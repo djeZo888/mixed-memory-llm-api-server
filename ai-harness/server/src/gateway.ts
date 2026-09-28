@@ -45,6 +45,8 @@ export interface GatewayOptions {
   responses?: {
     /** Closed by default. Host reviewed policy only; never browser controlled. */
     enabled: boolean;
+    /** Trusted bounded pilot may reserve less; ordinary production remains 65536. */
+    outputLimit?: number;
     /** Count the EXACT final Qwen chat template/history/tool payload on this lane. */
     countQwen: (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal) => Promise<{inputTokens:number; contextWindow:480000}>;
   };
@@ -670,7 +672,8 @@ export function createGateway(options: GatewayOptions): Gateway {
   async function chat(request: FastifyRequest, reply: FastifyReply) {
     const isResponses = request.routeOptions.url?.endsWith("/responses") === true;
     if (isResponses && options.responses?.enabled !== true) throw new ApiError(503,"codex_protocol_disabled","Codex Responses preview is disabled");
-    const translated = isResponses ? translateResponses(request.body) : undefined;
+    if (isResponses && options.ownership?.recoveryReady !== true) throw new ApiError(503,"codex_ownership_unavailable","Durable session ownership required");
+    const translated = isResponses ? translateResponses(request.body, options.responses?.outputLimit) : undefined;
     if (translated) request.body = translated.body;
     const frontier = request.routeOptions.url?.startsWith("/frontier/") === true;
     // MiMo remains SOURCE/FIXTURE ONLY until an independent live qualification.
@@ -942,6 +945,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         }
       },
     );
+    let bridgeInvalid = false;
     const bridge = translated ? new ResponsesStream(translated, data => {
       if (!disconnected && !reply.raw.destroyed) reply.raw.write(data);
     }) : undefined;
@@ -1031,7 +1035,19 @@ export function createGateway(options: GatewayOptions): Gateway {
             }
             observe.data(chunk);
             if (bridgeSuccess) {
-              try { bridge.push(chunk); } catch { fail("responses_stream_invalid","Upstream stream does not satisfy the local Responses contract"); }
+              if (!bridgeInvalid) try { bridge.push(chunk); } catch {
+                bridgeInvalid = true;
+                // Client format failure is not native/GPU failure: keep draining
+                // and observing Chat terminal evidence under the existing permit.
+                if (!disconnected && !reply.raw.destroyed) {
+                  if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Unqualified Responses output contract");
+                  else reply.raw.destroy();
+                }
+                disconnected = true;
+                cancelled.abort();
+                try { ownership.transition(ownedRequest,"draining"); } catch { /* retain failed ledger */ }
+                response.resume();
+              }
               return;
             }
             if (!disconnected && !reply.raw.destroyed) {
@@ -1063,7 +1079,13 @@ export function createGateway(options: GatewayOptions): Gateway {
               return;
             }
             observe.end();
-            if (bridgeSuccess) { try { bridge.end(); } catch { fail("responses_stream_invalid","Responses stream truncated or missing usage"); return; } }
+            if (bridgeSuccess && !bridgeInvalid) { try { bridge.end(); } catch {
+              bridgeInvalid = true;
+              if (!disconnected && !reply.raw.destroyed) {
+                if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Responses stream truncated or missing usage"); else reply.raw.destroy();
+              }
+              disconnected = true;
+            } }
             const status = response.statusCode ?? 502;
             const rejectedBeforeGeneration = [
               400, 401, 403, 404, 405, 413, 415, 422, 429,

@@ -1,0 +1,29 @@
+model = "qwen3.8-27b"
+model_provider = "sova"
+model_catalog_json = "/opt/sova/codex/models.json"
+approval_policy = "never"
+sandbox_mode = "danger-full-access"
+web_search = "disabled"
+check_for_update_on_startup = false
+allow_login_shell = false
+[analytics]
+enabled = false
+[feedback]
+enabled = false
+[features]
+multi_agent = false
+multi_agent_v2 = false
+apps = false
+plugins = false
+standalone_web_search = false
+[model_providers.sova]
+name = "Sova local"
+base_url = "http://10.0.2.2:8081/v1"
+wire_api = "responses"
+env_key = "AI_HARNESS_GATEWAY_TOKEN"
+requires_openai_auth = false
+request_max_retries = 0
+stream_max_retries = 0
+stream_idle_timeout_ms = 28800000
+supports_websockets = false
+supports_standalone_web_search = false

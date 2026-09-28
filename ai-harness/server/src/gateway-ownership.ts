@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
 export type RequestOwnershipState = "queued" | "counting" | "accepted" | "draining" | "uncertain" | "settled";
 export interface RequestOwnership { id:string; sessionId:string; state:RequestOwnershipState; lane?:string; updatedAt:string; }
-export interface SettlementQuery { sessionId:string; nativeThreadId?:string; activeTurnId?:string; }
+export interface SettlementQuery { sessionId:string; nativeThreadId?:string; activeTurnId?:string|null; }
 export interface OwnershipOptions {
   /** True only after a durable ledger has been opened and all prior records loaded. */
   recoveryReady:boolean;

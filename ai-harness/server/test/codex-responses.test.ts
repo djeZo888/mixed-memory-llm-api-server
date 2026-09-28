@@ -36,3 +36,13 @@ test("pinned patch grammar validates hunks and rejects arbitrary custom syntax",
  assert.ok(validPatch("*** Begin Patch\n*** Update File: a\n@@ old\n-x\n+y\n*** End of File\n*** End Patch\n"));
  for(const p of ["", "*** Begin Patch\n*** Add File: a\n*** End Patch\n", "*** Begin Patch\n*** Update File: a\n*** End of File\n*** End Patch\n"])assert.equal(validPatch(p),false);
 });
+test("valid final delta+finish, trailing SSE whitespace and empty reasoning remain supported",()=>{
+ let wire="";const s=new ResponsesStream(translateResponses(request()),x=>wire+=x);s.push(chunk({choices:[{delta:{content:"final",reasoning_content:null},finish_reason:"stop"}]}));s.push(chunk({choices:[],usage:{prompt_tokens:1,completion_tokens:1}}));s.push(Buffer.from("data: [DONE]\n"));s.push(Buffer.from("\n\r\n"));s.end();assert.equal(parse(wire).at(-1).response.output[0].content[0].text,"final");assert.throws(()=>s.push(Buffer.from("data: {}\n")));
+ const b=request();b.model="__proto__";assert.throws(()=>translateResponses(b));
+});
+test("interleaved parallel tool/result ordering rejects before generating invalid chat",()=>{
+ const b=request();b.input.push({type:"function_call",call_id:"a",name:"get_goal",arguments:"{}"},{type:"function_call",call_id:"b",name:"get_goal",arguments:"{}"},{type:"function_call_output",call_id:"a",output:"ok"},{type:"function_call",call_id:"c",name:"get_goal",arguments:"{}"});assert.throws(()=>translateResponses(b));
+});
+test("all actual native five-request tool/edit/read/continuation captures translate without dropping results",()=>{
+ const all=JSON.parse(readFileSync(new URL('./fixtures/codex/native-tool-continuation.json',import.meta.url),'utf8'));assert.equal(all.length,5);all.forEach((b:any)=>assert.doesNotThrow(()=>translateResponses(b)));const last=translateResponses(all.at(-1));assert.ok(last.body.messages.some((m:any)=>m.role==='tool'&&m.tool_call_id==='call_native_read'&&m.content.includes('native followup read PASS')));assert.equal(last.body.reasoning_effort,'none');assert.equal(translateResponses(request(),1024).body.max_tokens,1024);
+});

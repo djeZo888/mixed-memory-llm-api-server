@@ -34,10 +34,11 @@ export function validPatch(text: string): boolean {
   }
   return hunks > 0;
 }
-export function translateResponses(value: unknown): ResponsesTranslation {
+export function translateResponses(value: unknown, outputLimit = 65536): ResponsesTranslation {
+  if (!Number.isSafeInteger(outputLimit) || outputLimit < 1 || outputLimit > 65536) throw Error("Invalid trusted Responses output limit");
   if (!object(value)) reject("Expected Responses object"); const b = value as Record<string, any>;
   fields(b,["model","instructions","input","tools","tool_choice","parallel_tool_calls","reasoning","store","stream","include","prompt_cache_key","client_metadata","max_output_tokens"]);
-  if (!(b.model in CODEX_CONTEXT)) reject("Unsupported local model");
+  if (typeof b.model !== "string" || !Object.hasOwn(CODEX_CONTEXT,b.model)) reject("Unsupported local model");
   if (b.stream !== true || b.store !== false) reject("Only streaming stateless Responses are qualified");
   if (b.reasoning !== undefined && (!object(b.reasoning) || Object.keys(b.reasoning).length)) reject("Reasoning settings lack a verified local contract");
   // 0.158.0 core/client.rs always requests this optional field. Availability is
@@ -47,8 +48,8 @@ export function translateResponses(value: unknown): ResponsesTranslation {
   if (b.client_metadata !== undefined && (!object(b.client_metadata) || Object.values(b.client_metadata).some(v=>typeof v !== "string"))) reject("Invalid metadata");
   if (b.tool_choice !== "auto" && b.tool_choice !== "none") reject("Unsupported tool choice");
   if (typeof b.parallel_tool_calls !== "boolean") reject("parallel_tool_calls required");
-  const output = b.max_output_tokens ?? 65536;
-  if (!uint(output) || output < 1 || output > 65536) reject("Output reservation must be 1..65536");
+  const output = b.max_output_tokens ?? outputLimit;
+  if (!uint(output) || output < 1 || output > outputLimit) reject("Output reservation must be 1..65536");
   const tools = new Map<string, { custom: boolean; grammar: boolean }>();
   if (!Array.isArray(b.tools)) reject("tools must be an array");
   const chatTools = b.tools.map((t: any) => {
@@ -84,6 +85,7 @@ export function translateResponses(value: unknown): ResponsesTranslation {
       messages.push({role:item.role,content});
     } else if (["function_call","custom_tool_call"].includes(item.type)) {
       fields(item,["type","id","call_id","name","arguments","input","status"]);
+      if (pending.size && messages.at(-1)?.role === "tool") reject("Interleaved new tool calls before pending results");
       const id=string(item.call_id), name=string(item.name), custom=item.type==="custom_tool_call";
       if(!id || calls.has(id))reject("Duplicate tool call ID");
       const spec=tools.get(name); if(!spec || spec.custom!==custom)reject("Unknown history tool");
@@ -101,7 +103,7 @@ export function translateResponses(value: unknown): ResponsesTranslation {
     } else reject("Unsupported history item (including encrypted reasoning/response IDs)");
   }
   if(pending.size)reject("Missing tool results");
-  return {tools,body:{model:b.model,messages,tools:chatTools,tool_choice:b.tool_choice,parallel_tool_calls:b.parallel_tool_calls,stream:true,stream_options:{include_usage:true},max_tokens:output}};
+  return {tools,body:{model:b.model,...(b.model==="qwen3.8-27b"?{reasoning_effort:"none"}:{}),messages,tools:chatTools,tool_choice:b.tool_choice,parallel_tool_calls:b.parallel_tool_calls,stream:true,stream_options:{include_usage:true},max_tokens:output}};
 }
 
 /** Bounded SSE converter. Native usage is required; no invented token counts. */
@@ -112,7 +114,7 @@ export class ResponsesStream {
   constructor(private translation:ResponsesTranslation,private write:(data:string)=>void){}
   private emit(type:string,fields:Record<string,any>={}) { this.write(`event: ${type}\ndata: ${JSON.stringify({type,sequence_number:this.sequence++,...fields})}\n\n`); }
   private response(status:string) { return {id:this.responseId,object:"response",status,output:this.output,model:this.translation.body.model}; }
-  push(chunk:Buffer) { if(this.ended)throw Error("Data after terminal");this.buffer+=this.decoder.write(chunk);if(this.buffer.length>1024*1024)throw Error("SSE frame too large");let end;while((end=this.buffer.indexOf("\n"))>=0){const line=this.buffer.slice(0,end).trim();this.buffer=this.buffer.slice(end+1);if(line.startsWith("data:"))this.data(line.slice(5).trim());} }
+  push(chunk:Buffer) { if(this.ended){if(chunk.toString("utf8").trim())throw Error("Data after terminal");return;}this.buffer+=this.decoder.write(chunk);if(this.buffer.length>1024*1024)throw Error("SSE frame too large");let end;while((end=this.buffer.indexOf("\n"))>=0){const line=this.buffer.slice(0,end).trim();this.buffer=this.buffer.slice(end+1);if(line.startsWith("data:"))this.data(line.slice(5).trim());} }
   private data(data:string) {
     if(this.ended)throw Error("Duplicate terminal");
     if(data==="[DONE]"){this.complete();return;}
@@ -121,10 +123,11 @@ export class ResponsesStream {
     if(v.usage){const u=v.usage;if(!uint(u.prompt_tokens)||!uint(u.completion_tokens))throw Error("Invalid usage");const cached=u.prompt_tokens_details?.cached_tokens??0,reasoning=u.completion_tokens_details?.reasoning_tokens??0;if(!uint(cached)||!uint(reasoning)||cached>u.prompt_tokens||reasoning>u.completion_tokens)throw Error("Invalid token details");this.usage={input_tokens:u.prompt_tokens,output_tokens:u.completion_tokens,total_tokens:u.prompt_tokens+u.completion_tokens,input_tokens_details:{cached_tokens:cached},output_tokens_details:{reasoning_tokens:reasoning}};}
     if(!Array.isArray(v.choices)||v.choices.length>1)throw Error("Expected single choice");
     for(const c of v.choices){if(c.index!==0 && c.index!==undefined)throw Error("Invalid choice index");const d=c.delta??{};
-      if(d.reasoning_content!==undefined || d.reasoning!==undefined)throw Error("Unqualified reasoning field");
-      if(c.finish_reason){if(this.finishReason)throw Error("Duplicate finish");this.finishReason=c.finish_reason;}
-      if(d.content!==undefined && d.content!==null){if(typeof d.content!=="string")throw Error("Unsupported output media");if(this.finishReason && d.content)throw Error("Content after finish");if(d.content){if(!this.textStarted){this.textStarted=true;this.emit("response.output_item.added",{output_index:0,item:{id:this.messageId,type:"message",role:"assistant",status:"in_progress",content:[]}});this.emit("response.content_part.added",{item_id:this.messageId,output_index:0,content_index:0,part:{type:"output_text",text:"",annotations:[]}});}this.text+=d.content;if(this.text.length>4*1024*1024)throw Error("Output bound exceeded");this.emit("response.output_text.delta",{item_id:this.messageId,output_index:0,content_index:0,delta:d.content});}}
+      if([d.reasoning_content,d.reasoning].some(v=>v!==undefined&&v!==null&&v!==""))throw Error("Unqualified reasoning field");
+      if(this.finishReason && (d.content || d.tool_calls?.length))throw Error("Data after finish");
+      if(d.content!==undefined && d.content!==null){if(typeof d.content!=="string")throw Error("Unsupported output media");if(d.content){if(!this.textStarted){this.textStarted=true;this.emit("response.output_item.added",{output_index:0,item:{id:this.messageId,type:"message",role:"assistant",status:"in_progress",content:[]}});this.emit("response.content_part.added",{item_id:this.messageId,output_index:0,content_index:0,part:{type:"output_text",text:"",annotations:[]}});}this.text+=d.content;if(this.text.length>4*1024*1024)throw Error("Output bound exceeded");this.emit("response.output_text.delta",{item_id:this.messageId,output_index:0,content_index:0,delta:d.content});}}
       if(d.tool_calls){if(!Array.isArray(d.tool_calls))throw Error("Invalid tool deltas");for(const t of d.tool_calls){if(!uint(t.index)||t.index>127||t.type!==undefined&&t.type!=="function")throw Error("Invalid tool index/type");const old=this.calls.get(t.index)??{id:"",name:"",arguments:""};if(t.id){if(old.id&&old.id!==t.id)throw Error("Changed call ID");old.id=string(t.id);}if(t.function?.name)old.name+=string(t.function.name);if(t.function?.arguments)old.arguments+=string(t.function.arguments);if(old.arguments.length>1024*1024)throw Error("Tool bound exceeded");this.calls.set(t.index,old);}}
+      if(c.finish_reason){if(this.finishReason)throw Error("Duplicate finish");this.finishReason=c.finish_reason;}
     }
   }
   private complete(){
