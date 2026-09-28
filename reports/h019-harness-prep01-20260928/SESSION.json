@@ -11,9 +11,13 @@
   "hard_deadline_utc": "2026-09-28T02:43:00Z",
   "role": "worker2",
   "scope": "ai-harness-only",
-  "status": "PREPARATION_SOURCE_READY",
+  "status": "PREPARED_HANDING_BACK",
   "effectiveDeadlineUtc": "2026-09-28T02:39:49.099570+00:00",
   "modelOverride": false,
   "aiVmContact": false,
-  "exitRecorder": "../wrapper.log"
+  "exitRecorder": "../wrapper.log",
+  "workFinishedUtc": "2026-09-28T02:25:02.780193+00:00",
+  "sourceArtifactCommit": "34959c67baea0d8a357cbea4cefac1658f3553f0",
+  "actualNativeExit": "wrapper records after return",
+  "rootCloseDirection": "../input/CLOSE-FIRST-SESSION.md"
 }

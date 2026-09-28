@@ -1,0 +1,9 @@
+test_actual_startup_refresh_borrows_one_parent_and_reuses_sample (__main__.IndependentNestedLeaseTests.test_actual_startup_refresh_borrows_one_parent_and_reuses_sample) ... {"status": "OWNER_FAILURE", "launch_id": "f3ca4c5be49a4a3f8593bb894eaac827", "primary_failure": {"phase": "CREATING", "code": "unexpected_error", "observed_at": "2026-09-28T02:22:38.773029+00:00", "operation": "launch", "exception_class": "OtherException", "owner_source_line": 916}}
+ok
+test_borrowed_positive_fault_retained (__main__.IndependentNestedLeaseTests.test_borrowed_positive_fault_retained) ... ok
+test_borrowed_swallowed_alarm_still_refuses_refresh (__main__.IndependentNestedLeaseTests.test_borrowed_swallowed_alarm_still_refuses_refresh) ... ok
+
+----------------------------------------------------------------------
+Ran 3 tests in 0.061s
+
+OK
