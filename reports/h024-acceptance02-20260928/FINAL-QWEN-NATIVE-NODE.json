@@ -1,0 +1,93 @@
+{
+  "at": "2026-09-28T18:20:01.018546+00:00",
+  "noInference": true,
+  "node": {
+    "path": "/control/v1/node/status",
+    "startedAt": "2026-09-28T18:20:01.018560+00:00",
+    "http": 200,
+    "dto": {
+      "schema_version": 1,
+      "node_id": "ai-vm",
+      "boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+      "state": "ok",
+      "freshness": "fresh",
+      "age_ms": 610,
+      "observed_at": "2026-09-28T18:20:00.412013+00:00",
+      "services": [
+        {
+          "service_id": "qwen-gpu0",
+          "state": "ok",
+          "freshness": "fresh",
+          "age_ms": 310,
+          "observed_at": "2026-09-28T18:20:00.711842+00:00",
+          "generation": 5299993047934578,
+          "ready": true,
+          "hardware_latched": false,
+          "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+          "model_alias": "qwen3.8-27b-gpu0",
+          "configured_context_tokens": 480000,
+          "required_gpu_uuids": [
+            "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+          ]
+        },
+        {
+          "service_id": "qwen-gpu1",
+          "state": "ok",
+          "freshness": "fresh",
+          "age_ms": 317,
+          "observed_at": "2026-09-28T18:20:00.705285+00:00",
+          "generation": 6896433830610122,
+          "ready": true,
+          "hardware_latched": false,
+          "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+          "model_alias": "qwen3.8-27b",
+          "configured_context_tokens": 480000,
+          "required_gpu_uuids": [
+            "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+          ]
+        }
+      ]
+    },
+    "elapsedSeconds": 0.003
+  },
+  "native0": {
+    "path": "/get_server_info",
+    "startedAt": "2026-09-28T18:20:01.021243+00:00",
+    "http": 200,
+    "dto": {
+      "status": "ready",
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b-gpu0",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "max_running_requests": 1,
+      "default_chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    },
+    "elapsedSeconds": 0.006
+  },
+  "native1": {
+    "path": "/get_server_info",
+    "startedAt": "2026-09-28T18:20:01.027239+00:00",
+    "http": 200,
+    "dto": {
+      "status": "ready",
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "max_running_requests": 1,
+      "default_chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    },
+    "elapsedSeconds": 0.005
+  }
+}

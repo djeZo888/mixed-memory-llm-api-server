@@ -1,0 +1,20 @@
+{
+  "status": "SOURCE_BUILD_FOCUSED_TESTS_PASS",
+  "sourceSha256": "d24e622b32816974b6bf348d59e6a9dddc1b2b6854dc45c70d958aefc1d00d92",
+  "testSha256": "d041111a48525d84cff02cb6519184c1f636382d774abfcbedf89414d2baf6d4",
+  "mapping": "medium -> enable_thinking:true, no graded effort claim",
+  "unknown": "reject",
+  "conflicts": "none+true and medium+false reject",
+  "sourcePaths": [
+    "ai-harness/server/src/mimo.ts",
+    "ai-harness/server/test/mimo-effort.test.ts"
+  ],
+  "commit": "c6786cca10e28cd009e458af5347d2a3a4b0e989",
+  "bundleSha256": "b0b8e04f4cee0ed87f8d56ca58b948f272ce0925d9f9036f8319375c578cdad4",
+  "validation": {
+    "build": "PASS tsc",
+    "tests": "PASS 24/24 mimo-effort + mimo + mimo-integration",
+    "review": "PASS independent source review"
+  },
+  "deployed": false
+}
