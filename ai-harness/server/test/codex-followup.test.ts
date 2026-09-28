@@ -31,7 +31,7 @@ test("two loopback HTTP fixture requests use fresh live tokens, resume native hi
     model: "qwen3.8-27b",
     provider: "sova",
     contextLimit: 480000,
-    gatewayUrl: "http://10.0.2.2:8081/codex/v1",
+    gatewayUrl: "http://10.0.2.2:8081/v1",
     async launchRootless(input) {
       const stdin = new PassThrough(),
         stdout = new PassThrough();

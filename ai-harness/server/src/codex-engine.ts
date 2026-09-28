@@ -128,7 +128,7 @@ export class CodexEngine implements Engine {
       runtime.provider !== "sova" ||
       runtime.contextLimit !== 480000 ||
       runtime.gatewayUrl !== options.gatewayUrl ||
-      !/^http:\/\/10\.0\.2\.2:8081\//.test(runtime.gatewayUrl) ||
+      runtime.gatewayUrl !== "http://10.0.2.2:8081/v1" ||
       typeof runtime.launchRootless !== "function" ||
       typeof runtime.revokeGatewaySession !== "function" ||
       typeof runtime.confirmGatewaySettlement !== "function"
@@ -485,8 +485,8 @@ export class CodexEngine implements Engine {
         this.options.onUpdate({
           type: "context",
           used: Number(p.tokenUsage.last.totalTokens),
-          estimated: false,
-          source: "codex.last.totalTokens",
+          estimated: true,
+          source: "codex.latest-request.totalTokens",
         });
       }
     }

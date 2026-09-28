@@ -265,7 +265,7 @@ test("resume uses only original native thread ID and never imports returned hist
   assert.deepEqual(f.updates, []);
   await f.engine.close();
 });
-test("last occupied tokens and compaction invalidate context without cumulative billing or invented reasoning", async () => {
+test("latest request estimates retained context and compaction invalidate context without cumulative billing or invented reasoning", async () => {
   const f = fixture();
   const pending = f.engine.prompt("test usage");
   await tick();
@@ -302,6 +302,7 @@ test("last occupied tokens and compaction invalidate context without cumulative 
     f.updates.some((v) => v.type === "text"),
     false,
   );
+  assert.equal(f.updates.filter(v => v.type === "context" && v.used !== null).every(v => v.estimated && v.source === "codex.latest-request.totalTokens"), true);
 });
 test("cancel ACK cannot release ownership before native terminal, exact process cleanup and owned gateway proof", async () => {
   const proof = deferred<boolean>();
