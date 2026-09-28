@@ -1,6 +1,20 @@
 # Sova — complete the local Codex integration
 
-**September 28, 2026. Planning only; implementation awaits the next instruction.**
+**September 28, 2026. Implementation authorized: 16:52–18:52 UTC.**
+
+The H024 execution window follows the hardware checks. All four models are
+resident and existing benchmark requests are settled. The third-GPU cooling
+test passed; four-way qualification remains partial because its test monitor
+hit a journal-size limit. No further thermal or large-context test runs here.
+
+Worker1 owns current model qualification, provider/gateway/frontier integration
+and any required ai-vm supervision repair. Worker2 owns Responses/tool/PDF
+compatibility, context/UI work and deployment of the combined harness release.
+They use isolated copies and fresh bounded native CLI sessions on their Macs;
+root coordinates, reviews and publishes. Reserve the last15minutes for health,
+settlement and publication. MiniMax remains available/default while Codex is
+qualified. Later sections retain the original investigation/acceptance scope;
+this assignment supersedes their earlier worker allocation.
 
 This follows [the original plan](PLAN-CODEX-HARNESS.md) and the deployed
 [H021 preview](../reports/h021-codex-preview.md). Keep MiniMax available and

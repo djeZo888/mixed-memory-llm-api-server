@@ -1,41 +1,42 @@
-# Sova current task — H023
+# Sova current task — H024 Codex implementation
 
-Latest user has replaced the third Blackwell fan and restarted the host/VMs.
-Restore/check both VMs, bring current MiMo Pro-RL, two Qwens and image model up
-and warm; qualify CHA_FAN3 control, benchmark third-GPU cooling and run bounded
-four-way concurrency. If the stock Qwen Blackwell still overheats at100% fans,
-test a lower supported GPU power limit. Root plans/reviews/publishes; both Mac
-workers perform VM work in fresh bounded native CLI sessions and isolated copies.
+User authorizes a separate two-hour Codex implementation window after H023.
+Window: September28,2026 **16:52–18:52UTC**,18:52–20:52Ljubljana. Root plans,
+reviews, integrates and publishes; mac-worker1/mac-worker2 do actual coding,
+builds, tests and VM work through fresh bounded native CodexCLI sessions and
+isolated copies. Retain task/session IDs and compact durable results.
 
-This authorization supersedes prior read-only/shutdown/no-stress restrictions
-for this scope. Subsequent user steering authorizes a separate two-hour Codex
-implementation window after the cooling/four-way test; use the reviewed Codex
-completion plan and both workers. No 950K rerun, new models, GLM restoration,
-driver/runtime upgrade or Proxmox change. Preserve chats/files,
-weights/configuration, historical failures and uncertain request evidence.
-Recover prior-boot held MiMo ownership via its lifecycle path with current
-absence/boot proof, not by deleting history or forging readiness.
+Use ai-harness/PLAN-CODEX-COMPLETION.md. Worker1 owns readiness after reboot,
+both Qwen qualifications, provider/gateway/MiMo integration and narrowly needed
+ai-vm supervision changes. Worker2 owns Responses/tool/PDF compatibility,
+context/UI and the single combined ai-harness deployment. Agree shared provider
+interfaces before edits. Root reviews combined source before that deployment;
+ordinary assigned edits and focused checks are already authorized.
 
-Worker1 owns ai-vm lifecycle, warmups, thermal tests and conditional power limits.
-Worker2 owns ai-harness/BMC and independent review. Do not overlap fan setter
-qualification with load testing. Use current UUIDs, fresh readback and existing
-85C cutoff. User's CHA_FAN3 baseline is75%; only exact channel changes after
-review, preserving all other mode/source/curve settings. No guessed IPMI raw
-writes or lowering cooling on stale/missing temperature. Integrated GPU fan
-boost at70C remains; do not conflate a configured duty with physical RPM.
+All four models are currently resident and H023 work settled. MiMo Pro-RL950000,
+two Qwens480000 and existing FullHDimage keep their weights/runtime/GPU settings.
+No950K test, thermal retest, new model, hosted fallback, driver/runtime upgrade,
+GLM restoration or Proxmox change. The last first-use MiMo16K completed; 950K is
+configured capacity, not qualified occupied context. Preserve all histories,
+files, native IDs, old failures and uncertain-request evidence. Reconcile any
+holds through their owners; do not delete historical quarantines or replay work.
 
-Use short staged thermal load then roughly5min actual four-instance overlap,
-with a 16K occupied MiMo prompt and unchanged other-model settings. Configured
-950K/480K capacities remain unchanged. Qualify CHA_FAN3 100% control while idle,
-restore the user's 75% baseline and retain ability to raise it for heat.
-with bounded requests, telemetry and settlement. Do not claim PSU nameplate or
-transient capacity from GPU wattage alone. All3Blackwells share2200W PSU; Ada is
-separately powered. Keep models warm afterward if healthy. No paid worker idle
-through long loads. Initial hardware window15:04–17:05UTC September28; checkpoint
-unfinished work rather than extending silently. Start and record the separate
-user-authorized two-hour Codex window after hardware work. Large MiMo context
-testing waits until Codex is working and a later user-authorized test window.
-Source and reports remain on
-feature/glm53-flash / draftPR10; no merge of incomplete qualification.
+App/status were intentionally paused for H023; Worker2 restores them during the
+coordinated release/health checks. MiniMax remains available/default; Codex is
+qualified capability by capability. Do not accept arbitrary changed runtime
+identity, hide tool failures, strip unexplained arguments or prompt-rescue a
+failed acceptance until it passes. Record PASS/FAIL/NOT_TESTED honestly.
 
-Historical instructions: docs/orchestration/AGENTS-H022-archive.md.
+CHA_FAN3 was commanded/read back100%; physical speed increase remains unproven
+because raw tach decreased5040→2760. Other fan settings unchanged. Existing
+integrated GPU fan boost and85C guard remain. Later restoration to the user's75%
+baseline requires fresh third-GPU idle/<65C proof and exact scoped BMC action;
+no fan sweep or permanent BMC controller belongs to H024.
+
+First implementation sessions≤50min, then fresh integration/acceptance sessions.
+Reserve final15min for settlement, health/report/publication. No silent extension
+or forced success at the deadline. Keep healthy models resident. Source/results
+remain on feature/glm53-flash/draftPR10; no merge of incomplete qualification.
+
+H023 detailed records: orchestration task files outside checkout and reports/
+h023-* in this repository. Earlier instructions archived under docs/orchestration.
