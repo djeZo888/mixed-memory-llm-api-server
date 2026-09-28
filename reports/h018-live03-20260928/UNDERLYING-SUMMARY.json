@@ -1,0 +1,26 @@
+{
+  "utc": "2026-09-28T00:23:56.962208+00:00",
+  "node_unit": {
+    "code": 0,
+    "stdout": "MainPID=3309508\nExecMainStartTimestamp=Sun 2026-09-27 17:44:54 UTC\nStandardOutput=null\nStandardError=null\nActiveState=active\nSubState=running\nInvocationID=7264f712a5024b2484d38535790b94df\n",
+    "stderr": ""
+  },
+  "node_journal": {
+    "code": 0,
+    "stdout": "-- No entries --\n",
+    "stderr": ""
+  },
+  "kernel_window": {
+    "code": 0,
+    "stdout": "2026-09-28T00:16:05+00:00 llmserver kernel: show_signal_msg: 109 callbacks suppressed\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072723]: segfault at 0 ip 0000000000000000 sp 000075515f22cf28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072745]: segfault at 0 ip 0000000000000000 sp 000074cb27fedf28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 22 (core 22, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 44 (core 44, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072757]: segfault at 0 ip 0000000000000000 sp 000074cb21fe1f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072732]: segfault at 0 ip 0000000000000000 sp 000074cb33ff5f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072747]: segfault at 0 ip 0000000000000000 sp 000074cb26febf28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072772]: segfault at 0 ip 0000000000000000 sp 000074bf7dff1f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072741]: segfault at 0 ip 0000000000000000 sp 000074cb29ff1f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 31 (core 31, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 71 (core 71, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 40 (core 40, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 46 (core 46, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 56 (core 56, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072749]: segfault at 0 ip 0000000000000000 sp 000074cb25fe9f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2040475]: segfault at 0 ip 0000000000000000 sp 0000755175a59f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: llama-server[2072740]: segfault at 0 ip 0000000000000000 sp 000074cb2a7f2f28 error 14\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 5 (core 5, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 48 (core 48, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel:  likely on CPU 39 (core 39, socket 0)\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: \n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n2026-09-28T00:16:05+00:00 llmserver kernel: Code: Unable to access opcode bytes at 0xffffffffffffffd6.\n",
+    "stderr": ""
+  },
+  "lock": {
+    "dev": 26,
+    "ino": 1838,
+    "matching_proc_locks": []
+  },
+  "native_tail_private_sha256": "1f503ddabfc64c3c08e6173455ed2ba935f585662ea0dccd470e11304bf0e797",
+  "native_stop": "2026-09-28T00:16:03.656592115Z cancel task28",
+  "second_interrupt": "2026-09-28T00:16:05.464600080Z Received second interrupt, terminating immediately."
+}

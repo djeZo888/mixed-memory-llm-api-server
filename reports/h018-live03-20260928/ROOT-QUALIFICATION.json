@@ -1,0 +1,89 @@
+{
+  "status": "FAILED_NO_QUALIFICATION_NO_RETRY",
+  "utc": "2026-09-28T00:18:48.095315+00:00",
+  "collection_utc": "2026-09-28T00:18:21.924191+00:00",
+  "task": "H018-LIVE-03-20260928",
+  "raw_collection_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-03-20260928/private/COLLECT-20260928T001821Z.json",
+  "raw_collection_sha256": "784783ad0c7b29ea845546132b52300045418e96be64c8f9019cd0eaff37c234",
+  "unit": {
+    "MainPID": "0",
+    "Result": "exit-code",
+    "ExecMainStatus": "1",
+    "ActiveState": "failed",
+    "SubState": "failed",
+    "InvocationID": "39fbbfa5a6e3480ca97c36db290af551"
+  },
+  "client": {
+    "completed": [
+      "SHORT-TEXT"
+    ],
+    "deadline_epoch": 1790555444.6738658,
+    "error_type": "RuntimeError",
+    "finished_utc": "2026-09-28T00:16:03.932813+00:00",
+    "owned_disposition": {
+      "drained_monotonic_seconds": 67251.369322654,
+      "drained_utc": "2026-09-28T00:15:48.021602+00:00",
+      "request_sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+      "response_id": "chatcmpl-fJfGAJJnhVscmIqu4lGaK72uhH3hN1ND",
+      "status": "OWN_STREAM_TERMINAL_FULL_DRAIN"
+    },
+    "production_identity": {
+      "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+      "launch_id": "ddd222dc06b1421fb217cc08d4fd6762",
+      "manifest_sha256": "8636d893e23ef4a6d7b7ff2414d154aa97c74ccba61fd8186aa028304be6826c",
+      "native": {
+        "container_id": "d7ab15410156d2a10523b3cb62ff8c07a0cc390d7ecd5eebbe110f6d20e176c7",
+        "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+        "name": "llm-frontier-mimo-production",
+        "pid": 1830344,
+        "pid_start_ticks": "6649083",
+        "started_at": "2026-09-28T00:03:07.469603798Z"
+      },
+      "supervisor": {
+        "invocation_id": "671c7010ad1f49148432714c6e74f1cb",
+        "pid": 1829936,
+        "unit": "llm-frontier-mimo.service"
+      }
+    },
+    "request_may_be_active": true,
+    "started_utc": "2026-09-28T00:15:44.990690+00:00",
+    "status": "FAILED_NO_RETRY"
+  },
+  "ordinary_status": "HELD",
+  "production_identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "manifest_sha256": "8636d893e23ef4a6d7b7ff2414d154aa97c74ccba61fd8186aa028304be6826c",
+    "supervisor": {
+      "invocation_id": "671c7010ad1f49148432714c6e74f1cb",
+      "pid": 1829936,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "ddd222dc06b1421fb217cc08d4fd6762",
+    "native": {
+      "container_id": "d7ab15410156d2a10523b3cb62ff8c07a0cc390d7ecd5eebbe110f6d20e176c7",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1830344,
+      "pid_start_ticks": "6649083",
+      "started_at": "2026-09-28T00:03:07.469603798Z"
+    }
+  },
+  "primary_failure": {
+    "code": "owned_gpu_latch_unproven",
+    "cycle_elapsed_s": 0.115341,
+    "observed_at": "2026-09-28T00:16:03.140247+00:00",
+    "operation": "hardware_latch",
+    "phase": "RUNNING"
+  },
+  "cleanup_failure": {
+    "code": "command_timeout",
+    "observed_at": "2026-09-28T00:16:12.436586+00:00",
+    "operation": "settlement",
+    "phase": "SETTLING"
+  },
+  "qualification_json": null,
+  "enablement": "NOT_PERFORMED_QUALIFICATION_FAILED",
+  "Sova": "NO_IDLE_HANDOFF_DO_NOT_GENERATE",
+  "LAST": "INACTIVE_NO_DISPATCH",
+  "automatic_retry": false
+}

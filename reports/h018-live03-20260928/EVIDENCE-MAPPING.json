@@ -1,0 +1,101 @@
+{
+  "status": "FAILED_NO_QUALIFICATION_NO_RETRY",
+  "collection_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-03-20260928/private/COLLECT-20260928T001821Z.json",
+  "collection_sha256": "784783ad0c7b29ea845546132b52300045418e96be64c8f9019cd0eaff37c234",
+  "production_identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "manifest_sha256": "8636d893e23ef4a6d7b7ff2414d154aa97c74ccba61fd8186aa028304be6826c",
+    "supervisor": {
+      "invocation_id": "671c7010ad1f49148432714c6e74f1cb",
+      "pid": 1829936,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "ddd222dc06b1421fb217cc08d4fd6762",
+    "native": {
+      "container_id": "d7ab15410156d2a10523b3cb62ff8c07a0cc390d7ecd5eebbe110f6d20e176c7",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1830344,
+      "pid_start_ticks": "6649083",
+      "started_at": "2026-09-28T00:03:07.469603798Z"
+    }
+  },
+  "receipts": {
+    "CLIENT.json": {
+      "sha256": "00f1ed0c75a33bcfecdb9e554c54fcfec0f32e83a1da16ee61bed3b0ebd4f6aa",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/CLIENT.json"
+    },
+    "ALLOCATION.json": {
+      "sha256": "d8f496e0ca4c7b63578f6bfcd3ec109980accd69a95208da5b22e55915951509",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/ALLOCATION.json"
+    },
+    "GUARD-PROGRESS.json": {
+      "sha256": "d594ecccbf1903ae52d3996ded45cc8809d1766ef13a59c91eb6d02dc770e6f7",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/GUARD-PROGRESS.json"
+    },
+    "DISPATCH.json": {
+      "sha256": "413138f4fd1207e5d85cd84954a3f34167865ec33bf72ecd13c076413f479e09",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/DISPATCH.json"
+    },
+    "DISPATCH-ATTEMPT.json": {
+      "sha256": "fd6a6727a647c67a68c5416f1d906e05a269d350d609c4027c6a59af756ec4d1",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/DISPATCH-ATTEMPT.json"
+    },
+    "FINAL17-READ.txt": {
+      "sha256": "71ec1e3da054c590303251a90f199e725cbceac2e530e5ce0512aaeb4791b8c0",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/FINAL17-READ.txt"
+    },
+    "SHORT-TEXT.json": {
+      "sha256": "53b3206993b03523def981d44b35f13322c890a5fbe77f939e3d2dc31db06236",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/SHORT-TEXT.json"
+    },
+    "SHORT-TEXT-REQUEST.json": {
+      "sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/SHORT-TEXT-REQUEST.json"
+    },
+    "SHORT-TEXT-RAW.jsonl": {
+      "sha256": "79dc7236ec325975da31724c95b3cae5e29566a89416b54d48c264130e14ace2",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/SHORT-TEXT-RAW.jsonl"
+    },
+    "SHORT-TEXT-PROGRESS.jsonl": {
+      "sha256": "11ca27f0046ff48458e32888b96d84de3ef5f560add008b0d7cacd57cd704367",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/SHORT-TEXT-PROGRESS.jsonl"
+    },
+    "SHORT-TEXT-GUARD-AFTER.json": {
+      "sha256": "93794cdf25238ef85ac471ca111e4191e8723d4dcd66a15148aaea298255a553",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/SHORT-TEXT-GUARD-AFTER.json"
+    },
+    "FINAL17-TURN1.json": {
+      "sha256": "950868df239badb42d25443769c6ab1876fcb901ec305493f2fb1ca334a7627f",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/FINAL17-TURN1.json"
+    },
+    "FINAL17-TURN1-REQUEST.json": {
+      "sha256": "ec3e3e0a756dd3655da05f5c4deedd6990fda78b6bf045834f423505cb3b8b45",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/FINAL17-TURN1-REQUEST.json"
+    },
+    "FINAL17-TURN1-RAW.jsonl": {
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/FINAL17-TURN1-RAW.jsonl"
+    },
+    "FINAL17-TURN1-PROGRESS.jsonl": {
+      "sha256": "7261d211883a435179541fe60c0731c5ca142d7a36a8ddfe27e2149d00ccce0a",
+      "remote_path": "/data/logs/H018-20260928/worker1-short/FINAL17-TURN1-PROGRESS.jsonl"
+    }
+  },
+  "qualification": "FAILED_NO_QUALIFIED_ARTIFACT",
+  "primary_failure": {
+    "code": "owned_gpu_latch_unproven",
+    "cycle_elapsed_s": 0.115341,
+    "observed_at": "2026-09-28T00:16:03.140247+00:00",
+    "operation": "hardware_latch",
+    "phase": "RUNNING"
+  },
+  "cleanup_failure": {
+    "code": "command_timeout",
+    "observed_at": "2026-09-28T00:16:12.436586+00:00",
+    "operation": "settlement",
+    "phase": "SETTLING"
+  },
+  "request_ambiguity": "PRESERVED_AS_RECORDED_IN_CLIENT_AND_STREAM_RECEIPTS",
+  "historical_R9": "STATIC_HISTORICAL_ONLY_NOT_CURRENT_950K_ACCEPTANCE"
+}

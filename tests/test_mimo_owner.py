@@ -447,4 +447,114 @@ class OwnerTests(unittest.TestCase):
         for exc in (RuntimeError('private-token'),ValueError('private-prompt'),OSError('private-path')):
             self.assertNotIn('private-',json.dumps(o.failure(exc,'LOADING')))
 
+class LatchRefreshTests(unittest.TestCase):
+    """Real existing policy/latch semantics and canonical lease; no VM I/O."""
+    def setUp(self):
+        import datetime, os, tempfile
+        from common.lifecycle_lease import acquire_lease
+        from lifecycle import hardware_policy as hp
+        from tests.test_hardware_latch import MemoryProtectedStore, BOOT
+        self.boot = BOOT
+        self.temp = tempfile.TemporaryDirectory(); self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name).resolve()
+        self.store = MemoryProtectedStore()
+        self.stamp = lambda seconds=0: datetime.datetime.fromtimestamp(time.time()+seconds, datetime.timezone.utc).isoformat()
+        self.store.state['validated'] = {o.GPU: {'boot_id': BOOT, 'observed_at': self.stamp(-20), 'observation_id': 'a'*32}}
+        self.evidence = dict(gpu_uuid=o.GPU, boot_id=BOOT, observed_at=self.stamp(), observation_id='b'*32)
+        self.h = SimpleNamespace(acquire_lease=lambda **kw: acquire_lease(system_root=self.root, trusted_uid=os.geteuid(), **kw))
+        policy = hp.HardwarePolicy
+        patches = [patch.object(o, 'BOOT', SimpleNamespace(read_text=lambda:BOOT)),
+            patch.object(hp, 'RegisteredLatchStore', side_effect=lambda *a, **kw:self.store),
+            patch.object(hp, 'HardwarePolicy', side_effect=lambda store, lease:policy(store, lease=lease,
+                system_root=self.root, trusted_uid=os.geteuid(), boot=lambda:dict(boot_id=BOOT,uptime_seconds=100))),
+            patch('lifecycle.storage_binding.RegisteredStorageBinding.read_registered', return_value=object())]
+        for item in patches: item.start(); self.addCleanup(item.stop)
+
+    def test_stale_proof_refresh_uses_existing_policy_and_real_lease(self):
+        with patch.object(o, 'run', side_effect=AssertionError('no extra GPU query')):
+            result = o.latch(self.h, self.boot, evidence=self.evidence)
+        self.assertFalse(result['hardware_latched'])
+        self.assertTrue(result['owner_refresh']['refresh_attempted'])
+        self.assertEqual(self.store.writes, 1)
+        self.assertEqual(self.store.state['validated'][o.GPU]['observed_at'], self.evidence['observed_at'])
+
+    def test_fresh_proof_never_acquires_lease(self):
+        self.store.state['validated'][o.GPU]['observed_at'] = self.stamp()
+        self.h.acquire_lease = Mock(side_effect=AssertionError('unexpected lease'))
+        self.assertFalse(o.latch(self.h, self.boot)['hardware_latched'])
+        self.assertEqual(self.store.writes, 0)
+
+    def test_producer_refresh_before_lease_entry_succeeds_without_validation_write(self):
+        original=self.h.acquire_lease
+        @contextlib.contextmanager
+        def refreshed(**kwargs):
+            with original(**kwargs) as lease:
+                self.store.state['validated'][o.GPU]['observed_at']=self.stamp()
+                yield lease
+        self.h.acquire_lease=refreshed
+        result=o.latch(self.h,self.boot,evidence=self.evidence)
+        self.assertFalse(result['hardware_latched'])
+        self.assertEqual(self.store.writes,0)
+
+    def test_positive_latch_cannot_refresh(self):
+        from control.hardware_latch import HardwareLatch
+        from tests.test_hardware_latch import inventory
+        self.store.state['validated'] = {}
+        latch = HardwareLatch(self.store.state)
+        for second in (0,5): latch.observe(o.GPU, inventory(second, uuids=[]), current_boot_id=self.boot, boot_age_seconds=100)
+        self.store.state = latch.export_state(); before = copy.deepcopy(self.store.state)
+        with self.assertRaises(o.OwnerRefusal): o.latch(self.h,self.boot,evidence=self.evidence)
+        self.assertEqual(self.store.state,before); self.assertEqual(self.store.writes,0)
+
+    def test_missing_corrupt_storage_stale_sample_other_boot_and_busy_fail_closed(self):
+        from common.lifecycle_lease import LeaseBusy
+        cases = ['missing','corrupt','write_failure','stale_sample','other_boot','busy','deadline']
+        for case in cases:
+            with self.subTest(case=case):
+                before = copy.deepcopy(self.store.state); evidence = dict(self.evidence)
+                with contextlib.ExitStack() as stack:
+                    if case=='missing': self.store.state['validated']={}
+                    if case=='corrupt': self.store.state={'schema_version':99}
+                    if case=='write_failure': self.store.fail=True
+                    if case=='stale_sample': evidence['observed_at']=self.stamp(-30)
+                    if case=='other_boot': evidence['boot_id']='00000000-0000-0000-0000-000000000000'
+                    if case in ('busy','deadline'):
+                        error = LeaseBusy() if case=='busy' else o.MandatoryGuardTimeout('mandatory_guard_timeout')
+                        stack.enter_context(patch.object(self.h,'acquire_lease',side_effect=error))
+                    with self.assertRaises(Exception) as caught: o.latch(self.h,self.boot,evidence=evidence)
+                    receipt=o.failure(caught.exception,'RUNNING','hardware_latch')
+                    self.assertIn('hardware_evidence',receipt)
+                    self.assertNotIn('private storage detail',json.dumps(receipt))
+                    self.assertEqual(self.store.writes,0)
+                self.store.state=before; self.store.fail=False
+
+    def test_strict_owner_storage_failure_preserves_passive_unknown_contract(self):
+        from lifecycle.hardware_policy import read_latch_status
+        with patch.object(self.store,'read',side_effect=OSError('private read detail')):
+            self.assertIsNone(read_latch_status(object(),[o.GPU],current_boot_id=self.boot)['hardware_latched'])
+            with self.assertRaises(OSError) as caught: o.latch(self.h,self.boot,evidence=self.evidence)
+        receipt=o.failure(caught.exception,'RUNNING','hardware_latch')
+        self.assertFalse(receipt['hardware_evidence']['refresh_attempted'])
+        self.assertNotIn('private read detail',json.dumps(receipt))
+        self.assertEqual(self.store.writes,0)
+
+    def test_outer_alarm_cannot_allow_refresh_after_deadline(self):
+        # The passive projection swallows read exceptions; elapsed total remains fatal.
+        def delayed_read():
+            time.sleep(.04)
+            return copy.deepcopy(self.store.state)
+        with patch.object(self.store, 'read', side_effect=delayed_read), o.bounded(.01):
+            with self.assertRaises(o.MandatoryGuardTimeout):
+                o.latch(self.h,self.boot,evidence=self.evidence,deadline=time.monotonic()+.01)
+        self.assertEqual(self.store.writes,0)
+
+    def test_sample_proof_brackets_boot_and_preserves_probe_capture_time(self):
+        baseline=dict(MemTotal=1000,MemAvailable=900,SwapTotal=100,SwapFree=100)
+        with patch.object(o,'run',return_value=o.GPU+', 100, 8, 40'), patch.object(o,'memory',return_value=baseline):
+            result=o.sample_guard({'memory':{'limit_bytes':800}},baseline,85,proof_boot=self.boot)
+            self.assertEqual(result['hardware_validation']['boot_id'],self.boot)
+            with patch.object(o,'BOOT',SimpleNamespace(read_text=Mock(side_effect=[self.boot,'changed']))):
+                with self.assertRaisesRegex(o.OwnerRefusal,'boot_changed'):
+                    o.sample_guard({'memory':{'limit_bytes':800}},baseline,85,proof_boot=self.boot)
+
 if __name__ == '__main__':unittest.main()

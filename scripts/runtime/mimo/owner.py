@@ -122,6 +122,8 @@ def failure(exc, phase, operation=None, elapsed=None):
             trace = trace.tb_next
     if hasattr(exc, 'resource_memory'):
         result['resource_memory'] = exc.resource_memory
+    if hasattr(exc, 'hardware_evidence'):
+        result['hardware_evidence'] = exc.hardware_evidence
     return result
 
 
@@ -508,10 +510,15 @@ def validate_sample(m, sample, baseline, limit):
     return row
 
 
-def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
+def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None, proof_boot=None):
     # R4 cheap guard behavior: one own-GPU query <=2s, host and cgroup only.
     progress('nvml_sample')
+    if proof_boot is not None:
+        require(BOOT.read_text().strip() == proof_boot, 'boot_changed')
     raw = run(['nvidia-smi', '--id=' + GPU, '--query-gpu=uuid,memory.total,memory.free,temperature.gpu', '--format=csv,noheader,nounits'], 2)
+    observed_at = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    if proof_boot is not None:
+        require(BOOT.read_text().strip() == proof_boot, 'boot_changed')
     rows = []
     for line in raw.splitlines():
         fields = [x.strip() for x in line.split(',')]
@@ -531,6 +538,11 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
     progress('resource_validate')
     try:
         validate_sample(m, sample, baseline, limit)
+        if proof_boot is not None:
+            require(len(rows) == 1, 'owned_gpu_sample_invalid')
+            # validate_sample requires one exact UUID and all existing reserves.
+            sample['hardware_validation'] = {'gpu_uuid': GPU, 'boot_id': proof_boot,
+                'observed_at': observed_at, 'observation_id': uuid.uuid4().hex}
     except Exception as exc:
         # Preserve the actual cheap failing sample, before the last-good receipt
         # can obscure it. No extra sampling, process scan or per-token work.
@@ -560,13 +572,77 @@ def sample_guard(m, baseline, limit, native=None, *, progress=lambda _: None):
     return sample
 
 
-def latch(h, boot):
+def latch(h, boot, *, evidence=None, deadline=None):
     from lifecycle.storage_binding import RegisteredStorageBinding
     from lifecycle.manager import StorageRunner
-    from lifecycle.hardware_policy import read_latch_status
-    result = read_latch_status(RegisteredStorageBinding.read_registered(StorageRunner()), [GPU], current_boot_id=boot)
-    require(result.get('hardware_latched') is False, 'owned_gpu_latch_unproven')
-    return result
+    from lifecycle.hardware_policy import read_latch_status, RegisteredLatchStore, HardwarePolicy
+    from control.hardware_latch import HardwareLatch, _timestamp, MAX_AGE_MS
+    diagnostic = {'stage': 'registered_read', 'refresh_attempted': False}
+    def check_deadline():
+        # read_latch_status intentionally maps read exceptions to unknown; an
+        # outer alarm swallowed there must still leave the whole cycle closed.
+        if deadline is not None and time.monotonic() >= deadline:
+            raise MandatoryGuardTimeout('mandatory_guard_timeout')
+    try:
+        check_deadline()
+        binding = RegisteredStorageBinding.read_registered(StorageRunner())
+        result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+        diagnostic['pre'] = result
+        check_deadline()
+        if result.get('hardware_latched') is False:
+            return result
+        require(result.get('hardware_latched') is not True, 'owned_gpu_latch_unproven')
+        diagnostic['stage'] = 'canonical_lease'
+        # No waiting/retry or nested deadline: supervise's existing bounded(5)
+        # covers the prior <=2s GPU sample and this entire refresh transaction.
+        with h.acquire_lease(blocking=False) as lease:
+            result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+            diagnostic['under_lease'] = result
+            check_deadline()
+            if result.get('hardware_latched') is False:
+                return result  # The scheduled producer refreshed before entry.
+            diagnostic['stage'] = 'protected_state'
+            store = RegisteredLatchStore(binding, lease=lease)
+            state = HardwareLatch(store.read()).export_state()
+            check_deadline()
+            record = state['targets'].get(GPU, {})
+            proof = state.get('validated', {}).get(GPU, {})
+            observed = _timestamp(proof.get('observed_at'))
+            age = None if observed is None else (time.time() - observed) * 1000
+            diagnostic['protected_proof'] = {'boot_id': proof.get('boot_id'),
+                'observed_at': proof.get('observed_at'), 'age_ms': age,
+                'positive_latch': record.get('hardware_latched') is True}
+            require(record.get('hardware_latched') is not True, 'owned_gpu_latch_unproven')
+            diagnostic['stage'] = 'stale_same_boot_required'
+            require(proof.get('boot_id') == boot and age is not None and age > MAX_AGE_MS,
+                    'owned_gpu_latch_unproven')
+            diagnostic['stage'] = 'fresh_sample_required'
+            require(isinstance(evidence, dict)
+                    and set(evidence) == {'gpu_uuid', 'boot_id', 'observed_at', 'observation_id'}
+                    and _timestamp(evidence.get('observed_at')) is not None
+                    and re.fullmatch('[0-9a-f]{32}', str(evidence.get('observation_id')))
+                    and evidence.get('gpu_uuid') == GPU
+                    and evidence.get('boot_id') == boot and BOOT.read_text().strip() == boot,
+                    'owned_gpu_latch_unproven')
+            diagnostic['refresh_attempted'] = True
+            diagnostic['sample'] = evidence
+            diagnostic['stage'] = 'validate_required'
+            check_deadline()
+            HardwarePolicy(store, lease=lease).validate_required(GPU, current_boot_id=boot,
+                observed_at=evidence['observed_at'], observation_id=evidence['observation_id'])
+            check_deadline()
+            diagnostic['stage'] = 'post_projection'
+            result = read_latch_status(binding, [GPU], current_boot_id=boot, strict=True)
+            diagnostic['post'] = result
+            check_deadline()
+            require(result.get('hardware_latched') is False, 'owned_gpu_latch_unproven')
+            lease.validate()
+        return {**result, 'owner_refresh': diagnostic}
+    except BaseException as exc:
+        # Only policy projections, validated timestamps/UUIDs and fixed stages;
+        # never exception text, command output, credentials or request contents.
+        exc.hardware_evidence = diagnostic
+        raise
 
 
 def create_argv(h, m, launch_id):
@@ -853,9 +929,9 @@ def supervise(dry_run=False):
                 operation = 'docker_inspect'
                 exact_container(inspect(state['native']['container_id']), m, state)
                 operation = 'resource_sample'
-                sample = sample_guard(m, baseline, limit, state['native'], progress=progress)
+                sample = sample_guard(m, baseline, limit, state['native'], progress=progress, proof_boot=boot)
                 operation = 'hardware_latch'
-                hardware = latch(h, boot)
+                hardware = latch(h, boot, evidence=sample.get('hardware_validation'), deadline=cycle + 5)
                 if state['status'] == 'LOADING':
                     require(time.monotonic() < load_end, 'native_load_timeout')
                     ready = False
