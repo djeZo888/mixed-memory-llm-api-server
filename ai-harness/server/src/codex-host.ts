@@ -23,6 +23,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     throw Error("Codex requires reviewed protocol/rootless/current-instance qualification");
   if (qualification?.outputLimit !== undefined && (!Number.isSafeInteger(qualification.outputLimit) || qualification.outputLimit < 1 || qualification.outputLimit > 65536))
     throw Error("Invalid trusted Codex output reservation");
+  const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
     pin: CODEX_PIN, protocolQualified: !!qualification,
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
@@ -35,8 +36,11 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.
     // Observe the durable session ledger; this never releases native/image ownership.
-    confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query, 15000)) === true,
+    confirmGatewaySettlement: async query => (await gateway()?.observeSettlement(query, settlementObservation.signal)) === true,
   };
-  return { runtime, responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
+  return { runtime,
+    // Invoke before broker.close(): stopping observation is not settlement proof.
+    stopSettlementObservation: () => settlementObservation.abort(),
+    responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
     onError: qualification.onResponsesError, countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };
 }

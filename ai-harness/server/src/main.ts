@@ -299,6 +299,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
       },
     );
   } catch (error) {
+    codexHost.stopSettlementObservation();
     nodeAvailability?.stop();
     clearInterval(freezeTimer);
     await freezeServer?.close();
@@ -314,6 +315,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     nodeAvailability?.stop();
     clearInterval(freezeTimer);
     await freezeServer?.close();
+    codexHost.stopSettlementObservation();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),
