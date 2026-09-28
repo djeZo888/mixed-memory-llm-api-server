@@ -667,9 +667,9 @@ ADA_GPU = 'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'
 ADA_AUTH_PATH = '/data/services/llm-manager/adapters/sglang38_file_auth.py'
 ADA_AUTH_SHA256 = 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4'
 ADA_SOURCES = {
-    'ada_owner.py': '1c953d0eeab64251e9144a2e5f72a2e9120b823c90928e594379b734ff744c2c',
+    'ada_owner.py': '53ba6bcfb99f099809ee180356ca9e260baf3a82b6dbbe8022e39cf163180a70',
     'ada_launcher.py': '0c050ceea238d702d20c93eb082e99cce1b19ccb3712f2eb837d2ff0177fcf46',
-    'ada_supervisor.py': 'bd8cdd058bb1c7653e684e1e0c38c3428730c30ad59325b287de074362c03af2',
+    'ada_supervisor.py': '271a9367575455a8f70c5d6650bc2f95b740369cafa41bcc8aea5a9a7a95685e',
 }
 
 

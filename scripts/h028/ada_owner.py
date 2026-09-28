@@ -110,6 +110,15 @@ def storage():
         'model_dir':r['models']['path'],'model_uuid':r['models']['uuid'],'storage_mode':r['storage_mode']},Runner())
 
 
+def require_port_available(port=30014):
+    # Reuse permits a recently closed TCP connection in TIME_WAIT, never an
+    # active listener. Docker still performs the authoritative bind on start.
+    import socket
+    with socket.socket() as sock:
+        sock.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+        sock.bind(('127.0.0.1',port))
+
+
 def operate(action):
     s=storage()
     from common.lifecycle_lease import acquire_lease
@@ -148,8 +157,7 @@ def operate(action):
                     value=boot_identity();return {'boot_id':value['boot_id'],'uptime_seconds':value['boot_age_seconds']}
                 HardwarePolicy(RegisteredLatchStore(binding,lease=lease),lease=lease,
                     run=lambda argv,timeout=2:subprocess.check_output(argv,timeout=timeout,text=True),boot=boot).require_start([GPU],boot_restore=False)
-                import socket
-                sock=socket.socket();sock.bind(('127.0.0.1',30014));sock.close()
+                require_port_available()
                 gpu=subprocess.check_output(['nvidia-smi','--id='+GPU,'--query-gpu=uuid,memory.total,memory.free,temperature.gpu','--format=csv,noheader,nounits'],text=True,timeout=5).strip().split(',')
                 require(gpu[0].strip()==GPU and int(gpu[2])>=int(gpu[1])*.93 and int(gpu[3])<70,'ada_gpu_admission_failed')
                 apps=subprocess.check_output(['nvidia-smi','--id='+GPU,'--query-compute-apps=gpu_uuid,pid','--format=csv,noheader'],text=True,timeout=5)

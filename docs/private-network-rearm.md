@@ -1,74 +1,47 @@
-# H028 finite private transport recovery
+# H028 private transport recovery and Ada extension
 
-The timer continuously observes slowly, including when the interface/address
-returns long after boot or a manual NIC repair. It first runs after 45 seconds,
-then 60 seconds after the previous recovery service run becomes inactive.
-Each run makes at most four attempts with delays of 0, 5, 15 and 30 seconds,
-a 90-second total helper budget, and a 120-second systemd hard timeout. Exhaustion
-is reported honestly; the next slow timer observation remains scheduled.
-A single oneshot service and OnUnitInactiveSec prevent overlapping timer runs.
-Healthy sockets require only state reads and produce no mutations. There is no
-automatic model recovery or unbounded per-run retry loop.
+The enabled timer observes 45 seconds after boot, then 60 seconds after the
+previous recovery run becomes inactive. Each run permits four attempts with
+delays0,5,15,30 seconds, a90-second helper budget and120-second systemd timeout.
+One oneshot service prevents overlapping timer runs. Healthy sockets require
+only state reads; no model recovery or upstream start is performed.
 
-Only existing enabled (including runtime-enabled) inactive/failed transport
-sockets are candidates. Active sockets are not restarted; disabled/masked sockets
-are not enabled. A fresh state read before each action respects a concurrent
-operator disable. Only socket `reset-failed` and nonblocking `start` are issued.
-The exact original `private_network.py apply` and `check` guards must pass before
-any such action. They preserve the reviewed interface/address, all twelve unit
-bytes, pending drop-in checks, source/policy receipt and firewall ownership. No
-network configuration or upstream service is changed. Socket activation proves
-transport only, never model readiness. An activation still pending is retried and
-cannot be reported as success.
+All seven fixed roles are covered: control30000, GLM30002, Qwen30004, image30006,
+node30008, frontier30010 and dedicated Ada200K30014. Only enabled or runtime-enabled
+inactive/failed sockets can be rearmed. A second state read respects operator
+disable. Active sockets are not restarted; disabled or masked sockets are not
+enabled. Guard refusal and pending activation remain failures.
 
-## W1 installation and source pins
+Before starting any candidate, the fixed installed `private_network.py` must pass
+`apply` and `check`. These verify the exact IP/NIC, protected source/policy receipt,
+all fourteen socket/service unit files, effective fragments, pending drop-ins and
+owned ingress. The proxy forwards opaque TCP to the matching loopback port;
+file-backed native authentication remains mandatory. Transport readiness never
+proves model readiness. The dedicated Ada endpoint is excluded from480K routing.
 
-W1 is the sole ai-vm writer. This is a separate root-owned helper and two new unit
-files, not a change to any existing transport unit or the guarded network helper.
-Do not update/archive its ownership receipt, alter its source pin, add socket
-drop-ins, or change node/control source closures for this addition. Existing
-`private_network.py` bytes remain unchanged. Verify the delivery's SHA-256 pins
-for these exact new files before installing:
+FINALIZE01 extended the existing six-role owner through the explicit one-time
+`scripts/h028/finalize_network.py` transition. The twelve predecessor unit files
+remained byte-identical. The transition verified and archived the exact old
+helper, policy, ownership receipt, firewall and units under the existing lock,
+then atomically replaced only the owned INPUT jump's port list. It retained the
+same interface/client allow rules and terminal DROP; no firewall flush or
+unprotected gap occurred. The successor receipt retains the original pre-owner
+firewall backup and binds the new helper/policy/fourteen-unit signature.
 
-- `scripts/control/private_network_rearm.py` to
-  `/usr/local/lib/llm-server/private-network/private_network_rearm.py`, root:root 0644.
-- `configs/network/llm-private-network-rearm.service` and
-  `configs/network/llm-private-network-rearm.timer` to `/etc/systemd/system/`,
-  root:root 0644.
+The predecessor archive is `/etc/llm-server/h028-network-predecessor-20260929`.
+It is evidence, not an automatically replayable rollback. Never overwrite or
+waive a mismatched receipt. A future inverse requires all fourteen owned units
+stopped and sockets disabled, as enforced by the ordinary owner. No whole
+firewall snapshot should be restored.
 
-Use the existing protected parent directory. Check the new paths are absent
-(including dangling symlinks) and there are no existing same-name fragments,
-overrides or dependency directories; refuse an unowned collision. Record before
-socket enabled/active states and helper/unit hashes privately. Keep all twelve
-existing transport unit hashes and the original ownership receipt unchanged.
+The standalone, control-api and node-api helper copies all have the same final
+source. Both API processes were refreshed to load the successor policy. The
+rearm helper and two units are root-owned0644 in the existing protected locations.
+Source files, installed hashes and compact deployment receipts are recorded in
+`reports/h028-finalize01-20260929/`.
 
-Run both source checks, then install only the three new pinned files:
-
-```sh
-python3 -B scripts/control/private_network.py source-check
-python3 -B scripts/control/private_network_rearm.py source-check
-sudo install -o root -g root -m 0644 scripts/control/private_network_rearm.py /usr/local/lib/llm-server/private-network/private_network_rearm.py
-sudo install -o root -g root -m 0644 configs/network/llm-private-network-rearm.service configs/network/llm-private-network-rearm.timer /etc/systemd/system/
-sudo systemd-analyze verify --man=no /etc/systemd/system/llm-private-network-rearm.service /etc/systemd/system/llm-private-network-rearm.timer
-sudo systemctl daemon-reload
-sudo systemctl enable --now llm-private-network-rearm.timer
-```
-
-Enabling the new timer does not enable any transport socket. If boot time is
-already beyond 45 seconds, the timer starts the bounded helper immediately.
-Record status and a bounded journal for the new service, then current socket
-states and private status API reachability. An HTTP response or listening socket
-does not qualify model readiness. Preserve failure logs on exhaustion. The next
-timer observation occurs 60 seconds after completion, whether the prior run
-succeeded or failed. An operator may also start the same service explicitly;
-systemd does not create a second concurrent instance of this fixed service.
-
-Rollback stops/disables only the new timer, stops the new recovery service, and
-removes only new files whose installed hashes match the recorded delivery. Then
-daemon-reload. Do not stop the existing sockets, reverse enabled states, remove
-ingress, rewrite the original receipt, or touch native upstream/model services.
-
-Local focused tests simulate unavailable/recovered networking, finite backoff,
-guard refusal, pending activation, operator-disabled sockets and a late-network
-return after an earlier run exhausted its budget. Live systemd
-activation and late-network recovery require W1's actual deployment receipt.
+Focused fixtures cover source/policy/ownership drift, exact ingress ordering,
+interruption boundaries, disabled sockets, late network return, bounded retries
+and no model authority. Live `systemd-analyze verify`, ingress checks, all seven
+active sockets and natural healthy timer runs passed. Deliberate NIC disruption
+and whole reboot are NOT_TESTED; neither was requested for finalization.

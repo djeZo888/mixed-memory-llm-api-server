@@ -50,3 +50,26 @@ class QualificationIdentity(unittest.TestCase):
         self.assertTrue(supervisor.profile_qualified(c))
         c['source_sha256']['ada_launcher.py']='changed'
         self.assertFalse(supervisor.profile_qualified(c))
+
+
+class RestartPort(unittest.TestCase):
+    def test_active_listener_refused(self):
+        import socket
+        owner=load('ada_port_owner',ROOT/'scripts/h028/ada_owner.py')
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            listener.bind(('127.0.0.1',0));listener.listen()
+            with self.assertRaises(OSError):owner.require_port_available(listener.getsockname()[1])
+
+    def test_recently_closed_connection_allows_rebind(self):
+        import socket
+        owner=load('ada_port_owner',ROOT/'scripts/h028/ada_owner.py')
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET,socket.SO_REUSEADDR,1)
+            listener.bind(('127.0.0.1',0));listener.listen()
+            port=listener.getsockname()[1]
+            with socket.create_connection(('127.0.0.1',port)) as client:
+                server,_=listener.accept()
+                server.close()
+                self.assertEqual(client.recv(1),b'')
+        owner.require_port_available(port)

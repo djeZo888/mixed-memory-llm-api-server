@@ -1,6 +1,6 @@
 [Unit]
 Description=H028 isolated Qwen Ada 200K owner and resource guard
-After=docker.service local-ai-fan-boost.service
+After=docker.service local-ai-fan-boost.service llmctl-boot.service
 Requires=docker.service local-ai-fan-boost.service
 RequiresMountsFor=/data /data/models-large
 [Service]

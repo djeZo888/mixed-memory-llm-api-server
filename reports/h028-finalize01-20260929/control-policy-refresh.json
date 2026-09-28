@@ -1,0 +1,15 @@
+{
+  "result": "PASS",
+  "refresh_utc": "2026-09-28T23:48:24Z",
+  "readiness_utc": "2026-09-28T23:48:42.869354+00:00",
+  "readiness_http": 200,
+  "binding_check": "PASS",
+  "main_pid": 897686,
+  "invocation_id": "a8d3923826644e96ae1d4757ef57d382",
+  "policy_sha256": "ca5c52e774a33458633118cb1399421de8ca15eb464da412f1993c9af0e764e0",
+  "container_set_unchanged": true,
+  "diagnostics": [
+    "Immediate GET raced service startup and was reset; later passive readiness GET passed.",
+    "An incorrect /control/v1/health route returned404; canonical /control/v1/readiness returned200."
+  ]
+}

@@ -18,7 +18,7 @@ HELPER = Path('/usr/local/lib/llm-server/private-network/private_network_rearm.p
 NETWORK_HELPER = '/usr/local/lib/llm-server/private-network/private_network.py'
 SYSTEMCTL = '/usr/bin/systemctl'
 SOCKETS = tuple(f'llm-private-{role}.socket' for role in
-               ('control', 'glm', 'qwen38', 'image', 'node', 'frontier'))
+               ('control', 'glm', 'qwen38', 'image', 'node', 'frontier', 'ada200k'))
 DELAYS = (0, 5, 15, 30)
 BUDGET_SECONDS = 90
 ENABLED = ('enabled', 'enabled-runtime')

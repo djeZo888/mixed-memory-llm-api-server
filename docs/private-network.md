@@ -1,3 +1,25 @@
+# Current private TCP transport after H028 FINALIZE01
+
+The current fixed owner covers seven ports with fourteen socket/service units:
+control30000, GLM30002, Qwen30004, image30006, node30008, frontier30010 and the
+dedicated Ada200K30014 endpoint. All bind10.156.100.60 on enp6s18 and forward to
+the matching authenticated loopback port. The source subnet remains10.156.100.0/24.
+The first INPUT jump matches exactly30000,30002,30004,30006,30008,30010,30014;
+its loopback/LAN/interface/terminal-DROP chain is unchanged.
+
+H028 preserved the twelve predecessor unit files and archived the old source,
+policy, receipt and rule before an explicit guarded ownership transition. Current
+source, installation and readiness evidence are in
+`reports/h028-finalize01-20260929/`; finite network recovery and migration details
+are in `docs/private-network-rearm.md`. Ada remains excluded from480K routing.
+
+The following N1S and NETPATCH notes are historical. Their original three-role
+examples and NOT_EXECUTED statements describe those source-only stages, not the
+current fourteen-unit installation. Do not run the historical initial-install
+sequence over the installed owner.
+
+---
+
 # N1S private TCP transport — source ready for root review
 
 This change supplies only fixed transport policy, six units, and one stdlib

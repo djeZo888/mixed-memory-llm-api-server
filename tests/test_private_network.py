@@ -355,12 +355,12 @@ class InstallationDriftTests(unittest.TestCase):
 
 
 class SourceUnitsTests(unittest.TestCase):
-    def test_exact_eight_fixed_units_and_prebind_rule_order(self):
+    def test_exact_fourteen_fixed_units_and_prebind_rule_order(self):
         expected_names = {f'llm-private-{role}.{kind}'
-                          for role in ('control', 'glm', 'qwen38', 'image', 'node', 'frontier')
+                          for role in ('control', 'glm', 'qwen38', 'image', 'node', 'frontier', 'ada200k')
                           for kind in ('socket', 'service')}
         self.assertEqual(set(network.expected_units()), expected_names)
-        for role, port in (('control', 30000), ('glm', 30002), ('qwen38', 30004), ('image', 30006), ('node', 30008), ('frontier', 30010)):
+        for role, port in (('control', 30000), ('glm', 30002), ('qwen38', 30004), ('image', 30006), ('node', 30008), ('frontier', 30010), ('ada200k', 30014)):
             with self.subTest(role=role):
                 prefix = ROOT / 'configs/network' / ('llm-private-' + role)
                 socket = Path(str(prefix) + '.socket').read_text()

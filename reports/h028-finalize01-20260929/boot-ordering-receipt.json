@@ -1,0 +1,9 @@
+{
+  "utc": "2026-09-28T23:52:48.607547+00:00",
+  "before_sha256": "08a943e730819bee078ac8877433c05e692478bfc0515c9c543cbd08447dfced",
+  "after_sha256": "274561c1900d19b2fbe01af46a5960711dc5adc255f31900c73bcdc600401ebe",
+  "unit_readback": "MainPID=833214\nRequires=system.slice \"data-models\\\\x2dlarge.mount\" -.mount sysinit.target local-ai-fan-boost.service data.mount docker.service\nWants=\nAfter=llmctl-boot.service -.mount data.mount sysinit.target docker.service local-ai-fan-boost.service basic.target systemd-journald.socket \"data-models\\\\x2dlarge.mount\" system.slice\nActiveState=active\nUnitFileState=enabled\n",
+  "restarted": false,
+  "whole_reboot_tested": false,
+  "limitation": "Future start waits for existing potentially long llmctl-boot job; no Requires/Wants or failure propagation added"
+}
