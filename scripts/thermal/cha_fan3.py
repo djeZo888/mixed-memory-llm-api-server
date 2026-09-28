@@ -30,7 +30,7 @@ NODE_PATH = '/control/v1/node/status'
 PATHS = ('/api/fanctrl/mode', '/api/fanctrl/PWM', '/api/fanctrl/source', '/api/fanctrl/last_source')
 THERMAL = '/redfish/v1/Chassis/Self/Thermal'
 STATE = Path('/var/lib/sova-cha-fan3')
-CREDS = Path('/run/credentials/sova-cha-fan3.service')
+CREDS = Path('/run/sova-cha-fan3-credentials')
 BMC_FILE = Path('/home/user/.config/sova-private/bmc.json')
 NODE_FILE = Path('/home/user/.config/ai-harness/node-control-key')
 HOT, COOL, COOL_SECONDS, POLL, MAX_AGE = 70, 65, 30, 5, 15
@@ -83,11 +83,8 @@ def protected(path, maximum=8192, *, missing_ok=False):
         raise Fault('protected_file_unavailable') from None
 
 def valid_file_meta(path, s):
-    systemd_credential = (Path(path) in (CREDS / 'bmc.json', CREDS / 'node-control-key')
-                          and s.st_uid == 0 and s.st_gid == 0
-                          and stat.S_IMODE(s.st_mode) == 0o440)
     return (stat.S_ISREG(s.st_mode) and s.st_uid in (0, os.getuid())
-            and (not s.st_mode & 0o077 or systemd_credential) and s.st_nlink == 1)
+            and not s.st_mode & 0o077 and s.st_nlink == 1)
 
 def _protected(path, maximum=8192):
     path = Path(path)

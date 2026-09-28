@@ -298,15 +298,33 @@ class ControllerTests(unittest.TestCase):
         self.assertIn('not_measured_pwm',c.proof['readback_kind'])
 
 class StoreTests(unittest.TestCase):
-    def test_systemd_0440_exception_is_exact_and_root_only(self):
-        meta=SimpleNamespace(st_mode=stat.S_IFREG|0o440,st_uid=0,st_gid=0,st_nlink=1)
-        self.assertTrue(f.valid_file_meta(f.CREDS/'bmc.json',meta))
-        self.assertTrue(f.valid_file_meta(f.CREDS/'node-control-key',meta))
-        for path in (f.STATE/'status.json',f.BMC_FILE,f.CREDS/'other',Path('/tmp/bmc.json')):
-            self.assertFalse(f.valid_file_meta(path,meta))
-        for change in ({'st_uid':123},{'st_gid':123},{'st_mode':stat.S_IFREG|0o444},{'st_nlink':2}):
-            changed=SimpleNamespace(**{**vars(meta),**change})
-            self.assertFalse(f.valid_file_meta(f.CREDS/'bmc.json',changed))
+    def test_bound_credentials_require_private_regular_single_link(self):
+        meta=SimpleNamespace(st_mode=stat.S_IFREG|0o600,st_uid=os.getuid(),st_gid=os.getgid(),st_nlink=1)
+        for path in (f.CREDS/'bmc.json',f.CREDS/'node-control-key'):
+            self.assertTrue(f.valid_file_meta(path,meta))
+            for change in ({'st_uid':12345},{'st_mode':stat.S_IFREG|0o640},
+                           {'st_mode':stat.S_IFREG|0o644},{'st_mode':stat.S_IFLNK|0o600},
+                           {'st_nlink':2}):
+                changed=SimpleNamespace(**{**vars(meta),**change})
+                self.assertFalse(f.valid_file_meta(path,changed))
+        old=SimpleNamespace(st_mode=stat.S_IFREG|0o440,st_uid=0,st_gid=0,st_nlink=1)
+        for path in (f.CREDS/'bmc.json',Path('/run/credentials/sova-cha-fan3.service/bmc.json')):
+            self.assertFalse(f.valid_file_meta(path,old))
+    def test_credential_negative_paths(self):
+        with tempfile.TemporaryDirectory(dir=str(Path.home())) as directory:
+            root=Path(directory);os.chmod(root,0o700)
+            secret=root/'fixture';secret.write_bytes(b'non-secret-fixture');secret.chmod(0o600)
+            self.assertEqual(f.protected(secret),b'non-secret-fixture')
+            with self.assertRaisesRegex(f.Fault,'protected_file_unavailable'):f.protected(root/'missing')
+            link=root/'symlink';link.symlink_to(secret)
+            with self.assertRaisesRegex(f.Fault,'protected_file_unavailable'):f.protected(link)
+            hard=root/'hardlink';os.link(secret,hard)
+            with self.assertRaisesRegex(f.Fault,'unprotected_file'):f.protected(hard)
+            hard.unlink();secret.chmod(0o640)
+            with self.assertRaisesRegex(f.Fault,'unprotected_file'):f.protected(secret)
+            secret.chmod(0o600);root.chmod(0o720)
+            with self.assertRaisesRegex(f.Fault,'unprotected_parent'):f.protected(secret)
+            root.chmod(0o700)
     def test_empty_real_store_controller_bootstrap(self):
         with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:
             os.chmod(p,0o700);s=f.Store(p)
