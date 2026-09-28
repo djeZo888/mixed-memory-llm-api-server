@@ -33,6 +33,9 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
+The [H025 fan-control and load-test report](reports/h025-overview.md) records the
+deployed GPU fan policies, improved sampled temperatures, measured power and the
+remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
 The [H020 status repair](docs/h020-results.md) now separates configured models,
 selected frontier and fresh native identity, with measured GPU UUID dependency
 joins. The status-only deployment preserves the running model services.

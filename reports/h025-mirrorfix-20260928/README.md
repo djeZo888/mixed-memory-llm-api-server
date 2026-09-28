@@ -17,7 +17,7 @@ No VM/BMC/model/network access, deployment or live test. Root reviews; W2 owns l
 Latest 20:32 inbox diagnostic clarification applied in final commit; final focused suite and compile rerun after that change. Earlier complete artifacts retained under PRE-OBSERVE names.
 
 Root integration: reviewed exact worker source and passing receipts, then
-cherry-picked ca5b3d84, acf2f533 and2ecd1704 as d810c00,983c323 anda782064.
+cherry-picked ca5b3d84, acf2f533 and 2ecd1704 as d810c00, 983c323 and a782064.
 Root did not run implementation tests. The source-only report is distinct from
 the subsequent corrected live campaign; its result belongs to that campaign.
 Bulky/private artifacts remain in task storage outside Git.

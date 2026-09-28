@@ -1,23 +1,46 @@
-# Sova current task — H025 fan hysteresis and overlap
+# Sova current checkpoint — H025 closed
 
-The user now authorizes a focused fan-control task and a four-model concurrent
-test, including GLM 5.3 Flash in place of unavailable MiMo. This supersedes the
-H024 no-fan-controller/no-thermal-test/no-GLM restriction only for H025.
-Window: 28 September 2026, 18:50–21:00 UTC. The20:16 campaign failed on a monitor
-storage error. A20:23 bounded reproduction identified an atomic status-file read
-race. Root authorizes one focused reader/diagnostic fix and one reviewed corrected
-campaign: startby20:37, admissionsendby20:42, settlementby20:58;900srequest plus60s
-stopreserve. Preserve original failure. No further repair/retry/automaticextension.
-Root plans,
-reviews and publishes; both Mac workers execute fresh bounded native sessions.
-W1 owns integrated 100% >=70 C / firmware profile <=65 C and CHA_FAN3 80% >=70 C /
-40% <=65 C, preserving the user-disabled CPU source and holding state in between.
-W2 owns GLM readiness, compact monitoring-driver repair, independent review and
-the eventual five-minute overlap with both Qwens and the image model. Coordinate
-live changes centrally, preserve credentials/history and keep the 85 C guard.
-No Codex work, MiMo repair, large-context prefill, drivers, model/runtime upgrades
-or permanent Sova frontier-policy change. Task plan/status live outside this
-checkout under `orchestration/tasks/H025-20260928`.
+Execution closed on September 28, 2026, at 20:59:33 UTC. Final worker2 native
+session exited 0; its wrapper and watchdog are absent. Worker1's final source
+session also exited 0. Do not restart the expired campaign or open a new paid
+session simply to wait. Root reviewed and integrated the supplied evidence.
+
+Fan control is deployed: CHA_FAN1 is exclusively BMC/user-controlled from
+PCIe2/PCIe5 temperatures. Existing NVIDIA integrated fans boost to 100% at 70 C
+and return to firmware control at <=65 C for 30 seconds. Sova's CHA_FAN3 service
+uses only the server Blackwell temperature: 80% at >=70 C, 40% after <=65 C for
+30 seconds, holding the prior setting between thresholds. CPU source stays off.
+The natural external hot/cool transitions and idle/lifecycle checks passed.
+
+The corrected five-minute campaign is a SOFTWARE FAIL, not a full four-model
+functional pass. Qwen0/Qwen1 completed 162/124 requests and image completed six.
+An unsent Qwen0 request at the cutoff unnecessarily stopped its runtime; GLM's
+16,268-token request timed out after 900 seconds with no response bytes. All
+accepted work was physically settled; separate owner reconciliation retained
+original failed/UNKNOWN history. No automatic repair or workload retry.
+
+All four native model services were restored and reported ready at 20:58:11 UTC;
+app/status HTTP 200, search retained, external fan healthy at 40%. Readiness does
+not retroactively qualify GLM inference. Retained GLM was test-only: permanent
+frontier selection remains MiMo generation12, and MiMo was not started or repaired.
+Both Qwens remain 480K, retained GLM 1,048,576, image Full HD. Histories/files and
+three old quarantines were preserved. No new benchmark client or bridge remains.
+
+See `reports/h025-overview.md`, `reports/h025-exec05-20260928/SUMMARY.md`, and
+`reports/h025-power-20260928/README.md`. The full300s sampled three-Blackwell sum
+averaged843.74W and peaked1172.43W; peak GPU temperature75C. These are board
+readings, not whole-PSU or worst-case qualification. CPU400W or200-250W figures
+are user planning allowances, not measured CPU power.
+
+The user asked about 500W caps. Read-only limits confirm both workstation cards
+support150-600W and server card300-600W. Current/default/enforced remain600W.
+NO power caps were changed. A proposed500/500/200W Qwen/Qwen/frontier profile
+and adding anotherAda are discussion only; no hardware/cap-performance task ran.
+
+Root coordinates/reviews/publishes; mac-worker1/mac-worker2 perform actual coding,
+builds, tests and VM operations in bounded native CLI sessions with isolated
+copies. Publish to feature/glm53-flash / draft PR10; do not merge incomplete
+Codex/frontier qualification. Next work requires a newly assigned scope/window.
 
 ## Previous H024 checkpoint
 
