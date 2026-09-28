@@ -79,6 +79,17 @@ test("node transport failure has an explicit reason, preserves peer, and clears 
     assert.equal(nodes[1]!.freshness, "fresh");
   } finally { await service.app.close(); }
 });
+test("passive collector and model failure reasons remain explicit without exposing arbitrary diagnostics", () => {
+  for (const reason of ["collector_failed", "collector_timeout", "boot_changed", "unqualified", "hardware_latch_unknown"]) {
+    const raw = vm();
+    raw.services[0].reason = reason;
+    raw.services[1].reason = "private arbitrary diagnostic";
+    const parsed = sanitizeNode(raw, "ai-vm");
+    assert.equal(parsed.services[0]!.reason, reason);
+    assert.equal(parsed.services[1]!.reason, "unknown");
+    assert.equal(parsed.resources.cpu.percent, 12);
+  }
+});
 test("exact shared v1 fixture preserves nullable identities, independent metrics and no invented capability", () => {
   const shared = fixture("node-status-v1"),
     parsed = sanitizeNode(shared, "ai-vm");
