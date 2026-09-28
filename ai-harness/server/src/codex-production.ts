@@ -1,4 +1,5 @@
 /** Deployment receipt plus live, existing control/native APIs. No SSH or new daemon. */
+import { request } from "node:http";
 import { readFile, lstat } from "node:fs/promises";
 import { QWEN_CODEX_PIN, type QwenCountQualification } from "./codex-qwen.js";
 import { ApiError } from "./errors.js";
@@ -45,12 +46,20 @@ export async function loadQwenReceipt(file: string): Promise<QwenDeploymentRecei
   return validateQwenReceipt(JSON.parse(await readFile(file, "utf8")));
 }
 async function boundedGet(url: string, key: string): Promise<any> {
-  const response = await fetch(url, { redirect: "error", headers: { authorization: `Bearer ${key}` }, signal: AbortSignal.timeout(12000) });
-  if (!response.ok || !response.body) { await response.body?.cancel(); fail(); }
-  const reader = response.body!.getReader(), chunks: Uint8Array[] = []; let size = 0;
-  try { for (;;) { const r = await reader.read(); if (r.done) break; size += r.value.length; if (size > 512 * 1024) fail(); chunks.push(r.value); } }
-  finally { await reader.cancel().catch(() => {}); }
-  return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+  // Control rejects browser Sec-Fetch headers. Use the existing host HTTP style,
+  // no browser fetch metadata, redirects, pooled connection or ambient proxy.
+  return new Promise((resolve, reject) => {
+    const req = request(url, { method: "GET", agent: false, headers: { authorization: `Bearer ${key}`, accept: "application/json" }, signal: AbortSignal.timeout(12000) }, response => {
+      const chunks: Buffer[] = []; let size = 0;
+      response.on("data", (chunk: Buffer) => { size += chunk.length; if (size > 512 * 1024) { response.destroy(); reject(Error("Bounded Qwen identity response exceeded")); } else chunks.push(chunk); });
+      response.on("error", () => reject(Error("Qwen identity transport unavailable")));
+      response.on("end", () => {
+        if (response.statusCode !== 200) { reject(Error("Qwen identity HTTP unavailable")); return; }
+        try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8"))); } catch { reject(Error("Invalid Qwen identity response")); }
+      });
+    });
+    req.on("error", () => reject(Error("Qwen identity transport unavailable"))); req.end();
+  });
 }
 export function createProductionQwenVerifier(receiptValue: unknown, credentials: { controlKey: string; inferenceKey: string },
   get: (url: string, key: string) => Promise<any> = boundedGet, now: () => number = Date.now) {

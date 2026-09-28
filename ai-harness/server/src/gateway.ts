@@ -42,11 +42,15 @@ export interface GatewayUpstream {
 }
 export interface GatewayOptions {
   ownership?: OwnershipOptions;
+  /** Trusted temporary matched pilot ceiling for BOTH text engines; default65536. */
+  qwenOutputLimit?: number;
   responses?: {
     /** Closed by default. Host reviewed policy only; never browser controlled. */
     enabled: boolean;
     /** Trusted bounded pilot may reserve less; ordinary production remains 65536. */
     outputLimit?: number;
+    /** Per-request filter inside the existing shared queue; MiniMax keeps all lanes. */
+    qualifiedAliases?: readonly string[];
     /** Bounded host diagnostics keyed to the existing request owner, no model text. */
     /** Explicit private acceptance capture only; production leaves this absent. */
     onTrace?: (event: {requestId:string;sessionId:string;lane:string;chunk:Buffer}) => void;
@@ -137,6 +141,7 @@ interface Lane {
   ownerSettled?: boolean;
 }
 interface Ticket {
+  allowedAliases?: readonly string[];
   bytes: number;
   signal: AbortSignal;
   resolve: (lane: Lane) => void;
@@ -215,21 +220,22 @@ class Admission {
   available(lane: Lane): ServiceAvailability {
     return serviceAvailability(this.availability, lane.upstream.alias);
   }
-  private eligible(lane: Lane) {
+  private eligible(lane: Lane, allowedAliases?: readonly string[]) {
     return (
-      lane.state !== "quarantined" && this.available(lane).dispatch === "allow"
+      (!allowedAliases || allowedAliases.includes(lane.upstream.alias)) && lane.state !== "quarantined" && this.available(lane).dispatch === "allow"
     );
   }
-  private blocked(): GatewayError | undefined {
+  private blocked(allowedAliases?: readonly string[]): GatewayError | undefined {
+    const lanes = this.lanes.filter(lane => !allowedAliases || allowedAliases.includes(lane.upstream.alias));
     if (
-      this.lanes.some(
+      lanes.some(
         (lane) =>
           lane.state !== "quarantined" &&
           this.available(lane).dispatch !== "reject",
       )
     )
       return;
-    return this.lanes.some(
+    return lanes.some(
       (lane) => this.available(lane).state === "unavailable",
     )
       ? new GatewayError(
@@ -243,7 +249,7 @@ class Admission {
           "Inference lanes require settlement review",
         );
   }
-  acquire(signal: AbortSignal, bytes: number): Promise<Lane> {
+  acquire(signal: AbortSignal, bytes: number, allowedAliases?: readonly string[]): Promise<Lane> {
     if (this.stopped)
       return Promise.reject(
         new GatewayError(503, "gateway_stopping", "Gateway is stopping"),
@@ -253,7 +259,7 @@ class Admission {
         new GatewayError(499, "cancelled", "Request cancelled"),
       );
     const lane = this.lanes.find(
-      (candidate) => candidate.state === "idle" && this.eligible(candidate),
+      (candidate) => candidate.state === "idle" && this.eligible(candidate, allowedAliases),
     );
     if (lane && !this.queue.length) {
       try {
@@ -263,7 +269,7 @@ class Admission {
         return Promise.reject(error);
       }
     }
-    const blocked = this.blocked();
+    const blocked = this.blocked(allowedAliases);
     if (blocked) return Promise.reject(blocked);
     if (this.queue.length >= this.limit)
       return Promise.reject(
@@ -279,7 +285,7 @@ class Admission {
       );
     return new Promise((resolve, reject) => {
       const ticket: Ticket = {
-        bytes,
+        allowedAliases, bytes,
         signal,
         resolve,
         reject,
@@ -302,6 +308,7 @@ class Admission {
       signal.addEventListener("abort", ticket.abort, { once: true });
       this.queue.push(ticket);
       this.queueBytes += bytes;
+      this.notifyAvailabilityChanged();
     });
   }
   private remove(ticket: Ticket) {
@@ -332,27 +339,22 @@ class Admission {
   }
   notifyAvailabilityChanged() {
     if (this.stopped) return;
-    while (this.queue.length) {
-      const available = this.lanes.find(
-        (candidate) => candidate.state === "idle" && this.eligible(candidate),
-      );
-      if (!available) break;
-      const ticket = this.queue[0]!;
-      this.remove(ticket);
-      if (ticket.signal.aborted) {
-        ticket.reject(new GatewayError(499, "cancelled", "Request cancelled"));
-        continue;
-      }
-      try {
-        this.transition(available, "active");
-        ticket.resolve(available);
-      } catch (error) {
-        ticket.reject(error as Error);
-      }
+    for (const ticket of [...this.queue]) {
+      const blocked = this.blocked(ticket.allowedAliases);
+      if (blocked) { this.remove(ticket); ticket.reject(blocked); }
     }
-    const blocked = this.blocked();
-    if (blocked) this.rejectQueued(blocked.code, blocked.message);
+    while (this.queue.length) {
+      // Oldest request compatible with an idle lane; one queue, no second owner.
+      const ticket = this.queue.find(t => this.lanes.some(l => l.state === "idle" && this.eligible(l, t.allowedAliases)));
+      if (!ticket) break;
+      const available = this.lanes.find(l => l.state === "idle" && this.eligible(l, ticket.allowedAliases))!;
+      this.remove(ticket);
+      if (ticket.signal.aborted) { ticket.reject(new GatewayError(499, "cancelled", "Request cancelled")); continue; }
+      try { this.transition(available, "active"); ticket.resolve(available); }
+      catch (error) { ticket.reject(error as Error); }
+    }
   }
+
   private rejectQueued(code: string, message: string) {
     for (const ticket of [...this.queue]) {
       this.remove(ticket);
@@ -712,6 +714,11 @@ export function createGateway(options: GatewayOptions): Gateway {
     const prepared = frontier && mimo ? prepareMimo(request.body) : undefined;
     if (prepared && prepared.outputTokens > MIMO_PRODUCTION_OUTPUT) throw new ApiError(413, "mimo_output_limit", "MiMo production output ceiling exceeded");
     const body = prepared ? prepared.body : frontier ? frontierBody(request.body) : requestBody(request.body);
+    if (!frontier && options.qwenOutputLimit !== undefined) {
+      if (!Number.isSafeInteger(options.qwenOutputLimit) || options.qwenOutputLimit < 1 || options.qwenOutputLimit > MAX_OUTPUT) throw Error("Invalid trusted Qwen output cap");
+      body.max_tokens = Math.min(Number(body.max_tokens ?? body.max_completion_tokens ?? MAX_OUTPUT), options.qwenOutputLimit);
+      if (body.max_completion_tokens !== undefined) body.max_completion_tokens = body.max_tokens;
+    }
     const bodyBytes = Buffer.byteLength(JSON.stringify(body));
     const token = request.headers.authorization!.slice(7);
     const sessionId = tokens.get(token);
@@ -769,7 +776,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     reply.raw.once("close", disconnect);
     let lane: Lane;
     try {
-      lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes);
+      lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes, translated ? options.responses?.qualifiedAliases : undefined);
     } catch (error) {
       ownership.transition(ownedRequest, "settled");
       recordState(cancelled.signal.aborted ? "cancelled" : "rejected");

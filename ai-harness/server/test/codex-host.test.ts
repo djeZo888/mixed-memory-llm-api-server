@@ -25,3 +25,8 @@ test('Codex scope cannot submit image work, bypass Responses or reach frontier; 
   assert.equal((await g.app.inject({url:'/v1/models',headers:{authorization:`Bearer ${token}`}})).statusCode,401);
   await g.close();
 });
+
+test('trusted bounded child gate matches managed max4 while image remains independently disabled',()=>{
+ const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeDelegationQualified:true,qualifiedAliases:['qwen3.8-27b-gpu0'],verifyLane:async()=>{throw Error('not invoked');}});
+ assert.equal(host.runtime.delegationEnabled,true);assert.equal(host.runtime.maxChildren,4);assert.equal(host.runtime.imageToolEnabled,false);assert.deepEqual(host.responses?.qualifiedAliases,['qwen3.8-27b-gpu0']);
+});

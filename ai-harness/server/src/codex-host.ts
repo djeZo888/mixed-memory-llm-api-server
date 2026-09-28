@@ -10,8 +10,10 @@ export interface CodexHostQualification {
   /** Revalidates deployed model/runtime/template/allocation and current instance each call. */
   verifyLane(alias: string): Promise<QwenCountQualification>;
   outputLimit?: number;
+  qualifiedAliases?: readonly string[];
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
   imageJobsQualified?: true;
+  nativeDelegationQualified?: true;
   capabilities?: CodexRuntime['capabilities'];
 }
 export function composeCodexHost(launcherPath: string, gateway: () => Gateway | undefined,
@@ -25,11 +27,13 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
     imageToolEnabled: qualification?.imageJobsQualified === true,
+    delegationEnabled: qualification?.nativeDelegationQualified === true,
+    maxChildren: 4,
     capabilities: qualification?.capabilities,
     launchRootless: input => createRootlessCodexLauncher(launcherPath)(input),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query)) === true,
   };
-  return { runtime, responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit,
+  return { runtime, responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
     countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };
 }

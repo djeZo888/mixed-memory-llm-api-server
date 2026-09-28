@@ -40,15 +40,22 @@ function port(name: string, fallback: number) {
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
 export async function startCodexPreview(receiptPath: string, outputLimit = 65536) {
-  const receipt = await loadQwenReceipt(receiptPath);
-  const inferenceKey = await readProtectedCredential(required("AI_HARNESS_INFERENCE_KEY_FILE"));
-  const controlKey = await readProtectedCredential(required("AI_HARNESS_NODE_CONTROL_KEY_FILE"));
-  const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey });
-  // No inactive, stale or silently changed lane can enable the preview at startup.
-  for (const alias of Object.keys(receipt.lanes)) await verifyLane(alias);
-  return start({ enablePreview: true, qualification: { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit } });
+  let qualification: CodexHostQualification | undefined;
+  try {
+    const receipt = await loadQwenReceipt(receiptPath);
+    const inferenceKey = await readProtectedCredential(required("AI_HARNESS_INFERENCE_KEY_FILE"));
+    const controlKey = await readProtectedCredential(required("AI_HARNESS_NODE_CONTROL_KEY_FILE"));
+    const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey });
+    const qualifiedAliases: string[] = [];
+    for (const alias of Object.keys(receipt.lanes)) {
+      try { await verifyLane(alias); qualifiedAliases.push(alias); } catch { /* Only this Codex lane stays disabled. */ }
+    }
+    if (qualifiedAliases.length) qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true };
+  } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
+  if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit });
 }
-export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification } = {}) {
+export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -185,6 +192,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     gateway = createGateway({
       ownership,
       responses: codexHost.responses,
+      qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,
       frontier,
       selectedFrontierModel,
       initialFrontierOwnerModel: (application.store.db.prepare("SELECT json_extract(value,'$.model') AS model FROM frontier_requests WHERE state IN ('active','quarantined') ORDER BY updated_at DESC LIMIT 1").get() as {model?: string} | undefined)?.model,
