@@ -19,13 +19,14 @@ is documented in H005 source handoff; omission preserves baseline admission.
 ENGINE_LAUNCHER defaults to this script's sibling run-engine.sh.
 All required paths must exist, except DATA_DIR (created private if needed).
 An explicitly reviewed --codex-preview-receipt ABS enables the optional local preview;
+--codex-image-jobs-reviewed independently enables the reviewed specialist catalog/broker gate.
 --codex-preview-output-limit defaults65536 and may be1024 for bounded acceptance.
 Receipt failure disables only Codex. MiniMax remains the default engine.
 Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
-node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536
+node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536; codex_images=false
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
@@ -44,6 +45,9 @@ while (($#)); do
         --codex-preview-receipt) codex_receipt=$2 ;;
       esac
       shift 2 ;;
+    --codex-image-jobs-reviewed)
+      [[ "$codex_images" = false ]] || fail 'duplicate image gate'
+      codex_images=true; shift ;;
     --codex-preview-output-limit)
       (($# >= 2)) || fail 'output limit required'
       [[ "$2" =~ ^[0-9]+$ && "$2" -ge 1 && "$2" -le 65536 ]] || fail 'invalid output limit'
@@ -87,11 +91,13 @@ import os, sys
 if os.stat(sys.argv[1]).st_mode & 0o077:
     raise SystemExit("data directory must have no group/other permissions")
 PY
+[[ "$codex_images" = false || -n "$codex_receipt" ]] || fail 'image gate requires reviewed Codex preview'
 entry_args=("$app_dir/server/dist/main.js")
 if [[ -n "$codex_receipt" ]]; then
   [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
   [[ -f "$app_dir/server/dist/codex-preview-main.js" ]] || fail 'preview entrypoint missing'
   entry_args=("$app_dir/server/dist/codex-preview-main.js" "$codex_receipt" "$codex_output")
+  if [[ "$codex_images" = true ]]; then entry_args+=(image-jobs-reviewed); fi
 fi
 cd -- "$app_dir/server"
 service_user=$(id -un)
