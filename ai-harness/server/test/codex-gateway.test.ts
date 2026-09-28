@@ -42,3 +42,14 @@ test('receipt-qualified Codex lanes share admission while unqualified Qwen1 rema
  await until(()=>f.seen.length===2);assert.equal(f.seen[1].body.model,'qwen3.8-27b');assert.equal(f.seen[1].body.max_tokens,1024);assert.equal(f.seen[1].body.max_completion_tokens,1024);assert.equal(f.gateway.snapshot().queued,1);
  f.done(0);await(await first).text();await until(()=>f.seen.length===3);assert.equal(f.seen[2].body.model,'qwen3.8-27b-gpu0');f.done(1);f.done(2);await mini;await(await queued).text();
 });
+
+test('Codex host observes accepted drain after producer cleanup without replay or early ownership release',async t=>{
+ const f=await fixture();t.after(f.close);const pending=f.send();await until(()=>f.seen.length===1);
+ const {composeCodexHost}=await import('../src/codex-host.js');
+ const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>f.gateway);
+ host.runtime.revokeGatewaySession('s');
+ let settled=false;const proof=host.runtime.confirmGatewaySettlement({sessionId:'s',gatewayToken:f.token,activeTurnId:'fixture-turn'}).then(v=>{settled=true;return v;});
+ await delay(10);assert.equal(settled,false);assert.equal(f.gateway.sessionWork('s').length,1);
+ f.done(0);await(await pending).text();assert.equal(await proof,true);assert.equal(f.seen.length,1);
+ assert.equal(f.states.at(-1).state,'settled');
+});

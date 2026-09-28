@@ -33,7 +33,9 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     capabilities: qualification?.capabilities,
     launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
-    confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query)) === true,
+    // Native teardown can finish before the accepted provider request drains.
+    // Observe the durable session ledger; this never releases native/image ownership.
+    confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query, 15000)) === true,
   };
   return { runtime, responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
     onError: qualification.onResponsesError, countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };

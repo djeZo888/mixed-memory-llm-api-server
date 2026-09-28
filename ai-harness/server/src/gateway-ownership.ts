@@ -26,6 +26,7 @@ export class GatewayOwnership {
     private records = new Map<string, RequestOwnership>();
     private knownSessions = new Set<string>();
     private failed = false;
+    private settlementObservers = new Set<() => void>();
     constructor(private options?: OwnershipOptions) { for (const r of options?.initialRequests ?? []) {
         if (!r.id || !r.sessionId || !["queued", "counting", "accepted", "draining", "uncertain", "settled"].includes(r.state))
             throw Error("Invalid ownership ledger");
@@ -37,7 +38,8 @@ export class GatewayOwnership {
     begin(sessionId: string): RequestOwnership { this.registerSession(sessionId); const r: RequestOwnership = { id: randomUUID(), sessionId, state: "queued", updatedAt: new Date().toISOString() }; this.records.set(r.id, r); this.write(r); return r; }
     transition(r: RequestOwnership, state: RequestOwnershipState, lane?: string) { r.state = state; if (lane)
         r.lane = lane; r.updatedAt = new Date().toISOString(); this.write(r); if (state === "settled")
-        this.records.delete(r.id); }
+        this.records.delete(r.id);
+        for (const observe of this.settlementObservers) observe(); }
     account(r: RequestOwnership, value: NonNullable<RequestOwnership['accounting']>) {
         r.accounting = { ...r.accounting, ...value }; this.write(r);
     }
@@ -47,9 +49,35 @@ export class GatewayOwnership {
     catch {
         r.state = "uncertain";
         this.failed = true;
+        for (const observe of this.settlementObservers) observe();
         throw Error("Gateway ownership ledger unavailable");
     } }
     confirm(query: SettlementQuery): boolean { return this.options?.recoveryReady === true && !this.failed && this.knownSessions.has(query.sessionId) && ![...this.records.values()].some(r => r.sessionId === query.sessionId); }
+    /** Observe durable drain only; caller must first stop native producers and revoke admission.
+     * No request replay, lane release or uncertain-record reconciliation happens here.
+     */
+    waitForSettlement(query: SettlementQuery, waitMs: number): Promise<boolean> {
+        if (!Number.isSafeInteger(waitMs) || waitMs < 0 || waitMs > 15000)
+            throw Error("Invalid settlement observation budget");
+        const unavailable = () => this.options?.recoveryReady !== true || this.failed ||
+            !this.knownSessions.has(query.sessionId) ||
+            [...this.records.values()].some(r => r.sessionId === query.sessionId && r.state === "uncertain");
+        if (this.confirm(query)) return Promise.resolve(true);
+        if (!waitMs || unavailable()) return Promise.resolve(false);
+        return new Promise(resolve => {
+            const finish = (settled: boolean) => {
+                clearTimeout(timer);
+                this.settlementObservers.delete(observe);
+                resolve(settled);
+            };
+            const observe = () => {
+                if (this.confirm(query)) finish(true);
+                else if (unavailable()) finish(false);
+            };
+            const timer = setTimeout(() => finish(false), waitMs);
+            this.settlementObservers.add(observe);
+        });
+    }
     snapshot(sessionId: string) { return [...this.records.values()].filter(r => r.sessionId === sessionId).map(r => ({ ...r })); }
 }
 /** Additive table; old releases and existing lane/frontier ledgers remain intact. */
