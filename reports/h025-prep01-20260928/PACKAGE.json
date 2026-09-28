@@ -1,0 +1,17 @@
+{
+  "status": "NO_DISPATCH",
+  "files": {
+    "contract.py": "d501f16c327ddd2e481418132c66d9041314e66be2c4a12b2b027aa9f012cdfd",
+    "primitives.py": "cb9c39c42bfcc41e091eb18e0f56d074681962a5fa2a57683e83854f94ecd8f1",
+    "telemetry.py": "c25b89742903fd75d15f2121c5d09f291bb7dacc89fb1254aa58fd71d5a21a78",
+    "controller.py": "2b3633da22490d82838bd4d43c52782aa04c082f577efa8c0777df92b66620a8",
+    "runner.py": "270a387375d91206ac03195802aef9add72b116a3bae6130321207556bc7f9d8",
+    "native.py": "a27d6d3ad6cb7e2a713ec8fa66b9191b9439d2753ff47bcc1ee833ca795812a2",
+    "fans.py": "809b599b8e128d2d74282156245479f9f6403f73d2e428dc234aa4544c9fadbd",
+    "fan_status.py": "a13e74b0a2c5954a69adb6f4e31c4892b615112c9f6978b8b5cc3da7a699553d",
+    "bridge.py": "4310c7b6a829e5c10c58e050581006763cac3c5cfca5e157ee7cded21ce51226",
+    "driver.py": "57d4890d9d0bf18173b8f307951e8aa845cf328aaf1f05d249bd10564cb6d149"
+  },
+  "package_sha256": "e0620fbb42e0035d21526dbb519c6c5e5c38faeae3e2b1c7d5e01486f301e612",
+  "live": "NOT_TESTED_REQUIRES_W1_CURRENT_VALUES_AND_ROOT_REVIEW"
+}
