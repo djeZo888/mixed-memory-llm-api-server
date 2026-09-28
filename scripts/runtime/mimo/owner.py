@@ -900,7 +900,7 @@ def old_boot_absence(old, state, boot, *, successor=None):
                 'MainPID,ActiveState,SubState,InvocationID,Job'], 2).splitlines())
     if successor is None:
         require(unit['MainPID'] == '0' and unit['ActiveState'] in ('inactive', 'failed')
-                and unit.get('Job', '').split(' ', 1)[0] == '0', 'new_boot_owner_present')
+                and unit.get('Job') in ('', '0'), 'new_boot_owner_present')
     else:
         require(unit['MainPID'] == str(os.getpid()) == str(successor['pid'])
                 and unit['InvocationID'] == successor['invocation_id']

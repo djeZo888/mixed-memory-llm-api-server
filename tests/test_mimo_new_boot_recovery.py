@@ -208,6 +208,35 @@ class RecoveryTests(unittest.TestCase):
             o.assert_launch_admission(self.old, self.selected, self.state)
 
 class PhysicalTests(unittest.TestCase):
+    def test_systemd_job_requires_explicit_empty_or_zero_property(self):
+        # Live systemctl show emits Job= for no queued job; a missing property
+        # or an unknown/active representation must not become absence proof.
+        cid = 'c' * 64
+        old = {'container_name': 'llm-frontier-mimo-production'}
+        state = {'schema_version': 2, 'status': 'HELD', 'request_hold': True,
+                 'boot_id': OLD, 'manifest_sha256': o.digest(old),
+                 'native': {'pid': 10, 'container_id': cid},
+                 'supervisor': {'pid': 11}, 'proxy': {'pid': 12},
+                 'native_cgroup': '/sys/fs/cgroup/llmmimo.slice/docker-' + cid + '.scope'}
+        container = {'Id': cid, 'State': {'Running': False, 'Pid': 0, 'Status': 'exited'}}
+        for job, allowed in [('', True), ('0', True), (None, False), ('312/start', False),
+                             ('312', False), ('unknown', False), (' ', False),
+                             ('0 garbage', False), (' 0', False)]:
+            with self.subTest(job=job):
+                unit = 'MainPID=0\nActiveState=inactive\nSubState=dead\nInvocationID=\n'
+                if job is not None:
+                    unit += 'Job=' + job + '\n'
+                with patch.object(o, 'BOOT', SimpleNamespace(read_text=lambda: NEW)), \
+                     patch.object(o, 'run', side_effect=lambda argv, *a: unit if argv[0] == 'systemctl' else ''), \
+                     patch.object(o, 'inspect', return_value=container), \
+                     patch.object(o, 'exact_container', side_effect=lambda c, *a: c), \
+                     patch.object(Path, 'exists', return_value=False):
+                    if allowed:
+                        self.assertEqual(o.old_boot_absence(old, state, NEW)['physical_release'], 'REBOOT')
+                    else:
+                        with self.assertRaisesRegex(o.OwnerRefusal, 'new_boot_owner_present'):
+                            o.old_boot_absence(old, state, NEW)
+
     def test_same_boot_live_pid_unit_container_cgroup_gpu_listener_refuse(self):
         # Use the actual physical verifier with all operating-system boundaries mocked.
         cid='c'*64
@@ -217,7 +246,7 @@ class PhysicalTests(unittest.TestCase):
                'supervisor':{'pid':11},'proxy':{'pid':12},
                'native_cgroup':'/sys/fs/cgroup/llmmimo.slice/docker-'+cid+'.scope'}
         container={'Id':cid,'State':{'Running':False,'Pid':0,'Status':'exited'}}
-        unit='MainPID=0\nActiveState=inactive\nSubState=dead\nInvocationID=\nJob=0\n'
+        unit='MainPID=0\nActiveState=inactive\nSubState=dead\nInvocationID=\nJob=\n'
         cases=['ok','sameboot','pid','unit','running','cgroup','gpu','listener','private_proxy','bootchanged']
         for case in cases:
             with self.subTest(case=case):
