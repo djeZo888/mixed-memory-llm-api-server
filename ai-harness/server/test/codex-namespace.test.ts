@@ -5,7 +5,7 @@ import { translateResponses, ResponsesStream } from '../src/codex-responses.js';
 const fixture = () => JSON.parse(readFileSync(new URL('./fixtures/codex/native-namespace.json', import.meta.url),'utf8'));
 test('actual pinned native namespace history and returned calls preserve the tuple', () => {
  const b=fixture(), t=translateResponses(b); const mapped='sova_ns_14_multi_agent_v1_spawn_agent';
- assert.ok(t.body.tools.some((v:any)=>v.function.name===mapped));
+ assert.ok(t.body.tools.some((v:any)=>v.function.name===mapped && v.function.description.includes("Tools for spawning and managing sub-agents.")));
  assert.equal(t.body.messages[1].tool_calls[0].function.name,mapped);
  const frames:string[]=[];const s=new ResponsesStream(t,x=>frames.push(x));
  const data=(v:any)=>s.push(Buffer.from(`data: ${JSON.stringify(v)}\n\n`));

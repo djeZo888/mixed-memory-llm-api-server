@@ -7,7 +7,7 @@ const request=()=>structuredClone(captures[0].body);
 const parse=(s:string)=>s.split("\n").filter(l=>l.startsWith("data: ")).map(l=>JSON.parse(l.slice(6)));
 const chunk=(v:unknown)=>Buffer.from(`data: ${JSON.stringify(v)}\n\n`);
 test("real pinned macOS CLI first and second request preserve instructions and history",()=>{
- for(const capture of captures){const t=translateResponses(capture.body);assert.equal(t.body.max_tokens,65536);assert.equal(t.body.messages[0].role,"system");assert.equal(t.body.messages[1].role,"developer");assert.equal(t.tools.get("apply_patch")?.custom,true);assert.equal(t.body.messages.length,capture.body.input.length+1);}
+ for(const capture of captures){const t=translateResponses(capture.body);assert.equal(t.body.max_tokens,65536);assert.equal(t.body.messages[0].role,"system");assert.equal(t.body.messages[1].role,"user");assert.ok(t.body.messages[0].content.includes(JSON.stringify(capture.body.input[0].content.map((v:any)=>v.text).join(""))));assert.equal(t.tools.get("apply_patch")?.custom,true);assert.equal(t.body.messages.length,capture.body.input.length);}
  const second=translateResponses(captures[1].body);assert.ok(second.body.messages.some((m:any)=>m.role==="assistant"&&m.content==="Fixture complete."));
 });
 test("unsupported fields, media, encrypted state, arbitrary grammar and settings fail before dispatch",()=>{
@@ -48,4 +48,8 @@ test("all actual native five-request tool/edit/read/continuation captures transl
 });
 test("tool completion waits for native HTTP drain, not merely an SSE DONE marker",()=>{
  let wire='';const s=new ResponsesStream(translateResponses(request()),x=>wire+=x);s.push(chunk({choices:[{delta:{tool_calls:[{index:0,id:'call_wait',type:'function',function:{name:'get_goal',arguments:'{}'}}]},finish_reason:'tool_calls'}]}));s.push(chunk({choices:[],usage:{prompt_tokens:5,completion_tokens:2}}));s.push(Buffer.from('data: [DONE]\n\n'));assert.doesNotMatch(wire,/response.output_item.done|response.completed/);s.end();assert.match(wire,/response.output_item.done/);assert.match(wire,/response.completed/);assert.throws(()=>s.end());
+});
+
+test("Qwen leading instruction merge preserves ordered role/content and preserves later policy positions",()=>{
+ const b=request();const t=translateResponses(b);const payload=JSON.parse(t.body.messages[0].content.split("\n").slice(1).join("\n"));assert.deepEqual(payload.map((v:any)=>v.role),["system","developer"]);assert.equal(payload[0].content,b.instructions);assert.equal(payload[1].content,b.input[0].content.map((v:any)=>v.text).join(""));b.input.push({type:"message",role:"developer",content:[{type:"input_text",text:"late"}]});const mapped=translateResponses(b);const all=JSON.parse(mapped.body.messages[0].content.split("\n").slice(1).join("\n"));assert.equal(all.at(-1).content,"late");assert.equal(all.at(-1).position,b.input.length);
 });

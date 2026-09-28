@@ -4,7 +4,7 @@ import { composeCodexHost } from '../src/codex-host.js';
 import { createGateway } from '../src/gateway.js';
 
 test('host remains disabled without trusted runtime proof and settlement fails closed', async () => {
-  const host = composeCodexHost('/trusted/deploy/run-codex.sh', () => undefined);
+  const host = composeCodexHost('/legacy/custom-minimax.sh', () => undefined);
   assert.equal(host.runtime.protocolQualified, false);
   assert.equal(host.responses, undefined);
   assert.equal(await host.runtime.confirmGatewaySettlement({ sessionId: 'x', gatewayToken: 'x', activeTurnId: null }), false);

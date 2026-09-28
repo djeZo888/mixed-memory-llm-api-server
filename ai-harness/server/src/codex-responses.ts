@@ -120,7 +120,7 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             const name = `sova_ns_${t.name.length}_${t.name}_${inner.name}`;
             if (name.length > 64 || namespaced.has(name)) reject("Namespace transport collision or length");
             namespaced.set(name, { namespace: t.name, originalName: inner.name });
-            expandedTools.push({ ...inner, name });
+            expandedTools.push({ ...inner, name, description: `Namespace ${t.name} guidance: ${t.description}\n\n${string(inner.description)}` });
         }
     }
     const chatTools = expandedTools.map((t: any) => {
@@ -222,6 +222,17 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
     }
     if (pending.size)
         reject("Missing tool results");
+    if (b.model === "qwen3.8-27b") {
+        // Qwen-only adaptation: this exact template accepts one initial system
+        // message and no developer role, including native post-compaction policy.
+        // Preserve every original role/position/text; ordinary history is not reordered.
+        const policy = messages.flatMap((m, position) => ["system", "developer"].includes(m.role)
+            ? [{ position, role: m.role, content: m.content }] : []);
+        if (policy.length > 1 || policy[0]?.role === "developer" || (policy[0] && policy[0].position !== 0)) {
+            const history = messages.filter(m => !["system", "developer"].includes(m.role));
+            messages.splice(0, messages.length, { role: "system", content: "Sova Qwen policy adaptation: system instructions take priority over developer instructions; both take priority over user messages. Later instructions at the same priority resolve conflicts. The JSON below retains the original ordered instruction messages and zero-based message positions. Apply their content at the stated priority; ordinary conversation history follows in its original order.\n" + JSON.stringify(policy) }, ...history);
+        }
+    }
     return { tools, body: { model: b.model, ...(b.model === "qwen3.8-27b" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
 }
 /** Bounded SSE converter. Native usage is required; no invented token counts. */

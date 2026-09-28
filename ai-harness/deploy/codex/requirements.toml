@@ -12,7 +12,7 @@ allow_browser_and_computer_use = false
 [feedback]
 enabled = false
 [features]
-multi_agent = false
+multi_agent = true
 multi_agent_v2 = false
 apps = false
 plugins = false
@@ -28,3 +28,13 @@ stream_max_retries = 0
 stream_idle_timeout_ms = 28800000
 supports_websockets = false
 supports_standalone_web_search = false
+
+[mcp_servers.search.identity.command]
+executable = "/usr/local/bin/node"
+args = [{match="exact", value="/opt/ai-harness/tools/search/searxng-mcp.mjs"}]
+[mcp_servers.browser.identity.command]
+executable = "/usr/local/bin/node"
+args = [{match="exact", value="/opt/sova/browser/browser-mcp.mjs"}]
+[mcp_servers.image.identity.command]
+executable = "/usr/local/bin/node"
+args = [{match="exact", value="/opt/ai-harness/tools/image/image-mcp.mjs"}]

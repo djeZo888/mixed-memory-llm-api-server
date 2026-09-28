@@ -21,7 +21,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     pin: CODEX_PIN, protocolQualified: !!qualification,
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
-    launchRootless: createRootlessCodexLauncher(launcherPath),
+    launchRootless: input => createRootlessCodexLauncher(launcherPath)(input),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query)) === true,
   };

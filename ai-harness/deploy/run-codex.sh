@@ -110,7 +110,7 @@ rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless
 
 image_tag=localhost/sova-codex:0.158.0-h021
 revision=064c6b8c737f5b41d171fdda80bd9ef10ad06eb3
-patchset=b15fe65487835a79103cb9565a862f7c2cf5ffebfe45fcfd08491027be419a9f
+patchset=478893076399622375384d9f90b58b369ca5139e4f34d00ad9ab8ec36678cd73
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
@@ -120,7 +120,7 @@ image_patchset=${image_labels#*|}
 
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml','requirements.toml','models.json'])).hexdigest() == 'b15fe65487835a79103cb9565a862f7c2cf5ffebfe45fcfd08491027be419a9f'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == '478893076399622375384d9f90b58b369ca5139e4f34d00ad9ab8ec36678cd73'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
@@ -138,6 +138,9 @@ if [[ ! -e "$container_home" && ! -L "$container_home" ]]; then
   mkdir -- "$container_home"
 fi
 validate_directory "$container_home" 'isolated engine home'
+mkdir -p -- "$container_data/skills"
+validate_directory "$container_data/skills" 'engine skills root'
+[[ ! -L "$container_data/skills/sova-local-tools" ]] || die 'trusted skill target cannot be a symlink'
 
 # Do not add -t: private AppServer is newline-delimited JSON, never terminal text.
 # Preserve AppArmor and the pinned Podman seccomp rules, with only chroot
@@ -166,6 +169,7 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --volume "$profile_dir:$profile_dir:rw,rprivate" \
   --volume "$workspace:$workspace:rw,rprivate" \
   --volume "$launcher_dir/codex/config.toml:$container_data/config.toml:ro,rprivate" \
+  --volume "$launcher_dir/codex/skills/sova-local-tools:$container_data/skills/sova-local-tools:ro,rprivate" \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "CODEX_HOME=$container_data" \
   --env PATH=/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin \
