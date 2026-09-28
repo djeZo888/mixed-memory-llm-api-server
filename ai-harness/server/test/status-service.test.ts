@@ -90,6 +90,21 @@ test("passive collector and model failure reasons remain explicit without exposi
     assert.equal(parsed.resources.cpu.percent, 12);
   }
 });
+test("separate Ada 200K instance stays visible without invented observation or action authority", async () => {
+  const raw = vm();
+  const service = createStatusService({ backends: { "ai-vm": backend(raw) }, autoPoll: false });
+  try {
+    await service.caches["ai-vm"]!.poll();
+    const ada = service.snapshot()[0]!.services.find(s => s.service_id === "qwen-ada200k")!;
+    assert.equal(ada.configured_model?.instance_name, "Qwen Ada 200K");
+    assert.equal(ada.endpoint_ref, null);
+    assert.equal(ada.ready, null);
+    assert.equal(ada.configured_context_tokens, null);
+    assert.equal(ada.reason, "not_observed");
+    const targets = await service.app.inject({ url: "/api/admin/v1/targets", headers: { host: "10.156.100.61" } });
+    assert.equal(targets.json().targets.some((t: any) => t.service_id === "qwen-ada200k"), false);
+  } finally { await service.app.close(); }
+});
 test("exact shared v1 fixture preserves nullable identities, independent metrics and no invented capability", () => {
   const shared = fixture("node-status-v1"),
     parsed = sanitizeNode(shared, "ai-vm");

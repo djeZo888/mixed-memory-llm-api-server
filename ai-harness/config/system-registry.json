@@ -215,6 +215,23 @@
         "expected_alias": "mimo-v2.6-pro-rl",
         "selection_group": "frontier"
       }
+    },
+    {
+      "id": "qwen-ada200k",
+      "node_id": "ai-vm",
+      "display_name": "Qwen Ada 200K separate instance",
+      "observation_key": "qwen-ada200k",
+      "owner": "qwen-ada200k.service",
+      "capabilities": [
+        "chat.completions"
+      ],
+      "endpoint_ref": null,
+      "model": {
+        "display_name": "Qwen3.8 27B",
+        "instance_name": "Qwen Ada 200K",
+        "expected_alias": "qwen3.8-27b-ada200k",
+        "selection_group": null
+      }
     }
   ],
   "components": [

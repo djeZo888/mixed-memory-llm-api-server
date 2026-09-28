@@ -10,10 +10,13 @@ export function thirdNodeRegistry() {
   r.services.push({ id: "lab-service", node_id: "offline-lab", display_name: "Expected lab service", observation_key: "lab-service", owner: "unassigned", capabilities: [], endpoint_ref: null });
   return r;
 }
-test("default registry retains seven action identities and adds passive frontier inventory", () => {
+test("default registry retains seven action identities and adds passive model inventory", () => {
   const r = loadSystemRegistry();
   assert.deepEqual(r.nodes.map(n => [n.id, n.observation.transport]), [["ai-vm", "ai-vm-private"], ["ai-harness", "local-helper"]]);
-  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node && !["glm-5.3-flash", "mimo-v2.6-pro-rl"].includes(s.id)).map(s => s.id), ids);
+  for (const [node, ids] of Object.entries(SERVICE_IDS)) assert.deepEqual(r.services.filter(s => s.node_id === node && !["glm-5.3-flash", "mimo-v2.6-pro-rl", "qwen-ada200k"].includes(s.id)).map(s => s.id), ids);
+  const ada = r.services.find(s => s.id === "qwen-ada200k")!;
+  assert.equal(ada.endpoint_ref, null);
+  assert.equal(ada.model?.expected_alias, "qwen3.8-27b-ada200k");
   assert.equal(validateSystemRegistry(thirdNodeRegistry()).nodes.length, 3);
   assert.ok(r.components.every(c => c.type === "support" || c.independently_restartable === false));
 });
