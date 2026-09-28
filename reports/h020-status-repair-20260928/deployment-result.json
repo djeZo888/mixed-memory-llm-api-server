@@ -1,0 +1,231 @@
+{
+  "task": "H020-DEPLOY02",
+  "result": "PASS \u2014 status-only deployment and live passive acceptance complete",
+  "sessionId": "01a0e63c-591b-75e2-8c78-f457ef0dd85c",
+  "startedUtc": "2026-09-28T04:18:29.702351+00:00",
+  "deadlineUtc": "2026-09-28T04:30:29.702351+00:00",
+  "completedChecksUtc": "2026-09-28T04:24:58.607055+00:00",
+  "rootGoSha256": "4911feefe2758fa9a64a0f4304dced4abdf2c6d3274d4a9ffe66f4f27953bf60",
+  "sourceCommit": "739462b7e246f92a3c4161c4535a1a2d8a0886f2",
+  "reportBaseCommit": "ef6a75178b53dfaa5bf41a50e0835676500ce966",
+  "deploymentManifestSha256": "dceb324de3322800bb4aef5562f43848dbbb8be2a6d5ad125a6267fc2de5650b",
+  "activationScriptSha256": "9cb7dc754f6b1b867f810e26a8d8dd2a341ba5e64f07ce52ba2c20529e7a370e",
+  "dropIn": {
+    "path": "/etc/systemd/system/ai-harness-status.service.d/40-h020-status.conf",
+    "sha256": "1dd0a243708343390e41ecb127728bce18f1c043461fc76ac622132409006d78"
+  },
+  "sourceHashes": {
+    "ai-harness/config/system-registry.json": "91fe53ad7228fb11ea48f191bb88177aa2e088672a8b25b5fc1b3f1be68070a9",
+    "ai-harness/docs/status-registry.md": "889d49faf59ba88161744ab18b56904c196225897bf933ada4dfdcb458512a67",
+    "ai-harness/server/src/status-projection.ts": "26886db5d7e6935b8f732fea7bc34d20ca1af8cc741b553906ab642ed6d3f444",
+    "ai-harness/server/src/status-ui.ts": "609373e3e4b0e6551a993efb31fac2634434c8f7aab270d21868ca6cf4cf51c3",
+    "ai-harness/server/src/system-registry.ts": "25439800047d892bf013118b640e95f0edc4cbfc8aab8eb0c553c4ea5e740807",
+    "ai-harness/server/test/frontier-registry.test.ts": "429cdae9cf1a1542c8745adc877a204c5dbefcc00710bdcc5e19373d580783fc",
+    "ai-harness/server/test/status-browser.mjs": "65d3a2441882eb25268b4d1b11de2d3cc4c23fee4e1521a9b85360c6901353e0",
+    "ai-harness/server/test/status-service.test.ts": "045db205411e93ae6c315004801f6f7a40609e9c6715745a400b597d0fa972e4"
+  },
+  "compiledAndConfigurationHashes": {
+    "ai-harness/config/system-registry.json": "91fe53ad7228fb11ea48f191bb88177aa2e088672a8b25b5fc1b3f1be68070a9",
+    "ai-harness/config/active-frontier.json": "6fac2925b81e0c40154635643a327f8f3149f7211cf8b78a4f321f6d5b09dc22",
+    "ai-harness/server/dist/system-registry.d.ts": "0b91ec1fa266c38551ece1ba89e9446d2c83360d8d8abb56401c81a51bda1011",
+    "ai-harness/server/dist/status-ui.js": "4a4704c7a63a0e2a79df48aac596152016995dbc9c4e7a63795ec4dfd5cf72fb",
+    "ai-harness/server/dist/system-registry.js": "a278e5e543938f94a764cfbf8daa15b59197c91a6f82ed29848b08b3135d2c8d",
+    "ai-harness/server/dist/status-projection.js": "35e8c57e406c4ab4f7d8357997eaf22ce9323cafb4835dccbdc56162cb1502eb",
+    "ai-harness/server/dist/status-projection.d.ts": "e74c5cceb8a88808447b3b9775e604ccf290502f4cdf9ac2eea8f616336899a1",
+    "ai-harness/server/dist/status-ui.d.ts": "c8e69eb3a33be4427641c7f0c4091892ee19974e371c4f8e4f154f57c790262a"
+  },
+  "selection": {
+    "sha256": "6fac2925b81e0c40154635643a327f8f3149f7211cf8b78a4f321f6d5b09dc22",
+    "model": "mimo-v2.6-pro-rl",
+    "contextWindow": 950000,
+    "maxOutputTokens": 65536,
+    "source": "Exact deployed H019 bytes preserved"
+  },
+  "candidateMetadataReconciliation": "PASS; current CANDIDATE stagedRelease and dropInSha256 match pinned DEPLOYMENT and actual remote readbacks. Earlier in-progress fields are historical. Original metadata files retained.",
+  "activation": {
+    "startedUtc": "2026-09-28T04:20:27.963304+00:00",
+    "finishedUtc": "2026-09-28T04:20:28.452843+00:00",
+    "exitCode": 0,
+    "installedDropIns": [
+      "40-h020-status.conf"
+    ],
+    "daemonReloadInvocations": 1,
+    "normalStatusRestartInvocations": 1,
+    "otherServiceRestartInvocations": 0,
+    "automaticRestartsObserved": 0
+  },
+  "before": {
+    "statusPid": 301728,
+    "actualRelease": "7143c17d73173db9364b77956679c86d7026a4ae",
+    "loadedRelease": "34959c67baea0d8a357cbea4cefac1658f3553f0-h019-prep01",
+    "statusStartedUtc": "2026-09-27T07:32:20Z",
+    "appMainPid": 0,
+    "appActiveState": "inactive"
+  },
+  "after": {
+    "statusPid": 527553,
+    "actualCwd": "/opt/ai-harness/releases/739462b7e246f92a3c4161c4535a1a2d8a0886f2-h020-status01/ai-harness/server",
+    "actualExecutable": "/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node",
+    "actualCmdlineStatusMain": "/opt/ai-harness/releases/739462b7e246f92a3c4161c4535a1a2d8a0886f2-h020-status01/ai-harness/server/dist/status-main.js",
+    "statusStartedUtc": "2026-09-28T04:20:28Z",
+    "procStarttimeTicks": 18521374,
+    "systemdStartMonotonicUsec": 185213751092,
+    "activeState": "active",
+    "subState": "running",
+    "needDaemonReload": "no",
+    "dropInOwnerMode": "root:root 0644",
+    "appMainPid": 0,
+    "appActiveState": "inactive"
+  },
+  "assertions": [
+    {
+      "check": "Selected MiMo configured and observed aliases match with fresh evidence",
+      "result": "PASS"
+    },
+    {
+      "check": "Dormant GLM has no inherited ready flag",
+      "result": "PASS"
+    },
+    {
+      "check": "Qwen model instances retain distinct configured names aliases and measured UUID dependencies",
+      "result": "PASS"
+    },
+    {
+      "check": "Measured frontier GPU has only selected MiMo ready dependency and preserves GLM/MiMo action impact IDs",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached ai-vm node and node-manager generations unchanged",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached identity unchanged: qwen-gpu0",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached identity unchanged: qwen-gpu1",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached identity unchanged: image",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached identity unchanged: control",
+      "result": "PASS"
+    },
+    {
+      "check": "Cached identity unchanged: glm-5.3-flash",
+      "result": "PASS"
+    },
+    {
+      "check": "Public DTO exposes no credential/transport configuration keys or private URL/address/path values",
+      "result": "PASS"
+    },
+    {
+      "check": "Public DTO has no advertised action authority",
+      "result": "PASS"
+    },
+    {
+      "check": "Live desktop and mobile browser assertions pass using only public GET routes",
+      "result": "PASS"
+    },
+    {
+      "check": "Desktop/mobile document widths fit viewport",
+      "result": "PASS"
+    },
+    {
+      "check": "Final status process remains PID527553 running without automatic restarts; app MainPID0 inactive",
+      "result": "PASS"
+    },
+    {
+      "check": "Existing status unit and three drop-ins unchanged; only pinned40 drop-in added",
+      "result": "PASS"
+    }
+  ],
+  "browser": {
+    "result": "PASS",
+    "route": "SSH ai-harness SOCKS forward to its existing public nginx listener",
+    "viewports": [
+      {
+        "name": "desktop",
+        "width": 1440,
+        "height": 1000,
+        "result": "PASS",
+        "documentWidth": 1440,
+        "windowWidth": 1440
+      },
+      {
+        "name": "mobile",
+        "width": 390,
+        "height": 844,
+        "result": "PASS",
+        "documentWidth": 390,
+        "windowWidth": 390
+      }
+    ],
+    "publicGetRequests": 8,
+    "pageErrors": 0,
+    "blockedRequests": 0,
+    "httpStatuses": [
+      200
+    ],
+    "screenshots": "Outside Git in task/private; full desktop/mobile and top viewport PNGs. Desktop full page and mobile top visually inspected.",
+    "gpuLabels": [
+      "Ready model dependencies (not occupancy)",
+      "Action impact IDs"
+    ]
+  },
+  "retainedFailureEvidence": [
+    "Initial loopback public read refused: nginx binds documented LAN IP; corrected GET passed.",
+    "Browser local forward used unapproved Host and returned403; one selector-only rerun repeated403, explicit Host header was rejected by Chrome. All failure receipts retained. SOCKS routing preserved real public URL/Host and passed. No server reconfiguration."
+  ],
+  "limits": [
+    "No ai-vm SSH/contact by executor, inference requests, native PID attestation, benchmark polling/results review, admin requests, selection changes, owner/service changes other than status, hardware changes, Codex integration or automation changes.",
+    "MiMo readiness means fresh matching passive observer evidence; deployment label and configured token budgets do not prove native process identity, benchmark progress or qualification.",
+    "Existing missing/stale/mismatch selection fixtures and17 focused source tests were already completed in preparation; not rerun against production and no broad test/build rerun.",
+    "Both7143 actual-old and H019 loaded releases retained; rollback remains separately reviewable and was not executed.",
+    "Credentials, chats/uploads, original evidence and quarantines were not inspected or modified."
+  ],
+  "privateArtifactDirectory": "/Users/agent/CodexProjects/llm-orchestration/tasks/H020-DEPLOY02-20260928/private",
+  "privateArtifactSha256": {
+    "private/activation.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "private/activation.stdout": "9c1c2565184bb216f35c153bc08b1423e945aaaa9daa6a607b1abbe4fbc5dd80",
+    "private/status-desktop-top.png": "6b54d513237ab505b66e41d1fa7063102b829f78051a11335a9730bd48ca4c26",
+    "private/status-mobile-top.png": "d9f488582f3d7e6c53d4b25a783c7a9322da5612078f7f0d8d2f4632db2c5b73",
+    "private/public-after.json": "441a3e0fd53d495c6a5c7692421e9f0645d92dd4e6b6a19d1632e35e6620ef43",
+    "private/browser-second-failure.json": "e67070ea3c90c27ca83546be9f67f7d4a7e2f81ce9d2110f40947b4739e3ddc7",
+    "private/public-before.json": "065baa29f22708ee770cbb361ed4ae473c9261fbe4eccfd1aa8549113c576f0d",
+    "private/status-desktop.png": "405c81e1053d50859e2988fc97e3631e9b4a5b96d3ccd5bed40578b71e58a0e9",
+    "private/browser-first-failure.json": "929d2f0e62193f662c0134c9694e0147b49a909aa430c6970ad17b3659a683ca",
+    "private/status-mobile.png": "f242cc5a6a4fce3690fe64531aa4eac13a630462593f3812057a680b75cd3dc9",
+    "private/preflight-ok.json": "b4b8995241f3ef656787d76ad9a1ce6d16a44a4ac2be2a75e0ccfc3726be906e",
+    "private/preflight.stderr": "f53c0f3130b03f9b3bc724e9eccd9abfca1bc6e6863f680544a05706bba1b4b9",
+    "private/preflight.txt": "d7c1bc22a465c188c2ed3de9d9bf407397a29dc2ef95405990fe54985f7058d9",
+    "private/status-mobile-text.txt": "d2ad1ffbfd4aac3e41798ef6bf557b56c2bfe81ee4d2e7d569020954c58de8bd",
+    "private/browser-result.json": "5c95af63a936e345c8e78bc00d0c193d9e46ca5394383a6d9d48ec494c594ad5",
+    "private/browser-third-failure.json": "faee62afd6975b7d503dbcc112044ebc15d6ef69301f10111d887f4d4e864f61",
+    "private/public-before.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "private/status-desktop-text.txt": "a2ab6ac603edd2b7f5f392ed7c82be06fe2c56575be73ea852fedeac8305e66b",
+    "private/final-service-state.txt": "91cc735ec517885bfc647c53f0ebad6bb2507c98e9e6af55173d01733c8d1231",
+    "private/live-browser.mjs": "538897c2244ebd7159d63dd76eb2866606e20907a04167ff1abb19825518a869",
+    "private/postflight.txt": "5322778adc72bbdc22e7d4fba7fd8e57066480821dbc217d3358b8682bbb6a8c",
+    "private/postflight.stderr": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "loadedUnitAndDropInHashes": {
+    "before": {
+      "/etc/systemd/system/ai-harness-status.service": "77195ab6266431af465e2fff35e6f6be45f50b30a94abe8409bcaf71beebe217",
+      "/etc/systemd/system/ai-harness-status.service.d/10-h005-status-component.conf": "d55bcd355de0be2a7c04801f363377a2083667746d50f4611adfdb150e412b09",
+      "/etc/systemd/system/ai-harness-status.service.d/20-h006-component.conf": "4b5b619672817ba50bfeaf299c767ec6d87316193ba802816582f3a43123c2b3",
+      "/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf": "27f2baf37f28023f835304241426db9e0930840d0f65f081a553798ad2593155"
+    },
+    "after": {
+      "/etc/systemd/system/ai-harness-status.service": "77195ab6266431af465e2fff35e6f6be45f50b30a94abe8409bcaf71beebe217",
+      "/etc/systemd/system/ai-harness-status.service.d/10-h005-status-component.conf": "d55bcd355de0be2a7c04801f363377a2083667746d50f4611adfdb150e412b09",
+      "/etc/systemd/system/ai-harness-status.service.d/20-h006-component.conf": "4b5b619672817ba50bfeaf299c767ec6d87316193ba802816582f3a43123c2b3",
+      "/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf": "27f2baf37f28023f835304241426db9e0930840d0f65f081a553798ad2593155",
+      "/etc/systemd/system/ai-harness-status.service.d/40-h020-status.conf": "1dd0a243708343390e41ecb127728bce18f1c043461fc76ac622132409006d78"
+    }
+  },
+  "statusMainSha256": "14ad79727feda98572e345d633faa0986a0f3f5afd80c818a035655832e87287"
+}
