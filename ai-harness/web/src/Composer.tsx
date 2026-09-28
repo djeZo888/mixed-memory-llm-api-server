@@ -44,7 +44,13 @@ export function Composer({
   const dragDepth = useRef(0);
   const attachments = lookup(state.attachments, id) ?? [];
   const imageReferences = lookup(state.imageReferences, id) ?? [];
-  const imageUploads = state.visionAvailable || imageReferencesAvailable(state.imageCapabilities);
+  const codex = state.thread?.session.engineKind === 'codex';
+  const imageUploads =
+    !codex && (state.visionAvailable || imageReferencesAvailable(state.imageCapabilities));
+  const reusableFiles = [
+    ...(state.thread?.attachments ?? []),
+    ...(state.thread?.artifacts ?? []),
+  ].filter((file) => !/^(image|audio|video)\//i.test(file.mimeType));
   const busy = (action: string) => state.busy[busyKey(action, id)];
   const locked =
     uploading || busy('send') || busy('upload') || busy('delete') || state.loading || !state.thread;
@@ -172,6 +178,26 @@ export function Composer({
           void send();
         }}
       >
+        {codex && reusableFiles.length > 0 && (
+          <label className="composer-queue-note">
+            Reuse a file
+            <select
+              aria-label="Reuse workspace file"
+              value=""
+              disabled={!!locked}
+              onChange={(event) => {
+                if (event.target.value) void store.reuseFile(id, event.target.value);
+              }}
+            >
+              <option value="">Choose a previous upload or artifact…</option>
+              {reusableFiles.map((file) => (
+                <option key={file.id} value={file.id}>
+                  {file.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {attachments.length > 0 && (
           <ul className="attachments" aria-label="Attached files">
             {attachments.map((attachment) => (
@@ -352,6 +378,12 @@ export function Composer({
         </span>
         {state.imageCapabilitiesLoaded && !canStageEditReference(state.imageCapabilities) && (
           <span>Image editing unavailable</span>
+        )}
+        {codex && (
+          <span>
+            Files are workspace references. Native image, audio and video recognition is
+            unavailable.
+          </span>
         )}
         <span className="keyboard-hint" id="composer-keyboard-hint">
           Enter for a new line · Ctrl / Cmd + Enter to send

@@ -246,3 +246,18 @@ export interface Thread {
 }
 export const isActive = (status?: Status) =>
   !!status && ['queued', 'running', 'compacting', 'cancelling'].includes(status);
+
+export interface CodexCapability {
+  supported: boolean;
+  qualification: 'source' | 'scripted_fixture' | 'native_fixture' | 'live' | 'not_tested';
+  reason: string;
+}
+export interface CodexHealth {
+  available?: boolean;
+  configured?: boolean;
+  version?: string | null;
+  readiness?: string;
+  protocolQualified?: boolean;
+  qualification?: string;
+  capabilityDetails?: Record<string, CodexCapability>;
+}

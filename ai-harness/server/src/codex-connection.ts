@@ -5,13 +5,15 @@ export type CodexMethod =
   | "thread/start"
   | "thread/resume"
   | "turn/start"
-  | "turn/interrupt";
+  | "turn/interrupt"
+  | "thread/compact/start";
 const METHODS = new Set<string>([
   "initialize",
   "thread/start",
   "thread/resume",
   "turn/start",
   "turn/interrupt",
+  "thread/compact/start",
 ]);
 export const isRecord = (v: unknown): v is Record<string, unknown> =>
   !!v && typeof v === "object" && !Array.isArray(v);
@@ -117,9 +119,13 @@ export class CodexConnection {
       this.buffer = this.buffer.slice(end + 1);
       try {
         this.message(JSON.parse(line));
-      } catch {
+      } catch (error) {
         this.fail(
-          new CodexProtocolError("Invalid or out-of-order App Server message"),
+          error instanceof CodexProtocolError
+            ? error
+            : new CodexProtocolError(
+                "Invalid or out-of-order App Server message",
+              ),
         );
       }
     }

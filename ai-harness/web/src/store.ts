@@ -1,3 +1,4 @@
+import type { CodexHealth } from './types';
 import { api, ApiError, type Transport } from './api';
 import { healthAvailability, type HealthAvailability } from './availability';
 import { applyEvent, reconcileSnapshot } from './state';
@@ -22,6 +23,7 @@ export interface ViewState {
   visionAvailable: boolean;
   healthLoaded: boolean;
   codexAvailable?: boolean;
+  codexHealth?: CodexHealth;
   serviceAvailability?: HealthAvailability;
   imageCapabilities: ImageCapabilities | null;
   imageCapabilitiesLoaded: boolean;
@@ -132,7 +134,11 @@ export class HarnessStore {
     const current = () => !this.closed && lifetime === this.lifetime;
     const unknown = () => {
       if (current())
-        this.update({ healthLoaded: true, codexAvailable: false, serviceAvailability: healthAvailability(undefined) });
+        this.update({
+          healthLoaded: true,
+          codexAvailable: false,
+          serviceAvailability: healthAvailability(undefined),
+        });
     };
     const deadline = setTimeout(() => {
       read.abort();
@@ -144,6 +150,7 @@ export class HarnessStore {
       this.update({
         visionAvailable: health.visionAvailable === true,
         codexAvailable: health.engines?.codex?.available === true,
+        codexHealth: health.engines?.codex,
         healthLoaded: true,
         serviceAvailability: healthAvailability(health.availability),
       });
@@ -598,6 +605,27 @@ export class HarnessStore {
           submitted: { ...this.state.submitted, [id]: settled ? undefined : [runId] },
         });
         if (this.state.selectedId === id) void this.resync();
+      },
+    );
+  };
+  reuseFile = (id: string, fileId: string) => {
+    if (
+      !this.transport.reference ||
+      this.state.busy[busyKey('send', id)] ||
+      this.state.busy[busyKey('delete', id)]
+    )
+      return Promise.resolve(false);
+    return this.action(
+      'upload',
+      id,
+      () => this.transport.reference!(id, fileId),
+      ({ attachment }) => {
+        this.update({
+          attachments: {
+            ...this.state.attachments,
+            [id]: [...(lookup(this.state.attachments, id) ?? []), attachment],
+          },
+        });
       },
     );
   };
