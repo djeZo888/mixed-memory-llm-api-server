@@ -108,7 +108,10 @@ Root-owned system unit runs as user:user. systemd LoadCredential reads EXISTING
 `/home/user/.config/sova-private/bmc.json` and
 `/home/user/.config/ai-harness/node-control-key`; transient service-private copies
 are `/run/credentials/sova-cha-fan3.service/{bmc.json,node-control-key}`. Original
-credentials stay untouched. ProtectHome/ProtectSystem/PrivateDevices isolate
+credentials stay untouched. The two exact runtime credential filenames accept
+root:root0440 systemd presentation (observed on this host); other files still
+reject group/world access. No original credential permission is changed.
+ProtectHome/ProtectSystem/PrivateDevices isolate
 service access; only StateDirectory writable. No secret enters Git/evidence.
 
 Systemd creates `/var/lib/sova-cha-fan3` and its controller.lock, baseline.json,

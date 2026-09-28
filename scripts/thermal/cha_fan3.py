@@ -82,6 +82,13 @@ def protected(path, maximum=8192, *, missing_ok=False):
     except OSError:
         raise Fault('protected_file_unavailable') from None
 
+def valid_file_meta(path, s):
+    systemd_credential = (Path(path) in (CREDS / 'bmc.json', CREDS / 'node-control-key')
+                          and s.st_uid == 0 and s.st_gid == 0
+                          and stat.S_IMODE(s.st_mode) == 0o440)
+    return (stat.S_ISREG(s.st_mode) and s.st_uid in (0, os.getuid())
+            and (not s.st_mode & 0o077 or systemd_credential) and s.st_nlink == 1)
+
 def _protected(path, maximum=8192):
     path = Path(path)
     for parent in reversed(path.parents):
@@ -91,7 +98,7 @@ def _protected(path, maximum=8192):
     fd = os.open(path, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
     with os.fdopen(fd, 'rb') as f:
         s = os.fstat(f.fileno())
-        if not stat.S_ISREG(s.st_mode) or s.st_uid not in (0, os.getuid()) or s.st_mode & 0o077 or s.st_nlink != 1:
+        if not valid_file_meta(path, s):
             raise Fault('unprotected_file')
         raw = f.read(maximum + 1)
     if len(raw) > maximum:

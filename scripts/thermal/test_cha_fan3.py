@@ -8,6 +8,7 @@ import stat
 from pathlib import Path
 import tempfile
 import unittest
+from types import SimpleNamespace
 from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('fan', Path(__file__).with_name('cha_fan3.py'))
@@ -276,6 +277,15 @@ class ControllerTests(unittest.TestCase):
         self.assertIn('not_measured_pwm',c.proof['readback_kind'])
 
 class StoreTests(unittest.TestCase):
+    def test_systemd_0440_exception_is_exact_and_root_only(self):
+        meta=SimpleNamespace(st_mode=stat.S_IFREG|0o440,st_uid=0,st_gid=0,st_nlink=1)
+        self.assertTrue(f.valid_file_meta(f.CREDS/'bmc.json',meta))
+        self.assertTrue(f.valid_file_meta(f.CREDS/'node-control-key',meta))
+        for path in (f.STATE/'status.json',f.BMC_FILE,f.CREDS/'other',Path('/tmp/bmc.json')):
+            self.assertFalse(f.valid_file_meta(path,meta))
+        for change in ({'st_uid':123},{'st_gid':123},{'st_mode':stat.S_IFREG|0o444},{'st_nlink':2}):
+            changed=SimpleNamespace(**{**vars(meta),**change})
+            self.assertFalse(f.valid_file_meta(f.CREDS/'bmc.json',changed))
     def test_empty_real_store_controller_bootstrap(self):
         with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:
             os.chmod(p,0o700);s=f.Store(p)
