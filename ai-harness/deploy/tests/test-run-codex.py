@@ -10,7 +10,8 @@ base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base.LAUNCHER = Path(__file__).resolve().parents[1] / 'run-codex.sh'
 base.REVISION = '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'
-base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest()
+base.IMAGE_ID = 'sha256:17dae2a64865c2a09cd00c85e492bc0cdca3674d25ae9be8f6bb64a0c82c219d'
+base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest()
 
 class CodexLauncherContract(base.LauncherContract):
     def test_acp_transport_mounts_and_environment_allowlist(self):
@@ -32,6 +33,12 @@ class CodexLauncherContract(base.LauncherContract):
         for flag in ['--pull=never','--read-only','--init','--cgroup-parent=aiharnesstasks.slice','no-new-privileges']:self.assertIn(flag,run)
         self.assertEqual(calls[-2]['argv'],['--remote=false','rm','--force','--time','20','--ignore',name])
         self.assertEqual(calls[-1]['argv'],['--remote=false','container','exists',name])
+    def test_image_catalog_requires_trusted_launcher_flag(self):
+        result=self.invoke(['--profile-dir',str(self.profile),'--workspace',str(self.workspace),'--image-jobs-qualified'])
+        self.assertEqual(result.returncode,0,result.stderr)
+        run=self.calls()[-3]['argv']
+        self.assertIn(f'{base.LAUNCHER.parent}/codex/config-image-jobs.toml:{self.profile}/codex-home/config.toml:ro,rprivate',run)
+        self.assertNotIn('--image-jobs-qualified',run)
     def test_symlinked_engine_state_rejected(self):
         (self.profile/'codex-home').symlink_to(self.home,target_is_directory=True)
         result=self.invoke();self.assertEqual(result.returncode,64)

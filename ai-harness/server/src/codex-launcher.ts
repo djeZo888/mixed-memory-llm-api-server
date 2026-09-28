@@ -10,6 +10,8 @@ export interface CodexLaunchInput {
     gatewayUrl: string;
     gatewayToken: string;
     modelPolicyVersion: string;
+    /** Set only by trusted host composition, never chat input. */
+    imageJobsQualified?: boolean;
 }
 export interface OwnedCodexProcess {
     stdin: Writable;
@@ -30,7 +32,7 @@ export function createRootlessCodexLauncher(launcherPath: string): (input: Codex
             throw Error("Unqualified Codex rootless policy");
         const env: NodeJS.ProcessEnv = { PATH: "/usr/bin:/bin", HOME: process.env.HOME, USER: process.env.USER, LOGNAME: process.env.LOGNAME,
             AI_HARNESS_SESSION_ID: input.sessionId, AI_HARNESS_GATEWAY_URL: input.gatewayUrl, AI_HARNESS_GATEWAY_TOKEN: input.gatewayToken };
-        const child = spawn(launcherPath, ["--profile-dir", input.profileDir, "--workspace", input.workspace], { env, stdio: ["pipe", "pipe", "pipe"] });
+        const child = spawn(launcherPath, ["--profile-dir", input.profileDir, "--workspace", input.workspace, ...(input.imageJobsQualified === true ? ["--image-jobs-qualified"] : [])], { env, stdio: ["pipe", "pipe", "pipe"] });
         // The supervisor redacts; discard all stderr here (no credential/error echo).
         child.stderr.resume();
         let status: number | null | undefined;

@@ -22,8 +22,8 @@ CREATE TABLE quarantined_workspaces(id TEXT PRIMARY KEY,reason TEXT NOT NULL);
 CREATE TABLE h021_session_engines(session_id TEXT PRIMARY KEY REFERENCES sessions(id),engine_kind TEXT NOT NULL,engine_version TEXT,model_policy_version TEXT,workspace_id TEXT NOT NULL,active_turn_id TEXT,event_cursor INTEGER NOT NULL DEFAULT 0,ownership TEXT NOT NULL DEFAULT 'idle');
 CREATE TABLE h021_gateway_requests(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,state TEXT NOT NULL,record TEXT NOT NULL);
 CREATE TABLE h003_image_jobs(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,request_id TEXT NOT NULL,data TEXT NOT NULL,UNIQUE(session_id,request_id));
-CREATE TABLE h003_image_lane(id INTEGER PRIMARY KEY,lane TEXT NOT NULL);
-CREATE TABLE h005_image_ownership(id INTEGER PRIMARY KEY,uncertain INTEGER NOT NULL);
+CREATE TABLE h003_image_lane(id INTEGER PRIMARY KEY CHECK(id=1),state TEXT NOT NULL);
+CREATE TABLE h005_image_ownership(id INTEGER PRIMARY KEY CHECK(id=1),uncertain INTEGER NOT NULL CHECK(uncertain IN (0,1)));
 """
 
 
@@ -184,6 +184,10 @@ class SettlementTests(unittest.TestCase):
 
     def test_missing_or_unknown_engine_rejects(self):
         self.db.execute("UPDATE h021_session_engines SET engine_kind='unknown'")
+        self.db.commit()
+        with self.assertRaises(AssertionError):
+            helper.readback(self.db, self.query, self.binding)
+        self.db.execute("DELETE FROM h021_session_engines")
         self.db.commit()
         with self.assertRaises(AssertionError):
             helper.readback(self.db, self.query, self.binding)

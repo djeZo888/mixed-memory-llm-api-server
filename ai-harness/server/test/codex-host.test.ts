@@ -30,3 +30,9 @@ test('trusted bounded child gate matches managed max4 while image remains indepe
  const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeDelegationQualified:true,qualifiedAliases:['qwen3.8-27b-gpu0'],verifyLane:async()=>{throw Error('not invoked');}});
  assert.equal(host.runtime.delegationEnabled,true);assert.equal(host.runtime.maxChildren,4);assert.equal(host.runtime.imageToolEnabled,false);assert.deepEqual(host.responses?.qualifiedAliases,['qwen3.8-27b-gpu0']);
 });
+
+test('trusted image gate enables specialist independently and safe diagnostics are wired without tracing',()=>{
+ const onResponsesError=()=>{};
+ const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,imageJobsQualified:true,onResponsesError,verifyLane:async()=>{throw Error('not invoked');}});
+ assert.equal(host.runtime.imageToolEnabled,true);assert.equal(host.runtime.delegationEnabled,false);assert.equal(host.responses?.onError,onResponsesError);assert.equal('onTrace' in host.responses!,false);assert.equal(host.responses?.outputLimit,undefined);
+});
