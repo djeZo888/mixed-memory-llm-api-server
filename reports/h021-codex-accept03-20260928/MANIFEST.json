@@ -1,6 +1,6 @@
 {
   "privateTaskRoot": "/Users/agent/CodexProjects/llm-orchestration/tasks/H021-ACCEPT03-20260928",
-  "generatedUtc": "2026-09-28T06:50:27.210543+00:00",
+  "generatedUtc": "2026-09-28T06:53:01.521765+00:00",
   "rawEvidenceCommitted": false,
   "files": [
     {
@@ -10,8 +10,8 @@
     },
     {
       "path": "DOWNLOAD-CHECKPOINT.json",
-      "bytes": 1332,
-      "sha256": "7f3d0917ac0aac6f33e1ec5f98f9bc7fa4adb7a4d18640212c509c14ab90c108"
+      "bytes": 1596,
+      "sha256": "f221398081c6c76a6d1b9df9d1266ee14c4110685e905811e2d25bd5516060fb"
     },
     {
       "path": "EARLY.json",
@@ -77,6 +77,11 @@
       "path": "evidence/download-fixed.pdf",
       "bytes": 13264,
       "sha256": "3df79d34abbca99308e79cb94461c1893582604d68329a41fd4bec1885e6adb4"
+    },
+    {
+      "path": "evidence/download-no-retry.tap",
+      "bytes": 470,
+      "sha256": "4fb1f90f19a22715acd785d1ee0d630bb3523bd6fb556e9060b3d6a86dd58d4f"
     },
     {
       "path": "evidence/download-unit.tap",

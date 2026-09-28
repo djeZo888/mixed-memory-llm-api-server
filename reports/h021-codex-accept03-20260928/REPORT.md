@@ -12,7 +12,7 @@ Native executor session `01a0e6b3-3461-7e13-9302-d3d09d8f73cb` started
 `9ee552dcc8fd5086c97d47eea33828c8e0cf15c5`; root-provided namespace repair
 fast-forwarded to `dd0535e80df3665ebe39946033f2e175b15253e7`. Implementation
 commits: `2f2e478` browser guard, `747c8be` batch runner, `fd116f1` input hashes,
-`d27200c` inline download repair.
+`d27200c` inline download repair and `3a69a37` explicit zero retries.
 No push or subagents. Wrapper records actual exit after this terminal checkpoint.
 
 | Check | Result | Qualification |
@@ -52,13 +52,13 @@ The direct source PDF and created summary are legible, single-page fixtures with
 accuracy or model answer correctness. Local diagnosis confirmed the download failure mechanism: W3 responds200 with
 application/pdf and Chromium renders inline without a download event. The approved
 repair uses a browser-context GET with at most5 manually validated redirects,
-a20s GET deadline, explicit HTTP/body-size rejection and response disposal. The
+a20s GET deadline, explicit maxRetries0, HTTP/body-size rejection and response disposal. The
 20MiB limit is honestly an accepted-artifact limit after buffering. Actual Mac
 repair download is13264 bytes, SHA256
 `3df79d34abbca99308e79cb94461c1893582604d68329a41fd4bec1885e6adb4`, and
 pypdf reads one page containing Dummy PDF file. Linux MCP repeat remains pending
 a new exact window; the original failure is preserved. Final browser source
-SHA256 is `d632ecd7562af81d66f2bde25011ffd489dfea77eaf38b736d4a69eebd343f08`.
+SHA256 is `c874973d6bd48df542f0956dad16fe93c21c7448097dcc3956abd011040d0769`.
 W1 must incorporate it into its owned policy/image hashes before deployment.
 
 The actual W1 Linux captures confirm the seven-word fixture instruction override
