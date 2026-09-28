@@ -1,0 +1,75 @@
+{
+  "scope": "offline source and fixture only",
+  "sourceRevision": "4c413c548a68a629c1187e7e97edd2a537d75955",
+  "recordedUtc": "2026-09-28T05:40:30.005695+00:00",
+  "commands": [
+    {
+      "command": "npm test --prefix ai-harness/server",
+      "exitCode": 0,
+      "result": "PASS",
+      "tests": 445,
+      "passed": 445,
+      "failed": 0,
+      "log": "server-regression-final.tap"
+    },
+    {
+      "command": "npm test --prefix ai-harness/web",
+      "exitCode": 0,
+      "result": "PASS",
+      "tests": 180,
+      "passed": 180,
+      "failed": 0,
+      "log": "web-regression-final.txt"
+    },
+    {
+      "command": "npm run build --prefix ai-harness/server",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "server-build.txt"
+    },
+    {
+      "command": "npm run build --prefix ai-harness/web",
+      "exitCode": 0,
+      "result": "PASS",
+      "log": "web-build.txt"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "result": "PASS"
+    }
+  ],
+  "pinReview": {
+    "schemaFiles": 314,
+    "typeFiles": 732,
+    "individualHashes": "PASS",
+    "canonicalManifestHashes": "PASS",
+    "licenseNoticeHashes": "PASS",
+    "outgoingRPCSchemaValidation": "PASS"
+  },
+  "notTested": [
+    "W2 native Codex execution",
+    "W2 Linux runtime/isolation",
+    "live Qwen inference",
+    "live MiMo inference",
+    "real tool/delegation/compaction recall",
+    "browser visual acceptance",
+    "deployment/rollback",
+    "final integrated W1 gateway ownership transition callsites"
+  ],
+  "initialFailures": {
+    "serverRegression": "422 PASS / 2 FAIL before updating additive health assertion and stale descriptive registry assertion",
+    "fixtureSetup": [
+      "SQL placeholder count corrected",
+      "dynamic environment.now excluded from equality",
+      "nonexistent eventsAfter fixture helper replaced with allEvents"
+    ]
+  },
+  "limitations": [
+    "Existing MiniMax/MiMo HTTP400 unresolved",
+    "H019 benchmark untouched",
+    "Codex default disabled",
+    "MiniMax default preserved",
+    "No hosted inference/auth/search fallback enabled"
+  ]
+}

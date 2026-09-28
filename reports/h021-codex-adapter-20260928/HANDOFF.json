@@ -1,0 +1,46 @@
+{
+  "task": "H021 ADAPTER01 W2",
+  "status": "SOURCE_FIXTURE_CHECKPOINT_COMPLETE_INTEGRATION_BLOCKED",
+  "sessionID": "01a0e66d-1580-76b2-8dbe-a3032af04cac",
+  "baseRevision": "06dd663ec6a481f5a8ff1e7fbd3cd1f3a4e694d2",
+  "sourceRevision": "4c413c548a68a629c1187e7e97edd2a537d75955",
+  "startedUtc": "2026-09-28T05:11:43.351376+00:00",
+  "hardDeadlineUtc": "2026-09-28T05:51:43.351376+00:00",
+  "checkpointUtc": "2026-09-28T05:40:30.005695+00:00",
+  "actualExit": null,
+  "actualExitOwner": "external run.sh writes ../exit-code and ../finished-utc after native CLI exits",
+  "commits": [
+    "9d8b1db00498b0eabaf8284c27da2bc60598bbb6 Persist immutable engine identity and gate optional Codex preview",
+    "006e9cd217cc5b57ec728ef454a3b4d2dfca954b Add pinned private Codex lifecycle with per-turn ownership settlement",
+    "0ffd38c9b919aa387ef1000a88eb98d4eda76bde Stream native deltas and retain uncertain launcher ownership",
+    "4c413c548a68a629c1187e7e97edd2a537d75955 Label native latest-request context as estimated and fix local endpoint"
+  ],
+  "tests": {
+    "server": "445/445 PASS",
+    "web": "180/180 PASS",
+    "builds": "PASS"
+  },
+  "codexPreviewEnabled": false,
+  "rootReviewRequired": true,
+  "blockers": [
+    "Final W1 gateway/Responses/rootless launcher integration and durable ownership wiring not present in this isolated checkout",
+    "Actual Linux task isolation, shared-admission protocol/live acceptance and exact deployment review remain required"
+  ],
+  "preserved": [
+    "MiniMax default/native sessions",
+    "original histories/files",
+    "H020 status and deployed active MiMo selector",
+    "paused application",
+    "H019 benchmark untouched"
+  ],
+  "forbiddenActionsPerformed": [],
+  "handoffFiles": [
+    "SOURCE.patch",
+    "SOURCE.bundle",
+    "TESTS.json",
+    "HANDOFF.json",
+    "HANDOFF.md",
+    "CONTRACT.md"
+  ],
+  "report": "reports/h021-codex-adapter-20260928/README.md"
+}
