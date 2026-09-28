@@ -5,5 +5,5 @@ USER root
 COPY codex-x86_64-unknown-linux-musl /opt/sova/bin/codex
 COPY config.toml requirements.toml models.json /opt/sova/codex/
 RUN echo "167c0148a849d2444f1b5a7fb5f8bb2de1de5ae13a2a504b833fc765980f5cd9  /opt/sova/bin/codex" | sha256sum -c - && chmod 0555 /opt/sova/bin/codex && mkdir -p /etc/codex && cp /opt/sova/codex/requirements.toml /etc/codex/requirements.toml && chmod 0444 /etc/codex/requirements.toml /opt/sova/codex/*
-LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="8c04bc5027440a79c5e7845d4092e4dd86334fd0c7c379fd5a698ffe6e62029b"
+LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="b15fe65487835a79103cb9565a862f7c2cf5ffebfe45fcfd08491027be419a9f"
 ENTRYPOINT ["/opt/sova/bin/codex", "app-server", "--listen", "stdio://"]

@@ -19,6 +19,8 @@ export interface ResponsesTranslation {
     tools: Map<string, {
         custom: boolean;
         grammar: boolean;
+        namespace?: string;
+        originalName?: string;
     }>;
 }
 // Exact upstream grammar hash; arbitrary grammars cannot be safely approximated.
@@ -92,10 +94,36 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
     const tools = new Map<string, {
         custom: boolean;
         grammar: boolean;
+        namespace?: string;
+        originalName?: string;
     }>();
     if (!Array.isArray(b.tools))
         reject("tools must be an array");
-    const chatTools = b.tools.map((t: any) => {
+    const namespaced = new Map<string, { namespace: string; originalName: string }>();
+    const expandedTools: any[] = [];
+    const namespaceNames = new Set<string>();
+    for (const t of b.tools) {
+        if (!object(t)) reject("Invalid tool");
+        if (t.type !== "namespace") {
+            if (typeof t.name === "string" && t.name.startsWith("sova_ns_")) reject("Reserved namespace transport name");
+            expandedTools.push(t); continue;
+        }
+        fields(t, ["type", "name", "description", "tools"]);
+        // Only the actual captured pinned namespace is qualified. No custom/nested forms.
+        if (t.name !== "multi_agent_v1" || namespaceNames.has(t.name) || !Array.isArray(t.tools) || !t.tools.length)
+            reject("Unsupported or duplicate namespace");
+        string(t.description); namespaceNames.add(t.name);
+        for (const inner of t.tools) {
+            if (!object(inner) || inner.type !== "function" || !["spawn_agent", "wait_agent", "send_input", "resume_agent", "close_agent"].includes(inner.name))
+                reject("Unsupported namespace tool");
+            fields(inner, ["type", "name", "description", "strict", "parameters"]);
+            const name = `sova_ns_${t.name.length}_${t.name}_${inner.name}`;
+            if (name.length > 64 || namespaced.has(name)) reject("Namespace transport collision or length");
+            namespaced.set(name, { namespace: t.name, originalName: inner.name });
+            expandedTools.push({ ...inner, name });
+        }
+    }
+    const chatTools = expandedTools.map((t: any) => {
         if (!object(t))
             reject("Invalid tool");
         const name = string(t.name);
@@ -105,7 +133,7 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             fields(t, ["type", "name", "description", "strict", "parameters"]);
             if (!object(t.parameters) || typeof t.strict !== "boolean")
                 reject("Invalid function schema");
-            tools.set(name, { custom: false, grammar: false });
+            tools.set(name, { custom: false, grammar: false, ...namespaced.get(name) });
             return { type: "function", function: { name, description: string(t.description), parameters: t.parameters, strict: t.strict } };
         }
         if (t.type !== "custom")
@@ -153,10 +181,13 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             messages.push({ role: item.role, content });
         }
         else if (["function_call", "custom_tool_call"].includes(item.type)) {
-            fields(item, ["type", "id", "call_id", "name", "arguments", "input", "status"]);
+            fields(item, ["type", "id", "call_id", "name", "namespace", "arguments", "input", "status"]);
             if (pending.size && messages.at(-1)?.role === "tool")
                 reject("Interleaved new tool calls before pending results");
-            const id = string(item.call_id), name = string(item.name), custom = item.type === "custom_tool_call";
+            const id = string(item.call_id), originalName = string(item.name), custom = item.type === "custom_tool_call";
+            if (item.namespace != null && (item.namespace !== "multi_agent_v1" || custom)) reject("Unsupported history namespace");
+            const name = item.namespace == null ? originalName : `sova_ns_${item.namespace.length}_${item.namespace}_${originalName}`;
+            if (item.namespace == null && originalName.startsWith("sova_ns_")) reject("Transport name is not a native history identity");
             if (!id || calls.has(id))
                 reject("Duplicate tool call ID");
             const spec = tools.get(name);
@@ -336,7 +367,7 @@ export class ResponsesStream {
                     throw Error("Invalid custom tool input");
                 args = wrapper.input;
             }
-            const output_index = this.output.length, id = "fc_" + randomUUID(), type = spec.custom ? "custom_tool_call" : "function_call", key = spec.custom ? "input" : "arguments", item = { id, type, call_id: c.id, name: c.name, status: "completed", [key]: args };
+            const output_index = this.output.length, id = "fc_" + randomUUID(), type = spec.custom ? "custom_tool_call" : "function_call", key = spec.custom ? "input" : "arguments", item = { id, type, call_id: c.id, name: spec.originalName ?? c.name, ...(spec.namespace ? { namespace: spec.namespace } : {}), status: "completed", [key]: args };
             this.emit("response.output_item.added", { output_index, item: { ...item, status: "in_progress", [key]: "" } });
             this.emit(spec.custom ? "response.custom_tool_call_input.delta" : "response.function_call_arguments.delta", { output_index, item_id: id, delta: args });
             this.emit(spec.custom ? "response.custom_tool_call_input.done" : "response.function_call_arguments.done", { output_index, item_id: id, [key]: args });

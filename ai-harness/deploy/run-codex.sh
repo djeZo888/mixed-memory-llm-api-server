@@ -110,7 +110,7 @@ rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless
 
 image_tag=localhost/sova-codex:0.158.0-h021
 revision=064c6b8c737f5b41d171fdda80bd9ef10ad06eb3
-patchset=8c04bc5027440a79c5e7845d4092e4dd86334fd0c7c379fd5a698ffe6e62029b
+patchset=b15fe65487835a79103cb9565a862f7c2cf5ffebfe45fcfd08491027be419a9f
 image_metadata=$("$podman_bin" --remote=false image inspect --format '{{.Id}}|{{index .Labels "org.opencontainers.image.revision"}}|{{index .Labels "org.opencontainers.image.ai-harness.patchset"}}' "$image_tag" 2>/dev/null) || die 'reviewed engine image is absent; build it separately after bootstrap'
 image_id=${image_metadata%%|*}
 image_labels=${image_metadata#*|}
@@ -120,7 +120,7 @@ image_patchset=${image_labels#*|}
 
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml','requirements.toml','models.json'])).hexdigest() == '8c04bc5027440a79c5e7845d4092e4dd86334fd0c7c379fd5a698ffe6e62029b'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml','requirements.toml','models.json'])).hexdigest() == 'b15fe65487835a79103cb9565a862f7c2cf5ffebfe45fcfd08491027be419a9f'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the

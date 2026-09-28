@@ -2,7 +2,7 @@
 model_provider = "sova"
 model_catalog_json = "/opt/sova/codex/models.json"
 allowed_approval_policies = ["never"]
-allowed_sandbox_modes = ["danger-full-access"]
+allowed_sandbox_modes = ["read-only", "danger-full-access"]
 allowed_web_search_modes = ["disabled"]
 check_for_update_on_startup = false
 allow_login_shell = false
