@@ -3,7 +3,7 @@ from contract import LANES, Refusal, digest, number, require, utc_seconds
 
 THROTTLE = ('hw_thermal_slowdown', 'sw_thermal_slowdown', 'hw_power_brake_slowdown')
 
-def validate_sample(m, row, now, baseline=None):
+def validate_sample(m, row, now, baseline=None, previous=None, guest_swap_streak=0):
     """Return normalized diagnostics and exact fault scopes; unknown never means cancel-all."""
     faults = []
     def fault(reason, lane=None, stop_exact=False):
@@ -71,8 +71,13 @@ def validate_sample(m, row, now, baseline=None):
                 all(type(v) is int and v >= 0 for v in guest['cpu_ticks']), 'guest_CPU_missing')
         if guest['ram_available_bytes'] < guest['ram_total_bytes']*m['guard']['min_guest_ram_fraction']:
             fault('guest_RAM_reserve_loss')
-        if baseline is not None and any(guest[k] > baseline['guest'][k] for k in ('swap_in', 'swap_out')):
-            fault('guest_swap_activity_requires_scope_review')
+        # H013: five consecutive sample-to-sample increases, not growth since
+        # phase baseline. One transient bump must not become a persistent streak.
+        swap_increased = previous is not None and any(
+            guest[k] > previous['guest'][k] for k in ('swap_in', 'swap_out'))
+        guest_swap_streak = guest_swap_streak+1 if swap_increased else 0
+        if guest_swap_streak >= 5:
+            fault('sustained_swap_io_5_intervals')
         kernel = row['kernel']
         require(kernel.get('read_ok') is True and isinstance(kernel.get('events'), list), 'kernel_monitor_lost')
         for event in kernel['events']:
@@ -89,7 +94,9 @@ def validate_sample(m, row, now, baseline=None):
                        'three_blackwell_draw_w': sum(row['gpu'][m['lanes'][l]['gpu_uuid']]['power_draw_w'] for l in LANES[:3]),
                        'ada_draw_w': row['gpu'][m['lanes']['image']['gpu_uuid']]['power_draw_w'],
                        'host_CPU_package_wall_PSU_power': 'UNAVAILABLE_NOT_MEASURED',
-                       'guest_cpu_busy_fraction': None}
+                       'guest_cpu_busy_fraction': None,
+                       'guest_swap_increased': swap_increased,
+                       'guest_swap_consecutive_intervals': guest_swap_streak}
         if baseline is not None:
             ticks = guest['cpu_ticks']
             prev = baseline['guest']['cpu_ticks']

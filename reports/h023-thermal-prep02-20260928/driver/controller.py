@@ -37,6 +37,7 @@ class Phase:
         self.escalations = []
         self.latest_sample = None
         self.baseline = None
+        self.guest_swap_streak = 0
         self.http_intervals = {l: [] for l in self.lanes}
         self.gpu_intervals = {l: [] for l in self.lanes}
         self.gpu_evidence = []
@@ -105,9 +106,11 @@ class Phase:
 
     def observe(self, sample):
         with self.lock:
-            diagnostics, faults = validate_sample(self.m, sample, self.clock()['monotonic'], self.baseline)
+            diagnostics, faults = validate_sample(self.m, sample, self.clock()['monotonic'], self.baseline,
+                                                 self.latest_sample, self.guest_swap_streak)
             self.journal.append('TELEMETRY', {'sample': sample, 'diagnostics': diagnostics, 'faults': faults})
             if diagnostics is not None:
+                self.guest_swap_streak = diagnostics['guest_swap_consecutive_intervals']
                 if self.baseline is None:
                     self.baseline = copy.deepcopy(sample)
                 self.latest_sample = copy.deepcopy(sample)

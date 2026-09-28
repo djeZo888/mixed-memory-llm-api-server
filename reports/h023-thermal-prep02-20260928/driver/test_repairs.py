@@ -59,6 +59,36 @@ class Repairs(unittest.TestCase):
   _,faults=p.observe(r);self.assertFalse(faults);self.assertEqual(p.latest_sample['cgroups']['mimo']['events']['max'],99)
   r['cgroups']['mimo']['events']['oom']=1
   _,faults=p.observe(r);self.assertIn({'reason':'cgroup_OOM_or_limit','lane':'mimo','stop_exact':True},faults)
+ def test_single_guest_swap_bump_does_not_persist_against_baseline(self):
+  p,m,c=self.phase()
+  for index in range(8):
+   c.advance();r=sample(m,c);r['guest']['swap_out']=261
+   d,faults=p.observe(r)
+   self.assertFalse(faults);self.assertEqual(d['guest_swap_consecutive_intervals'],1 if index==0 else 0)
+  self.assertEqual(p.baseline['guest']['swap_out'],0)
+  self.assertFalse(p.first_failure);self.assertFalse(p.admission_closed)
+ def test_five_consecutive_guest_swap_intervals_close_only_admission(self):
+  for counter in ('swap_in','swap_out','alternating'):
+   with self.subTest(counter=counter):
+    p,m,c=self.phase();values={'swap_in':0,'swap_out':0}
+    for index in range(1,6):
+     c.advance();r=sample(m,c)
+     values[('swap_in' if index%2 else 'swap_out') if counter=='alternating' else counter]+=1
+     r['guest'].update(values);d,faults=p.observe(r)
+     self.assertEqual(d['guest_swap_consecutive_intervals'],index)
+     self.assertEqual(bool(faults),index==5)
+    self.assertEqual(faults,[{'reason':'sustained_swap_io_5_intervals','lane':None,'stop_exact':False}])
+    self.assertTrue(p.admission_closed);self.assertFalse(p.stop_intents)
+ def test_quiet_interval_resets_guest_swap_streak_owned_swap_still_immediate(self):
+  p,m,c=self.phase()
+  for value,streak in ((1,1),(2,2),(3,3),(4,4),(4,0),(5,1)):
+   c.advance();r=sample(m,c);r['guest']['swap_out']=value
+   d,faults=p.observe(r);self.assertFalse(faults)
+   self.assertEqual(d['guest_swap_consecutive_intervals'],streak)
+  c.advance();r=sample(m,c);r['guest']['swap_out']=5;r['cgroups']['qwen1']['swap_current']=1
+  _,faults=p.observe(r)
+  self.assertIn({'reason':'owned_swap','lane':'qwen1','stop_exact':True},faults)
+  self.assertIn('qwen1',p.stop_intents)
  def test_top_error_preserves_exact_owned_receipts(self):
   from driver import failure_receipt
   p,m,c=self.phase();p.prepare('mimo',text_body(m,'mimo','fresh','x'),'fresh',proof(m,c,'mimo'))
