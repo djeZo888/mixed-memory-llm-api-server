@@ -39,6 +39,9 @@ BOOT_RE = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\Z')
 class Fault(Exception):
     """Only fixed, nonsecret reason codes belong in this exception."""
 
+class LoweringCancelled(Exception):
+    pass
+
 @contextmanager
 def bounded(seconds=3):
     def timeout(*_):
@@ -70,6 +73,12 @@ def utc():
     return datetime.now(timezone.utc).isoformat()
 
 def protected(path, maximum=8192):
+    try:
+        return _protected(path, maximum)
+    except OSError:
+        raise Fault('protected_file_unavailable') from None
+
+def _protected(path, maximum=8192):
     path = Path(path)
     for parent in reversed(path.parents):
         s = parent.lstat()
@@ -93,6 +102,7 @@ class BMC:
         self.last_login = None
         self.puts = 0
         self.logins = 0
+        self.before_put = None
 
     def secret(self):
         s = decode(protected(self.credential_file))
@@ -134,6 +144,9 @@ class BMC:
                 if method == 'PUT':
                     body = json.dumps(data, separators=(',', ':'))
                     h['Content-Type'] = 'application/json'
+                    if self.before_put is None:
+                        raise Fault('actuator_guard_missing')
+                    self.before_put(int(data['CurrentPWMdata'][1]))
                     self.puts += 1  # Attempt, not proof of success.
                 c.request(method, path, body=body, headers=h)
                 r = c.getresponse()
@@ -154,6 +167,8 @@ class BMC:
                         self.csrf = None
                         raise Fault('bmc_login_rejected')
                 return result
+            except (OSError, http.client.HTTPException):
+                raise Fault('bmc_transport_unavailable') from None
             finally:
                 c.close()
 
@@ -184,7 +199,7 @@ class BMC:
         value = r.get('Reading')
         if type(value) not in (int, float) or not math.isfinite(value) or value <= 0:
             raise Fault('tach_missing_or_stopped')
-        return {'value': value, 'units': r.get('ReadingUnits'), 'name': r['Name']}
+        return {'value': value, 'units': r.get('ReadingUnits'), 'name': r['Name'], 'at': utc()}
 
     def logout(self):
         if self.csrf:
@@ -331,10 +346,15 @@ class Store:
             return decode(protected(self.path / name, 65536))
         except FileNotFoundError:
             return None
-    def write(self, name, value):
-        held, named = os.fstat(self.fd), (self.path / 'controller.lock').lstat()
+    def assert_held(self):
+        try:
+            held, named = os.fstat(self.fd), (self.path / 'controller.lock').lstat()
+        except OSError:
+            raise Fault('controller_lock_unavailable') from None
         if (held.st_dev, held.st_ino) != (named.st_dev, named.st_ino):
             raise Fault('controller_lock_replaced')
+    def write(self, name, value):
+        self.assert_held()
         raw = (json.dumps(value, sort_keys=True) + '\n').encode()
         if len(raw) > 65536:
             raise Fault('status_size')
@@ -362,6 +382,9 @@ class Controller:
         self.expected = None
         self.baseline = store.read('baseline.json')
         self.proof = store.read('status.json') or {}
+        self.readback_at = self.proof.get('readback_at')
+        self.stopping = lambda: False
+        self.bmc.before_put = self.actuator_guard
         self.policy = Policy()
         self.last_write_at = None
         self.started_at = utc()
@@ -377,7 +400,12 @@ class Controller:
             self.store.write('baseline.json', inv)
         if inv != self.baseline:
             raise Fault('bmc_invariant_changed')
+        self.readback_at = utc()
         return s, duty
+    def actuator_guard(self, duty):
+        self.store.assert_held()
+        if duty == 40 and self.stopping():
+            raise LoweringCancelled()
     def command(self, s, current, desired):
         if desired == current:
             return s, current
@@ -385,6 +413,7 @@ class Controller:
                   'invariant_sha256': digest(self.baseline), 'state': 'prepared'}
         self.store.write('pending-write.json', intent)
         try:
+            self.actuator_guard(desired)
             self.bmc.call('PUT', PATHS[1], payload(s, desired))
             self.last_write_at = utc()
             after, readback = self.inspect()
@@ -392,6 +421,10 @@ class Controller:
                 raise Fault('bmc_write_readback_mismatch')
             self.store.write('pending-write.json', dict(intent, state='verified', readback_at=utc()))
             return after, readback
+        except LoweringCancelled:
+            self.expected = current
+            self.store.write('pending-write.json', dict(intent, state='verified', cancelled_before_send=True))
+            return s, current
         except Exception as e:
             # Keep uncertain original write separate from the reserved high attempt.
             try:
@@ -406,11 +439,11 @@ class Controller:
           'updated_at': utc(), 'state': state, 'errors': [error] if error else [],
           'desired_duty': self.expected, 'readback_duty': duty,
           'readback_kind': 'first_four_curve_duties_not_measured_pwm',
-          'readback_at': utc() if duty is not None else previous.get('readback_at'),
+          'readback_at': self.readback_at if duty is not None else previous.get('readback_at'),
           'last_known_readback_duty': duty if duty is not None else previous.get('last_known_readback_duty'),
           'actual_tach': tach['value'] if tach else previous.get('actual_tach'),
           'actual_tach_units': tach['units'] if tach else previous.get('actual_tach_units'),
-          'tach_at': utc() if tach else previous.get('tach_at'),
+          'tach_at': tach.get('at') if tach else previous.get('tach_at'),
           'last_write_at': self.last_write_at, 'bmc_put_attempts': self.bmc.puts,
           'bmc_logins': self.bmc.logins, 'invariant_sha256': digest(self.baseline),
           'source_bits': [0, 0, 0] if duty is not None else None,
@@ -502,9 +535,8 @@ class Controller:
             return False
 
 def transient(e):
-    return (isinstance(e, (OSError, http.client.HTTPException, json.JSONDecodeError))
-            or isinstance(e, Fault) and str(e) in {
-                'request_timeout', 'bmc_write_pending_readback', 'bmc_http_status', 'bmc_session_expired',
+    return (isinstance(e, Fault) and str(e) in {
+                'request_timeout', 'bmc_transport_unavailable', 'bmc_write_pending_readback', 'bmc_http_status', 'bmc_session_expired',
                 'bmc_session_missing', 'bmc_relogin_throttled', 'bmc_login_rejected',
                 'bmc_response_size', 'tach_identity_unavailable', 'tach_missing_or_stopped'})
 
@@ -542,6 +574,7 @@ def main():
     def stop(*_):
         nonlocal stopping
         stopping = True
+    ctl.stopping = lambda: stopping
     signal.signal(signal.SIGTERM, stop)
     signal.signal(signal.SIGINT, stop)
     try:

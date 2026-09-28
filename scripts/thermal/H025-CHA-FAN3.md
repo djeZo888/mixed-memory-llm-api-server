@@ -34,7 +34,10 @@ Startup/stop/failure/restart verifies >=80, preserving higher existing setting
 until fresh cooldown. It never restores75 or CPU source. Independent85C workload
 cutoff and existing83/85 safeguards remain W2/owner responsibilities.
 
-Writes occur only when command differs from actual curve readback. Complete
+Writes occur only when command differs from actual curve readback. The held/named
+controller lock and stop flag are checked immediately at the PUT send boundary;
+a stop during sampling cancels any lowering command. Local durable-state and
+credential errors are not classified as recoverable network outages. Complete
 readback validates other-zone/mode/source/knots invariant before/after writes.
 Overwrite/mismatch durably latches `blocked.json` (file and parent-directory
 fsync) BEFORE one safe-high attempt; source
@@ -83,6 +86,8 @@ source/UUID, current boot/PID instance, mode4/source_bits[0,0,0], desired equal
 readback40/80 (or retained higher100 with owner-reviewed proof), positive tach,
 all timestamps and source age <=15seconds. Blocked/degraded/starting/stopped,
 missing/stale status or bridge death must fail admission/settle through owner.
+Readback/tach timestamps retain actual successful acquisition time; publication
+and degraded-status refresh do not make older measurements fresh.
 `healthy` is controller/readback health; the separate idle actuator PASS receipt
 is also mandatory. Controller does not consume or depend on W2's task bridge.
 

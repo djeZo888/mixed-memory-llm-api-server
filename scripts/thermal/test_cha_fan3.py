@@ -38,10 +38,11 @@ class MemoryStore:
     def __init__(self): self.values={}
     def read(self,n): return copy.deepcopy(self.values.get(n))
     def write(self,n,v): self.values[n]=copy.deepcopy(v)
+    def assert_held(self): pass
 class FakeBMC:
     def __init__(self,d=75): self.s=snapshot(d);self.puts=0;self.logins=1;self.reject=False;self.csrf='synthetic'
     def snapshot(self): return copy.deepcopy(self.s)
-    def tach(self): return {'value':3000,'units':None,'name':'CHA_FAN3'}
+    def tach(self): return {'value':3000,'units':None,'name':'CHA_FAN3','at':f.utc()}
     def call(self,m,p,data):
         f.validate_payload(data);self.puts+=1
         if not self.reject:
@@ -185,7 +186,7 @@ class ControllerTests(unittest.TestCase):
         for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
         c.expected=40
         original=b.snapshot
-        with patch.object(b,'snapshot',side_effect=TimeoutError()):
+        with patch.object(b,'snapshot',side_effect=f.Fault('bmc_transport_unavailable')):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(c.proof['state'],'degraded_unknown')
         self.assertIsNone(s.read('blocked.json'))
@@ -197,7 +198,7 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make(40);c.start();c.recovering=False
         for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
         c.expected=40;original=b.snapshot
-        with patch.object(b,'snapshot',side_effect=[TimeoutError(),original(),snapshot(80)]):
+        with patch.object(b,'snapshot',side_effect=[f.Fault('bmc_transport_unavailable'),original(),snapshot(80)]):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(c.proof['state'],'degraded_high')
         self.assertEqual(c.proof['readback_duty'],80)
@@ -208,7 +209,7 @@ class ControllerTests(unittest.TestCase):
         self.assertFalse(f.transient(f.Fault('user_disabled_sources_changed')))
     def test_ambiguous_put_reconciles_read_only_no_replay(self):
         c,b,s=self.make(40);original=b.call
-        def ambiguous(*args):original(*args);raise TimeoutError()
+        def ambiguous(*args):original(*args);raise f.Fault('bmc_transport_unavailable')
         with patch.object(b,'call',side_effect=ambiguous):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(b.puts,1)
@@ -219,10 +220,10 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(b.puts,1)  # Fresh read proves high; NO replay.
     def test_ambiguous_put_absence_retries_reads_only(self):
         c,b,s=self.make(40);original=b.call
-        def ambiguous(*args):original(*args);raise TimeoutError()
+        def ambiguous(*args):original(*args);raise f.Fault('bmc_transport_unavailable')
         with patch.object(b,'call',side_effect=ambiguous):
             with self.assertRaisesRegex(f.Fault,'pending_readback'):c.start()
-        with patch.object(b,'snapshot',side_effect=TimeoutError()):
+        with patch.object(b,'snapshot',side_effect=f.Fault('bmc_transport_unavailable')):
             for _ in range(3):self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(b.puts,1)
         self.assertEqual(c.proof['state'],'degraded_unknown')
@@ -240,6 +241,35 @@ class ControllerTests(unittest.TestCase):
                 'invariant_sha256':f.digest(c.baseline)})
         with self.assertRaisesRegex(f.Fault,'ambiguous_write_conflicting'):c.cycle(FakeNode())
         self.assertEqual(b.puts,0)
+    def test_stop_during_telemetry_read_cancels_low(self):
+        c,b,s=self.make();c.start()
+        for t in range(0,30,5):c.step(FakeNode(),t)
+        node=FakeNode()
+        def read():c.stopping=lambda:True;return observed()
+        node.read=read;c.step(node,30)
+        self.assertEqual(b.puts,1);self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+    def test_actuator_guard_after_durable_intent(self):
+        c,b,s=self.make();c.start();original=s.write;lost=[False]
+        def write(n,v):original(n,v);lost[0]=n=='pending-write.json'
+        def held():
+            if lost[0]:raise f.Fault('controller_lock_replaced')
+        s.write=write;s.assert_held=held
+        with self.assertRaises(f.Fault):c.command(b.snapshot(),80,40)
+        self.assertEqual(b.puts,1)
+    def test_status_retains_acquisition_times(self):
+        c,b,s=self.make();c.start();c.readback_at='2000-01-01T00:00:00+00:00'
+        tach={'value':3000,'units':None,'at':'2000-01-01T00:00:01+00:00'}
+        c.status('healthy',80,observed(),tach=tach)
+        self.assertEqual(c.proof['readback_at'],'2000-01-01T00:00:00+00:00')
+        self.assertEqual(c.proof['tach_at'],tach['at'])
+        c.status('degraded_unknown',None,error='request_timeout')
+        self.assertEqual(c.proof['readback_at'],'2000-01-01T00:00:00+00:00')
+        self.assertEqual(c.proof['tach_at'],tach['at'])
+    def test_local_io_errors_are_not_transport_recovery(self):
+        self.assertFalse(f.transient(OSError('synthetic local fsync failure')))
+        self.assertFalse(f.transient(f.Fault('protected_file_unavailable')))
+        self.assertTrue(f.transient(f.Fault('bmc_transport_unavailable')))
     def test_status_unknown_units_and_compact(self):
         c,b,s=self.make();c.start();c.step(FakeNode(),0)
         self.assertIsNone(c.proof['actual_tach_units']);self.assertLess(len(json.dumps(c.proof)),4096)
