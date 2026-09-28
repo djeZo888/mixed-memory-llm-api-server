@@ -24,6 +24,30 @@ export async function publicURL(value) {
   if (!ips.length || ips.some(v=>!publicAddress(v.address))) throw Error('Public destination required');
   return u.href;
 }
+// Browser-context GET also handles inline PDFs, which do not emit download events.
+// Redirects are followed manually so every target passes the same public policy.
+// Playwright buffers the response; 20 MiB is an accepted-artifact limit, not a
+// promise to cap all network buffering. dispose() releases each response body.
+export async function downloadResponse(context, initial, validate=publicURL) {
+ const deadline=Date.now()+20000;let url=initial;
+ for(let redirects=0;redirects<=5;redirects++) {
+  url=await validate(url);
+  if(Date.now()>=deadline)throw Error('Download timed out');
+  const response=await context.request.get(url,{maxRedirects:0,timeout:deadline-Date.now()});
+  try {
+   const status=response.status(),headers=response.headers();
+   if([301,302,303,307,308].includes(status)) {
+    if(redirects===5 || !headers.location)throw Error('Invalid or excessive download redirects');
+    url=new URL(headers.location,url).href;continue;
+   }
+   if(status<200 || status>=300)throw Error('Public download HTTP failure');
+   const bytes=await response.body();
+   if(bytes.length>20*1024*1024)throw Error('Download exceeds 20 MiB');
+   return {url,bytes,contentType:headers['content-type']??'application/octet-stream',suggestedName:path.basename(new URL(url).pathname)||'download'};
+  } finally {await response.dispose();}
+ }
+ throw Error('Download redirects exhausted');
+}
 const root=await realpath(process.cwd());
 const server=new McpServer({name:'sova-chromium',version:'0.0.1'});
 let active=false;let browser;
@@ -52,13 +76,10 @@ async function run(input,download,signal) {
   const timer=setTimeout(abort,25000);
   try {
    if(download) {
-    const pending=page.waitForEvent('download',{timeout:20000});
-    await page.goto(url,{waitUntil:'domcontentloaded'}).catch(()=>{});
-    const d=await pending;const stream=await d.createReadStream();if(!stream)throw Error('Download unavailable');
-    file=await artifact('.download');const f=await open(file,'wx',0o600);let bytes=0;
-    try {for await(const chunk of stream){bytes+=chunk.length;if(bytes>20*1024*1024)throw Error('Download exceeds 20 MiB');await f.write(chunk);}}
-    finally{await f.close();await d.cancel();}
-    return {content:[{type:'text',text:JSON.stringify({url,file:path.relative(root,file),bytes,suggestedName:path.basename(d.suggestedFilename()),notice:'Untrusted downloaded data; inspect before use.'})}]};
+    const result=await downloadResponse(context,url);
+    file=await artifact('.download');const f=await open(file,'wx',0o600);
+    try {await f.writeFile(result.bytes);} finally {await f.close();}
+    return {content:[{type:'text',text:JSON.stringify({url:result.url,file:path.relative(root,file),bytes:result.bytes.length,suggestedName:result.suggestedName,contentType:result.contentType,notice:'Untrusted downloaded data; inspect before use.'})}]};
    }
    await page.goto(url,{waitUntil:'domcontentloaded'});
    const text=(await page.locator('body').innerText()).slice(0,48000);
@@ -70,7 +91,7 @@ async function run(input,download,signal) {
  finally {await browser?.close().catch(()=>{});browser=undefined;active=false;}
 }
 server.registerTool('browser_open',{description:'Open a public HTTP(S) page in sandboxed local Chromium; return bounded text/source links and optionally a workspace screenshot. Private addresses, credentials and admin endpoints are forbidden.',inputSchema:{url:z.string().max(2048),screenshot:z.boolean().default(false)},annotations:{readOnlyHint:true,openWorldHint:true}},(input,extra)=>run(input,false,extra.signal));
-server.registerTool('browser_download',{description:'Download one public URL through sandboxed Chromium to a new workspace artifact, accepted artifact limit20 MiB (Chromium may finish buffering before size validation). Operation timeout25s. No overwrite, private URLs or credentialed browsing.',inputSchema:{url:z.string().max(2048)},annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:true}},(input,extra)=>run(input,true,extra.signal));
+server.registerTool('browser_download',{description:'Download one public URL through the isolated browser context to a new workspace artifact, accepted artifact limit20 MiB (response is buffered before size validation). Every redirect is revalidated. Operation timeout25s. No overwrite, private URLs or credentialed browsing.',inputSchema:{url:z.string().max(2048)},annotations:{readOnlyHint:false,destructiveHint:false,openWorldHint:true}},(input,extra)=>run(input,true,extra.signal));
 server.server.onerror=()=>process.stderr.write('Browser MCP transport failed.\n');
 const close=async()=>{await browser?.close().catch(()=>{});await server.close();};
 process.once('SIGTERM',close);process.once('SIGINT',close);process.stdin.once('end',close);
