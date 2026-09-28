@@ -1,10 +1,11 @@
 /** Narrow, stateless Responses compatibility for the reviewed Codex pin.
  * Every request still enters the existing gateway admission and transport.
- * Client-carried history only. No encrypted/reconstructed internal reasoning.
+ * Client-carried history only. Plaintext reasoning requires a verified provider contract.
  */
 import { randomUUID, createHash } from "node:crypto";
 import { StringDecoder } from "node:string_decoder";
 import { ApiError } from "./errors.js";
+import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
 export const CODEX_VERSION = "0.158.0";
 export const CODEX_CONTEXT = { "qwen3.8-27b": 480000, "mimo-v2.6-pro-rl": 950000 } as const;
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -22,6 +23,7 @@ const NAMESPACE_TOOLS: Readonly<Record<string, readonly string[]>> = Object.free
 });
 export interface ResponsesTranslation {
     body: Record<string, any>;
+    provider: CodexProviderContract;
     tools: Map<string, {
         custom: boolean;
         grammar: boolean;
@@ -61,6 +63,7 @@ export type ResponsesDiagnostic = {
     status: "completed" | "incomplete";
     messageId?: string;
     text: ResponsesFingerprint;
+    reasoning?: ResponsesFingerprint;
     tools: ResponsesToolDiagnostic[];
     usage: { input_tokens: number; output_tokens: number; total_tokens: number };
 };
@@ -108,7 +111,7 @@ export function validPatch(text: string): boolean {
     }
     return hunks > 0;
 }
-export function translateResponses(value: unknown, outputLimit = 65536): ResponsesTranslation {
+export function translateResponses(value: unknown, outputLimit = 65536, selectedProvider?: CodexProviderContract): ResponsesTranslation {
     if (!Number.isSafeInteger(outputLimit) || outputLimit < 1 || outputLimit > 65536)
         throw Error("Invalid trusted Responses output limit");
     if (!object(value))
@@ -117,6 +120,13 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
     fields(b, ["model", "instructions", "input", "tools", "tool_choice", "parallel_tool_calls", "reasoning", "store", "stream", "include", "prompt_cache_key", "client_metadata", "max_output_tokens"]);
     if (typeof b.model !== "string" || !Object.hasOwn(CODEX_CONTEXT, b.model))
         reject("Unsupported local model");
+    const expectedProvider = codexProvider(b.model);
+    const selected = selectedProvider ?? expectedProvider;
+    if (Object.keys(expectedProvider).some(key =>
+        selected[key as keyof CodexProviderContract] !== expectedProvider[key as keyof CodexProviderContract]))
+        reject("Unqualified or mismatched provider contract");
+    // Retain the immutable reviewed descriptor, not a caller-mutable policy object.
+    const provider = expectedProvider;
     if (b.stream !== true || b.store !== false)
         reject("Only streaming stateless Responses are qualified");
     if (b.reasoning !== undefined && (!object(b.reasoning) || Object.keys(b.reasoning).length))
@@ -133,6 +143,8 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
         reject("Unsupported tool choice");
     if (typeof b.parallel_tool_calls !== "boolean")
         reject("parallel_tool_calls required");
+    if (!provider.parallelToolCalls && (b.parallel_tool_calls !== false || b.tool_choice !== "auto"))
+        reject("Provider requires qualified serial auto tool semantics");
     const output = b.max_output_tokens ?? outputLimit;
     if (!uint(output) || output < 1 || output > outputLimit)
         reject("Output reservation must be 1..65536");
@@ -209,6 +221,8 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
         custom: boolean;
     }>();
     const pending = new Set<string>();
+    let pendingReasoning: string | undefined;
+    let reasoningAssistant: any;
     if (b.instructions !== undefined)
         messages.push({ role: "system", content: string(b.instructions) });
     if (!Array.isArray(b.input))
@@ -225,7 +239,29 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             const content = item.content.map((c: any) => { if (!object(c))
                 reject("Invalid content"); fields(c, ["type", "text", "annotations"]); if (!["input_text", "output_text"].includes(c.type) || c.annotations?.length)
                 reject("Unsupported media or annotations"); return string(c.text); }).join("");
-            messages.push({ role: item.role, content });
+            if (pendingReasoning !== undefined && item.role !== "assistant")
+                reject("Reasoning must belong to the next assistant output");
+            const message = { role: item.role, content,
+                ...(pendingReasoning === undefined ? {} : { reasoning_content: pendingReasoning }) };
+            reasoningAssistant = pendingReasoning === undefined ? undefined : message;
+            pendingReasoning = undefined;
+            messages.push(message);
+        }
+        else if (item.type === "reasoning") {
+            fields(item, ["type", "id", "summary", "content", "encrypted_content"]);
+            if (provider.reasoning !== "mimo-plaintext" || pending.size || pendingReasoning !== undefined ||
+                item.encrypted_content != null || !Array.isArray(item.summary) || item.summary.length ||
+                !Array.isArray(item.content) || !item.content.length)
+                reject("Unqualified reasoning history");
+            if (item.id !== undefined) string(item.id);
+            pendingReasoning = item.content.map((part: any) => {
+                if (!object(part)) reject("Invalid plaintext reasoning");
+                fields(part, ["type", "text"]);
+                if (part.type !== "reasoning_text") reject("Unqualified reasoning content type");
+                return string(part.text);
+            }).join("");
+            if (!pendingReasoning) reject("Empty reasoning history lacks a verified contract");
+            reasoningAssistant = undefined;
         }
         else if (["function_call", "custom_tool_call"].includes(item.type)) {
             fields(item, ["type", "id", "call_id", "name", "namespace", "arguments", "input", "status"]);
@@ -247,14 +283,21 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             pending.add(id);
             let prior = messages.at(-1);
             if (!prior?.tool_calls) {
-                prior = { role: "assistant", content: null, tool_calls: [] };
-                messages.push(prior);
+                if (prior && prior === reasoningAssistant) prior.tool_calls = [];
+                else {
+                    prior = { role: "assistant", content: null, tool_calls: [],
+                        ...(pendingReasoning === undefined ? {} : { reasoning_content: pendingReasoning }) };
+                    messages.push(prior);
+                }
             }
+            if (pendingReasoning !== undefined) reasoningAssistant = prior;
+            pendingReasoning = undefined;
             prior.tool_calls.push({ id, type: "function", function: { name, arguments: args } });
         }
         else if (["function_call_output", "custom_tool_call_output"].includes(item.type)) {
             fields(item, ["type", "id", "call_id", "output", "status"]);
             const id = string(item.call_id), call = calls.get(id);
+            if (pendingReasoning !== undefined) reject("Reasoning cannot precede a tool result");
             if (!pending.delete(id) || !call || call.custom !== (item.type === "custom_tool_call_output"))
                 reject("Unmatched or duplicate tool result");
             let output = item.output;
@@ -263,10 +306,12 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
                     reject("Invalid tool output"); fields(c, ["type", "text"]); if (c.type !== "input_text")
                     reject("Unsupported tool media"); return string(c.text); }).join("");
             messages.push({ role: "tool", tool_call_id: id, content: string(output) });
+            reasoningAssistant = undefined;
         }
         else
             reject("Unsupported history item (including encrypted reasoning/response IDs)");
     }
+    if (pendingReasoning !== undefined) reject("Reasoning has no assistant output");
     if (pending.size)
         reject("Missing tool results");
     if (b.model === "qwen3.8-27b") {
@@ -280,12 +325,12 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             messages.splice(0, messages.length, { role: "system", content: "Sova Qwen policy adaptation: system instructions take priority over developer instructions; both take priority over user messages. Later instructions at the same priority resolve conflicts. The JSON below retains the original ordered instruction messages and zero-based translated-message positions. Apply their content at the stated priority; ordinary conversation history follows in its original order.\n" + JSON.stringify(policy) }, ...history);
         }
     }
-    return { tools, body: { model: b.model, ...(b.model === "qwen3.8-27b" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
+    return { provider, tools, body: { model: b.model, ...(provider.reasoning === "none" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
 }
 /** Bounded SSE converter. Native usage is required; no invented token counts. */
 /** Static diagnostics only: never include raw provider text or malformed JSON. */
 export function responsesFailureCode(error: unknown): string {
-    const known = new Set(['Data after terminal','SSE frame too large','Duplicate terminal','Invalid upstream chunk','Invalid usage','Invalid token details','Expected single choice','Invalid choice index','Unqualified reasoning field','Data after finish','Unsupported output media','Output bound exceeded','Invalid tool deltas','Invalid tool index/type','Changed call ID','Aggregate tool bound exceeded','Tool bound exceeded','Duplicate finish','Missing finish/usage','Tool finish mismatch','Invalid tool identity','Invalid custom tool input','Truncated or repeated Responses stream']);
+    const known = new Set(['Data after terminal','SSE frame too large','Duplicate terminal','Invalid upstream chunk','Invalid usage','Invalid token details','Expected single choice','Invalid choice index','Unqualified reasoning field','Interleaved reasoning output','Reasoning without assistant output','Data after finish','Unsupported output media','Output bound exceeded','Invalid tool deltas','Invalid tool index/type','Changed call ID','Aggregate tool bound exceeded','Tool bound exceeded','Duplicate finish','Missing finish/usage','Tool finish mismatch','Invalid tool identity','Invalid custom tool input','Truncated or repeated Responses stream']);
     if (error instanceof SyntaxError) return 'invalid_json';
     return error instanceof Error && known.has(error.message) ? error.message.toLowerCase().replaceAll(/[ /]+/g, '_') : 'unqualified_output';
 }
@@ -300,6 +345,9 @@ export class ResponsesStream {
     private finishReason: string | undefined;
     private responseId = "resp_" + randomUUID();
     private messageId = "msg_" + randomUUID();
+    private reasoningId = "rs_" + randomUUID();
+    private reasoning = "";
+    private reasoningStarted = false;
     private text = "";
     private textStarted = false;
     private usage: any;
@@ -314,6 +362,7 @@ export class ResponsesStream {
     private diagnose(event: ResponsesDiagnostic) {
         try { this.onDiagnostic?.(event); } catch { /* Observers cannot affect stream or owned settlement. */ }
     }
+    private get messageIndex() { return this.reasoningStarted ? 1 : 0; }
     private emit(type: string, fields: Record<string, any> = {}) { this.write(`event: ${type}\ndata: ${JSON.stringify({ type, sequence_number: this.sequence++, ...fields })}\n\n`); }
     private response(status: string) { return { id: this.responseId, object: "response", status, output: this.output, model: this.translation.body.model }; }
     push(chunk: Buffer) { if (this.ended) {
@@ -357,23 +406,38 @@ export class ResponsesStream {
             if (c.index !== 0 && c.index !== undefined)
                 throw Error("Invalid choice index");
             const d = c.delta ?? {};
-            if ([d.reasoning_content, d.reasoning].some(v => v !== undefined && v !== null && v !== ""))
+            if (d.reasoning !== undefined && d.reasoning !== null && d.reasoning !== "")
                 throw Error("Unqualified reasoning field");
-            if (this.finishReason && (d.content || d.tool_calls?.length))
+            if (this.finishReason && (d.content || d.tool_calls?.length || d.reasoning_content))
                 throw Error("Data after finish");
+            if (d.reasoning_content !== undefined && d.reasoning_content !== null && d.reasoning_content !== "") {
+                if (this.translation.provider.reasoning !== "mimo-plaintext" || typeof d.reasoning_content !== "string")
+                    throw Error("Unqualified reasoning field");
+                if (this.textStarted || this.calls.size) throw Error("Interleaved reasoning output");
+                if (!this.reasoningStarted) {
+                    this.reasoningStarted = true;
+                    this.emit("response.output_item.added", { output_index: 0, item: {
+                        id: this.reasoningId, type: "reasoning", summary: [], content: [], encrypted_content: null,
+                    } });
+                }
+                this.reasoning += d.reasoning_content;
+                if (this.reasoning.length > 4 * 1024 * 1024) throw Error("Output bound exceeded");
+                this.emit("response.reasoning_text.delta", { item_id: this.reasoningId, output_index: 0,
+                    content_index: 0, delta: d.reasoning_content });
+            }
             if (d.content !== undefined && d.content !== null) {
                 if (typeof d.content !== "string")
                     throw Error("Unsupported output media");
                 if (d.content) {
                     if (!this.textStarted) {
                         this.textStarted = true;
-                        this.emit("response.output_item.added", { output_index: 0, item: { id: this.messageId, type: "message", role: "assistant", status: "in_progress", content: [] } });
-                        this.emit("response.content_part.added", { item_id: this.messageId, output_index: 0, content_index: 0, part: { type: "output_text", text: "", annotations: [] } });
+                        this.emit("response.output_item.added", { output_index: this.messageIndex, item: { id: this.messageId, type: "message", role: "assistant", status: "in_progress", content: [] } });
+                        this.emit("response.content_part.added", { item_id: this.messageId, output_index: this.messageIndex, content_index: 0, part: { type: "output_text", text: "", annotations: [] } });
                     }
                     this.text += d.content;
                     if (this.text.length > 4 * 1024 * 1024)
                         throw Error("Output bound exceeded");
-                    this.emit("response.output_text.delta", { item_id: this.messageId, output_index: 0, content_index: 0, delta: d.content });
+                    this.emit("response.output_text.delta", { item_id: this.messageId, output_index: this.messageIndex, content_index: 0, delta: d.content });
                 }
             }
             if (d.tool_calls) {
@@ -381,6 +445,8 @@ export class ResponsesStream {
                     throw Error("Invalid tool deltas");
                 for (const t of d.tool_calls) {
                     if (!uint(t.index) || t.index > 127 || t.type !== undefined && t.type !== "function")
+                        throw Error("Invalid tool index/type");
+                    if (!this.translation.provider.parallelToolCalls && t.index !== 0)
                         throw Error("Invalid tool index/type");
                     const old = this.calls.get(t.index) ?? { id: "", name: "", arguments: "" };
                     if (t.id) {
@@ -417,12 +483,21 @@ export class ResponsesStream {
             throw Error("Missing finish/usage");
         if ((this.finishReason === "tool_calls") !== !!this.calls.size)
             throw Error("Tool finish mismatch");
+        if (this.reasoningStarted && !this.textStarted && !this.calls.size && this.finishReason === "stop")
+            throw Error("Reasoning without assistant output");
+        if (this.reasoningStarted) {
+            const item = { id: this.reasoningId, type: "reasoning", summary: [],
+                content: [{ type: "reasoning_text", text: this.reasoning }], encrypted_content: null };
+            this.emit("response.reasoning_text.done", { item_id: this.reasoningId, output_index: 0, content_index: 0, text: this.reasoning });
+            this.emit("response.output_item.done", { output_index: 0, item });
+            this.output.push(item);
+        }
         if (this.textStarted) {
             const part = { type: "output_text", text: this.text, annotations: [] };
             const item = { id: this.messageId, type: "message", role: "assistant", status: "completed", content: [part] };
-            this.emit("response.output_text.done", { item_id: this.messageId, output_index: 0, content_index: 0, text: this.text });
-            this.emit("response.content_part.done", { item_id: this.messageId, output_index: 0, content_index: 0, part });
-            this.emit("response.output_item.done", { output_index: 0, item });
+            this.emit("response.output_text.done", { item_id: this.messageId, output_index: this.messageIndex, content_index: 0, text: this.text });
+            this.emit("response.content_part.done", { item_id: this.messageId, output_index: this.messageIndex, content_index: 0, part });
+            this.emit("response.output_item.done", { output_index: this.messageIndex, item });
             this.output.push(item);
         }
         const ids = new Set<string>();
@@ -469,7 +544,7 @@ export class ResponsesStream {
         if (this.onDiagnostic) this.diagnose({ type: "response_terminal", responseId: this.responseId,
             model: this.translation.body.model, finishReason: this.finishReason as "stop" | "tool_calls" | "length",
             status: incomplete ? "incomplete" : "completed", ...(this.textStarted ? { messageId: this.messageId } : {}),
-            text: fingerprint(this.text), tools: diagnosticTools,
+            text: fingerprint(this.text), ...(this.reasoningStarted ? { reasoning: fingerprint(this.reasoning) } : {}), tools: diagnosticTools,
             usage: { input_tokens: this.usage.input_tokens, output_tokens: this.usage.output_tokens, total_tokens: this.usage.total_tokens } });
     }
     end() {

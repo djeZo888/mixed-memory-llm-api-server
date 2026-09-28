@@ -43,6 +43,8 @@ export interface CodexRuntime {
   readonly delegationEnabled?: boolean;
   readonly imageToolEnabled?: boolean;
   readonly maxChildren?: number;
+  /** Trusted host-reviewed child providers; absent keeps the Qwen-only boundary. */
+  readonly qualifiedChildModels?: readonly string[];
   /** W1/root supplies a reviewed rootless launcher. No host spawn/default executable exists here.
    * It must use the pinned Linux image, isolated CODEX_HOME, read-only trusted provider/tool
    * config, clean environment, restricted egress, disabled hosted auth/search/plugins/retries,
@@ -127,6 +129,7 @@ export class CodexEngine implements Engine {
       () => this.nativeId,
       options.onUpdate,
       runtime.maxChildren ?? 4,
+      runtime.qualifiedChildModels ?? ["qwen3.8-27b"],
     );
     this.nativeId = options.nativeSessionId;
     this.cursor = options.nativeState?.eventCursor ?? 0;
