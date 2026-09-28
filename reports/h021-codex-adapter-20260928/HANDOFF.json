@@ -23,6 +23,7 @@
   "codexPreviewEnabled": false,
   "rootReviewRequired": true,
   "blockers": [
+    "W1 queued-successor settlement race requires correction before concurrent pilot",
     "Final W1 gateway/Responses/rootless launcher integration and durable ownership wiring not present in this isolated checkout",
     "Actual Linux task isolation, shared-admission protocol/live acceptance and exact deployment review remain required"
   ],
@@ -42,5 +43,11 @@
     "HANDOFF.md",
     "CONTRACT.md"
   ],
-  "report": "reports/h021-codex-adapter-20260928/README.md"
+  "report": "reports/h021-codex-adapter-20260928/README.md",
+  "crossReview": {
+    "candidate": "9acd523fe4d5c155c56cc80ed9304953ed900c6d",
+    "patchSha256": "f3530d45ff055c3b89352d707c92b5beeee1fa1f404a237c9b759fd690900254",
+    "finding": "Gateway settleLane evaluates lane.state after synchronous reassignment to queued successor; old settled owner may be recorded uncertain. W1 fix and focused concurrency fixture required.",
+    "scope": "read-only source review; no W2 candidate execution"
+  }
 }
