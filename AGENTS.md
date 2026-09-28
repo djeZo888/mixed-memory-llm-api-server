@@ -1,18 +1,39 @@
-# Active H026 — quick Qwen power-cap comparison
+# Latest checkpoint — H026 complete; both guests shut down
 
-Latest user authorizes temporary550W and500W Qwen power limits and quick
-performance comparisons. This is a new bounded task, September28 21:03–21:30UTC;
-stop new measurements21:23. Root stated both Qwen cards sequentially after an
-optional scope clarification; later user steering wins. See
-`docs/h026-qwen-power-plan.md` for the600/550/500/600 drift-anchor method.
+H026 measured both warm Qwen GPUs at 600/550/500/600 W, plus one discarded
+warm-up per card. All ten requests settled at 21:18:54 UTC on September 28,
+2026. Actual input was about 64K tokens with 512 output; configured capacity
+stayed 480K. At 500 W, complete requests took 6.5%/3.8% longer. Output speed
+changes were within baseline drift. Peak temperatures were 74 C/73 C, with
+no guard fault. See `reports/h026-overview.md` and the linked compact evidence.
 
-W1 is the sole VM writer in a fresh mac-worker1 native CLI; W2 performs one short
-independent source/method review in a fresh mac-worker2 native CLI, no VM calls.
-Root plans/reviews/publishes. Reuse current warm Qwens at480K and existing small
-streaming helper where practical. Preserve85C/fan guards and native ownership;
-no H025 multi-lane campaign, new framework, model loads or large-context sweep.
-Restore original600W limits and upper services after temporary measurements.
-No permanent cap policy or frontier/Ada/fan changes are authorized here.
+Original configured/enforced 600 W limits were restored and read back. No
+persistent 500/550 W policy was installed. The user requested both VMs shut
+down to add another Ada. Worker1's ai-vm poweroff succeeded at 21:20:08 UTC;
+SSH closed at 21:20:11. Worker2's ai-harness poweroff succeeded at 21:24:20;
+SSH/web became unavailable and the journal connection closed at 21:24:29.
+Hypervisor power state was not independently queried. The user should confirm
+VM120/130 show Stopped before powering down the host. Histories/files/configs
+were preserved; no more live work is scheduled.
+
+Worker sessions all exited 0:
+- W1 execution: 01a0e9d7-255c-7153-907a-b9136e22c032, 21:22:59 UTC.
+- W2 review: 01a0e9d7-f14b-74e0-89db-66798f81319b, 21:13:37 UTC.
+- W2 shutdown: 01a0e9e5-5156-7632-bdb5-03eb4fcd0566, 21:25:37 UTC.
+
+W1 commit 046f1e2 was integrated as 972f739: compact benchmark evidence,
+narrow client dispatch/timestamp corrections and three boundary tests. W1
+reported 17 focused tests passed; root reviewed source/results without rerunning
+tests. The pre-dispatch raw-directory mode failure was preserved. No accepted
+request replay or runtime stop was needed. Raw traces remain private on Mac.
+
+The user's next hardware/restart instructions determine subsequent work. Do not
+start GPUs/models, run stress tests, repair services, persist caps, start VMs or
+operate Proxmox automatically. Do not revive older expired task windows. Fan
+policies remain unchanged. MiMo remains selected but absent; GLM was the retained
+test fallback before poweroff. Root plans/reviews/publishes; workers implement,
+test and operate VMs. Publish to feature/glm53-flash / draft PR10; do not merge
+incomplete qualification.
 
 # Previous checkpoint — H025 closed
 

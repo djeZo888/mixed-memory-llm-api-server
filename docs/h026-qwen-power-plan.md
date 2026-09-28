@@ -57,3 +57,13 @@ Exact targets:
 Deliver compact source/settings/results, speed/power table and recommendation;
 credentials/bulky raw traces remain private. Keep original failures and raw
 measurement receipts. Publish reviewed results to feature/glm53-flash/PR10.
+
+## User shutdown instruction (21:13 UTC)
+
+The user explicitly confirmed both Qwen cards and requested both VMs shut down
+after benchmarking to add another Ada. Save compact results off-VM, restore
+original 600 W limits, then gracefully stop ai-vm and ai-harness. Worker1 owns
+ai-vm; worker2 owns ai-harness. Keep ai-harness and its CHA_FAN3 controller up
+until worker1 releases it after GPU work stops. Preserve all histories and files.
+Do not spend time warming/restoring upper services immediately before shutdown.
+Report the exact shutdown evidence and any inability to verify host-side state.
