@@ -67,6 +67,10 @@ class ServerContract(unittest.TestCase):
             image_preview = subprocess.run(args + ['--codex-preview-receipt', str(receipt), '--codex-image-jobs-reviewed'], env=env, text=True, capture_output=True)
             self.assertEqual(image_preview.returncode, 0, image_preview.stderr)
             self.assertEqual(json.loads(image_preview.stdout)['_argv'], [str(app / 'server/dist/codex-preview-main.js'), str(receipt), '65536', 'image-jobs-reviewed'])
+            owned_policy = root / 'private-acceptance.json'
+            owned = subprocess.run(args + ['--codex-preview-receipt', str(receipt), '--codex-owned-acceptance-policy', str(owned_policy)], env=env, text=True, capture_output=True)
+            self.assertEqual(owned.returncode, 0, owned.stderr)
+            self.assertEqual(json.loads(owned.stdout)['_argv'], [str(app / 'server/dist/codex-preview-main.js'), str(receipt), '65536', 'image-jobs-unqualified', str(owned_policy)])
             ungated = subprocess.run(args + ['--codex-image-jobs-reviewed'], env=env, text=True, capture_output=True)
             self.assertNotEqual(ungated.returncode, 0)
             key.chmod(0o644)

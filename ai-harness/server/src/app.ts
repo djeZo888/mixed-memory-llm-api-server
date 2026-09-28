@@ -156,7 +156,7 @@ export async function createApp(options: AppOptions): Promise<{
       store,
       files,
       cancelImages: (id) => images?.cancelSession(id),
-      validateCodexImageReferences: (count) => assertCodexImageReferences(count),
+      validateCodexImageReferences: (sessionId, count) => assertCodexImageReferences(sessionId, count),
     });
     if (options.imageBackend)
       images = new ImageBroker({
@@ -175,11 +175,13 @@ export async function createApp(options: AppOptions): Promise<{
         );
       return images;
     };
-    const codexImageEnabled = () => !!images && options.enginePolicy?.codex?.imageToolEnabled === true &&
+    const codexImageEnabled = (sessionId?: string) => !!images && (options.enginePolicy?.codex?.imageToolEnabled === true ||
+      (sessionId !== undefined && options.imageAcceptance?.(sessionId) === true)) &&
       codexAvailable(options.enginePolicy, options.codexEngineFactory);
-    async function assertCodexImageReferences(count: number, staging = false) {
-      if (!codexImageEnabled()) throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
+    async function assertCodexImageReferences(sessionId: string, count: number, staging = false) {
+      if (!codexImageEnabled(sessionId)) throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
       const capabilities = await imageBroker().capabilities();
+      if (!codexImageEnabled(sessionId)) throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
       if (!options.imageBackend?.profiles(capabilities).some(p => p.operation === "edit" && (staging ? p.referenceCount >= count : p.referenceCount === count)))
         throw new ApiError(400,"codex_image_tool_unavailable","Qualified image editing is unavailable");
     }
@@ -403,7 +405,7 @@ export async function createApp(options: AppOptions): Promise<{
           "Native CLI slash commands are not supported in ai-harness v0.0.3. Please phrase a normal task instead.",
         );
       if (store.getSession(id(req)).engineKind === "codex" && imageReferences.length)
-        await assertCodexImageReferences(imageReferences.length);
+        await assertCodexImageReferences(id(req), imageReferences.length);
       const runId = broker.enqueue(
         id(req),
         "message",
@@ -450,7 +452,7 @@ export async function createApp(options: AppOptions): Promise<{
             if (!["image/png","image/jpeg"].includes(part.mimetype)) {
               part.file.resume(); throw new ApiError(415,"codex_media_unsupported","Specialist references require PNG or JPEG");
             }
-            try { await assertCodexImageReferences(1, true); } catch (error) { part.file.resume(); throw error; }
+            try { await assertCodexImageReferences(sessionId, 1, true); } catch (error) { part.file.resume(); throw error; }
             specialistUpload = true;
           }
           if (

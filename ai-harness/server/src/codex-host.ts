@@ -18,6 +18,8 @@ export interface CodexHostQualification {
   qualifiedAliases?: readonly string[];
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
   imageJobsQualified?: true;
+  /** Temporary exact-session/run acceptance; never changes advertised capability. */
+  imageAcceptance?: (sessionId: string) => boolean;
   nativeDelegationQualified?: true;
   onResponsesError?: NonNullable<GatewayOptions["responses"]>["onError"];
   capabilities?: CodexRuntime['capabilities'];
@@ -38,7 +40,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     maxChildren: 4,
     qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
-    launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true }),
+    launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true || qualification?.imageAcceptance?.(input.sessionId) === true }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.
     // Observe the durable session ledger; this never releases native/image ownership.

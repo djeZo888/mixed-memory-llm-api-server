@@ -79,6 +79,8 @@ export interface GatewayOptions {
   images?: ImageBroker;
   /** Separate reviewed specialist-job gate; text settlement never releases image ownership. */
   codexImageJobsQualified?: boolean;
+  /** Trusted temporary exact-session/run acceptance, checked on each new job. */
+  imageAcceptance?: (sessionId: string) => boolean;
   dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
   availability?: AvailabilityProvider;
@@ -633,10 +635,14 @@ export function createGateway(options: GatewayOptions): Gateway {
         },
       });
     // Codex text settlement cannot prove image job ownership or frontier settlement.
-    const qualifiedImageRoute = options.codexImageJobsQualified === true &&
-      ((request.method === "POST" && request.url === "/v1/image-jobs") ||
-       (request.method === "GET" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+$/.test(request.url)) ||
-       (request.method === "POST" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+\/cancel$/.test(request.url)));
+    // Expiry closes creation only. Existing jobs retain broker-enforced exact
+    // session/job ownership for reads, cancellation and normal settlement.
+    const existingImageRoute =
+      (request.method === "GET" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+$/.test(request.url)) ||
+      (request.method === "POST" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+\/cancel$/.test(request.url));
+    const qualifiedImageRoute = existingImageRoute ||
+      (request.method === "POST" && request.url === "/v1/image-jobs" &&
+       (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true));
     if (codexTokens.has(token) && !qualifiedImageRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
       return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
     // This internal bearer service has no browser API and never grants CORS.

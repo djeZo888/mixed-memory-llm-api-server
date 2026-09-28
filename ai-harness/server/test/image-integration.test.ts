@@ -10,6 +10,7 @@ import { Store } from "../src/store.js";
 import { createApp } from "../src/app.js";
 import { createGateway } from "../src/gateway.js";
 import { ImageUpstream } from "../src/image-upstream.js";
+import { createOwnedProviderAcceptance } from "../src/provider-diagnostics.js";
 import type { EngineOptions } from "../src/contracts.js";
 import type { ImageJob } from "../src/image-contracts.js";
 const delay = (ms = 5) => new Promise((r) => setTimeout(r, ms));
@@ -24,7 +25,7 @@ const png = (width = 64, height = 64) =>
   sharp({ create: { width, height, channels: 3, background: "#728344" } })
     .png()
     .toBuffer();
-async function fixture(t: TestContext, codexImages = false) {
+async function fixture(t: TestContext, codexImages = false, imageAcceptance?: (sessionId: string) => boolean) {
   const dir = await realpath(
     await mkdtemp(path.join(tmpdir(), "h003-integration-")),
   );
@@ -157,6 +158,7 @@ async function fixture(t: TestContext, codexImages = false) {
   gateway = createGateway({
     upstreamKey: "offline-secret",
     codexImageJobsQualified: codexImages,
+    imageAcceptance,
     ownership: { recoveryReady: true, onRequestState: () => {} },
     images: application.images,
     upstreams: [
@@ -615,6 +617,29 @@ test("Codex specialist gate reuses image ownership and cannot approve or clear a
   assert.equal(await f.gateway.confirmSettlement({sessionId:f.session.id}),true);
   assert.equal(f.images!.snapshot().lane,'active');
   assert.equal(f.images!.get(f.session.id,job.id).cancelRequested,true);
+  await f.complete();await until(()=>f.images!.snapshot().lane==='idle');
+  assert.equal(f.requests.length,1);
+});
+
+test("owned image acceptance expires creation while exact-owned job read/cancel/drain survives", async t => {
+  let scope: ReturnType<typeof createOwnedProviderAcceptance> | undefined, now = Date.now();
+  const f = await fixture(t, false, sessionId => scope?.allow(sessionId) === true);
+  scope = createOwnedProviderAcceptance({sessionId:f.session.id,runId:f.runId,expiresAt:now+1000,
+    activeRunId:sessionId=>f.broker.currentImageRun(sessionId)?.runId},()=>now);
+  const token=f.gateway.issueToken(f.session.id,'codex'),other=f.gateway.issueToken('unrelated','codex');
+  const payload={requestId:'scoped-owned-job',operation:'generation',prompt:'owned fixture',size:'64x64'};
+  assert.equal((await f.internal('POST','/v1/image-jobs',payload,other)).statusCode,403);
+  const submitted=await f.internal('POST','/v1/image-jobs',payload,token);
+  assert.equal(submitted.statusCode,200,submitted.body);const job=submitted.json().job;
+  await until(()=>f.requests.length===1);
+  now+=1000;
+  assert.equal((await f.internal('POST','/v1/image-jobs',{...payload,requestId:'denied-after-expiry'},token)).statusCode,403);
+  assert.equal((await f.internal('GET',`/v1/image-jobs/${job.id}`,undefined,token)).statusCode,200);
+  assert.equal((await f.internal('GET',`/v1/image-jobs/${job.id}`,undefined,other)).statusCode,404);
+  scope.close();
+  assert.equal((await f.internal('POST',`/v1/image-jobs/${job.id}/cancel`,{},other)).statusCode,404);
+  assert.equal((await f.internal('POST',`/v1/image-jobs/${job.id}/cancel`,{},token)).statusCode,200);
+  assert.equal(f.images!.snapshot().lane,'active');
   await f.complete();await until(()=>f.images!.snapshot().lane==='idle');
   assert.equal(f.requests.length,1);
 });

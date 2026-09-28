@@ -27,11 +27,12 @@ EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
 node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536; codex_images=false
+owned_acceptance_policy=""
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -43,6 +44,7 @@ while (($#)); do
         --node-control-key-file) node_control_key_file=$2 ;;
         --engine-launcher) engine_launcher=$2 ;;
         --codex-preview-receipt) codex_receipt=$2 ;;
+        --codex-owned-acceptance-policy) owned_acceptance_policy=$2 ;;
       esac
       shift 2 ;;
     --codex-image-jobs-reviewed)
@@ -97,7 +99,11 @@ if [[ -n "$codex_receipt" ]]; then
   [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
   [[ -f "$app_dir/server/dist/codex-preview-main.js" ]] || fail 'preview entrypoint missing'
   entry_args=("$app_dir/server/dist/codex-preview-main.js" "$codex_receipt" "$codex_output")
-  if [[ "$codex_images" = true ]]; then entry_args+=(image-jobs-reviewed); fi
+  if [[ "$codex_images" = true ]]; then entry_args+=(image-jobs-reviewed); elif [[ -n "$owned_acceptance_policy" ]]; then entry_args+=(image-jobs-unqualified); fi
+  if [[ -n "$owned_acceptance_policy" ]]; then
+    [[ "$owned_acceptance_policy" == /* && "$owned_acceptance_policy" != *$'\n'* && "$owned_acceptance_policy" != *$'\r'* ]] || fail 'owned policy path must be absolute and single-line'
+    entry_args+=("$owned_acceptance_policy")
+  fi
 fi
 cd -- "$app_dir/server"
 service_user=$(id -un)

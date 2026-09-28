@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { createHostOwnedAcceptance } from "./owned-acceptance.js";
 import { loadFrontierSelection, loadActiveFrontier } from "./active-frontier.js";
 import { FRONTIER_MODEL } from "./frontier.js";
 import { MIMO_MODEL } from "./mimo.js";
@@ -40,7 +41,7 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -52,15 +53,15 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     // counter revalidates again before/after counting on the selected lane.
     const qualifiedAliases = Object.keys(receipt.lanes);
     qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
-      ...(acceptance ? { frontierAcceptance: acceptance.frontier } : {}),
+      ...(acceptance ? { frontierAcceptance: acceptance.frontier, imageAcceptance: acceptance.image } : {}),
       ...(frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
       ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
-  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics });
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath });
 }
-export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"] } = {}) {
+export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -79,6 +80,9 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
   let freezeServer: Awaited<ReturnType<typeof serveDispatchFreeze>> | undefined;
   let freezeTimer: NodeJS.Timeout | undefined;
   if (codex.qualification && gatewayPort !== 8081) throw Error("Codex requires the shared gateway owner on port 8081");
+  let activeRunId = (_sessionId: string): string | undefined => undefined;
+  const owned = codex.ownedAcceptancePath ? createHostOwnedAcceptance(codex.ownedAcceptancePath, id => activeRunId(id)) : undefined;
+  if (owned && codex.qualification) codex.qualification = { ...codex.qualification, frontierAcceptance: owned.frontier, imageAcceptance: owned.image, onResponsesDiagnostic: owned.onDiagnostic };
   const codexHost = composeCodexHost(path.join(path.dirname(launcher), "run-codex.sh"), () => gateway, codex.qualification);
   const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime });
   const availability = (id: string) => {
@@ -103,6 +107,9 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     launcher,
     engineFactory: createEngine,
     ...codexOptions,
+    imageAcceptance: codex.qualification?.imageAcceptance,
+    onRunAccepted: owned?.onRunAccepted,
+    onRunFinished: owned?.onRunFinished,
     imageBackend: new ImageUpstream({ key }),
     frontierStatus: (sessionId) => ({
       ...gateway?.frontierSnapshot(),
@@ -128,6 +135,10 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     webDist: process.env.AI_HARNESS_WEB_DIST,
     visionAvailable: process.env.AI_HARNESS_VISION_AVAILABLE !== "false", // fixed deployment capability approved by root probe; UI path remains untested
   });
+  activeRunId = id => {
+    const rows = application.store.db.prepare("SELECT id FROM runs WHERE session_id=? AND status='running'").all(id) as {id:string}[];
+    return rows.length === 1 ? rows[0].id : undefined;
+  };
   try {
     application.store.db.exec(
       "CREATE TABLE IF NOT EXISTS gateway_lanes(alias TEXT PRIMARY KEY,state TEXT NOT NULL); CREATE TABLE IF NOT EXISTS gateway_usage(session_id TEXT PRIMARY KEY,prompt_tokens INTEGER NOT NULL,completion_tokens INTEGER,source TEXT NOT NULL,observed_at TEXT NOT NULL)",
@@ -198,7 +209,8 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     gateway = createGateway({
       ownership,
       responses: codexHost.responses,
-      diagnostics: codex.providerDiagnostics,
+      diagnostics: owned ? { capture: owned.capture, onFailure: owned.onFailure } : codex.providerDiagnostics,
+      imageAcceptance: codex.qualification?.imageAcceptance,
       qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,
       frontier,
       selectedFrontierModel,
@@ -303,6 +315,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
       },
     );
   } catch (error) {
+    owned?.close();
     codexHost.stopSettlementObservation();
     nodeAvailability?.stop();
     clearInterval(freezeTimer);
@@ -319,6 +332,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     nodeAvailability?.stop();
     clearInterval(freezeTimer);
     await freezeServer?.close();
+    owned?.close();
     codexHost.stopSettlementObservation();
     await Promise.all([
       application.broker.close(),

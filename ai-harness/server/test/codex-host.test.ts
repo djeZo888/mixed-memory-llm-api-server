@@ -36,3 +36,10 @@ test('trusted image gate enables specialist independently and safe diagnostics a
  const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,imageJobsQualified:true,onResponsesError,verifyLane:async()=>{throw Error('not invoked');}});
  assert.equal(host.runtime.imageToolEnabled,true);assert.equal(host.runtime.delegationEnabled,false);assert.equal(host.responses?.onError,onResponsesError);assert.equal('onTrace' in host.responses!,false);assert.equal(host.responses?.outputLimit,undefined);
 });
+
+test('private image scope is evaluated for each launch without advertising global capability',async()=>{
+ const seen:string[]=[];const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,verifyLane:async()=>{throw Error('not invoked');},imageAcceptance:id=>{seen.push(id);return id==='owned';}});
+ assert.equal(host.runtime.imageToolEnabled,false);assert.deepEqual(seen,[]);
+ for(const sessionId of ['owned','unrelated']) await assert.rejects(host.runtime.launchRootless({sessionId,profileDir:'/fixture',workspace:'/fixture/work',codexHome:'/fixture/codex-home',gatewayUrl:'http://invalid',gatewayToken:'fixture',modelPolicyVersion:'invalid'}),/Unqualified Codex rootless policy/);
+ assert.deepEqual(seen,['owned','unrelated']);assert.equal(host.runtime.imageToolEnabled,false);
+});

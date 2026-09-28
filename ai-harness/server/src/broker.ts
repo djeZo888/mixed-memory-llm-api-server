@@ -30,7 +30,13 @@ export interface BrokerOptions {
   /** Protected durable host gate; never supplied by browser/task requests. */
   dispatchHeld?: () => boolean;
   cancelImages?: (sessionId: string) => void;
-  validateCodexImageReferences?: (count: number) => Promise<void>;
+  /** Trusted exact-session/run gate; ordinary capability stays independently qualified. */
+  imageAcceptance?: (sessionId: string) => boolean;
+  /** Trusted one-shot scope binder, after durable enqueue and before dispatch. */
+  onRunAccepted?: (sessionId: string, runId: string) => void;
+  /** Revoke owned acceptance after any attempt; completion is not settlement proof. */
+  onRunFinished?: (sessionId: string, runId: string) => void;
+  validateCodexImageReferences?: (sessionId: string, count: number) => Promise<void>;
 }
 interface Runner {
   engine: Engine;
@@ -140,7 +146,7 @@ export class Broker {
           "This chat already has a pending context compaction",
         );
     }
-    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled)
+    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(sessionId) !== true)
       throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
     if (this.options.dispatchHeld?.())
       throw new ApiError(
@@ -216,6 +222,7 @@ export class Broker {
       { kind: "queue", label: "Waiting for workspace" },
       run.id,
     );
+    try { this.options.onRunAccepted?.(s.id, run.id); } catch { /* Optional acceptance must fail closed without cancelling ordinary work. */ }
     queueMicrotask(() => this.pump(s.workspaceId));
     return run.id;
   }
@@ -547,9 +554,9 @@ export class Broker {
           .get(run.id);
         const imageReferenceIds: string[] = imageRefRow ? JSON.parse(String(imageRefRow.data)) : [];
         if (s.engineKind === "codex" && imageReferenceIds.length) {
-          if (!this.options.enginePolicy?.codex?.imageToolEnabled || !this.options.validateCodexImageReferences)
+          if ((!this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(s.id) !== true) || !this.options.validateCodexImageReferences)
             throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
-          await this.options.validateCodexImageReferences(imageReferenceIds.length);
+          await this.options.validateCodexImageReferences(s.id, imageReferenceIds.length);
         }
         const imagePaths = await this.files.imageReferences(s.id, imageReferenceIds, s.engineKind === "codex");
         if (active.cancelled) await cancelBeforePrompt();
@@ -747,6 +754,7 @@ export class Broker {
           run.id,
         );
       this.store.emit(s.id, "done", { runId: run.id }, run.id);
+      try { this.options.onRunFinished?.(s.id, run.id); } catch { /* Scope manager remains responsible for fail-closed expiry. */ }
     }
   }
   private async register(
