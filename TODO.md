@@ -47,9 +47,11 @@ authorized windows and preserve manual operator control. Required work:
 ## Future routing and scaling
 
 **ACCEPTED DESIGN / GENERAL ROUTING IMPLEMENTATION PENDING.** H009 adds a fixed
-GLM-5.3-Flash frontier lane beside the two Qwen slots. Qwen remains coordinator;
-the image path stays separate. This is selective native child delegation, not
-arbitrary-model selection or distributed capacity management.
+frontier lane beside the two Qwen slots. It initially served GLM-5.3-Flash;
+H019 selects MiMo, with ordinary-chat acceptance still pending after a validation
+failure. Qwen remains coordinator; the image path stays separate. This is
+selective native child delegation, not arbitrary-model selection or distributed
+capacity management.
 
 - Implement ModelDefinition / ModelInstance / Node separation and multiple
   general-purpose and specialist models, with N compatible instances per model.
@@ -74,6 +76,15 @@ arbitrary-model selection or distributed capacity management.
 See the [future routing contract](docs/sova-architecture.md#accepted-future-model-and-routing-design).
 No distributed MiniMax deployment or new capacity benchmark is claimed. General
 installer implementation and tests remain paused.
+
+## Optional Codex harness
+
+**PLAN ONLY — not implemented.** Follow the
+[Codex harness plan](ai-harness/PLAN-CODEX-HARNESS.md) after a separate execution
+request. Keep MiniMax available, qualify the Responses/local-provider contract
+first, then implement the engine adapter, shared tools and lifecycle acceptance.
+Compare both engines on the same models and bounded tasks before choosing a
+default. The current App Server experimental status is an explicit pilot risk.
 
 ## Flash follow-up qualification
 

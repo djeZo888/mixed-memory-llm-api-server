@@ -23,6 +23,10 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
+The [Codex harness plan](ai-harness/PLAN-CODEX-HARNESS.md) proposes a selectable
+alternative to MiniMax. It is **planning only**, with local-provider protocol
+qualification required before implementation or a default-engine change.
+
 ```mermaid
 flowchart TB
     User["LAN browser"]
@@ -95,20 +99,22 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 28, 01:24 UTC checkpoint:** Sova is online with GLM-5.3-Flash,
-two Qwen instances and the image service. MiMo V2.6 Pro-RL passed optimized
-native tests, but remains unavailable after a supervisor locking failure during
-950K tool qualification. The swap-limit repair passed; a further periodic
-health-write correction passed 59 focused checks but is not deployed. Original
-GLM/Sova recovery and preservation of chats/files were verified.
+**September 28, 03:39 UTC checkpoint:** MiMo V2.6 Pro-RL is the selected,
+resident frontier service at 950,000 configured tokens. Current native text and
+tool/continuation qualification passed. Its independent near-950K request was
+confirmed processing; the result remains pending. Both Qwens and the image
+service were preserved. Ordinary Sova chat remains paused after its delegated
+MiMo request failed validation with HTTP400; native model readiness is not
+application acceptance. Histories and files are intact. See the
+[H019 checkpoint and pending work](docs/h019-mimo-finalization-results.md).
 Current availability comes from the status API; the measurements below are dated evidence.
 
 | Model / instance | Configured context | Private API base | Role |
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| MiMo V2.6 Pro-RL | 950,000 prepared | `http://10.156.100.60:30012/v1` | Staged candidate; supervisor failure, unavailable |
-| GLM-5.3-Flash | 1,048,576 | `http://10.156.100.60:30010/v1` | Active frontier after verified recovery |
+| MiMo V2.6 Pro-RL | 950,000 | `http://10.156.100.60:30012/v1` | Selected native frontier; Sova delegation repair pending |
+| GLM-5.3-Flash | 1,048,576 retained profile | `http://10.156.100.60:30010/v1` | Dormant alternative, not the running frontier |
 
 MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
 **1,000,000-token usable allocation**, the selected eight-decode-thread profile
@@ -120,10 +126,12 @@ context are pending; allocation does not establish long-context correctness.
 [MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
 
 The latest **950,000-token allocation** showed **85.74 GiB device memory
-used and 9.85 GiB free**. Tiny text generation passed, but a supervisor error
-prevented tool and Sova acceptance. The original GLM-backed service was restored
-with chats/files intact. No optimized 64K or near-950K background job is running.
-[Latest integration outcome and next repair](docs/h018-mimo-integration-results.md).
+used and 9.85 GiB free**. After the supervisor repairs, two native tool turns
+processed 9,536/9,635 input tokens at **67.37/65.43 input tokens/s** and
+**9.39/9.58 output tokens/s**. The final 948,975-input-token request was submitted
+once at 03:36:16 UTC, with an independent deadline of 11:36:11 UTC. Its correctness,
+speed and peak memory remain unverified. The optimized 64K test was skipped as
+requested. [Current native and application evidence](docs/h019-mimo-finalization-results.md).
 
 The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
 **145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.

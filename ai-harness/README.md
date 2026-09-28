@@ -8,6 +8,9 @@ refresh, with no fallback or retry. Root visual review is recorded in the
 [compact evidence summary](docs/acceptance-v0.0.3.json).
 
 See [chat examples](docs/chat-examples-v0.0.3.md) for usable image prompts.
+The [optional Codex harness plan](PLAN-CODEX-HARNESS.md) retains MiniMax and
+requires local-provider compatibility tests first; no Codex integration has
+been implemented by that planning task.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
 remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
 records earlier chat/progress/download/ZIP checks; [v0.0.1](docs/acceptance-v0.0.1.md)
@@ -116,13 +119,15 @@ explore/verifier/custom restrictions remain unchanged.
 
 ## Capacity and context
 
-Qwen main and child sessions have a fixed **480,000-token context**. The restored
-GLM frontier child uses **1,048,576 tokens**. The staged MiMo candidate passed
-historical native qualification at **1,000,000 tokens**. The later **950,000-token**
-profile loaded and answered tiny text, but its supervisor failed on a swap-limit
-check before tool/Sova acceptance. MiMo remains unavailable to Sova; the original
-application was restored at 20:48 UTC on September 27 with histories/files intact.
-No long-context MiMo test is running. The maximum
+Qwen main and child sessions have a fixed **480,000-token context**. At the
+September 28, 03:39 UTC checkpoint, **MiMo V2.6 Pro-RL** is selected and resident
+with **950,000 configured tokens**. Current native text/tool continuation passed;
+an independent 948,975-input-token test was confirmed processing and its outcome
+is pending. GLM's retained **1,048,576-token** profile is dormant. Ordinary chat
+remains paused because its native frontier child hit an unresolved HTTP400
+validation failure before MiMo admission. Histories and files are preserved.
+See the [current checkpoint](../docs/h019-mimo-finalization-results.md).
+The maximum
 output is **65,536 tokens per inference request**, including reasoning where
 counted. Input and output share the context window; these are configured limits,
 not a claim that full-window occupancy or full-length output has been accepted.
@@ -133,11 +138,10 @@ compression and auxiliary requests all compete for those slots; extra requests
 queue. A waiting parent does not reserve a slot. Qwen remains the default for
 coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
-then reviews the returned result. MiMo V2.6 Pro-RL remains the intended
-replacement, but the active frontier is GLM-5.3-Flash following verified recovery. See the
-[MiMo integration state and remaining repair](../docs/h017-mimo-integration-results-20260927.md).
-The staged MiMo release permits eight hours of active inference plus a separate
-30-minute queue; it has not been activated. Qwen and GLM retain their existing limits.
+then reviews the returned result. The selected MiMo release permits eight hours
+of active inference plus a separate 30-minute queue. Its native qualification
+does not resolve the ordinary-chat failure described above. Qwen retains its
+existing limits; historical GLM acceptance is recorded separately below.
 
 The [H009 native acceptance](../reports/h009-frontier-20260926/ACCEPTANCE-02.md)
 passed one full-roster code workflow: Flash read, patched and tested a file,
