@@ -1,7 +1,7 @@
 # Active H028 — added Ada and status recovery
 
 The user confirmed both VMs are reachable after the MAC-based NIC-name fix and
-requests verification/fan control for the new Ada, Qwen ~250K capacity with7%
+requests verification/fan control for the new Ada, an explicitly authorized third Qwen at200K with7%
 reserve, and status-page repair. This new scope supersedes H026/H027's closed
 windows. Read `docs/h028-added-ada-status-plan.md`. Root coordinates/reviews;
 W1 owns ai-vm writes; W2 owns ai-harness status recovery/source and coordinates

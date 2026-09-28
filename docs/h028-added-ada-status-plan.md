@@ -50,3 +50,29 @@ full-context or PSU stress tests. Added Qwen deployment beyond bounded qualifica
 must be scoped to the new card and its proven context; no expansion into generic
 scheduler redesign. Publish reviewed fixes and compact evidence to current branch,
 not main. Explicitly list incomplete work if the window closes.
+
+## User steering: third Qwen and external fan
+
+The user explicitly selected 200,000 tokens for a third Qwen instance on the new
+Ada, with at least7% usable VRAM free. Deploy and warm it if qualification passes;
+retain both existing480K instances. Register the new instance and endpoint with
+its real capacity. Eligibility must include input plus requested output allowance;
+a200K backend must not receive oversized480K-session requests. Reuse existing
+count/admission logic. If safe heterogeneous routing needs a broader redesign,
+keep the new API/status entry available but exclude it from the shared480K pool
+and report that limitation rather than misrouting requests.
+
+User also reports CHA_FAN3 apparently80% while server Blackwell is idle. W2 owns
+checking/restoring the existing harness-side controller feedback, with W1 node
+endpoint cooperation. Existing40% at<=65C for30s,80% at>=70C and stale-data safe
+80% policy remains. Do not force40% without fresh temperature/identity evidence.
+CHA_FAN1 remains exclusively BMC/user controlled.
+
+## Final scope clarification
+
+The user explicitly postpones harness/upper routing work. Deliver the status page
+with current hardware/model facts and a working dedicated Qwen200K API on the new
+Ada, with a short benchmark. Do not alter shared gateway/engine routing. Keep
+existing480K lanes as configured and new200K endpoint separately discoverable.
+Private API socket recovery and appropriate bounded boot recovery remain in scope.
+Do not load/repair the frontier solely to make status appear green.
