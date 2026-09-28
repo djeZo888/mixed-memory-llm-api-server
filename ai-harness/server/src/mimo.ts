@@ -93,6 +93,9 @@ export interface MimoPrepared {
   readonly sha256: string;
   readonly outputTokens: number;
   readonly toolNames: readonly string[];
+  /** Adapter metadata, never sent as native request fields. Medium means on,
+   * not a claim that the pinned MiMo template implements graded effort. */
+  readonly thinking: Readonly<{ requestedEffort: 'none' | 'medium' | null; enableThinking: boolean }>;
 }
 const preparedSet = new WeakSet<object>();
 export function prepareMimo(value: unknown): MimoPrepared {
@@ -157,13 +160,17 @@ export function prepareMimo(value: unknown): MimoPrepared {
   }
   if (b.stop !== undefined && !(typeof b.stop === 'string' && b.stop.length > 0 && b.stop.length <= 4096) &&
     !(Array.isArray(b.stop) && b.stop.length > 0 && b.stop.length <= 16 && b.stop.every(s => typeof s === 'string' && s.length > 0 && s.length <= 4096))) fail();
-  // Only explicit off is accepted as an effort value. No invented high/low mapping.
-  if (b.reasoning_effort !== undefined && b.reasoning_effort !== 'none') fail('mimo_invalid_request', 'reasoning_effort_contract');
+  // The pinned MiniMax resolver defaults reasoning-enabled children to medium.
+  // MiMo has a boolean template switch: adapt that known default to on, without
+  // claiming graded effort. Unknown effort values remain unsupported.
+  if (b.reasoning_effort !== undefined && b.reasoning_effort !== 'none' && b.reasoning_effort !== 'medium') fail('mimo_invalid_request', 'reasoning_effort_contract');
+  const requestedEffort = (b.reasoning_effort ?? null) as 'none' | 'medium' | null;
   let thinking = b.reasoning_effort !== 'none';
   if (b.chat_template_kwargs !== undefined) {
     fields(b.chat_template_kwargs, ['enable_thinking'], 'thinking_fields');
     if (typeof b.chat_template_kwargs.enable_thinking !== 'boolean' ||
-      (b.reasoning_effort === 'none' && b.chat_template_kwargs.enable_thinking)) fail('mimo_invalid_request', 'thinking_conflict');
+      (b.reasoning_effort === 'none' && b.chat_template_kwargs.enable_thinking) ||
+      (b.reasoning_effort === 'medium' && !b.chat_template_kwargs.enable_thinking)) fail('mimo_invalid_request', 'thinking_conflict');
     thinking = b.chat_template_kwargs.enable_thinking;
   }
   delete b.max_completion_tokens; delete b.reasoning_effort;
@@ -175,7 +182,8 @@ export function prepareMimo(value: unknown): MimoPrepared {
   // --no-prefill-assistant is a required observed runtime flag below.
   const json = JSON.stringify(b);
   if (Buffer.byteLength(json) > MAX_BODY) fail('mimo_body_limit');
-  const prepared = freeze({ body: b, json, sha256: sha(json), outputTokens: output, toolNames });
+  const prepared = freeze({ body: b, json, sha256: sha(json), outputTokens: output, toolNames,
+    thinking: { requestedEffort, enableThinking: thinking } });
   preparedSet.add(prepared); return prepared;
 }
 
