@@ -52,7 +52,7 @@ export function codexCapabilities(
     },
     pdf: {
       supported: true, qualification: "native_fixture",
-      reason: "Direct rootless Linux extraction/render/creation helpers passed. Matched Codex PDF workflow FAILED: extraction/render succeeded after two path errors, but no summary PDF or final numeric answer",
+      reason: "Direct rootless Linux extraction/render/creation helpers passed. Matched Codex PDF workflow FAILED: no summary PDF or final numeric answer. Full workflow remains unqualified; the H024 diagnostic was blocked before generation by current Qwen identity verification",
     },
     coding: {
       supported: true, qualification: "live",
@@ -71,12 +71,12 @@ export function codexCapabilities(
     image: {
       ...(reviewed.image ??
         unavailable(
-          "Existing image specialist ownership and tool acceptance pending",
+          "Specialist image workflows remain unqualified after malformed MCP capability arguments; generation/edit acceptance pending",
         )),
       supported: gates.imageToolEnabled === true,
     },
     frontier: unavailable(
-      "MiMo live Codex deferred while H019 owns frontier; target context 950000",
+      "MiMo native Responses and tool-continuation qualification pending; 950000 configured tokens, not qualified occupied context",
     ),
   };
 }

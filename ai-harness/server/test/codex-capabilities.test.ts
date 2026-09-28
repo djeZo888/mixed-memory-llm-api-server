@@ -13,3 +13,7 @@ test('image and delegation metadata never override independent operational gates
  assert.equal(codexCapabilities(reviewed).image.supported,false);
  const c=codexCapabilities(reviewed,{imageToolEnabled:true,delegationEnabled:true});assert.equal(c.image.supported,true);assert.equal(c.image.qualification,'native_fixture');assert.equal(c.nativeDelegation.supported,true);assert.equal(c.nativeMedia.supported,false);assert.equal(c.frontier.supported,false);
 });
+
+test('current qualification reasons retain failures without stale frontier owner or changed gates',()=>{
+ const c=codexCapabilities();assert.equal(c.frontier.supported,false);assert.equal(c.image.supported,false);assert.equal(c.pdf.qualification,'native_fixture');assert.match(c.frontier.reason,/Responses and tool-continuation qualification pending/);assert.doesNotMatch(c.frontier.reason,/H019/);assert.match(c.pdf.reason,/blocked before generation/);assert.match(c.image.reason,/malformed MCP/);
+});
