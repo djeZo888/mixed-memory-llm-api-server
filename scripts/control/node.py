@@ -232,8 +232,27 @@ class NodeStatus:
         telemetry = self._read('gpu_metrics')
         rows = (telemetry['value'] or {}).get('gpus', [])
         rows = rows if type(rows) is list else []
-        samples = {row['uuid']: telemetry for row in rows if type(row) is dict
-                   and type(row.get('uuid')) is str and UUID.fullmatch(row['uuid'])}
+        samples = {}
+        for row in rows:
+            if type(row) is not dict or type(row.get('uuid')) is not str or not UUID.fullmatch(row['uuid']):
+                continue
+            sample = telemetry
+            child = row.get('_observation')
+            if type(child) is dict:
+                meta = unknown()
+                child_age, outer_age = integer(child.get('age_ms')), integer(telemetry.get('age_ms'))
+                age = child_age + outer_age if child_age is not None and outer_age is not None else None
+                observed = child.get('observed_at')
+                observed = observed if type(observed) is str and re.fullmatch(r'[0-9T:+.Z-]{20,40}', observed) else None
+                meta.update(state=child.get('state') if child.get('state') in ('ok', 'error', 'timeout', 'unknown') else 'unknown',
+                    reason=reason(child.get('reason')), observed_at=observed, age_ms=age,
+                    freshness='unknown' if age is None or observed is None else 'fresh' if age <= 15000 else 'stale')
+                if telemetry['state'] != 'ok':
+                    meta.update(state=telemetry['state'], reason=telemetry['reason'])
+                if telemetry['freshness'] != 'fresh':
+                    meta['freshness'] = telemetry['freshness']
+                sample = dict(telemetry, **meta)
+            samples[row['uuid']] = sample
         # Fixed required GPUs plus inventory-discovered IDs use independent
         # capacity. Unknown/unassigned card failure cannot stall a healthy one.
         known = {u for required in SERVICES.values() for u in required}
@@ -242,10 +261,10 @@ class NodeStatus:
         for gpu_uuid in sorted(known):
             sample = self._read('gpu:' + gpu_uuid)
             if sample['value'] is None and sample['reason'] == 'not_observed':
-                if gpu_uuid not in result['inventory']['gpu_uuids']:
+                if gpu_uuid in samples and sum(type(row) is dict and row.get('uuid') == gpu_uuid for row in rows) == 1:
                     continue
                 # Inventory discovery must not hide an extra unassigned GPU.
-                # It gets no new thread, automatic assignment, or metric claims.
+                # Absent assigned identities also remain visible without metrics.
                 sample = dict(unknown(), value={'boot_id': boot_id, 'gpus': [{'uuid': gpu_uuid}]})
             candidates = (sample['value'] or {}).get('gpus', [])
             if type(candidates) is not list or len(candidates) != 1 or type(candidates[0]) is not dict or candidates[0].get('uuid') != gpu_uuid:
@@ -273,7 +292,8 @@ class NodeStatus:
             target['pci_bus_id'] = row.get('pci_bus_id') if type(row.get('pci_bus_id')) is str and re.fullmatch(r'[0-9a-fA-F]{4,8}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]', row['pci_bus_id']) else None
             target['ecc_mode'] = row.get('ecc_mode') if row.get('ecc_mode') in ('enabled', 'disabled') else None
             target['sampling_since'] = row.get('sampling_since') if type(row.get('sampling_since')) is str and re.fullmatch(r'[0-9T:+.Z-]{20,40}', row['sampling_since']) else None
-            target['generation'] = aggregate_generation(boot_id, [row for row in result['services'] if row['service_id'] in target['affected_services']], uuid)
+            # Passive discovery grants no action generation for unassigned GPUs.
+            target['generation'] = aggregate_generation(boot_id, [row for row in result['services'] if row['service_id'] in target['affected_services']], uuid) if target['affected_services'] else None
             result['gpus'].append(target)
         return result
 

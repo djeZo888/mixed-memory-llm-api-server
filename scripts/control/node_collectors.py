@@ -222,6 +222,66 @@ class InventoryCollector:
         return value
 
 
+class DiscoveredGpuCollector:
+    """One passive slot for unassigned UUIDs; never produces owner/latch proofs.
+
+    Existing assigned GPUs keep their independent slots. Unassigned queries
+    share one deadline, with per-row errors and capture ages. No dynamic worker
+    threads are created, even if a native query ignores its deadline.
+    """
+    def __init__(self, inventory, *, run=command, boot=boot_identity,
+                 wall=time.time, clock=time.monotonic):
+        self.inventory, self.run, self.boot = inventory, run, boot
+        self.wall, self.clock = wall, clock
+        self.collectors = {}
+
+    def __call__(self, seconds):
+        started = self.clock()
+        before = self.boot()
+        proof = self.inventory.last_proof
+        if (proof is None or not 0 <= started - proof[1] <= 15 or
+                proof[0].get('boot_id') != before['boot_id'] or
+                proof[0].get('complete') is not True):
+            raise ValueError('inventory_unknown')
+        ids = proof[0].get('gpu_uuids')
+        if (type(ids) is not list or len(ids) > 64 or
+                any(type(u) is not str or not UUID.fullmatch(u) for u in ids) or
+                len(set(ids)) != len(ids)):
+            raise ValueError('inventory_unknown')
+        extras = sorted(set(ids) - set(GPU_UUIDS))
+        self.collectors = {u: self.collectors.get(u) or GpuCollector(u,
+            run=self.run, boot=self.boot, wall=self.wall) for u in extras}
+        rows = []
+        deadline = started + max(0, seconds - 0.05)
+        for index, gpu_uuid in enumerate(extras):
+            captured = None
+            row = {'uuid': gpu_uuid}
+            observation = {'state': 'timeout', 'reason': 'collector_timeout',
+                'observed_at': None, 'age_ms': None, 'freshness': 'unknown'}
+            budget = (deadline - self.clock()) / (len(extras) - index)
+            try:
+                if budget <= 0:
+                    raise TimeoutError('collector_timeout')
+                row = self.collectors[gpu_uuid](budget)['gpus'][0]
+                captured = self.clock()
+                observation = {'state': 'ok', 'reason': None,
+                    'observed_at': utc(self.wall()), 'age_ms': 0, 'freshness': 'fresh'}
+            except TimeoutError:
+                pass
+            except Exception:
+                observation.update(state='error', reason='collector_failed')
+            rows.append((row, observation, captured))
+        if self.boot()['boot_id'] != before['boot_id']:
+            raise ValueError('boot_changed')
+        ended = self.clock()
+        for row, observation, captured in rows:
+            if captured is not None:
+                observation['age_ms'] = int(max(0, ended - captured) * 1000)
+                observation['freshness'] = 'fresh' if observation['age_ms'] <= 15000 else 'stale'
+            row['_observation'] = observation
+        return {'boot_id': before['boot_id'], 'gpus': [row for row, _, _ in rows]}
+
+
 class HardwareEvidenceCollector:
     """One bounded scheduled producer serializes latch proofs; never GET.
 
@@ -268,5 +328,6 @@ def production_callbacks(identity_reader=None, *, control_key=None):
         control_key=control_key if service == 'control' else None) for service in (*SERVICES, 'node')})
     result.update(resource_callbacks())
     result.update({'gpu:' + collector.gpu_uuid: collector for collector in gpus})
+    result['gpu_metrics'] = DiscoveredGpuCollector(inventory)
     result['hardware_evidence'] = HardwareEvidenceCollector(inventory, gpus)
     return result

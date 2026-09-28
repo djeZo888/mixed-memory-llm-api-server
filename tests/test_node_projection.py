@@ -80,7 +80,9 @@ class NodeProjectionTests(unittest.TestCase):
     def test_malformed_gpu_metric_row_cannot_collapse_partial_status(self):
         for bad in ([], {}, None, 1):
             snapshot = status(gpu_metrics=sample({'boot_id': BOOT, 'gpus': [{'uuid': bad}]})).snapshot()
-            self.assertEqual(snapshot['gpus'], [])
+            self.assertEqual({row['uuid'] for row in snapshot['gpus']},
+                             {u for required in SERVICES.values() for u in required})
+            self.assertTrue(all(row['freshness'] == 'unknown' for row in snapshot['gpus']))
             self.assertEqual(snapshot['node_id'], 'ai-vm')
 
     def test_independent_gpu_timeout_does_not_erase_healthy_peer(self):
@@ -212,8 +214,11 @@ class NodeProjectionTests(unittest.TestCase):
         rows = [{'uuid': GPU, 'index': 0}, {'uuid': GPU, 'index': 1},
                 {'uuid': OTHER_GPU, 'index': 99}, {'index': 0}]
         gpus = status(gpu_metrics=sample({'gpus': rows})).snapshot()['gpus']
-        self.assertEqual([row['uuid'] for row in gpus], [OTHER_GPU])
-        self.assertEqual(gpus[0]['affected_services'], ['qwen-gpu1'])
+        by_uuid = {row['uuid']: row for row in gpus}
+        self.assertEqual(by_uuid[OTHER_GPU]['affected_services'], ['qwen-gpu1'])
+        self.assertEqual(by_uuid[OTHER_GPU]['index'], 99)
+        self.assertIsNone(by_uuid[GPU]['index'])
+        self.assertEqual(by_uuid[GPU]['freshness'], 'unknown')
 
 
 if __name__ == '__main__':

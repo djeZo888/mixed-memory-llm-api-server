@@ -160,12 +160,12 @@ class CollectorsTests(unittest.TestCase):
 
     def test_production_observers_are_bounded_and_individual(self):
         callbacks=collectors.production_callbacks()
-        self.assertLessEqual(len(callbacks),18)
+        self.assertLessEqual(len(callbacks),19)
         self.assertIn('mimo-v2.6-pro-rl', callbacks)
         from control.passive import BoundedObservers
         BoundedObservers(callbacks).close()
         self.assertEqual(len([name for name in callbacks if name.startswith('gpu:')]),4)
-        self.assertNotIn('gpu_metrics',callbacks)
+        self.assertIn('gpu_metrics',callbacks)
 
     def test_node_source_closure_and_credentials_protected_before_start(self):
         root=Path(__file__).resolve().parents[1]
