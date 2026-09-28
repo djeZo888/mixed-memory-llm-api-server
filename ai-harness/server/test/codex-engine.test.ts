@@ -716,10 +716,10 @@ test("resume usage snapshot permits follow-up without adopting historical turn",
     assert.equal(f.requests.filter(r => r.method === "turn/start").length, 1);
   } finally { await f.engine.close(); }
 });
-for (const bad of ["wrong-thread", "wrong-context", "negative-usage"]) {
+for (const bad of ["wrong-thread", "wrong-context", "negative-usage", "bad-usage-shape", "empty-turn"]) {
   test(`resume usage rejects ${bad}`, async () => {
     const f = fixture({ nativeId: "thread-1" }); await f.engine.start();
-    f.events("thread/tokenUsage/updated", { threadId: bad === "wrong-thread" ? "other-thread" : "thread-1", turnId: "previous-turn", tokenUsage: { last: { totalTokens: bad === "negative-usage" ? -1 : 2345 }, modelContextWindow: bad === "wrong-context" ? 950000 : 480000 } });
+    f.events("thread/tokenUsage/updated", { threadId: bad === "wrong-thread" ? "other-thread" : "thread-1", turnId: bad === "empty-turn" ? "" : "previous-turn", tokenUsage: bad === "bad-usage-shape" ? {} : { last: { totalTokens: bad === "negative-usage" ? -1 : 2345 }, modelContextWindow: bad === "wrong-context" ? 950000 : 480000 } });
     await assert.rejects(f.engine.prompt("must not dispatch"));
     assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0);
     assert.equal(f.updates.filter(u => u.type === "context").length, 0); await f.engine.close();
