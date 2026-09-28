@@ -1,0 +1,14 @@
+{
+  "command": [
+    "ai-harness/server/node_modules/.bin/tsx",
+    "--test",
+    "--test-timeout=15000",
+    "--test-name-pattern=cached successful HTTP|registry retains third|mismatched or duplicate native|fresh success ages independently",
+    "ai-harness/server/test/status-service.test.ts",
+    "ai-harness/server/test/observer-cache.test.ts"
+  ],
+  "exitCode": 1,
+  "utc": "2026-09-28T04:05:06.096369+00:00",
+  "sourceCommit": "e256814c6f2b9cc421ba68cde3febd1e0a6c9aa8",
+  "syntheticOnly": true
+}

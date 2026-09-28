@@ -1,0 +1,159 @@
+{
+  "sourceCommit": "e256814c6f2b9cc421ba68cde3febd1e0a6c9aa8",
+  "sources": [
+    {
+      "path": "AGENTS.md",
+      "sha256": "86bcbc09cf50a0bb7d464ee7cc6c4686042855769bee870a4e15d918b78f00eb"
+    },
+    {
+      "path": "docs/h020-status-and-codex-plan.md",
+      "sha256": "5f461c6bdf7a11f9adb083f05abf6495488b4a80bf213cb92b9c5e66a4101378"
+    },
+    {
+      "path": "ai-harness/AGENTS.md",
+      "sha256": "ed686b8c815f568f157ace0ca5595a61e6ea71a8c0be774761dce552278e0d7e"
+    },
+    {
+      "path": "ai-harness/config/system-registry.json",
+      "sha256": "a2d69b9ba6ddba922b9ec128ce2a7cf89e16602154d47fafc5376dd3f1bf5ddc"
+    },
+    {
+      "path": "ai-harness/config/active-frontier.json",
+      "sha256": "7a4bea03394e51fb005f56d39cd3b5b7c4a28d8c2de85e99b45fc73913febe1a"
+    },
+    {
+      "path": "ai-harness/config/frontier.json",
+      "sha256": "5c099305b84baccaa2d736f90a8100953ee203001b9ad822b314aefe9cd065c3"
+    },
+    {
+      "path": "ai-harness/config/mimo-candidate.json",
+      "sha256": "2ed2decd50e4a8b83fa89cc5fe85d6d667e7fbfaa799bde1e7f2a177e3f2c1be"
+    },
+    {
+      "path": "ai-harness/server/src/system-registry.ts",
+      "sha256": "66ae9742a9ef52c2de0021ed40543730fa092631ba0d49ed9882b1d0c34f9c2b"
+    },
+    {
+      "path": "ai-harness/server/src/active-frontier.ts",
+      "sha256": "03ac6d1079b54baf5728ee6d268fc197ada17b3574e7ec762164b162253902d0"
+    },
+    {
+      "path": "ai-harness/server/src/status-main.ts",
+      "sha256": "092b75ef8da1c915662b66dbf8ab815136795d653b7dc97351b3e867f6fe8ce0"
+    },
+    {
+      "path": "ai-harness/server/src/status-service.ts",
+      "sha256": "6242bfedefd8dba002548cff487a7fbc4124ff320573bb2e9b72e5bf0e5c12f2"
+    },
+    {
+      "path": "ai-harness/server/src/status-projection.ts",
+      "sha256": "7d98d62f29b8e2021d0bb261a03f3074308f6f5f6e51f915f0be1550d41e9738"
+    },
+    {
+      "path": "ai-harness/server/src/status-ui.ts",
+      "sha256": "54725fc077c6b85aef7815c4b8ee5acd18ca7da56807949e6135dfc71ea3d971"
+    },
+    {
+      "path": "ai-harness/server/src/node-contract.ts",
+      "sha256": "fa15331c20b2c5ba4dd963359f6b894df57fcc9d6ad4941ffb5481171a1404e8"
+    },
+    {
+      "path": "ai-harness/server/src/node-client.ts",
+      "sha256": "a37ca77ba4599bd2f76c2d51ef77c84b72ca02eb70b2c18521178f5ccd957f0a"
+    },
+    {
+      "path": "ai-harness/server/src/observer-cache.ts",
+      "sha256": "2bebd87147b14a79b3647b901413321902a31c5bd7eeee30d2e8a2a3e1705119"
+    },
+    {
+      "path": "ai-harness/server/src/admin-actions.ts",
+      "sha256": "5fb84684025f8516999475845752d2efe41d9e7b1f236459c9e8e1e9704f0717"
+    },
+    {
+      "path": "ai-harness/server/src/gateway.ts",
+      "sha256": "c6d4b0512bf13ce6aa0219dd367618792ddc26180aa7ef09061a37b51607c448"
+    },
+    {
+      "path": "ai-harness/server/src/backend-readiness.ts",
+      "sha256": "24e1a67a190a65567610f87ff2e32931213dfd15b5606f2e871dbcf55d5a6f60"
+    },
+    {
+      "path": "ai-harness/server/src/frontier.ts",
+      "sha256": "0f5e0349bf7221fd8db3c110d08d23827b2b44ac7409a7b3c37f4377e8a243ba"
+    },
+    {
+      "path": "ai-harness/server/src/mimo-frontier.ts",
+      "sha256": "50d6ba41172e42ffbb5693f21076991a67de468b4e39cf4e1b15d9b17a836c01"
+    },
+    {
+      "path": "ai-harness/server/src/image-upstream.ts",
+      "sha256": "926f822289ea6d7b29932e939ba99ec32aeb5dcc2d0a34d479d6b4c5cd05a504"
+    },
+    {
+      "path": "ai-harness/deploy/engine/configure-profile.mjs",
+      "sha256": "1767aec74793b161b07feeee9e8dc97c3a4ffc9970c5c8f532bbf443b9f8ea1c"
+    },
+    {
+      "path": "ai-harness/docs/status-registry.md",
+      "sha256": "d51aef16780f50a36164801355cb64fce9d90e33b37e6324d7e03f1b79636e87"
+    },
+    {
+      "path": "scripts/control/node.py",
+      "sha256": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571"
+    },
+    {
+      "path": "scripts/control/node_observation.py",
+      "sha256": "da330ab85bd2beb44ab71e5996743b4519ff2958c3ac7ad8ebb0f309e4b04ee2"
+    },
+    {
+      "path": "scripts/control/node_collectors.py",
+      "sha256": "347b4667146bd2fa6fe0e95035f59817c860528ee50575fa2d278c439ac207dd"
+    },
+    {
+      "path": "scripts/control/node_serve.py",
+      "sha256": "40050f7d90f2ed3ab069408b9cbe6df17a7584ceed1be1365b5de91467f26d73"
+    },
+    {
+      "path": "scripts/control/passive.py",
+      "sha256": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3"
+    },
+    {
+      "path": "scripts/runtime/mimo/owner.py",
+      "sha256": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53"
+    },
+    {
+      "path": "scripts/runtime/mimo/launch.json",
+      "sha256": "1fbfd1e9360c6ef7ed86bb26b339a65d21c21991dd1e5da48683f0df36d368cd"
+    },
+    {
+      "path": "ai-harness/server/test/frontier-registry.test.ts",
+      "sha256": "ca2ede59ff4da9cbd35dc9c9fa972802f70c25b535881094690dd676e2a0d0dd"
+    },
+    {
+      "path": "ai-harness/server/test/system-registry.test.ts",
+      "sha256": "595bb16b5ec4f554843fa4dac8149b536644ec962ada3db8d299b967a971dd06"
+    },
+    {
+      "path": "ai-harness/server/test/status-service.test.ts",
+      "sha256": "7a43dcc75595fbccf46bd91a908b8dfec0ec34ac1a91b0c41c6518ad8497cf77"
+    },
+    {
+      "path": "ai-harness/server/test/observer-cache.test.ts",
+      "sha256": "3cb215074161c12ac8e806bfe475aeaaed9f9164a591b8101c0f60d44b14c8ad"
+    }
+  ],
+  "inputs": [
+    {
+      "path": "DEADLINE.json",
+      "sha256": "b2c2c54623849321eb2456cf8a020fd52821e9d267491d4a98dcb7a6c21bfd36"
+    },
+    {
+      "path": "input/W2-EARLY-FINDINGS.json",
+      "sha256": "d3c9232004086d4ce73472980d2b952e0a4c391c2180f786b67b49a2936aa535"
+    },
+    {
+      "path": "input/W2-passive-before.json",
+      "sha256": "0b14847c650fea1734bce5f2607621064ccd9742593e9af8f60f789d00f295bd"
+    }
+  ]
+}
