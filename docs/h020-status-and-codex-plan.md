@@ -1,5 +1,8 @@
 # H020 — status identity repair and Codex harness planning
 
+Completed status repair and planning outcome: [H020 results](h020-results.md).
+Codex integration itself remains [plan only](../ai-harness/PLAN-CODEX-HARNESS.md).
+
 ## Scope
 
 1. Fix incorrect GLM labels while MiMo is selected/running. Derive status labels and placement from trusted configuration plus observed model identity.

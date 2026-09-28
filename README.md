@@ -26,6 +26,9 @@ report stays unchanged. Maintenance-window automation is future work.
 The [Codex harness plan](ai-harness/PLAN-CODEX-HARNESS.md) proposes a selectable
 alternative to MiniMax. It is **planning only**, with local-provider protocol
 qualification required before implementation or a default-engine change.
+The [H020 status repair](docs/h020-results.md) now separates configured models,
+selected frontier and fresh native identity, with measured GPU UUID dependency
+joins. The status-only deployment preserves the running model services.
 
 ```mermaid
 flowchart TB
