@@ -2,6 +2,29 @@
 
 ## Current external-fan state — 28 September
 
+H025 deployed the GPU-driven CHA_FAN3 controller on ai-harness. It commands
+80% at server Blackwell temperature >=70 C, returns to 40% after <=65 C for
+30 continuous seconds, and holds its previous state between those thresholds.
+The CPU-temperature source remains disabled. Missing or stale GPU telemetry
+requests the high setting and exposes a degraded state; the separate 85 C
+workload stop remains in place. Readback and physical actuator checks, normal
+stop/restart, and the target-only configuration migration passed. See
+[H025 fan qualification](../reports/h025-fan04-20260928/README.md).
+
+**CHA_FAN1 belongs exclusively to the BMC/user.** It cools both motherboard
+Blackwells using the PCIe2/PCIe5 slot temperatures. Sova never writes that
+channel. Its changes are recorded for audit without stopping CHA_FAN3 or
+restoring old values. CHA_FAN3 target identity, sources, curve and expected duty
+remain guarded against conflicting changes.
+
+The two motherboard Blackwells retain their existing NVIDIA fan controller:
+100% at >=70 C, then normal firmware control after <=65 C for 30 continuous
+seconds. The server Blackwell is excluded from this integrated-fan controller.
+The H025 concurrent-load result is recorded separately from idle actuator and
+synthetic threshold qualification.
+
+### Earlier September 28 observations
+
 The user replaced the server Blackwell's external fan. A bounded ordinary-load
 check at the user-set 75% duty reached 79 C; the separate four-way test has
 incomplete monitoring and does not establish full PSU/thermal qualification.
@@ -15,11 +38,9 @@ source and physically confirmed that revving stopped. Readback confirmed the
 Zone4 CPU source bit changed from 1 to 0, with the curve unchanged. Preserve
 this working setting; do not restore the CPU-temperature source automatically.
 
-The requested new policy is **40% below 70 C GPU temperature and 80% at or above
-70 C**, with a stable cooldown before reducing duty. This GPU-driven external
-fan policy is not yet deployed or qualified. A flat BMC CPU-temperature curve
-is not a GPU-temperature controller. The separate integrated GPU fan policy
-remains 100% at 70 C, with firmware control restored below its cooldown threshold.
+At that earlier checkpoint the GPU-driven external fan policy was not deployed;
+H025 above supersedes that limitation. A flat BMC CPU-temperature curve alone
+does not follow the GPU temperature.
 
 ## Historical deployment and BMC access — 27 September
 

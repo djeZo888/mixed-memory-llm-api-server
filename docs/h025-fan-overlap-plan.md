@@ -2,7 +2,8 @@
 
 Authorized September 28, 2026. Root coordinates/reviews/publishes; both Macs run
 fresh bounded native CLI sessions in isolated copies. Overall execution window
-18:50–20:20 UTC (90 minutes), with final 15 minutes for settlement and reporting.
+initially 18:50–20:20 UTC (90 minutes), with final time reserved for settlement
+and reporting. The final revised envelope is documented below.
 Keep this focused: no Codex work, MiMo repair, large-context test or runtime update.
 
 ## Policies
@@ -17,6 +18,9 @@ Keep this focused: no Codex work, MiMo repair, large-context test or runtime upd
   Use protected BMC credentials, bounded telemetry freshness and channel readback.
   On lost telemetry/controller failure keep high cooling and expose the failure;
   retain the independent 85 C workload stop. Verify host-service restart behavior.
+- CHA_FAN1 is exclusively BMC/user-controlled using PCIe2/PCIe5 temperatures.
+  Sova must not change it. Unrelated fan-zone changes are audited without
+  invalidating CHA_FAN3's target-only configuration checks.
 
 ## Worker allocation
 
@@ -64,3 +68,14 @@ First bounded sessions: at most 45 minutes, checkpoint by 19:35 UTC. One short
 fresh execution session may finish the reviewed deployment/overlap by 20:05.
 Close paid sessions promptly; do not spend the window observing unchanged state.
 At 20:05 stop new tests and settle/report. No automatic extension or unrelated fixes.
+
+### Final revised envelope
+
+The initial schedule above is historical. Target-only fan ownership and an atomic
+status-file read race required bounded corrections. Preserve the failed attempts
+as separate evidence. Root explicitly revised the final envelope to 21:00 UTC:
+one corrected campaign starts by 20:37, admits requests for 300 seconds ending
+by 20:42, and settles accepted work by 20:58. The existing 900-second request
+budget and 60-second stop reserve remain. No further load retry or repair follows
+that campaign. The reader correction permits only a bounded, guarded reopen
+after a confirmed file replacement; shared storage protection is unchanged.

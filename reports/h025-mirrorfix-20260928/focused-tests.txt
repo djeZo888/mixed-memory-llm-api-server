@@ -1,0 +1,30 @@
+test_corrected_reader_reopens_and_returns_coherent_fresh_snapshot (test_fan_snapshot.FanSnapshotTests.test_corrected_reader_reopens_and_returns_coherent_fresh_snapshot) ... ok
+test_invalid_current_replacement_is_not_retried (test_fan_snapshot.FanSnapshotTests.test_invalid_current_replacement_is_not_retried) ... ok
+test_invalid_owner_uses_actual_guarded_stat_protection (test_fan_snapshot.FanSnapshotTests.test_invalid_owner_uses_actual_guarded_stat_protection) ... ok
+test_known_error_without_identity_replacement_is_not_retried (test_fan_snapshot.FanSnapshotTests.test_known_error_without_identity_replacement_is_not_retried) ... ok
+test_malformed_json_is_not_retried (test_fan_snapshot.FanSnapshotTests.test_malformed_json_is_not_retried) ... ok
+test_missing_name_after_replacement_fails_without_retry (test_fan_snapshot.FanSnapshotTests.test_missing_name_after_replacement_fails_without_retry) ... ok
+test_mount_fault_during_replacement_recheck_fails_closed (test_fan_snapshot.FanSnapshotTests.test_mount_fault_during_replacement_recheck_fails_closed) ... ok
+test_nonprivate_mode_is_rejected (test_fan_snapshot.FanSnapshotTests.test_nonprivate_mode_is_rejected) ... ok
+test_original_reader_reproduces_exact_error_after_real_replace (test_fan_snapshot.FanSnapshotTests.test_original_reader_reproduces_exact_error_after_real_replace) ... ok
+test_persistent_hardlink_is_rejected (test_fan_snapshot.FanSnapshotTests.test_persistent_hardlink_is_rejected) ... ok
+test_repeated_real_replacement_exhausts_small_retry_budget (test_fan_snapshot.FanSnapshotTests.test_repeated_real_replacement_exhausts_small_retry_budget) ... ok
+test_symlink_is_rejected (test_fan_snapshot.FanSnapshotTests.test_symlink_is_rejected) ... ok
+test_arbitrary_exception_text_code_and_metadata_are_not_emitted (test_monitor_diagnostics.MonitorDiagnostics.test_arbitrary_exception_text_code_and_metadata_are_not_emitted) ... ok
+test_known_storage_code_and_errno_are_retained (test_monitor_diagnostics.MonitorDiagnostics.test_known_storage_code_and_errno_are_retained) ... ok
+test_monitor_failure_receipt_keeps_code_and_dispatches_stops (test_monitor_diagnostics.MonitorDiagnostics.test_monitor_failure_receipt_keeps_code_and_dispatches_stops) ... ok
+test_monitor_tick_stage_is_retained (test_monitor_diagnostics.MonitorDiagnostics.test_monitor_tick_stage_is_retained) ... ok
+test_observe_persistence_failure_is_distinguished_from_sample (test_monitor_diagnostics.MonitorDiagnostics.test_observe_persistence_failure_is_distinguished_from_sample) ... ok
+test_bridge_arrives_during_sample_is_not_false_future (test_fan_status.FanStatus.test_bridge_arrives_during_sample_is_not_false_future) ... ok
+test_bridge_death_cannot_be_hidden_by_source_freshness (test_fan_status.FanStatus.test_bridge_death_cannot_be_hidden_by_source_freshness) ... ok
+test_each_controller_fault_blocks (test_fan_status.FanStatus.test_each_controller_fault_blocks) ... ok
+test_exact_current_controller (test_fan_status.FanStatus.test_exact_current_controller) ... ok
+test_stale_source_cannot_be_refreshed_by_bridge (test_fan_status.FanStatus.test_stale_source_cannot_be_refreshed_by_bridge) ... ok
+test_exact_go_deadline_phase_batch_reject (test_driver.Contracts.test_exact_go_deadline_phase_batch_reject) ... ok
+test_monitor_read_failure_stops_and_settles_accepted_work (test_monitor_history.MonitorHistory.test_monitor_read_failure_stops_and_settles_accepted_work) ... ok
+test_mount_loss_cannot_kill_monitor_before_owned_settlement (test_monitor_history.MonitorHistory.test_mount_loss_cannot_kill_monitor_before_owned_settlement) ... ok
+
+----------------------------------------------------------------------
+Ran 25 tests in 0.276s
+
+OK

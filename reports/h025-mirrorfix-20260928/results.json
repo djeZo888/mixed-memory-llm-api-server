@@ -1,0 +1,39 @@
+{
+  "task": "H025-MIRRORFIX01",
+  "status": "SOURCE_TEST_COMPLETE_NO_DEPLOYMENT",
+  "completed_utc": "2026-09-28T20:33:59.725963+00:00",
+  "base_commit": "6079d748e556c48d5fbb7ce1ba573a96042861ad",
+  "baseline_commit": "ca5b3d8",
+  "commit": "2ecd1704e51f17ae33d2c2093bcb6a0a23236234",
+  "ref": "h025-mirrorfix01",
+  "baseline_package_sha256": "f567cc8ac3b8a4e8685139d0be594aa50f8965c604b98a611a44a9fef6538a13",
+  "package_sha256": "01ed8314a50e2f3dea9dc14c9cd014315d689257c7238ef728d9acb26f9d9ca6",
+  "tests": {
+    "focused": 25,
+    "result": "PASS",
+    "compile_files": 18,
+    "compile": "PASS",
+    "command": "python3 -B -m unittest -v test_fan_snapshot test_monitor_diagnostics test_fan_status test_driver.Contracts.test_exact_go_deadline_phase_batch_reject test_monitor_history.MonitorHistory.test_monitor_read_failure_stops_and_settles_accepted_work test_monitor_history.MonitorHistory.test_mount_loss_cannot_kill_monitor_before_owned_settlement"
+  },
+  "shared_storage_io_sha256": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+  "shared_storage_io_unchanged": true,
+  "bundle_complete_history": true,
+  "live": "NOT_TESTED",
+  "original_campaign_cause": "UNPROVEN; later read-only race and local actual os.replace reproduce class/code",
+  "retry": "same anchored root; max3 attempts; exact two known storage error codes only; guarded valid before/after inode identity must change; fresh shared read_json each attempt",
+  "cutoffs": {
+    "admission": "2026-09-28T20:42:00Z",
+    "settlement": "2026-09-28T21:00:00Z",
+    "fixture_planned_settlement": "2026-09-28T20:58:00Z"
+  },
+  "artifact_sha256": {
+    "H025-MIRRORFIX01.bundle": "df8280fc9d53c0be5cdf38efec44b6e8c81a27f486a16f63ac45342034a358f0",
+    "H025-MIRRORFIX01.diff": "da6c82f7fe53415689b2b3025f3229cebbe7c5889656509af01cec1d3009939a",
+    "CORRECTION-ONLY.diff": "7c90d4471c5c87278b4200a99f9c459a6c06978f511efbf721b319d4679ae57e",
+    "focused-tests.log": "e32f821b7215b6ee4af8b4c53ef79972e7c0a355a82f57013b264a78ac14ae54",
+    "compile.log": "7ddecadfd925957cf0d48086beea534ecb0ca0e42f1705d6fbfebfac88ec6e82"
+  },
+  "previous_source_commit": "acf2f53345c5c371dbf391168563ffb6aa18a3fb",
+  "previous_package_sha256": "049ddb62b19c6435d93c2bdfa723a5fdbb0827d21f5b6ec3f8b4f79ae918aef2",
+  "diagnostics": "static code/errno; sample, observe persistence, monitoring_tick distinguished"
+}

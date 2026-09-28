@@ -3,7 +3,12 @@
 The user now authorizes a focused fan-control task and a four-model concurrent
 test, including GLM 5.3 Flash in place of unavailable MiMo. This supersedes the
 H024 no-fan-controller/no-thermal-test/no-GLM restriction only for H025.
-Window: 28 September 2026, 18:50–20:20 UTC; stop new tests at 20:05. Root plans,
+Window: 28 September 2026, 18:50–21:00 UTC. The20:16 campaign failed on a monitor
+storage error. A20:23 bounded reproduction identified an atomic status-file read
+race. Root authorizes one focused reader/diagnostic fix and one reviewed corrected
+campaign: startby20:37, admissionsendby20:42, settlementby20:58;900srequest plus60s
+stopreserve. Preserve original failure. No further repair/retry/automaticextension.
+Root plans,
 reviews and publishes; both Mac workers execute fresh bounded native sessions.
 W1 owns integrated 100% >=70 C / firmware profile <=65 C and CHA_FAN3 80% >=70 C /
 40% <=65 C, preserving the user-disabled CPU source and holding state in between.
