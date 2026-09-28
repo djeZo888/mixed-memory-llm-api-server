@@ -1,7 +1,8 @@
 # Codex as an optional Sova harness
 
-**Status: plan only — September 28, 2026.** No Codex engine, provider, container
-or live model integration has been installed or activated by this task.
+**Status: implementation authorized — September 28, 2026.** H020 published
+this plan; H021 implements it after the user's explicit follow-up. See
+`docs/h021-codex-execution.md` for current scope and evidence.
 
 ## Decision
 
@@ -210,7 +211,7 @@ attachments, inline image artifacts and downloads. Add engine service/version
 and capability health to the status registry without tying model availability
 to one harness. Keep model instance identity and GPU placement independent.
 
-## 6. Bounded implementation sequence — requires a later execution request
+## 6. Bounded implementation sequence
 
 | Stage | Worker1 | Worker2 | Exit condition |
 |---|---|---|---|
@@ -249,7 +250,8 @@ interventions. Harness features do not establish a model-quality improvement.
 
 ### Current implementation status
 
-All Codex integration items above are **NOT IMPLEMENTED / NOT TESTED**. H020
-only researches and publishes this plan. The existing MiniMax-to-MiMo HTTP400
-repair and completion review of the running near-950K benchmark remain separate
-work; this plan does not claim either is fixed.
+H021 implementation is now in progress. No Codex behavior is qualified until
+its recorded acceptance passes. The existing MiniMax-to-MiMo HTTP400 repair
+and completion review of the running near-950K benchmark remain separate work;
+this plan does not claim either is fixed. MiMo live Codex qualification is
+deferred while that benchmark owns the frontier runtime.
