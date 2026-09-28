@@ -1,3 +1,14 @@
+# Active H028 — added Ada and status recovery
+
+The user confirmed both VMs are reachable after the MAC-based NIC-name fix and
+requests verification/fan control for the new Ada, Qwen ~250K capacity with7%
+reserve, and status-page repair. This new scope supersedes H026/H027's closed
+windows. Read `docs/h028-added-ada-status-plan.md`. Root coordinates/reviews;
+W1 owns ai-vm writes; W2 owns ai-harness status recovery/source and coordinates
+ai-vm patches with W1. Fresh bounded native worker sessions, isolated copies.
+Window ends September29 00:10UTC; stop new inference00:00, report gaps honestly.
+No frontier repair, driver/ECC/power changes or broad stress/context benchmarking.
+
 # Latest checkpoint — H026 complete; both guests shut down
 
 H026 measured both warm Qwen GPUs at 600/550/500/600 W, plus one discarded
