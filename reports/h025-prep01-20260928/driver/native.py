@@ -208,6 +208,8 @@ class NativeAdapter:
         body=json.loads(raw);count_body=body if lane=='flash' else {k:v for k,v in body.items() if k not in ('stream','stream_options')}
         count_raw=canonical(count_body)
         result=self.rpc(lane,self.m['lanes'][lane]['count_path'],count_raw)
+        if lane=='flash':
+            require(result.get('tokenizer_revision')==result.get('template_revision')=='eb9eb208eb0d988989d07a6a12d0fdeb5f52574a' and result.get('context_limit')==1048576,'retained GLM native count identity drift')
         if lane.startswith('qwen'):
             tokens=result.get('tokens');require(isinstance(tokens,list) and type(result.get('count')) is int and result['count']==len(tokens)
                 and all(type(t) is int and 0<=t<2**31 for t in tokens),'Qwen native count/token mismatch')
@@ -362,13 +364,15 @@ def sample(a,due):
     for line in kernel.splitlines():
         if re.search(r'NVRM.*Xid|out of memory|oom-kill|AER:.*(?:fatal|uncorrected)',line,re.I):
             events.append({'kind':'Xid' if 'Xid' in line else 'AER' if 'AER' in line else 'OOM','lane':None,'sha256':hashlib.sha256(line.encode()).hexdigest()})
+    external_fan=read_fan_mirror(a)
+    end=clock()
     return {'boot_id':Path('/proc/sys/kernel/random/boot_id').read_text().strip(),'deployment_sha256':digest(a.m),'identities':identities,
             'guard_ok':True,'stopping_lanes':{l:v['stage'] for l,v in list(a.stopping.items())},'physically_settled_lanes':sorted(a.physically_stopped),'utc':start['utc'],'start_monotonic':start['monotonic'],'due_monotonic':min(due,start['monotonic']),
-            'end_monotonic':time.monotonic(),'gpu':gpu,'cgroups':cgroups,'guest':{'ram_total_bytes':ram['MemTotal'],
+            'end_monotonic':end['monotonic'],'end_utc':end['utc'],'gpu':gpu,'cgroups':cgroups,'guest':{'ram_total_bytes':ram['MemTotal'],
             'ram_available_bytes':ram['MemAvailable'],'swap_in':swap['pswpin'],'swap_out':swap['pswpout'],
             'psi':{name:Path('/proc/pressure',name).read_text() for name in ('cpu','memory','io')},
             'cpu_ticks':list(map(int,Path('/proc/stat').read_text().splitlines()[0].split()[1:]))},
-            'kernel':{'read_ok':True,'events':events},'external_fan':read_fan_mirror(a)}
+            'kernel':{'read_ok':True,'events':events},'external_fan':external_fan}
 
 
 def read_fan_mirror(a):

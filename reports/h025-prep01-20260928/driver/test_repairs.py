@@ -101,6 +101,15 @@ class Repairs(unittest.TestCase):
   a.m=m;a.stopping={'qwen1':{'stage':'PHYSICAL_STOPPING'}};a.physically_stopped=set()
   a.manager=types.SimpleNamespace(trusted_container=lambda _:dict(Id=expected['Id'],Image=expected['Image'],State=dict(Running=False,Pid=0,Restarting=False)))
   self.assertEqual(a.stopping_identity('qwen1'),m['lanes']['qwen1']['identity']);self.assertFalse(a.physically_stopped)
+ def test_glm_native_count_revision_is_pinned_without_qwen_token_array(self):
+  from contract import canonical
+  a=NativeAdapter.__new__(NativeAdapter);a.m=manifest();a.owner_id='owned';raw=canonical(text_body(a.m,'flash','prefix','corpus'))
+  row={'identity':a.m['lanes']['flash']['identity']}
+  native={'count':16257,'tokenizer_revision':'eb9eb208eb0d988989d07a6a12d0fdeb5f52574a','template_revision':'eb9eb208eb0d988989d07a6a12d0fdeb5f52574a','context_limit':1048576}
+  a.rpc=lambda *args:dict(native)
+  self.assertEqual(a.count('flash',raw,row)['response']['count'],16257)
+  native['template_revision']='changed'
+  with self.assertRaises(Refusal):a.count('flash',raw,row)
  def test_qwen_physical_wait_outside_lease_bookkeeping_inside(self):
   a=NativeAdapter.__new__(NativeAdapter);m=manifest();m['lanes']['qwen1']['identity']={'container':dict(Id='a'*64,Image='b',Pid=987654321),'generation':35,'runtime_profile':{'id':'a'*64}}
   a.m=m;a.stopping={};a.physically_stopped=set();a.cg={'qwen1':Path('/nonexistent-fixture-cgroup')};a.journal=MagicMock();a.identity=lambda _:None

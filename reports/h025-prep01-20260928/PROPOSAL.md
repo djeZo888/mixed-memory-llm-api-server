@@ -27,3 +27,5 @@ Launch workload ONLY under exact durable unit named in GO, e.g. h025-test01-over
 ```
 
 No inference has been dispatched.115focused tests PASS in42.393s, including420complete request lifecycles exceeding the old1MiB aggregate, real confined storage, monitor failure and mount-loss exact settlement, partialreceipt persistence failure, stale/failed fan bridge, swap streak and SSEEOF. These fixtures are not live thermal qualification. W1 initial review corrections recorded outsideGit and forwarded; final physical fan proof pending.
+
+Post-checkpoint boundary correction: fan mirror may arrive during a GPU sample; freshness is now checked against actual sample-endUTC/monotonic rather than sample-startUTC, avoiding a false future timestamp. GLM token count additionally pins both native revisions and1048576context. A serial lane exhausting its finite cap before admission end fails campaign instead of coasting. Focused affected fixtures5+32+42 PASS; no additional live calls/inference.

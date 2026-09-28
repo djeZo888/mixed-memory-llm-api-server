@@ -86,7 +86,7 @@ def validate_sample(m, row, now, baseline=None, previous=None, guest_swap_streak
             require(lane is None or lane in LANES, 'kernel_event_scope')
             fault('kernel_'+event['kind'], lane, lane is not None)
         from fan_status import validate_fan
-        validate_fan(m,row['external_fan'],row['utc'],now)
+        validate_fan(m,row['external_fan'],row.get('end_utc',row['utc']),now)
         # These are GPU draw totals, not host/package/wall or PSU input measurements.
         diagnostics = {'sampling_delay_seconds': end-due, 'query_seconds': end-start,
                        'three_blackwell_draw_w': sum(row['gpu'][m['lanes'][l]['gpu_uuid']]['power_draw_w'] for l in LANES[:3]),

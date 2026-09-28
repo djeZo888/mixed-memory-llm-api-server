@@ -65,7 +65,10 @@ class Runner:
             while True:
                 with self.p.lock:
                     try:self.p.admission(lane)
-                    except Refusal:return
+                    except Refusal:
+                        if self.p.first_failure is None and not self.p.admission_closed and self.p.clock()['monotonic'] < self.p.admission_deadline:
+                            self.p.fail('finite_lane_cap_before_campaign_end',lane)
+                        return
                 if not self.once(lane,content):return
         except Exception as exc:
             self.p.fail('lane_preparation_failed:'+type(exc).__name__,lane)

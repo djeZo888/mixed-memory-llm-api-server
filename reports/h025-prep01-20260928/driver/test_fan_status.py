@@ -12,6 +12,11 @@ class FanStatus(unittest.TestCase):
  def test_bridge_death_cannot_be_hidden_by_source_freshness(self):
   c=Clock();m=manifest();s=sample(m,c)['external_fan'];c.advance(6)
   with self.assertRaises(Refusal):validate_fan(m,s,c()['utc'],c.t)
+ def test_bridge_arrives_during_sample_is_not_false_future(self):
+  from telemetry import validate_sample
+  c=Clock();m=manifest();row=sample(m,c);c.advance(.5)
+  row['external_fan']=sample(m,c)['external_fan'];row['end_utc']=c()['utc'];row['end_monotonic']=c.t
+  _,faults=validate_sample(m,row,c.t);self.assertFalse(faults)
  def test_each_controller_fault_blocks(self):
   c=Clock();m=manifest();source=sample(m,c)['external_fan']
   for key,value in [('pid',43),('state','blocked'),('errors',['uncertain']),('source_bits',[1,0,0]),('mode',3),('readback_duty',80),('actual_tach',0),('actual_tach_units','rpm'),('node_boot_id','old'),('source_sha256','c'*64)]:
