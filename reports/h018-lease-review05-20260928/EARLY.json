@@ -1,0 +1,13 @@
+{
+  "task": "H018 LEASE REVIEW05",
+  "nativeID": "01a0e58c-8348-7592-8249-debd8e3d69d4",
+  "native_start_utc": "2026-09-28T01:06:25Z",
+  "native_start_evidence": "ps lstart of native codex parent PID 72229 (Europe/Ljubljana UTC+02)",
+  "deadline_utc": "2026-09-28T01:14:25.651Z",
+  "hard_deadline_utc": "2026-09-28T01:15:00Z",
+  "maximum_seconds": 480,
+  "source_commit": "f25c86ff00bfbd19806a515826d2e0949fee7d0d",
+  "scope": "Source-only independent review; no remote contact, model requests, builds, deployment, runtime or implementation edits",
+  "recorded_utc": "2026-09-28T01:07:12.313003+00:00",
+  "deadline_authority": "Exact unchanged deadline supplied by direct root steering; original ps start precision was seconds"
+}
