@@ -5,8 +5,8 @@
 The two-hour window runs from23:38:03UTC September27 to01:38:03UTC September28.
 The swap-limit mechanism has been reproduced locally and a narrow repair has
 passed small-container checks and independent review. Deployment of the ordinary
-MiMo service is in progress; actual readiness and Sova acceptance remain
-pending at this checkpoint. No long benchmark is running.
+MiMo service began its ordinary 950K load at **00:03:07 UTC**; actual readiness
+and Sova acceptance remain pending at this checkpoint. No long benchmark is running.
 
 Sova was paused normally at23:41:52UTC. Chats, files and existing quarantines
 were preserved. The original GLM process was normally stopped and its exact
@@ -21,7 +21,7 @@ mechanism described by [Moby issue51446](https://github.com/moby/moby/issues/514
 The original H017 failing literal was not retained; this is a new controlled
 reproduction, not a reconstructed historical observation.
 
-The proposed repair uses an explicit dedicated `llmmimo.slice` with a704GiB
+The deployed repair uses an explicit dedicated `llmmimo.slice` with a704GiB
 memory limit and zero swap, and puts the model's Docker scope beneath it.
 The owner verifies the exact ancestry and sole model child, the persistent
 unit, actual kernel limits and zero owned swap/OOM. It classifies Linux's
@@ -29,6 +29,12 @@ unit, actual kernel limits and zero owned swap/OOM. It classifies Linux's
 acceptable only when the independently checked parent enforces zero swap.
 The service requires and starts after the slice, so ordinary starts do not
 depend on a one-time manual setup.
+
+The actual production container is beneath the required slice. At startup,
+both parent and child had the 704 GiB limit, zero swap limit/current and no
+owned OOM events. The deployment worker exited at 00:10:04 UTC while the
+ordinary service continued loading independently. This is startup evidence,
+not yet readiness or long-context qualification.
 
 The exact production parent settings were exercised using a tiny64MiB child,
 without allocating704GiB or loading model weights. Parent704GiB/zero-swap
