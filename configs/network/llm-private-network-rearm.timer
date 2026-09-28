@@ -1,0 +1,12 @@
+# H028 finite boot grace; no recurring or persistent retry loop.
+[Unit]
+Description=Start bounded private API socket recovery after boot
+
+[Timer]
+OnBootSec=45s
+AccuracySec=1s
+Unit=llm-private-network-rearm.service
+Persistent=no
+
+[Install]
+WantedBy=timers.target
