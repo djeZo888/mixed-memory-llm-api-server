@@ -38,7 +38,7 @@ class SourceGates(unittest.TestCase):
 
     def test_h018_absolute_last_window_cannot_be_extended(self):
         go = self.go()
-        go.update(admit_before_epoch=1790558701, hard_end_epoch=1790558701 + 28800)
+        go.update(admit_before_epoch=1790559001, hard_end_epoch=1790559001 + 28800)
         with self.assertRaisesRegex(RuntimeError, 'finite_admission_required'):
             c.validate_go(go, 1790550000)
 

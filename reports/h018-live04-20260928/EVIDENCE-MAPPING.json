@@ -1,0 +1,153 @@
+{
+  "utc": "2026-09-28T00:53:47.026706+00:00",
+  "private_retained_files": {
+    "LIVE04-FAILURE-READ.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/LIVE04-FAILURE-READ.json",
+      "sha256": "20df4323a6b2ec9b3399abbb2da1967ed2ce775efb47df5b63570076b13274cf"
+    },
+    "LIVE04-FRESH-RELEASE.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/LIVE04-FRESH-RELEASE.json",
+      "sha256": "2db99b873aedb760cc2c5b730b6e6204c86db0a2cf9ca1f2fc5e1e773968e652"
+    },
+    "ROOT-START-LIVE04-FULL.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/ROOT-START-LIVE04-FULL.json",
+      "sha256": "858888ad60d6bd92e0c811becd0b4f23c8554db15683d0d5cca79c698e8118e9"
+    },
+    "ROOT-START-LIVE04-02-FULL.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/ROOT-START-LIVE04-02-FULL.json",
+      "sha256": "a8a6cb59dfeee7f9097f1d2d62b1f03636883eeb21e3129a0206d83fcdef3fff"
+    },
+    "SHORT02-CONFIG.PREPARED.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/SHORT02-CONFIG.PREPARED.json",
+      "sha256": "2494d815787f22e2317c29b27a86fd0e6daa7e05b2f2fbb9897f4e5222225b1f"
+    },
+    "read-dispatch-live04-remote.py": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/read-dispatch-live04-remote.py",
+      "sha256": "c88fa1359f194984238b92143aabe37ed916b368e53d053289d838861aabdff1"
+    },
+    "collect-live04-remote.py": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/collect-live04-remote.py",
+      "sha256": "8866c4718f8907d1158eeca451bf27056cdffe9cc7085934d7da74b12f5676af"
+    },
+    "TIMEOUT-SOURCE.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/TIMEOUT-SOURCE.json",
+      "sha256": "218ba9bc55a31e6bb9449cf83c79024b55425feb0ab871732fe3e9b8bfc56269"
+    },
+    "TIMEOUT-SOURCE-EXTRA.json": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LIVE-04-20260928/private/TIMEOUT-SOURCE-EXTRA.json",
+      "sha256": "7e628f29ab78ee15d7d24f90e261c978d2bef2624daf8ad3b28fb94505bcfb73"
+    }
+  },
+  "raw_private_files_not_committed": true,
+  "failed_original_remote_archive": {
+    "imported_shared_policy": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+    "mode": "0400",
+    "original_request_completion": "UNPROVEN_FAILED",
+    "original_state_sha256": "6f460676efc90d0abdc9502fd233b33ae9f9d3bab2e7ff9070a1180698d7614c",
+    "path": "/data/build/H018-20260928/live04/FAILED-ddd222-IMMUTABLE.json",
+    "sha256": "748e31feeedd5dfc859b487a305c70fa7070f19d35c9366005c30b615cf5a47f"
+  },
+  "current_start_guard": {
+    "gpus": [
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "total_mib": 97887.0,
+        "free_mib": 96659.0,
+        "temp_c": 36.0
+      }
+    ],
+    "host": {
+      "MemTotal": 946820976640,
+      "MemFree": 537254211584,
+      "MemAvailable": 921357533184,
+      "Buffers": 411590656,
+      "Cached": 388686430208,
+      "SwapCached": 13152256,
+      "Active": 5001179136,
+      "Inactive": 392793088000,
+      "Active(anon)": 2418323456,
+      "Inactive(anon)": 8838602752,
+      "Active(file)": 2582855680,
+      "Inactive(file)": 383954485248,
+      "Unevictable": 28422144,
+      "Mlocked": 28409856,
+      "SwapTotal": 3157258240,
+      "SwapFree": 28672,
+      "Zswap": 0,
+      "Zswapped": 0,
+      "Dirty": 1187840,
+      "Writeback": 0,
+      "AnonPages": 8711868416,
+      "Mapped": 3159113728,
+      "Shmem": 2551693312,
+      "KReclaimable": 2516631552,
+      "Slab": 3386576896,
+      "SReclaimable": 2458791936,
+      "SUnreclaim": 927784960,
+      "KernelStack": 26902528,
+      "PageTables": 67383296,
+      "SecPageTables": 0,
+      "NFS_Unstable": 0,
+      "Bounce": 0,
+      "WritebackTmp": 0,
+      "CommitLimit": 476567744512,
+      "Committed_AS": 38643773440,
+      "VmallocTotal": 14073748835531776,
+      "VmallocUsed": 681332736,
+      "VmallocChunk": 0,
+      "Percpu": 136839168,
+      "HardwareCorrupted": 0,
+      "AnonHugePages": 0,
+      "ShmemHugePages": 0,
+      "ShmemPmdMapped": 0,
+      "FileHugePages": 0,
+      "FilePmdMapped": 0,
+      "Unaccepted": 0,
+      "HugePages_Total": 0,
+      "HugePages_Free": 0,
+      "HugePages_Rsvd": 0,
+      "HugePages_Surp": 0,
+      "Hugepagesize": 2097152,
+      "Hugetlb": 0,
+      "DirectMap4k": 24449548288,
+      "DirectMap2M": 896750583808,
+      "DirectMap1G": 42949672960
+    },
+    "memory_policy": {
+      "memory.max": "755914244096",
+      "memory.swap.max": "0",
+      "memory.swap.current": "0"
+    },
+    "cgroup": {
+      "memory.current": "216793088",
+      "memory.max": "755914244096",
+      "memory.swap.current": "0",
+      "memory.swap.max": "0",
+      "memory.events": {
+        "low": "0",
+        "high": "0",
+        "max": "0",
+        "oom": "0",
+        "oom_kill": "0",
+        "oom_group_kill": "0"
+      }
+    },
+    "host_swap_diagnostic": {
+      "baseline_used_bytes": 3157229568,
+      "used_bytes": 3157229568,
+      "delta_bytes": 0
+    }
+  },
+  "current_start_parent_policy": {
+    "memory.max": "755914244096",
+    "memory.swap.max": "0",
+    "memory.swap.current": "0"
+  },
+  "current_start_lock_proof": {
+    "parent_context_closed": true,
+    "parent_canonical_fds_absent": true,
+    "bounded_lock_observations": 56
+  },
+  "qualification": "NONE; current usable capacity configured950000 only, no actualREADY/occupied/short17/Sova proof yet",
+  "http_audit_sha256": "14e7f18db5ceb8a6aead6c99a59c1a3f959c333fbcc9fb3998db5833017df103"
+}

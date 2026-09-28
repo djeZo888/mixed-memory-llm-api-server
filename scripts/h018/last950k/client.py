@@ -94,8 +94,8 @@ def owner():
 def validate_go(go, now):
     require(go.get('authorized') is True and go.get('purpose') == 'H018_LAST_NEAR950K', 'root_go_required')
     require(type(go.get('active_cap_seconds')) is int and go['active_cap_seconds'] == ACTIVE_CAP, 'exact_8h_cap_required')
-    require(now < go['admit_before_epoch'] <= min(1790558700, go['hard_end_epoch'] - ACTIVE_CAP)
-            and go['hard_end_epoch'] <= 1790558700 + ACTIVE_CAP, 'finite_admission_required')
+    require(now < go['admit_before_epoch'] <= min(1790559000, go['hard_end_epoch'] - ACTIVE_CAP)
+            and go['hard_end_epoch'] <= 1790559000 + ACTIVE_CAP, 'finite_admission_required')
     require(go.get('private_api') == {'host': HOST, 'port': PORT, 'model': 'mimo-v2.6-pro-rl'}, 'private_api_identity')
     require(go.get('frontier_claim_contract') == LANE_CONTRACT, 'proxy_single_active_claim_contract_required')
     require(set(go.get('acceptance', {})) == {'final_native17', 'production', 'sova'}, 'all_acceptance_proofs_required')

@@ -1,0 +1,100 @@
+{
+  "status": "DISPATCH_FAILED_NO_RETRY",
+  "utc": "2026-09-28T00:43:02.985684+00:00",
+  "source_commit": "35997789925807237d63ca24d7a9eea2479edc11",
+  "manifest_sha256": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+  "selection": {
+    "generation": 10,
+    "manifest_sha256": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "failed_archive": {
+    "imported_shared_policy": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+    "mode": "0400",
+    "original_request_completion": "UNPROVEN_FAILED",
+    "original_state_sha256": "6f460676efc90d0abdc9502fd233b33ae9f9d3bab2e7ff9070a1180698d7614c",
+    "path": "/data/build/H018-20260928/live04/FAILED-ddd222-IMMUTABLE.json",
+    "sha256": "748e31feeedd5dfc859b487a305c70fa7070f19d35c9366005c30b615cf5a47f"
+  },
+  "rollback_path": "/data/build/H018-20260928/live04/ROLLBACK.json",
+  "rollback_sha256": "5dbcea257df61e7918a6838aee937a83c40534aab7323d6b03c387c945570c78",
+  "mutations": [
+    {
+      "removed_exact_stopped_container": "d7ab15410156d2a10523b3cb62ff8c07a0cc390d7ecd5eebbe110f6d20e176c7"
+    },
+    {
+      "path": "/data/services/mimo-h016-20260927/source/owner.py",
+      "sha256": "218c890f1f3d8f7f80998aaf5cf7463c32febf5e454713f40da76a9ed60027d0"
+    },
+    {
+      "path": "/data/services/mimo-h016-20260927/manifest.json",
+      "sha256": "15ed9cbce60e2c7dac67f05df1d678d9128eb73eed851f3270a851183dd2ffbd"
+    },
+    {
+      "path": "/data/build/H018-20260928/worker1-short02/client.py",
+      "sha256": "057ae91cc1189ad9fa48221a5897ab649132b5c159d9b0ff7e46cf81c1f8408e"
+    },
+    {
+      "path": "/data/build/H018-20260928/worker1-short02/h018-short02.service",
+      "sha256": "24ae61689c71c5f99844aa39740cd900f77808dac531fde49f5fcc9516667f95"
+    },
+    {
+      "path": "/data/build/H018-20260928/worker1-short02/AUTHORITY.INACTIVE.json",
+      "sha256": "e0ab55f18588f43d256788d84679f50d7f4bb71501eb806d59887099ef29fd13"
+    },
+    {
+      "path": "/etc/systemd/system/h018-short02.service",
+      "sha256": "24ae61689c71c5f99844aa39740cd900f77808dac531fde49f5fcc9516667f95"
+    }
+  ],
+  "old_settlement": {
+    "cgroup_empty": true,
+    "gpu_compute_empty": true,
+    "pid_released": true
+  },
+  "staging_lease_released_before_dispatch": true,
+  "dispatch_attempted": true,
+  "dispatch_utc": "2026-09-28T00:43:01.728991+00:00",
+  "primary_failure": {
+    "class": "RuntimeError",
+    "reason": "dispatch_not_loading"
+  },
+  "cleanup_failure": null,
+  "lease_inode": [
+    26,
+    1838
+  ],
+  "first_dispatch_only": true,
+  "superseded_by_root_authorized_fresh_start": {
+    "invocation_id": "666c1c52cadd453a9dc264b6e1823c5b",
+    "pid": 2619425,
+    "unit": "llm-frontier-mimo.service"
+  },
+  "resident_identity_and_limits_before_after_reload": [
+    {
+      "name": "/llm-image-backend",
+      "id": "15031b926938cd0492e1c678d8319e4ed2363d1bc705e6d53ebed5f1ee9db1d6",
+      "pid": 1833066,
+      "limits_unchanged": true,
+      "swap_before": "4096",
+      "swap_after": "4096"
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "pid": 1819707,
+      "limits_unchanged": true,
+      "swap_before": "1416278016",
+      "swap_after": "1416278016"
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "pid": 1784601,
+      "limits_unchanged": true,
+      "swap_before": "1655459840",
+      "swap_after": "1655459840"
+    }
+  ]
+}
