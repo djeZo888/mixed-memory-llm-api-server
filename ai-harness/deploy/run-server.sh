@@ -18,16 +18,19 @@ uses the status daemon, and must never be passed to engines. Its exact authority
 is documented in H005 source handoff; omission preserves baseline admission.
 ENGINE_LAUNCHER defaults to this script's sibling run-engine.sh.
 All required paths must exist, except DATA_DIR (created private if needed).
+An explicitly reviewed --codex-preview-receipt ABS enables the optional local preview;
+--codex-preview-output-limit defaults65536 and may be1024 for bounded acceptance.
+Receipt failure disables only Codex. MiniMax remains the default engine.
 Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
-node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''
+node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -38,8 +41,13 @@ while (($#)); do
         --browser-approval-key-file) approval_key_file=$2 ;;
         --node-control-key-file) node_control_key_file=$2 ;;
         --engine-launcher) engine_launcher=$2 ;;
+        --codex-preview-receipt) codex_receipt=$2 ;;
       esac
       shift 2 ;;
+    --codex-preview-output-limit)
+      (($# >= 2)) || fail 'output limit required'
+      [[ "$2" =~ ^[0-9]+$ && "$2" -ge 1 && "$2" -le 65536 ]] || fail 'invalid output limit'
+      codex_output=$2; shift 2 ;;
     -h|--help) usage; exit 0 ;;
     *) fail "unknown argument: $1" ;;
   esac
@@ -79,6 +87,12 @@ import os, sys
 if os.stat(sys.argv[1]).st_mode & 0o077:
     raise SystemExit("data directory must have no group/other permissions")
 PY
+entry_args=("$app_dir/server/dist/main.js")
+if [[ -n "$codex_receipt" ]]; then
+  [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
+  [[ -f "$app_dir/server/dist/codex-preview-main.js" ]] || fail 'preview entrypoint missing'
+  entry_args=("$app_dir/server/dist/codex-preview-main.js" "$codex_receipt" "$codex_output")
+fi
 cd -- "$app_dir/server"
 service_user=$(id -un)
 runtime_dir="/run/user/$(id -u)"
@@ -96,4 +110,4 @@ exec env -i \
   AI_HARNESS_GATEWAY_URL=http://10.0.2.2:8081/v1 \
   AI_HARNESS_ALLOWED_ORIGINS=http://10.156.100.61 \
   AI_HARNESS_WEB_DIST="$app_dir/web/dist" \
-  "$node_prefix/bin/node" "$app_dir/server/dist/main.js"
+  "$node_prefix/bin/node" "${entry_args[@]}"

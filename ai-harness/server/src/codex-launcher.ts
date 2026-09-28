@@ -17,7 +17,7 @@ export interface OwnedCodexProcess {
     exited: Promise<void>;
     terminateAndConfirm(): Promise<boolean>;
 }
-export const CODEX_MODEL_POLICY = "sova-codex-0.158.0-qwen-text-v1";
+export const CODEX_MODEL_POLICY = "sova-codex-0.158.0-qwen-text-v2";
 /** Fixed reviewed script uses task-egress.py and redact-acp.py. Supervisor exit0
  * attests exact random container rm + explicit exists exit1, not mere PID exit.
  * Unclean exits/timeout stay uncertain. Gateway settlement is a separate proof.

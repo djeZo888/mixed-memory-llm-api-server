@@ -20,7 +20,7 @@ class ServerContract(unittest.TestCase):
             (prefix / 'bin').mkdir(parents=True)
             node = prefix / 'bin/node'
             node.write_text(f'#!{sys.executable}\nimport json,os,sys\n'
-                            'print("v24.21.0" if sys.argv[1:] == ["--version"] else json.dumps(dict(os.environ)))\n')
+                            'print("v24.21.0" if sys.argv[1:] == ["--version"] else json.dumps(dict(os.environ,_argv=sys.argv[1:])))\n')
             node.chmod(0o700)
             app = root / 'app'
             (app / 'server/dist').mkdir(parents=True)
@@ -59,6 +59,11 @@ class ServerContract(unittest.TestCase):
                 self.assertNotIn(name, observed)
             self.assertNotIn(key.read_text(), result.stdout + result.stderr)
             self.assertEqual(data.stat().st_mode & 0o777, 0o700)
+            (app / 'server/dist/codex-preview-main.js').touch()
+            receipt = root / 'reviewed-receipt.json'
+            preview = subprocess.run(args + ['--codex-preview-receipt', str(receipt), '--codex-preview-output-limit', '1024'], env=env, text=True, capture_output=True)
+            self.assertEqual(preview.returncode, 0, preview.stderr)
+            self.assertEqual(json.loads(preview.stdout)['_argv'], [str(app / 'server/dist/codex-preview-main.js'), str(receipt), '1024'])
             key.chmod(0o644)
             rejected = subprocess.run(args, env=env, text=True, capture_output=True)
             self.assertNotEqual(rejected.returncode, 0)
