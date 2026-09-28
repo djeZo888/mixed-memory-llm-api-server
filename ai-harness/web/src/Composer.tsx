@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { ArrowUp, FileText, Paperclip, Square, X } from 'lucide-react';
-import { HarnessStore, busyKey, lookup, pendingRunIds, type ViewState } from './store';
+import { HarnessStore, busyKey, lookup, codexSpecialistAvailable, pendingRunIds, type ViewState } from './store';
 import { ContextMeter } from './ContextMeter';
 import { contextForThread } from './context';
 import { isActive } from './types';
@@ -47,7 +47,7 @@ export function Composer({
   const codex = state.thread?.session.engineKind === 'codex';
   const codexUnavailable = codex && state.healthLoaded && state.codexAvailable !== true;
   const imageUploads =
-    !codex && (state.visionAvailable || imageReferencesAvailable(state.imageCapabilities));
+    codex ? codexSpecialistAvailable(state) : (state.visionAvailable || imageReferencesAvailable(state.imageCapabilities));
   const reusableFiles = [
     ...(state.thread?.attachments ?? []),
     ...(state.thread?.artifacts ?? []),
@@ -231,7 +231,7 @@ export function Composer({
               <li key={artifact.id}>
                 <FileText size={15} />
                 <span>{artifact.name}</span>
-                <small>Image reference · Original retained</small>
+                <small>{codex ? 'Specialist image reference' : 'Image reference'} · Original retained</small>
                 <button
                   type="button"
                   className="icon-button"
@@ -317,7 +317,7 @@ export function Composer({
             multiple
             tabIndex={-1}
             aria-label="Upload file"
-            accept={uploadAccept + (imageUploads ? ',image/*' : '')}
+            accept={uploadAccept + (imageUploads ? codex ? ',image/png,image/jpeg,.png,.jpg,.jpeg' : ',image/*' : '')}
             disabled={!!locked}
             onChange={(event) => {
               const files = Array.from(event.target.files ?? []);
@@ -384,7 +384,7 @@ export function Composer({
         <span>
           {state.healthLoaded
             ? imageUploads
-              ? 'PDF, source, text and image files · 50 MiB per file'
+              ? codex ? 'PDF, source, text and PNG/JPEG specialist references · 50 MiB per file' : 'PDF, source, text and image files · 50 MiB per file'
               : 'PDF, source and text files · 50 MiB per file · Images unavailable'
             : 'Checking attachment capabilities…'}
         </span>

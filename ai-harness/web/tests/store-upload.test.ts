@@ -110,3 +110,16 @@ describe('upload batch lifecycle', () => {
     store.dispose();
   });
 });
+it('chat navigation during a delayed batch retains the target Codex specialist classification',async()=>{
+ const {transport}=fixtureTransport();const first=deferred<Awaited<ReturnType<typeof transport.upload>>>();
+ transport.health.mockResolvedValue({visionAvailable:false,engines:{codex:{available:true,imageToolEnabled:true}}});
+ transport.imageCapabilities.mockResolvedValue({profiles:[{operation:'edit',references:2,size:'64x64',transparent:false,evidence_sha256:'a'.repeat(64)}]});
+ const baseSnapshot=transport.snapshot.getMockImplementation()!;
+ transport.snapshot.mockImplementation(async(id,...args)=>{const value=await baseSnapshot(id,...args);return {...value,session:{...value.session,engineKind:id==='chat/a'?'codex':'minimax'}};});
+ transport.upload.mockReturnValueOnce(first.promise).mockResolvedValueOnce({attachment:{id:'second',name:'second.png',mimeType:'image/png',size:3}});
+ const store=new HarnessStore(transport);await store.start();await waitFor(()=>expect(store.getSnapshot().thread?.session.engineKind).toBe('codex'));
+ const uploading=store.uploadBatch('chat/a',[new File(['one'],'one.png',{type:'image/png'}),new File(['two'],'two.png',{type:'image/png'})]);await waitFor(()=>expect(transport.upload).toHaveBeenCalledTimes(1));
+ store.select('chat/b');await waitFor(()=>expect(store.getSnapshot().thread?.session.engineKind).toBe('minimax'));
+ first.resolve({attachment:{id:'first',name:'first.png',mimeType:'image/png',size:3}});expect(await uploading).toBe(true);
+ expect(transport.upload).toHaveBeenCalledTimes(2);expect(store.getSnapshot().imageReferences['chat/a'].map(a=>a.id)).toEqual(['first','second']);expect(store.getSnapshot().attachments['chat/a']??[]).toEqual([]);store.dispose();
+});

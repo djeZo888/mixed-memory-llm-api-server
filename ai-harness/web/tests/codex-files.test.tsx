@@ -49,3 +49,22 @@ it('disabled Codex keeps history visible and composer read-only', async () => {
   expect(screen.getByRole('button', { name: 'Send message' })).toBeDisabled();
   expect(transport.send).not.toHaveBeenCalled();
 });
+it('qualified Codex image upload stages a specialist reference and sends no native attachment',async()=>{
+ const {transport}=fixtureTransport();transport.health.mockResolvedValue({visionAvailable:false,engines:{codex:{available:true,imageToolEnabled:true}}});
+ transport.imageCapabilities.mockResolvedValue({profiles:[{operation:'edit',references:1,size:'64x64',transparent:false,evidence_sha256:'a'.repeat(64)}]});
+ transport.snapshot.mockImplementation(async id=>({...snapshot(id),session:{...snapshot(id).session,engineKind:'codex'}}));
+ transport.upload.mockResolvedValue({attachment:{id:'uploaded-image',name:'input.png',mimeType:'image/png',size:3}});
+ const store=new HarnessStore(transport);render(<App store={store}/>);
+ await screen.findByText(/PNG\/JPEG specialist references/);
+ await userEvent.upload(screen.getByLabelText('Upload file'),new File(['png'],'input.png',{type:'image/png'}));
+ expect(await screen.findByRole('button',{name:'Remove image reference input.png'})).toBeEnabled();
+ expect(screen.getByText(/Specialist image reference/)).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Remove attachment input.png'})).not.toBeInTheDocument();
+ await store.send('chat/a','Edit with specialist');expect(transport.send).toHaveBeenCalledWith('chat/a','Edit with specialist',[],['uploaded-image']);
+ expect(screen.getByText(/Native image, audio and video recognition is unavailable/)).toBeInTheDocument();
+});
+it('descriptive image capability cannot enable Codex specialist uploads without operational flag',async()=>{
+ const {transport}=fixtureTransport();transport.health.mockResolvedValue({visionAvailable:true,engines:{codex:{available:true,capabilityDetails:{image:{supported:true,qualification:'live',reason:'description'}}}}});
+ transport.imageCapabilities.mockResolvedValue({profiles:[{operation:'edit',references:1,size:'64x64',transparent:false,evidence_sha256:'a'.repeat(64)}]});
+ transport.snapshot.mockImplementation(async id=>({...snapshot(id),session:{...snapshot(id).session,engineKind:'codex'}}));const store=new HarnessStore(transport);await store.start();await waitFor(()=>expect(store.getSnapshot().thread?.session.engineKind).toBe('codex'));
+ expect(await store.upload('chat/a',new File(['png'],'input.png',{type:'image/png'}))).toBe(false);expect(transport.upload).not.toHaveBeenCalled();store.dispose();
+});
