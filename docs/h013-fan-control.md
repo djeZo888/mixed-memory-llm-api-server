@@ -1,6 +1,27 @@
 # GPU fan boost and motherboard fan control
 
-## Current deployment and BMC access — 27 September
+## Current external-fan state — 28 September
+
+The user replaced the server Blackwell's external fan. A bounded ordinary-load
+check at the user-set 75% duty reached 79 C; the separate four-way test has
+incomplete monitoring and does not establish full PSU/thermal qualification.
+See [H023 results](../reports/h023-thermal-20260928/README.md).
+
+The user subsequently observed repeated changes between about 2500 and 5000
+RPM. No deployed Sova script was found writing this BMC channel; the NVML fan
+boost service explicitly excludes the server GPU. Host-side writer inspection
+was unavailable. On September 28 the user disabled CPU temperature as CHA_FAN3's
+source and physically confirmed that revving stopped. Readback confirmed the
+Zone4 CPU source bit changed from 1 to 0, with the curve unchanged. Preserve
+this working setting; do not restore the CPU-temperature source automatically.
+
+The requested new policy is **40% below 70 C GPU temperature and 80% at or above
+70 C**, with a stable cooldown before reducing duty. This GPU-driven external
+fan policy is not yet deployed or qualified. A flat BMC CPU-temperature curve
+is not a GPU-temperature controller. The separate integrated GPU fan policy
+remains 100% at 70 C, with firmware control restored below its cooldown threshold.
+
+## Historical deployment and BMC access — 27 September
 
 **08:36 update:** the user changed sova to Administrator. The unchanged probe
 then passed login, all four fan GETs and owned logout (six HTTP200 responses).
