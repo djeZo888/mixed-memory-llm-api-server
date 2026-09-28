@@ -1,4 +1,4 @@
-import { translateResponses, ResponsesStream, CODEX_CONTEXT } from "./codex-responses.js";
+import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT } from "./codex-responses.js";
 import { GatewayOwnership, type OwnershipOptions, type SettlementQuery } from "./gateway-ownership.js";
 import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
 import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
@@ -47,6 +47,10 @@ export interface GatewayOptions {
     enabled: boolean;
     /** Trusted bounded pilot may reserve less; ordinary production remains 65536. */
     outputLimit?: number;
+    /** Bounded host diagnostics keyed to the existing request owner, no model text. */
+    /** Explicit private acceptance capture only; production leaves this absent. */
+    onTrace?: (event: {requestId:string;sessionId:string;lane:string;chunk:Buffer}) => void;
+    onError?: (event: {requestId:string;sessionId:string;lane:string;phase:'stream'|'terminal';code:string}) => void;
     /** Count the EXACT final Qwen chat template/history/tool payload on this lane. */
     countQwen: (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal) => Promise<{inputTokens:number; contextWindow:480000}>;
   };
@@ -56,6 +60,8 @@ export interface GatewayOptions {
   /** Latest unresolved durable request owner, retained across profile changes. */
   initialFrontierOwnerModel?: string;
   images?: ImageBroker;
+  /** Separate reviewed specialist-job gate; text settlement never releases image ownership. */
+  codexImageJobsQualified?: boolean;
   dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
   availability?: AvailabilityProvider;
@@ -598,7 +604,11 @@ export function createGateway(options: GatewayOptions): Gateway {
         },
       });
     // Codex text settlement cannot prove image job ownership or frontier settlement.
-    if (codexTokens.has(token) && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
+    const qualifiedImageRoute = options.codexImageJobsQualified === true &&
+      ((request.method === "POST" && request.url === "/v1/image-jobs") ||
+       (request.method === "GET" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+$/.test(request.url)) ||
+       (request.method === "POST" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+\/cancel$/.test(request.url)));
+    if (codexTokens.has(token) && !qualifiedImageRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
       return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
     // This internal bearer service has no browser API and never grants CORS.
     if (request.headers.origin)
@@ -855,6 +865,7 @@ export function createGateway(options: GatewayOptions): Gateway {
         const count = await options.responses!.countQwen(finalBody, lane.upstream, key, cancelled.signal);
         if (count.contextWindow !== CODEX_CONTEXT["qwen3.8-27b"] || !Number.isSafeInteger(count.inputTokens) || count.inputTokens < 0)
           throw new ApiError(503,"codex_tokenizer_unqualified","Exact input count is unavailable");
+        ownership.account(ownedRequest, { inputTokens: count.inputTokens, reservedOutputTokens: Number(body.max_tokens) });
         if (count.inputTokens + Number(body.max_tokens) > count.contextWindow)
           throw new ApiError(413,"codex_context_full","Input plus reserved output exceeds model context");
         if (cancelled.signal.aborted || tokens.get(token) !== sessionId) throw new ApiError(499,"cancelled","Request cancelled before dispatch");
@@ -936,6 +947,8 @@ export function createGateway(options: GatewayOptions): Gateway {
         // This is one request's input occupancy, never a sum. A runner can issue
         // child/compression requests: callers must keep that attribution uncertain.
         try {
+          if (!frontier) ownership.account(ownedRequest, { promptTokens,
+            ...(Number.isSafeInteger(completionTokens) && Number(completionTokens) >= 0 ? {completionTokens:Number(completionTokens)} : {}) });
           if (!frontier)
             options.onUsage?.({
               sessionId,
@@ -1042,8 +1055,10 @@ export function createGateway(options: GatewayOptions): Gateway {
               return;
             }
             observe.data(chunk);
+            if (bridgeSuccess) try { options.responses?.onTrace?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,chunk:Buffer.from(chunk)}); } catch { /* capture cannot change transport */ }
             if (bridgeSuccess) {
-              if (!bridgeInvalid) try { bridge.push(chunk); } catch {
+              if (!bridgeInvalid) try { bridge.push(chunk); } catch (error) {
+                try { options.responses?.onError?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,phase:'stream',code:responsesFailureCode(error)}); } catch { /* diagnostics never affect ownership */ }
                 bridgeInvalid = true;
                 // Client format failure is not native/GPU failure: keep draining
                 // and observing Chat terminal evidence under the existing permit.
@@ -1102,7 +1117,8 @@ export function createGateway(options: GatewayOptions): Gateway {
             // Release the proven native inference owner before exposing tool
             // completions: parents cannot retain a GPU permit while tools run.
             settle(confirmed);
-            if (bridgeSuccess && !bridgeInvalid) { try { bridge.end(); } catch {
+            if (bridgeSuccess && !bridgeInvalid) { try { bridge.end(); } catch (error) {
+              try { options.responses?.onError?.({requestId:ownedRequest.id,sessionId,lane:lane.upstream.alias,phase:'terminal',code:responsesFailureCode(error)}); } catch { /* diagnostics never affect ownership */ }
               bridgeInvalid = true;
               if (!disconnected && !reply.raw.destroyed) {
                 if (!reply.raw.headersSent) sendRawError(reply,502,"responses_stream_invalid","Responses stream truncated or missing usage"); else reply.raw.destroy();

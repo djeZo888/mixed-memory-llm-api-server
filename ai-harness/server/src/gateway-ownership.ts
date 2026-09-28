@@ -7,6 +7,7 @@ export interface RequestOwnership {
     state: RequestOwnershipState;
     lane?: string;
     updatedAt: string;
+    accounting?: { inputTokens?: number; reservedOutputTokens?: number; promptTokens?: number; completionTokens?: number };
 }
 export interface SettlementQuery {
     sessionId: string;
@@ -37,6 +38,9 @@ export class GatewayOwnership {
     transition(r: RequestOwnership, state: RequestOwnershipState, lane?: string) { r.state = state; if (lane)
         r.lane = lane; r.updatedAt = new Date().toISOString(); this.write(r); if (state === "settled")
         this.records.delete(r.id); }
+    account(r: RequestOwnership, value: NonNullable<RequestOwnership['accounting']>) {
+        r.accounting = { ...r.accounting, ...value }; this.write(r);
+    }
     private write(r: RequestOwnership) { try {
         this.options?.onRequestState({ ...r });
     }

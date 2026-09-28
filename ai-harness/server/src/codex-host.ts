@@ -10,6 +10,9 @@ export interface CodexHostQualification {
   /** Revalidates deployed model/runtime/template/allocation and current instance each call. */
   verifyLane(alias: string): Promise<QwenCountQualification>;
   outputLimit?: number;
+  /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
+  imageJobsQualified?: true;
+  capabilities?: CodexRuntime['capabilities'];
 }
 export function composeCodexHost(launcherPath: string, gateway: () => Gateway | undefined,
   qualification?: CodexHostQualification) {
@@ -21,6 +24,8 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     pin: CODEX_PIN, protocolQualified: !!qualification,
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
+    imageToolEnabled: qualification?.imageJobsQualified === true,
+    capabilities: qualification?.capabilities,
     launchRootless: input => createRootlessCodexLauncher(launcherPath)(input),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     confirmGatewaySettlement: async query => (await gateway()?.confirmSettlement(query)) === true,

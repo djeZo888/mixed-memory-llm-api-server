@@ -242,6 +242,12 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
     return { tools, body: { model: b.model, ...(b.model === "qwen3.8-27b" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
 }
 /** Bounded SSE converter. Native usage is required; no invented token counts. */
+/** Static diagnostics only: never include raw provider text or malformed JSON. */
+export function responsesFailureCode(error: unknown): string {
+    const known = new Set(['Data after terminal','SSE frame too large','Duplicate terminal','Invalid upstream chunk','Invalid usage','Invalid token details','Expected single choice','Invalid choice index','Unqualified reasoning field','Data after finish','Unsupported output media','Output bound exceeded','Invalid tool deltas','Invalid tool index/type','Changed call ID','Aggregate tool bound exceeded','Tool bound exceeded','Duplicate finish','Missing finish/usage','Tool finish mismatch','Invalid tool identity','Invalid custom tool input','Truncated or repeated Responses stream']);
+    if (error instanceof SyntaxError) return 'invalid_json';
+    return error instanceof Error && known.has(error.message) ? error.message.toLowerCase().replaceAll(/[ /]+/g, '_') : 'unqualified_output';
+}
 export class ResponsesStream {
     private decoder = new StringDecoder("utf8");
     private buffer = "";
