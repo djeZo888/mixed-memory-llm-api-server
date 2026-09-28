@@ -1,4 +1,4 @@
-# FAN04 version 2 migration — NOT EXECUTED
+# FAN04 version 2 migration procedure
 
 Requires exact root reviewGO for this source and this procedure. Keep the unit
 stopped and failed; do not start/reset it before successful migration. No unit,
@@ -10,7 +10,7 @@ an existing unversioned/v1 baseline always raises baseline_migration_required.
 The following executable Python procedure runs ONLY on ai-harness as the state
 owner after root review. Run from the reviewed scripts/thermal directory. Supply
 a private root-reviewed manifest at REVIEW_MANIFEST with canonical digest()
-values for each current state file listed below (null for absent files), plus
+values for each current state file listed below (digest(null) for absent files), plus
 prior_status_sha256 for the exact historical healthy own-40 status JSON placed
 at PRIOR_STATUS. Both inputs are host-local, not credentials. Root must compare
 the original baseline raw SHA256 against
@@ -87,6 +87,6 @@ and are archived. A new controller run may replace current receipts, while
 migration-v1-* preserves the originals. Interrupted migration is an explicit
 review hold; never rerun blindly or clear a latch to work around assertions.
 After successful migration only, root may authorize installation/restart and
-focused live verification of the exact reviewed source. No such action occurred
-in FAN04 source work. Cooperative CAS is protected by the existing flock; it
+focused live verification of the exact reviewed source. FAN04 executed this procedure after root exact GO; see
+reports/h025-fan04-20260928/results.json for the executed receipt. Cooperative CAS is protected by the existing flock; it
 cannot fence an unrelated process that disregards that lock.
