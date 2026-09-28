@@ -1,0 +1,16 @@
+{
+  "native_session": "01a0e54c-6fe1-7ff0-af93-e4d55bb73453",
+  "role": "native mac-worker2 executor",
+  "branch": "worker2/h018-review02",
+  "starting_head": "6c57b5ca3737665f28b2a8caaf398bee71417b9d",
+  "published_base": "685e234a14f071fbc456a5d91a21a286aa81ab01",
+  "wrapper_started_utc": "2026-09-27T23:56:26.899868+00:00",
+  "first_observed_utc": "2026-09-27T23:56:35Z",
+  "early_verdict_utc": "2026-09-27T23:57:33.937220+00:00",
+  "hard_stop_utc": "2026-09-28T00:15:00+00:00",
+  "review_completed_utc": "2026-09-28T00:02:18.815900+00:00",
+  "no_paid_wait": true,
+  "implementation_edits": false,
+  "vm_contacts": false,
+  "subagents": false
+}
