@@ -11,3 +11,13 @@ Worker1 owns protocol/provider/gateway/tool integration; Worker2 owns engine ada
 The existing Sova app is paused; a separate MiniMax/MiMo HTTP400 issue remains unresolved. Do not claim it fixed by Codex acceptance. Preserve active-frontier MiMo selection and the deployed H020 status release; runtime descriptive inventory must not silently revert to repository default GLM. Deployment must preserve prior releases and data and must not affect the running MiMo benchmark. Keep status available where practical, but do not spend time maintaining general app availability during implementation.
 
 Use feature/glm53-flash and draft PR10. Do not merge incomplete acceptance into main. Automation remains paused. No automatic engine/dependency upgrades. Record actual PASS/FAIL/NOT_TESTED evidence and limitations. Latest user task has no new fixed wall deadline; each assigned worker task remains bounded and produces a terminal checkpoint before continuation.
+
+H021 PILOT05 completes the planned central engine-status view. A reviewed
+ai-harness-only status release is permitted alongside the final app release;
+preserve H020's model identity/placement repair, actual registry/selector and
+user data. The earlier exact status-PID preservation check was for releases
+that did not change status code; it is superseded only for this intentional
+status update. Engine data comes from configured app health with explicit
+freshness/unavailable states, independently of model readiness. No ai-vm node,
+control, model or benchmark inspection/mutation is authorized. Do not restart
+the app until Worker2 has released all acceptance ownership.
