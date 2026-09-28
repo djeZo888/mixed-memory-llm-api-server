@@ -1,0 +1,12 @@
+{
+  "status": "INSTALLED_EXACT_ROOT_RECEIPT",
+  "utc": "2026-09-28T03:17:06.191505+00:00",
+  "sha256": "05ad0301dc7b7d614f0400747812079a02c7f4163c506d774d8c7b944d61e83a",
+  "bytes": 4429,
+  "originalSha256": "f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455",
+  "privateBackup": "/etc/sova-qualification/history/h019-activate02-original-f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455.json",
+  "owner": "root:root",
+  "mode": "0644",
+  "parentMode": "0755",
+  "etcAiHarnessMode": "0700"
+}

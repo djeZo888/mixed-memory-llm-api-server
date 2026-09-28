@@ -1,0 +1,18 @@
+{
+  "status": "FRESH_DISTINCT_UNSUBMITTED_ATTEMPT_PREPARED",
+  "utc": "2026-09-28T03:25:15.441288+00:00",
+  "launcherSha256": "9c814c5456075de7b1fbbcfa560bee9fb702af7b5757ca1ae97f050a20daaa21",
+  "originalLauncherSha256": "28e06bf9319be2f23facb16f47606576da1f4c912486797a42335d457d39645b",
+  "changes": [
+    "driver directory driver-attempt02 for separate receipts and logs",
+    "distinct acceptance systemd unit suffix -02",
+    "distinct hardstop timer suffix -02"
+  ],
+  "driverSourceChanged": false,
+  "clocksChanged": false,
+  "imageSourceChanged": false,
+  "originalFailurePreserved": true,
+  "permissionFix": "PAIR-READY.json 0664->0600; exact bytes/hash unchanged",
+  "metadataRecheck": "PASS all existing preflight path helpers",
+  "authorization": "Current INBOX ROOT GO for preflight refusal repair; fresh DISTINCT dispatch authorized after proof"
+}

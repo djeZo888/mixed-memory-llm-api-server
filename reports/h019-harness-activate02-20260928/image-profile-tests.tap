@@ -1,0 +1,13 @@
+✔ managed frontier custom agent uses native model/limits and preserves tools/MCP inheritance (1.091505ms)
+✔ managed frontier seed preserves custom conflict and rejects symlink escapes (2.413666ms)
+✔ MiMo selected native profile and exact managed migration/rollback preserve Qwen/custom/history (3.149907ms)
+✔ MiMo numerical user edits never become managed prior content (0.653946ms)
+✔ H017 exact managed context matrix retains legacy GLM hashes and all six MiMo tuples (7.138205ms)
+ℹ tests 5
+ℹ suites 0
+ℹ pass 5
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 49.0298

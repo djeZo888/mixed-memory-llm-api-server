@@ -1,0 +1,40 @@
+{
+  "status": "CURRENT_PASSIVE_API_READBACK",
+  "utc": "2026-09-28T03:29:59.350Z",
+  "availability": {
+    "mimo-v2.6-pro-rl": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "qwen3.8-27b": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "qwen3.8-27b-gpu0": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "image": {
+      "state": "available",
+      "dispatch": "allow"
+    }
+  },
+  "native": {
+    "model": "mimo-v2.6-pro-rl",
+    "usableContext": 950000,
+    "totalSlots": 1,
+    "slot": {
+      "id": 0,
+      "n_ctx": 950000,
+      "speculative": false,
+      "is_processing": false
+    },
+    "propsStatus": 200,
+    "slotsStatus": 200,
+    "completeBodiesDrained": true,
+    "qualifiedPropsAndSlotsMatch": true
+  },
+  "rawPath": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/private/ACTIVATE02-PASSIVE-RAW.json",
+  "rawSha256": "d074b3f651c2e87850fa8c69d40fb3498ecd778fb9b34a39830b75fbde3c2b96",
+  "scope": "Passive GET only; actual slot processing boolean observed. Physical process, owner generation, cgroup and private-proxy ownership require W1 current proof; static qualification identity is not new process attestation."
+}

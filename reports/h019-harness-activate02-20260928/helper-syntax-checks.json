@@ -1,0 +1,13 @@
+{
+  "status": "PASS",
+  "pythonAST": [
+    "install-qualification.py",
+    "check-preservation.py",
+    "record-activation-gate.py",
+    "collect-attempt02.py"
+  ],
+  "bashSyntax": [
+    "launch-app-acceptance-02.sh"
+  ],
+  "scope": "execution/report helpers only; no broad tests or native builds"
+}

@@ -1,0 +1,32 @@
+{
+  "status": "FAIL_PREFLIGHT_NO_MODEL_DISPATCH",
+  "utc": "2026-09-28T03:23:59.862064+00:00",
+  "actualApplicationPass": false,
+  "supervisorStatus": "PREFLIGHT_REFUSED",
+  "invocationId": "b9a73132e5a54fb2b16f3f7ac88d15aa",
+  "startedUtc": "2026-09-28T03:22:17.836482+00:00",
+  "endedUtc": "2026-09-28T03:22:17.870058+00:00",
+  "exactFailure": "H016_PREFLIGHT_FAILED: unsafe permissions",
+  "failedPath": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/private/PAIR-READY.json",
+  "observedMode": "0664",
+  "correctedMode": "0600",
+  "receiptBytesUnchanged": true,
+  "pairReadySha256": "3a1977b9ed2fe027edf2dd81f4d988629c95c4e59e86da608dbddfa506bf5ca5",
+  "failedBeforeRunRootCreated": true,
+  "parentRequestObserved": false,
+  "frontierRequestObserved": false,
+  "nativeSettlement": "NO_REQUEST_DISPATCHED_BY_THIS_ATTEMPT",
+  "appPaused": true,
+  "pairApplied": true,
+  "failedAttemptPreserved": true,
+  "relaunchPerformed": false,
+  "source": "34959c67baea0d8a357cbea4cefac1658f3553f0",
+  "image": "5ec052185fc8683a36bb0d2e0882bfc709de4ed56cae16fde2b0b64b2180727c",
+  "resultSha256": {
+    "supervisor-result.json": "270ab8237c613f2e35a255095eec05ca63b8ef6fb933d371e6d613432e74aeb4",
+    "preflight.log": "7f290f8a8b3453cc1aa8608b93b71cf4c5c36b04e11eb6ce2bf1ec7aa4b21313",
+    "dispatch-intent.json": "25762965ce38e08758fc2fdda82839159ff04653c3c544dd2b59c59719f6ebbb",
+    "ACTIVATE02-PRESERVATION-AFTER-REFUSAL.json": "baf58edf6fb18db431e5bd02babc6818c505d17947035cb836780948a2e096a7"
+  },
+  "next": "One-shot launcher guards remain intact. Root may review concrete pre-dispatch failure and determine a fresh bounded attempt; no automatic replay or guard bypass."
+}

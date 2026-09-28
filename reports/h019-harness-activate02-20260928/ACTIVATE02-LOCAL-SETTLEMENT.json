@@ -1,0 +1,28 @@
+{
+  "utc": "2026-09-28T03:28:23.695159+00:00",
+  "taskRuns": [
+    [
+      "completed",
+      1
+    ]
+  ],
+  "taskFrontierRequests": [],
+  "fixtureLanes": [
+    [
+      "qwen3.8-27b",
+      "idle"
+    ],
+    [
+      "glm-5.3-flash",
+      "idle"
+    ],
+    [
+      "qwen3.8-27b-gpu0",
+      "idle"
+    ]
+  ],
+  "quarantineCount": 0,
+  "scope": "app-side local ownership only; native GPU-idle remains W1/root responsibility",
+  "frontierRequestsCount": 0,
+  "allRecordedLanesIdle": true
+}

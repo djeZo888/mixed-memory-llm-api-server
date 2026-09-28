@@ -1,0 +1,17 @@
+{
+  "result": "PASS",
+  "source": "34959c67baea0d8a357cbea4cefac1658f3553f0",
+  "image": "5ec052185fc8683a36bb0d2e0882bfc709de4ed56cae16fde2b0b64b2180727c",
+  "base": "46feffff8fe00e5993a8e0d35f5a7932f82ee43ef91d87759f568c3a6029dc1e",
+  "baseLayers": 32,
+  "additionalLayers": 1,
+  "inventoryEntries": 26025,
+  "payloadFiles": 2,
+  "changedEntries": 2,
+  "allNonPayloadEntriesUnchanged": true,
+  "payloadSha256": {
+    "/opt/ai-harness/config/active-frontier.json": "6fac2925b81e0c40154635643a327f8f3149f7211cf8b78a4f321f6d5b09dc22",
+    "/opt/ai-harness/engine/configure-profile.mjs": "1767aec74793b161b07feeee9e8dc97c3a4ffc9970c5c8f532bbf443b9f8ea1c"
+  },
+  "inference": false
+}

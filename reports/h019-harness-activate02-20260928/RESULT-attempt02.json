@@ -1,0 +1,8 @@
+{
+  "status": "FAILED",
+  "failure": "actual native foreground task result IDs absent",
+  "startedUtc": "2026-09-28T03:25:32.718Z",
+  "endedUtc": "2026-09-28T03:26:07.465Z",
+  "upperStartAuthorized": false,
+  "productionDataModified": false
+}
