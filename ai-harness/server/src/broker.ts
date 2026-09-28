@@ -19,6 +19,7 @@ export interface BrokerOptions {
   files: Files;
   engineFactory: EngineFactory;
   codexEngineFactory?: EngineFactory;
+  codexGatewayUrl?: string;
   enginePolicy?: EnginePolicy;
   launcher: string;
   gatewayUrl: string;
@@ -257,7 +258,7 @@ export class Broker {
       workspace: this.files.workspace(s.workspaceId),
       nativeSessionId: s.nativeSessionId,
       launcher: this.options.launcher,
-      gatewayUrl: this.options.gatewayUrl,
+      gatewayUrl: s.engineKind === "codex" ? this.options.codexGatewayUrl ?? this.options.gatewayUrl : this.options.gatewayUrl,
       gatewayToken: token,
       stderrPath: this.files.log(s.id),
       onExit: () => this.options.revokeToken(token),
@@ -565,6 +566,10 @@ export class Broker {
       await active.cancelPromise;
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
+      // Initial Codex preview proves exact container cleanup per turn; the next
+      // follow-up creates a new scoped runner and resumes the persisted thread.
+      if (s.engineKind === "codex" && !(await this.closeRunner(s.id)))
+        throw Object.assign(new Error("Codex cleanup unconfirmed"), { code: "engine_settlement_unknown" });
       this.store.settleRun(
         run.id,
         active.cancelled ? "cancelled" : "completed",

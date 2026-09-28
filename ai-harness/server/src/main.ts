@@ -11,6 +11,7 @@ import { createApp } from "./app.js";
 import { createGateway, type LaneState } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
 import { createEngine } from "./engine.js";
+import { codexDeployment } from "./codex-deployment.js";
 import {
   NodeAvailability,
   type HardwareLatchLedger,
@@ -33,7 +34,8 @@ function port(name: string, fallback: number) {
     throw new Error(`${name} must be a TCP port`);
   return +value;
 }
-export async function start() {
+export async function start(codex: Parameters<typeof codexDeployment>[0] = {}) {
+  const codexOptions = codexDeployment(codex);
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -72,6 +74,7 @@ export async function start() {
     dataDir,
     launcher,
     engineFactory: createEngine,
+    ...codexOptions,
     imageBackend: new ImageUpstream({ key }),
     frontierStatus: (sessionId) => ({
       ...gateway?.frontierSnapshot(),

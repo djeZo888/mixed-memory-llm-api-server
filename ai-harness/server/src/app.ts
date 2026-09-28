@@ -244,7 +244,12 @@ export async function createApp(options: AppOptions): Promise<{
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
-      engines: { default: "minimax", codex: { available: codexAvailable(options.enginePolicy, options.codexEngineFactory), preview: true } },
+      engines: { default: "minimax", codex: { available: codexAvailable(options.enginePolicy, options.codexEngineFactory), preview: true,
+        configured: !!options.codexEngineFactory,
+        version: options.enginePolicy?.codex?.engineVersion ?? null,
+        readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
+        capabilities: { text: true, media: false, steering: false, delegation: false, frontier: false, reasoning: false },
+      } },
       ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
     }));
     app.get("/api/sessions", async () => ({ sessions: store.listSessions() }));

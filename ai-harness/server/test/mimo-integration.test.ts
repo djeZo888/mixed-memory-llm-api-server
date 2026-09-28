@@ -107,7 +107,8 @@ test('selected registry reports both canonical inventory identities on the share
  const registry=validateSystemRegistry(JSON.parse(readFileSync(new URL('../../config/system-registry.json',import.meta.url),'utf8')));
  const selected=selectRegistryFrontier(registry,MIMO_MODEL);
  assert.equal(selected.services.filter(s=>s.endpoint_ref==='frontier-private').length,2);
- assert.ok(selected.services.some(s=>s.id===MIMO_MODEL&&s.observation_key===MIMO_MODEL));assert.ok(selected.services.some(s=>s.id===FRONTIER_MODEL&&s.observation_key===FRONTIER_MODEL&&s.display_name.includes('dormant')));
+ assert.equal(selected.selected_frontier,MIMO_MODEL);
+ assert.ok(selected.services.some(s=>s.id===MIMO_MODEL&&s.observation_key===MIMO_MODEL));assert.ok(selected.services.some(s=>s.id===FRONTIER_MODEL&&s.observation_key===FRONTIER_MODEL&&s.display_name===registry.services.find(original=>original.id===FRONTIER_MODEL)?.display_name));
  assert.ok(registry.services.some(s=>s.id===FRONTIER_MODEL));
 });
 test('granular qualification cannot mistake arithmetic or requested ceiling for native occupied/output proof',()=>{

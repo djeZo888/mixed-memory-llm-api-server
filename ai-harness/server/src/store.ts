@@ -110,7 +110,7 @@ export class Store {
     try {
       const interrupted = this.db
         .prepare(
-          "SELECT DISTINCT session_id FROM runs WHERE status IN ('queued','running','cancelling')",
+          "SELECT DISTINCT session_id FROM runs WHERE status IN ('queued','running','cancelling') UNION SELECT session_id FROM h021_session_engines WHERE engine_kind='codex' AND ownership!='idle'",
         )
         .all() as { session_id: string }[];
       const interruptedRuns = this.db
