@@ -137,6 +137,14 @@ class ChannelTests(unittest.TestCase):
         with self.assertRaises(f.Fault):f.validate_payload(p)
     def test_unadvertised_route_before_network(self):
         with self.assertRaises(f.Fault):f.BMC(None).call('PUT','/api/fanctrl/source',{})
+    def test_nontarget_lastsource_observation_is_not_source_configuration(self):
+        a=snapshot();a[f.PATHS[3]]['PWM8_LastSource']=0
+        b=copy.deepcopy(a);b[f.PATHS[3]]['PWM8_LastSource']=2
+        self.assertEqual(f.invariant(a),f.invariant(b))
+        b[f.PATHS[2]]['PWM8_1']=1
+        self.assertNotEqual(f.invariant(a),f.invariant(b))
+        b=copy.deepcopy(a);b[f.PATHS[3]]['PWM4_LastSource']=1
+        with self.assertRaises(f.Fault):f.invariant(b)
     def test_dynamic_temperature_ignored_only(self):
         a=snapshot();b=copy.deepcopy(a);b[f.PATHS[3]]['PWM4_LastTemp']=55
         self.assertEqual(f.invariant(a),f.invariant(b))

@@ -117,7 +117,10 @@ service access; only StateDirectory writable. No secret enters Git/evidence.
 Systemd creates `/var/lib/sova-cha-fan3` and its controller.lock, baseline.json,
 status.json, pending-write.json (last scoped write intent/result), uncertain-write.json
 (only after uncertainty), and blocked.json (only on confirmed integrity fault). Baseline preserves first observed
-settings apart from the four controlled duties/dynamic LastTemp fields.
+settings apart from the four controlled duties/dynamic LastTemp fields and
+non-target LastSource observations. Live read-only evidence showed unusedPWM8
+LastSource changing0->2 with every source mask/mode/curve unchanged. The actual
+/source configuration stays immutable; targetPWM4 LastSource0 remains mandatory.
 
 Capture idle startup80, then30second fresh-cool transition40, with independent
 readback/tach after settling. Check no external overwrite; stop/restart once

@@ -247,7 +247,7 @@ def invariant(s):
         p['Duty'] = None
     def clean(v):
         if isinstance(v, dict):
-            return {k: clean(x) for k, x in v.items() if not re.fullmatch(r'(?:PWM[1-8]_)?LastTemp', k)}
+            return {k: clean(x) for k, x in v.items() if not re.fullmatch(r'(?:PWM[1-8]_)?LastTemp|PWM[1235678]_LastSource', k)}
         if isinstance(v, list):
             return [clean(x) for x in v]
         return v
