@@ -1,77 +1,15 @@
-# Sova project execution — H019
+# Sova execution — H020
 
-## Current user authorization
+Current request: repair status so model/service names, placement and hardware reflect trusted configuration plus actual observations. Separately write a Codex CLI/App Server harness integration plan, retaining MiniMax as an option. **No Codex integration execution or installation in this task.**
 
-The user authorized another two-hour foreground window, September 28 2026
-02:10:29–04:10:29 UTC (04:10–06:10 Ljubljana). Finish MiMo integration using
-both Mac workers. Root plans, coordinates, reviews and publishes; workers do
-implementation, builds, tests and VM operations through fresh bounded native
-Codex CLI sessions over SSH in isolated working copies. Preserve session IDs,
-compact checkpoints and reusable artifacts. Avoid paid sessions waiting idle.
+Root plans, coordinates, reviews and publishes. Mac-worker2 owns status code, tests and ai-harness status-only deployment. Mac-worker1 independently reviews configuration/observation contracts and verifies changes. Use fresh bounded native CLI sessions through SSH aliases, isolated copies, retained IDs and compact task files. No paid idle waiting. Latest user request supersedes the historical H019 foreground clock; keep worker tasks bounded to their supplied deadlines. Historical instructions: docs/orchestration/AGENTS-H019-archive.md.
 
-The user explicitly changed two earlier requirements:
-- Keep MiMo selected/resident at the deadline; do NOT swap it back to GLM.
-  Sova may remain down. A real hardware/resource fault still requires stopping
-  affected work safely; do not keep a failing GPU workload alive or load GLM.
-- Skip the unrun optimized 64K benchmark. The final independent test goes
-  directly to near-950K input in the 950,000-token window.
+MiMo's independent near-950K benchmark is running on ai-vm. Do not interrupt, replay, restart or reconfigure it, other inference services, their supervisors, control/node services, hardware policy, drivers, GPUs or VM. Do not send inference requests. No model switching, GLM rollback, hardware/BMC/fan changes or long-test polling. Only existing passive status observations are needed. Ordinary Sova chat stays paused; its HTTP400 delegation issue is a separate remaining task.
 
-Read docs/h018-mimo-integration-results.md and docs/h019-mimo-finalization-plan.md.
-H018 records and client clocks are historical. Do not repeat completed model
-hashing/downloads, native builds, 4K/16K benchmarks, thread tuning, or the passed
-GLM million-token benchmark. Retain the verified MiMo Pro-RL MXFP4/BF16/F32
-checkpoint/runtime, eight decode threads, 64 batch threads, F16 KV, 950K context,
-GOMP_SPINCOUNT=0 and all-node memory interleave.
+Status repair must use existing trusted registry/selection ownership rather than a cosmetic string substitution. Distinguish configured/selected models, actual observed models and stale/unavailable observations. Model names, instances, hosts and endpoint references belong in configuration, with measured GPU UUID bindings/status from observations. Do not infer readiness from configuration or transfer one model's health to another. Credentials and action authority stay separate from descriptive inventory. Existing action identities, confirmations, dispatch locks, queues and credential boundaries must not be weakened.
 
-## Execution and acceptance
+Prefer narrow changes, focused tests and a status-only release. No broad inference registry migration during the benchmark. Document existing workload endpoint sources honestly if they remain separate; do not claim one file configures the whole runtime unless it does. After source/tests and independent review, root may authorize exact status deployment and normal restart of only ai-harness-status.service. No extra user approval is needed for that requested fix. Preserve chats/uploads, credentials, previous release and failure evidence.
 
-Deploy the reviewed periodic health-write fix; repair the demonstrated nested
-lease issue narrowly. First measure health-proof freshness and canonical-lock
-hold time before another expensive model load. Stage independent test clients
-before loading. No full filesystem scans in periodic health writes. Preserve
-heavy storage checks at lifecycle boundaries and lightweight exact mount/path/
-registration checks during use. Do not widen proof TTL or erase positive faults.
+Codex planning is read-only research plus project documentation. Verify current official documentation/local source, distinguish open-source engine from hosted services, Responses compatibility from our Chat Completions APIs, and proposed capability from tested behavior. Reuse earlier project analysis but check current facts. No live Codex/provider configuration changes.
 
-Worker1 owns ai-vm. Worker2 owns ai-harness preparation and independent review.
-Coordinate shared deployment; workers must not change each other's live host.
-Sova downtime is authorized and nobody is using it. Preserve chats, uploads,
-artifacts, credentials and historical failure evidence. Keep the two Qwens and
-image resident where practical; do not spend time restoring front-end availability.
-
-Aim to finish native tools/result and Sova delegation acceptance, then launch
-one independent near-950K test with the existing eight-hour background limit. If
-only Sova application integration remains incomplete, a stable qualified native
-MiMo service may run the private-API benchmark while Sova stays paused. Record
-Sova's incomplete acceptance honestly; it is not a native benchmark prerequisite. Count
-actual input tokens and reserve output/template space. Verify real startup and
-then close paid CLI sessions; user will nudge for results. Do not stay active to
-poll a multi-hour request, and leave the existing automation paused.
-
-Use current failure evidence to make narrow fixes, not blanket timeouts or
-safety bypasses. Preserve request ownership, complete SSE/HTTP drain and native
-settlement checks. Never automatically replay ambiguous requests. A parent
-waiting on a child does not hold an inference slot. Do not hold lifecycle locks
-across inference or expensive periodic work. Do not invent new approval steps
-for work already authorized here; root review of an exact changed artifact is
-sufficient for coordinated deployment.
-
-## Resource and data boundaries
-
-Use registered storage and the existing canonical /run/llmctl/lifecycle.lock;
-never replace/unlink it. Nested operations borrow and validate the existing
-lease. Preserve MiMo's dedicated 704 GiB zero-swap slice, zero owned swap/OOM,
-15% host available-memory reserve and 7% frontier GPU free-memory reserve.
-Keep existing Qwen and Ada guards. Stop on 85C or lower hardware limit.
-No four-way stress, driver/ECC/BMC/fan changes, host/VM reboot, Proxmox changes,
-new model/runtime builds, installer work or model precision changes in H019.
-Credentials stay private outside Git and task containers; do not print them.
-
-## Publication and handoff
-
-Use feature/glm53-flash and draft PR10. Root synchronizes reviewed worker commits,
-scans changed files for credentials and pushes GitHub. Distinguish tested source,
-live deployment, allocation, native qualification and application acceptance.
-No main merge until appropriate acceptance. Record actual unavailable subsystems
-and unfinished work. At the deadline keep MiMo selected; no automatic GLM rollback.
-Historical instructions: docs/orchestration/AGENTS-H018-archive.md, not current
-execution authority. Latest explicit user directions override older plans.
+Use feature/glm53-flash, draft PR10; root reviews, synchronizes and publishes. Do not merge unfinished MiMo application integration to main. Keep automation paused. Save H020 plans/results and worker handoffs in durable project files.
