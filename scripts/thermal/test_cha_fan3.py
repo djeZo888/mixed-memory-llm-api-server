@@ -276,6 +276,25 @@ class ControllerTests(unittest.TestCase):
         self.assertIn('not_measured_pwm',c.proof['readback_kind'])
 
 class StoreTests(unittest.TestCase):
+    def test_empty_real_store_controller_bootstrap(self):
+        with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:
+            os.chmod(p,0o700);s=f.Store(p)
+            try:
+                self.assertIsNone(s.read('baseline.json'))
+                c=f.Controller(FakeBMC(),s);c.start()
+                self.assertEqual(s.read('status.json')['readback_duty'],80)
+                self.assertIsNone(s.read('blocked.json'))
+                with self.assertRaisesRegex(f.Fault,'protected_file_unavailable'):
+                    f.protected(Path(p)/'missing-credential')
+            finally:s.close()
+    def test_missing_lock_is_local_fault(self):
+        with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:
+            os.chmod(p,0o700);s=f.Store(p)
+            try:
+                os.unlink(Path(p)/'controller.lock')
+                with self.assertRaisesRegex(f.Fault,'controller_lock_unavailable') as caught:s.assert_held()
+                self.assertFalse(f.transient(caught.exception))
+            finally:s.close()
     def test_singleton_and_atomic_private(self):
         # Private directory under /home/user: protected() intentionally rejects /tmp.
         with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:

@@ -72,9 +72,13 @@ def digest(value):
 def utc():
     return datetime.now(timezone.utc).isoformat()
 
-def protected(path, maximum=8192):
+def protected(path, maximum=8192, *, missing_ok=False):
     try:
         return _protected(path, maximum)
+    except FileNotFoundError:
+        if missing_ok:
+            return None
+        raise Fault('protected_file_unavailable') from None
     except OSError:
         raise Fault('protected_file_unavailable') from None
 
@@ -342,10 +346,8 @@ class Store:
             os.close(self.fd)
             raise Fault('controller_already_running') from None
     def read(self, name):
-        try:
-            return decode(protected(self.path / name, 65536))
-        except FileNotFoundError:
-            return None
+        raw = protected(self.path / name, 65536, missing_ok=True)
+        return None if raw is None else decode(raw)
     def assert_held(self):
         try:
             held, named = os.fstat(self.fd), (self.path / 'controller.lock').lstat()
