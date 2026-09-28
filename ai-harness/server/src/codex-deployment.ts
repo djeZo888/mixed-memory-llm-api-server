@@ -24,6 +24,9 @@ export function codexDeployment(
     enginePolicy: {
       codex: {
         enabled: input.enablePreview === true,
+        capabilities: runtime?.capabilities,
+        delegationEnabled: runtime?.delegationEnabled === true,
+        imageToolEnabled: runtime?.imageToolEnabled === true,
         protocolQualified: runtime?.protocolQualified === true,
         engineVersion: CODEX_PIN.version,
         modelPolicyVersion: runtime?.modelPolicyVersion ?? "unqualified",

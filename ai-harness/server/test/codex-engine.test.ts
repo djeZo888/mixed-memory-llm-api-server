@@ -19,6 +19,7 @@ const schemaNames = {
   "thread/resume": "ThreadResumeParams",
   "turn/start": "TurnStartParams",
   "turn/interrupt": "TurnInterruptParams",
+  "thread/compact/start": "ThreadCompactStartParams",
 };
 const ajv = new Ajv({ strict: false, validateFormats: false });
 const validators = new Map(
@@ -45,6 +46,7 @@ function deferred<T>() {
 function fixture(
   config: {
     nativeId?: string;
+    delegation?: boolean;
     gateway?: () => Promise<boolean>;
     terminate?: () => Promise<boolean>;
   } = {},
@@ -84,6 +86,7 @@ function fixture(
   };
   const runtime: CodexRuntime = {
     pin: CODEX_PIN,
+    delegationEnabled: config.delegation,
     protocolQualified: true,
     modelPolicyVersion: "fixture-policy",
     model: "qwen3.8-27b",
@@ -160,6 +163,10 @@ function fixture(
         cwd: options.workspace,
         approvalPolicy: "never",
       });
+    if (req.method === "thread/compact/start") {
+      events("turn/started", { turn: { id: "turn-1", status: "inProgress" } });
+      response(req.id, {});
+    }
     if (req.method === "turn/start") {
       assert.equal(states.at(-1)!.ownership, "uncertain");
       turn++;
@@ -302,7 +309,14 @@ test("latest request estimates retained context and compaction invalidate contex
     f.updates.some((v) => v.type === "text"),
     false,
   );
-  assert.equal(f.updates.filter(v => v.type === "context" && v.used !== null).every(v => v.estimated && v.source === "codex.latest-request.totalTokens"), true);
+  assert.equal(
+    f.updates
+      .filter((v) => v.type === "context" && v.used !== null)
+      .every(
+        (v) => v.estimated && v.source === "codex.latest-request.totalTokens",
+      ),
+    true,
+  );
 });
 test("cancel ACK cannot release ownership before native terminal, exact process cleanup and owned gateway proof", async () => {
   const proof = deferred<boolean>();
@@ -537,5 +551,144 @@ test("declined native command remains cancelled in Activity", async () => {
   assert.equal(
     f.updates.some((u) => u.type === "progress" && u.status === "cancelled"),
     true,
+  );
+});
+
+test("actual pinned native delegation event replay preserves child terminal before parent", async () => {
+  const f = fixture({ delegation: true });
+  const capture = JSON.parse(
+    readFileSync(
+      new URL(
+        "./fixtures/codex/native-delegation-events.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const pending = f.engine.prompt("delegate");
+  await tick();
+  for (const event of capture.events) {
+    const p = { ...event.params };
+    if (p.threadId === capture.parentThreadId) p.threadId = "thread-1";
+    if (p.turnId === capture.parentTurnId) p.turnId = "turn-1";
+    if (p.turn?.id === capture.parentTurnId)
+      p.turn = { ...p.turn, id: "turn-1" };
+    if (p.item?.senderThreadId === capture.parentThreadId)
+      p.item = { ...p.item, senderThreadId: "thread-1" };
+    f.events(event.method, p);
+  }
+  assert.equal(await pending, "completed");
+  const summaries = f.updates
+    .filter((u) => u.type === "progress" && u.subagents)
+    .map((u) => u.subagents!);
+  assert.ok(summaries.some((s) => s.active === 1));
+  assert.equal(summaries.at(-1)?.completed, 1);
+  assert.equal(summaries.at(-1)?.active, 0);
+});
+
+test("finished spawn tool with pending child cannot turn native cleanup into parent success", async () => {
+  const f = fixture({ delegation: true });
+  const pending = f.engine.prompt("delegate");
+  const rejected = assert.rejects(pending, /incomplete/);
+  await tick();
+  const item = {
+    tool: "spawnAgent",
+    status: "inProgress",
+    senderThreadId: "thread-1",
+    receiverThreadIds: [],
+    agentsStates: {},
+    model: "",
+  };
+  f.item("spawn", "collabAgentToolCall", item, "started");
+  f.item("spawn", "collabAgentToolCall", {
+    ...item,
+    status: "completed",
+    model: "qwen3.8-27b",
+    receiverThreadIds: ["child-1"],
+    agentsStates: { "child-1": { status: "pendingInit", message: null } },
+  });
+  f.complete();
+  await rejected;
+  await f.engine.close();
+  assert.ok(
+    f.updates.some(
+      (u) =>
+        u.type === "progress" &&
+        u.subagentId === "child-1" &&
+        u.status === "cancelled" &&
+        u.detail?.includes("cleanup"),
+    ),
+  );
+});
+
+test("private compaction uses exact pinned RPC; missing/failed compaction never claims readiness", async () => {
+  for (const outcome of ["success", "missing", "failure"]) {
+    const f = fixture();
+    const pending = f.engine.compact();
+    const result = outcome === "success" ? pending : assert.rejects(pending);
+    await tick();
+    if (outcome !== "missing")
+      f.item("compact", "contextCompaction", {}, "started");
+    if (outcome === "success") f.item("compact", "contextCompaction");
+    f.complete(outcome === "failure" ? "failed" : "completed");
+    await result;
+    assert.equal(
+      f.requests.filter((r) => r.method === "thread/compact/start").length,
+      1,
+    );
+    assert.equal(f.requests.filter((r) => r.method === "turn/start").length, 0);
+    assert.ok(f.updates.some((u) => u.type === "context" && u.used === null));
+    if (outcome !== "success") {
+      assert.ok(
+        f.updates.some((u) => u.type === "compaction" && u.status === "failed"),
+      );
+      await f.engine.close();
+    }
+  }
+});
+
+test("actual native child trajectory rejects an unfinished child command before success", async () => {
+  const f = fixture({ delegation: true });
+  const capture = JSON.parse(
+    readFileSync(
+      new URL(
+        "./fixtures/codex/native-delegation-events.json",
+        import.meta.url,
+      ),
+      "utf8",
+    ),
+  );
+  const pending = f.engine.prompt("delegate");
+  const rejected = assert.rejects(pending, /child has incomplete/);
+  await tick();
+  for (const event of capture.events) {
+    const p = { ...event.params };
+    if (p.threadId === capture.parentThreadId) p.threadId = "thread-1";
+    if (p.turnId === capture.parentTurnId) p.turnId = "turn-1";
+    if (p.turn?.id === capture.parentTurnId)
+      p.turn = { ...p.turn, id: "turn-1" };
+    if (p.item?.senderThreadId === capture.parentThreadId)
+      p.item = { ...p.item, senderThreadId: "thread-1" };
+    if (event.method === "turn/completed" && p.threadId !== "thread-1")
+      f.events("item/started", {
+        threadId: p.threadId,
+        turnId: p.turn.id,
+        item: {
+          id: "unfinished-command",
+          type: "commandExecution",
+          status: "inProgress",
+        },
+      });
+    f.events(event.method, p);
+  }
+  await rejected;
+  await f.engine.close();
+  assert.ok(
+    f.updates.some(
+      (u) =>
+        u.type === "progress" &&
+        u.kind === "subagent" &&
+        u.status === "cancelled",
+    ),
   );
 });

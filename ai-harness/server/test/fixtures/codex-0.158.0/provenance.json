@@ -10,6 +10,7 @@
     "ThreadResumeParams.json": "c818e26d830ac4430791eab7d4a872d2384fa6006b14c505d8caf46e7e093527",
     "ThreadStartParams.json": "e9c6d3cc18d049bfbc0249add3808fb8e5a27e1a0b5a423767aafbc3859a9428",
     "TurnInterruptParams.json": "6dff382dae73d1dbc58406ed045605f647e7a49660e2540fbd2c6c24d60c5f2b",
-    "TurnStartParams.json": "2dfcf68705896fadc344ccfeb2e9fe5a6bcbbb8b9a90cf449ce232b636daf05a"
+    "TurnStartParams.json": "2dfcf68705896fadc344ccfeb2e9fe5a6bcbbb8b9a90cf449ce232b636daf05a",
+    "ThreadCompactStartParams.json": "684b20adf20213a9fcbca31b59108feadcd5a8b693c16431c20d701049df3737"
   }
 }

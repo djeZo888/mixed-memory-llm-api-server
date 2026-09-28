@@ -1,3 +1,6 @@
+import type { CodexCapabilities } from "./codex-capabilities.js";
+import { CodexChildren } from "./codex-children.js";
+import { codexInput } from "./codex-input.js";
 import { join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
 import type {
@@ -30,11 +33,16 @@ export interface RootlessCodexProcess {
 export interface CodexRuntime {
   readonly pin: typeof CODEX_PIN;
   readonly protocolQualified: boolean;
+  readonly capabilities?: Partial<CodexCapabilities>;
   readonly modelPolicyVersion: string;
   readonly model: string;
   readonly provider: string;
   readonly gatewayUrl: string;
   readonly contextLimit: 480000;
+  /** Trusted host gate; child catalog and shared lineage must be reviewed first. */
+  readonly delegationEnabled?: boolean;
+  readonly imageToolEnabled?: boolean;
+  readonly maxChildren?: number;
   /** W1/root supplies a reviewed rootless launcher. No host spawn/default executable exists here.
    * It must use the pinned Linux image, isolated CODEX_HOME, read-only trusted provider/tool
    * config, clean environment, restricted egress, disabled hosted auth/search/plugins/retries,
@@ -79,6 +87,10 @@ function fault(message: string): never {
  */
 export class CodexEngine implements Engine {
   private child?: RootlessCodexProcess;
+  private children: CodexChildren;
+  private compacting = new Set<string>();
+  private compactRequested = false;
+  private compactObserved = false;
   private launchAttempted = false;
   private connection?: CodexConnection;
   private launchPromise?: Promise<void>;
@@ -111,6 +123,11 @@ export class CodexEngine implements Engine {
     private readonly options: EngineOptions,
     private readonly runtime: CodexRuntime,
   ) {
+    this.children = new CodexChildren(
+      () => this.nativeId,
+      options.onUpdate,
+      runtime.maxChildren ?? 4,
+    );
     this.nativeId = options.nativeSessionId;
     this.cursor = options.nativeState?.eventCursor ?? 0;
     if (
@@ -150,6 +167,19 @@ export class CodexEngine implements Engine {
   private fail(error: Error) {
     if (this.stopping || this.failed) return;
     this.failed = error;
+    for (const compactionId of this.compacting)
+      this.options.onUpdate({
+        type: "compaction",
+        compactionId,
+        status: "failed",
+      });
+    if (this.compactRequested && !this.compacting.size)
+      this.options.onUpdate({
+        type: "compaction",
+        compactionId: "requested-compaction",
+        status: "failed",
+      });
+    this.compacting.clear();
     try {
       this.state("uncertain");
     } catch {
@@ -250,7 +280,7 @@ export class CodexEngine implements Engine {
     text: string,
     attachments: { path: string; mimeType: string; name: string }[] = [],
   ): Promise<"completed" | "cancelled"> {
-    if (attachments.length) fault("Codex media is not qualified");
+    const input = await codexInput(text, this.options.workspace, attachments);
     if (this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
     await this.start();
@@ -271,7 +301,7 @@ export class CodexEngine implements Engine {
     try {
       const result = await this.connection!.request("turn/start", {
         threadId: this.nativeId,
-        input: [{ type: "text", text, text_elements: [] }],
+        input,
       });
       if (!isRecord(result) || !isRecord(result.turn))
         fault("Invalid turn/start result");
@@ -285,6 +315,48 @@ export class CodexEngine implements Engine {
         error instanceof Error
           ? error
           : new CodexProtocolError("Native turn failed"),
+      );
+      throw error;
+    } finally {
+      this.active = false;
+    }
+  }
+  /** Host-only supported operation. Never forwarded from browser RPC. */
+  async compact(): Promise<"completed" | "cancelled"> {
+    if (this.active || this.stopped || this.closing || this.failed)
+      fault("Codex cannot compact now");
+    await this.start();
+    if (this.options.dispatchHeld?.())
+      fault("Codex compaction blocked by dispatch freeze");
+    this.active = true;
+    this.compactRequested = true;
+    this.state("uncertain", null);
+    this.options.onUpdate({
+      type: "context",
+      used: null,
+      estimated: false,
+      source: "codex.compaction.awaiting-usage",
+    });
+    const promise = new Promise<"completed" | "cancelled">(
+      (resolve, reject) => {
+        this.terminal = { promise: undefined as never, resolve, reject };
+      },
+    );
+    this.terminal!.promise = promise;
+    void promise.catch(() => undefined);
+    try {
+      await this.connection!.request("thread/compact/start", {
+        threadId: this.nativeId,
+      });
+      const result = await promise;
+      if (this.failed) throw this.failed;
+      await this.cleanup();
+      return result;
+    } catch (error) {
+      this.fail(
+        error instanceof Error
+          ? error
+          : new CodexProtocolError("Native compaction failed"),
       );
       throw error;
     } finally {
@@ -352,6 +424,7 @@ export class CodexEngine implements Engine {
         ? await this.child.terminateAndConfirm()
         : !this.launchAttempted;
       // Stop producers, revoke this runner capability, then prove all retained lineage drained.
+      if (nativeSettled) this.children.interruptedAfterCleanup();
       this.runtime.revokeGatewaySession(this.options.sessionId);
       this.options.onExit?.();
       const gatewaySettled = await this.runtime.confirmGatewaySettlement({
@@ -380,14 +453,21 @@ export class CodexEngine implements Engine {
       return;
     }
     if (method === "thread/started") {
-      if (
-        !isRecord(p.thread) ||
-        (this.nativeId && p.thread.id !== this.nativeId)
-      )
-        fault("Native child thread is unavailable in this preview");
+      if (!isRecord(p.thread)) fault("Invalid native thread");
+      if (this.nativeId && p.thread.id !== this.nativeId) {
+        if (!this.runtime.delegationEnabled)
+          fault("Native delegation unavailable");
+        this.children.thread(p.thread);
+      }
       return;
     }
     if (method === "thread/status/changed") return;
+    if (this.children.owns(p.threadId)) {
+      this.children.notification(method, p);
+      this.cursor++;
+      this.state("active");
+      return;
+    }
     const relevant =
       method.startsWith("turn/") ||
       method.startsWith("item/") ||
@@ -419,6 +499,12 @@ export class CodexEngine implements Engine {
       this.adoptTurn(p.turn.id);
       if (method === "turn/completed") {
         if (
+          p.turn.status === "completed" &&
+          this.compactRequested &&
+          !this.compactObserved
+        )
+          fault("Compaction completed without canonical item evidence");
+        if (
           !["completed", "interrupted", "failed"].includes(
             String(p.turn.status),
           )
@@ -426,7 +512,8 @@ export class CodexEngine implements Engine {
           fault("Nonterminal completion event");
         if (
           p.turn.status === "completed" &&
-          [...this.items.values()].some((item) => !item.completed)
+          ([...this.items.values()].some((item) => !item.completed) ||
+            this.children.unfinished)
         )
           fault(
             "Native items or descendants are incomplete; completion cannot be accepted",
@@ -565,7 +652,18 @@ export class CodexEngine implements Engine {
         streamState: complete ? "completed" : "streaming",
         phaseSource: "codex.item.phase",
       });
+    } else if (value.type === "collabAgentToolCall") {
+      if (!this.runtime.delegationEnabled)
+        fault("Native delegation unavailable");
+      this.children.item(value, complete);
+    } else if (value.type === "subAgentActivity") {
+      if (!this.runtime.delegationEnabled)
+        fault("Native delegation unavailable");
+      this.children.activity(value);
     } else if (value.type === "contextCompaction") {
+      this.compactObserved = true;
+      if (complete) this.compacting.delete(value.id);
+      else this.compacting.add(value.id);
       this.options.onUpdate({
         type: "compaction",
         compactionId: value.id,
