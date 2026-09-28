@@ -344,6 +344,11 @@ class Store:
             with os.fdopen(fd, 'wb', closefd=False) as f:
                 f.write(raw); f.flush(); os.fsync(fd)
             os.replace(tmp, self.path / name)
+            directory_fd = os.open(self.path, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            try:
+                os.fsync(directory_fd)  # Durable latch BEFORE its one reserved high attempt.
+            finally:
+                os.close(directory_fd)
         finally:
             os.close(fd)
             if tmp.exists():

@@ -4,6 +4,7 @@ from datetime import datetime, timezone
 import importlib.util
 import json
 import os
+import stat
 from pathlib import Path
 import tempfile
 import unittest
@@ -193,6 +194,15 @@ class StoreTests(unittest.TestCase):
                 with self.assertRaisesRegex(f.Fault,'already_running'):f.Store(p)
                 s.write('status.json',{'ok':1});self.assertEqual(s.read('status.json'),{'ok':1})
                 self.assertEqual(os.stat(Path(p)/'status.json').st_mode & 0o777,0o600)
+            finally:s.close()
+    def test_latch_file_and_parent_are_fsynced(self):
+        with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:
+            os.chmod(p,0o700);s=f.Store(p);kinds=[];real=os.fsync
+            def sync(fd):
+                kinds.append(stat.S_ISDIR(os.fstat(fd).st_mode));real(fd)
+            try:
+                with patch.object(f.os,'fsync',side_effect=sync):s.write('blocked.json',{'high_attempt_reserved':True})
+                self.assertEqual(kinds,[False,True])
             finally:s.close()
     def test_lock_replacement(self):
         with tempfile.TemporaryDirectory(dir=str(Path.home())) as p:

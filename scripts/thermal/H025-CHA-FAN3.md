@@ -36,7 +36,8 @@ cutoff and existing83/85 safeguards remain W2/owner responsibilities.
 
 Writes occur only when command differs from actual curve readback. Complete
 readback validates other-zone/mode/source/knots invariant before/after writes.
-Overwrite/mismatch latches `blocked.json` BEFORE one safe-high attempt; source
+Overwrite/mismatch durably latches `blocked.json` (file and parent-directory
+fsync) BEFORE one safe-high attempt; source
 or invariant drift cannot pass the safe-high precondition. Subsequent starts
 and ExecStopPost refuse further writes while blocked. Exit78 prevents restart
 fighting. A failed write/readback is unavailable, never a physical fan claim.
