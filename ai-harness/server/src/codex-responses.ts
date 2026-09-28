@@ -14,6 +14,12 @@ function fields(v: Record<string, any>, allowed: string[]) { if (Object.keys(v).
 function string(v: unknown): string { if (typeof v !== "string")
     reject("Expected string"); return v as string; }
 const uint = (v: unknown): v is number => Number.isSafeInteger(v) && Number(v) >= 0;
+const NAMESPACE_TOOLS: Readonly<Record<string, readonly string[]>> = Object.freeze({
+    multi_agent_v1: ["spawn_agent", "wait_agent", "send_input", "resume_agent", "close_agent"],
+    mcp__browser: ["browser_open", "browser_download"],
+    mcp__search: ["searxng_search"],
+    mcp__image: ["image_capabilities"],
+});
 export interface ResponsesTranslation {
     body: Record<string, any>;
     tools: Map<string, {
@@ -110,11 +116,11 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
         }
         fields(t, ["type", "name", "description", "tools"]);
         // Only the actual captured pinned namespace is qualified. No custom/nested forms.
-        if (t.name !== "multi_agent_v1" || namespaceNames.has(t.name) || !Array.isArray(t.tools) || !t.tools.length)
+        if (!Object.hasOwn(NAMESPACE_TOOLS, t.name) || namespaceNames.has(t.name) || !Array.isArray(t.tools) || !t.tools.length)
             reject("Unsupported or duplicate namespace");
         string(t.description); namespaceNames.add(t.name);
         for (const inner of t.tools) {
-            if (!object(inner) || inner.type !== "function" || !["spawn_agent", "wait_agent", "send_input", "resume_agent", "close_agent"].includes(inner.name))
+            if (!object(inner) || inner.type !== "function" || !NAMESPACE_TOOLS[t.name]!.includes(inner.name))
                 reject("Unsupported namespace tool");
             fields(inner, ["type", "name", "description", "strict", "parameters"]);
             const name = `sova_ns_${t.name.length}_${t.name}_${inner.name}`;
@@ -185,7 +191,7 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             if (pending.size && messages.at(-1)?.role === "tool")
                 reject("Interleaved new tool calls before pending results");
             const id = string(item.call_id), originalName = string(item.name), custom = item.type === "custom_tool_call";
-            if (item.namespace != null && (item.namespace !== "multi_agent_v1" || custom)) reject("Unsupported history namespace");
+            if (item.namespace != null && (!Object.hasOwn(NAMESPACE_TOOLS, item.namespace) || custom)) reject("Unsupported history namespace");
             const name = item.namespace == null ? originalName : `sova_ns_${item.namespace.length}_${item.namespace}_${originalName}`;
             if (item.namespace == null && originalName.startsWith("sova_ns_")) reject("Transport name is not a native history identity");
             if (!id || calls.has(id))
@@ -230,7 +236,7 @@ export function translateResponses(value: unknown, outputLimit = 65536): Respons
             ? [{ position, role: m.role, content: m.content }] : []);
         if (policy.length > 1 || policy[0]?.role === "developer" || (policy[0] && policy[0].position !== 0)) {
             const history = messages.filter(m => !["system", "developer"].includes(m.role));
-            messages.splice(0, messages.length, { role: "system", content: "Sova Qwen policy adaptation: system instructions take priority over developer instructions; both take priority over user messages. Later instructions at the same priority resolve conflicts. The JSON below retains the original ordered instruction messages and zero-based message positions. Apply their content at the stated priority; ordinary conversation history follows in its original order.\n" + JSON.stringify(policy) }, ...history);
+            messages.splice(0, messages.length, { role: "system", content: "Sova Qwen policy adaptation: system instructions take priority over developer instructions; both take priority over user messages. Later instructions at the same priority resolve conflicts. The JSON below retains the original ordered instruction messages and zero-based translated-message positions. Apply their content at the stated priority; ordinary conversation history follows in its original order.\n" + JSON.stringify(policy) }, ...history);
         }
     }
     return { tools, body: { model: b.model, ...(b.model === "qwen3.8-27b" ? { reasoning_effort: "none" } : {}), messages, tools: chatTools, tool_choice: b.tool_choice, parallel_tool_calls: b.parallel_tool_calls, stream: true, stream_options: { include_usage: true }, max_tokens: output } };
