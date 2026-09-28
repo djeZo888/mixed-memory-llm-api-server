@@ -49,6 +49,36 @@ const backend = (value: unknown): NodeBackend => ({
   action: async () => fixture("node-operation-v1"),
   operation: async () => fixture("node-operation-v1"),
 });
+test("node transport failure has an explicit reason, preserves peer, and clears on recovery", async () => {
+  let fail = true;
+  const service = createStatusService({
+    backends: {
+      "ai-vm": { ...backend(vm()), status: async () => {
+        if (fail) throw Error("private network unavailable");
+        return vm();
+      } },
+      "ai-harness": backend({ ...vm(), node_id: "ai-harness", services: [] }),
+    }, autoPoll: false,
+  });
+  try {
+    await Promise.all(Object.values(service.caches).map(c => c.poll()));
+    let nodes = service.snapshot();
+    assert.equal(nodes[0]!.state, "error");
+    assert.equal(nodes[0]!.reason, "transport_error");
+    assert.equal(nodes[1]!.resources.cpu.percent, 12);
+    assert.equal(nodes[1]!.freshness, "fresh");
+    fail = false;
+    await service.caches["ai-vm"]!.poll();
+    assert.equal(service.snapshot()[0]!.reason, null);
+    fail = true;
+    await service.caches["ai-vm"]!.poll();
+    nodes = service.snapshot();
+    assert.equal(nodes[0]!.reason, "transport_error");
+    assert.equal(nodes[0]!.resources.cpu.percent, 12);
+    assert.equal(nodes[0]!.resources.cpu.freshness, "stale");
+    assert.equal(nodes[1]!.freshness, "fresh");
+  } finally { await service.app.close(); }
+});
 test("exact shared v1 fixture preserves nullable identities, independent metrics and no invented capability", () => {
   const shared = fixture("node-status-v1"),
     parsed = sanitizeNode(shared, "ai-vm");

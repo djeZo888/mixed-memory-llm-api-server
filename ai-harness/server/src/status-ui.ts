@@ -14,7 +14,7 @@ function rate(value){return value==null?"Unknown":bytes(value)+"/s";}
 function detail(main,lines=[]){const box=el("div",undefined,"gpu-cell");box.append(el("span",main));for(const line of lines)box.append(el("small",line));return box;}
 function rangeInterval(g){const range=numeric(g.temperature_min_c," °C")+" – "+numeric(g.temperature_max_c," °C");if(!g.sampling_since||!g.observed_at)return range+" · interval unknown";return range+" · "+new Date(g.sampling_since).toLocaleTimeString()+"–"+new Date(g.observed_at).toLocaleTimeString();}
 function metric(title,observation,rows){const box=el("div",undefined,"metric");box.append(el("strong",title),el("small",observationText(observation)));const list=el("dl");for(const [label,value]of rows){list.append(el("dt",label),el("dd",value));}box.append(list);return box;}
-function observationText(o){return (o?.state||"unknown")+" · "+(o?.freshness||"unknown")+" · age "+(o?.age_ms==null?"unknown":Math.round(o.age_ms/1000)+"s")+(o?.observed_at?" · "+o.observed_at:"");}
+function observationText(o){return (o?.state||"unknown")+" · "+(o?.freshness||"unknown")+" · age "+(o?.age_ms==null?"unknown":Math.round(o.age_ms/1000)+"s")+(o?.observed_at?" · "+o.observed_at:"")+(o?.reason?" · "+o.reason:"");}
 function currentMetric(o,value){return (o?.state==="ok"&&o?.freshness==="fresh"?value:"Unknown")+" · "+(o?.freshness||"unknown");}
 function modelDetails(s){
   if(!s.configured_model)return [];
@@ -68,7 +68,7 @@ function render(data){
     }
     const p=el("section",undefined,"panel");p.dataset.nodeId=node.node_id;p.append(el("h2",name+" · resources"),badge(node.freshness),el("p",observationText(node)+" · Boot: "+(node.boot_id||"unknown"),"muted"));
     if(node.gpus.length){const gpuTable=table(["GPU / observed dependencies","Temperature / sampled range","Memory used / total","Power draw / limit","ECC","PCIe current / max"],node.gpus.map(g=>[
-      detail(g.name||"Unknown GPU",["UUID "+g.uuid,observationText(g),
+      detail(g.name||"Unknown GPU",["UUID "+g.uuid,"Current PCI: "+(g.pci_bus_id||"unknown"),observationText(g),
         "Ready model dependencies (not occupancy): "+((g.observed_ready_dependents||[]).map(b=>b.model_alias+" · "+b.instance_name+" ("+b.node_id+" / "+b.service_id+"; "+b.selection+")").join(", ")||"unknown / none observed"),
         "Action impact IDs: "+((g.affected_services||[]).join(", ")||"none reported")]),
       detail(numeric(g.temperature_c," °C"),[rangeInterval(g)]),

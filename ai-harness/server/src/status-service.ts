@@ -80,6 +80,12 @@ export function createStatusService(options: {
       node.gpus.forEach(age);
       Object.values(node.resources).forEach(age);
       node.resources.disk?.volumes?.forEach(age);
+      // The last successful sample is retained, but a failed current transport
+      // must be visible even before the first sample. Never expose error text.
+      if (cached.error) {
+        node.state = cached.error === "timeout" ? "timeout" : "error";
+        node.reason = cached.error;
+      }
       return { ...projectNode(node, config, registry),
         engines: registry.services.filter(s => s.node_id === config.id).flatMap(s => projectEngines(s, engineCache?.snapshot())),
       };
