@@ -149,7 +149,13 @@
             "attachments"
           ]
         }
-      ]
+      ],
+      "engine_health": {
+        "hostname": "127.0.0.1",
+        "port": 8080,
+        "host_header": "10.156.100.61",
+        "path": "/api/health"
+      }
     },
     {
       "id": "search",

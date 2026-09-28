@@ -18,7 +18,7 @@ const harness = () => registry().services.find(s => s.id === "harness")!;
 test("engine catalog is descriptive, bounded and confined to existing harness owner", () => {
   const r = registry();
   assert.deepEqual(harness().engines!.map(e => e.id), ["minimax", "codex"]);
-  const old = structuredClone(r); delete old.services.find(s => s.id === "harness")!.engines;
+  const old = structuredClone(r); delete old.services.find(s => s.id === "harness")!.engines; delete old.services.find(s => s.id === "harness")!.engine_health;
   assert.deepEqual(validateSystemRegistry(old), old); // deployed older registry still accepted
   for (const mutate of [
     (r: any) => r.services[0].engines = harness().engines,
@@ -26,6 +26,13 @@ test("engine catalog is descriptive, bounded and confined to existing harness ow
     (r: any) => r.services.find((s: any) => s.id === "harness").engines[0].url = "http://other/",
     (r: any) => r.services.find((s: any) => s.id === "harness").engines[0].id = "__proto__",
     (r: any) => r.services.find((s: any) => s.id === "harness").engines[0].expected_version = false,
+    ...["https://evil/", "8.8.8.8", "169.254.169.254", "localhost", "0.0.0.0"].map(hostname => (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.hostname = hostname),
+    (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.host_header = "10.1.2.3\r\nAuthorization: stolen",
+    (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.host_header = "8.8.8.8",
+    (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.path = "/control/v1/node/status",
+    (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.credential = "forbidden",
+    (r: any) => r.services.find((s: any) => s.id === "harness").engine_health.port = 65536,
+    (r: any) => delete r.services.find((s: any) => s.id === "harness").engine_health,
   ]) { const invalid = registry(); mutate(invalid); assert.throws(() => validateSystemRegistry(invalid)); }
 });
 
@@ -98,20 +105,21 @@ test("unavailable and hung app retain catalog; timeout does not spawn replacemen
 test("configured passive health adapter uses one bounded local GET, no redirects, credentials or retries", async () => {
   let mode = "ok", calls = 0;
   const mock = createServer((req, res) => {
-    calls++; assert.equal(req.url, "/api/health"); assert.equal(req.method, "GET"); assert.equal(req.headers.authorization, undefined); assert.equal(req.headers.host, "10.156.100.61");
+    calls++; assert.equal(req.url, "/api/health"); assert.equal(req.method, "GET"); assert.equal(req.headers.authorization, undefined); assert.equal(req.headers.host, "10.20.30.40:9999");
     if (mode === "redirect") { res.writeHead(302, { Location: "/forbidden" }); res.end(); }
     else if (mode === "oversize") res.end("x".repeat(65537));
     else if (mode === "badjson") res.end("{");
     else if (mode === "failure") { res.writeHead(503); res.end("private failure"); }
     else res.end(JSON.stringify(health()));
   });
-  await new Promise<void>((resolve, reject) => { mock.on("error", reject); mock.listen(8080, "127.0.0.1", resolve); });
+  await new Promise<void>((resolve, reject) => { mock.on("error", reject); mock.listen(0, "127.0.0.1", resolve); });
   try {
-    const observer = appHealthObserver(registry());
+    const configured = registry(); configured.services.find(s => s.id === "harness")!.engine_health = { hostname: "127.0.0.1", port: (mock.address() as { port: number }).port, host_header: "10.20.30.40:9999", path: "/api/health" };
+    const observer = appHealthObserver(configured);
     assert.deepEqual(await observer.status(AbortSignal.timeout(1000)), health());
     for (mode of ["redirect", "oversize", "badjson", "failure"]) await assert.rejects(observer.status(AbortSignal.timeout(1000)), /Application health unavailable/);
     assert.equal(calls, 5);
-    const r = registry(); delete r.services.find(s => s.id === "harness")!.engines;
+    const r = registry(); delete r.services.find(s => s.id === "harness")!.engines; delete r.services.find(s => s.id === "harness")!.engine_health;
     assert.throws(() => appHealthObserver(r));
   } finally { await new Promise<void>(resolve => mock.close(() => resolve())); }
 });

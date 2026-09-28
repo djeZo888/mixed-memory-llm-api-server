@@ -2,6 +2,7 @@
 import { request } from "node:http";
 import type { Observation } from "./observer-cache.js";
 import type { RegistryService, SystemRegistry } from "./system-registry.js";
+import { validateSystemRegistry } from "./system-registry.js";
 
 const object = (v: unknown): Record<string, unknown> | null =>
   v !== null && typeof v === "object" && !Array.isArray(v) ? v as Record<string, unknown> : null;
@@ -72,10 +73,11 @@ export function projectEngines(service: RegistryService, cached?: Observation<En
 /** Fixed trusted endpoint reference, no URL from the browser or observation body.
  * No credential needed; only bounded GET /api/health, no redirect or retry. */
 export function appHealthObserver(registry: SystemRegistry) {
-  const service = registry.services.find(s => s.id === "harness" && s.node_id === "ai-harness" && s.endpoint_ref === "harness-local");
-  if (!service?.engines?.length) throw Error("Configured harness engine catalog required");
+  const service = validateSystemRegistry(registry).services.find(s => s.id === "harness" && s.node_id === "ai-harness" && s.endpoint_ref === "harness-local");
+  if (!service?.engines?.length || !service.engine_health) throw Error("Configured harness engine catalog required");
+  const endpoint = service.engine_health;
   return { status: (signal: AbortSignal) => new Promise<unknown>((resolve, reject) => {
-    const req = request({ hostname: "127.0.0.1", port: 8080, path: "/api/health", method: "GET", signal, agent: false, headers: { Host: "10.156.100.61", Accept: "application/json", "Cache-Control": "no-cache" } }, res => {
+    const req = request({ hostname: endpoint.hostname, port: endpoint.port, path: endpoint.path, method: "GET", signal, agent: false, headers: { Host: endpoint.host_header, Accept: "application/json", "Cache-Control": "no-cache" } }, res => {
       let bytes = 0; const chunks: Buffer[] = [];
       const fail = () => { reject(Error("Application health unavailable")); res.destroy(); req.destroy(); };
       if (res.statusCode !== 200) { fail(); return; }

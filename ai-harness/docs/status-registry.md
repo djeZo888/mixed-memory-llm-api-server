@@ -254,13 +254,17 @@ confirmation, dispatch interlock or queue.
 The existing `harness` service may carry a bounded `engines` catalog for
 MiniMax and Codex: display name, expected deployment-policy version (nullable),
 preview label and descriptive capability names. It adds no services or controls.
-Only the reviewed `ai-harness` / `harness-local` binding accepts this catalog.
-Older registries without it remain valid. On deployment, add this catalog to
+Only the reviewed `ai-harness` / `harness-local` binding accepts this catalog and
+its required `engine_health` endpoint (private IPv4, port, private IPv4 Host and
+exact `/api/health` path; no credential or method configuration).
+Older registries without it remain valid. On deployment, add
+the catalog plus engine-health endpoint to
 the **actual current registry**, preserving every model/placement entry and the
 separate active-frontier selector; never replace these with repository defaults.
 
 The existing status process observes the configured local app with bounded
-`GET /api/health` (loopback 8080, reviewed app Host `10.156.100.61`, no credentials,
+`GET /api/health` (release-configured hostname/port/Host; current catalog uses
+loopback 8080 and app Host `10.156.100.61`; no credentials,
 redirects or retry). Its independent ObserverCache polls every 5 seconds with
 2-second deadline and 15-second freshness threshold. An abort-ignoring request
 retains its observer slot until settled. No native engines are started, and
