@@ -42,6 +42,33 @@ def container_identity(c):
     return {'Id':c['Id'],'Image':c['Image'],'StartedAt':c['State']['StartedAt'],'Pid':pid,'cgroup':cg,
             'pid_start_ticks':Path('/proc',str(pid),'stat').read_text().rsplit(')',1)[1].split()[19]}
 
+@contextlib.contextmanager
+def initial_lease(acquire, busy_type, expected_boot):
+    """One bounded pre-dispatch admission; never retries a request/body/phase."""
+    path='/run/llmctl/lifecycle.lock'
+    info=os.stat(path,follow_symlinks=False);identity=(info.st_dev,info.st_ino)
+    deadline=time.monotonic()+10
+    def unchanged():
+        info=os.stat(path,follow_symlinks=False)
+        require((info.st_dev,info.st_ino)==identity and
+                Path('/proc/sys/kernel/random/boot_id').read_text().strip()==expected_boot,
+                'initial canonical lease or boot changed')
+    while True:
+        unchanged()
+        context=acquire(blocking=False)
+        try:
+            lease=context.__enter__()
+            break
+        except busy_type:
+            remaining=deadline-time.monotonic()
+            if remaining<=0:raise
+            time.sleep(min(.1,remaining))
+    try:
+        unchanged()
+        yield lease
+    finally:
+        context.__exit__(*sys.exc_info())
+
 class Wire:
     def __init__(self,spec,key,seconds):
         url=urlsplit(spec['endpoint']);cls=http.client.HTTPSConnection if url.scheme=='https' else http.client.HTTPConnection
@@ -68,7 +95,7 @@ class NativeAdapter:
         sys.path.insert(0,str(ROOT/'scripts'))
         from install.storage import Storage
         from install.storage_io import MountedStorageGuard, AnchoredRoot
-        from common.lifecycle_lease import acquire_lease
+        from common.lifecycle_lease import acquire_lease, LeaseBusy
         from lifecycle.manager import load_manager
         class Command:
             def run(self,argv,*,timeout=30,env=None):return subprocess.check_output(argv,text=True,timeout=timeout,env=env)
@@ -87,7 +114,7 @@ class NativeAdapter:
         require(str(self.journal_path).startswith('/data/logs/H023-') and '..' not in self.journal_path.parts,'registered H023 journal required')
         # One full registration/root/lease boundary; retain guard for lightweight
         # mountinfo/path/FD checks throughout telemetry and all journal writes.
-        with self.acquire(blocking=False):
+        with initial_lease(self.acquire,LeaseBusy,m['boot_id']):
             self.storage.root_payload_guard()
             self.guard=self.guard_cls(self.storage)
             self.guard.check_path(str(self.journal_path.parent))
@@ -294,13 +321,15 @@ def sample(a,due):
     for path,identity in a.source_stats.items():
         st=Path(path).stat();require((st.st_ino,st.st_mtime_ns,st.st_size)==identity,'source identity drift')
     start=clock();fields=['uuid','name','temperature.gpu','power.draw','power.limit','utilization.gpu','memory.total','memory.used','memory.free',
-        'clocks.current.graphics','clocks.current.sm','clocks.current.memory','ecc.mode.current','ecc.mode.pending','ecc.errors.uncorrected.volatile.total','pcie.replay_counter']
+        'clocks.current.graphics','clocks.current.sm','clocks.current.memory','ecc.mode.current','ecc.mode.pending','ecc.errors.uncorrected.volatile.total']
     reasons=['hw_thermal_slowdown','sw_thermal_slowdown','hw_power_brake_slowdown','sw_power_cap','hw_slowdown']
     fields += ['clocks_event_reasons.'+x for x in reasons]
     raw=run(['nvidia-smi','--query-gpu='+','.join(fields),'--format=csv,noheader,nounits'],3)
     rows={}
     for line in raw.splitlines():
         v=dict(zip(fields,[p.strip() for p in line.split(',')]))
+        # Installed nvidia-smi rejects this field; retain explicit unavailability.
+        v['pcie.replay_counter']='N/A'
         rows[v['uuid']]=v
     gpu={};cgroups={};identities={}
     fans=a.fans.sample({l:a.m['lanes'][l]['gpu_uuid'] for l in LANES})
@@ -317,7 +346,7 @@ def sample(a,due):
                 ('utilization_pct','utilization.gpu'),('memory_total_mib','memory.total'),('memory_used_mib','memory.used'),('memory_free_mib','memory.free')]:g[name]=float(v[field])
         for name,field in [('ecc_uncorrected','ecc.errors.uncorrected.volatile.total'),('pcie_replay','pcie.replay_counter')]:
             g[name]=int(v[field]) if v[field].isdigit() else None
-        g['counter_unavailable_reason']='native nvidia-smi unsupported' if any(g[k] is None for k in ('ecc_uncorrected','pcie_replay')) else None
+        g['counter_unavailable_reason']='installed nvidia-smi rejects pcie.replay_counter; unsupported counters remain unavailable' if any(g[k] is None for k in ('ecc_uncorrected','pcie_replay')) else None
         allfans=fans[spec['gpu_uuid']].get('fans',[])
         g['integrated_fan']={'target_pct':min(x['intended_percent'] for x in allfans) if allfans else None,
                             'current_pct':min(x['reported_percent'] for x in allfans) if allfans else None,
