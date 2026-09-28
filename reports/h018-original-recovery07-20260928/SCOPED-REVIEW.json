@@ -1,0 +1,21 @@
+{
+  "utc": "2026-09-28T01:25:23.214725+00:00",
+  "scope": [
+    "reports/h018-original-recovery07-20260928/RECOVERY.json",
+    "reports/h018-original-recovery07-20260928/REPORT.md",
+    "reports/h018-original-recovery07-20260928/SESSION.json",
+    "reports/h018-original-recovery07-20260928/SOURCE.json"
+  ],
+  "secretScan": "PASS_NO_PATTERN_MATCHES",
+  "diffWhitespace": "PASS",
+  "rawPrivateReceiptsIncluded": false,
+  "sourceImplementationChanges": false,
+  "reviewedHelperChangesOnly": [
+    "task receipt path",
+    "actual backend proof hash"
+  ],
+  "runtimeValidation": "normal original app start; required HTTP200; existing observer ready; preservation equality",
+  "testCycle": "NOT_RUN_NOT_AUTHORIZED",
+  "push": "NOT_PERFORMED",
+  "independentFinalReview": "PASS: raw/QUIET counts, preserved hashes, HTTP, observer availability, evidence hashes, two authorized helper substitutions, and truthful pending native exit verified"
+}

@@ -1,0 +1,163 @@
+{
+  "status": "PASS_ORIGINAL_SOVA_RESTORED",
+  "essentialChecksFinishedUtc": "2026-09-28T01:24:11.431917+00:00",
+  "startedUtc": "2026-09-28T01:22:52.639759+00:00",
+  "startReturnedUtc": "2026-09-28T01:22:52.671830+00:00",
+  "appPid": "491237",
+  "originalSource": "7143c17d73173db9364b77956679c86d7026a4ae",
+  "originalImage": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "http": {
+    "/api/health": {
+      "http_status": 200,
+      "bytes": 271
+    },
+    "/status": {
+      "http_status": 200,
+      "bytes": 876
+    },
+    "/api/status/v1/system": {
+      "http_status": 200,
+      "bytes": 26873
+    }
+  },
+  "availability": {
+    "glm-5.3-flash": {
+      "observed_at": "2026-09-28T01:22:51.187371+00:00",
+      "generation": 5922882353416082,
+      "availability": "available",
+      "ready": true,
+      "freshness": "fresh",
+      "model_alias": "glm-5.3-flash",
+      "deployment_id": "glm-5.3-flash-1048576-fp8-kt",
+      "configured_context_tokens": 1048576,
+      "max_output_tokens": 65536
+    },
+    "qwen-gpu0": {
+      "observed_at": "2026-09-28T01:22:50.888163+00:00",
+      "generation": 5183996324027758,
+      "availability": "available",
+      "ready": true,
+      "freshness": "fresh",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null
+    },
+    "qwen-gpu1": {
+      "observed_at": "2026-09-28T01:22:50.888295+00:00",
+      "generation": 6022637887592269,
+      "availability": "available",
+      "ready": true,
+      "freshness": "fresh",
+      "model_alias": "qwen3.8-27b",
+      "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null
+    },
+    "image": {
+      "observed_at": "2026-09-28T01:22:50.879053+00:00",
+      "generation": 8035765252897144,
+      "availability": "available",
+      "ready": true,
+      "freshness": "fresh",
+      "model_alias": "qwen-image-2.1",
+      "deployment_id": "image21-runtime-20260923",
+      "configured_context_tokens": null,
+      "max_output_tokens": null
+    }
+  },
+  "frontierConfig": {
+    "model": "glm-5.3-flash",
+    "contextWindow": 1048576,
+    "maxOutputTokens": 65536,
+    "qualified": true
+  },
+  "protectedHistoryPreserved": {
+    "sessions": true,
+    "messages": true,
+    "files": true,
+    "runs": true,
+    "events": true,
+    "quarantined_workspaces": true,
+    "h003_image_jobs": true,
+    "h005_image_ownership": true,
+    "frontier_requests": true
+  },
+  "protectedCounts": {
+    "sessions": 26,
+    "messages": 133,
+    "files": 62,
+    "runs": 48,
+    "events": 25359,
+    "h003_image_jobs": 19,
+    "quarantined_workspaces": 1
+  },
+  "nonDatabaseFiles": {
+    "regular_non_database_files": 17597,
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 161
+  },
+  "filesPreserved": true,
+  "otherServicesPreserved": true,
+  "otherServicePids": {
+    "ai-harness-searxng.service": "190181",
+    "ai-harness-status.service": "301728",
+    "ai-harness-admin.service": "66185"
+  },
+  "unitsImageUnchanged": true,
+  "credentialMetadataUnchanged": true,
+  "protectedParentMetadataUnchanged": true,
+  "installedMetadataUnchanged": true,
+  "originalFileSha256": {
+    "/home/user/.config/systemd/user/ai-harness.service": "eee8e1d7a3f370e3fcdbf5783f1b03df8672296abcf27726cdaca73c62b71b9c",
+    "/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf": "e033a07a50b8c5f9f535909e1405c87f99f932a3c1506aa36c30a4647462ac16",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/deploy/run-engine.sh": "f3385648fdb2fd41efca41509b6c2a11ad5b6098fa5ad761e98dd5b2f2d5c722",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/deploy/run-server.sh": "1e70596f578db2c5af5dd5400575f9a47607f9a16e2f820d44175169cb19309f",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/config/frontier.json": "5c099305b84baccaa2d736f90a8100953ee203001b9ad822b314aefe9cd065c3",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/config/system-registry.json": "b9b9120afda6d9c007008a9222be375aa49f82b43faab07ba1c47f6256acd3cd"
+  },
+  "imageLaneBefore": [
+    [
+      "quarantined",
+      1
+    ]
+  ],
+  "imageLaneAfter": [
+    [
+      "idle",
+      1
+    ]
+  ],
+  "imageOwnershipUncertain": [
+    [
+      0,
+      1
+    ]
+  ],
+  "manualQuarantineClear": false,
+  "modelRequests": 0,
+  "ownerSqliteRead": false,
+  "profileTagUnitQualificationWrites": false,
+  "aiVmContact": false,
+  "sourceFix06Deployed": false,
+  "mimoQualificationAppAcceptanceLastBenchmark": "NOT_RUN",
+  "rootBackendProofSha256": "6c4f28e39abe17caab19cdd889804ae1e9a8778534c86c9ec7ec623cb2eb3d59",
+  "rootGoSha256": "5d4ade6497b2cdf0309d62f18f7c8915fb763cc5439583c61c8fefdbb603cbe6",
+  "quietSha256": "b89de894fcd4c1ad44e77c74e777a688b92fd7b0c6700cc1ab9643f7a44d9197",
+  "reviewedHelperSha256": "7d675d7ab9e2dfa7457b543c8002c2ca9e6054bb52b46072df3f48d510e4d450",
+  "usedHelperSha256": "88e95c935930f44bddc6c1f37c01ae7263450c85095a6d18a907febdd9685503",
+  "helperOnlyChanges": [
+    "task receipt path",
+    "actual backend proof hash"
+  ],
+  "recoveryCommandExit": 0,
+  "evidenceSha256": {
+    "RECOVERY-RAW.json": "8fe798153ae86bce48ad68f135f2a0d781f3412d8b6be8ba453c0d591a65af46",
+    "STATUS-PRIVATE.json": "f5f5df6dfbbc8f8aa5640e37356b5f9f582cad137ca7c0df103effa3419c0acc",
+    "POST-METADATA.json": "70b3909dc915809b27c0b1207695e2f0c474dcbe8a2cb30ec0d3546b0f9eac74"
+  },
+  "additionalReadOnlyObservation": {
+    "/health": 404,
+    "note": "extra route not implemented; required /api/health passed"
+  }
+}
