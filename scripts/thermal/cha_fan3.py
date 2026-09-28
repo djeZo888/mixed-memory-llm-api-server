@@ -365,6 +365,7 @@ class Controller:
         self.policy = Policy()
         self.last_write_at = None
         self.started_at = utc()
+        self.recovering = True
         self.source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         self.host_boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
     def inspect(self):
@@ -380,12 +381,23 @@ class Controller:
     def command(self, s, current, desired):
         if desired == current:
             return s, current
-        self.bmc.call('PUT', PATHS[1], payload(s, desired))
-        self.last_write_at = utc()
-        after, readback = self.inspect()
-        if readback != desired:
-            raise Fault('bmc_write_readback_mismatch')
-        return after, readback
+        intent = {'at': utc(), 'before_duty': current, 'desired_duty': desired,
+                  'invariant_sha256': digest(self.baseline), 'state': 'prepared'}
+        self.store.write('pending-write.json', intent)
+        try:
+            self.bmc.call('PUT', PATHS[1], payload(s, desired))
+            self.last_write_at = utc()
+            after, readback = self.inspect()
+            if readback != desired:
+                raise Fault('bmc_write_readback_mismatch')
+            self.store.write('pending-write.json', dict(intent, state='verified', readback_at=utc()))
+            return after, readback
+        except Exception as e:
+            # Keep uncertain original write separate from the reserved high attempt.
+            try:
+                self.store.write('uncertain-write.json', dict(intent, state='uncertain', error=reason(e)))
+            finally:
+                raise Fault('bmc_write_pending_readback' if transient(e) else 'bmc_write_uncertain') from None
     def status(self, state, duty, observed=None, error=None, tach=None):
         # Last valid tach/readback remains distinctly timestamped when unavailable.
         previous = self.proof
@@ -407,8 +419,28 @@ class Controller:
         if observed:
             self.proof.update(observed)
         self.store.write('status.json', self.proof)
-    def high(self):
+    def reconcile_pending(self):
+        pending = self.store.read('pending-write.json')
+        if not pending or pending.get('state') == 'verified':
+            return
+        if (pending.get('state') != 'prepared' or pending.get('desired_duty') not in (40, 80)
+                or type(pending.get('before_duty')) is not int
+                or not 0 <= pending['before_duty'] <= 100
+                or pending.get('invariant_sha256') != digest(self.baseline)):
+            raise Fault('write_record_invalid')
+        _, duty = self.inspect()  # READ ONLY until full invariant and exact state proved.
+        if duty not in (pending['desired_duty'], pending['before_duty']):
+            raise Fault('ambiguous_write_conflicting_readback')
+        self.store.write('pending-write.json', dict(pending, state='verified',
+                         reconciled_readback_duty=duty, readback_at=utc()))
+        self.expected = duty
+        self.policy = Policy()  # Outage never counts toward the cool dwell.
+
+    def high(self, check_expected=False):
+        self.reconcile_pending()
         s, duty = self.inspect()
+        if check_expected and self.expected is not None and duty != self.expected:
+            raise Fault('competing_writer_or_overwrite')
         self.expected = max(80, duty)
         return self.command(s, duty, self.expected)[1]
     def terminal(self, error):
@@ -424,7 +456,7 @@ class Controller:
     def start(self):
         if self.store.read('blocked.json'):
             raise Fault('operator_review_required')
-        duty = self.high()
+        duty = self.high(check_expected=True)
         self.status('starting_high', duty, tach=self.bmc.tach())
     def step(self, node, now=None):
         s, current = self.inspect()
@@ -439,6 +471,42 @@ class Controller:
         self.expected = desired
         _, duty = self.command(s, current, desired)
         self.status('healthy' if observed else 'degraded_high', duty, observed, error, self.bmc.tach())
+
+    def cycle(self, node):
+        """Transport loss retries with bounded backoff; integrity loss never retries."""
+        try:
+            if not self.bmc.csrf:
+                self.bmc.login()
+            if self.recovering:
+                self.start()
+            self.step(node)
+            self.recovering = False
+            return True
+        except Exception as e:
+            if not transient(e):
+                raise
+            self.policy = Policy()
+            self.recovering = True
+            duty = tach = None
+            error = reason(e)
+            try:
+                # Fresh readback precedes any new high command, never a PUT replay.
+                duty = self.high(check_expected=True)
+                tach = self.bmc.tach()
+            except Exception as high_error:
+                if not transient(high_error):
+                    raise
+                error += ':safe_high_unavailable'
+            self.status('degraded_high' if duty is not None and duty >= 80 else 'degraded_unknown',
+                        duty, error=error, tach=tach)
+            return False
+
+def transient(e):
+    return (isinstance(e, (OSError, http.client.HTTPException, json.JSONDecodeError))
+            or isinstance(e, Fault) and str(e) in {
+                'request_timeout', 'bmc_write_pending_readback', 'bmc_http_status', 'bmc_session_expired',
+                'bmc_session_missing', 'bmc_relogin_throttled', 'bmc_login_rejected',
+                'bmc_response_size', 'tach_identity_unavailable', 'tach_missing_or_stopped'})
 
 def notify(message):
     address = os.environ.get('NOTIFY_SOCKET')
@@ -480,24 +548,32 @@ def main():
         if store.read('blocked.json'):
             # Preserve original blocker and last proof; no repeated fan writes.
             return 78
-        bmc.login()
         if args.mode == 'failsafe':
+            bmc.login()
             duty = ctl.high()
             ctl.status('stopped_high', duty, tach=bmc.tach())
             return 0
-        ctl.start()
-        notify('READY=1\nWATCHDOG=1')
         node = Node(CREDS / 'node-control-key')
+        backoff = POLL
         while not stopping:
             start = time.monotonic()
-            ctl.step(node)
-            notify('WATCHDOG=1')
-            while not stopping and time.monotonic() - start < POLL:
-                time.sleep(max(0, min(0.2, POLL - (time.monotonic() - start))))
+            healthy_cycle = ctl.cycle(node)
+            backoff = POLL if healthy_cycle else min(30, backoff * 2)
+            notify('READY=1\nWATCHDOG=1')  # Process ready; status remains degraded on outage.
+            next_heartbeat = time.monotonic() + 5
+            while not stopping and time.monotonic() - start < backoff:
+                if time.monotonic() >= next_heartbeat:
+                    notify('WATCHDOG=1')
+                    next_heartbeat = time.monotonic() + 5
+                time.sleep(max(0, min(0.2, backoff - (time.monotonic() - start))))
         duty = ctl.high()
         ctl.status('stopped_high', duty, tach=bmc.tach())
         return 0
     except Exception as e:
+        if transient(e):
+            # Stop/failsafe transport outage: expose unavailable, retain restart path.
+            ctl.status('stopped_unavailable', None, error=reason(e))
+            return 1
         ctl.terminal(reason(e))
         return 78
     finally:

@@ -41,6 +41,14 @@ fsync) BEFORE one safe-high attempt; source
 or invariant drift cannot pass the safe-high precondition. Subsequent starts
 and ExecStopPost refuse further writes while blocked. Exit78 prevents restart
 fighting. A failed write/readback is unavailable, never a physical fan claim.
+Transient BMC read/login/tach transport failure publishes degraded/unknown
+readback and retries with10/20/30second capped backoff, resetting cool dwell.
+Watchdog heartbeats during backoff indicate process liveness, not fan health.
+An ambiguous fixed-channel PUT is recorded in pending-write.json and a separate
+uncertain-write.json. Recovery READS full invariants and actual duty first; only
+exact intended or exact before-write state reconciles it. No blind PUT replay.
+After reconciliation high is requested from fresh readback before another cool
+dwell. Confirmed conflicting readback/scope remains a durable hard block.
 Ordinary crash uses ExecStopPost high; watchdog30seconds catches stalled loops;
 automatic crash restart is bounded3/300seconds with30second spacing. Clearing a
 blocker requires an owner investigation; do not remove latch automatically.
@@ -99,7 +107,8 @@ credentials stay untouched. ProtectHome/ProtectSystem/PrivateDevices isolate
 service access; only StateDirectory writable. No secret enters Git/evidence.
 
 Systemd creates `/var/lib/sova-cha-fan3` and its controller.lock, baseline.json,
-status.json (and blocked.json only on fault). Baseline preserves first observed
+status.json, pending-write.json (last scoped write intent/result), uncertain-write.json
+(only after uncertainty), and blocked.json (only on confirmed integrity fault). Baseline preserves first observed
 settings apart from the four controlled duties/dynamic LastTemp fields.
 
 Capture idle startup80, then30second fresh-cool transition40, with independent

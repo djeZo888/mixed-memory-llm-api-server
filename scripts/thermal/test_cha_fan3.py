@@ -39,7 +39,7 @@ class MemoryStore:
     def read(self,n): return copy.deepcopy(self.values.get(n))
     def write(self,n,v): self.values[n]=copy.deepcopy(v)
 class FakeBMC:
-    def __init__(self,d=75): self.s=snapshot(d);self.puts=0;self.logins=1;self.reject=False
+    def __init__(self,d=75): self.s=snapshot(d);self.puts=0;self.logins=1;self.reject=False;self.csrf='synthetic'
     def snapshot(self): return copy.deepcopy(self.s)
     def tach(self): return {'value':3000,'units':None,'name':'CHA_FAN3'}
     def call(self,m,p,data):
@@ -172,7 +172,7 @@ class ControllerTests(unittest.TestCase):
         c.terminal('bmc_invariant_changed');self.assertEqual(b.puts,1)
     def test_readback_mismatch_latches_bounded(self):
         c,b,s=self.make();b.reject=True
-        with self.assertRaisesRegex(f.Fault,'readback_mismatch'):c.start()
+        with self.assertRaisesRegex(f.Fault,'write_uncertain'):c.start()
         c.terminal('bmc_write_readback_mismatch')
         self.assertEqual(b.puts,2);self.assertEqual(c.proof['state'],'blocked')
     def test_start100_retained_no_write(self):
@@ -180,6 +180,66 @@ class ControllerTests(unittest.TestCase):
     def test_high_stop_never_restores75(self):
         c,b,s=self.make(40);self.assertEqual(c.high(),80)
         self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+    def test_transient_outage_then_recovery(self):
+        c,b,s=self.make(40);c.start();c.recovering=False
+        for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
+        c.expected=40
+        original=b.snapshot
+        with patch.object(b,'snapshot',side_effect=TimeoutError()):
+            self.assertFalse(c.cycle(FakeNode()))
+        self.assertEqual(c.proof['state'],'degraded_unknown')
+        self.assertIsNone(s.read('blocked.json'))
+        self.assertTrue(c.cycle(FakeNode()))
+        self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(c.proof['state'],'healthy')
+        self.assertIsNone(s.read('blocked.json'))
+    def test_transient_can_prove_high_once(self):
+        c,b,s=self.make(40);c.start();c.recovering=False
+        for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
+        c.expected=40;original=b.snapshot
+        with patch.object(b,'snapshot',side_effect=[TimeoutError(),original(),snapshot(80)]):
+            self.assertFalse(c.cycle(FakeNode()))
+        self.assertEqual(c.proof['state'],'degraded_high')
+        self.assertEqual(c.proof['readback_duty'],80)
+    def test_invariant_fault_is_not_recoverable(self):
+        c,b,s=self.make();c.start();c.recovering=False
+        b.s[f.PATHS[2]]['PWM4_1']=1
+        with self.assertRaisesRegex(f.Fault,'user_disabled'):c.cycle(FakeNode())
+        self.assertFalse(f.transient(f.Fault('user_disabled_sources_changed')))
+    def test_ambiguous_put_reconciles_read_only_no_replay(self):
+        c,b,s=self.make(40);original=b.call
+        def ambiguous(*args):original(*args);raise TimeoutError()
+        with patch.object(b,'call',side_effect=ambiguous):
+            self.assertFalse(c.cycle(FakeNode()))
+        self.assertEqual(b.puts,1)
+        self.assertEqual(s.read('uncertain-write.json')['desired_duty'],80)
+        self.assertEqual(s.read('pending-write.json')['state'],'verified')
+        self.assertIsNone(s.read('blocked.json'))
+        self.assertTrue(c.cycle(FakeNode()))
+        self.assertEqual(b.puts,1)  # Fresh read proves high; NO replay.
+    def test_ambiguous_put_absence_retries_reads_only(self):
+        c,b,s=self.make(40);original=b.call
+        def ambiguous(*args):original(*args);raise TimeoutError()
+        with patch.object(b,'call',side_effect=ambiguous):
+            with self.assertRaisesRegex(f.Fault,'pending_readback'):c.start()
+        with patch.object(b,'snapshot',side_effect=TimeoutError()):
+            for _ in range(3):self.assertFalse(c.cycle(FakeNode()))
+        self.assertEqual(b.puts,1)
+        self.assertEqual(c.proof['state'],'degraded_unknown')
+        self.assertTrue(c.cycle(FakeNode()))
+        self.assertEqual(b.puts,1)
+    def test_interrupted_low_write_restart_goes_high_after_reconciliation(self):
+        c,b,s=self.make(40);c.inspect()
+        s.write('pending-write.json',{'state':'prepared','before_duty':80,'desired_duty':40,
+                'invariant_sha256':f.digest(c.baseline)})
+        c.start();self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(b.puts,1)
+    def test_ambiguous_put_conflicting_duty_hard_block(self):
+        c,b,s=self.make(60);c.inspect()
+        s.write('pending-write.json',{'state':'prepared','before_duty':40,'desired_duty':80,
+                'invariant_sha256':f.digest(c.baseline)})
+        with self.assertRaisesRegex(f.Fault,'ambiguous_write_conflicting'):c.cycle(FakeNode())
+        self.assertEqual(b.puts,0)
     def test_status_unknown_units_and_compact(self):
         c,b,s=self.make();c.start();c.step(FakeNode(),0)
         self.assertIsNone(c.proof['actual_tach_units']);self.assertLess(len(json.dumps(c.proof)),4096)
