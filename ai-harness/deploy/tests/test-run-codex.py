@@ -10,7 +10,7 @@ base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base.LAUNCHER = Path(__file__).resolve().parents[1] / 'run-codex.sh'
 base.REVISION = '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'
-base.IMAGE_ID = 'sha256:17dae2a64865c2a09cd00c85e492bc0cdca3674d25ae9be8f6bb64a0c82c219d'
+base.IMAGE_ID = 'sha256:822a648bb4ae3fb431f1f2c32ee1d4b320b24df66382451136b7f3fd90115327'
 base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest()
 
 class CodexLauncherContract(base.LauncherContract):

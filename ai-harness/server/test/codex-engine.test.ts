@@ -700,3 +700,34 @@ test("actual native child trajectory rejects an unfinished child command before 
     ),
   );
 });
+
+// Cold resume replays historical usage after the resume response in pinned0.158.0.
+// It must never adopt an old turn, mark a new turn active, or replay history.
+test("resume usage snapshot permits follow-up without adopting historical turn", async () => {
+  const f = fixture({ nativeId: "thread-1" });
+  await f.engine.start();
+  const stateCount = f.states.length;
+  f.events("thread/tokenUsage/updated", { turnId: "previous-turn", tokenUsage: { last: { totalTokens: 2345 }, modelContextWindow: 480000 } });
+  try {
+    assert.deepEqual(f.updates, [{ type: "context", used: null, estimated: true, source: "codex.restored-usage.awaiting-current-request" }]);
+    assert.equal(f.states.length, stateCount, "usage snapshot must not write ownership");
+    const pending = f.engine.prompt("distinct follow-up");
+    await tick(); f.complete(); assert.equal(await pending, "completed");
+    assert.equal(f.requests.filter(r => r.method === "turn/start").length, 1);
+  } finally { await f.engine.close(); }
+});
+for (const bad of ["wrong-thread", "wrong-context", "negative-usage", "bad-usage-shape", "empty-turn"]) {
+  test(`resume usage rejects ${bad}`, async () => {
+    const f = fixture({ nativeId: "thread-1" }); await f.engine.start();
+    f.events("thread/tokenUsage/updated", { threadId: bad === "wrong-thread" ? "other-thread" : "thread-1", turnId: bad === "empty-turn" ? "" : "previous-turn", tokenUsage: bad === "bad-usage-shape" ? {} : { last: { totalTokens: bad === "negative-usage" ? -1 : 2345 }, modelContextWindow: bad === "wrong-context" ? 950000 : 480000 } });
+    await assert.rejects(f.engine.prompt("must not dispatch"));
+    assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0);
+    assert.equal(f.updates.filter(u => u.type === "context").length, 0); await f.engine.close();
+  });
+}
+test("resume usage does not weaken real item ordering", async () => {
+  const f = fixture({ nativeId: "thread-1" }); await f.engine.start();
+  f.events("item/completed", { turnId: "previous-turn", item: { id: "old-item", type: "agentMessage", text: "must not replay" } });
+  await assert.rejects(f.engine.prompt("must not dispatch"));
+  assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0); await f.engine.close();
+});
