@@ -44,6 +44,9 @@ async function run(input,download,signal) {
    try { await publicURL(route.request().url());await route.continue(); }
    catch {await route.abort('blockedbyclient').catch(()=>{});}
   });
+  // Public pages must not reach task-only gateway/search sockets via WebSocket.
+  // Register before any page; route() covers HTTP but not WebSocket handshakes.
+  await context.routeWebSocket('**/*', socket => socket.close());
   const page=await context.newPage();page.setDefaultTimeout(15000);page.setDefaultNavigationTimeout(20000);
   const abort=()=>void browser?.close();signal?.addEventListener('abort',abort,{once:true});
   const timer=setTimeout(abort,25000);
