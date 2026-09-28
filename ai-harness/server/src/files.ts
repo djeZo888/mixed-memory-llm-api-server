@@ -170,6 +170,17 @@ export class Files {
     await fs.rm(path.join(this.root, "uploads", f.path), { force: true });
     this.store.db.prepare("DELETE FROM files WHERE id=?").run(f.id);
   }
+  /** Reuse immutable bytes by opaque ID, with the same workspace boundary as handoff. */
+  async referenceAttachment(sessionId: string, fileId: string) {
+    const session = this.store.getSession(sessionId);
+    const source = this.store.file(requireId(fileId));
+    const owner = this.store.getSession(source.sessionId);
+    if (owner.workspaceId !== session.workspaceId || owner.deleteRequested)
+      throw new ApiError(400,"invalid_file_reference","File does not belong to this workspace");
+    const {handle} = await this.openGuarded(path.join(this.root,source.kind === "artifact" ? "artifacts" : "uploads"),source.path);
+    try { return await this.upload(sessionId,source.name,source.mimeType,handle.createReadStream()); }
+    finally { await handle.close().catch(() => {}); }
+  }
   async attachments(sessionId: string, ids: string[]) {
     const s = this.store.getSession(sessionId);
     await this.prepare(s.id, s.workspaceId);

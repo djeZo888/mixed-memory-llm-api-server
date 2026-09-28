@@ -1,9 +1,13 @@
+import type { CodexCapabilities } from "./codex-capabilities.js";
 import type { EngineFactory, EngineKind, EngineOptions } from "./contracts.js";
 import { ApiError } from "./errors.js";
 
 /** Host deployment input only. No request body can populate this policy. */
 export interface EnginePolicy {
   codex?: {
+    capabilities?: Partial<CodexCapabilities>;
+    delegationEnabled?: boolean;
+    imageToolEnabled?: boolean;
     enabled: boolean;
     protocolQualified: boolean;
     engineVersion: string;

@@ -11,7 +11,7 @@ enabled = false
 [feedback]
 enabled = false
 [features]
-multi_agent = false
+multi_agent = true
 multi_agent_v2 = false
 apps = false
 plugins = false
@@ -27,3 +27,31 @@ stream_max_retries = 0
 stream_idle_timeout_ms = 28800000
 supports_websockets = false
 supports_standalone_web_search = false
+
+[mcp_servers.search]
+command = "/usr/local/bin/node"
+args = ["/opt/ai-harness/tools/search/searxng-mcp.mjs"]
+startup_timeout_sec = 10
+tool_timeout_sec = 20
+[mcp_servers.search.env]
+AI_HARNESS_SEARXNG_URL = "http://10.0.2.2:8082"
+
+[mcp_servers.browser]
+command = "/usr/local/bin/node"
+args = ["/opt/sova/browser/browser-mcp.mjs"]
+startup_timeout_sec = 10
+tool_timeout_sec = 30
+
+[mcp_servers.image]
+command = "/usr/local/bin/node"
+args = ["/opt/ai-harness/tools/image/image-mcp.mjs"]
+env_vars = ["AI_HARNESS_GATEWAY_TOKEN"]
+enabled_tools = ["image_capabilities"]
+startup_timeout_sec = 10
+tool_timeout_sec = 20
+
+[agents]
+enabled = true
+max_concurrent_threads_per_session = 4
+max_depth = 1
+default_subagent_model = "qwen3.8-27b"

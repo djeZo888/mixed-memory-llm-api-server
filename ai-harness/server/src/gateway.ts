@@ -77,7 +77,7 @@ export interface GatewayOptions {
 export type LaneState = "idle" | "active" | "quarantined";
 export interface Gateway {
   app: FastifyInstance;
-  issueToken(sessionId: string): string;
+  issueToken(sessionId: string, scope?: "minimax" | "codex"): string;
   revokeToken(token: string): void;
   revokeSession(sessionId: string): void;
   /** Gateway proof only; caller also proves native parent/children cannot emit more work. */
@@ -543,6 +543,7 @@ export function createGateway(options: GatewayOptions): Gateway {
   activeRequestTimeoutMs("qwen", options.activeTimeoutMs);
   const ownership = new GatewayOwnership(options.ownership);
   const tokens = new Map<string, string>();
+  const codexTokens = new Set<string>();
   const frontierCancellations = new Map<string, Set<AbortController>>();
   const active = new Set<ClientRequest>();
   const app = Fastify({
@@ -596,6 +597,9 @@ export function createGateway(options: GatewayOptions): Gateway {
           message: "Inference authorization required",
         },
       });
+    // Codex text settlement cannot prove image job ownership or frontier settlement.
+    if (codexTokens.has(token) && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
+      return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
     // This internal bearer service has no browser API and never grants CORS.
     if (request.headers.origin)
       return reply.code(403).send({
@@ -1140,19 +1144,22 @@ export function createGateway(options: GatewayOptions): Gateway {
     admission.stop();
     frontierAdmission?.stop();
     tokens.clear();
+    codexTokens.clear();
     for (const request of active) request.destroy();
   });
   return {
     app,
-    issueToken(sessionId) {
+    issueToken(sessionId, scope = "minimax") {
       if (!sessionId) throw new Error("sessionId is required");
       const token = randomBytes(32).toString("base64url");
       ownership.registerSession(sessionId);
       tokens.set(token, sessionId);
+      if (scope === "codex") codexTokens.add(token);
       return token;
     },
     revokeToken(token) {
       tokens.delete(token);
+      codexTokens.delete(token);
       // Frontier queued/counting work cancels immediately. Dispatched generation
       // is not wired to this signal and retains its drain/settlement ownership.
       for (const controller of frontierCancellations.get(token) ?? [])
@@ -1161,6 +1168,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     revokeSession(sessionId) {
       for (const [token, owner] of tokens) if (owner === sessionId) {
         tokens.delete(token);
+      codexTokens.delete(token);
         for (const controller of frontierCancellations.get(token) ?? []) controller.abort();
       }
     },

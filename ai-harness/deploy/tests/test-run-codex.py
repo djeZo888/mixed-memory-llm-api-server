@@ -10,7 +10,7 @@ base = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(base)
 base.LAUNCHER = Path(__file__).resolve().parents[1] / 'run-codex.sh'
 base.REVISION = '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'
-base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml','requirements.toml','models.json'])).hexdigest()
+base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest()
 
 class CodexLauncherContract(base.LauncherContract):
     def test_acp_transport_mounts_and_environment_allowlist(self):
@@ -24,7 +24,7 @@ class CodexLauncherContract(base.LauncherContract):
             self.assertFalse({'OPENAI_API_KEY','SSH_AUTH_SOCK','CODEX_HOME','NODE_OPTIONS','CONTAINER_HOST','HTTP_PROXY'} & c['env'].keys())
             self.assertNotIn(base.TOKEN,' '.join(c['argv']))
         mounts=[run[i+1] for i,v in enumerate(run) if v=='--volume']
-        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate'])
+        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate', f'{base.LAUNCHER.parent}/codex/skills/sova-local-tools:{self.profile}/codex-home/skills/sova-local-tools:ro,rprivate'])
         env=[run[i+1] for i,v in enumerate(run) if v=='--env']
         self.assertIn(f'CODEX_HOME={self.profile}/codex-home',env)
         self.assertIn(f'HOME={self.profile}/codex-home/home',env)

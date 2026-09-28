@@ -1,0 +1,102 @@
+{
+  "scope": "Prepared short matched tasks; no live inference executed",
+  "protocolPin": "0.158.0 / 064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+  "policy": {
+    "engines": [
+      "minimax",
+      "codex"
+    ],
+    "model": "qwen3.8-27b",
+    "context": 480000,
+    "normalOutputCeiling": 65536,
+    "pilotOutputCap": 1024,
+    "retries": 0,
+    "frontier": "UNAVAILABLE during H019",
+    "previewEnabled": false
+  },
+  "cases": [
+    {
+      "id": "python-boundary",
+      "task": "Fix bins.py so intervals are lower-inclusive and upper-exclusive. Preserve the API and tests.",
+      "files": [
+        "python/bins.py",
+        "python/test_bins.py"
+      ],
+      "check": "python3 -m unittest -v test_bins.py",
+      "cwd": "python",
+      "evidence": "independent fixed boundary/negative/fractional expectations"
+    },
+    {
+      "id": "cpp-bounds",
+      "task": "Fix prefix.hpp to sum exactly count elements, including zero and full length. Preserve invalid-count rejection and tests.",
+      "files": [
+        "cpp/prefix.hpp",
+        "cpp/test_prefix.cpp"
+      ],
+      "check": "c++ -std=c++17 -Wall -Wextra -Werror test_prefix.cpp -o test-prefix; ./test-prefix",
+      "cwd": "cpp",
+      "evidence": "independent fixed sums, zero/empty/full bounds and exception"
+    },
+    {
+      "id": "node-async-validation",
+      "task": "Fix load.mjs to return resolved values in input order and propagate a fetch rejection. Validate all IDs before starting any fetch.",
+      "files": [
+        "node/load.mjs",
+        "node/test_load.mjs"
+      ],
+      "check": "node --test test_load.mjs",
+      "cwd": "node",
+      "evidence": "reverse completion order, no side effects for invalid inputs, outer rejection"
+    },
+    {
+      "id": "research-page",
+      "task": "Use local search for the Python bisect official documentation, open the returned primary-source page, explain which side bisect_right chooses at equal values, and link the actual page read.",
+      "toolFixtureReferences": [
+        "ai-harness/tools/search/test/search.test.mjs",
+        "ai-harness/deploy/tests/native-integration.mjs"
+      ],
+      "expectedPrimaryUrl": "https://docs.python.org/3/library/bisect.html",
+      "offlineExpected": "External research reports unavailable; do not fabricate a visited source",
+      "status": "LIVE_NOT_TESTED"
+    },
+    {
+      "id": "pdf-units",
+      "task": "Invoke existing ai-harness/tools/pdf/tests/test_pdf_tools.py write_pdf(path,text=\"Supply voltage 3.3 V; current limit 250 mA\") in the owned fixture workspace. Extract/render it with local PDF tools, report 3.3 V and 250 mA (0.25 A), and create a one-page summary artifact.",
+      "fixtureReference": "ai-harness/deploy/tests/native-integration.mjs browser(): real PDF builder / Native browser PDF fixture 42",
+      "additionalReference": "ai-harness/tools/pdf/tests/test_pdf_tools.py write_pdf and extraction/render fixtures",
+      "status": "PREPARED_GENERATOR_REFERENCE_ONLY; LIVE_NOT_TESTED; no PDF authored in ADAPTER02",
+      "expected": {
+        "voltage": "3.3 V",
+        "current": "250 mA",
+        "convertedCurrent": "0.25 A"
+      }
+    },
+    {
+      "id": "image-specialist",
+      "task": "Read existing image capabilities and perform one bounded generation/edit under existing approved image ownership and resize/seed rules. Save an artifact and verify immutable input checksum, operation metadata and image dimensions.",
+      "fixtureReferences": [
+        "ai-harness/tools/image/test/image.test.mjs",
+        "ai-harness/deploy/tests/fixtures/native-image-mcp-catalog.json",
+        "ai-harness/docs/acceptance-v0.0.3.md"
+      ],
+      "status": "LIVE_NOT_TESTED; no native image recognition claim"
+    }
+  ],
+  "measurementFields": [
+    "engine",
+    "exactSource",
+    "model",
+    "toolConfig",
+    "startUtc",
+    "elapsedMs",
+    "inputTokens",
+    "outputTokens",
+    "retryCount",
+    "toolErrors",
+    "interventions",
+    "independentCheck",
+    "artifacts",
+    "verdict",
+    "limitations"
+  ]
+}

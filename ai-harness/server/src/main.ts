@@ -11,6 +11,8 @@ import { createApp } from "./app.js";
 import { createGateway, type LaneState } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
 import { createEngine } from "./engine.js";
+import { composeCodexHost, type CodexHostQualification } from "./codex-host.js";
+import { GatewayOwnershipLedger } from "./gateway-ownership.js";
 import { codexDeployment } from "./codex-deployment.js";
 import {
   NodeAvailability,
@@ -34,8 +36,7 @@ function port(name: string, fallback: number) {
     throw new Error(`${name} must be a TCP port`);
   return +value;
 }
-export async function start(codex: Parameters<typeof codexDeployment>[0] = {}) {
-  const codexOptions = codexDeployment(codex);
+export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification } = {}) {
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -53,6 +54,9 @@ export async function start(codex: Parameters<typeof codexDeployment>[0] = {}) {
   let nodeAvailability: NodeAvailability | undefined;
   let freezeServer: Awaited<ReturnType<typeof serveDispatchFreeze>> | undefined;
   let freezeTimer: NodeJS.Timeout | undefined;
+  if (codex.qualification && gatewayPort !== 8081) throw Error("Codex requires the shared gateway owner on port 8081");
+  const codexHost = composeCodexHost(path.join(path.dirname(launcher), "run-codex.sh"), () => gateway, codex.qualification);
+  const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime });
   const availability = (id: string) => {
     const observed = serviceAvailability(
       nodeAvailability
@@ -92,7 +96,7 @@ export async function start(codex: Parameters<typeof codexDeployment>[0] = {}) {
     gatewayUrl:
       process.env.AI_HARNESS_GATEWAY_URL ??
       `http://127.0.0.1:${gatewayPort}/v1`,
-    issueToken: (id) => gateway!.issueToken(id),
+    issueToken: (id) => gateway!.issueToken(id, application.store.getSession(id).engineKind === "codex" ? "codex" : "minimax"),
     revokeToken: (token) => gateway!.revokeToken(token),
     allowedOrigins: process.env.AI_HARNESS_ALLOWED_ORIGINS?.split(",").map(
       (s) => s.trim(),
@@ -160,7 +164,15 @@ export async function start(codex: Parameters<typeof codexDeployment>[0] = {}) {
           .all() as { alias: string; state: LaneState }[]
       ).map((r) => [r.alias, r.state]),
     );
+    const ownership = new GatewayOwnershipLedger(application.store.db).options();
+    // A recovered request cannot be erased by an idle lane row from an older owner.
+    for (const record of ownership.initialRequests ?? []) {
+      if (record.lane) states[record.lane] = "quarantined";
+      else for (const alias of ["qwen3.8-27b-gpu0", "qwen3.8-27b"]) states[alias] = "quarantined";
+    }
     gateway = createGateway({
+      ownership,
+      responses: codexHost.responses,
       frontier,
       selectedFrontierModel,
       initialFrontierOwnerModel: (application.store.db.prepare("SELECT json_extract(value,'$.model') AS model FROM frontier_requests WHERE state IN ('active','quarantined') ORDER BY updated_at DESC LIMIT 1").get() as {model?: string} | undefined)?.model,

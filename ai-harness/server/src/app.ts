@@ -1,3 +1,4 @@
+import { codexCapabilities } from "./codex-capabilities.js";
 import Fastify, { type FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
 import staticPlugin from "@fastify/static";
@@ -248,7 +249,9 @@ export async function createApp(options: AppOptions): Promise<{
         configured: !!options.codexEngineFactory,
         version: options.enginePolicy?.codex?.engineVersion ?? null,
         readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
-        capabilities: { text: true, media: false, steering: false, delegation: false, frontier: false, reasoning: false },
+        protocolQualified: options.enginePolicy?.codex?.protocolQualified === true,
+        capabilities: { text: true, media: false, steering: false, delegation: options.enginePolicy?.codex?.delegationEnabled === true, frontier: false, reasoning: false },
+        capabilityDetails: codexCapabilities(options.enginePolicy?.codex?.capabilities, options.enginePolicy?.codex),
       } },
       ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
     }));
@@ -334,6 +337,12 @@ export async function createApp(options: AppOptions): Promise<{
     app.delete("/api/sessions/:id", async (req, reply) => {
       const status = await broker.delete(id(req));
       return reply.code(status === "deleted" ? 200 : 202).send({ status });
+    });
+    app.post("/api/sessions/:id/references", async (req,reply) => {
+      const body = object(req.body);
+      only(body,["fileId"]);
+      const attachment = await files.referenceAttachment(id(req),requireId(body.fileId));
+      return reply.code(201).send({attachment:store.publicFile(attachment)});
     });
     app.post("/api/sessions/:id/messages", async (req, reply) => {
       const body = object(req.body);

@@ -1,3 +1,4 @@
+import type { CodexHealth } from './types';
 import {
   eventTypes,
   type Attachment,
@@ -73,7 +74,11 @@ export interface StreamCallbacks {
 export interface Transport {
   health(
     signal?: AbortSignal,
-  ): Promise<{ visionAvailable: boolean; availability?: HealthAvailability; engines?: { codex?: { available?: boolean } } }>;
+  ): Promise<{
+    visionAvailable: boolean;
+    availability?: HealthAvailability;
+    engines?: { codex?: CodexHealth };
+  }>;
   imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;
   snapshot(id: string, signal?: AbortSignal): Promise<Snapshot>;
@@ -95,6 +100,7 @@ export interface Transport {
   cancel(id: string): Promise<{ status: 'cancelling' }>;
   handoff(id: string): Promise<{ runId: string }>;
   upload(id: string, file: File): Promise<{ attachment: Attachment }>;
+  reference?(id: string, fileId: string): Promise<{ attachment: Attachment }>;
   stream(id: string, after: number, callbacks: StreamCallbacks): () => void;
 }
 
@@ -129,6 +135,7 @@ export const api: Transport = {
   health: (signal) => request('/api/health', { signal }),
   imageCapabilities: (signal) => request('/api/image-capabilities', { signal }),
   list: (signal) => request('/api/sessions', { signal }),
+  reference: (id, fileId) => post(`${sessionPath(id)}/references`, { fileId }),
   snapshot: (id, signal) => request(sessionPath(id), { signal }),
   create: (engineKind) => post('/api/sessions', engineKind ? { engineKind } : {}),
   remove: (id) => request(sessionPath(id), { method: 'DELETE' }),

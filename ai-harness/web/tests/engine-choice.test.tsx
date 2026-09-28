@@ -30,3 +30,36 @@ it('qualified deployment enables new-chat choice and sends immutable engine choi
   await waitFor(() => expect(transport.create).toHaveBeenCalledWith('codex'));
   expect(transport.send).not.toHaveBeenCalled();
 });
+it('shows qualification separately from configuration without enabling preview', async () => {
+  const { transport } = fixtureTransport();
+  transport.health.mockResolvedValue({
+    visionAvailable: false,
+    engines: {
+      codex: {
+        available: false,
+        configured: true,
+        version: '0.158.0',
+        readiness: 'disabled',
+        protocolQualified: true,
+        capabilityDetails: {
+          nativeDelegation: {
+            supported: false,
+            qualification: 'native_fixture',
+            reason: 'Gateway qualification pending',
+          },
+          nativeMedia: {
+            supported: false,
+            qualification: 'not_tested',
+            reason: 'Native media unavailable',
+          },
+        },
+      },
+    },
+  });
+  const store = new HarnessStore(transport);
+  render(<App store={store} />);
+  await screen.findByText(/Configured · 0.158.0 · disabled/);
+  expect(screen.getByRole('option', { name: /Codex/ })).toBeDisabled();
+  expect(screen.getByText(/Gateway qualification pending/)).toBeInTheDocument();
+  expect(screen.getByText(/Live acceptance is separate/)).toBeInTheDocument();
+});
