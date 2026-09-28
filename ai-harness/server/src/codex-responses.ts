@@ -29,6 +29,45 @@ export interface ResponsesTranslation {
         originalName?: string;
     }>;
 }
+export interface ResponsesFingerprint {
+    bytes: number;
+    sha256: string;
+}
+export interface ResponsesToolDiagnostic {
+    /** Exact identity only when bounded and log-safe; the digest is always retained. */
+    callId?: string;
+    callIdSha256: string;
+    transportName: string;
+    name: string;
+    namespace?: string;
+    providerArguments: ResponsesFingerprint;
+    responseArguments: ResponsesFingerprint;
+    argumentShape: "object" | "array" | "scalar" | "invalid_json";
+    /** Only declared schema keys and the three retained unexpected keys are exposed. */
+    argumentKeys: string[];
+    otherKeyCount: number;
+}
+export type ResponsesDiagnostic = {
+    type: "provider_finish";
+    responseId: string;
+    model: string;
+    finishReason: "stop" | "tool_calls" | "length" | "unsupported";
+    finishReasonSha256: string;
+} | {
+    type: "response_terminal";
+    responseId: string;
+    model: string;
+    finishReason: "stop" | "tool_calls" | "length";
+    status: "completed" | "incomplete";
+    messageId?: string;
+    text: ResponsesFingerprint;
+    tools: ResponsesToolDiagnostic[];
+    usage: { input_tokens: number; output_tokens: number; total_tokens: number };
+};
+const fingerprint = (value: string): ResponsesFingerprint => ({
+    bytes: Buffer.byteLength(value), sha256: createHash("sha256").update(value).digest("hex"),
+});
+const diagnosticId = (value: string): string | undefined => /^[A-Za-z0-9_.:-]{1,256}$/.test(value) ? value : undefined;
 // Exact upstream grammar hash; arbitrary grammars cannot be safely approximated.
 const PATCH_GRAMMAR_SHA = "d6367f4826ed608c424b0a308f3d6163527df63c22513d089b91863552f8bfeb";
 export function validPatch(text: string): boolean {
@@ -270,7 +309,11 @@ export class ResponsesStream {
         arguments: string;
     }>();
     private output: any[] = [];
-    constructor(private translation: ResponsesTranslation, private write: (data: string) => void) { }
+    constructor(private translation: ResponsesTranslation, private write: (data: string) => void,
+        private onDiagnostic?: (event: ResponsesDiagnostic) => void) { }
+    private diagnose(event: ResponsesDiagnostic) {
+        try { this.onDiagnostic?.(event); } catch { /* Observers cannot affect stream or owned settlement. */ }
+    }
     private emit(type: string, fields: Record<string, any> = {}) { this.write(`event: ${type}\ndata: ${JSON.stringify({ type, sequence_number: this.sequence++, ...fields })}\n\n`); }
     private response(status: string) { return { id: this.responseId, object: "response", status, output: this.output, model: this.translation.body.model }; }
     push(chunk: Buffer) { if (this.ended) {
@@ -362,6 +405,10 @@ export class ResponsesStream {
                 if (this.finishReason)
                     throw Error("Duplicate finish");
                 this.finishReason = c.finish_reason;
+                if (this.onDiagnostic) this.diagnose({ type: "provider_finish", responseId: this.responseId,
+                    model: this.translation.body.model,
+                    finishReason: ["stop", "tool_calls", "length"].includes(c.finish_reason) ? c.finish_reason : "unsupported",
+                    finishReasonSha256: fingerprint(JSON.stringify(c.finish_reason)).sha256 });
             }
         }
     }
@@ -379,6 +426,7 @@ export class ResponsesStream {
             this.output.push(item);
         }
         const ids = new Set<string>();
+        const diagnosticTools: ResponsesToolDiagnostic[] = [];
         let expected = 0;
         for (const [index, c] of [...this.calls].sort((a, b) => a[0] - b[0])) {
             const spec = this.translation.tools.get(c.name);
@@ -398,10 +446,31 @@ export class ResponsesStream {
             this.emit(spec.custom ? "response.custom_tool_call_input.done" : "response.function_call_arguments.done", { output_index, item_id: id, [key]: args });
             this.emit("response.output_item.done", { output_index, item });
             this.output.push(item);
+            if (this.onDiagnostic) {
+                let argumentShape: ResponsesToolDiagnostic["argumentShape"] = "invalid_json", keys: string[] = [];
+                try {
+                    const parsed: unknown = JSON.parse(c.arguments);
+                    argumentShape = object(parsed) ? "object" : Array.isArray(parsed) ? "array" : "scalar";
+                    if (object(parsed)) keys = Object.keys(parsed);
+                } catch { /* Raw invalid arguments remain unchanged for native tool validation. */ }
+                const schema = this.translation.body.tools.find((tool: any) => tool.function.name === c.name)?.function.parameters;
+                const declared = object(schema?.properties) ? Object.keys(schema.properties) : [];
+                const allowed = new Set([...declared, "__ns", "ns", "__v"]);
+                const argumentKeys = keys.filter(key => allowed.has(key) && /^[A-Za-z0-9_-]{1,64}$/.test(key)).slice(0, 64);
+                diagnosticTools.push({ callId: diagnosticId(c.id), callIdSha256: fingerprint(c.id).sha256,
+                    transportName: c.name, name: spec.originalName ?? c.name, ...(spec.namespace ? { namespace: spec.namespace } : {}),
+                    providerArguments: fingerprint(c.arguments), responseArguments: fingerprint(args),
+                    argumentShape, argumentKeys, otherKeyCount: keys.length - argumentKeys.length });
+            }
         }
         this.ended = true;
         const incomplete = this.finishReason === "length";
         this.emit(incomplete ? "response.incomplete" : "response.completed", { response: { ...this.response(incomplete ? "incomplete" : "completed"), usage: this.usage, ...(incomplete ? { incomplete_details: { reason: "max_output_tokens" } } : {}) } });
+        if (this.onDiagnostic) this.diagnose({ type: "response_terminal", responseId: this.responseId,
+            model: this.translation.body.model, finishReason: this.finishReason as "stop" | "tool_calls" | "length",
+            status: incomplete ? "incomplete" : "completed", ...(this.textStarted ? { messageId: this.messageId } : {}),
+            text: fingerprint(this.text), tools: diagnosticTools,
+            usage: { input_tokens: this.usage.input_tokens, output_tokens: this.usage.output_tokens, total_tokens: this.usage.total_tokens } });
     }
     end() {
         this.buffer += this.decoder.end();
