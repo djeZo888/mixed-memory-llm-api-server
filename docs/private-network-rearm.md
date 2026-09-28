@@ -2,7 +2,7 @@
 
 The timer continuously observes slowly, including when the interface/address
 returns long after boot or a manual NIC repair. It first runs after 45 seconds,
-then 120 seconds after the previous recovery service run becomes inactive.
+then 60 seconds after the previous recovery service run becomes inactive.
 Each run makes at most four attempts with delays of 0, 5, 15 and 30 seconds,
 a 90-second total helper budget, and a 120-second systemd hard timeout. Exhaustion
 is reported honestly; the next slow timer observation remains scheduled.
@@ -59,7 +59,7 @@ already beyond 45 seconds, the timer starts the bounded helper immediately.
 Record status and a bounded journal for the new service, then current socket
 states and private status API reachability. An HTTP response or listening socket
 does not qualify model readiness. Preserve failure logs on exhaustion. The next
-timer observation occurs 120 seconds after completion, whether the prior run
+timer observation occurs 60 seconds after completion, whether the prior run
 succeeded or failed. An operator may also start the same service explicitly;
 systemd does not create a second concurrent instance of this fixed service.
 

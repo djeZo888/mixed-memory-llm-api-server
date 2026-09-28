@@ -49,7 +49,7 @@ Description=Observe and recover private API sockets after boot or late network r
 
 [Timer]
 OnBootSec=45s
-OnUnitInactiveSec=120s
+OnUnitInactiveSec=60s
 AccuracySec=1s
 Unit=llm-private-network-rearm.service
 Persistent=no

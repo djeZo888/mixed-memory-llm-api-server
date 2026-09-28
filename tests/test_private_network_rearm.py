@@ -147,7 +147,7 @@ class RearmTests(unittest.TestCase):
         self.assertNotIn('RemainAfterExit', service)
         self.assertIn('Restart=no', service)
         self.assertIn('OnBootSec=45s', timer)
-        self.assertIn('OnUnitInactiveSec=120s', timer)
+        self.assertIn('OnUnitInactiveSec=60s', timer)
         self.assertIn('Unit=llm-private-network-rearm.service', timer)
         self.assertNotIn('Requires=', service)
         self.assertNotIn('Wants=', service)
