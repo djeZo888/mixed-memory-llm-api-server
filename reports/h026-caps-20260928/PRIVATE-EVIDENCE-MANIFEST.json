@@ -1,0 +1,29 @@
+{
+  "private_base": "../private relative to the isolated W1 repo",
+  "artifacts": {
+    "H026-CAP01-evidence.tar.gz": {
+      "bytes": 752730,
+      "sha256": "adb1ec89a4d1a116dee1bf2f122221463b09f5348f2146f4fbe8f74cd2f50299"
+    },
+    "caps02-journal.txt": {
+      "bytes": 3693,
+      "sha256": "d3758dd764ffd93b64c64170012e2b1314c0d8244539db3a30e3df56e75dcd0c"
+    },
+    "quiet-before.txt": {
+      "bytes": 1237,
+      "sha256": "ea6cb16b3d5e478bc1243679a97726a18f345c52d468c6edee95ef9707943671"
+    },
+    "quiet-after.txt": {
+      "bytes": 1244,
+      "sha256": "72c83acd482d7d33ff7cc42cebb649b1e46e81971407367247738e0e6016354a"
+    },
+    "quiet-final.txt": {
+      "bytes": 1244,
+      "sha256": "72c83acd482d7d33ff7cc42cebb649b1e46e81971407367247738e0e6016354a"
+    },
+    "client-tests3.log": {
+      "bytes": 116,
+      "sha256": "138698c126447036d61a488ff1c3040a4d0f4b9a4c8d01f1e654ec76963df600"
+    }
+  }
+}
