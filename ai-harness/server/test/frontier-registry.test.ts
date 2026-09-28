@@ -107,9 +107,14 @@ test('missing, stale, mismatched, unavailable and unselected evidence cannot cer
   assert.deepEqual(staleGpu.gpus[0]!.observed_ready_dependents, []);
   const missingGpu = project(registry, [observed(model)], { gpus: [] });
   assert.deepEqual(missingGpu.gpus, []); // A required UUID cannot invent measured hardware.
-  const unknownSelection = project(validateSystemRegistry(raw()), [observed(model)]).services.find(s => s.service_id === model)!;
+  const unselectedNode = project(validateSystemRegistry(raw()), [observed(model)]);
+  assert.deepEqual(unselectedNode.gpus[0]!.observed_ready_dependents, []);
+  const unknownSelection = unselectedNode.services.find(s => s.service_id === model)!;
   assert.equal(unknownSelection.selection, 'unknown'); assert.equal(unknownSelection.ready, null);
-  const conflicting = project(registry, frontier.map(id => observed(id))).services.find(s => s.service_id === frontier[0])!;
+  const conflictNode = project(registry, frontier.map(id => observed(id)));
+  assert.deepEqual(conflictNode.gpus[0]!.observed_ready_dependents.map(s => s.service_id), [model]);
+  const conflicting = conflictNode.services.find(s => s.service_id === frontier[0])!;
+  assert.equal(conflicting.selection_conflict, true);
   assert.equal(conflicting.current_state, 'dormant'); assert.equal(conflicting.health, 'unknown');
   assert.equal(conflicting.observed_model.ready, true); // Explicit observer evidence remains separate from current health.
 });

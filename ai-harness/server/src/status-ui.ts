@@ -21,6 +21,7 @@ function modelDetails(s){
   const c=s.configured_model,o=s.observed_model||{};
   return ["Configured model: "+c.display_name+" · instance: "+c.instance_name,
     "Expected alias: "+c.expected_alias+" · selection: "+s.selection,
+    ...(s.selection_conflict?["Selection conflict: nonselected instance reports ready"]:[]),
     "Observed model: "+(o.model_alias||"unknown")+" · identity: "+s.identity_status,
     "Observed instance: "+(o.node_id||"unknown")+" / "+(o.service_id||"unknown")+" · deployment: "+(o.deployment_id||"unknown"),
     "Reported required GPU UUIDs: "+((o.required_gpu_uuids||[]).join(", ")||"unknown"),

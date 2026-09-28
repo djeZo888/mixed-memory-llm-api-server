@@ -153,7 +153,7 @@ configuration, **not consumed by gateway/inference clients in this patch**:
 
 | Reference | Current runtime binding | Existing owner/source |
 |---|---|---|
-| frontier-private | ai-vm private IPv4 port 30009 | active-frontier.ts selects frontier.json / mimo-candidate.json and protected qualification receipt; frontier.ts / mimo-frontier.ts own workload clients |
+| frontier-private | ai-vm private IPv4 GLM 30010/v1; MiMo 30012/v1 | active-frontier.ts selects frontier.json / mimo-candidate.json and protected qualification receipt; frontier.ts / mimo-frontier.ts own workload clients |
 | qwen-gpu0-private | ai-vm private IPv4 port 30002 | gateway.ts / backend-readiness.ts |
 | qwen-gpu1-private | ai-vm private IPv4 port 30004 | gateway.ts / backend-readiness.ts |
 | image-private | ai-vm private IPv4 port 30006 | image-upstream.ts |
@@ -235,7 +235,10 @@ Measured GPU rows remain keyed by their observed UUID, with their own observatio
 freshness. `required_gpu_uuids` is the node's reported dependency configuration;
 `affected_services` is action impact scope. Neither proves process occupancy.
 The additive `observed_ready_dependents` joins a freshly observed matching model
-and its reported required UUID to a freshly measured GPU row. The UI explicitly
+with projected current readiness and its reported required UUID to a freshly
+measured GPU row. Dormant or unknown-selection instances never enter this ready
+dependency list, even when their raw observer reports ready; a dormant instance
+reporting ready instead shows an explicit selection conflict in its service row. The UI explicitly
 calls these ready model dependencies, not occupancy, and displays unchanged action
 impact IDs separately. Missing hardware rows are never synthesized from required
 UUIDs. No GPU ordinal or configured model label substitutes for UUID evidence.

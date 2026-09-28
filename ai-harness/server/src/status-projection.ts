@@ -23,6 +23,7 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
     return {
       ...native, service_id: s.id, node_id: s.node_id, display_name: s.display_name,
       configured_model: s.model ?? null, selection, identity_status: identity,
+      selection_conflict: selection === "dormant" && identity === "matched" && native.ready === true,
       observed_model: {
         node_id: observed ? node.node_id : null, service_id: observed?.service_id ?? null,
         model_alias: native.model_alias, deployment_id: native.deployment_id,
@@ -66,7 +67,7 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
     // A dependency join requires fresh matching service/model and measured GPU presence.
     // The node reports required UUIDs, not per-process occupancy. Never rewrite impact IDs.
     observed_ready_dependents: current(node) && current(gpu) ? services.filter(s =>
-      s.identity_status === "matched" && s.observed_model.ready === true &&
+      s.identity_status === "matched" && s.ready === true &&
       s.observed_model.required_gpu_uuids.includes(gpu.uuid)).map(s => ({
         service_id: s.service_id, node_id: s.node_id, display_name: s.display_name,
         instance_name: s.configured_model!.instance_name,
