@@ -74,6 +74,8 @@ OWNER_FAILURE_CODES = frozenset({
     'settlement_lock_changed', 'source_and_qualification_pins_required', 'supervisor_cgroup_changed',
     'supervisor_not_current', 'tool_template_pin_invalid', 'unrecorded_container_exists',
     'verified_artifact_required', 'verified_shard_changed',
+    'new_boot_recovery_invalid', 'new_boot_owner_present', 'new_boot_archive_changed',
+    'new_boot_recovery_consumed', 'source_only_amendment_required',
 })
 
 
@@ -860,9 +862,172 @@ def settle_state(h, m, state, proxy=None, *, lease=None, deadline=None):
     return state
 
 
-def assert_launch_admission(m, selected, previous):
+def recovery_names(boot):
+    require(isinstance(boot, str) and re.fullmatch(
+        r'[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}', boot),
+        'new_boot_recovery_invalid')
+    return ('new-boot-archive-' + boot + '.json', 'new-boot-consumed-' + boot + '.json')
+
+
+def recovery_receipt_name(boot):
+    recovery_names(boot)
+    return 'new-boot-recovery-' + boot + '.json'
+
+
+def source_only_amendment(old, new):
+    """The reviewed owner source pin is the ONLY permitted manifest amendment."""
+    path = str(BASE / 'source/owner.py')
+    a, b = json.loads(json.dumps(old)), json.loads(json.dumps(new))
+    prior, current = a['source_sha256'].pop(path), b['source_sha256'].pop(path)
+    require(a == b and HEX.fullmatch(prior) and HEX.fullmatch(current) and prior != current
+            and hashlib.sha256(protected(BASE / 'source/owner.py')).hexdigest() == current,
+            'source_only_amendment_required')
+
+
+def old_boot_absence(old, state, boot, *, successor=None):
+    """Physical absence only; never turns an uncertain request into success."""
+    recovery_names(boot)
+    recovery_names(state['boot_id'])
+    require(state['boot_id'] != boot and BOOT.read_text().strip() == boot
+            and state.get('schema_version') == 2 and state.get('status') == 'HELD'
+            and state.get('request_hold') is True and state.get('manifest_sha256') == digest(old),
+            'new_boot_recovery_invalid')
+    for field in ('native', 'supervisor', 'proxy'):
+        value = state.get(field)
+        require(isinstance(value, dict) and type(value.get('pid')) is int and value['pid'] > 0
+                and not Path('/proc', str(value['pid'])).exists(), 'new_boot_owner_present')
+    unit = dict(x.split('=', 1) for x in run(['systemctl', 'show', UNIT, '-p',
+                'MainPID,ActiveState,SubState,InvocationID,Job'], 2).splitlines())
+    if successor is None:
+        require(unit['MainPID'] == '0' and unit['ActiveState'] in ('inactive', 'failed')
+                and unit.get('Job', '').split(' ', 1)[0] == '0', 'new_boot_owner_present')
+    else:
+        require(unit['MainPID'] == str(os.getpid()) == str(successor['pid'])
+                and unit['InvocationID'] == successor['invocation_id']
+                and unit['ActiveState'] in ('activating', 'active'), 'new_boot_owner_present')
+    c = exact_container(inspect(state['native']['container_id']), old, state)
+    require(c['State']['Running'] is False and c['State']['Pid'] == 0
+            and c['State']['Status'] == 'exited', 'new_boot_owner_present')
+    cg = Path(state['native_cgroup'])
+    require(str(cg) == '/sys/fs/cgroup/' + MEMORY_SLICE + '/docker-' + c['Id'] + '.scope'
+            and (not cg.exists() or not (cg / 'cgroup.procs').read_text().strip()),
+            'new_boot_owner_present')
+    require(not run(['nvidia-smi', '--id=' + GPU, '--query-compute-apps=pid',
+                     '--format=csv,noheader,nounits'], 2).strip(), 'new_boot_owner_present')
+    # MiMo proxy binds private IPv4:30012; native binds loopback:30012.
+    # The unrelated legacy GLM private socket on :30010 is not MiMo ownership.
+    require(not run(['ss', '-H', '-lnt', 'sport = :30012'], 2).strip(), 'new_boot_owner_present')
+    require(BOOT.read_text().strip() == boot, 'boot_changed')
+    return {'old_boot_id': state['boot_id'], 'current_boot_id': boot,
+            'container_id': c['Id'], 'native_pid_absent': True, 'cgroup_empty': True,
+            'gpu_compute_empty': True, 'owner_absent': True,
+            'physical_release': 'REBOOT', 'prior_request_outcome': 'FAILED_OR_UNKNOWN'}
+
+
+def exclusive_recovery_write(h, guard, name, value):
+    raw = (json.dumps(value, sort_keys=True, indent=2) + '\n').encode()
+    with h.AnchoredRoot(str(BASE), guard) as root:
+        with root.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o400) as stream:
+            stream.write(raw)
+            stream.fsync()
+        os.fsync(root.fileno())
+        root.check()
+    require(protected(BASE / name) == raw, 'new_boot_archive_changed')
+
+
+def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifest_sha256):
+    """Explicit source-bound action; archives history, never edits the old owner."""
+    require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
+                (expected_state_sha256, expected_manifest_sha256)), 'new_boot_recovery_invalid')
+    recovery_names(expected_boot_id)
+    h = setup()
+    m = read(BASE / 'manifest.json')
+    require(digest(m) == expected_manifest_sha256, 'new_boot_recovery_invalid')
+    source_preflight(h, m)
+    with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as guard:
+        storage_paths(h, guard)
+        h.s.root_payload_guard()
+        lease.validate()
+        names = ['state.json', 'proxy-state.json', 'guard.json', 'selection.json',
+                 'new-boot-prior-manifest.json', 'new-boot-prior-owner.py']
+        def input_name(name):
+            if name.startswith('new-boot-prior-'):
+                stem, suffix = name.rsplit('.', 1)
+                return stem + '-' + expected_boot_id + '.' + suffix
+            return name
+        files = {name: protected(BASE / input_name(name)).decode() for name in names}
+        require(hashlib.sha256(files['state.json'].encode()).hexdigest() == expected_state_sha256
+                and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
+        state = json.loads(files['state.json'])
+        old = json.loads(files['new-boot-prior-manifest.json'])
+        proxy, prior_guard = json.loads(files['proxy-state.json']), json.loads(files['guard.json'])
+        require(all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
+                and prior_guard.get('boot_id') == state['boot_id']
+                and prior_guard.get('manifest_sha256') == digest(old), 'new_boot_recovery_invalid')
+        source_only_amendment(old, m)
+        require(hashlib.sha256(files['new-boot-prior-owner.py'].encode()).hexdigest()
+                == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
+        selected = require_selected(old, state['selection'])
+        physical = old_boot_absence(old, state, expected_boot_id)
+        archive_name, consumed_name = recovery_names(expected_boot_id)
+        receipt_name = recovery_receipt_name(expected_boot_id)
+        require(not (BASE / consumed_name).exists() and not (BASE / receipt_name).exists(),
+                'new_boot_recovery_consumed')
+        archive = {'schema_version': 1, 'files': files,
+                   'sha256': {k: hashlib.sha256(v.encode()).hexdigest() for k, v in files.items()},
+                   'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN'}
+        exclusive_recovery_write(h, guard, archive_name, archive)
+        amended = {**selected, 'manifest_sha256': digest(m)}
+        receipt = {'schema_version': 1, 'status': 'NEW_BOOT_RECONCILED',
+                   'current_boot_id': expected_boot_id, 'prior_state_digest': digest(state),
+                   'prior_manifest_sha256': digest(old), 'manifest_sha256': digest(m),
+                   'selection': amended, 'archive_name': archive_name,
+                   'archive_sha256': hashlib.sha256(protected(BASE / archive_name)).hexdigest(),
+                   'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN',
+                   'preserved_container_name': old['container_name'] + '-prior-' + state['launch_id']}
+        exclusive_recovery_write(h, guard, receipt_name, receipt)
+        require(read(BASE / 'state.json') == state and selection() == selected
+                and BOOT.read_text().strip() == expected_boot_id, 'new_boot_recovery_invalid')
+        # Source-only CAS amendment, after durable archive/receipt; no model/generation change.
+        write(h, 'selection.json', amended)
+        h.s.root_payload_guard()
+        lease.validate()
+    return receipt
+
+
+def recovery_for_start(m, selected, previous):
+    boot = BOOT.read_text().strip()
+    receipt = read(BASE / recovery_receipt_name(boot))
+    archive_name, consumed_name = recovery_names(boot)
+    require(not (BASE / consumed_name).exists(), 'new_boot_recovery_consumed')
+    require(receipt.get('schema_version') == 1 and receipt.get('status') == 'NEW_BOOT_RECONCILED'
+            and receipt.get('current_boot_id') == boot and receipt.get('archive_name') == archive_name
+            and receipt.get('manifest_sha256') == digest(m) and receipt.get('selection') == selected
+            and receipt.get('prior_state_digest') == digest(previous)
+            and receipt.get('prior_request_outcome') == 'FAILED_OR_UNKNOWN', 'new_boot_recovery_invalid')
+    raw = protected(BASE / archive_name)
+    require(hashlib.sha256(raw).hexdigest() == receipt['archive_sha256'], 'new_boot_archive_changed')
+    archive = json.loads(raw)
+    require(all(hashlib.sha256(v.encode()).hexdigest() == archive['sha256'][k]
+                for k, v in archive['files'].items()), 'new_boot_archive_changed')
+    old = json.loads(archive['files']['new-boot-prior-manifest.json'])
+    require(json.loads(archive['files']['state.json']) == previous
+            and digest(old) == receipt['prior_manifest_sha256']
+            and receipt['preserved_container_name'] == old['container_name'] + '-prior-' + previous['launch_id'],
+            'new_boot_archive_changed')
+    source_only_amendment(old, m)
+    return receipt, old
+
+
+def assert_launch_admission(m, selected, previous, recovery=None):
     require(selected['selected_frontier'] == MODEL and selected.get('manifest_sha256') == digest(m), 'not_selected')
     if previous is not None:
+        if recovery is not None:
+            require(recovery.get('status') == 'NEW_BOOT_RECONCILED'
+                    and recovery.get('prior_state_digest') == digest(previous)
+                    and recovery.get('manifest_sha256') == digest(m)
+                    and recovery.get('selection') == selected, 'new_boot_recovery_invalid')
+            return
         require(previous.get('schema_version') == 2 and previous.get('status') == 'SETTLED'
                 and previous.get('settlement') == {'pid_released': True, 'cgroup_empty': True, 'gpu_compute_empty': True}
                 and previous.get('request_hold') is False, 'prior_owner_or_request_unsettled')
@@ -877,7 +1042,10 @@ def supervise(dry_run=False):
         previous = read(BASE / 'state.json')
     except FileNotFoundError:
         previous = None
-    assert_launch_admission(m, selected, previous)
+    recovery, prior_manifest = None, m
+    if previous is not None and previous.get('status') == 'HELD':
+        recovery, prior_manifest = recovery_for_start(m, selected, previous)
+    assert_launch_admission(m, selected, previous, recovery)
     if dry_run:
         return {'status': 'SOURCE_PREFLIGHT_ONLY', 'manifest_sha256': digest(m)}
     supervisor = unit_identity()
@@ -899,6 +1067,13 @@ def supervise(dry_run=False):
             storage_paths(h, g)
             h.s.root_payload_guard()
             require_selected(m, selected)
+            if recovery is not None:
+                require(read(BASE / 'state.json') == previous
+                        and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
+                recovery, prior_manifest = recovery_for_start(m, selected, previous)
+                old_boot_absence(prior_manifest, previous, boot, successor=supervisor)
+                lease.validate()
+                state['predecessor_recovery'] = recovery
             # Competing boot intent is gated by GLM's reviewed ExecCondition.
             glm = dict(x.split('=', 1) for x in run(['systemctl', 'show', GLM_UNIT, '-p', 'MainPID,ActiveState'], 2).splitlines())
             require(glm['MainPID'] == '0' and glm['ActiveState'] in ('inactive', 'failed'), 'glm_must_be_settled_before_selection')
@@ -913,11 +1088,24 @@ def supervise(dry_run=False):
                 latch(h, boot, evidence=sample.get('hardware_validation'),
                       deadline=launch_guard_started + 5, lease=lease)
             found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
+            require(recovery is None or bool(found), 'owned_container_missing_requires_review')
             if found:
-                require(previous is not None and previous.get('manifest_sha256') == digest(m), 'unrecorded_container_exists')
-                c = exact_container(inspect(found), m, previous)
+                require(previous is not None and previous.get('manifest_sha256') == digest(prior_manifest), 'unrecorded_container_exists')
+                c = exact_container(inspect(found), prior_manifest, previous)
                 require(not c['State']['Running'] and c['State']['Pid'] == 0, 'no_double_launch')
-                run(['docker', 'rm', c['Id']], 5)  # Only exact previously settled owner.
+                if recovery is not None:
+                    # All read-only launch checks passed. Persist successor ownership
+                    # before consuming its intent or changing the predecessor name.
+                    state['baseline'] = baseline
+                    write(h, 'state.json', state)
+                    admitted = True
+                    exclusive_recovery_write(h, g, recovery_names(boot)[1],
+                        {'schema_version': 1, 'recovery_sha256': digest(recovery),
+                         'successor_launch_id': state['launch_id'], 'supervisor': supervisor})
+                    # Keep stopped predecessor and all Docker logs; no history deletion.
+                    run(['docker', 'rename', c['Id'], recovery['preserved_container_name']], 5)
+                else:
+                    run(['docker', 'rm', c['Id']], 5)  # Only exact previously settled owner.
             state['baseline'] = baseline
             write(h, 'state.json', state)
             admitted = True
@@ -1039,10 +1227,18 @@ def rollback_glm(h, m, expected, *, dry_run=False):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm'])
+    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot'])
     p.add_argument('--service', choices=[MODEL, GLM])
     p.add_argument('--dry-run', action='store_true')
+    p.add_argument('--expected-state-sha256')
+    p.add_argument('--expected-boot-id')
+    p.add_argument('--expected-manifest-sha256')
     args = p.parse_args()
+    if args.action == 'reconcile-new-boot':
+        require(not args.dry_run, 'new_boot_recovery_invalid')
+        result = reconcile_new_boot(args.expected_state_sha256, args.expected_boot_id, args.expected_manifest_sha256)
+        print(json.dumps({'status': result['status'], 'archive_sha256': result['archive_sha256']}))
+        return 0
     if args.action == 'check-selected':
         require(args.service is not None, 'service_required')
         return 0 if selection()['selected_frontier'] == args.service else 1
