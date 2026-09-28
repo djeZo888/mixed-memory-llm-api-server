@@ -1,0 +1,19 @@
+test_changed_mount_refuses_before_write (scripts.h019.test_periodic.PersistenceTests.test_changed_mount_refuses_before_write) ... ok
+test_corrupt_readback_refuses_both_periodic_paths (scripts.h019.test_periodic.PersistenceTests.test_corrupt_readback_refuses_both_periodic_paths) ... ok
+test_guard_zero_scans_and_integrity (scripts.h019.test_periodic.PersistenceTests.test_guard_zero_scans_and_integrity) ... ok
+test_other_write_boundaries_keep_two_scans (scripts.h019.test_periodic.PersistenceTests.test_other_write_boundaries_keep_two_scans) ... ok
+test_short_zero_scans_and_integrity (scripts.h019.test_periodic.PersistenceTests.test_short_zero_scans_and_integrity) ... ok
+test_current_deadline_and_all_acceptance_are_required (scripts.h019.test_clients.CurrentAuthorityTests.test_current_deadline_and_all_acceptance_are_required) ... ok
+test_direct_one_request_exact_count_and_reserve (scripts.h019.test_clients.CurrentAuthorityTests.test_direct_one_request_exact_count_and_reserve) ... ok
+test_dispatch_passes_actual_sample_and_existing_lease (scripts.h019.test_clients.CurrentAuthorityTests.test_dispatch_passes_actual_sample_and_existing_lease) ... ok
+test_final_settlement_reuses_exact_authority_hash (scripts.h019.test_clients.CurrentAuthorityTests.test_final_settlement_reuses_exact_authority_hash) ... ok
+test_final_stages_have_no_hidden_64k_precondition (scripts.h019.test_clients.CurrentAuthorityTests.test_final_stages_have_no_hidden_64k_precondition) ... ok
+test_optional_sova_and_unrecognized_proof (scripts.h019.test_clients.CurrentAuthorityTests.test_optional_sova_and_unrecognized_proof) ... ok
+test_short_expired_authority_never_calls_transport (scripts.h019.test_clients.CurrentAuthorityTests.test_short_expired_authority_never_calls_transport) ... ok
+test_ambiguous_direct_dispatch_retains_ownership_without_replay (scripts.h019.test_clients.FinalExecutionTests.test_ambiguous_direct_dispatch_retains_ownership_without_replay) ... ok
+test_direct_execution_one_dispatch_full_drain_and_keep_warm (scripts.h019.test_clients.FinalExecutionTests.test_direct_execution_one_dispatch_full_drain_and_keep_warm) ... ok
+
+----------------------------------------------------------------------
+Ran 14 tests in 0.008s
+
+OK

@@ -125,10 +125,12 @@ all17 offered schemas, a real allowlisted read, actual tool result continuation,
 usage and complete owned HTTP/SSE drain/native settlement. Worker2 then performs
 genuine Sova Qwen-parent/MiMo-child/tool-result/Qwen-verification acceptance.
 
-Create a protected acceptance JSON with exactly `final_native17`, `production`,
-`sova`; each names actual receipt path/rawSHA/status_field/expected_value(PASS or
+Create a protected acceptance JSON requiring `final_native17` and `production`,
+with optional real `sova` PASS; each names actual receipt path/rawSHA/status_field/expected_value(PASS or
 PASSED). Native uses `FINAL17-QUALIFICATION.json`, production uses `ALLOCATION.json`.
-The Sova receipt is supplied by worker2/root after actual acceptance, never invented.
+The optional Sova receipt is supplied after actual acceptance, never invented.
+Absent Sova acceptance is recorded separately as PENDING_NOT_TESTED_APP_PAUSED.
+Sova remains paused and does not block the native benchmark.
 Then:
 
 ```sh

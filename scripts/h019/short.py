@@ -15,7 +15,7 @@ BASE = Path('/data/build/H019-20260928/worker1-short')
 LOG = '/data/logs/H019-20260928/worker1-short'
 UNIT = 'h019-short.service'
 OWNER = Path('/data/services/mimo-h016-20260927/source/owner.py')
-OWNER_SHA = '57ace7da1f84e09cb7ed5f0a72ac18315a9875d4c8c00f87f768288bf1b2c5f8'
+OWNER_SHA = 'e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53'
 TRANSPORT = Path('/data/build/H016-20260927/worker1-final13-long/client.py')
 READER = TRANSPORT.with_name('reader.py')
 R9 = Path('/data/build/H016-20260927/worker1-r9')
@@ -70,6 +70,17 @@ def settle():
     final = o.read(o.BASE / 'state.json')
     require(final.get('status') == 'SETTLED' and final.get('settlement') ==
             {'pid_released': True, 'cgroup_empty': True, 'gpu_compute_empty': True}, 'exact_settlement_unproven')
+
+
+
+def write_guard_progress(h, current):
+    # Called inside the existing alarm cycle; never acquire a lifecycle lease.
+    with h.MountedStorageGuard(h.s) as g, h.AnchoredRoot(LOG, g) as a:
+        g.check_path(str(Path(LOG) / 'GUARD-PROGRESS.json'))
+        a.atomic_json('GUARD-PROGRESS.json', current)
+        with a.open('GUARD-PROGRESS.json') as stream:
+            require(json.loads(stream.read()) == current, 'progress_write_integrity')
+        a.check()
 
 
 def run():
@@ -141,10 +152,13 @@ def run():
     failed = Guard()
     def alarm(*_):
         failed.is_set()
-        _, _, current = c.check_identity(o, cfg, allow_active=True)
-        # Periodic progress uses exact registered path checks, never full scans.
-        with h.MountedStorageGuard(h.s) as g, h.AnchoredRoot(LOG, g) as a:
-            a.atomic_json('GUARD-PROGRESS.json', current)
+        cycle = time.monotonic()
+        with o.bounded(5):
+            _, _, current = c.check_identity(o, cfg, allow_active=True)
+            write_guard_progress(h, current)
+            require(time.monotonic() < cycle + 5, 'short_guard_budget')
+        # bounded() disarms its one-shot timer; restore periodic supervision.
+        signal.setitimer(signal.ITIMER_REAL, 5, 5)
     def interrupted(*_):
         raise RuntimeError('short_client_interrupted')
     def phase(hh, kk, payload, label, ff, ss, planning_seconds, **kwargs):

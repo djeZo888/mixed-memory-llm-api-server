@@ -23,7 +23,7 @@ class CurrentAuthorityTests(unittest.TestCase):
             'admit_before_epoch': f.ADMIT_END, 'hard_end_epoch': f.ADMIT_END + 28800,
             'private_api': {'host': '10.156.100.60', 'port': 30012, 'model': 'mimo-v2.6-pro-rl'},
             'frontier_claim_contract': 'ordinary-proxy-single-active-chat-lock-v1',
-            'acceptance': {k: {} for k in ('final_native17', 'production', 'sova')},
+            'acceptance': {k: {} for k in ('final_native17', 'production')},
             'source_sha256': {'fixture': 'pin'}, 'production_identity': {'launch_id': 'fixture'}}
 
     def test_direct_one_request_exact_count_and_reserve(self):
@@ -42,6 +42,15 @@ class CurrentAuthorityTests(unittest.TestCase):
             candidate = copy.deepcopy(go); del candidate['acceptance'][key]
             with self.assertRaises(RuntimeError): f.validate_go(candidate, f.ADMIT_END - 1)
         with self.assertRaises(RuntimeError): f.validate_go(go, f.ADMIT_END)
+
+
+    def test_optional_sova_and_unrecognized_proof(self):
+        go = self.authority()
+        f.validate_go(go, f.ADMIT_END - 1)
+        go['acceptance']['sova'] = {}
+        f.validate_go(go, f.ADMIT_END - 1)
+        go['acceptance']['invented'] = {}
+        with self.assertRaises(RuntimeError): f.validate_go(go, f.ADMIT_END - 1)
 
     def test_dispatch_passes_actual_sample_and_existing_lease(self):
         sample = {'hardware_validation': {'observed_at': 'actual-fresh', 'boot_id': 'same'}}

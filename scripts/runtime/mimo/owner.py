@@ -49,7 +49,7 @@ OWNER_FAILURE_CODES = frozenset({
     'command_failed', 'command_output_bound', 'container_not_settled',
     'created_container_changed', 'created_id_invalid', 'deployed_source_closure_required',
     'exact_owned_container_required', 'frontier_compute_present', 'frontier_compute_remains',
-    'glm_must_be_settled_before_selection', 'glm_original_changed', 'guard_adapter_changed',
+    'glm_must_be_settled_before_selection', 'glm_original_changed', 'guard_adapter_changed', 'guard_write_integrity',
     'host_reserve', 'host_swap_configuration_changed', 'interleave_file_changed', 'interleave_pins_required',
     'key_invalid', 'launch_source_changed', 'native_bind_changed',
     'native_cgroup_not_empty', 'native_configuration_changed', 'native_generation_changed',
@@ -336,9 +336,17 @@ def storage_paths(h, guard):
 
 
 def write(h, filename, value):
-    # Status writes do not acquire the lifecycle lease. Anchored registered I/O
-    # and root-disk guards remain mandatory before/after every write boundary.
+    # Only periodic guard persistence omits recursive root-payload scans.
+    # MountedStorageGuard and anchored I/O still verify registration, mount,
+    # protected ancestry and the exact path. Lifecycle/state writes scan fully.
     with h.MountedStorageGuard(h.s) as g, h.AnchoredRoot(str(BASE), g) as a:
+        if filename == 'guard.json':
+            g.check_path(str(BASE / filename))
+            a.atomic_json(filename, value)
+            with a.open(filename) as stream:
+                require(json.loads(stream.read()) == value, 'guard_write_integrity')
+            a.check()
+            return
         h.s.root_payload_guard()
         a.atomic_json(filename, value)
         h.s.root_payload_guard()

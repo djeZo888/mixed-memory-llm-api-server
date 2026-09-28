@@ -1,5 +1,5 @@
 [Unit]
-Description=H019 direct near950K after native and Sova acceptance
+Description=H019 direct near950K after native17 and production acceptance
 RequiresMountsFor=/data /data/models-large
 
 [Service]

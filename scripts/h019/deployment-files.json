@@ -1,6 +1,6 @@
 {
   "/data/build/H019-20260928/client-closure.json": {
-    "sha256": "88e479196db7a2e6132e9ee652cb8d197527df31d0305b0f3a0d84bfe4df74d8",
+    "sha256": "b6204999019679bf11ae4d95a809b1758d00b89a831e227d2f4101e89e2d2fcb",
     "source": "scripts/h019/client-closure.json"
   },
   "/data/build/H019-20260928/deploy.py": {
@@ -8,7 +8,7 @@
     "source": "scripts/h019/deploy.py"
   },
   "/data/build/H019-20260928/dispatch.py": {
-    "sha256": "ce0caa4d3ec91a7c5f021e2d62f16223f7216e8f79cc1fc6b51c80b6d2d5d36c",
+    "sha256": "807c8dde46c6b581ac58b7dbd4ae84477bce1e5636d34e3e81df66fcdcb47609",
     "source": "scripts/h019/dispatch.py"
   },
   "/data/build/H019-20260928/observe.py": {
@@ -16,27 +16,27 @@
     "source": "scripts/h019/observe.py"
   },
   "/data/build/H019-20260928/prepare_authority.py": {
-    "sha256": "0a4846466f8a3dcaa0173e0948785ed984123a4951e97631d65ec8cde9fa3b14",
+    "sha256": "db7481d44adeea6692af3d5827d2c05e869e57844d1978a1e18ccf370ea7f707",
     "source": "scripts/h019/prepare_authority.py"
   },
   "/data/build/H019-20260928/worker1-final950k/final.py": {
-    "sha256": "c99861da152f072dbe6e7bf454d6a592163db352f023d3fb16df5f066a9c66db",
+    "sha256": "abecd4a844a09536a20dc89c1ee73d8e82f1d354720085206950c80a65f56ca3",
     "source": "scripts/h019/final.py"
   },
   "/data/build/H019-20260928/worker1-short/short.py": {
-    "sha256": "eb5afeea6b3e9ee3d33a743d92391599472e0abff39a4dde93001f89306f8673",
+    "sha256": "c41df72cc832672c6db0b57b63bce5766dcfd77548617e832c7431bd594b5ab6",
     "source": "scripts/h019/short.py"
   },
   "/data/services/mimo-h016-20260927/manifest.json": {
-    "sha256": "d3525c3c4091848d8d4e058747446c7f148a020ff5a659beef6b778166a4eed6",
+    "sha256": "743edc0f8fa343f8c05efe7a307cf5a6eb4396b09ba9ed378230fe9d62e1e0a0",
     "source": "scripts/h019/manifest.candidate.json"
   },
   "/data/services/mimo-h016-20260927/source/owner.py": {
-    "sha256": "57ace7da1f84e09cb7ed5f0a72ac18315a9875d4c8c00f87f768288bf1b2c5f8",
+    "sha256": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53",
     "source": "scripts/runtime/mimo/owner.py"
   },
   "/etc/systemd/system/h019-final950k.service": {
-    "sha256": "fd99e51a1c784db5e46a1af2a2265f26efe12eb6d1792a207d161bf7ac264c51",
+    "sha256": "863005cbaaa5ede762e1160d9ab3f1b00c5890b0027c8cdcb447697639cbb7d9",
     "source": "scripts/h019/h019-final950k.service"
   },
   "/etc/systemd/system/h019-short.service": {

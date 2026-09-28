@@ -11,7 +11,7 @@ from pathlib import Path
 BASE = Path('/data/build/H019-20260928')
 LOG = Path('/data/logs/H019-20260928')
 OWNER = Path('/data/services/mimo-h016-20260927/source/owner.py')
-OWNER_SHA = '57ace7da1f84e09cb7ed5f0a72ac18315a9875d4c8c00f87f768288bf1b2c5f8'
+OWNER_SHA = 'e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53'
 ADMIT_END = 1790568629
 
 

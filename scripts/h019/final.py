@@ -36,7 +36,8 @@ def validate_go(go, now):
             and go['hard_end_epoch'] == go['admit_before_epoch'] + ACTIVE_CAP, 'finite_admission_required')
     require(go.get('private_api') == {'host': '10.156.100.60', 'port': PORT, 'model': 'mimo-v2.6-pro-rl'}, 'private_api_identity')
     require(go.get('frontier_claim_contract') == 'ordinary-proxy-single-active-chat-lock-v1', 'proxy_claim_required')
-    require(set(go.get('acceptance', {})) == {'final_native17', 'production', 'sova'}, 'actual_acceptance_required')
+    require(set(go.get('acceptance', {})) in ({'final_native17', 'production'},
+            {'final_native17', 'production', 'sova'}), 'actual_acceptance_required')
     require(bool(go.get('source_sha256')) and bool(go.get('production_identity')), 'source_and_owner_required')
 
 
@@ -77,7 +78,7 @@ def settle():
     c.read_go = lambda _: (historical, cfg_sha)
     c.settle()
 
-OWNER_SHA = '57ace7da1f84e09cb7ed5f0a72ac18315a9875d4c8c00f87f768288bf1b2c5f8'
+OWNER_SHA = 'e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53'
 TRANSPORT_SHA = '28d61829c6b28067b59db4520ef72a94d5b230cfb28058f2cfe8984525b1f63b'
 
 def run():
@@ -91,7 +92,8 @@ def run():
     started = time.time()
     deadline = min(started + ACTIVE_CAP, go['hard_end_epoch'])
     result = {'status': 'PREPARING', 'go_sha256': go_sha, 'started_epoch': started,
-              'hard_end_epoch': deadline, 'completed_rungs': [], 'stages': {LABEL: 'QUEUED'}, 'production_identity': go['production_identity'], 'request_may_be_active': False}
+              'hard_end_epoch': deadline, 'completed_rungs': [], 'stages': {LABEL: 'QUEUED'}, 'production_identity': go['production_identity'], 'request_may_be_active': False,
+              'sova_status': go.get('sova_status', 'NOT_TESTED')}
     require(not Path(LOG, 'CLIENT.json').exists(), 'single_attempt_no_replay')
     write(o, h, 'CLIENT.json', result)
     sys.path.insert(0, str(reader_dir))
