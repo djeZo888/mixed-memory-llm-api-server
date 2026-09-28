@@ -69,8 +69,14 @@ no Host guard, proxy or security setting was weakened.
 
 Source review and preparation evidence are in the
 [Worker1 review](../reports/h020-review02-20260928/REVIEW.md) and
-[Worker2 report](../reports/h020-status-repair-20260928/README.md).
+[Worker2 preparation report](../reports/h020-status-repair-20260928/README.md).
+The [deployed acceptance](../reports/h020-status-repair-20260928/deployment-notes.md)
+records 16 passing checks and the
+[machine-readable receipt](../reports/h020-status-repair-20260928/deployment-result.json).
 Original failures and superseded staging receipts remain historical evidence.
+
+All four bounded native worker sessions ended with exit0. The final deployment
+session closed at04:26:48 UTC; no paid worker remains waiting for the benchmark.
 
 ## Boundaries and remaining work
 
