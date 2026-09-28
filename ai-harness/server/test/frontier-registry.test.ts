@@ -96,6 +96,7 @@ test('missing, stale, mismatched, unavailable and unselected evidence cannot cer
     const actual = project(registry, row ? [row] : []);
     const service = actual.services.find(s => s.service_id === model)!;
     assert.equal(service.identity_status, expected);
+    if (!row) { assert.equal(service.observed_model.node_id, null); assert.equal(service.observed_model.service_id, null); }
     assert.equal(service.health, 'unknown'); assert.equal(service.ready, null); assert.equal(service.admitting, null);
     assert.deepEqual(actual.gpus[0]!.observed_ready_dependents, []);
   }

@@ -5,7 +5,8 @@ const current = (o: { state: string; freshness: string }) => o.state === "ok" &&
 /** Join expectations after sanitizing and aging native facts. No parent health inheritance. */
 export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: SystemRegistry) {
   const services = registry.services.filter(s => s.node_id === node.node_id).map(s => {
-    const native = node.services.find(n => n.service_id === s.observation_key) ??
+    const observed = node.services.find(n => n.service_id === s.observation_key);
+    const native = observed ??
       sanitizeNode({ schema_version: 1, node_id: node.node_id, services: [{ service_id: s.observation_key, reason: "not_observed" }] }, node.node_id, [s.observation_key]).services[0]!;
     const selection = s.model?.selection_group === "frontier"
       ? registry.selected_frontier === undefined ? "unknown"
@@ -23,7 +24,7 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
       ...native, service_id: s.id, node_id: s.node_id, display_name: s.display_name,
       configured_model: s.model ?? null, selection, identity_status: identity,
       observed_model: {
-        node_id: node.node_id, service_id: native.service_id,
+        node_id: observed ? node.node_id : null, service_id: observed?.service_id ?? null,
         model_alias: native.model_alias, deployment_id: native.deployment_id,
         required_gpu_uuids: native.required_gpu_uuids,
         ...observation(native), ready: native.ready,
