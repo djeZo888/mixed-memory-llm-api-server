@@ -116,7 +116,40 @@
         "chat",
         "gateway"
       ],
-      "endpoint_ref": "harness-local"
+      "endpoint_ref": "harness-local",
+      "engines": [
+        {
+          "id": "minimax",
+          "display_name": "MiniMax",
+          "expected_version": null,
+          "preview": false,
+          "capabilities": [
+            "text",
+            "coding",
+            "search",
+            "browser",
+            "pdf",
+            "image"
+          ]
+        },
+        {
+          "id": "codex",
+          "display_name": "Codex",
+          "expected_version": "0.158.0",
+          "preview": true,
+          "capabilities": [
+            "text",
+            "coding",
+            "search",
+            "browser",
+            "pdf",
+            "image",
+            "native-delegation",
+            "compaction",
+            "attachments"
+          ]
+        }
+      ]
     },
     {
       "id": "search",

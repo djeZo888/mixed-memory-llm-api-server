@@ -15,8 +15,10 @@ import { isActionNode, loadSystemRegistry, validateSystemRegistry, type SystemRe
 import { projectNode } from "./status-projection.js";
 import type { NodeBackend } from "./node-client.js";
 import { statusHtml, statusCss, statusJs } from "./status-ui.js";
+import { projectEngines, sanitizeEngineHealth } from "./engine-status.js";
 export function createStatusService(options: {
   backends: Record<string, Pick<NodeBackend, "status">>;
+  engineHealth?: Pick<NodeBackend, "status">;
   registry?: SystemRegistry;
   origins?: string[];
   readOnlyOrigins?: string[];
@@ -51,6 +53,12 @@ export function createStatusService(options: {
       ),
     ]),
   ) as Record<string, ObserverCache<NodeSnapshot>>;
+  const engineCache = registry.services.some(s => s.engines?.length) ? new ObserverCache(
+    async signal => {
+      if (!options.engineHealth) throw Error("Application health adapter unavailable");
+      return sanitizeEngineHealth(await options.engineHealth.status(signal));
+    }, { deadlineMs: options.deadlineMs, now: options.now },
+  ) : undefined;
   const snapshot = () =>
     registry.nodes.map(config => {
       const cached = caches[config.id]!.snapshot(),
@@ -72,7 +80,9 @@ export function createStatusService(options: {
       node.gpus.forEach(age);
       Object.values(node.resources).forEach(age);
       node.resources.disk?.volumes?.forEach(age);
-      return projectNode(node, config, registry);
+      return { ...projectNode(node, config, registry),
+        engines: registry.services.filter(s => s.node_id === config.id).flatMap(s => projectEngines(s, engineCache?.snapshot())),
+      };
     });
   app.addHook("onRequest", async (req, reply) => {
     security.check(
@@ -205,8 +215,11 @@ export function createStatusService(options: {
   app.addHook("onClose", async () => {
     options.actions?.close();
     for (const cache of Object.values(caches)) cache.stop();
+    engineCache?.stop();
   });
-  if (options.autoPoll !== false)
+  if (options.autoPoll !== false) {
     for (const cache of Object.values(caches)) cache.start();
-  return { app, caches, snapshot };
+    engineCache?.start();
+  }
+  return { app, caches, engineCache, snapshot };
 }
