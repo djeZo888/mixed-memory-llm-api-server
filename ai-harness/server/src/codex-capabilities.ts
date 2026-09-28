@@ -42,10 +42,22 @@ export function codexCapabilities(
     nativeMedia: unavailable(
       "Native image/audio/video recognition is not qualified; specialist image tools are separate",
     ),
-    search: unavailable("Local search MCP acceptance pending"),
-    browser: unavailable("Local Chromium MCP acceptance pending"),
-    pdf: unavailable("Workspace PDF tool acceptance pending"),
-    coding: unavailable("Python/C/C++/Node matched-task acceptance pending"),
+    search: {
+      supported: true, qualification: "native_fixture",
+      reason: "Actual rootless Linux SearXNG MCP returned primary sources; matched model research acceptance pending",
+    },
+    browser: {
+      supported: true, qualification: "native_fixture",
+      reason: "Actual rootless Linux public navigation/render and private-address rejection passed; repaired PDF download Linux acceptance pending",
+    },
+    pdf: {
+      supported: true, qualification: "native_fixture",
+      reason: "Actual rootless Linux helper extraction/render/creation passed; matched model PDF acceptance pending",
+    },
+    coding: {
+      supported: true, qualification: "live",
+      reason: "Qwen0 native shell/read, freeform file edit/test and resumed follow-up passed; matched Python/C/C++/Node comparison pending",
+    },
     ...reviewed,
     nativeDelegation: {
       ...(reviewed.nativeDelegation ?? {
