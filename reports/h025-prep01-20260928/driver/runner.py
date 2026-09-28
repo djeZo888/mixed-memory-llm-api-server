@@ -62,7 +62,7 @@ def monitor_error(exc, stage):
     code=code if isinstance(code,str) and code in _STORAGE_CODES else 'unclassified'
     number=getattr(exc,'errno',None)
     number=number if type(number) is int and number in errno.errorcode else None
-    stage=stage if stage in ('sample','monitoring_tick') else 'monitor'
+    stage=stage if stage in ('sample','observe','monitoring_tick') else 'monitor'
     return kind+':code='+code+':errno='+str(number)+':stage='+stage
 
 class Runner:
@@ -151,7 +151,9 @@ class Runner:
         while not self.finished.is_set():
             stage='sample'
             try:
-                self.p.observe(self.a.sample(due))
+                sample=self.a.sample(due)
+                stage='observe'
+                self.p.observe(sample)
                 stage='monitoring_tick'
                 self.p.monitoring_tick()
             except Exception as exc:

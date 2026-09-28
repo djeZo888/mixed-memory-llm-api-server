@@ -28,6 +28,16 @@ class MonitorDiagnostics(unittest.TestCase):
         runner.monitor()
         self.assertEqual(reasons,['monitor_or_owner_read_failed:StorageIOError:code=registered_storage_mount_changed:errno=None:stage=sample'])
         self.assertEqual(dispatched,[True])
+    def test_observe_persistence_failure_is_distinguished_from_sample(self):
+        reasons=[];dispatched=[]
+        def observe(row):raise StorageIOError('storage_json_too_large')
+        phase=types.SimpleNamespace(clock=lambda:{'monotonic':1},settlement_deadline=1,
+                                    fail=reasons.append,observe=observe)
+        runner=Runner(phase,types.SimpleNamespace(sample=lambda due:{}))
+        runner.dispatch_stops=lambda:dispatched.append(True)
+        runner.monitor()
+        self.assertEqual(reasons,['monitor_or_owner_read_failed:StorageIOError:code=storage_json_too_large:errno=None:stage=observe'])
+        self.assertEqual(dispatched,[True])
     def test_monitor_tick_stage_is_retained(self):
         reasons=[]
         def tick():raise TimeoutError(errno.ETIMEDOUT,'SECRET')
