@@ -1,3 +1,4 @@
+import { nativeMedia } from "./codex-input.js";
 import { createHash } from "node:crypto";
 import type { Store, Run, StoredSession } from "./store.js";
 import { Files } from "./files.js";
@@ -106,8 +107,8 @@ export class Broker {
   ): string {
     const s = this.store.getSession(sessionId);
     assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
-    if (s.engineKind === "codex" && (attachmentIds.length || imageReferences.length))
-      throw new ApiError(400, "codex_media_unsupported", "Codex preview does not yet support attachments or image references");
+    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled)
+      throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
     if (this.options.dispatchHeld?.())
       throw new ApiError(
         503,
@@ -131,6 +132,8 @@ export class Broker {
       throw new ApiError(429, "queue_full", "Run queue is full");
     for (const id of attachmentIds) {
       const f = this.store.file(id);
+      if (s.engineKind === "codex" && nativeMedia(f.mimeType))
+        throw new ApiError(400,"codex_media_unsupported","Codex native media is not qualified; use an available image specialist");
       if (f.kind !== "attachment" || f.sessionId !== sessionId)
         throw new ApiError(
           400,

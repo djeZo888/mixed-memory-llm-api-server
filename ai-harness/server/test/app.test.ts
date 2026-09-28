@@ -177,8 +177,11 @@ test("JSON contract, durable messages/native identity/events and unknown context
     environment: health.json().environment,
     status: "ok",
     visionAvailable: false,
-    engines: { default: "minimax", codex: { available: false, preview: true, configured: false, version: null, readiness: "disabled", capabilities: { text: true, media: false, steering: false, delegation: false, frontier: false, reasoning: false } } },
+    engines: { default: "minimax", codex: { available: false, preview: true, configured: false, version: null, readiness: "disabled", protocolQualified:false, capabilityDetails:health.json().engines.codex.capabilityDetails, capabilities: { text: true, media: false, steering: false, delegation: false, frontier: false, reasoning: false } } },
   });
+  assert.equal(health.json().engines.codex.capabilityDetails.nativeMedia.supported,false);
+  assert.equal(health.json().engines.codex.capabilityDetails.nativeDelegation.supported,false);
+  assert.equal(health.json().engines.codex.capabilityDetails.frontier.supported,false);
   const s = await h.session();
   assert.equal(s.context.used, 0);
   assert.equal(s.context.limit, 480000);
