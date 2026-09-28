@@ -1,0 +1,11 @@
+{
+  "cwd": "/Users/agent/CodexProjects/llm-orchestration/tasks/H020-REVIEW02-20260928/candidate-initial",
+  "command": [
+    "ai-harness/server/node_modules/.bin/tsx",
+    "--test",
+    "--test-timeout=15000",
+    "reports/h020-review01-20260928/identity-review.test.ts",
+    "reports/h020-review01-20260928/retained-boundaries.test.ts"
+  ],
+  "exitCode": 0
+}
