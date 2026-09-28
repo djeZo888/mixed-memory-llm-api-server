@@ -1,4 +1,20 @@
-# Sova current task — H024 Codex implementation
+# Sova current task — H025 fan hysteresis and overlap
+
+The user now authorizes a focused fan-control task and a four-model concurrent
+test, including GLM 5.3 Flash in place of unavailable MiMo. This supersedes the
+H024 no-fan-controller/no-thermal-test/no-GLM restriction only for H025.
+Window: 28 September 2026, 18:50–20:20 UTC; stop new tests at 20:05. Root plans,
+reviews and publishes; both Mac workers execute fresh bounded native sessions.
+W1 owns integrated 100% >=70 C / firmware profile <=65 C and CHA_FAN3 80% >=70 C /
+40% <=65 C, preserving the user-disabled CPU source and holding state in between.
+W2 owns GLM readiness, compact monitoring-driver repair, independent review and
+the eventual five-minute overlap with both Qwens and the image model. Coordinate
+live changes centrally, preserve credentials/history and keep the 85 C guard.
+No Codex work, MiMo repair, large-context prefill, drivers, model/runtime upgrades
+or permanent Sova frontier-policy change. Task plan/status live outside this
+checkout under `orchestration/tasks/H025-20260928`.
+
+## Previous H024 checkpoint
 
 **Bounded execution closed.** Both final worker sessions exited cleanly by
 18:38:41 UTC. The reviewed app is deployed, but Codex's full live qualification
