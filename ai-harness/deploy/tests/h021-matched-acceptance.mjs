@@ -85,10 +85,14 @@ export async function runOne(g, inputsDir, out, {source, fetcher=fetch, wait=ms=
   if (c.id === 'pdf-units') files.push('source.pdf');
   // Only hard-coded input names; never upload PLAN, CASES, reference solutions or expected answers.
   const inputs = await Promise.all(files.map(async name=>({name,bytes:await readFile(join(inputsDir,c.id,name))})));
+  for(const name of c.files ?? []) {
+    const input=inputs.find(f=>f.name===basename(name));
+    assert.equal(sha(input.bytes),sha(await readFile(join(fixtureRoot,name))),'staged buggy source/test changed; do not expose repaired answers');
+  }
   await mkdir(out, {recursive:false});
   await save(out,'GO.json',g);
   let sessionId, runId; const startedUtc = new Date().toISOString(); const start = performance.now();
-  const result = {engine:g.engine,caseId:g.caseId,exactSource:source,model:g.model,lane:g.lane,imageDigest:g.imageDigest,profileSha256:g.profileSha256,nativeCli:g.nativeCli,context:g.context,outputCap:g.outputCap,startedUtc,retryCount:0,inputTokens:null,outputTokens:null,tokenUsageReason:'Public Sova snapshot exposes occupied context, not billing input/output usage; request W1 gateway receipt',toolErrors:[],interventions:[],verdict:'NOT_TESTED',settlement:'REQUIRES_EXISTING_AUTHORITATIVE_HOST_SETTLEMENT'};
+  const result = {engine:g.engine,caseId:g.caseId,exactSource:source,model:g.model,lane:g.lane,imageDigest:g.imageDigest,profileSha256:g.profileSha256,nativeCli:g.engine==='codex'?g.nativeCli:null,context:g.context,outputCap:g.outputCap,startedUtc,retryCount:0,inputTokens:null,outputTokens:null,tokenUsageReason:'Public Sova snapshot exposes occupied context, not billing input/output usage; request W1 gateway receipt',toolErrors:[],interventions:[],verdict:'NOT_TESTED',settlement:'REQUIRES_EXISTING_AUTHORITATIVE_HOST_SETTLEMENT'};
   async function request(path, options={}) {
     assert(Date.now() < Date.parse(g.expiresUtc),'GO expired; stop without retry');
     const r = await fetcher(g.origin+path,{...options,redirect:'error',headers:{Origin:g.origin,...options.headers},signal:AbortSignal.timeout(30_000)});
@@ -102,6 +106,8 @@ export async function runOne(g, inputsDir, out, {source, fetcher=fetch, wait=ms=
     if(g.engine==='codex') assert(health.engines?.codex?.available && health.engines.codex.protocolQualified);
     const created = await post('/api/sessions',{engineKind:g.engine}); sessionId=created.session.id; result.sessionId=sessionId;
     await save(out,'created.json',created); assert.equal(created.session.engineKind,g.engine);
+    result.engineVersion=created.session.engineVersion ?? null;
+    if(g.engine==='minimax') result.nativeCli=created.session.engineVersion ?? null;
     const attachmentIds=[];
     for(const input of inputs) {
       const form=new FormData();form.append('file',new Blob([input.bytes]),input.name);
