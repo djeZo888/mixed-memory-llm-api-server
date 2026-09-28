@@ -33,7 +33,7 @@ export async function downloadResponse(context, initial, validate=publicURL) {
  for(let redirects=0;redirects<=5;redirects++) {
   url=await validate(url);
   if(Date.now()>=deadline)throw Error('Download timed out');
-  const response=await context.request.get(url,{maxRedirects:0,timeout:deadline-Date.now()});
+  const response=await context.request.get(url,{maxRedirects:0,maxRetries:0,timeout:deadline-Date.now()});
   try {
    const status=response.status(),headers=response.headers();
    if([301,302,303,307,308].includes(status)) {
