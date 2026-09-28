@@ -1,0 +1,86 @@
+{
+  "utc": "2026-09-28T00:46:57.637965+00:00",
+  "status": "STAGED_FUTURE_CLOCK_ONLY",
+  "stageRoot": "/home/user/ai-harness-build/H018-HARNESS-PREP01-20260928",
+  "baseSourceCommit": "3760c615ec4c4785d1a3e5f5ca4781066782ad66",
+  "clockOverlayCommit": "5b6f9335b9e362e590f8c1541a1581dd70e332d3",
+  "sourceIdentity": "3760c615 source plus explicitly pinned FINAL04 clock-only overlay; SOURCE-COMMIT retained",
+  "originalManifestSha256": "054c7cf73f69740e739d18af05c55402603a68839ebacb80eb461b60886bf724",
+  "sourceManifestSha256": "ad0a8b847a3d477907085d157eef2dbdd7df084f4d0aacb067d05834eb57c60c",
+  "sourceManifestEntries": 479,
+  "stageInputsSha256": "75232be769ad8a1bcbe8f334ab297252c69c6062ff128158f8f627f1d4f82134",
+  "changes": {
+    "launch-app-acceptance.sh": {
+      "before": "a3176d8dc1ea3dd87b9c535cc9afd8fe864e081348d81997a129e61e85632b9d",
+      "after": "857b74bf275a11f2fe143eb42af05e3f285cff758e1f76eae6d988fdb8365135",
+      "mode": 420
+    },
+    "driver/supervise.py": {
+      "before": "6483eed72f6a74be6846b997ba2ae9beb643d0de31167707d8cc69bfb98899b7",
+      "after": "72ca193919d4ee58c68239aed0544bddd2cd43d4c71442bce81e104431f6c952",
+      "mode": 420
+    },
+    "driver/supervise_test.py": {
+      "before": "bf5f85db8cb32254bea64a8c84bb875fed35d37d0e6bc181eaaf4c6b3c6db3ad",
+      "after": "2032c71019d8546ced02e789d85e1d309991b37e2af0e07a8cb886c8348ef5f6",
+      "mode": 420
+    },
+    "driver/preflight.mjs": {
+      "before": "629f1db2f9c6b45ab12ceb6ea8d9954e46d5b3d1181eb9ce21f488421d04e217",
+      "after": "c43a193d78283820fe839327a9bea057bc05b8f0124a5bf906c8bc2ee7161924",
+      "mode": 420
+    },
+    "driver/preflight.test.mjs": {
+      "before": "b38f7b5821ef7682a2e6a927ae108b27d95a5193a0a04c11fae2145ba7e2fbb8",
+      "after": "8c3be36ffb40b85714dfe823a03f7784d4e489bf170fe717a9045e0dbb82f06e",
+      "mode": 420
+    },
+    "SOURCE-CLOSURE.json": {
+      "before": "2af4280a7d4b56662237dc45e9c26cbbbd1e93daef1d899359a70a91685b015e",
+      "after": "5ed357204c541905c3e5e7b5e13eef174e88e12573df73c84ef82c4af4cfe34d",
+      "mode": 384
+    },
+    "source/reports/h018-harness-prep01-20260928/launch-app-acceptance.sh": {
+      "before": "a3176d8dc1ea3dd87b9c535cc9afd8fe864e081348d81997a129e61e85632b9d",
+      "after": "857b74bf275a11f2fe143eb42af05e3f285cff758e1f76eae6d988fdb8365135",
+      "mode": 420
+    },
+    "source/reports/h018-harness-prep01-20260928/driver/supervise.py": {
+      "before": "6483eed72f6a74be6846b997ba2ae9beb643d0de31167707d8cc69bfb98899b7",
+      "after": "72ca193919d4ee58c68239aed0544bddd2cd43d4c71442bce81e104431f6c952",
+      "mode": 420
+    },
+    "source/reports/h018-harness-prep01-20260928/driver/supervise_test.py": {
+      "before": "bf5f85db8cb32254bea64a8c84bb875fed35d37d0e6bc181eaaf4c6b3c6db3ad",
+      "after": "2032c71019d8546ced02e789d85e1d309991b37e2af0e07a8cb886c8348ef5f6",
+      "mode": 420
+    },
+    "source/reports/h018-harness-prep01-20260928/driver/preflight.mjs": {
+      "before": "629f1db2f9c6b45ab12ceb6ea8d9954e46d5b3d1181eb9ce21f488421d04e217",
+      "after": "c43a193d78283820fe839327a9bea057bc05b8f0124a5bf906c8bc2ee7161924",
+      "mode": 420
+    },
+    "source/reports/h018-harness-prep01-20260928/driver/preflight.test.mjs": {
+      "before": "b38f7b5821ef7682a2e6a927ae108b27d95a5193a0a04c11fae2145ba7e2fbb8",
+      "after": "8c3be36ffb40b85714dfe823a03f7784d4e489bf170fe717a9045e0dbb82f06e",
+      "mode": 420
+    },
+    "source/reports/h018-harness-prep01-20260928/SOURCE-CLOSURE.json": {
+      "before": "2af4280a7d4b56662237dc45e9c26cbbbd1e93daef1d899359a70a91685b015e",
+      "after": "5ed357204c541905c3e5e7b5e13eef174e88e12573df73c84ef82c4af4cfe34d",
+      "mode": 384
+    }
+  },
+  "guardBeforeSha256": "0a7fe135eb7ec00fb38d3276b42a0f6bcaa2644381d5689f830d992e7f21e7d3",
+  "guardAfterSha256": "50b907f53e69d92f3a1d7c47c44fa12ab745121d291b196ef4095b6ee1b5d3c4",
+  "protectedMetadataUnchanged": true,
+  "etcAiHarnessMode": "700:0:0",
+  "privateBaselineHashesUnchanged": true,
+  "historicalH017DiscrepancyUnchanged": true,
+  "historical1MQualifierUnchanged": true,
+  "runningClocksChanged": false,
+  "daemonReload": false,
+  "imageBuild": false,
+  "pairApplied": false,
+  "acceptanceDispatched": false
+}

@@ -4,7 +4,7 @@
   "startedUtc": "2026-09-28T00:42:27.061320+00:00",
   "hardDeadlineUtc": "2026-09-28T01:22:00Z",
   "source": "5b3841755e295917b1b32bb1a66c37d68967e191",
-  "status": "REVIEW_COMMITTED_FUTURE_CLOCK_PREP",
+  "status": "PREP_READY_NO_GENUINE_QUALIFIER_HAND_BACK",
   "applicationStopUtc": "2026-09-28T01:24:30Z",
   "hardSettlementUtc": "2026-09-28T01:25:00Z",
   "qualification": "NOT_PROVIDED_NEW_950K_FULL17",
@@ -13,5 +13,10 @@
   "acceptanceDispatched": false,
   "exit": "wrapper records actual exit after handback",
   "reviewRecordCommit": "6540d216820a5cc22fdd349d84ddc4d937f86dee",
-  "reviewBundle": "H018-REVIEW03-records.bundle"
+  "reviewBundle": "H018-REVIEW03-records.bundle",
+  "clockOverlayCommit": "5b6f9335b9e362e590f8c1541a1581dd70e332d3",
+  "stageSourceCommit": "3760c615ec4c4785d1a3e5f5ca4781066782ad66",
+  "stageManifestSha256": "ad0a8b847a3d477907085d157eef2dbdd7df084f4d0aacb067d05834eb57c60c",
+  "stageManifestEntries": 479,
+  "readyUtc": "2026-09-28T00:46:57.637965+00:00"
 }

@@ -7,5 +7,7 @@
   "bothPreflightsCharged": "supervisor charges first elapsed time; live workDeadline and absolute cleanup bound charge second elapsed time; live enforces >=720s after second preflight",
   "newClockTests": false,
   "broaderTests": false,
-  "historicalReportAndEvidence": "preserved; PREP01 REPORT.md describes its original clock, superseded by FINAL04 CLOCKS.json"
+  "historicalReportAndEvidence": "preserved; PREP01 REPORT.md describes its original clock, superseded by FINAL04 CLOCKS.json",
+  "testedHelperBytesMatchStaged": true,
+  "stageAll479EntriesVerifiedBeforeAfter": true
 }
