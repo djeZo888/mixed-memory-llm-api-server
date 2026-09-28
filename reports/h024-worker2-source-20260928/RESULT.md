@@ -70,6 +70,8 @@ The exact combined server/thin policy build and sole deployment remain for the
 next fresh Worker2 session after root review/GO. App/status remain paused here.
 
 See `NEXT-ACCEPTANCE.md` for one short owned compact/recall case and the required
-conditional MiMo continuation. No unchanged live image/PDF retry is scheduled.
+conditional MiMo continuation. Root separately authorized one original PDF and one normal image diagnostic
+workflow after exact combined deployment/GO; these collect missing evidence and
+do not reclassify historical failures as repaired.
 Wrapper writes the exit receipt after this CLI exits; no premature exit PASS is
 claimed. Models/fans/holds/quarantines/default engine were not touched.
