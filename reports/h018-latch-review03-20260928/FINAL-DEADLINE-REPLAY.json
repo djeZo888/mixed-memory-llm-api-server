@@ -1,0 +1,12 @@
+{
+  "owner_sha256": "8d916033b42cc7b7024cca70c59b0413c76c709abebf00c86cd68ff9789502ce",
+  "hardware_policy_sha256": "640aed9076e2b82872bc27c31f4b8ca1ac026caef830aca0587c37a023c5761d",
+  "bound_seconds": 0.01,
+  "first_read_synthetic_delay_seconds": 0.04,
+  "elapsed_seconds": 0.013823875022353604,
+  "protected_reads": 1,
+  "accepted_after_alarm": false,
+  "raised_exception": "MandatoryGuardTimeout",
+  "passed": true,
+  "scope": "Only the exact swallowed-alarm replay rerun against both frozen final modules; no expanded suite, no VM or GPU."
+}

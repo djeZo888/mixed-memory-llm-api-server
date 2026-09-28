@@ -1,0 +1,30 @@
+{
+  "status": "PASS_OWNER_ONLY_SOURCE_REVIEW",
+  "utc": "2026-09-28T00:38:45.974964+00:00",
+  "session_id": "01a0e563-64ad-7eb0-9c28-60c9b8038a0f",
+  "source_variant": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/scratch-owner-local/owner.py",
+  "owner_sha256": "218c890f1f3d8f7f80998aaf5cf7463c32febf5e454713f40da76a9ed60027d0",
+  "parent_owner_sha256": "8d916033b42cc7b7024cca70c59b0413c76c709abebf00c86cd68ff9789502ce",
+  "shared_hardware_policy_sha256": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+  "delta": "Exactly three , strict=True keyword arguments removed from final8d916 owner. All explicit deadline checks and production deadline=cycle+5 retained; original shared policy unchanged.",
+  "regression": {
+    "status": "PASS",
+    "deadline_expression": "cycle+5",
+    "cycle_total_budget_seconds": 5,
+    "simulated_already_spent_seconds": 4.99,
+    "remaining_budget_seconds": 0.01,
+    "first_read_delay_seconds": 0.04,
+    "elapsed_seconds": 0.013851916999556124,
+    "protected_reads": 1,
+    "lease_acquisitions": 0,
+    "writes": 0,
+    "exception_class": "MandatoryGuardTimeout",
+    "accepted_after_alarm": false,
+    "scope": "Only exact swallowed-alarm regression. Original passive reader catches alarm; owner explicit deadline check must re-raise before second read/lease/write."
+  },
+  "source_acceptance": "Owner-only preferred variant preserves reviewed predicates and original shared policy/other resident closures. No extra suite run.",
+  "deployed": false,
+  "W1_source_edited": false,
+  "qualification": false,
+  "activation": false
+}

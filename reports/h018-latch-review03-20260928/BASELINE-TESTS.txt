@@ -1,0 +1,10 @@
+test_contention_can_leave_persisted_proof_stale_despite_fresh_collector (__main__.Contract.test_contention_can_leave_persisted_proof_stale_despite_fresh_collector) ... ok
+test_expiry_changes_availability_not_identity_or_persistent_state (__main__.Contract.test_expiry_changes_availability_not_identity_or_persistent_state) ... ok
+test_positive_wins_over_expired_proof_and_inherited_boot (__main__.Contract.test_positive_wins_over_expired_proof_and_inherited_boot) ... ok
+test_same_boot_exact_healthy_receipt_cannot_clear_positive (__main__.Contract.test_same_boot_exact_healthy_receipt_cannot_clear_positive) ... ok
+test_unknown_cases_all_remain_closed (__main__.Contract.test_unknown_cases_all_remain_closed) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.037s
+
+OK

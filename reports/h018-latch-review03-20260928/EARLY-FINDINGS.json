@@ -1,0 +1,84 @@
+{
+  "task": "H018-LATCH-REVIEW03",
+  "status": "EARLY_SOURCE_FINDINGS_CAUSE_NOT_ESTABLISHED",
+  "session_id": "01a0e563-64ad-7eb0-9c28-60c9b8038a0f",
+  "started_utc": "2026-09-28T00:21:31.014686+00:00",
+  "deadline_utc": "2026-09-28T00:40:00Z",
+  "written_utc": "2026-09-28T00:23:29.333942+00:00",
+  "base_commit": "5b3841755e295917b1b32bb1a66c37d68967e191",
+  "scope": "Local source and supplied retained evidence only. No VM/harness contact, live changes, build, inference, subagents or activation.",
+  "findings": [
+    {
+      "id": "F1",
+      "source": [
+        "scripts/runtime/mimo/owner.py:563-569",
+        "scripts/runtime/mimo/owner.py:846-907"
+      ],
+      "finding": "Owner reads passive protected status every nominal 5 seconds after its resource sample. Every value other than literal False raises owned_gpu_latch_unproven; error does not identify a positive fault, expired proof or read failure."
+    },
+    {
+      "id": "F2",
+      "source": [
+        "scripts/lifecycle/hardware_policy.py:137-188",
+        "scripts/control/hardware_latch.py:35",
+        "scripts/control/hardware_latch.py:90-130"
+      ],
+      "finding": "Reader requires allowed exact UUIDs, schema-valid protected state, current-boot validated proof and wall age 0..15000ms. Positive protected records win before freshness/current-boot validation, including inherited positives. Invalid state, storage exception, absent/wrongboot/future/expired proof produce unknown; generic reason loses subtype."
+    },
+    {
+      "id": "F3",
+      "source": [
+        "scripts/control/node_collectors.py:98-143",
+        "scripts/control/node_collectors.py:225-256",
+        "scripts/control/passive.py:18-20",
+        "scripts/control/passive.py:65-109"
+      ],
+      "finding": "Actual periodic writer is HardwareEvidenceCollector, using nonblocking canonical lease, then inventory plus exact GPU last_proof. GPU proof uses exact UUID and stable boot across XML query. Poll 5s, observer deadline 2s, receipt horizon 15s. LeaseBusy aborts producer invocation; generic collector error does not itself prove contention. Hung slot is not replaced; late callbacks may already have side effects before result discarded."
+    },
+    {
+      "id": "F4",
+      "source": [
+        "scripts/control/hardware_latch.py:201-273",
+        "scripts/lifecycle/hardware_policy.py:233-250",
+        "scripts/lifecycle/hardware_policy.py:113-134"
+      ],
+      "finding": "Same-boot positive fault is sticky under healthy inventory or validate_required; inherited positive remains until explicit current-boot valid observation. Producer writes are protected, atomic, registered-storage guarded and lease validated. No expiry increase or unknown-to-False change justified."
+    },
+    {
+      "id": "F5",
+      "evidence": "../input/FAILURE-DIAGNOSTIC.json",
+      "finding": "At 00:19:51.569702 later status is False with age3657.9ms and protected targets{}; this is not failure-time proof. At 00:16:03.140247 owner failed at hardware_latch; cleanup interruptions then command_timeout at00:16:12 remain distinct. Later native exit139/PID absent/cgroup absent/GPUempty does not erase request uncertainty."
+    },
+    {
+      "id": "F6",
+      "source": [
+        "scripts/runtime/mimo/owner.py:810-843",
+        "scripts/runtime/mimo/private_proxy.py:173-251"
+      ],
+      "finding": "Owner launch canonical lease exits before periodic monitor. Proxy uses threading.Lock around full stream, not the canonical lifecycle lease. No evidence yet that inference itself holds canonical lease or blocks producer."
+    }
+  ],
+  "exact_unknown_evidence_requests": [
+    "Failure-time protected hardware-latch.json bytes/hash or nearest pre-failure retained copy: targets plus selected-GPU validated boot_id/observed_at/observation_id; capture wall time and boot ID. The later00:19:51 copy cannot fill this gap.",
+    "Last good guard.json and any exact failing latch projection/classification at00:16:03; include hardware proof age/identity and source hashes. Current owner does not retain failed projection.",
+    "Existing producer/observer snapshot or logs spanning00:15:40..00:16:05: hardware_evidence slot state/reason/last observation, selected GPU slot proof timestamps, inventory slot, llm-node service state/restart. Generic collector_failed alone cannot prove LeaseBusy.",
+    "If contention asserted: existing canonical lease holder PID/inode/time/stack or bounded retained acquisition failure code. No new probe/reproduction requested from this worker.",
+    "Installed producer/source hashes, frozen narrow patch and its focused regression with exact result. Explain why it addresses supplied evidence and preserves sticky faults plus corrupt/wrongboot/storage/identity/resource/settlement refusal.",
+    "Exact later settlement receipt if available; preserve exited139 chronology and unfinished full17 request independently from physical release."
+  ],
+  "recommendation": "No guard relaxation or deployment recommendation without concrete failure classification and frozen correction. Source mechanism supports possible producer freshness/lease failure, not actual attribution.",
+  "source_sha256": {
+    "scripts/runtime/mimo/owner.py": "dbb54dd908a5f9d1e833d34f9cf5d72fce27583fea089c35071b46e0b91f4e05",
+    "scripts/control/node_collectors.py": "347b4667146bd2fa6fe0e95035f59817c860528ee50575fa2d278c439ac207dd",
+    "scripts/control/passive.py": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+    "scripts/control/hardware_latch.py": "a23e3e55453fefd3bbd5dbb6bce7d8e16da08db2f6debfcdfe01110815353685",
+    "scripts/lifecycle/hardware_policy.py": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+    "scripts/common/lifecycle_lease.py": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0",
+    "scripts/runtime/mimo/private_proxy.py": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52"
+  },
+  "input_sha256": {
+    "../input/FAILURE-DIAGNOSTIC.json": "3b44ab8708877a17432583a78131286ef1f61a52351d2aba92532428bb3bc2f7",
+    "../input/ROOT-QUALIFICATION.json": "255176299a67c2b1286d69b57916b6f1d9069a6a9157ecee46033619695c3724",
+    "../input/ROOT-SOURCE-FOCUS.md": "47df2a9ebac6ba0503494264536ad3a417d9e2306958a4d5f139dee876091f44"
+  }
+}

@@ -1,0 +1,71 @@
+test_initial_corrupt_then_fresh_must_refuse (__main__.Eligibility.test_initial_corrupt_then_fresh_must_refuse) ... FAIL
+test_initial_future_proof_then_fresh_must_refuse (__main__.Eligibility.test_initial_future_proof_then_fresh_must_refuse) ... FAIL
+test_initial_missing_proof_then_fresh_must_refuse (__main__.Eligibility.test_initial_missing_proof_then_fresh_must_refuse) ... FAIL
+test_initial_positive_then_fresh_must_refuse (__main__.Eligibility.test_initial_positive_then_fresh_must_refuse) ... ok
+test_initial_unreadable_then_fresh_must_refuse (__main__.Eligibility.test_initial_unreadable_then_fresh_must_refuse) ... FAIL
+test_initial_wrongboot_then_fresh_must_refuse (__main__.Eligibility.test_initial_wrongboot_then_fresh_must_refuse) ... FAIL
+
+======================================================================
+FAIL: test_initial_corrupt_then_fresh_must_refuse (__main__.Eligibility.test_initial_corrupt_then_fresh_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 59, in test_initial_corrupt_then_fresh_must_refuse
+    self.check_forbidden({'invalid': True})
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 52, in check_forbidden
+    with self.assertRaises(Exception, msg='Forbidden initial evidence was accepted after readback'):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Exception not raised : Forbidden initial evidence was accepted after readback
+
+======================================================================
+FAIL: test_initial_future_proof_then_fresh_must_refuse (__main__.Eligibility.test_initial_future_proof_then_fresh_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 72, in test_initial_future_proof_then_fresh_must_refuse
+    self.check_forbidden(state)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 52, in check_forbidden
+    with self.assertRaises(Exception, msg='Forbidden initial evidence was accepted after readback'):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Exception not raised : Forbidden initial evidence was accepted after readback
+
+======================================================================
+FAIL: test_initial_missing_proof_then_fresh_must_refuse (__main__.Eligibility.test_initial_missing_proof_then_fresh_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 62, in test_initial_missing_proof_then_fresh_must_refuse
+    self.check_forbidden({'schema_version': 1, 'targets': {}})
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 52, in check_forbidden
+    with self.assertRaises(Exception, msg='Forbidden initial evidence was accepted after readback'):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Exception not raised : Forbidden initial evidence was accepted after readback
+
+======================================================================
+FAIL: test_initial_unreadable_then_fresh_must_refuse (__main__.Eligibility.test_initial_unreadable_then_fresh_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 56, in test_initial_unreadable_then_fresh_must_refuse
+    self.check_forbidden(OSError('synthetic-unreadable'))
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 52, in check_forbidden
+    with self.assertRaises(Exception, msg='Forbidden initial evidence was accepted after readback'):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Exception not raised : Forbidden initial evidence was accepted after readback
+
+======================================================================
+FAIL: test_initial_wrongboot_then_fresh_must_refuse (__main__.Eligibility.test_initial_wrongboot_then_fresh_must_refuse)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 67, in test_initial_wrongboot_then_fresh_must_refuse
+    self.check_forbidden(state)
+    ~~~~~~~~~~~~~~~~~~~~^^^^^^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-LATCH-REVIEW03-20260928/repo/reports/h018-latch-review03-20260928/test_candidate_eligibility.py", line 52, in check_forbidden
+    with self.assertRaises(Exception, msg='Forbidden initial evidence was accepted after readback'):
+         ~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Exception not raised : Forbidden initial evidence was accepted after readback
+
+----------------------------------------------------------------------
+Ran 6 tests in 0.005s
+
+FAILED (failures=5)
