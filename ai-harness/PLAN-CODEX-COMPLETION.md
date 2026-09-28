@@ -2,8 +2,8 @@
 
 **September 28, 2026. Implementation authorized: 16:52–18:52 UTC.**
 
-The H024 execution window follows the hardware checks. All four models are
-resident and existing benchmark requests are settled. The third-GPU cooling
+The H024 execution window follows the hardware checks. All four models were
+resident at its start and existing benchmark requests are settled. The third-GPU cooling
 test passed; four-way qualification remains partial because its test monitor
 hit a journal-size limit. No further thermal or large-context test runs here.
 
@@ -21,7 +21,27 @@ This follows [the original plan](PLAN-CODEX-HARNESS.md) and the deployed
 default while qualifying Codex. Preserve existing conversations, native thread
 identities, files, model services and failed-test evidence.
 
-## Current baseline
+## H024 implementation checkpoint
+
+Combined application source `e2e0a946cd4057ee33657a4714da473cf16ab5ca`
+was activated at 18:22 UTC. It includes per-model provider budgets, protected
+single-run diagnostics, reference staging, an owned manual compaction action,
+the clearer response label and MiMo's demonstrated medium-effort mapping.
+These source/fixture results do not qualify remaining live workflows.
+MiniMax remains default; ordinary Codex image and frontier gates remain closed.
+
+MiMo stopped at 18:04:30 after its five-second hardware guard could not acquire
+the common lifecycle lease. A read-only reproduction measured the control
+service holding that lease for about nine seconds. The historical holder at
+the failure instant is not proved. Repair slow status observation and identity
+publication before another load or large-context test; preserve the guard.
+See [worker evidence and proposed repair](../reports/h024-acceptance02-20260928/RESULTS.md)
+and the [bounded-window report](../reports/h024-codex-checkpoint.md).
+
+The user resolved CHA_FAN3 cycling by removing its CPU-temperature source.
+Preserve that setting; the requested GPU-driven 40%/80% policy is still pending.
+
+## Historical H021 baseline
 
 Codex 0.158.0 is pinned to source
 `064c6b8c737f5b41d171fdda80bd9ef10ad06eb3`. Sova application source
@@ -43,7 +63,9 @@ The 950K MiMo result is a separate native-capacity test. Passing it cannot
 establish Sova delegation, tool or Codex compatibility. H022's read-only check
 found that the existing client failed before its deadline due to recorded
 `lifecycle_busy` during hardware supervision, followed by settlement timeout.
-MiMo is selected but no longer resident; held ownership remains. See the
+At that H022 checkpoint MiMo was selected but no longer resident and held
+ownership remained. The old hold was subsequently reconciled with an audited
+exact inverse in H024; MiMo's later 18:04 outage is recorded above. See the
 [result and limits](../reports/h022-950k-status.md). A running
 or unsettled request continues to block new MiMo inference. No automatic repeat
 of this expensive test is proposed. Allocation alone does not qualify 950K.

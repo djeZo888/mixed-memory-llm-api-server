@@ -31,6 +31,8 @@ workflows and remaining limits, and the
 [original integration plan](ai-harness/PLAN-CODEX-HARNESS.md) for its scope.
 The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
+The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
+the deployed follow-up changes and remaining live qualification failures.
 The [H020 status repair](docs/h020-results.md) now separates configured models,
 selected frontier and fresh native identity, with measured GPU UUID dependency
 joins. The status-only deployment preserves the running model services.
@@ -116,15 +118,20 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 28, 11:07 UTC checkpoint:** MiMo V2.6 Pro-RL remains the selected
+**September 28, 18:22 UTC checkpoint:** MiMo V2.6 Pro-RL remains the selected
 frontier profile at 950,000 configured tokens, but its native process is absent.
-The near-950K test failed at 07:40 UTC after a recorded lifecycle-lock conflict
-in hardware supervision, followed by a settlement timeout. It did not produce
-a completed answer; 950K remains unqualified. Held ownership is preserved.
-See the [collected result and resource evidence](reports/h022-950k-status.md).
-Sova's application was restored during H021 with MiniMax default and optional
-Codex preview; MiMo delegation remains unavailable and its separate HTTP400
-repair is pending. Histories and files are preserved. Earlier successful short
+After recovery, it stopped again at 18:04 following a five-second hardware-guard
+lock timeout. A status request reproduced a nine-second control-lock hold; a
+focused control repair is required before another load. This does not establish
+a memory-capacity failure. See [H024 evidence](reports/h024-codex-checkpoint.md).
+The earlier near-950K test also failed without a completed answer and remains
+unqualified; its [original evidence](reports/h022-950k-status.md) is preserved.
+Its old hold was reconciled through an audited exact inverse.
+
+Sova's updated application is deployed with MiniMax default and optional
+Codex preview. MiMo delegation remains unavailable; the demonstrated request
+effort mapping is repaired in source but not yet qualified with live MiMo.
+Histories and files are preserved. Earlier successful short
 native turns are recorded in the [H019 checkpoint](docs/h019-mimo-finalization-results.md).
 Current availability comes from the status API; the measurements below are dated evidence.
 

@@ -86,18 +86,24 @@ and [original plan](ai-harness/PLAN-CODEX-HARNESS.md). The next proposed work is
 organized in the [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md).
 Remaining qualification:
 
+- **H024 priority:** fix slow control/status observation holding the shared
+  lifecycle lock beyond MiMo's guard deadline. Revalidate identities before
+  publication; retain the guard and race tests. See the
+  [measured defect and repair proposal](reports/h024-acceptance02-20260928/CONTROL-REFRESH-FUTURE-FIX.md).
+
 - Repair Codex's parameterless image-tool calls before re-enabling its image
   flag. The bounded repeat supplied `__v=0`, failed twice and dispatched no image
   jobs; simpler namespace aliases did not qualify it. Preserve MiniMax images.
-- Improve the “Legacy response” label for new messages lacking phase metadata;
-  qualify final/progress separation without inventing a reasoning trace.
+- H024 deployed the clearer “Assistant response” label. Complete live
+  final/progress qualification without inventing a reasoning trace.
 - Investigate the PDF workflow's early completion. Two retained attempts failed
   despite successful extraction; do not turn repeated prompting into a PASS.
-- Qualify live compaction and recall through an owned test path. Native protocol
-  fixtures passed, but the deployed app has no short forced-compaction entrypoint.
+- Qualify live compaction and recall through H024's deployed owned action.
+  Native protocol and durable retry fixtures passed.
   Avoid a large prefill merely to trigger the production threshold.
-- After the separate near-950K benchmark is reviewed and settled, fix the existing
-  MiniMax-to-MiMo validation failure and qualify Codex frontier delegation.
+- Recover MiMo after the control repair, then qualify MiniMax and Codex frontier
+  delegation. H024 repaired the observed medium-effort mapping offline; no live
+  MiMo acceptance pass is claimed. Preserve the near-950K failure evidence.
 - Qualify Codex on Qwen1 without bypassing its current-generation metadata guard.
 - Qualify native media recognition separately from specialist image tools.
 - If optimizing Codex latency, first measure gateway validation, tokenization,

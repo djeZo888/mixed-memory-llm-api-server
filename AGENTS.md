@@ -1,5 +1,11 @@
 # Sova current task — H024 Codex implementation
 
+**Bounded execution closed.** Both final worker sessions exited cleanly by
+18:38:41 UTC. The reviewed app is deployed, but Codex's full live qualification
+is incomplete and MiMo is absent. Read `reports/h024-codex-checkpoint.md` and
+`reports/h024-codex-results.json`. Do not restart the expired window or repeat
+tests automatically; the next work needs a newly assigned bounded task.
+
 The user authorizes a separate two-hour Codex implementation window after H023:
 **September 28, 2026, 16:52–18:52 UTC (18:52–20:52 Ljubljana).** Root plans,
 reviews, integrates and publishes. mac-worker1 and mac-worker2 perform coding,
@@ -13,7 +19,11 @@ and the single combined ai-harness deployment. Agree shared provider interfaces
 before edits. Root reviews combined source before deployment; ordinary assigned
 edits and focused checks are already authorized.
 
-All four models are resident and H023 work has settled. Keep MiMo Pro-RL at
+H023 work has settled. At H024's start all four models were resident; MiMo
+later stopped at 18:04:30 UTC after a canonical-lease guard timeout. Do not
+treat its static qualification receipt as current readiness or blindly restart
+it. See `reports/h024-acceptance02-20260928/CONTROL-REFRESH-FUTURE-FIX.md`.
+Keep MiMo Pro-RL configured at
 950,000 configured tokens, both Qwens at 480,000 and the existing Full HD image
 profile, with the same weights, runtimes and GPU assignments. No 950K test,
 thermal retest, new model, hosted fallback, driver/runtime upgrade, GLM
@@ -28,11 +38,11 @@ qualify Codex capability by capability. Do not accept arbitrary changed runtime
 identity, hide tool failures, strip unexplained arguments or silently rescue a
 failed acceptance prompt. Record PASS, FAIL and NOT_TESTED honestly.
 
-CHA_FAN3 was commanded and read back at 100%. Physical speed increase remains
-unproven because raw tach decreased from 5040 to 2760. Other fan settings are
-unchanged. Existing integrated GPU fan boost and the 85°C guard remain. Returning
-to the user's 75% baseline requires fresh third-GPU idle/below-65°C proof and an
-exact scoped BMC action. No fan sweep or permanent BMC controller belongs here.
+The user removed CHA_FAN3's CPU-temperature source and physically confirmed that
+cycling stopped. Preserve this working setting. H024 Worker1 made no BMC writes;
+the requested GPU-driven 40% below 70°C / 80% at or above 70°C policy remains
+unimplemented. Existing integrated GPU fan boost and the 85°C guard remain.
+No fan sweep or permanent BMC controller belongs here.
 
 Initial implementation sessions last at most 50 minutes, followed by fresh
 integration/acceptance sessions. Reserve the final 15 minutes for settlement,
