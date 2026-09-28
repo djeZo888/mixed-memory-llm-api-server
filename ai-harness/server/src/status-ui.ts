@@ -21,6 +21,8 @@ function modelDetails(s){
   const c=s.configured_model,o=s.observed_model||{};
   return ["Configured model: "+c.display_name+" · instance: "+c.instance_name,
     "Expected alias: "+c.expected_alias+" · selection: "+s.selection,
+    "Observed configured context: "+(s.configured_context_tokens??"unknown")+" tokens",
+    ...(s.service_id==="qwen-ada200k"?["Functional qualification: "+(s.freshness==="fresh"?String(s.functional_qualified??"unknown"):"unknown")+" · Separate from native readiness"]:[]),
     ...(s.selection_conflict?["Selection conflict: nonselected instance reports ready"]:[]),
     "Observed model: "+(o.model_alias||"unknown")+" · identity: "+s.identity_status,
     "Observed instance: "+(o.node_id||"unknown")+" / "+(o.service_id||"unknown")+" · deployment: "+(o.deployment_id||"unknown"),

@@ -36,6 +36,7 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
       evidence_source: "native-service" as const,
       ready: usable ? native.ready : null,
       admitting: usable ? native.admitting : null,
+      functional_qualified: usable ? native.functional_qualified : null,
       current_state: selection === "dormant" ? "dormant" : identity === "mismatch" ? "mismatch" : usable ? native.availability : "unknown",
       health: usable ? native.ready === true ? "ready" : native.ready === false ? "not_ready" : "unknown" : "unknown",
     };

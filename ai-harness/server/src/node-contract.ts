@@ -243,6 +243,7 @@ export function sanitizeNode(raw: unknown, nodeId: string, serviceIds: readonly 
       ),
       ready: bool(s.ready),
       admitting: bool(s.admitting),
+      functional_qualified: bool(s.functional_qualified),
       required_gpu_uuids: (Array.isArray(s.required_gpu_uuids)
         ? s.required_gpu_uuids
         : []

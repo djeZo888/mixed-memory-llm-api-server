@@ -105,6 +105,22 @@ test("separate Ada 200K instance stays visible without invented observation or a
     assert.equal(targets.json().targets.some((t: any) => t.service_id === "qwen-ada200k"), false);
   } finally { await service.app.close(); }
 });
+test("Ada native readiness and context do not imply functional qualification or routing", async () => {
+  const raw = vm();
+  raw.services.push({ ...obs, service_id: "qwen-ada200k", model_alias: "qwen3.8-27b-ada200k",
+    ready: true, admitting: null, functional_qualified: false, availability: "available",
+    configured_context_tokens: 200000, required_gpu_uuids: ["GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"] });
+  const service = createStatusService({ backends: { "ai-vm": backend(raw) }, autoPoll: false });
+  try {
+    await service.caches["ai-vm"]!.poll();
+    const ada = service.snapshot()[0]!.services.find(s => s.service_id === "qwen-ada200k")!;
+    assert.equal(ada.ready, true);
+    assert.equal(ada.functional_qualified, false);
+    assert.equal(ada.configured_context_tokens, 200000);
+    assert.equal(ada.admitting, null);
+    assert.equal(ada.endpoint_ref, null);
+  } finally { await service.app.close(); }
+});
 test("exact shared v1 fixture preserves nullable identities, independent metrics and no invented capability", () => {
   const shared = fixture("node-status-v1"),
     parsed = sanitizeNode(shared, "ai-vm");
