@@ -38,7 +38,9 @@ Writes occur only when command differs from actual curve readback. The held/name
 controller lock and stop flag are checked immediately at the PUT send boundary;
 a stop during sampling cancels any lowering command. Local durable-state and
 credential errors are not classified as recoverable network outages. Complete
-readback validates other-zone/mode/source/knots invariant before/after writes.
+readback validates schema and the version2 target/mode/source/knots invariant
+before/after writes. Other-zone configured changes are bounded audit evidence,
+not blockers or attributed writes. See H025-FAN04-MIGRATION.md.
 Overwrite/mismatch durably latches `blocked.json` (file and parent-directory
 fsync) BEFORE one safe-high attempt; source
 or invariant drift cannot pass the safe-high precondition. Subsequent starts
@@ -119,11 +121,11 @@ sandbox, service identity, lock, invariant or status-contract changes.
 
 Systemd creates `/var/lib/sova-cha-fan3` and its controller.lock, baseline.json,
 status.json, pending-write.json (last scoped write intent/result), uncertain-write.json
-(only after uncertainty), and blocked.json (only on confirmed integrity fault). Baseline preserves first observed
-settings apart from the four controlled duties/dynamic LastTemp fields and
-non-target LastSource observations. Live read-only evidence showed unusedPWM8
-LastSource changing0->2 with every source mask/mode/curve unchanged. The actual
-/source configuration stays immutable; targetPWM4 LastSource0 remains mandatory.
+(only after uncertainty), and blocked.json (only on confirmed integrity fault). Baseline version2 preserves only the target row (controlled duties normalized),
+global FanMode, exact target source entry/bits and target LastSource. Full fresh
+pre/post PUT snapshots and bounded non-target configuration differences are
+private atomic replacement receipts. Existing unversioned/v1 state requires
+explicit reviewed migration; it is never silently projected or accepted.
 
 Capture idle startup80, then30second fresh-cool transition40, with independent
 readback/tach after settling. Check no external overwrite; stop/restart once

@@ -1,0 +1,1173 @@
+{
+  "/api/fanctrl/PWM": [
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 35,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 35,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 60,
+          "Temp": 55,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 60,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone1(CPU_FAN & CPU_OPT)",
+      "PWMNum": 0,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 30,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 30,
+          "Temp": 30,
+          "index": 1
+        },
+        {
+          "Duty": 50,
+          "Temp": 35,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 40,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone2(CHA_FAN1)",
+      "PWMNum": 1,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 25,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 25,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 50,
+          "Temp": 55,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 60,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone3(CHA_FAN2)",
+      "PWMNum": 2,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 40,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 40,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 40,
+          "Temp": 90,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone4(CHA_FAN3)",
+      "PWMNum": 3,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 25,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 25,
+          "Temp": 35,
+          "index": 1
+        },
+        {
+          "Duty": 55,
+          "Temp": 40,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 45,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone5(CHA_FAN4)",
+      "PWMNum": 4,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 30,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 30,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 60,
+          "Temp": 50,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 55,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 20,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 40,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 70,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone6(CHA_FAN5)",
+      "PWMNum": 5,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 100,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 100,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 100,
+          "Temp": 60,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 100,
+          "Temp": 20,
+          "index": 0
+        },
+        {
+          "Duty": 100,
+          "Temp": 45,
+          "index": 1
+        },
+        {
+          "Duty": 100,
+          "Temp": 65,
+          "index": 2
+        },
+        {
+          "Duty": 100,
+          "Temp": 70,
+          "index": 3
+        },
+        {
+          "Duty": 100,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "Zone7(W_PUMP+)",
+      "PWMNum": 6,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    },
+    {
+      "CurrentPWMdata": [
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 0
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 1
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 2
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 3
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "GenericPWMdata": [
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 0
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 1
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 2
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 3
+        },
+        {
+          "Duty": 0,
+          "Temp": 100,
+          "index": 4
+        }
+      ],
+      "PWMName": "N/A",
+      "PWMNum": 7,
+      "PWMSrc": 0,
+      "TCCMax": 100
+    }
+  ],
+  "/api/fanctrl/last_source": {
+    "PWM1_LastSource": 0,
+    "PWM1_LastTemp": 43,
+    "PWM2_LastSource": 12,
+    "PWM2_LastTemp": 33,
+    "PWM3_LastSource": 0,
+    "PWM3_LastTemp": 43,
+    "PWM4_LastSource": 0,
+    "PWM4_LastTemp": 43,
+    "PWM5_LastSource": 5,
+    "PWM5_LastTemp": 36,
+    "PWM6_LastSource": 0,
+    "PWM6_LastTemp": 43,
+    "PWM7_LastSource": 0,
+    "PWM7_LastTemp": 43,
+    "PWM8_LastSource": 2,
+    "PWM8_LastTemp": 47
+  },
+  "/api/fanctrl/mode": {
+    "FanMode": 4
+  },
+  "/api/fanctrl/source": {
+    "FanSourceList": [
+      {
+        "Current": 1,
+        "Name": "CPU_FAN & CPU_OPT",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM1",
+        "Visible": 0
+      },
+      {
+        "Current": 36864,
+        "Name": "CHA_FAN1",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM2",
+        "Visible": 1
+      },
+      {
+        "Current": 1,
+        "Name": "CHA_FAN2",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM3",
+        "Visible": 1
+      },
+      {
+        "Current": 0,
+        "Name": "CHA_FAN3",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM4",
+        "Visible": 1
+      },
+      {
+        "Current": 2040,
+        "Name": "CHA_FAN4",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM5",
+        "Visible": 1
+      },
+      {
+        "Current": 1,
+        "Name": "CHA_FAN5",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM6",
+        "Visible": 1
+      },
+      {
+        "Current": 1,
+        "Name": "W_PUMP+",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM7",
+        "Visible": 1
+      },
+      {
+        "Current": 16777215,
+        "Name": "UNKNOWN",
+        "Option": [
+          {
+            "key": "CPU Package Temp",
+            "value": 0
+          },
+          {
+            "key": "TR1 Temperature",
+            "value": 1
+          },
+          {
+            "key": "LAN Temp",
+            "value": 2
+          },
+          {
+            "key": "DIMMA1_Temp",
+            "value": 3
+          },
+          {
+            "key": "DIMMB1_Temp",
+            "value": 4
+          },
+          {
+            "key": "DIMMC1_Temp",
+            "value": 5
+          },
+          {
+            "key": "DIMMD1_Temp",
+            "value": 6
+          },
+          {
+            "key": "DIMME1_Temp",
+            "value": 7
+          },
+          {
+            "key": "DIMMF1_Temp",
+            "value": 8
+          },
+          {
+            "key": "DIMMG1_Temp",
+            "value": 9
+          },
+          {
+            "key": "DIMMH1_Temp",
+            "value": 10
+          },
+          {
+            "key": "PCIE01 Temp",
+            "value": 11
+          },
+          {
+            "key": "PCIE02 Temp",
+            "value": 12
+          },
+          {
+            "key": "PCIE03 Temp",
+            "value": 13
+          },
+          {
+            "key": "PCIE04 Temp",
+            "value": 14
+          },
+          {
+            "key": "PCIE05 Temp",
+            "value": 15
+          },
+          {
+            "key": "PCIE06 Temp",
+            "value": 16
+          },
+          {
+            "key": "PCIE07 Temp",
+            "value": 17
+          }
+        ],
+        "PWM": "PWM8",
+        "Visible": 0
+      }
+    ],
+    "PWM1_1": 1,
+    "PWM1_2": 0,
+    "PWM1_3": 0,
+    "PWM2_1": 0,
+    "PWM2_2": 144,
+    "PWM2_3": 0,
+    "PWM3_1": 1,
+    "PWM3_2": 0,
+    "PWM3_3": 0,
+    "PWM4_1": 0,
+    "PWM4_2": 0,
+    "PWM4_3": 0,
+    "PWM5_1": 248,
+    "PWM5_2": 7,
+    "PWM5_3": 0,
+    "PWM6_1": 1,
+    "PWM6_2": 0,
+    "PWM6_3": 0,
+    "PWM7_1": 1,
+    "PWM7_2": 0,
+    "PWM7_3": 0,
+    "PWM8_1": 255,
+    "PWM8_2": 255,
+    "PWM8_3": 255
+  }
+}

@@ -219,13 +219,25 @@ class BMC:
             self.cookies.clear()
 
 def shape(s):
+    try:
+        return _shape(s)
+    except (KeyError, TypeError, IndexError, AttributeError, ValueError):
+        raise Fault('malformed_fan_snapshot') from None
+
+def _shape(s):
     mode, pwm, source, last = [s[p] for p in PATHS]
     if mode.get('FanMode') != 4 or type(pwm) is not list or len(pwm) != 8:
         raise Fault('mode_or_zone_count')
+    if any(type(r) is not dict for r in pwm) or any(type(x) is not dict for x in (mode, source, last)):
+        raise Fault('malformed_fan_snapshot')
     t = pwm[3]
+    if sum(r.get('PWMNum') == 3 for r in pwm) != 1:
+        raise Fault('channel_identity')
     if sum(r.get('PWMName') == 'Zone4(CHA_FAN3)' for r in pwm) != 1 or (t.get('PWMName'), t.get('PWMNum'), t.get('PWMSrc')) != ('Zone4(CHA_FAN3)', 3, 0):
         raise Fault('channel_identity')
-    listed = [r for r in source.get('FanSourceList', []) if r.get('PWM') == 'PWM4' and r.get('Name') == 'CHA_FAN3']
+    listed = [r for r in source['FanSourceList'] if r.get('PWM') == 'PWM4' or r.get('Name') == 'CHA_FAN3']
+    if len(listed) != 1 or (listed[0].get('PWM'), listed[0].get('Name')) != ('PWM4', 'CHA_FAN3'):
+        raise Fault('channel_identity')
     if (any(source.get(k) != 0 for k in ('PWM4_1', 'PWM4_2', 'PWM4_3'))
             or len(listed) != 1 or listed[0].get('Current') != 0 or last.get('PWM4_LastSource') != 0):
         raise Fault('user_disabled_sources_changed')
@@ -238,11 +250,26 @@ def shape(s):
     return duties[0]
 
 def invariant(s):
-    s = copy.deepcopy(s)
     shape(s)
-    for p in s[PATHS[1]][3]['CurrentPWMdata'][:4]:
-        p['Duty'] = None
-    return configuration_only(s)
+    target = copy.deepcopy(s[PATHS[1]][3])
+    for point in target['CurrentPWMdata'][:4]:
+        point['Duty'] = None
+    source = s[PATHS[2]]
+    return {'schema_version': 2, 'FanMode': s[PATHS[0]]['FanMode'],
+            'array_index': 3, 'target': configuration_only(target),
+            'source': {k: source[k] for k in ('PWM4_1', 'PWM4_2', 'PWM4_3')},
+            'source_entry': copy.deepcopy(next(r for r in source['FanSourceList'] if r['PWM'] == 'PWM4')),
+            'PWM4_LastSource': s[PATHS[3]]['PWM4_LastSource']}
+
+def non_target(s):
+    out = configuration_only(copy.deepcopy(s))
+    out[PATHS[0]].pop('FanMode', None)
+    out[PATHS[1]][3] = None
+    for key in ('PWM4_1', 'PWM4_2', 'PWM4_3'):
+        out[PATHS[2]].pop(key, None)
+    out[PATHS[2]]['FanSourceList'] = [r for r in out[PATHS[2]]['FanSourceList'] if r['PWM'] != 'PWM4']
+    out[PATHS[3]].pop('PWM4_LastSource', None)
+    return out
 
 def configuration_only(v):
     # Last-selected source is observation, not the configured /source mask.
@@ -408,8 +435,10 @@ class Controller:
     def __init__(self, bmc, store):
         self.bmc, self.store = bmc, store
         self.expected = None
-        self.baseline = configuration_only(store.read('baseline.json'))
+        self.baseline = store.read('baseline.json')
         self.proof = store.read('status.json') or {}
+        if type(self.proof.get('readback_duty')) is int:
+            self.expected = self.proof['readback_duty']
         self.readback_at = self.proof.get('readback_at')
         self.stopping = lambda: False
         self.bmc.before_put = self.actuator_guard
@@ -419,8 +448,12 @@ class Controller:
         self.recovering = True
         self.source_sha = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()
         self.host_boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
-    def inspect(self):
+    def inspect(self, receipt=None):
+        if self.baseline is not None and (not isinstance(self.baseline, dict) or self.baseline.get('schema_version') != 2):
+            raise Fault('baseline_migration_required')
         s = self.bmc.snapshot()
+        if receipt:
+            self.store.write(receipt, s)
         duty = shape(s)
         inv = invariant(s)
         if self.baseline is None:
@@ -440,6 +473,10 @@ class Controller:
     def command(self, s, current, desired):
         if desired == current:
             return s, current
+        s, fresh_duty = self.inspect()
+        if fresh_duty != current:
+            raise Fault('competing_writer_or_overwrite')
+        self.store.write('write-pre-snapshot.json', s)
         intent = {'at': utc(), 'before_duty': current, 'desired_duty': desired,
                   'invariant_sha256': digest(self.baseline), 'state': 'prepared'}
         self.store.write('pending-write.json', intent)
@@ -447,7 +484,11 @@ class Controller:
             self.actuator_guard(desired)
             self.bmc.call('PUT', PATHS[1], payload(s, desired))
             self.last_write_at = utc()
-            after, readback = self.inspect()
+            after, readback = self.inspect(receipt='write-post-snapshot.json')
+            self.store.write('non-target-audit.json', {'at': utc(),
+                'before_sha256': digest(s), 'after_sha256': digest(after),
+                'differences': configuration_diff(non_target(s), non_target(after)), 'limit': 32,
+                'attribution': 'unknown'})
             if readback != desired:
                 raise Fault('bmc_write_readback_mismatch')
             self.store.write('pending-write.json', dict(intent, state='verified', readback_at=utc()))

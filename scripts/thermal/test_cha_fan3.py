@@ -14,6 +14,16 @@ from unittest.mock import patch
 spec = importlib.util.spec_from_file_location('fan', Path(__file__).with_name('cha_fan3.py'))
 f = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(f)
+# Worker-local macOS lacks Linux boot_id; only the inert fixture host identity is stubbed.
+_real_read_text = Path.read_text
+def _fixture_read_text(path, *args, **kwargs):
+    if str(path) == '/proc/sys/kernel/random/boot_id':
+        return '17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125'
+    return _real_read_text(path, *args, **kwargs)
+_boot_patch = patch.object(Path, 'read_text', _fixture_read_text)
+def setUpModule(): _boot_patch.start()
+def tearDownModule(): _boot_patch.stop()
+
 BOOT = '17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125'
 
 def snapshot(duty=75):
@@ -142,14 +152,14 @@ class ChannelTests(unittest.TestCase):
         b=copy.deepcopy(a);b[f.PATHS[3]]['PWM8_LastSource']=2
         self.assertEqual(f.invariant(a),f.invariant(b))
         b[f.PATHS[2]]['PWM8_1']=1
-        self.assertNotEqual(f.invariant(a),f.invariant(b))
+        self.assertEqual(f.invariant(a),f.invariant(b))
         b=copy.deepcopy(a);b[f.PATHS[3]]['PWM4_LastSource']=1
         with self.assertRaises(f.Fault):f.invariant(b)
     def test_dynamic_temperature_ignored_only(self):
         a=snapshot();b=copy.deepcopy(a);b[f.PATHS[3]]['PWM4_LastTemp']=55
         self.assertEqual(f.invariant(a),f.invariant(b))
         b[f.PATHS[1]][0]['PWMSrc']=3
-        self.assertNotEqual(f.invariant(a),f.invariant(b))
+        self.assertEqual(f.invariant(a),f.invariant(b))
 
 class ControllerTests(unittest.TestCase):
     def make(self,d=75):
@@ -177,22 +187,52 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make();c.start();b.s[f.PATHS[2]]['PWM4_1']=1
         c.terminal('user_disabled_sources_changed')
         self.assertEqual(b.puts,1);self.assertIn('safe_high_unavailable',c.proof['errors'][0])
-    def test_invariant_mismatch_retains_exact_bounded_path(self):
-        c,b,s=self.make();c.start();b.s[f.PATHS[1]][0]['PWMSrc']=1
+    def test_target_mismatch_retains_exact_bounded_path(self):
+        c,b,s=self.make();c.start();b.s[f.PATHS[1]][3]['review_field']=1
         with self.assertRaisesRegex(f.Fault,'invariant_changed'):c.inspect()
         receipt=s.read('invariant-mismatch.json')
-        self.assertEqual(receipt['differences'],[{'path':'//api/fanctrl/PWM/0/PWMSrc','before':0,'after':1}])
+        self.assertEqual(receipt['differences'],[{'path':'/target/review_field','before':None,'after':1}])
         self.assertLess(len(json.dumps(receipt)),4096)
-    def test_old_baseline_keeps_config_excludes_only_observation(self):
-        b=FakeBMC(80);s=MemoryStore();baseline=f.invariant(b.snapshot())
-        baseline[f.PATHS[3]]['PWM8_LastSource']=0;s.write('baseline.json',baseline)
-        b.s[f.PATHS[3]]['PWM8_LastSource']=2
-        c=f.Controller(b,s);c.start();self.assertEqual(b.puts,0)
-        b.s[f.PATHS[2]]['PWM8_1']=1
-        with self.assertRaisesRegex(f.Fault,'invariant_changed'):c.inspect()
-    def test_other_zone_drift_no_write(self):
-        c,b,s=self.make();c.start();b.s[f.PATHS[1]][0]['PWMSrc']=1
-        c.terminal('bmc_invariant_changed');self.assertEqual(b.puts,1)
+    def test_legacy_baseline_requires_explicit_migration(self):
+        for legacy in (snapshot(), {'schema_version':1,'snapshot':snapshot()}):
+            c,b,s=self.make();s.write('baseline.json',legacy);c=f.Controller(b,s)
+            before=copy.deepcopy(s.values)
+            with self.assertRaisesRegex(f.Fault,'baseline_migration_required'):c.inspect()
+            self.assertEqual(s.values,before);self.assertEqual(b.puts,0)
+    def test_actual_six_field_change_allowed_and_audited(self):
+        after=json.loads(Path(__file__).with_name('fan04-snapshot-fixture.json').read_text())
+        before=copy.deepcopy(after)
+        for i,t in ((1,35),(2,40),(3,45)):before[f.PATHS[1]][1]['CurrentPWMdata'][i]['Temp']=t
+        before[f.PATHS[2]]['PWM2_1']=248;before[f.PATHS[2]]['PWM2_2']=151
+        before[f.PATHS[2]]['FanSourceList'][1]['Current']=38904
+        self.assertEqual(f.invariant(before),f.invariant(after))
+        self.assertEqual(len(f.configuration_diff(f.non_target(before),f.non_target(after))),6)
+        c,b,s=self.make(40);b.s=copy.deepcopy(before);c.inspect();original=b.call
+        def concurrent(*args):
+            original(*args)
+            duty=f.shape(b.s);b.s=copy.deepcopy(after)
+            for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=duty
+        with patch.object(b,'call',side_effect=concurrent):self.assertEqual(c.high(),80)
+        self.assertEqual(len(s.read('non-target-audit.json')['differences']),6)
+        self.assertEqual(s.read('write-pre-snapshot.json'),before)
+        self.assertEqual(f.shape(s.read('write-post-snapshot.json')),80)
+        for _ in range(40):c.inspect()
+        self.assertLessEqual(len(s.values),6)
+    def test_other_zone_change_before_safe_high(self):
+        c,b,s=self.make(40);c.inspect();b.s[f.PATHS[1]][0]['PWMSrc']=1
+        self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+    def test_duplicate_target_and_malformed_shape_block(self):
+        for mutate in (lambda x:x[f.PATHS[1]][0].update(PWMNum=3),
+                       lambda x:x[f.PATHS[2]]['FanSourceList'].append({'PWM':'PWM4','Name':'other','Current':0}),
+                       lambda x:x[f.PATHS[1]].__setitem__(0,None),
+                       lambda x:x.pop(f.PATHS[3])):
+            x=snapshot();mutate(x)
+            with self.assertRaises(f.Fault):f.invariant(x)
+    def test_fresh_pre_put_duty_drift_blocks(self):
+        c,b,s=self.make(40);old=b.snapshot();c.inspect()
+        for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=60
+        with self.assertRaisesRegex(f.Fault,'competing_writer'):c.command(old,40,80)
+        self.assertEqual(b.puts,0)
     def test_readback_mismatch_latches_bounded(self):
         c,b,s=self.make();b.reject=True
         with self.assertRaisesRegex(f.Fault,'write_uncertain'):c.start()
@@ -220,7 +260,7 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make(40);c.start();c.recovering=False
         for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
         c.expected=40;original=b.snapshot
-        with patch.object(b,'snapshot',side_effect=[f.Fault('bmc_transport_unavailable'),original(),snapshot(80)]):
+        with patch.object(b,'snapshot',side_effect=[f.Fault('bmc_transport_unavailable'),original(),original(),snapshot(80)]):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(c.proof['state'],'degraded_high')
         self.assertEqual(c.proof['readback_duty'],80)
