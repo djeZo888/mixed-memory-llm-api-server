@@ -1,7 +1,7 @@
 # Sova
 
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax and optional Codex agent runtimes, two Qwen text instances, a selectable
+chat/task harness, MiniMax and optional Codex agent runtimes, three configured Qwen text instances, a selectable
 frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
@@ -36,6 +36,9 @@ the deployed follow-up changes and remaining live qualification failures.
 The [H025 fan-control and load-test report](reports/h025-overview.md) records the
 deployed GPU fan policies, improved sampled temperatures, measured power and the
 remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
+The [H028 added-Ada and status report](reports/h028-overview.md) records the fifth
+GPU, a separate Qwen 200K API, its 16K benchmark, and recovery from the NIC change.
+The new Ada instance is not yet part of harness routing.
 The [H020 status repair](docs/h020-results.md) now separates configured models,
 selected frontier and fresh native identity, with measured GPU UUID dependency
 joins. The status-only deployment preserves the running model services.
@@ -61,6 +64,7 @@ flowchart TB
         Control["Deterministic text lifecycle control"]
         Q0["Qwen text instance 0 / fast Blackwell"]
         Q1["Qwen text instance 1 / Server Blackwell"]
+        Q2["Qwen text instance 2 / new Ada / separate 200K API"]
         Frontier["Selected frontier: MiMo or GLM / CPU experts + fast Blackwell"]
         Image["Separate image API and Qwen-Image service / Ada"]
     end
@@ -91,6 +95,7 @@ flowchart TB
     Node --> Control
     Node --> Image
     Node --> Frontier
+    Node -. observes .-> Q2
     Control --> Q0
     Control --> Q1
     User -.-> LB
@@ -142,6 +147,7 @@ Current availability comes from the status API; the measurements below are dated
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
+| Qwen Ada | 200,000 allocated | `http://10.156.100.60:30014/v1` | Separate API, tested through 15,625 input tokens; harness routing deferred |
 | MiMo V2.6 Pro-RL | 950,000 configured target | `http://10.156.100.60:30012/v1` | Selected but not resident; recovery and delegation repair pending |
 | GLM-5.3-Flash | 1,048,576 retained profile | `http://10.156.100.60:30010/v1` | Dormant alternative, not the running frontier |
 

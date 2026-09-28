@@ -1,0 +1,14 @@
+{
+  "task": "H028-ACCEPT01",
+  "native_session_id": "01a0ea69-01ff-7eb0-8214-f1fa6bf71f45",
+  "started_at": "2026-09-28T23:45:45.401703+00:00",
+  "hard_deadline": "2026-09-29T00:00:45.401703+00:00",
+  "finished_at": "2026-09-28T23:54:36Z",
+  "exit_code": 0,
+  "source_head": "fc7c12167c01c73ca516ecd0ad0e5bc50b63856f",
+  "bundle_sha256": "cbb2e4b63ddb5242737322d4dbf42915b79cff24a9b589a96d1d46e0f9f689aa",
+  "owned_pending_work": false,
+  "w2_inference_requests": 0,
+  "w2_ai_vm_mutations": 0,
+  "final_report_sha256": "bcaaeb917cd66eb9fbec3243e0a62bce78f075ac2bce8356029861378916de44"
+}

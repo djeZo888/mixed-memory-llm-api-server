@@ -1,15 +1,30 @@
-# Active H028 — added Ada and status recovery
+# Latest checkpoint — H028 complete; dedicated Ada Qwen resident
 
-The user confirmed both VMs are reachable after the MAC-based NIC-name fix and
-requests verification/fan control for the new Ada, an explicitly authorized third Qwen at200K with7%
-reserve, and status-page repair. This new scope supersedes H026/H027's closed
-windows. Read `docs/h028-added-ada-status-plan.md`. Root coordinates/reviews;
-W1 owns ai-vm writes; W2 owns ai-harness status recovery/source and coordinates
-ai-vm patches with W1. Fresh bounded native worker sessions, isolated copies.
-Window ends September29 00:10UTC; stop new inference00:00, report gaps honestly.
-No frontier repair, driver/ECC/power changes or broad stress/context benchmarking.
+September 29, 2026, Europe/Ljubljana. Read `reports/h028-overview.md` and its
+deployment/acceptance receipts. Five GPUs now have fresh status metrics with
+current PCI addresses. The added Ada runs `qwen3.8-27b-ada200k` with 200,000
+configured/allocated tokens at authenticated `http://10.156.100.60:30014/v1`.
+Measured 15,625 input / 446 output: 24.202 s total, 4.557 s TTFT, 22.70 output
+tokens/s, at least 9.87% free VRAM, peak 61 C; loaded Gen4 x16 verified.
+Restart/tool continuation and independent LAN auth/readiness checks passed.
+Full 200K occupied input, natural Ada fan threshold and whole-VM boot are untested.
 
-# Latest checkpoint — H026 complete; both guests shut down
+NIC recovery restored private status feeds and CHA_FAN3's healthy idle 40%.
+New Ada joins the existing NVIDIA 70/65 C fan hysteresis. CHA_FAN1 is exclusively
+user/BMC-controlled. Bounded recurring transport recovery includes all seven
+private listeners. Disabled/masked units remain respected; no automatic model
+repair. New Ada starts after the existing potentially long boot job.
+
+Only the new Ada model is resident. Previous Qwens/image were stopped after the
+hardware reboot and remain stopped; selected MiMo is unavailable. Status shows
+actual state. Shared 480K harness routing and all upper integration are explicitly
+deferred. Do not restart old models, repair frontier, replay benchmarks or revive
+expired H028 windows automatically. Both final native worker sessions exited 0
+at 23:54 UTC September 28, with no pending inference. Root reviewed/published;
+workers implemented, tested and operated VMs. Continue on feature/glm53-flash /
+draft PR10; do not merge incomplete Codex/frontier work into main.
+
+# Previous checkpoint — H026 complete; both guests shut down
 
 H026 measured both warm Qwen GPUs at 600/550/500/600 W, plus one discarded
 warm-up per card. All ten requests settled at 21:18:54 UTC on September 28,

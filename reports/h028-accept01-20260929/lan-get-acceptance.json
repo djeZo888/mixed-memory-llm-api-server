@@ -1,0 +1,59 @@
+{
+  "utc": "2026-09-28T23:49:55.236307+00:00",
+  "origin": "ai-harness",
+  "endpoint": "10.156.100.60:30014",
+  "credentialReadInGuestOnly": true,
+  "requests": [
+    {
+      "path": "/v1/models",
+      "authenticated": true,
+      "http": 200,
+      "body": {
+        "object": "list",
+        "data": [
+          {
+            "id": "qwen3.8-27b-ada200k",
+            "object": "model",
+            "created": 1790639395,
+            "owned_by": "sglang",
+            "root": "qwen3.8-27b-ada200k",
+            "parent": null,
+            "max_model_len": 200000
+          }
+        ]
+      },
+      "eof": true
+    },
+    {
+      "path": "/v1/readiness",
+      "authenticated": true,
+      "http": 200,
+      "body": {
+        "schema_version": 1,
+        "model_alias": "qwen3.8-27b-ada200k",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      },
+      "eof": true
+    },
+    {
+      "path": "/v1/models",
+      "authenticated": false,
+      "http": 401,
+      "body": {
+        "error": "Unauthorized"
+      },
+      "eof": true
+    },
+    {
+      "path": "/v1/readiness",
+      "authenticated": false,
+      "http": 401,
+      "body": {
+        "error": "Unauthorized"
+      },
+      "eof": true
+    }
+  ]
+}
