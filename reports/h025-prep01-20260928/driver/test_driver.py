@@ -133,6 +133,17 @@ class Contracts(unittest.TestCase):
             with self.assertRaises(Refusal):validate_go(bad,m,'B','f'*64,c()['utc'])
         c.advance(390)
         with self.assertRaises(Refusal):validate_go(g,m,'B','f'*64,c()['utc'])
+        # Latest source-only clock authority; no live grant is produced.
+        current={**g,'not_before_utc':'2026-09-28T20:35:30Z',
+                 'admission_deadline_utc':'2026-09-28T20:42:00Z',
+                 'settlement_deadline_utc':'2026-09-28T20:58:00Z'}
+        validate_go(current,m,'B','f'*64,'2026-09-28T20:36:00Z')
+        with self.assertRaisesRegex(Refusal,'GO settlement bound'):
+            validate_go({**current,'settlement_deadline_utc':'2026-09-28T21:00:00Z'},m,'B','f'*64,'2026-09-28T20:36:00Z')
+        for changed in ({'not_before_utc':'2026-09-28T20:35:31Z','admission_deadline_utc':'2026-09-28T20:42:01Z'},
+                        {'settlement_deadline_utc':'2026-09-28T21:00:01Z'}):
+            with self.assertRaisesRegex(Refusal,'H025 absolute cutoff'):
+                validate_go({**current,**changed},m,'B','f'*64,'2026-09-28T20:36:00Z')
     def test_flash_canonical_matches_retained_native_normalizer(self):
         import importlib.util
         path=HERE.parents[2]/'scripts/runtime/flash/tokenize_adapter.py'

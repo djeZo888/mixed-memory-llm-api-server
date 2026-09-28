@@ -1,11 +1,69 @@
 """Finite threaded H025 phase runner. Adapter is fixed NativeAdapter or offline fake."""
 import contextlib
+import errno
 import json
 import threading
 import time
 import uuid
 from contract import TEXT, Refusal, image_body, text_body
 from primitives import capture_text, capture_image
+
+# Static allowlist: exception messages, filenames and arbitrary codes never
+# enter the monitoring receipt. Unknown values remain explicit but sanitized.
+_STORAGE_CODES = frozenset({
+    'invalid_registered_storage_device',
+    'invalid_storage_directory',
+    'invalid_storage_file_or_hardlink',
+    'invalid_storage_guard_roles',
+    'invalid_storage_guard_snapshot',
+    'invalid_storage_json',
+    'invalid_storage_mountinfo',
+    'registered_storage_bytes_changed',
+    'registered_storage_file_changed',
+    'registered_storage_file_too_large',
+    'registered_storage_identity_changed',
+    'registered_storage_mount_ambiguous',
+    'registered_storage_mount_changed',
+    'registered_storage_mount_identity_changed',
+    'registered_storage_mount_lost',
+    'registered_storage_path_changed',
+    'storage_anchor_closed',
+    'storage_anchor_device_mismatch',
+    'storage_anchor_outside_registered_roots',
+    'storage_directory_crosses_filesystem',
+    'storage_directory_detached_or_replaced',
+    'storage_directory_identity_changed',
+    'storage_file_closed',
+    'storage_file_crosses_filesystem',
+    'storage_file_detached_or_replaced',
+    'storage_guard_closed',
+    'storage_guard_roles_changed',
+    'storage_json_too_large',
+    'storage_mountinfo_too_large',
+    'storage_mountinfo_unavailable',
+    'storage_path_verifier_required',
+    'storage_promotion_identity_changed',
+    'storage_read_must_be_bounded',
+    'storage_role_not_verified',
+    'storage_write_no_progress',
+    'unprotected_storage_owner_or_mode',
+    'unsafe_storage_anchor_path',
+    'unsafe_storage_create_mode',
+    'unsafe_storage_open_flags_or_mode',
+    'unsafe_storage_relative_path',
+})
+
+def monitor_error(exc, stage):
+    kind=type(exc).__name__
+    if kind not in ('StorageIOError','OSError','FileNotFoundError','PermissionError',
+                    'TimeoutError','Refusal','ValueError','KeyError','TypeError'):
+        kind='Exception'
+    code=getattr(exc,'code',None)
+    code=code if isinstance(code,str) and code in _STORAGE_CODES else 'unclassified'
+    number=getattr(exc,'errno',None)
+    number=number if type(number) is int and number in errno.errorcode else None
+    stage=stage if stage in ('sample','monitoring_tick') else 'monitor'
+    return kind+':code='+code+':errno='+str(number)+':stage='+stage
 
 class Runner:
     def __init__(self, phase, adapter, sleep=time.sleep):
@@ -91,11 +149,13 @@ class Runner:
     def monitor(self):
         due=self.p.clock()['monotonic']
         while not self.finished.is_set():
+            stage='sample'
             try:
                 self.p.observe(self.a.sample(due))
+                stage='monitoring_tick'
                 self.p.monitoring_tick()
             except Exception as exc:
-                self.p.fail('monitor_or_owner_read_failed:'+type(exc).__name__)
+                self.p.fail('monitor_or_owner_read_failed:'+monitor_error(exc,stage))
             finally:
                 # Persistence/sample failure cannot skip exact owned settlement.
                 self.dispatch_stops()

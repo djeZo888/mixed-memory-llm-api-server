@@ -142,7 +142,7 @@ def validate_go(go, m, phase, package_sha256, now_utc):
     require(utc_seconds(go['not_before_utc']) <= now < utc_seconds(go['admission_deadline_utc']), 'GO expired/not yet valid')
     require(0 < utc_seconds(go['admission_deadline_utc']) - utc_seconds(go['not_before_utc']) <= 390,
             'GO preparation plus admission window exceeds390s bound')
-    require(utc_seconds(go['admission_deadline_utc'])<=utc_seconds('2026-09-28T20:22:00Z') and utc_seconds(go['settlement_deadline_utc'])<=utc_seconds('2026-09-28T20:40:00Z'),'H025 absolute cutoff')
+    require(utc_seconds(go['admission_deadline_utc'])<=utc_seconds('2026-09-28T20:42:00Z') and utc_seconds(go['settlement_deadline_utc'])<=utc_seconds('2026-09-28T21:00:00Z'),'H025 absolute cutoff')
     require(utc_seconds(go['admission_deadline_utc']) < utc_seconds(go['settlement_deadline_utc']) <=
             utc_seconds(go['admission_deadline_utc']) + m['bounds']['settlement_seconds'], 'GO settlement bound')
     require(utc_seconds(go['settlement_deadline_utc'])-utc_seconds(go['admission_deadline_utc']) >= m['bounds']['request_seconds']+60,

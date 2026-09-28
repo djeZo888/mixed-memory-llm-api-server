@@ -377,7 +377,30 @@ def sample(a,due):
 
 def read_fan_mirror(a):
     path=Path(a.m['fan_status_path'])
+    # Keep one guarded anchor. Only confirmed namespace replacement permits a
+    # fresh read; shared storage I/O continues to reject the detached old fd.
+    from install.storage_io import StorageIOError
+    def snapshot_stat(root):
+        info=root.stat(path.name)
+        if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+            raise StorageIOError('invalid_storage_file_or_hardlink')
+        if info.st_uid != root.uid or info.st_mode & 0o077:
+            raise StorageIOError('unprotected_storage_owner_or_mode')
+        return info.st_dev,info.st_ino
     with a.root_cls(str(path.parent),a.guard) as root:
-        value=root.read_json(path.name)
+        for attempt in range(3):
+            before=snapshot_stat(root)
+            try:
+                value=root.read_json(path.name)
+                break
+            except StorageIOError as exc:
+                if exc.code not in ('invalid_storage_file_or_hardlink',
+                                    'storage_file_detached_or_replaced'):
+                    raise
+                # A guarded, valid new inode is mandatory, even at exhaustion.
+                # Missing names, bad owners/modes/links and mount faults fail.
+                after=snapshot_stat(root)
+                if after == before or attempt == 2:
+                    raise
     require(len(canonical(value))<=70*1024,'fan mirror size bound')
     return value
