@@ -1,3 +1,4 @@
+import { MAX_MESSAGE_CHARACTERS, MAX_MESSAGE_BODY_BYTES } from "./message-limits.js";
 import { codexCapabilities } from "./codex-capabilities.js";
 import Fastify, { type FastifyInstance } from "fastify";
 import multipart from "@fastify/multipart";
@@ -364,15 +365,15 @@ export async function createApp(options: AppOptions): Promise<{
       const attachment = await files.referenceAttachment(id(req),requireId(body.fileId));
       return reply.code(201).send({attachment:store.publicFile(attachment)});
     });
-    app.post("/api/sessions/:id/messages", async (req, reply) => {
+    app.post("/api/sessions/:id/messages", { bodyLimit: MAX_MESSAGE_BODY_BYTES }, async (req, reply) => {
       const body = object(req.body);
       only(body, ["text", "attachmentIds", "imageReferences", "submissionId"]);
       const submissionId = body.submissionId === undefined ? undefined : requireId(body.submissionId);
-      if (typeof body.text !== "string" || body.text.length > 250000)
+      if (typeof body.text !== "string" || body.text.length > MAX_MESSAGE_CHARACTERS)
         throw new ApiError(
           400,
           "invalid_message",
-          "text must be a string of at most 250000 characters",
+          `text must be a string of at most ${MAX_MESSAGE_CHARACTERS} characters`,
         );
       const ids = body.attachmentIds ?? [];
       if (

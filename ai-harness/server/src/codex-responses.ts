@@ -7,7 +7,10 @@ import { StringDecoder } from "node:string_decoder";
 import { ApiError } from "./errors.js";
 import { codexProvider, codexFunctionStrict, type CodexProviderContract } from "./codex-provider.js";
 export const CODEX_VERSION = "0.158.0";
-export const CODEX_CONTEXT = { "qwen3.8-27b": 480000, "mimo-v2.6-pro-rl": 950000 } as const;
+export const CODEX_CONTEXT = {
+    "qwen3.8-27b": codexProvider("qwen3.8-27b").contextWindow,
+    "mimo-v2.6-pro-rl": codexProvider("mimo-v2.6-pro-rl").contextWindow,
+} as const;
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
 const reject = (message: string): never => { throw new ApiError(400, "unsupported_responses_contract", message); };
 function fields(v: Record<string, any>, allowed: string[]) { if (Object.keys(v).some(k => !allowed.includes(k)))

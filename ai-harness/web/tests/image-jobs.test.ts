@@ -218,6 +218,8 @@ describe('image lifecycle and reference boundaries', () => {
       'chat/a',
       'Ordinary message still works',
       [],
+      [],
+      expect.any(String),
     );
     store.dispose();
   });
@@ -255,6 +257,7 @@ describe('image lifecycle and reference boundaries', () => {
       'Edit this image',
       ['file/1'],
       ['generated'],
+      expect.any(String),
     );
     expect(store.getSnapshot().imageReferences['chat/a']).toEqual([]);
     expect(store.getSnapshot().thread?.artifacts).toHaveLength(2);
@@ -294,6 +297,7 @@ describe('image lifecycle and reference boundaries', () => {
       'Use these sources',
       [],
       ['first', 'second'],
+      expect.any(String),
     );
     store.dispose();
   });

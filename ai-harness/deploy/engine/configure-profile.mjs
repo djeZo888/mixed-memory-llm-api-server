@@ -7,9 +7,10 @@ export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investi
 export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
 export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
-// Only the two fixed H035 managed skills have reviewed migration pairs.
+// Only the fixed managed skills have reviewed, byte-exact migration pairs.
 const MANAGED_SKILL_UPDATES = Object.freeze({
-  image: { successor: '98db7d4da3cf4f27f3b4b3f2ec5b271ada2b8bf59cab89ae6fb2c23cd85e294e', predecessors: {
+  image: { successor: '9e503c891570d2c91975348f0954015c5b27fe658dd4926c88919a1c6a43c96d', predecessors: {
+    '98db7d4da3cf4f27f3b4b3f2ec5b271ada2b8bf59cab89ae6fb2c23cd85e294e': '.image-skill-h035-98db7d4d.md',
     '56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01': '.image-skill-h033-56449a3f.md',
     '824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc': '.image-skill-h034-824aba75.md',
   } },
@@ -32,7 +33,7 @@ export const SHARED_SLOT_INSTRUCTIONS = 'Two shared inference slots serve all ch
 
 export const DEFAULT_FRONTIER_PROFILE = Object.freeze({ model: FRONTIER_MODEL, contextWindow: FRONTIER_CONTEXT, maxOutputTokens: 65536 });
 // Exact managed bytes only; support is not capacity qualification or selection.
-export const MIMO_MANAGED_CONTEXTS = Object.freeze([131072, 917504, 950000, 1000000, 1000192, 1048576]);
+export const MIMO_MANAGED_CONTEXTS = Object.freeze([131072, 480000, 917504, 950000, 1000000, 1000192, 1048576]);
 export function selectedFrontierProfile(selection) {
   if (selection?.model === FRONTIER_MODEL) return DEFAULT_FRONTIER_PROFILE;
   if (selection?.model !== 'mimo-v2.6-pro-rl' || selection.mimoEnabled !== true ||

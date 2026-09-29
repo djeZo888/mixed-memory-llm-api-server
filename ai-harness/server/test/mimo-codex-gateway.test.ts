@@ -5,7 +5,7 @@ import {setTimeout as delay} from 'node:timers/promises';
 import {createGateway} from '../src/gateway.js';
 import {MIMO_MODEL,MIMO_RUNTIME,MIMO_ARTIFACT_REVISION,MIMO_ARTIFACT_MANIFEST_SHA256,type MimoQualification} from '../src/mimo.js';
 const d='a'.repeat(64);
-const proof=():MimoQualification=>({qualified:true,evidenceSha256:d,identity:{model:MIMO_MODEL,runtimeRevision:MIMO_RUNTIME,runtimeBuildSha256:d,artifactRevision:MIMO_ARTIFACT_REVISION,artifactManifestSha256:MIMO_ARTIFACT_MANIFEST_SHA256,loadedTensorMetadataSha256:d,loadedTokenizerSha256:d,loadedTemplateSha256:d,serverInstance:'current-native',serverGeneration:'current-generation',actualSlotContext:950000,maxOutputTokens:65536,parallel:1,contextShift:false,speculative:false,mtp:false,multimodal:false,assistantPrefill:false,jinja:true,kvUnified:true,swaFull:false},checks:{artifactBytes:true,nativePrecision:true,allocation:true,reserves:true,templateAndTokenizer:true,textArrayRendering:true,admissionBound:{basis:'pinned-source-s-minus-one',arithmeticFixtures:true,shortNativeCountUsageMatch:true},generationCeiling:{requestedMaxTokens:65536,requestedCeilingAccepted:true,largestCompletedOutputTokens:20},reasoningAndTools:true,singleOwner:true}});
+const proof=():MimoQualification=>({qualified:true,evidenceSha256:d,identity:{model:MIMO_MODEL,runtimeRevision:MIMO_RUNTIME,runtimeBuildSha256:d,artifactRevision:MIMO_ARTIFACT_REVISION,artifactManifestSha256:MIMO_ARTIFACT_MANIFEST_SHA256,loadedTensorMetadataSha256:d,loadedTokenizerSha256:d,loadedTemplateSha256:d,serverInstance:'current-native',serverGeneration:'current-generation',actualSlotContext:480000,maxOutputTokens:65536,parallel:1,contextShift:false,speculative:false,mtp:false,multimodal:false,assistantPrefill:false,jinja:true,kvUnified:true,swaFull:false},checks:{artifactBytes:true,nativePrecision:true,allocation:true,reserves:true,templateAndTokenizer:true,textArrayRendering:true,admissionBound:{basis:'pinned-source-s-minus-one',arithmeticFixtures:true,shortNativeCountUsageMatch:true},generationCeiling:{requestedMaxTokens:65536,requestedCeilingAccepted:true,largestCompletedOutputTokens:20},reasoningAndTools:true,singleOwner:true}});
 const user={type:'message',role:'user',content:[{type:'input_text',text:'Use fixture tool'}]};
 const request={model:MIMO_MODEL,stream:true,store:false,input:[user],tools:[{type:'function',name:'lookup',description:'Fixture tool',strict:true,parameters:{type:'object',properties:{},additionalProperties:false}}],tool_choice:'auto',parallel_tool_calls:true};
 async function until(f:()=>boolean){for(let i=0;i<300;i++){if(f())return;await delay(5);}throw Error('fixture timeout');}
@@ -15,7 +15,7 @@ test('Codex MiMo shares serial admission/count bytes, roundtrips actual reasonin
  const counts:string[]=[],calls:{body:string;res:ServerResponse}[]=[],owners:any[]=[],captures:any[]=[],diagnostics:any[]=[];
  const backend=createServer(async(req,res)=>{const chunks=[];for await(const c of req)chunks.push(c);const raw=Buffer.concat(chunks).toString();assert.equal(req.headers.authorization,'Bearer fixture-mimo');if(req.url?.endsWith('/input_tokens')){counts.push(raw);res.end('{"input_tokens":100}');}else{calls.push({body:raw,res});}});
  await new Promise<void>(r=>backend.listen(0,'127.0.0.1',r));const backendUrl=`http://127.0.0.1:${(backend.address() as any).port}/v1`;
- let scope=true,currentCalls=0;const g=createGateway({upstreamKey:'qwen-key',ownership:{recoveryReady:true,onRequestState:r=>owners.push(r)},availability:()=>({state:'available',dispatch:'allow'}),responses:{enabled:true,frontierAcceptance:id=>scope&&id==='owned-codex',countQwen:async()=>{throw Error('Qwen tokenizer forbidden on MiMo');},onDiagnostic:e=>diagnostics.push(e)},diagnostics:{capture:e=>captures.push(e)},frontier:{provider:'mimo',contextWindow:950000,qualification:proof(),capacity:{published:1048576,configured:950000,allocated:950000,occupiedTested:16384},upstreamKey:'fixture-mimo',fixtureUrl:backendUrl,serialCompletionQualified:true,onRequestState:()=>{},observe:async()=>{throw Error('historical identity observer forbidden');},current:async()=>{currentCalls++;return {qualification:proof(),observe:async()=>proof().identity};}}});
+ let scope=true,currentCalls=0;const g=createGateway({upstreamKey:'qwen-key',ownership:{recoveryReady:true,onRequestState:r=>owners.push(r)},availability:()=>({state:'available',dispatch:'allow'}),responses:{enabled:true,frontierAcceptance:id=>scope&&id==='owned-codex',countQwen:async()=>{throw Error('Qwen tokenizer forbidden on MiMo');},onDiagnostic:e=>diagnostics.push(e)},diagnostics:{capture:e=>captures.push(e)},frontier:{provider:'mimo',contextWindow:480000,qualification:proof(),capacity:{published:1048576,configured:480000,allocated:480000,occupiedTested:16384},upstreamKey:'fixture-mimo',fixtureUrl:backendUrl,serialCompletionQualified:true,onRequestState:()=>{},observe:async()=>{throw Error('historical identity observer forbidden');},current:async()=>{currentCalls++;return {qualification:proof(),observe:async()=>proof().identity};}}});
  t.after(async()=>{await g.close();backend.closeAllConnections();await new Promise<void>(r=>backend.close(()=>r()));});
  const url=await g.app.listen({host:'127.0.0.1',port:0}),token=g.issueToken('owned-codex','codex');
  const send=(body:any)=>fetch(url+'/v1/responses',{method:'POST',headers:{authorization:`Bearer ${token}`,'content-type':'application/json'},body:JSON.stringify(body)});
@@ -28,4 +28,35 @@ test('Codex MiMo shares serial admission/count bytes, roundtrips actual reasonin
 });
 test('MiMo source descriptor does not open frontier without independent acceptance and existing hold',async()=>{
  const g=createGateway({upstreamKey:'q',ownership:{recoveryReady:true,onRequestState:()=>{}},responses:{enabled:true,countQwen:async()=>({inputTokens:1,contextWindow:480000})}});try{const t=g.issueToken('codex','codex');const r=await g.app.inject({method:'POST',url:'/v1/responses',headers:{authorization:`Bearer ${t}`},payload:request});assert.equal(r.statusCode,503);assert.equal(r.json().error.code,'codex_frontier_unqualified');assert.equal(g.sessionWork('codex').length,0);}finally{await g.close();}
+});
+
+
+test('old 950K MiMo gateway configuration rejects before native count or inference under 480K descriptor', async () => {
+ let countOrObserve = 0;
+ const old = proof(); old.identity.actualSlotContext = 950000;
+ const g = createGateway({upstreamKey:'fixture',ownership:{recoveryReady:true,onRequestState:()=>{}},availability:()=>({state:'available',dispatch:'allow'}),
+  responses:{enabled:true,frontierAcceptance:()=>true,countQwen:async()=>{throw Error('not Qwen');}},
+  frontier:{provider:'mimo',contextWindow:950000,qualification:old,
+   capacity:{published:1048576,configured:950000,allocated:950000,occupiedTested:9635},
+   upstreamKey:'fixture',serialCompletionQualified:true,onRequestState:()=>{},
+   observe:async()=>{countOrObserve++;throw Error('must reject before observe/count');}}});
+ try {
+  const token=g.issueToken('owned','codex');
+  const response=await g.app.inject({method:'POST',url:'/v1/responses',headers:{authorization:`Bearer ${token}`},payload:request});
+  assert.equal(response.statusCode,503); assert.equal(countOrObserve,0);
+  assert.equal(await g.confirmSettlement({sessionId:'owned'}),true);
+ } finally {await g.close();}
+});
+
+test('480K MiMo retains the exact S-1 admission boundary and full 65536 output reserve', async () => {
+ const {prepareMimo,countMimo}=await import('../src/mimo.js');
+ const q=proof(), prepared=prepareMimo({model:MIMO_MODEL,messages:[{role:'user',content:'synthetic boundary'}],max_tokens:65536});
+ const count=(tokens:number)=>countMimo(prepared,q,{observe:async()=>q.identity,
+  post:async()=>new Response(JSON.stringify({input_tokens:tokens}))},new AbortController().signal);
+ assert.equal((await count(414463)).promptTokens,414463);
+ await assert.rejects(count(414464),{code:'mimo_context_full'});
+ assert.equal(prepared.outputTokens,65536);
+ const stale={...q.identity,actualSlotContext:950000};
+ await assert.rejects(countMimo(prepared,q,{observe:async()=>stale,
+  post:async()=>{throw Error('must reject stale identity before count');}},new AbortController().signal),{code:'mimo_identity_mismatch'});
 });

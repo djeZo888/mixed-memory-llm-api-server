@@ -35,14 +35,16 @@ function fixture() {
   const read = (name: string) => { if (!documents[name]) throw Error("missing"); return documents[name]; };
   refresh(); return { record, value, review, documents, refresh, bindWorkflows, read };
 }
-test("explicit frontier reuse preserves actual old pins and runs and reports distinct live/reviewed identity", () => {
-  const f = fixture(), before = JSON.stringify(f.value), q = validateCodexSpecialists(f.record, f.read, now);
-  assert.equal(q.frontierResponsesQualified, true); assert.equal(q.imageJobsQualified, false);
-  assert.equal(JSON.stringify(f.value), before); assert.equal(f.value.pins.toolPolicySha256, testedPolicy);
-  assert.deepEqual(f.value.workflows.tool_continuation, f.value.workflows.codex_child);
-  for (const expected of [testedSource, targetSource, testedPolicy, CODEX_SPECIALIST_PINS.toolPolicySha256, f.value.review.sha256,
-    f.record.frontier.sha256, "Reused live", "compatibility reviewed", "reviewed implementation basis", "no new target live execution", "current backend readiness is checked separately", "950000 is configured capacity"])
-    assert.ok(q.capabilities.frontier.reason.includes(expected), expected);
+test("historical compatibility cannot be repinned or relabelled as 480K evidence", () => {
+  const f = fixture(), before = JSON.stringify(f.value);
+  assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
+  assert.equal(JSON.stringify(f.value), before);
+  for (const pins of [f.value.pins, f.review.testedPins, f.review.targetPins]) {
+    pins.frontier.profile.contextWindow = 950000;
+    pins.frontier.profile.autoCompactTokenLimit = 880000;
+  }
+  f.refresh();
+  assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
 });
 test("schema1 current pins pass but original old tool policy cannot implicitly carry", () => {
   const f = fixture(); delete f.value.sourceRevision; delete f.value.review;
@@ -123,8 +125,11 @@ test("frontier compatibility cannot qualify image even with relabelled capabilit
     assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
   }
 });
-test("protected loader enforces boundaries for record, evidence and review", t => {
-  const f = fixture(); let unsafeFile = "", defect = "", current = ""; const opened: string[] = [];
+test("protected loader enforces boundaries for fresh-profile record and evidence", t => {
+  const f = fixture();
+  delete f.value.sourceRevision; delete f.value.review;
+  f.value.schema = 1; f.value.kind = "retained-live-specialist-acceptance";
+  f.value.pins = structuredClone(CODEX_SPECIALIST_PINS); f.refresh(); let unsafeFile = "", defect = "", current = ""; const opened: string[] = [];
   const textFor = (p: string) => f.documents[p.slice(root.length)]?.text ?? "";
   const fileStat = (p: string) => ({ uid: p === unsafeFile && defect === "owner" ? 1000 : 0,
     mode: p === unsafeFile && defect === "writable" ? 0o100666 : 0o100644,
@@ -139,8 +144,8 @@ test("protected loader enforces boundaries for record, evidence and review", t =
   ];
   syncBuiltinESMExports(); t.after(() => { for (const m of mocks) m.mock.restore(); syncBuiltinESMExports(); });
   assert.equal(loadCodexSpecialists(root + "record.json").frontierResponsesQualified, true);
-  assert.deepEqual(opened, [root + "record.json", root + "frontier.json", root + "review.json"]);
-  for (const name of ["record.json", "frontier.json", "review.json"]) for (const bad of ["owner", "writable", "hardlink", "symlink", "size", "replaced", "ancestry"]) {
+  assert.deepEqual(opened, [root + "record.json", root + "frontier.json"]);
+  for (const name of ["record.json", "frontier.json"]) for (const bad of ["owner", "writable", "hardlink", "symlink", "size", "replaced", "ancestry"]) {
     unsafeFile = root + name; defect = bad; const q = loadCodexSpecialists(root + "record.json");
     assert.equal(q.frontierResponsesQualified || q.imageJobsQualified, false, `${name}: ${bad}`);
   }
@@ -157,7 +162,7 @@ test("historical H033 target source and policy reject after exact H035 replaceme
   assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
 });
 
-test("H035 protected records bind the reviewed combined basis and retain original H034 evidence bytes", () => {
+test("H035 protected records retain their old basis and cannot qualify the new 480K profile", () => {
   const read = (directory: string, name: string) => {
     const text = fs.readFileSync(new URL(`../../../reports/${directory}/${name}`, import.meta.url), "utf8");
     return { text, value: JSON.parse(text) };
@@ -180,8 +185,10 @@ test("H035 protected records bind the reviewed combined basis and retain origina
   assert.equal(review.reviewedBy, "Mac-Orchestrator / root");
   assert.equal(review.reviewedAt, "2026-09-29T20:10:00Z");
   assert.deepEqual(review.testedPins, oldEvidence.pins);
-  assert.deepEqual(review.targetPins, CODEX_SPECIALIST_PINS);
-  const qualification = validateCodexSpecialists(record, readCurrent, Date.parse("2026-09-29T20:11:00Z"));
-  assert.equal(qualification.frontierResponsesQualified, true);
-  assert.equal(qualification.imageJobsQualified, false);
+  assert.equal(review.targetPins.frontier.profile.contextWindow, 950000);
+  assert.equal(review.targetPins.frontier.profile.autoCompactTokenLimit, 880000);
+  assert.equal(CODEX_SPECIALIST_PINS.frontier.profile.contextWindow, 480000);
+  assert.throws(() => validateCodexSpecialists(record, readCurrent, Date.parse("2026-09-29T20:11:00Z")));
+  const repinnedOuter = { ...record, pins: structuredClone(CODEX_SPECIALIST_PINS) };
+  assert.throws(() => validateCodexSpecialists(repinnedOuter, readCurrent, Date.parse("2026-09-29T20:11:00Z")));
 });

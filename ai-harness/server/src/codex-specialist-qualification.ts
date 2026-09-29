@@ -46,7 +46,7 @@ const closed = (): CodexSpecialistQualification => ({
   imageJobsQualified: false, frontierResponsesQualified: false,
   capabilities: {
     image: { supported: false, qualification: "not_tested", reason: "Retained H034 generation and fresh native child generation passed; protected full guarded-edit, approval and result-handoff evidence remains absent or invalid" },
-    frontier: { supported: false, qualification: "not_tested", reason: "Protected live MiMo tool-continuation and Codex/MiniMax delegation evidence is absent or invalid; 950000 is configured capacity" },
+    frontier: { supported: false, qualification: "not_tested", reason: `Protected live MiMo tool-continuation and Codex/MiniMax delegation evidence is absent or invalid; ${CODEX_SPECIALIST_PINS.frontier.profile.contextWindow} is configured capacity, not qualified occupied context` },
   },
 });
 const fail = (): never => { throw Error("Invalid protected Codex specialist qualification"); };
@@ -64,6 +64,10 @@ const reviewedToolPolicy = {
   testedSource: "c863d4984f4a75c237b6de97b7ce40b8570fca81",
   targetSource: "dbcd579f8b5ee91ff86c4035bfe643d51e8cd3d1",
 } as const;
+// The historical review changed tool policy only; it never reviewed a capacity change.
+const reviewedFrontierProfile = {
+  ...codexProvider("mimo-v2.6-pro-rl"), contextWindow: 950000, autoCompactTokenLimit: 880000,
+} as const;
 type EvidenceReader = (name: string) => { text: string; value: any };
 function referencedEvidence(ref: any, readEvidence: EvidenceReader) {
   fields(ref, ["file", "sha256"]);
@@ -77,6 +81,7 @@ function reviewedFrontierCompatibility(value: any, readEvidence: EvidenceReader,
   if (value.schema !== 2 || value.kind !== "retained-live-frontier-reviewed-compatibility" || value.capability !== "frontier" ||
       value.sourceRevision !== reviewedToolPolicy.testedSource || value.pins?.toolPolicySha256 !== reviewedToolPolicy.tested ||
       CODEX_SPECIALIST_PINS.toolPolicySha256 !== reviewedToolPolicy.target ||
+      !isDeepStrictEqual(CODEX_SPECIALIST_PINS.frontier.profile, reviewedFrontierProfile) ||
       !isDeepStrictEqual(value.pins, { ...CODEX_SPECIALIST_PINS, toolPolicySha256: reviewedToolPolicy.tested })) fail();
   const review = referencedEvidence(value.review, readEvidence);
   fields(review, ["schema", "kind", "testedSourceRevision", "testedPins", "targetSourceRevision", "targetPins", "workflowsSha256", "reviewedAt", "reviewedBy"]);
@@ -88,7 +93,7 @@ function reviewedFrontierCompatibility(value: any, readEvidence: EvidenceReader,
       typeof review.reviewedBy !== "string" || !review.reviewedBy.trim() || review.reviewedBy.length > 200 ||
       typeof review.reviewedAt !== "string" || !Number.isFinite(Date.parse(review.reviewedAt)) ||
       Date.parse(review.reviewedAt) < Date.parse(value.reviewedAt) || Date.parse(review.reviewedAt) > now) fail();
-  return `Reused live MiMo tool continuation and Codex/MiniMax delegation evidence tested on source ${value.sourceRevision} / tool policy ${value.pins.toolPolicySha256}; compatibility reviewed for target tool policy ${review.targetPins.toolPolicySha256}, reviewed implementation basis ${review.targetSourceRevision}, by ${review.reviewedBy} (${value.review.sha256}); no new target live execution; current backend readiness is checked separately; 950000 is configured capacity`;
+  return `Reused live MiMo tool continuation and Codex/MiniMax delegation evidence tested on source ${value.sourceRevision} / tool policy ${value.pins.toolPolicySha256}; compatibility reviewed for target tool policy ${review.targetPins.toolPolicySha256}, reviewed implementation basis ${review.targetSourceRevision}, by ${review.reviewedBy} (${value.review.sha256}); no new target live execution; current backend readiness is checked separately; ${CODEX_SPECIALIST_PINS.frontier.profile.contextWindow} is configured capacity, not qualified occupied context`;
 }
 /** Pure validation seam. Production supplies only the protected fixed-directory reader. */
 export function validateCodexSpecialists(record: any, readEvidence: EvidenceReader, now = Date.now()): CodexSpecialistQualification {
@@ -119,7 +124,7 @@ export function validateCodexSpecialists(record: any, readEvidence: EvidenceRead
     result.capabilities[capability] = { supported: true, qualification: "live", reason: compatibilityReason
       ? `${compatibilityReason}; retained evidence ${ref.sha256}` : capability === "image"
         ? `Reviewed retained live generation, follow-up edit and child evidence ${ref.sha256}; current image readiness is checked separately`
-        : `Reviewed retained live MiMo tool continuation and Codex/MiniMax delegation evidence ${ref.sha256}; current backend readiness is checked separately; 950000 is configured capacity` };
+        : `Reviewed retained live MiMo tool continuation and Codex/MiniMax delegation evidence ${ref.sha256}; current backend readiness is checked separately; ${CODEX_SPECIALIST_PINS.frontier.profile.contextWindow} is configured capacity, not qualified occupied context` };
   }
   return result;
 }

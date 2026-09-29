@@ -1,3 +1,4 @@
+import { MAX_MESSAGE_CHARACTERS, MAX_MESSAGE_BODY_BYTES } from "../../server/src/message-limits";
 import { ApiError } from './api';
 /** Pending bodies stay in this tab across reloads, never in global localStorage.
  * No network retry is triggered by reading this record or reconnecting SSE.
@@ -21,14 +22,18 @@ export function readSubmission(id: string): PendingSubmission | undefined {
     a.every((v) => typeof v === 'string' && v.length > 0) && new Set(a).size === a.length;
   if (!value || value.version !== 1 || value.sessionId !== id ||
     typeof value.submissionId !== 'string' || !/^[a-zA-Z0-9_-]{1,80}$/.test(value.submissionId) ||
-    typeof value.text !== 'string' || value.text.length > 250000 ||
+    typeof value.text !== 'string' || value.text.length > MAX_MESSAGE_CHARACTERS ||
     !ids(value.attachmentIds) || !ids(value.imageReferences) ||
     Object.keys(value).some((k) => !['version','sessionId','submissionId','text','attachmentIds','imageReferences'].includes(k))) throw bad();
   return value;
 }
 export function saveSubmission(value: PendingSubmission) {
+  // Reject before saving: an oversized record must not become an unreadable pending submission.
+  const serialized = JSON.stringify(value);
+  if (value.text.length > MAX_MESSAGE_CHARACTERS || new TextEncoder().encode(serialized).byteLength > MAX_MESSAGE_BODY_BYTES)
+    throw new Error(`Message exceeds the ${MAX_MESSAGE_CHARACTERS} character or ${MAX_MESSAGE_BODY_BYTES} byte limit.`);
   // Fail before HTTP if persistence is unavailable/quota-limited.
-  sessionStorage.setItem(key(value.sessionId), JSON.stringify(value));
+  sessionStorage.setItem(key(value.sessionId), serialized);
 }
 export function acknowledgeSubmission(value: PendingSubmission) {
   if (readSubmission(value.sessionId)?.submissionId === value.submissionId)

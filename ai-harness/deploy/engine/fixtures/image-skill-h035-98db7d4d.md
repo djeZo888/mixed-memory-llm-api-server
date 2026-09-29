@@ -65,8 +65,6 @@ change it or automatically resubmit. Explain a collision and ask the user for
 a new seed or permission to omit it. Seed choice does not qualify editing;
 capability discovery still governs availability.
 
-image_edit submits an edit proposal. Make one normal guarded proposal with the owned reference and a supported edit profile. If the target dimensions differ from the reference and approval is required, the app saves a protected awaiting_approval card; no transformation or GPU edit is dispatched before actual user approval. Surface that saved card, then retain its job ID. Never preapprove, resize locally, duplicate or resubmit the proposal. A qualified same-canvas edit may proceed normally without inventing an approval requirement.
-
 Editing preserves original geometry when qualified. If the original dimensions
 are not an advertised edit profile, choose a supported edit target and explain
 the exact canvas change; retain the original file. Any necessary resize,

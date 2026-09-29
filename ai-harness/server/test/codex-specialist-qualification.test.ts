@@ -82,7 +82,7 @@ for (const [name, mutate] of Object.entries<Record<string, (f: ReturnType<typeof
   "missing tool policy": f => delete f.record.pins.toolPolicySha256,
   "parent-only retained evidence": f => { f.evidence["fixture-image.json"].value.pins.image.runtimeImage = f.evidence["fixture-image.json"].value.pins.image.parentImageReference; f.refresh("image"); },
   "changed output budget": f => f.record.pins.frontier.profile.maxOutputTokens = 512,
-  "changed compaction": f => f.record.pins.frontier.profile.autoCompactTokenLimit = 400000,
+  "changed compaction": f => f.record.pins.frontier.profile.autoCompactTokenLimit = 880000,
   "changed thinking": f => f.record.pins.frontier.profile.reasoning = "none",
   "changed parallel policy": f => f.record.pins.frontier.profile.parallelToolCalls = true,
   "extra field": f => f.record.ready = true,

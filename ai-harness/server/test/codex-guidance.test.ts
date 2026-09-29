@@ -59,3 +59,19 @@ test('restricted Codex catalog offers only capability and owned status lookup; c
   assert.deepEqual(enabled('config.toml'), ['image_capabilities', 'image_status']);
   assert.deepEqual(enabled('config-image-jobs.toml'), ['image_capabilities', 'image_status', 'image_generate', 'image_edit']);
 });
+
+
+test('normal edit proposal creates the approval card before transformation; guidance never grants approval', () => {
+  const models = JSON.parse(profile('models.json')).models;
+  const sources = [profile('sova-overlay.md'), profile('skills/sova-local-tools/SKILL.md'),
+    readFileSync(new URL('../../skills/image/SKILL.md', import.meta.url), 'utf8'),
+    readFileSync(new URL('../../tools/image/image-mcp.mjs', import.meta.url), 'utf8'),
+    ...models.map((m: any) => m.model_messages.instructions_template)];
+  for (const source of sources) {
+    assert.match(source, /image_edit submits an edit proposal/);
+    assert.match(source, /one normal guarded proposal/);
+    assert.match(source, /no transformation or GPU edit is dispatched before actual user approval/);
+    assert.match(source, /Never preapprove, resize locally, duplicate or resubmit/);
+    assert.match(source, /same-canvas edit may proceed normally/);
+  }
+});

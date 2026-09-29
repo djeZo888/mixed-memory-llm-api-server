@@ -13,8 +13,8 @@ import { translateResponses, ResponsesStream } from '../src/codex-responses.js';
 
 const pin = '788a818fbb9596869c7a487554507cb8bdca17584b8671112b23f9e225ba35c8';
 const reasoning = 'Synthetic private reasoning fixture: preserve exactly Ω and a newline.\nSecond line.';
-const provider = { model: 'mimo-v2.6-pro-rl', contextWindow: 950000, maxOutputTokens: 65536,
-  autoCompactTokenLimit: 880000, reasoning: 'mimo-plaintext', parallelToolCalls: false,
+const provider = { model: 'mimo-v2.6-pro-rl', contextWindow: 480000, maxOutputTokens: 65536,
+  autoCompactTokenLimit: 400000, reasoning: 'mimo-plaintext', parallelToolCalls: false,
   tokenizer: 'mimo-native-input-tokens' } as const;
 const bodyFixture = () => {
   const body = JSON.parse(readFileSync(new URL('./fixtures/codex/native-mcp-namespaces.json', import.meta.url), 'utf8'));
@@ -108,7 +108,7 @@ test('pinned native MiMo roundtrips reasoning and one tool through the adapter w
   server.listen(0, '127.0.0.1'); await once(server, 'listening'); const address = server.address(); assert.ok(address && typeof address === 'object');
   const catalog = JSON.parse(readFileSync(new URL('../../deploy/codex/models.json', import.meta.url), 'utf8'));
   const model = structuredClone(catalog.models[0]); Object.assign(model, { slug: provider.model, display_name: 'MiMo native fixture',
-    context_window: 950000, max_context_window: 950000, auto_compact_token_limit: 880000, use_responses_lite: false });
+    context_window: 480000, max_context_window: 480000, auto_compact_token_limit: 400000, use_responses_lite: false });
   writeFileSync(join(home, 'models.json'), JSON.stringify({ models: [model] }));
   const mcp = fileURLToPath(new URL('./fixtures/codex-image-native-mcp.mjs', import.meta.url));
   writeFileSync(join(home, 'config.toml'), `model = "${provider.model}"

@@ -121,3 +121,30 @@ it('definite validation rejection unlocks correction; unknown/proxy errors do no
   expect(readSubmission(id)?.text).toBe('Uncertain');
   f.store.dispose();
 });
+
+it('large normal paste survives saved submission reload without an automatic retry', async () => {
+  const text = '0123456789\n'.repeat(110000) + 'END-H036';
+  const f = await ready();
+  f.transport.send.mockRejectedValueOnce(new TypeError('ACK lost'));
+  expect(await f.store.send(id, text)).toBe(false);
+  const saved = readSubmission(id)!;
+  expect(saved.text).toBe(text);
+  f.store.dispose();
+  const next = await ready();
+  expect(next.transport.send).not.toHaveBeenCalled();
+  expect(readSubmission(id)).toEqual(saved);
+  expect(await next.store.retrySubmission(id)).toBe(true);
+  expect(next.transport.send).toHaveBeenCalledWith(id, text, [], [], saved.submissionId);
+  next.store.dispose();
+});
+
+
+it('oversized text rejects before storage or HTTP and a corrected draft can be sent', async () => {
+  const { MAX_MESSAGE_CHARACTERS } = await import('../../server/src/message-limits');
+  const f = await ready();
+  expect(await f.store.send(id, 'x'.repeat(MAX_MESSAGE_CHARACTERS + 1))).toBe(false);
+  expect(f.transport.send).not.toHaveBeenCalled();
+  expect(readSubmission(id)).toBeUndefined();
+  expect(await f.store.send(id, 'Corrected')).toBe(true);
+  f.store.dispose();
+});

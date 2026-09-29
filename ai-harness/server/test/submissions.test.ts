@@ -174,3 +174,33 @@ test("legacy omitted IDs remain explicitly fresh requests and invalid IDs do not
   assert.equal(f.accepted.length, 2);
   await until(() => f.calls.length === 1); f.calls[0].resolve(); await until(() => f.calls.length === 2); f.calls[1].resolve();
 });
+
+test("bounded large normal paste survives persistence, lost ACK replay and restart byte-for-byte", async t => {
+  const f = await setup(t), session = await f.h.broker.createSession(undefined, "codex");
+  const text = "0123456789\n".repeat(110000) + "END-H036";
+  const payload = { ...body("large-paste"), text };
+  const first = await f.post(session.id, payload);
+  assert.equal(first.statusCode, 202);
+  await until(() => f.calls.length === 1);
+  assert.equal(f.calls[0].text, text);
+  f.calls[0].resolve();
+  await until(() => f.h.store.getSession(session.id).status === "idle");
+  await f.restart(); f.unavailable();
+  assert.equal(f.h.store.snapshot(session.id).messages.find(m => m.role === "user")?.content, text);
+  assert.deepEqual((await f.post(session.id, payload)).json(), first.json());
+  assert.equal(f.calls.length, 1);
+});
+
+test("message character and JSON byte bounds reject before dispatch; other routes retain 1 MiB bound", async t => {
+  const { MAX_MESSAGE_CHARACTERS, MAX_MESSAGE_BODY_BYTES } = await import("../src/message-limits.js");
+  const f = await setup(t), session = await f.h.broker.createSession();
+  const tooLong = await f.post(session.id, { ...body(), text: "x".repeat(MAX_MESSAGE_CHARACTERS + 1) });
+  assert.equal(tooLong.statusCode, 400); assert.equal(tooLong.json().error.code, "invalid_message");
+  const tooLarge = await f.h.app.inject({ method: "POST", url: `/api/sessions/${session.id}/messages`,
+    headers: { host: "localhost", "content-type": "application/json" }, payload: " ".repeat(MAX_MESSAGE_BODY_BYTES + 1) });
+  assert.equal(tooLarge.statusCode, 413);
+  const other = await f.h.app.inject({ method: "POST", url: "/api/sessions", headers: { host: "localhost" },
+    payload: { title: "x".repeat(1024 * 1024 + 1) } });
+  assert.equal(other.statusCode, 413);
+  assert.equal(f.calls.length, 0); assert.equal(f.accepted.length, 0);
+});

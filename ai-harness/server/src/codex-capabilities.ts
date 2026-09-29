@@ -1,3 +1,4 @@
+import { codexProvider } from "./codex-provider.js";
 export type CapabilityName =
   | "nativeDelegation"
   | "compaction"
@@ -76,7 +77,7 @@ export function codexCapabilities(
       supported: gates.imageToolEnabled === true,
     },
     frontier: reviewed.frontier ?? unavailable(
-      "MiMo native Responses and tool-continuation qualification pending; 950000 configured tokens, not qualified occupied context",
+      `MiMo native Responses and tool-continuation qualification pending; ${codexProvider("mimo-v2.6-pro-rl").contextWindow} configured tokens, not qualified occupied context`,
     ),
   };
 }

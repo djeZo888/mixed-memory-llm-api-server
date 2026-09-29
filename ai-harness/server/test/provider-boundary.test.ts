@@ -6,6 +6,7 @@ import {join} from 'node:path';
 import {createGateway} from '../src/gateway.js';
 import {createOwnedProviderCapture} from '../src/provider-diagnostics.js';
 import {codexProvider} from '../src/codex-provider.js';
+import {CODEX_CONTEXT} from '../src/codex-responses.js';
 import {prepareMimo,MimoError} from '../src/mimo.js';
 import {MIMO_MODEL,MIMO_RUNTIME,MIMO_ARTIFACT_REVISION,MIMO_ARTIFACT_MANIFEST_SHA256,type MimoQualification} from '../src/mimo.js';
 const d = 'a'.repeat(64);
@@ -18,7 +19,8 @@ const qualification = (): MimoQualification => ({ qualified: true, evidenceSha25
 
 test('model budgets, tokenizer, reasoning and compaction are deliberate per provider',()=>{
  assert.deepEqual(codexProvider('qwen3.8-27b'),{model:'qwen3.8-27b',contextWindow:480000,maxOutputTokens:65536,autoCompactTokenLimit:400000,reasoning:'none',parallelToolCalls:true,tokenizer:'qwen-native-tokenize'});
- const m=codexProvider(MIMO_MODEL);assert.equal(m.contextWindow,950000);assert.equal(m.reasoning,'mimo-plaintext');assert.equal(m.parallelToolCalls,false);assert.throws(()=>codexProvider('hosted'));
+ assert.deepEqual(CODEX_CONTEXT,{'qwen3.8-27b':480000,'mimo-v2.6-pro-rl':480000});
+ const m=codexProvider(MIMO_MODEL);assert.equal(m.contextWindow,480000);assert.equal(m.autoCompactTokenLimit,400000);assert.equal(m.maxOutputTokens,65536);assert.equal(m.reasoning,'mimo-plaintext');assert.equal(m.parallelToolCalls,false);assert.throws(()=>codexProvider('hosted'));
 });
 test('static MiMo validation sites preserve strict rejection and reasoning',()=>{
  const base={model:MIMO_MODEL,messages:[{role:'user',content:'fixture'}],max_tokens:100};
