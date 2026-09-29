@@ -1,6 +1,7 @@
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
 import { admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { CODEX_PIN, type CodexRuntime } from "./codex-engine.js";
+import { loadCodexResumeInstructions } from "./codex-instructions.js";
 import { CODEX_MODEL_POLICY, createRootlessCodexLauncher } from "./codex-launcher.js";
 import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwen.js";
 import type { Gateway, GatewayOptions } from "./gateway.js";
@@ -42,6 +43,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     maxChildren: 4,
     qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
+    loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,
     launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true || qualification?.imageAcceptance?.(input.sessionId) === true }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.

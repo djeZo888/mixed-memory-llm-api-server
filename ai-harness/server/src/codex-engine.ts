@@ -1,5 +1,7 @@
 import type { CodexCapabilities } from "./codex-capabilities.js";
 import { CodexChildren } from "./codex-children.js";
+import { CodexSchemaErrorGuard, type CodexSchemaErrorFailure } from "./codex-schema-errors.js";
+import { validateCodexResumeInstructions, type CodexResumeInstructions } from "./codex-instructions.js";
 import { codexInput } from "./codex-input.js";
 import { join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
@@ -45,6 +47,9 @@ export interface CodexRuntime {
   readonly maxChildren?: number;
   /** Trusted host-reviewed child providers; absent keeps the Qwen-only boundary. */
   readonly qualifiedChildModels?: readonly string[];
+  /** Cold parent resume only: exact reviewed catalog text from trusted host files.
+   * Existing child sessions keep their original instruction provenance. */
+  loadResumeInstructions?(): Promise<CodexResumeInstructions>;
   /** W1/root supplies a reviewed rootless launcher. No host spawn/default executable exists here.
    * It must use the pinned Linux image, isolated CODEX_HOME, read-only trusted provider/tool
    * config, clean environment, restricted egress, disabled hosted auth/search/plugins/retries,
@@ -106,6 +111,9 @@ export class CodexEngine implements Engine {
   private turnId: string | null = null;
   private active = false;
   private cancelRequested = false;
+  private schemaErrors = new CodexSchemaErrorGuard();
+  private schemaStop?: Promise<void>;
+  private schemaError?: Error;
   private terminal?: {
     promise: Promise<"completed" | "cancelled">;
     resolve: (v: "completed" | "cancelled") => void;
@@ -131,6 +139,7 @@ export class CodexEngine implements Engine {
       options.onUpdate,
       runtime.maxChildren ?? 4,
       runtime.qualifiedChildModels ?? ["qwen3.8-27b"],
+      (failure, threadId, turnId) => this.stopRepeatedSchemaError(failure, threadId, turnId),
     );
     this.nativeId = options.nativeSessionId;
     this.cursor = options.nativeState?.eventCursor ?? 0;
@@ -258,10 +267,13 @@ export class CodexEngine implements Engine {
       approvalPolicy: "never",
       sandbox: "danger-full-access",
     };
+    const resumeInstructions = this.nativeId && r.loadResumeInstructions
+      ? validateCodexResumeInstructions(await r.loadResumeInstructions())
+      : undefined;
     const result = await this.connection.request(
       this.nativeId ? "thread/resume" : "thread/start",
       this.nativeId
-        ? { ...params, threadId: this.nativeId }
+        ? { ...params, threadId: this.nativeId, ...(resumeInstructions ? { baseInstructions: resumeInstructions.text } : {}) }
         : { ...params, ephemeral: false },
     );
     if (
@@ -278,6 +290,14 @@ export class CodexEngine implements Engine {
     // History returned by resume is never appended to Sova's original message store.
     this.nativeId = result.thread.id;
     o.onNativeSessionId(this.nativeId);
+    if (resumeInstructions) o.onUpdate({
+      type: "progress",
+      kind: "instruction_refresh",
+      label: "Resumed this native chat with the reviewed current instructions; original history retained.",
+      detail: JSON.stringify({ nativeThreadId: this.nativeId, source: "cold_thread_resume.baseInstructions",
+        instructionsSha256: resumeInstructions.sha256, toolPolicySha256: resumeInstructions.toolPolicySha256,
+        modelPolicyVersion: r.modelPolicyVersion, existingChildrenRefreshed: false }),
+    });
     this.state("idle", null);
   }
   async prompt(
@@ -311,6 +331,10 @@ export class CodexEngine implements Engine {
         fault("Invalid turn/start result");
       this.adoptTurn(result.turn.id);
       const outcome = await promise;
+      if (this.schemaStop) {
+        await this.schemaStop;
+        throw this.schemaError!;
+      }
       if (this.failed) throw this.failed;
       await this.cleanup();
       // An absent native phase is not a reasoning/final split. Only the last
@@ -328,6 +352,12 @@ export class CodexEngine implements Engine {
         });
       return outcome;
     } catch (error) {
+      if (this.schemaStop) {
+        // A bounded tool failure is an ordinary failed run only after both
+        // settlement proofs. A cleanup error takes precedence and stays uncertain.
+        await this.schemaStop;
+        throw this.schemaError!;
+      }
       this.fail(
         error instanceof Error
           ? error
@@ -386,6 +416,38 @@ export class CodexEngine implements Engine {
     if (!this.active) fault("Unsolicited native turn");
     this.turnId = id;
     this.state("active");
+  }
+  private stopRepeatedSchemaError(failure: CodexSchemaErrorFailure, threadId: string, turnId: string) {
+    if (this.schemaStop || this.cancelRequested || !this.active || !this.turnId || this.completedTurn) return;
+    this.cancelRequested = true;
+    this.schemaError = Object.assign(new Error(
+      `Native tool ${failure.server}/${failure.tool} repeated the same invalid arguments ${failure.callIds.length} times; correct the arguments before retrying.`,
+    ), { code: "native_tool_schema_repetition" });
+    // Keep the original call results in Activity and native history. This is a
+    // separate actionable failure receipt, not a replacement tool result.
+    this.options.onUpdate({
+      type: "progress",
+      kind: "tool_schema_error",
+      label: `Stopped after ${failure.callIds.length} identical tool input errors. Correct the tool arguments before retrying.`,
+      name: failure.tool,
+      status: "failed",
+      ...(threadId === this.nativeId ? {} : { subagentId: threadId, parentSessionId: this.nativeId }),
+      detail: JSON.stringify({ threadId, turnId, ...failure }),
+    });
+    this.schemaStop = (async () => {
+      try {
+        // The root interruption scopes the stop; confirmed container cleanup
+        // below also stops all owned children and drains provider lineage.
+        await this.cancel();
+      } catch {
+        // An ACK, rejection or timeout cannot prove settlement. Cleanup can.
+      }
+      await this.cleanup();
+    })();
+    void this.schemaStop.then(
+      () => this.terminal?.reject(this.schemaError!),
+      error => this.terminal?.reject(error),
+    );
   }
   async cancel() {
     this.cancelRequested = true;
@@ -803,6 +865,8 @@ export class CodexEngine implements Engine {
       // No reasoning text or encrypted state is synthesized or exposed in this preview.
     } else if (value.type !== "userMessage")
       fault(`Native item capability unavailable: ${value.type}`);
+    const schemaFailure = this.schemaErrors.observe(value, complete);
+    if (schemaFailure) this.stopRepeatedSchemaError(schemaFailure, this.nativeId!, this.turnId!);
   }
 }
 export const codexEngineFactory =

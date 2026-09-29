@@ -3,6 +3,7 @@ import test from "node:test";
 import { readFileSync } from "node:fs";
 import Ajv from "ajv";
 import { PassThrough } from "node:stream";
+import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
 import {
   CodexEngine,
   CODEX_PIN,
@@ -50,6 +51,7 @@ function fixture(
     qualifiedChildModels?: readonly string[];
     gateway?: () => Promise<boolean>;
     terminate?: () => Promise<boolean>;
+    interrupt?: "reject" | "timeout";
   } = {},
 ) {
   const stdin = new PassThrough(),
@@ -177,7 +179,10 @@ function fixture(
       });
       response(req.id, { turn: { id: `turn-${turn}`, status: "inProgress" } });
     }
-    if (req.method === "turn/interrupt") response(req.id, {});
+    if (req.method === "turn/interrupt") {
+      if (config.interrupt === "reject") stdout.write(JSON.stringify({ id: req.id, error: { code: -1, message: "fixture rejection" } }) + "\n");
+      else if (config.interrupt !== "timeout") response(req.id, {});
+    }
   });
   const engine = new CodexEngine(options, runtime);
   const item = (
@@ -894,4 +899,130 @@ test('same-status terminal duplicate with changed summary is conflicting, never 
   await tick(); const turn = finishRetained(f);
   f.events('turn/completed', { turn }); f.events('turn/completed', { turn: { ...turn, items: [] } });
   await checked; assert.equal(promotion(f).length, 0); await f.engine.close();
+});
+
+const schemaCapture = JSON.parse(readFileSync(new URL('./fixtures/codex/h033-schema-errors.json', import.meta.url), 'utf8'));
+function replaySchemaFailures(f: ReturnType<typeof fixture>, count = 3) {
+  for (const call of schemaCapture.calls.slice(0, count)) {
+    f.item(call.callId, 'mcpToolCall', call.started, 'started');
+    f.item(call.callId, 'mcpToolCall', call.completed);
+  }
+}
+test('actual H033 three identical completed schema errors interrupt once and settle before ordinary failure', async () => {
+  const proof = deferred<boolean>(), f = fixture({ gateway: () => proof.promise });
+  const pending = f.engine.prompt('retained H033 fixture');
+  const checked = assert.rejects(pending, (error: any) => error.code === 'native_tool_schema_repetition');
+  let done = false; void checked.then(() => { done = true; });
+  await tick(); replaySchemaFailures(f);
+  assert.equal(f.requests.filter(r => r.method === 'turn/interrupt').length, 1);
+  assert.deepEqual(f.requests.find(r => r.method === 'turn/interrupt').params, { threadId: 'thread-1', turnId: 'turn-1' });
+  // An ACK without terminal still falls through bounded cancellation to cleanup.
+  await new Promise(resolve => setTimeout(resolve, 45));
+  assert.equal(done, false); assert.ok(f.calls.includes('gateway-proof'));
+  proof.resolve(true); await checked;
+  assert.equal(f.states.at(-1)!.ownership, 'idle');
+  assert.deepEqual(f.calls.slice(-4), ['terminate', 'revoke-lineage', 'revoke', 'gateway-proof']);
+  const trace = f.updates.filter(u => u.type === 'progress' && u.kind === 'tool_schema_error');
+  assert.equal(trace.length, 1);
+  const receipt = JSON.parse((trace[0] as any).detail);
+  assert.deepEqual(receipt.callIds, schemaCapture.calls.map((call: any) => call.callId));
+  for (const call of schemaCapture.calls) {
+    const event = f.updates.find((u: any) => u.type === 'progress' && u.toolCallId === call.callId && u.status === 'failed') as any;
+    assert.deepEqual(JSON.parse(event.detail).result, call.completed.result);
+  }
+  assert.equal(promotion(f).length, 0); await f.engine.close();
+});
+for (const interrupt of ['reject', 'timeout'] as const) {
+  test(`schema guard still settles after interrupt ${interrupt}`, async () => {
+    const f = fixture({ interrupt }), pending = f.engine.prompt('schema stop');
+    const checked = assert.rejects(pending, (error: any) => error.code === 'native_tool_schema_repetition');
+    await tick(); replaySchemaFailures(f); await checked;
+    assert.equal(f.states.at(-1)!.ownership, 'idle');
+    assert.equal(f.calls.filter(c => c === 'terminate').length, 1);
+  });
+}
+for (const mode of ['native', 'gateway'] as const) {
+  test(`schema guard retains uncertainty when ${mode} settlement fails`, async () => {
+    const f = fixture({ terminate: async () => mode !== 'native', gateway: async () => mode !== 'gateway' });
+    const pending = f.engine.prompt('schema stop');
+    const expected = mode === 'native' ? 'native_cleanup_unconfirmed' : 'gateway_settlement_unconfirmed';
+    const checked = assert.rejects(pending, (error: any) => error.cleanupFailure === expected);
+    await tick(); replaySchemaFailures(f); f.complete('interrupted'); await checked;
+    assert.equal(f.states.at(-1)!.ownership, 'uncertain');
+    await assert.rejects(f.engine.close(), (error: any) => error.cleanupFailure === expected);
+  });
+}
+test('native completion racing the schema stop cannot become a successful final', async () => {
+  const f = fixture(), pending = f.engine.prompt('schema stop race');
+  const checked = assert.rejects(pending, (error: any) => error.code === 'native_tool_schema_repetition');
+  await tick(); replaySchemaFailures(f);
+  f.events('turn/completed', { turn: finishRetained(f) }); await checked;
+  assert.equal(promotion(f).length, 0); assert.equal(f.states.at(-1)!.ownership, 'idle');
+});
+test('duplicate completions and changed arguments cannot prematurely stop the owned turn', async () => {
+  const f = fixture(), pending = f.engine.prompt('schema retry'); await tick();
+  replaySchemaFailures(f, 2);
+  f.item(schemaCapture.calls[1].callId, 'mcpToolCall', schemaCapture.calls[1].completed);
+  const next = structuredClone(schemaCapture.calls[2]);
+  next.started.arguments = {}; next.completed.arguments = {}; next.completed.status = 'completed'; next.completed.result = { content: [{ type: 'text', text: 'capabilities' }] };
+  f.item(next.callId, 'mcpToolCall', next.started, 'started'); f.item(next.callId, 'mcpToolCall', next.completed);
+  assert.equal(f.requests.filter(r => r.method === 'turn/interrupt').length, 0);
+  f.complete(); assert.equal(await pending, 'completed');
+});
+test('user cancellation and an incomplete third call do not produce schema-loop failure', async () => {
+  const f = fixture(), pending = f.engine.prompt('cancel incomplete retry'); await tick(); replaySchemaFailures(f, 2);
+  f.item(schemaCapture.calls[2].callId, 'mcpToolCall', schemaCapture.calls[2].started, 'started');
+  const cancelled = f.engine.cancel(); f.complete('interrupted');
+  assert.equal(await pending, 'cancelled'); await cancelled;
+  assert.equal(f.updates.some(u => u.type === 'progress' && u.kind === 'tool_schema_error'), false);
+});
+test('cold resume sends exact reviewed catalog instructions with original thread/history and explicit provenance', async () => {
+  const reviewed = await loadCodexResumeInstructions(new URL('../../deploy/run-codex.sh', import.meta.url).pathname);
+  const f = fixture({ nativeId: 'thread-1' }); let reads = 0;
+  f.runtime.loadResumeInstructions = async () => { reads++; return reviewed; };
+  await f.engine.start();
+  const resumed = f.requests.find(r => r.method === 'thread/resume');
+  assert.equal(reads, 1); assert.equal(resumed.params.threadId, 'thread-1');
+  assert.equal(resumed.params.baseInstructions, reviewed.text); assert.equal(resumed.params.model, 'qwen3.8-27b');
+  assert.equal(f.requests.some(r => r.method === 'thread/start'), false);
+  assert.equal('history' in resumed.params, false);
+  assert.equal(f.updates.some(u => u.type === 'text'), false);
+  const provenance = f.updates.find(u => u.type === 'progress' && u.kind === 'instruction_refresh') as any;
+  assert.deepEqual(JSON.parse(provenance.detail), { nativeThreadId: 'thread-1', source: 'cold_thread_resume.baseInstructions',
+    instructionsSha256: reviewed.sha256, toolPolicySha256: reviewed.toolPolicySha256,
+    modelPolicyVersion: 'fixture-policy', existingChildrenRefreshed: false });
+  const pending = f.engine.prompt('retained follow-up'); await tick(); f.complete(); await pending;
+  assert.equal(reads, 1); assert.equal('baseInstructions' in f.requests.find(r => r.method === 'turn/start').params, false);
+});
+test('fresh threads continue using the mounted catalog without a resume override', async () => {
+  const f = fixture(); f.runtime.loadResumeInstructions = async () => { throw Error('fresh path must not load override'); };
+  await f.engine.start(); assert.equal('baseInstructions' in f.requests.find(r => r.method === 'thread/start').params, false);
+  assert.equal(f.updates.some(u => u.type === 'progress' && u.kind === 'instruction_refresh'), false);
+  await f.engine.close();
+});
+test('tampered reviewed instruction result cannot dispatch a resume or rewrite the retained thread', async () => {
+  const reviewed = await loadCodexResumeInstructions(new URL('../../deploy/run-codex.sh', import.meta.url).pathname);
+  const f = fixture({ nativeId: 'thread-1' });
+  f.runtime.loadResumeInstructions = async () => ({ ...reviewed, text: reviewed.text + 'tamper' });
+  await assert.rejects(f.engine.start());
+  assert.equal(f.requests.some(r => ['thread/start', 'thread/resume', 'turn/start'].includes(r.method)), false);
+  await f.engine.close(); assert.equal(f.states.at(-1)!.ownership, 'idle');
+});
+test('owned child schema loop stops the parent and settles every unfinished child', async () => {
+  const f = fixture({ delegation: true }), pending = f.engine.prompt('child schema loop');
+  const checked = assert.rejects(pending, (error: any) => error.code === 'native_tool_schema_repetition');
+  await tick();
+  f.events('thread/started', { thread: { id: 'child-1', parentThreadId: 'thread-1', modelProvider: 'sova', model: 'qwen3.8-27b' } });
+  f.events('turn/started', { threadId: 'child-1', turn: { id: 'child-turn-1', status: 'inProgress' } });
+  for (const call of schemaCapture.calls) {
+    f.events('item/started', { threadId: 'child-1', turnId: 'child-turn-1', item: call.started });
+    f.events('item/completed', { threadId: 'child-1', turnId: 'child-turn-1', item: call.completed });
+  }
+  f.complete('interrupted'); await checked;
+  assert.deepEqual(f.requests.find(r => r.method === 'turn/interrupt').params, { threadId: 'thread-1', turnId: 'turn-1' });
+  const trace = f.updates.find(u => u.type === 'progress' && u.kind === 'tool_schema_error') as any;
+  assert.equal(trace.subagentId, 'child-1'); assert.equal(JSON.parse(trace.detail).turnId, 'child-turn-1');
+  assert.equal(JSON.parse(trace.detail).attempts.length, 3);
+  assert.ok(f.updates.some(u => u.type === 'progress' && u.kind === 'subagent' && u.subagentId === 'child-1' && u.status === 'cancelled'));
+  assert.equal(f.states.at(-1)!.ownership, 'idle');
 });

@@ -1,5 +1,6 @@
 import type { EngineUpdate, SubagentSummary } from "./contracts.js";
 import { CodexProtocolError, isRecord } from "./codex-connection.js";
+import { CodexSchemaErrorGuard, type CodexSchemaErrorFailure } from "./codex-schema-errors.js";
 const statuses = new Set([
   "pendingInit",
   "running",
@@ -33,6 +34,7 @@ export class CodexChildren {
       id: string;
       terminal: boolean;
       terminalStatus?: string;
+      schemaErrors: CodexSchemaErrorGuard;
       items: Map<
         string,
         { type: string; completed: boolean; snapshot?: string }
@@ -44,6 +46,7 @@ export class CodexChildren {
     private emit: (u: EngineUpdate) => void,
     private max = 4,
     private qualifiedModels: readonly string[] = ["qwen3.8-27b"],
+    private onSchemaError?: (failure: CodexSchemaErrorFailure, threadId: string, turnId: string) => void,
   ) {
     if (!Number.isSafeInteger(max) || max < 1 || max > 4)
       throw new CodexProtocolError("Invalid child bound");
@@ -183,6 +186,7 @@ export class CodexChildren {
       this.turns.set(p.threadId, {
         id: p.turn.id,
         terminal: false,
+        schemaErrors: new CodexSchemaErrorGuard(),
         items: new Map(),
       });
       this.state(p.threadId, "running");
@@ -265,8 +269,12 @@ export class CodexChildren {
         completed: complete,
         snapshot: complete ? JSON.stringify(item) : undefined,
       });
+      // Only validated events in this owned child turn reach its own guard.
+      // Completed duplicates returned above cannot count as another attempt.
+      const schemaFailure = turn.schemaErrors.observe(item, complete);
+      if (schemaFailure) this.onSchemaError?.(schemaFailure, p.threadId, turn.id);
     }
-    // Child content stays private; lifecycle alone populates durable Activity.
+    // Child prose stays private; the schema callback contains only matched MCP calls.
   }
   private isActive(thread: string, status: string) {
     return !terminal.has(status) || this.turns.get(thread)?.terminal === false;
