@@ -2,6 +2,7 @@
 """Reuse existing container ownership/security fixtures for Codex; fake Podman only."""
 import importlib.util
 import hashlib
+import tomllib
 from pathlib import Path
 import unittest
 
@@ -15,6 +16,15 @@ base.IMAGE_ID = 'sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8
 base.PATCHSET = 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 
 class CodexLauncherContract(base.LauncherContract):
+    def assert_catalog_selected_by_container_config_is_mounted(self, run, config_name):
+        # Inspect the real launcher's emitted Podman arguments, not a mocked catalog.
+        mounts = [run[i+1] for i, value in enumerate(run) if value == '--volume']
+        config = tomllib.loads((base.LAUNCHER.parent / 'codex' / config_name).read_text())
+        target = config['model_catalog_json']
+        self.assertEqual(target, '/opt/sova/codex/models.json')
+        matching = [mount for mount in mounts if mount.split(':')[1] == target]
+        self.assertEqual(matching, [f'{base.LAUNCHER.parent}/codex/models.json:{target}:ro,rprivate'])
+
     def test_acp_transport_mounts_and_environment_allowlist(self):
         self.env.update(OPENAI_API_KEY='fixture-never-export', SSH_AUTH_SOCK='/private/ssh', CODEX_HOME='/private/codex', NODE_OPTIONS='--inspect', CONTAINER_HOST='ssh://wrong', HTTP_PROXY='http://wrong')
         request='{"id":1,"method":"initialize"}\n'
@@ -26,7 +36,8 @@ class CodexLauncherContract(base.LauncherContract):
             self.assertFalse({'OPENAI_API_KEY','SSH_AUTH_SOCK','CODEX_HOME','NODE_OPTIONS','CONTAINER_HOST','HTTP_PROXY'} & c['env'].keys())
             self.assertNotIn(base.TOKEN,' '.join(c['argv']))
         mounts=[run[i+1] for i,v in enumerate(run) if v=='--volume']
-        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate', f'{base.LAUNCHER.parent}/codex/skills/sova-local-tools:{self.profile}/codex-home/skills/sova-local-tools:ro,rprivate'])
+        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate', f'{base.LAUNCHER.parent}/codex/models.json:/opt/sova/codex/models.json:ro,rprivate', f'{base.LAUNCHER.parent}/codex/skills/sova-local-tools:{self.profile}/codex-home/skills/sova-local-tools:ro,rprivate'])
+        self.assert_catalog_selected_by_container_config_is_mounted(run, 'config.toml')
         env=[run[i+1] for i,v in enumerate(run) if v=='--env']
         self.assertIn(f'CODEX_HOME={self.profile}/codex-home',env)
         self.assertIn(f'HOME={self.profile}/codex-home/home',env)
@@ -40,6 +51,7 @@ class CodexLauncherContract(base.LauncherContract):
         run=self.calls()[-3]['argv']
         self.assertIn(f'{base.LAUNCHER.parent}/codex/config-image-jobs.toml:{self.profile}/codex-home/config.toml:ro,rprivate',run)
         self.assertNotIn('--image-jobs-qualified',run)
+        self.assert_catalog_selected_by_container_config_is_mounted(run, 'config-image-jobs.toml')
     def test_symlinked_engine_state_rejected(self):
         (self.profile/'codex-home').symlink_to(self.home,target_is_directory=True)
         result=self.invoke();self.assertEqual(result.returncode,64)
