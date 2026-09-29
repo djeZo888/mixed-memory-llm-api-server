@@ -113,6 +113,10 @@ class PackagePreparationTests(unittest.TestCase):
             for name in ("TMPDIR", "TMP", "TEMP"):
                 self.assertEqual(transaction.call_args.kwargs["env"][name],
                                  anchor_path + "/cache/installer-apt/tmp")
+            for name, value in {"DEBIAN_FRONTEND": "noninteractive", "NEEDRESTART_MODE": "l",
+                                "LC_ALL": "C"}.items():
+                self.assertEqual(transaction.call_args.kwargs["env"][name], value)
+            self.assertEqual(transaction.call_args.kwargs["timeout"], 3600)
             command.reset_mock()
             with self.assertRaisesRegex(InstallError, "owned_package_transaction_required"):
                 runner.run(mutation_argv)

@@ -60,11 +60,14 @@ class FixtureRunner:
         # Real AnchoredRoot, synthetic package execution: verify the held FD is
         # usable at the mutation boundary without starting apt or any service.
         self.owner.assertIsNotNone(self.owner.stage.prereqs._anchor)
+        self.owner.assertEqual(os.fstat(self.owner.stage.prereqs._anchor.fileno()).st_ino,
+                               self.owner.data.stat().st_ino)
         for name in ("TMPDIR", "TMP", "TEMP"):
             self.owner.assertRegex(env[name], r"^/proc/[0-9]+/fd/[0-9]+/cache/")
-            self.owner.assertEqual(Path(env[name]).resolve(),
-                                   self.owner.data / "cache/installer-apt/tmp")
-            self.owner.assertTrue(Path(env[name]).is_dir())
+            if sys.platform == "linux":
+                self.owner.assertEqual(Path(env[name]).resolve(),
+                                       self.owner.data / "cache/installer-apt/tmp")
+                self.owner.assertTrue(Path(env[name]).is_dir())
         return self.run(argv, timeout=timeout, env=env)
 
     def run(self, argv, timeout=60, env=None):
