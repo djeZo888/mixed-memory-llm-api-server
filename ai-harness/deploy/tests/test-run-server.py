@@ -71,6 +71,24 @@ class ServerContract(unittest.TestCase):
             owned = subprocess.run(args + ['--codex-preview-receipt', str(receipt), '--codex-owned-acceptance-policy', str(owned_policy)], env=env, text=True, capture_output=True)
             self.assertEqual(owned.returncode, 0, owned.stderr)
             self.assertEqual(json.loads(owned.stdout)['_argv'], [str(app / 'server/dist/codex-preview-main.js'), str(receipt), '65536', 'image-jobs-unqualified', str(owned_policy)])
+            specialists = root / 'protected specialist record.json'
+            specialist_args = ['--codex-specialist-qualification', str(specialists)]
+            qualified_args = ['--codex-preview-receipt', str(receipt), '--codex-owned-acceptance-policy', str(owned_policy)]
+            for image_flags, image_mode in (([], 'image-jobs-unqualified'), (['--codex-image-jobs-reviewed'], 'image-jobs-reviewed')):
+                with self.subTest(specialist_image_mode=image_mode):
+                    qualified = subprocess.run(args + qualified_args + specialist_args + image_flags, env=env, text=True, capture_output=True)
+                    self.assertEqual(qualified.returncode, 0, qualified.stderr)
+                    self.assertEqual(json.loads(qualified.stdout)['_argv'], [str(app / 'server/dist/codex-preview-main.js'), str(receipt), '65536', image_mode, str(owned_policy), str(specialists)])
+            for invalid_path in ('relative.json', '', '/tmp/multiline\nrecord.json', '/tmp/carriage\rrecord.json'):
+                with self.subTest(specialist_invalid_path=repr(invalid_path)):
+                    rejected_path = subprocess.run(args + qualified_args + ['--codex-specialist-qualification', invalid_path], env=env, text=True, capture_output=True)
+                    self.assertNotEqual(rejected_path.returncode, 0)
+                    self.assertIn('specialist qualification path must be absolute and single-line', rejected_path.stderr)
+            for dependencies in ([], ['--codex-preview-receipt', str(receipt)], ['--codex-owned-acceptance-policy', str(owned_policy)]):
+                with self.subTest(specialist_dependencies=dependencies):
+                    missing_dependency = subprocess.run(args + dependencies + specialist_args, env=env, text=True, capture_output=True)
+                    self.assertNotEqual(missing_dependency.returncode, 0)
+                    self.assertIn('specialist qualification requires reviewed Codex preview and owned acceptance policy', missing_dependency.stderr)
             ungated = subprocess.run(args + ['--codex-image-jobs-reviewed'], env=env, text=True, capture_output=True)
             self.assertNotEqual(ungated.returncode, 0)
             key.chmod(0o644)
