@@ -23,6 +23,8 @@ import {
 
 type Lane = "idle" | "active" | "quarantined";
 interface RecordData {
+  /** Cutover: terminal history predating H035 is read-only, never backfilled. */
+  resultEligible?: boolean;
   job: ImageJob;
   submission: ImageSubmission;
   bodyHash: string;
@@ -153,6 +155,7 @@ function submission(value: unknown): ImageSubmission {
 /** A single durable image lane. It neither acquires nor releases text gateway lanes. */
 export class ImageBroker {
   private records = new Map<string, RecordData>();
+  private resultDeliveries = new Set<RecordData>();
   private lane: Lane = "quarantined";
   private closed = false;
   private pumping = false;
@@ -177,7 +180,9 @@ export class ImageBroker {
       .prepare("SELECT data FROM h003_image_jobs ORDER BY rowid")
       .all()) {
       const record = JSON.parse(String(row.data)) as RecordData;
+      if (!terminal.has(record.job.state)) record.resultEligible = true;
       this.records.set(record.job.id, record);
+      if (record.resultEligible && terminal.has(record.job.state)) this.resultDeliveries.add(record);
     }
     const previousLane = db.prepare("SELECT state FROM h003_image_lane WHERE id=1").get();
     const ownership = db.prepare("SELECT uncertain FROM h005_image_ownership WHERE id=1").get();
@@ -278,19 +283,31 @@ export class ImageBroker {
       throw e;
     }
     if (lane) this.lane = lane;
-    for (const entry of changed)
-      this.options.store.emit(
+    for (const entry of changed) {
+      if (entry.resultEligible && terminal.has(entry.job.state)) this.resultDeliveries.add(entry);
+      try { this.options.store.emit(
         entry.job.sessionId,
         "image_job",
         { job: this.public(entry, true) },
         entry.job.runId,
-      );
+      ); } catch { /* committed state remains authoritative on reconnect */ }
+    }
+    this.deliverTerminalResults();
+  }
+  private deliverTerminalResults() {
+    for (const r of this.resultDeliveries) {
+      try {
+        this.options.store.deliverImageResult(r.job);
+        this.resultDeliveries.delete(r);
+      }
+      catch { /* Retry the durable handoff on the next tick/startup, never the job. */ }
+    }
   }
   private queued() {
     return [...this.records.values()].filter((r) => r.job.state === "queued");
   }
   private public(r: RecordData, browser = false): ImageJob {
-    const value = { ...r.job };
+    const value = { ...r.job, ...(r.resultEligible ? { resultEligible: true } : {}) };
     if (browser) delete value.outputPath;
     return structuredClone({
       ...value,
@@ -325,6 +342,22 @@ export class ImageBroker {
   }
   get(sessionId: string, jobId: string) {
     return this.public(this.owned(sessionId, jobId));
+  }
+  /** Fresh app-owned state for the next explicit user turn, not a model event.
+   * Deliberately omit prompts, tokens, reference names and local paths. */
+  context(sessionId: string): string {
+    const jobs = this.list(sessionId);
+    if (!jobs.length) return "";
+    const statuses = jobs.slice(-20).map(job => ({
+      id: job.id, revision: job.revision, state: job.state,
+      runId: job.runId, operation: job.operation, cancelRequested: job.cancelRequested,
+      ...(job.finishedAt ? { finishedAt: job.finishedAt } : {}),
+      ...(job.error ? { errorCode: job.error.code } : {}),
+      ...(job.artifactId ? { artifactId: job.artifactId,
+        previewUrl: `/api/files/${job.artifactId}/preview`,
+        downloadUrl: `/api/artifacts/${job.artifactId}/download` } : {}),
+    }));
+    return `\n\nCurrent image-service status snapshot (app-owned; most recent ${statuses.length} of ${jobs.length} jobs):\n${JSON.stringify(statuses)}\nThese states supersede older image-status claims, not historical model text. Native turn completion is not external image completion. Only state=completed is successful delivery; failed/cancelled/interrupted are not success even when an artifact is retained. running/saving with cancelRequested means draining. Use image_status with the exact existing job ID for a fresh read; never resubmit to obtain status. Awaiting approval releases the native turn; approval and completion are handled by the app without an automatic model turn.`;
   }
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };
@@ -563,6 +596,7 @@ export class ImageBroker {
         ...(adjustment ? { adjustment } : {}),
       };
       const record: RecordData = {
+        resultEligible: true,
         job,
         submission: body,
         sourceSeeds,
@@ -751,6 +785,7 @@ export class ImageBroker {
         this.cancel(sessionId, r.job.id);
   }
   private kick() {
+    this.deliverTerminalResults();
     this.resumePreparation?.();
     if (this.closed || this.rejectUnavailablePending()) return;
     for (const r of this.queued())

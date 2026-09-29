@@ -24,6 +24,11 @@ class CodexLauncherContract(base.LauncherContract):
         self.assertEqual(target, '/opt/sova/codex/models.json')
         matching = [mount for mount in mounts if mount.split(':')[1] == target]
         self.assertEqual(matching, [f'{base.LAUNCHER.parent}/codex/models.json:{target}:ro,rprivate'])
+        # The ordinary launcher retains owned-job reads without creative admission.
+        expected = ['image_capabilities', 'image_status']
+        if config_name == 'config-image-jobs.toml':
+            expected += ['image_generate', 'image_edit']
+        self.assertEqual(config['mcp_servers']['image']['enabled_tools'], expected)
 
     def test_acp_transport_mounts_and_environment_allowlist(self):
         self.env.update(OPENAI_API_KEY='fixture-never-export', SSH_AUTH_SOCK='/private/ssh', CODEX_HOME='/private/codex', NODE_OPTIONS='--inspect', CONTAINER_HOST='ssh://wrong', HTTP_PROXY='http://wrong')

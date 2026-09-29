@@ -7,9 +7,16 @@ export const CURATED_SKILLS = Object.freeze(['technical-research', 'code-investi
 export const SKILLS_SOURCE = '/opt/ai-harness/skills';
 export const SEARXNG_URL = 'http://10.0.2.2:8082';
 export const IMAGE_TIMEOUT_MS = 50 * 60 * 1000;
-// Exact H033 efde32a packaged skill -> H034 reviewed explicit-query skill.
-const PRIOR_IMAGE_SKILL_SHA256 = '56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01';
-const REVIEWED_IMAGE_SKILL_SHA256 = '824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc';
+// Only the two fixed H035 managed skills have reviewed migration pairs.
+const MANAGED_SKILL_UPDATES = Object.freeze({
+  image: { successor: '98db7d4da3cf4f27f3b4b3f2ec5b271ada2b8bf59cab89ae6fb2c23cd85e294e', predecessors: {
+    '56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01': '.image-skill-h033-56449a3f.md',
+    '824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc': '.image-skill-h034-824aba75.md',
+  } },
+  pdf: { successor: 'f1e77bf04846cde401c900f0a817a6fc14685df438c050f7f6aad75d6a670211', predecessors: {
+    '31088c03ce196bfc575d48c3f9214c5a5c2ac94f3fb6f9fd00f71fbe31472918': '.pdf-skill-h034-31088c03.md',
+  } },
+});
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 
 export const FRONTIER_CONTEXT = 1048576; // H013 reviewed native PASS; deploy only with the matching ready 1M backend.
@@ -149,7 +156,7 @@ function safeRead(target, owned = false) {
   } finally { closeSync(fd); }
 }
 
-function skillTree(source, destination, copy, omit = [], priorImageSkillTarget = null) {
+function skillTree(source, destination, copy, omit = [], managed = new Map(), changes = []) {
   safeDirectory(source);
   safeDirectory(destination, true);
   const names = readdirSync(source).filter(name => !omit.includes(name)).sort();
@@ -162,52 +169,71 @@ function skillTree(source, destination, copy, omit = [], priorImageSkillTarget =
     const stat = lstatSync(original);
     if (stat.isDirectory()) {
       if (copy) mkdirSync(target, { mode: 0o700 });
-      skillTree(original, target, copy, [], priorImageSkillTarget);
+      skillTree(original, target, copy, [], managed, changes);
     } else if (stat.isFile()) {
       const content = safeRead(original);
       if (copy) writeFileSync(target, content, { mode: 0o600, flag: 'wx' });
       else {
         const previous = safeRead(target, true);
-        if (!previous.equals(content) && !(target === priorImageSkillTarget &&
-            sha256(previous) === PRIOR_IMAGE_SKILL_SHA256 && sha256(content) === REVIEWED_IMAGE_SKILL_SHA256)) {
-          throw new Error('Existing skills differ from the reviewed image contents.');
+        if (!previous.equals(content)) {
+          const rule = managed.get(target);
+          const backupName = rule?.predecessors[sha256(previous)];
+          if (!backupName || sha256(content) !== rule.successor) {
+            throw new Error('Existing skills differ from the reviewed image contents.');
+          }
+          changes.push({ target, previous, content, backupName });
         }
       }
     } else throw new Error('Refusing a non-regular reviewed skills entry.');
   }
 }
 
-function refreshReviewedImageSkill(profile, source, target) {
-  const imageSkill = path.join(target, 'image', 'SKILL.md');
-  // Validate every existing path, byte and metadata check before any replacement.
-  // Only this exact managed predecessor/successor pair may differ.
-  skillTree(source, target, false, [], imageSkill);
-  const previous = safeRead(imageSkill, true);
-  const content = safeRead(path.join(source, 'image', 'SKILL.md'));
-  if (previous.equals(content)) return;
-  if (sha256(previous) !== PRIOR_IMAGE_SKILL_SHA256 || sha256(content) !== REVIEWED_IMAGE_SKILL_SHA256) {
-    throw new Error('Existing skills differ from the reviewed image contents.');
-  }
+function refreshReviewedSkills(profile, source, target, missingImage) {
   safeDirectory(profile, true);
-  const staging = mkdtempSync(path.join(profile, '.skills-image-'));
-  try {
-    const replacement = path.join(staging, 'SKILL.md');
-    writeFileSync(replacement, content, { mode: 0o600, flag: 'wx' });
-    safeDirectory(profile, true);
-    skillTree(source, target, false, [], imageSkill);
-    if (!safeRead(imageSkill, true).equals(previous)) {
-      throw new Error('Existing skills differ from the reviewed image contents.');
-    }
-    // Retain the exact old managed bytes privately, outside the skills roster.
-    // A conflicting backup is user content; never truncate or adopt it.
-    const backup = path.join(profile, '.image-skill-h033-56449a3f.md');
-    const saved = statIfPresent(backup);
-    if (saved) {
-      if (!saved.isFile() || (saved.mode & 0o077) !== 0 || !safeRead(backup, true).equals(previous)) {
-        throw new Error('Refusing an unsafe or modified image skill backup.');
+  const managed = new Map(Object.entries(MANAGED_SKILL_UPDATES)
+    .map(([name, rule]) => [path.join(target, name, 'SKILL.md'), rule]));
+  const inspect = () => {
+    const changes = [];
+    skillTree(source, target, false, missingImage ? ['image'] : [], managed, changes);
+    return changes;
+  };
+  const inspectBackups = changes => {
+    for (const change of changes) {
+      const backup = path.join(profile, change.backupName);
+      const saved = statIfPresent(backup);
+      if (saved && (!saved.isFile() || (saved.mode & 0o077) !== 0 || !safeRead(backup, true).equals(change.previous))) {
+        throw new Error('Refusing an unsafe or modified managed skill backup.');
       }
-    } else writeFileSync(backup, previous, { mode: 0o600, flag: 'wx' });
-    renameSync(replacement, imageSkill);
+    }
+  };
+  // Every existing skill and applicable backup is checked before any mutation.
+  // In particular a later PDF conflict cannot partially refresh image first.
+  const changes = inspect();
+  inspectBackups(changes);
+  if (!changes.length && !missingImage) return;
+  const staging = mkdtempSync(path.join(profile, '.skills-managed-'));
+  try {
+    changes.forEach((change, index) => writeFileSync(path.join(staging, String(index)), change.content, { mode: 0o600, flag: 'wx' }));
+    if (missingImage) {
+      mkdirSync(path.join(staging, 'image'), { mode: 0o700 });
+      skillTree(path.join(source, 'image'), path.join(staging, 'image'), true);
+    }
+    safeDirectory(profile, true);
+    const checked = inspect();
+    if (checked.length !== changes.length || checked.some((change, index) =>
+      change.target !== changes[index].target || !change.previous.equals(changes[index].previous) || !change.content.equals(changes[index].content))) {
+      throw new Error('Existing skills changed during migration.');
+    }
+    inspectBackups(changes);
+    if (missingImage) skillTree(path.join(source, 'image'), path.join(staging, 'image'), false);
+    // Save all exact old bytes privately before publishing any replacement.
+    // Renames are resumable, not a multi-file transaction against other writers.
+    for (const change of changes) {
+      const backup = path.join(profile, change.backupName);
+      if (!statIfPresent(backup)) writeFileSync(backup, change.previous, { mode: 0o600, flag: 'wx' });
+    }
+    changes.forEach((change, index) => renameSync(path.join(staging, String(index)), change.target));
+    if (missingImage) renameSync(path.join(staging, 'image'), path.join(target, 'image'));
   } finally { rmSync(staging, { recursive: true, force: true }); }
 }
 
@@ -228,16 +254,8 @@ export function seedReviewedSkills(profile, source = SKILLS_SOURCE) {
     // Upgrade only the exact prior reviewed roster. Verify every old byte and
     // ownership before adding the new skill; never replace user-modified files.
     const prior = expected.filter(name => name !== 'image');
-    if (JSON.stringify(readdirSync(target).sort()) === JSON.stringify(prior)) {
-      skillTree(source, target, false, ['image']);
-      const staging = mkdtempSync(path.join(profile, '.skills-'));
-      try {
-        skillTree(path.join(source, 'image'), staging, true);
-        if (statIfPresent(path.join(target, 'image'))) throw new Error('Image skill appeared during initialization.');
-        renameSync(staging, path.join(target, 'image'));
-      } finally { rmSync(staging, { recursive: true, force: true }); }
-    }
-    refreshReviewedImageSkill(profile, source, target);
+    const missingImage = JSON.stringify(readdirSync(target).sort()) === JSON.stringify(prior);
+    refreshReviewedSkills(profile, source, target, missingImage);
     return;
   }
   // Publish only a complete private copy. Interrupted partial staging is never

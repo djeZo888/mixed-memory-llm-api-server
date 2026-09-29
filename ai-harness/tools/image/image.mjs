@@ -27,6 +27,7 @@ const fields = {
 // Discovery is an explicit read-only request, not a creative prompt. Keep the
 // enum representation aligned with the reviewed provider function-tool contract.
 export const capabilitiesInput = z.object({ query: z.enum(['capabilities']) }).strict();
+export const statusInput = z.object({ jobId: z.string().refine(identifier, 'Use the existing image job ID returned for this session') }).strict();
 export const generateInput = z.object({ ...fields, references: z.array(reference).max(LIMITS.references).optional() }).strict();
 export const editInput = z.object({ ...fields, references: z.array(reference).min(1).max(LIMITS.references) }).strict();
 
@@ -107,11 +108,25 @@ export function publicJob(value, token) {
   // The trusted session job supplies the artifact ID, never a URL/path. These
   // fixed same-origin routes still authorize the file on every browser read.
   // A retained artifact after a workspace-copy failure is reusable too.
-  if (['completed', 'failed'].includes(value.state) && /^[A-Za-z0-9_-]{1,80}$/u.test(result.artifactId ?? '')) {
+  if (/^[A-Za-z0-9_-]{1,80}$/u.test(result.artifactId ?? '')) {
     result.previewUrl = `/api/files/${result.artifactId}/preview`;
     result.downloadUrl = `/api/artifacts/${result.artifactId}/download`;
   }
   return result;
+}
+
+function jobResult(job) {
+  if (job.state === 'awaiting_approval') return { job, instruction: 'Use the user approval card to approve or reject the exact resize/canvas adjustment. Do not submit another job or approve through a tool. On a later turn, use image_status with this existing job ID to read the current result. Native turn completion does not mean this image job completed.' };
+  return { job,
+    ...(job.state === 'completed' && job.previewUrl ? {
+      imageMarkdown: `![Generated image](${job.previewUrl})`,
+      instruction: 'Reuse this saved artifact. Put imageMarkdown at the relevant place in the final answer and describe it accurately; use downloadUrl for a file link. Do not regenerate to repair embedding, layout, links, or cosmetic self-verification. Additional variants require a user request or a concrete unmet output requirement. If the job reports an error, disclose it; a retained artifact is not a successful workspace copy.',
+    } : { instruction: job.previewUrl
+      ? `The original job state is ${job.state}. A retained output can be downloaded using job.downloadUrl, but it is not successful image delivery. Preserve this exact state, cancellation flag and error; do not resubmit this job.`
+      : terminal.has(job.state)
+      ? 'This is the current terminal image job result. Report its state and any error accurately; do not claim completion for failed, cancelled or interrupted work. Do not resubmit this existing job.'
+      : 'This image job is still pending. Native turn completion does not mean this image job completed. Reuse this existing job ID with image_status on a later turn; do not resubmit or hold a model turn waiting for external approval.' }),
+  };
 }
 
 // Capability field selection is deliberate: opaque backend settings/URLs and
@@ -205,6 +220,17 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
     const data = await request('/image-capabilities', 'GET', undefined, signal, LIMITS.requestMs);
     return publicCapabilities(data, token);
   }
+  async function status(input, { signal } = {}) {
+    const parsed = statusInput.safeParse(input);
+    if (!parsed.success) throw new ImageError('INVALID_INPUT', 'image_status requires exactly {"jobId":"existing-job-id"}; use an image job ID already returned for this session. No submission, approval or cancellation arguments are accepted.');
+    if (signal?.aborted) throw new ImageError('OBSERVATION_STOPPED', 'Image status observation stopped before the read.');
+    const data = await request(`/image-jobs/${encodeURIComponent(parsed.data.jobId)}`, 'GET', undefined, signal, LIMITS.requestMs);
+    const job = publicJob(data.job, token);
+    if (job.id !== parsed.data.jobId) throw new ImageError('INVALID_JOB_RESPONSE', 'The gateway returned an unrelated image job.');
+    const result = jobResult(job);
+    result.instruction += " This is a one-shot read: do not busy-poll pending work. The app delivers a separate terminal result automatically; the next explicit user turn receives fresh status context.";
+    return result;
+  }
   async function invoke(operation, input, { signal, onProgress } = {}) {
     const parsed = (operation === 'edit' ? editInput : generateInput).safeParse(input);
     if (!['generation', 'edit'].includes(operation) || !parsed.success) throw new ImageError('INVALID_INPUT', 'Use prompt, optional supported size/seed, and current-session file IDs or anchored relative workspace references only.');
@@ -227,14 +253,7 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
     }
     let attempt = 0; let observationError;
     while (true) {
-      if (job.state === 'awaiting_approval') return { job, instruction: 'Use the user approval card to approve or reject the exact resize/canvas adjustment. Do not submit another job or approve through a tool.' };
-      if (terminal.has(job.state)) return {
-        job,
-        ...(job.previewUrl ? {
-          imageMarkdown: `![Generated image](${job.previewUrl})`,
-          instruction: 'Reuse this saved artifact. Put imageMarkdown at the relevant place in the final answer and describe it accurately; use downloadUrl for a file link. Do not regenerate to repair embedding, layout, links, or cosmetic self-verification. Additional variants require a user request or a concrete unmet output requirement. If the job reports an error, disclose it; a retained artifact is not a successful workspace copy.',
-        } : {}),
-      };
+      if (job.state === 'awaiting_approval' || terminal.has(job.state)) return jobResult(job);
       if (signal?.aborted || now() >= deadline) return { job, observationStopped: true,
         ...(observationError ? { error: observationError } : {}),
         instruction: 'The submitted image job survives this tool ending. Check its image job card for the result; do not resubmit. Active cancellation drains until the backend settles.' };
@@ -261,5 +280,5 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
       }
     }
   }
-  return { capabilities, invoke };
+  return { capabilities, status, invoke };
 }

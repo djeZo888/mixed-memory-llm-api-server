@@ -156,6 +156,7 @@ export async function createApp(options: AppOptions): Promise<{
       store,
       files,
       cancelImages: (id) => images?.cancelSession(id),
+      imageContext: (id) => images?.context(id) ?? "",
       validateCodexImageReferences: (sessionId, count) => assertCodexImageReferences(sessionId, count),
     });
     if (options.imageBackend)

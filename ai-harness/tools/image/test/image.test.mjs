@@ -200,8 +200,8 @@ test('retained artifact on workspace-copy failure gets stable presentation links
   assert.equal(f.calls.length, 1);
   assert.equal(result.job.state, 'failed');
   assert.equal(result.job.error.code, 'image_workspace_save_failed');
-  assert.equal(result.imageMarkdown, '![Generated image](/api/files/retained-1/preview)');
-  assert.match(result.instruction, /disclose it/);
+  assert.equal(result.imageMarkdown, undefined);
+  assert.match(result.instruction, /original job state is failed/);
 });
 
 test('presentation links are derived only from safe retained IDs, ignoring supplied URLs and raw paths', () => {
@@ -217,7 +217,7 @@ test('presentation links are derived only from safe retained IDs, ignoring suppl
     assert.equal(value.downloadUrl, undefined, artifactId);
   }
   for (const state of ['queued', 'running', 'cancelled', 'interrupted', 'awaiting_approval']) {
-    assert.equal(publicJob(record(state, { artifactId: 'owned-1' }), token).previewUrl, undefined);
+    assert.equal(publicJob(record(state, { artifactId: 'owned-1' }), token).previewUrl, '/api/files/owned-1/preview');
   }
 });
 
@@ -314,7 +314,7 @@ test('official SDK initialize/list/schema and actual tool call reject injected s
   await server.connect(right); await client.connect(left);
   try {
     const { tools } = await client.listTools();
-    assert.deepEqual(tools.map(tool => tool.name), ['image_capabilities', 'image_generate', 'image_edit']);
+    assert.deepEqual(tools.map(tool => tool.name), ['image_capabilities', 'image_status', 'image_generate', 'image_edit']);
     for (const tool of tools) assert.equal(tool.inputSchema.additionalProperties, false);
     for (const name of ['image_generate', 'image_edit']) {
       const bad = await client.callTool({ name, arguments: { prompt: 'x', approved: true, references: [{ fileId: 'upload-1' }] } });
@@ -337,7 +337,7 @@ test('main and delegated-child MCP processes expose the same tools with only exi
     try {
       await client.connect(transport); await client.ping();
       assert.equal(client.getServerVersion().name, 'ai-harness-image');
-      assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), ['image_capabilities', 'image_generate', 'image_edit']);
+      assert.deepEqual((await client.listTools()).tools.map(tool => tool.name), ['image_capabilities', 'image_status', 'image_generate', 'image_edit']);
     } finally { await client.close(); }
     assert.equal(stderr, '');
   }

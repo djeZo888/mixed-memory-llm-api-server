@@ -4,7 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { capabilitiesInput, configuredToken, createImageClient, editInput, generateInput, ImageError, LIMITS } from './image.mjs';
+import { capabilitiesInput, configuredToken, createImageClient, editInput, generateInput, statusInput, ImageError, LIMITS } from './image.mjs';
 
 export function createImageServer(client, lifetime = new AbortController()) {
   const server = new McpServer({ name: 'ai-harness-image', version: '0.0.3' });
@@ -28,6 +28,12 @@ export function createImageServer(client, lifetime = new AbortController()) {
     inputSchema: capabilitiesInput,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (input, extra) => run(() => client.capabilities(input, { signal: AbortSignal.any([extra.signal, lifetime.signal]) })));
+  server.registerTool('image_status', {
+    title: 'Read an existing image job result',
+    description: 'Read the current authoritative status of one existing image job using its previously returned jobId. One read only; never generates, edits, approves, cancels or resubmits work. Use on an explicit user follow-up after deferred approval. Do not busy-poll awaiting approval or running work; the app delivers terminal results automatically. Native turn completion is not image job completion. Reuse the returned saved artifact and imageMarkdown; preserve failed, cancelled or interrupted status accurately. IDs from other sessions are refused.',
+    inputSchema: statusInput,
+    annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
+  }, (input, extra) => run(() => client.status(input, { signal: AbortSignal.any([extra.signal, lifetime.signal]) })));
   server.registerTool('image_generate', {
     title: 'Generate an image locally',
     description: 'Create one opaque image using resident Qwen-Image-2.1. Plan a small set of distinct purposeful images for the user request; explicit multiple images and variants are supported. Reuse successful artifacts, never regenerate for embedding/layout or cosmetic self-verification. Use returned imageMarkdown inline in the final answer. Default size 1920x1080. Current generation profiles accept zero references; reference-based creation uses image_edit with references. Do not automatically convert operations; unqualified inputs may fail. Submit once; the stored job survives tool/turn ending. If awaiting approval, ask the user to use the image approval card; never resubmit or approve by tool.',
@@ -55,7 +61,7 @@ export function createImageServer(client, lifetime = new AbortController()) {
 
 async function main() {
   if (process.argv.includes('--help')) {
-    process.stdout.write('Usage: node image-mcp.mjs\nMCP stdio server for image_capabilities, image_generate and image_edit.\nUses only the existing AI_HARNESS_GATEWAY_TOKEN at fixed http://10.0.2.2:8081/v1.\nNo endpoint, identity, approval or backend arguments. Submitted jobs survive disconnection.\n');
+    process.stdout.write('Usage: node image-mcp.mjs\nMCP stdio server for image_capabilities, image_status, image_generate and image_edit.\nUses only the existing AI_HARNESS_GATEWAY_TOKEN at fixed http://10.0.2.2:8081/v1.\nNo endpoint, identity, approval or backend arguments. Submitted jobs survive disconnection.\n');
     return;
   }
   if (process.argv.length !== 2) { process.stderr.write('Unsupported arguments. Use --help.\n'); process.exitCode = 1; return; }

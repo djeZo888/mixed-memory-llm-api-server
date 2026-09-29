@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate only the H034 reviewed file overlays; never select an image or policy."""
+"""Validate only the H035 reviewed image and skill overlays; never select an image or policy."""
 import hashlib
 import os
 from pathlib import Path
@@ -8,12 +8,13 @@ import sys
 
 
 COMMON = {
-    "tools/image/image-mcp.mjs": "d23616513961b053d7da4e61b9f5ca29025b48cce6290d52e871a8e82fb51a66",
-    "tools/image/image.mjs": "fb15f15951448169a6d3e1ca97805ce1075aa668b495e6e032069437ef8f6f6b",
+    "tools/image/image-mcp.mjs": "6f4347bc3b3192fcd057883bc5425fd30c8a096bdf6ee6785d0673a4f6b4d2b7",
+    "tools/image/image.mjs": "7cba531025eb598f1df36e9fed14c07b1ee59c0d091373ee03ad419443de7407",
 }
 ENGINE = {
-    "skills/image/SKILL.md": "824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc",
-    "deploy/engine/configure-profile.mjs": "e4042d2a544d1422e840f084e7c77caa84b67668da428d462e84f563358fdcfc",
+    "skills/pdf/SKILL.md": "f1e77bf04846cde401c900f0a817a6fc14685df438c050f7f6aad75d6a670211",
+    "skills/image/SKILL.md": "98db7d4da3cf4f27f3b4b3f2ec5b271ada2b8bf59cab89ae6fb2c23cd85e294e",
+    "deploy/engine/configure-profile.mjs": "81a4ce401f01a67439c7db278c29f69498c7ec87ae27c415b9b231291e242896",
 }
 
 

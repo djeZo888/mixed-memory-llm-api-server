@@ -21,6 +21,7 @@ import { CONTEXT_LIMIT, unknownSubagents } from "./contracts.js";
 import { environment } from "./locale.js";
 import { imageMime, safeStorageName, displayName } from "./file-metadata.js";
 import { ApiError, requireId } from "./errors.js";
+import type { ImageJob } from "./image-contracts.js";
 
 export interface StoredSession extends Session {
   workspaceId: string;
@@ -107,6 +108,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h029_message_submissions(session_id TEXT NOT NULL REFERENCES sessions(id),submission_id TEXT NOT NULL,fingerprint TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,submission_id));
       CREATE TABLE IF NOT EXISTS h024_compaction_actions(session_id TEXT NOT NULL REFERENCES sessions(id),action_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,action_id));
       CREATE TABLE IF NOT EXISTS h030_handoff_targets(run_id TEXT PRIMARY KEY REFERENCES runs(id),engine_kind TEXT NOT NULL CHECK(engine_kind IN ('minimax','codex')));
+      CREATE TABLE IF NOT EXISTS h035_image_results(job_id TEXT PRIMARY KEY,message_id TEXT NOT NULL UNIQUE REFERENCES messages(id));
     `);
     // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
     this.db.exec(`
@@ -419,6 +421,68 @@ export class Store {
     this.db
       .prepare("UPDATE messages SET content=content || ? WHERE id=?")
       .run(text, id);
+  }
+  /** One durable app result per existing terminal image job, independently of
+   * native turn completion. A crash before this transaction is repaired by the
+   * image broker's terminal reconciliation; a crash after it replays the event. */
+  deliverImageResult(job: ImageJob): Message | undefined {
+    if (!["completed", "failed", "cancelled", "interrupted"].includes(job.state))
+      return;
+    const session = this.getSession(job.sessionId, true);
+    // Deleted conversations stay deleted; Stop alone still receives a factual result.
+    if (session.deleted || session.deleteRequested) return;
+    const row = this.db.prepare("SELECT data FROM h003_image_jobs WHERE id=? AND session_id=?").get(job.id, job.sessionId);
+    const record = row ? decode<{ job: ImageJob; resultEligible?: boolean }>(row.data) : undefined;
+    if (record?.resultEligible !== true) return;
+    const durable = record.job;
+    const run = this.db.prepare("SELECT session_id FROM runs WHERE id=?").get(job.runId);
+    if (!durable || durable.runId !== job.runId || run?.session_id !== job.sessionId ||
+        durable.revision !== job.revision || durable.state !== job.state ||
+        durable.artifactId !== job.artifactId || !durable.finishedAt)
+      throw new ApiError(409, "image_result_mismatch", "Image result does not match its durable owner");
+    // Formatting always uses durable service fields, never caller-carried text.
+    job = durable;
+    let artifact: Artifact | undefined;
+    if (job.artifactId) {
+      const file = this.file(job.artifactId);
+      if (file.sessionId !== job.sessionId || file.runId !== job.runId ||
+          file.kind !== "artifact" || file.image?.jobId !== job.id ||
+          file.image.model !== job.model || file.image.seed !== job.seed ||
+          file.image.actualSize !== job.actualSize)
+        throw new ApiError(409, "image_result_mismatch", "Image artifact does not match its job");
+      artifact = this.publicFile(file) as Artifact;
+    }
+    if (job.state === "completed" && (!artifact || job.cancelRequested))
+      throw new ApiError(409, "image_result_mismatch", "Successful image delivery requires its original artifact");
+    const existing = this.db.prepare("SELECT message_id FROM h035_image_results WHERE job_id=?").get(job.id);
+    if (existing) return this.message(String(existing.message_id));
+    const uncertain = job.state === "interrupted" ||
+      ["image_completion_unknown", "server_stopped", "server_restarted"].includes(job.error?.code ?? "");
+    let content = `Image service result: ${job.state}.\n\nJob: ${job.id}\n\nRecorded at: ${job.finishedAt}.`;
+    if (uncertain) content += "\n\nExternal completion is uncertain. This is not a success receipt. The original job will not be resubmitted automatically.";
+    else if (job.state === "cancelled") content += "\n\nImage delivery was cancelled or rejected; this is not a successful completion.";
+    else if (job.state === "failed") content += "\n\nImage delivery failed; this is not a successful completion.";
+    if (job.error) content += `\n\nError code: ${job.error.code}.`;
+    if (artifact) {
+      if (job.state === "completed") content += `\n\n![Completed image](${artifact.previewUrl})`;
+      else content += "\n\nAn output artifact was retained with its original provenance; it does not change the job outcome.";
+      content += `\n\n[${job.state === "completed" ? "Download image" : "Download retained output"}](${artifact.downloadUrl})`;
+    }
+    content += "\n\nThis update was recorded by the image service, separately from the earlier model answer.";
+    let event: Event;
+    let message: Message;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      message = this.addMessage(job.sessionId, "assistant", content, job.runId, [], randomUUID(), {
+        phase: "unclassified", streamState: "completed", origin: "image_service", imageJobId: job.id,
+      });
+      this.db.prepare("INSERT INTO h035_image_results VALUES(?,?)").run(job.id, message.id);
+      event = this.writeEvent(job.sessionId, "message", { message }, job.runId);
+      this.db.exec("COMMIT");
+    } catch (error) { this.db.exec("ROLLBACK"); throw error; }
+    // Persistence is authoritative even if a disconnected listener fails.
+    try { this.events.emit(job.sessionId, event); } catch { /* durable replay */ }
+    return message;
   }
   message(id: string): Message {
     const r = this.db

@@ -44,6 +44,8 @@ export interface Message {
   nativeMessageId?: string;
   nativeTurnId?: string;
   streamState?: StreamState;
+  origin?: 'image_service';
+  imageJobId?: string;
 }
 export interface Attachment {
   id: string;
@@ -93,6 +95,7 @@ export interface ImageAdjustmentSource extends ImageReference {
 export interface ImageJob {
   id: string;
   revision: number;
+  resultEligible?: boolean;
   sessionId: string;
   runId: string;
   requestId: string;

@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -8,9 +8,22 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { seedReviewedSkills } from './configure-profile.mjs';
 
-const source = realpathSync(fileURLToPath(new URL('../../skills', import.meta.url)));
+const packagedSource = realpathSync(fileURLToPath(new URL('../../skills', import.meta.url)));
+// Local handoff validation may supply final W2 bytes without editing its files.
+// In an integrated checkout both defaults are the reviewed packaged skills.
+const sourceRoot = realpathSync(mkdtempSync(path.join(os.tmpdir(), 'h035-managed-source-')));
+const source = path.join(sourceRoot, 'skills');
+cpSync(packagedSource, source, { recursive: true });
+for (const [name, supplied] of [['image', process.env.H035_IMAGE_SKILL], ['pdf', process.env.H035_PDF_SKILL]]) {
+  if (supplied) writeFileSync(path.join(source, name, 'SKILL.md'), readFileSync(supplied));
+}
+after(() => rmSync(sourceRoot, { recursive: true, force: true }));
 const predecessor = readFileSync(new URL('./fixtures/image-skill-efde32a.md', import.meta.url));
 const successor = readFileSync(path.join(source, 'image', 'SKILL.md'));
+const h034Image = readFileSync(new URL('./fixtures/image-skill-h034-824aba75.md', import.meta.url));
+const oldPdf = readFileSync(new URL('./fixtures/pdf-skill-h034-31088c03.md', import.meta.url));
+const newPdf = readFileSync(path.join(source, 'pdf', 'SKILL.md'));
+const pdfBackupName = '.pdf-skill-h034-31088c03.md';
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
 const mismatch = /Existing skills differ from the reviewed image contents\./u;
 const backupName = '.image-skill-h033-56449a3f.md';
@@ -41,7 +54,10 @@ function snapshot(root, prefix = '') {
 
 test('image migration fixture is exact efde32a predecessor and source is exact reviewed successor', () => {
   assert.equal(sha256(predecessor), '56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01');
-  assert.equal(sha256(successor), '824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc');
+  assert.equal(sha256(h034Image), '824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc');
+  assert.equal(sha256(oldPdf), '31088c03ce196bfc575d48c3f9214c5a5c2ac94f3fb6f9fd00f71fbe31472918');
+  assert.equal(sha256(successor), '98db7d4da3cf4f27f3b4b3f2ec5b271ada2b8bf59cab89ae6fb2c23cd85e294e');
+  assert.equal(sha256(newPdf), 'f1e77bf04846cde401c900f0a817a6fc14685df438c050f7f6aad75d6a670211');
 });
 
 test('current skill reuse preserves every profile byte and inode', () => fixture(({ profile }) => {
@@ -179,4 +195,69 @@ test('existing exact five-skill roster upgrade remains available', () => fixture
   seedReviewedSkills(profile, source);
   assert.equal(existsSync(target), true);
   assert.deepEqual(readFileSync(target), successor);
+}));
+
+
+test('fixed image H033/H034 and PDF predecessors migrate independently or together and reuse exact backups', async t => {
+  for (const [label, imageBytes, pdfBytes] of [
+    ['H033 plus PDF', predecessor, oldPdf], ['H034 plus PDF', h034Image, oldPdf],
+    ['H034 only', h034Image, newPdf], ['PDF only', successor, oldPdf],
+  ]) await t.test(label, () => fixture(({ profile, target }) => {
+    const pdf = path.join(profile, 'skills', 'pdf', 'SKILL.md');
+    writeFileSync(target, imageBytes); writeFileSync(pdf, pdfBytes);
+    const imageBackup = imageBytes.equals(predecessor) ? backupName : '.image-skill-h034-824aba75.md';
+    const backups = [...(!imageBytes.equals(successor) ? [[imageBackup, imageBytes]] : []), ...(!pdfBytes.equals(newPdf) ? [[pdfBackupName, pdfBytes]] : [])];
+    for (const [name, bytes] of backups) writeFileSync(path.join(profile, name), bytes, { mode: 0o600 });
+    const inodes = backups.map(([name]) => lstatSync(path.join(profile, name)).ino);
+    seedReviewedSkills(profile, source);
+    assert.deepEqual(readFileSync(target), successor); assert.deepEqual(readFileSync(pdf), newPdf);
+    backups.forEach(([name, bytes], index) => {
+      assert.deepEqual(readFileSync(path.join(profile, name)), bytes);
+      assert.equal(lstatSync(path.join(profile, name)).ino, inodes[index]);
+    });
+    const done = snapshot(profile); seedReviewedSkills(profile, source); seedReviewedSkills(profile, source);
+    assert.deepEqual(snapshot(profile), done);
+  }));
+});
+
+test('any PDF conflict refuses before image bytes, image backup or five-skill roster mutation', async t => {
+  for (const missingImage of [false, true]) for (const kind of ['target edit', 'source edit', 'backup conflict', 'backup nonprivate', 'backup symlink', 'backup hardlink', 'target hardlink', 'target mode']) {
+    await t.test(`${missingImage ? 'five' : 'six'} skills ${kind}`, () => fixture(({ root, profile, target }) => {
+      writeFileSync(target, predecessor);
+      if (missingImage) rmSync(path.dirname(target), { recursive: true });
+      const pdf = path.join(profile, 'skills', 'pdf', 'SKILL.md');
+      writeFileSync(pdf, oldPdf);
+      let selected = source;
+      if (kind === 'target edit') writeFileSync(pdf, Buffer.concat([oldPdf, Buffer.from('custom')]));
+      if (kind === 'target hardlink') linkSync(pdf, path.join(root, 'linked-target'));
+      if (kind === 'target mode') chmodSync(pdf, 0o620);
+      if (kind === 'source edit') {
+        selected = path.join(root, 'modified-source'); cpSync(source, selected, { recursive: true });
+        writeFileSync(path.join(selected, 'pdf', 'SKILL.md'), Buffer.concat([newPdf, Buffer.from('custom')]));
+      }
+      if (kind.startsWith('backup ')) {
+        const backup = path.join(profile, pdfBackupName), external = path.join(root, 'external');
+        writeFileSync(external, oldPdf, { mode: 0o600 });
+        if (kind === 'backup symlink') symlinkSync(external, backup);
+        else if (kind === 'backup hardlink') linkSync(external, backup);
+        else writeFileSync(backup, kind === 'backup conflict' ? 'custom' : oldPdf, { mode: 0o600 });
+        if (kind === 'backup nonprivate') chmodSync(backup, 0o644);
+      }
+      const before = snapshot(profile);
+      assert.throws(() => seedReviewedSkills(profile, selected));
+      assert.deepEqual(snapshot(profile), before);
+      assert.equal(existsSync(path.join(profile, backupName)), false);
+      assert.equal(existsSync(target), !missingImage);
+    }));
+  }
+});
+
+test('five-skill upgrade migrates exact old PDF before adding image and resumes without drift', () => fixture(({ profile, target }) => {
+  const pdf = path.join(profile, 'skills', 'pdf', 'SKILL.md');
+  rmSync(path.dirname(target), { recursive: true }); writeFileSync(pdf, oldPdf);
+  seedReviewedSkills(profile, source);
+  assert.deepEqual(readFileSync(target), successor); assert.deepEqual(readFileSync(pdf), newPdf);
+  assert.deepEqual(readFileSync(path.join(profile, pdfBackupName)), oldPdf);
+  assert.equal(lstatSync(path.join(profile, pdfBackupName)).mode & 0o777, 0o600);
+  const done = snapshot(profile); seedReviewedSkills(profile, source); assert.deepEqual(snapshot(profile), done);
 }));

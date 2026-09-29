@@ -30,6 +30,8 @@ export interface BrokerOptions {
   /** Protected durable host gate; never supplied by browser/task requests. */
   dispatchHeld?: () => boolean;
   cancelImages?: (sessionId: string) => void;
+  /** Read-only app state, refreshed immediately before a user-requested turn. */
+  imageContext?: (sessionId: string) => string;
   /** Trusted exact-session/run gate; ordinary capability stays independently qualified. */
   imageAcceptance?: (sessionId: string) => boolean;
   /** Trusted unbound ticket permits reference staging only, never image dispatch. */
@@ -586,10 +588,11 @@ export class Broker {
           let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
           try {
             await this.waitForDispatch(active);
+            const currentImageContext = this.options.imageContext?.(s.id) ?? "";
             promptOutcome = await engine.prompt(
-              handoff
+              (handoff
                 ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`
-                : requestText,
+                : requestText) + currentImageContext,
               attachments,
             );
           } catch (error) {

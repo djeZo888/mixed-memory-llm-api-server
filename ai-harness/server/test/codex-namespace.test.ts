@@ -100,3 +100,20 @@ test('captured image schema and raw function arguments survive alias response an
   assert.equal(history.at(-1).content,result);assert.equal(history.at(-1).tool_call_id,'cap-call');
  }
 });
+
+test('read-only image_status preserves exact job arguments and results in pinned namespace transport', () => {
+ const b=JSON.parse(readFileSync(new URL('./fixtures/codex/native-mcp-namespaces.json',import.meta.url),'utf8'));
+ const image=b.tools.find((v:any)=>v.name==='mcp__image');
+ image.tools.push({type:'function',name:'image_status',description:'Read an existing owned image job',strict:false,parameters:{type:'object',properties:{jobId:{type:'string'}},required:['jobId'],additionalProperties:false}});
+ const arguments_=' { "jobId" : "existing-job" }\n', result='{"job":{"id":"existing-job","state":"running","cancelRequested":false}}';
+ b.input.push({type:'function_call',call_id:'status-read',namespace:'mcp__image',name:'image_status',arguments:arguments_},{type:'function_call_output',call_id:'status-read',output:result});
+ const t=translateResponses(b), alias='sova_ns_mcp__image_image_status';
+ assert.ok(t.body.tools.some((v:any)=>v.function.name===alias));
+ assert.equal(t.body.messages.at(-2).tool_calls[0].function.arguments,arguments_);
+ assert.equal(t.body.messages.at(-1).content,result);
+ const frames:string[]=[], stream=new ResponsesStream(t,x=>frames.push(x));
+ for(const data of [{choices:[{delta:{tool_calls:[{index:0,id:'status-next',type:'function',function:{name:alias,arguments:arguments_}}]},finish_reason:'tool_calls'}]},{choices:[],usage:{prompt_tokens:1,completion_tokens:1}}])stream.push(Buffer.from(`data: ${JSON.stringify(data)}\n\n`));
+ stream.push(Buffer.from('data: [DONE]\n\n'));stream.end();
+ const item=frames.map(v=>JSON.parse(v.split('\ndata: ')[1]!)).find(v=>v.type==='response.output_item.done').item;
+ assert.equal(item.namespace,'mcp__image');assert.equal(item.name,'image_status');assert.equal(item.arguments,arguments_);
+});

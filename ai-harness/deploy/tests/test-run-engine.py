@@ -183,6 +183,7 @@ os.execv(sys.executable, [sys.executable, *args])
             f"{source}/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate",
             f"{source}/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate",
             f"{source}/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate",
+            f"{source}/skills/pdf/SKILL.md:/opt/ai-harness/skills/pdf/SKILL.md:ro,rprivate",
             f"{source}/deploy/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate",
         ])
         self.assertEqual(argv[-1], IMAGE_ID)

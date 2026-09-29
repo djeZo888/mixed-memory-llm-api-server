@@ -6,6 +6,7 @@ import { ConversationReplies, WorkingStatus } from '../src/Replies';
 import { formatTime } from '../src/display';
 import { applyEvent } from '../src/state';
 import { HarnessStore } from '../src/store';
+import type { ImageJob } from '../src/types';
 import {
   artifactDownloadUrl,
   attachmentDownloadUrl,
@@ -23,7 +24,207 @@ import {
   runEvent,
 } from './reply-fixtures';
 
+const replyImageJob = (patch: Partial<ImageJob> = {}): ImageJob => ({
+  id: 'original-job',
+  revision: 1,
+  sessionId: 'chat/a',
+  runId: 'run/image',
+  requestId: 'original-request',
+  operation: 'edit',
+  state: 'completed',
+  model: 'Qwen-Image-2.1',
+  prompt: 'Fixture image edit',
+  seed: 42,
+  requestedSize: '1024x1024',
+  references: [],
+  createdAt,
+  cancelRequested: false,
+  ...patch,
+});
+
 describe('reply-level conversation presentation', () => {
+  it('delivers a deferred image service result without changing the old final across replay and reload', () => {
+    const runId = 'run/image';
+    const oldFinal = replyMessage('old-final', 'assistant', 'The image is awaiting approval.', {
+      runId,
+      phase: 'final',
+      streamState: 'completed',
+    });
+    const artifact = replyArtifact('original-artifact', 'image.png', {
+      runId,
+      messageId: oldFinal.id,
+      mimeType: 'image/png',
+      previewUrl: '/api/files/original-artifact/preview',
+      image: { jobId: 'original-job' },
+    });
+    let thread = replyThread({
+      messages: [oldFinal],
+      runs: [replyRun(runId, { status: 'completed', finalMessageId: oldFinal.id })],
+      imageJobs: [replyImageJob({ resultEligible: true, state: 'saving' })],
+    });
+    const { rerender, unmount } = render(<ConversationReplies thread={thread} />);
+    thread = applyEvent(thread, runEvent(1, 'artifact', { artifact }, runId));
+    rerender(<ConversationReplies thread={thread} />);
+    // The artifact event can precede the terminal message, including an old
+    // scalar message association. Neither allows rewriting the old answer.
+    expect(within(screen.getByLabelText('Final answer')).queryByRole('img')).toBeNull();
+    const message = replyMessage(
+      'service-result',
+      'assistant',
+      'Image job original-job completed.\n\n![Completed image](/api/files/original-artifact/preview)\n\n[Download image](/api/artifacts/original-artifact/download)',
+      {
+        runId,
+        origin: 'image_service',
+        imageJobId: 'original-job',
+        phase: 'unclassified',
+        streamState: 'completed',
+      },
+    );
+    const delivery = runEvent(2, 'message', { message }, runId);
+    thread = applyEvent(applyEvent(thread, delivery), delivery);
+    rerender(<ConversationReplies thread={thread} />);
+    const assertResult = () => {
+      const result = screen.getByLabelText('Image service result');
+      expect(screen.getAllByLabelText('Image service result')).toHaveLength(1);
+      expect(screen.getAllByRole('img')).toHaveLength(1);
+      expect(screen.queryByText(/Additional image previews/)).not.toBeInTheDocument();
+      expect(result).not.toHaveClass('message-final');
+      expect(within(result).getByRole('img', { name: 'Completed image' })).toHaveAttribute(
+        'src',
+        '/api/files/original-artifact/preview',
+      );
+      expect(within(result).getByRole('link', { name: 'Download image' })).toHaveAttribute(
+        'href',
+        '/api/artifacts/original-artifact/download',
+      );
+      expect(screen.getByLabelText('Final answer')).toHaveTextContent(oldFinal.content);
+      expect(within(screen.getByLabelText('Final answer')).queryByRole('img')).toBeNull();
+      expect(thread.messages.find((item) => item.id === oldFinal.id)).toEqual(oldFinal);
+      expect(thread.runs[0].finalMessageId).toBe(oldFinal.id);
+    };
+    assertResult();
+    unmount();
+    thread = replyThread({
+      messages: thread.messages,
+      runs: thread.runs,
+      artifacts: thread.artifacts,
+    });
+    render(<ConversationReplies thread={thread} />);
+    assertResult();
+  });
+
+  it.each([undefined, false])(
+    'preserves legacy completed image fallback when result eligibility is %s',
+    (resultEligible) => {
+      const oldFinal = replyMessage('old-final', 'assistant', 'Original image answer.', {
+        runId: 'run/image',
+        phase: 'final',
+        streamState: 'completed',
+      });
+      const thread = replyThread({
+        messages: [oldFinal],
+        runs: [
+          replyRun('run/image', {
+            status: 'completed',
+            finalMessageId: oldFinal.id,
+            artifactIds: ['legacy-artifact'],
+          }),
+        ],
+        imageJobs: [replyImageJob({ resultEligible, artifactId: 'legacy-artifact' })],
+        artifacts: [
+          replyArtifact('legacy-artifact', 'legacy.png', {
+            runId: 'run/image',
+            messageId: oldFinal.id,
+            mimeType: 'image/png',
+            previewUrl: '/api/files/legacy-artifact/preview',
+            image: { jobId: 'original-job' },
+          }),
+        ],
+      });
+      render(<ConversationReplies thread={thread} />);
+      expect(within(screen.getByLabelText('Final answer')).getByRole('img')).toHaveAttribute(
+        'src',
+        '/api/files/legacy-artifact/preview',
+      );
+      expect(screen.queryByLabelText('Image service result')).not.toBeInTheDocument();
+      expect(screen.queryByText(/Additional image previews/)).not.toBeInTheDocument();
+      expect(thread.messages).toEqual([oldFinal]);
+    },
+  );
+
+  it.each(['rejected', 'failed', 'cancelled', 'interrupted'])(
+    'does not infer a completed image for a %s image service result',
+    (state) => {
+      const thread = replyThread({
+        messages: [
+          replyMessage(
+            'service-result',
+            'assistant',
+            `Image job original-job ${state}.\n\nAn output artifact was retained; this is not a successful completion.\n\n[Download retained output](/api/artifacts/retained-artifact/download)`,
+            {
+              runId: 'run/image',
+              origin: 'image_service',
+              imageJobId: 'original-job',
+              phase: 'unclassified',
+              streamState: 'completed',
+            },
+          ),
+        ],
+        runs: [replyRun('run/image', { status: 'completed' })],
+        artifacts: [
+          replyArtifact('retained-artifact', 'retained.png', {
+            runId: 'run/image',
+            mimeType: 'image/png',
+            previewUrl: '/api/files/retained-artifact/preview',
+            image: { jobId: 'original-job' },
+          }),
+        ],
+      });
+      render(<ConversationReplies thread={thread} />);
+      const result = screen.getByLabelText('Image service result');
+      expect(result).toHaveTextContent(`Image job original-job ${state}.`);
+      expect(within(result).queryByRole('img')).toBeNull();
+      expect(
+        within(result).getByRole('link', { name: 'Download retained output' }),
+      ).toHaveAttribute('href', '/api/artifacts/retained-artifact/download');
+      expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+      expect(screen.queryByText('Assistant response')).not.toBeInTheDocument();
+      expect(screen.getByRole('link', { name: /retained.png/ })).toHaveAttribute(
+        'href',
+        '/api/artifacts/retained-artifact/download',
+      );
+    },
+  );
+
+  it('keeps explicit model image placement for completed image service jobs', () => {
+    render(
+      <ConversationReplies
+        thread={replyThread({
+          messages: [
+            replyMessage(
+              'model-final',
+              'assistant',
+              '![Requested image](/api/files/original-artifact/preview)',
+              { runId: 'run/image', phase: 'final', streamState: 'completed' },
+            ),
+          ],
+          artifacts: [
+            replyArtifact('original-artifact', 'image.png', {
+              runId: 'run/image',
+              mimeType: 'image/png',
+              previewUrl: '/api/files/original-artifact/preview',
+              image: { jobId: 'original-job' },
+            }),
+          ],
+        })}
+      />,
+    );
+    expect(within(screen.getByLabelText('Final answer')).getByRole('img')).toHaveAttribute(
+      'src',
+      '/api/files/original-artifact/preview',
+    );
+  });
+
   it('collapses emitted progress when a final arrives, preserving text for reopening and reload', async () => {
     const user = userEvent.setup();
     let thread = replyThread({

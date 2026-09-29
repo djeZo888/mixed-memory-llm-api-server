@@ -37,6 +37,9 @@ export interface Session {
 }
 export type MessageChannel = "thought" | "commentary" | "final" | "unknown";
 export interface MessagePhase {
+  /** App-owned external result; never a native assistant final or turn receipt. */
+  origin?: "image_service";
+  imageJobId?: string;
   phase: "intermediate" | "thinking" | "final" | "unclassified";
   nativeMessageId?: string;
   nativeTurnId?: string;

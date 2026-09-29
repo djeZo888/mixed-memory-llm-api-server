@@ -169,6 +169,7 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --volume "$overlay_root/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate" \
   --volume "$overlay_root/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate" \
   --volume "$overlay_root/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate" \
+  --volume "$overlay_root/skills/pdf/SKILL.md:/opt/ai-harness/skills/pdf/SKILL.md:ro,rprivate" \
   --volume "$launcher_dir/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate" \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data" \

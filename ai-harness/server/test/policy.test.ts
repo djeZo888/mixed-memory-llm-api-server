@@ -334,6 +334,7 @@ test("only exact reviewed image MCP tools and image skill supplement native role
   const { permit } = await fixture(t);
   for (const name of [
     "mcp__image__image_capabilities",
+    "mcp__image__image_status",
     "mcp__image__image_generate",
     "mcp__image__image_edit",
   ])

@@ -416,12 +416,17 @@ function AssistantReply({
   }, []);
   const messages = reply.messages.filter((message) => message.content.trim().length > 0);
   const progress = messages.filter(
-    (message) => message.phase === 'intermediate' || message.phase === 'thinking',
+    (message) =>
+      message.origin !== 'image_service' &&
+      (message.phase === 'intermediate' || message.phase === 'thinking'),
   );
   const responses = messages.filter(
-    (message) => message.phase !== 'intermediate' && message.phase !== 'thinking',
+    (message) =>
+      message.origin === 'image_service' ||
+      (message.phase !== 'intermediate' && message.phase !== 'thinking'),
   );
-  const finalReady = responses.some(
+  const modelResponses = responses.filter((message) => message.origin !== 'image_service');
+  const finalReady = modelResponses.some(
     (message) => message.phase === 'final' && message.streamState === 'completed',
   );
   const run = thread.runs.find((run) => run.id === reply.runId);
@@ -437,7 +442,12 @@ function AssistantReply({
           : undefined))
       : undefined;
   const finalResponse =
-    responses.find((message) => message.id === run?.finalMessageId) ?? responses.at(-1);
+    modelResponses.find((message) => message.id === run?.finalMessageId) ?? modelResponses.at(-1);
+  // New image jobs own a separate result, even before its message arrives.
+  // Historical jobs without result eligibility retain their original fallback.
+  const imageServiceReply =
+    reply.imageJobs.some((job) => job.resultEligible === true) ||
+    responses.some((message) => message.origin === 'image_service');
   if (
     !messages.length &&
     !reply.activity.length &&
@@ -465,27 +475,34 @@ function AssistantReply({
           </div>
         )}
         {responses.map((message) => {
-          const final = message.phase === 'final';
+          const imageResult = message.origin === 'image_service';
+          const final = !imageResult && message.phase === 'final';
           return (
             <section
               key={message.id}
               className={final ? 'message-final' : 'message-response'}
-              aria-label={final ? 'Final answer' : undefined}
+              aria-label={imageResult ? 'Image service result' : final ? 'Final answer' : undefined}
             >
               <div className="message-meta">
                 <strong>
-                  {final
-                    ? 'Final answer'
-                    : message.streamState === 'streaming'
-                      ? 'Assistant · responding'
-                      : 'Assistant response'}
+                  {imageResult
+                    ? 'Image service result'
+                    : final
+                      ? 'Final answer'
+                      : message.streamState === 'streaming'
+                        ? 'Assistant · responding'
+                        : 'Assistant response'}
                 </strong>
                 <Timestamp value={message.createdAt} />
               </div>
               <Text
                 message={message}
                 artifacts={reply.artifacts}
-                fallbackImages={message === finalResponse && message.streamState !== 'streaming'}
+                fallbackImages={
+                  !imageServiceReply &&
+                  message === finalResponse &&
+                  message.streamState !== 'streaming'
+                }
                 registerInlineImage={registerInlineImage}
               />
             </section>

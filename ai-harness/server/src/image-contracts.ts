@@ -33,6 +33,8 @@ export interface ImageAdjustment {
   reason: string;
 }
 export interface ImageJob {
+  /** App result cutover marker in public snapshots; absent on legacy terminal history. */
+  resultEligible?: boolean;
   revision: number;
   id: string;
   sessionId: string;

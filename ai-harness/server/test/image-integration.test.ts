@@ -11,7 +11,7 @@ import { createApp } from "../src/app.js";
 import { createGateway } from "../src/gateway.js";
 import { ImageUpstream } from "../src/image-upstream.js";
 import { createOwnedProviderAcceptance } from "../src/provider-diagnostics.js";
-import type { EngineOptions } from "../src/contracts.js";
+import type { EngineOptions, Message } from "../src/contracts.js";
 import type { ImageJob } from "../src/image-contracts.js";
 const delay = (ms = 5) => new Promise((r) => setTimeout(r, ms));
 async function until(f: () => boolean) {
@@ -528,6 +528,95 @@ test("approval after text completion binds original run; Stop while idle removes
       .statusCode,
     404,
   );
+});
+
+test("deferred approved edit delivers one app result after parent completion and refreshes only the next explicit turn", async (t) => {
+  const f = await fixture(t),
+    reference = await f.files.upload(f.session.id, "reference.png", "image/png", Readable.from(await png(120, 60))),
+    body = { requestId: "deferred-result", operation: "edit", prompt: "fixture-private-image-instruction", references: [{ fileId: reference.id }] };
+  const submitted = await f.internal("POST", "/v1/image-jobs", body);
+  assert.equal(submitted.statusCode, 200);
+  const original = submitted.json().job as ImageJob;
+  assert.equal(original.state, "awaiting_approval");
+  assert.equal(f.requests.length, 0);
+  assert.equal((await f.internal("POST", "/v1/image-jobs", body)).json().job.id, original.id);
+  const resultMessages = () => f.store.messages(f.session.id).filter((message) => message.origin === "image_service");
+  assert.equal(resultMessages().length, 0, "pending approval is not completion");
+  const { approvalToken } = await f.images!.issueApprovalToken(f.session.id, original.id);
+  const approved = await f.browser("POST", `/api/sessions/${f.session.id}/image-jobs/${original.id}/approval`, { decision: "approve", approvalToken });
+  assert.equal(approved.statusCode, 200);
+  await until(() => f.requests.length === 1);
+  assert.equal(f.images!.get(f.session.id, original.id).state, "running");
+  f.turns[0].finish();
+  await f.broker.idle();
+  const finalId = f.store.runSnapshot(f.runId).finalMessageId!;
+  const historicalFinal = f.store.message(finalId);
+  assert.equal(historicalFinal.content, "Final fixture reply");
+  const done = f.store.allEvents(f.session.id).find((event) => event.type === "done" && event.runId === f.runId)!;
+  assert.ok(done);
+  assert.equal(resultMessages().length, 0, "native turn/completed is not image completion");
+  await f.complete();
+  await until(() => f.images!.get(f.session.id, original.id).state === "completed");
+  const completed = f.images!.get(f.session.id, original.id),
+    artifact = f.store.file(completed.artifactId!);
+  assert.equal(f.requests.length, 1);
+  assert.equal(f.images!.list(f.session.id).length, 1);
+  assert.equal(f.turns.length, 1, "external completion must not start native inference");
+  assert.equal(resultMessages().length, 1);
+  const result = resultMessages()[0];
+  assert.equal(result.imageJobId, original.id);
+  assert.equal(result.runId, f.runId);
+  assert.equal(result.phase, "unclassified");
+  assert.equal(result.streamState, "completed");
+  assert.ok(result.content.includes(original.id));
+  assert.match(result.content, /completed/);
+  const publicArtifact = f.store.publicFile(artifact);
+  assert.ok(result.content.includes(publicArtifact.previewUrl!));
+  assert.ok(result.content.includes(publicArtifact.downloadUrl!));
+  assert.equal(artifact.runId, f.runId);
+  assert.equal(artifact.messageId, finalId, "retain the exact original artifact association");
+  assert.equal(artifact.image?.jobId, original.id);
+  assert.deepEqual(f.store.message(finalId), historicalFinal);
+  assert.equal(f.store.runSnapshot(f.runId).finalMessageId, finalId);
+  const resultEvents = () => f.store.allEvents(f.session.id).filter((event) => event.type === "message" && (event.data.message as Message)?.imageJobId === original.id);
+  assert.equal(resultEvents().length, 1);
+  assert.ok(resultEvents()[0].id > done.id);
+  assert.equal((resultEvents()[0].data.message as Message).id, result.id);
+  const eventCount = f.store.allEvents(f.session.id).length;
+  for (let i = 0; i < 3; i++) {
+    const status = await f.internal("GET", `/v1/image-jobs/${original.id}`);
+    assert.equal(status.statusCode, 200);
+    assert.equal(status.json().job.id, original.id);
+    assert.equal(status.json().job.state, "completed");
+    assert.equal(status.json().job.artifactId, artifact.id);
+    f.store.deliverImageResult(completed);
+  }
+  assert.equal(f.store.allEvents(f.session.id).length, eventCount);
+  assert.equal(resultMessages().length, 1);
+  assert.equal(f.requests.length, 1);
+  const refreshed = (await f.browser("GET", `/api/sessions/${f.session.id}`)).json();
+  const deliver = f.store.deliverImageResult.bind(f.store);
+  let repeatDeliveries = 0;
+  f.store.deliverImageResult = (job) => { repeatDeliveries++; return deliver(job); };
+  for (let i = 0; i < 5; i++) f.images!.notifyAvailabilityChanged();
+  assert.equal(repeatDeliveries, 0, "settled handoffs are removed from recurring tick work");
+  f.store.deliverImageResult = deliver;
+  assert.equal(refreshed.messages.filter((message: Message) => message.imageJobId === original.id).length, 1);
+  assert.equal(refreshed.messages.find((message: Message) => message.id === finalId).content, historicalFinal.content);
+  const other = await f.broker.createSession(), foreignToken = f.gateway.issueToken(other.id);
+  assert.equal((await f.internal("GET", `/v1/image-jobs/${original.id}`, undefined, foreignToken)).statusCode, 404);
+  assert.equal((await f.internal("GET", "/v1/image-jobs/unknown-owned-job")).statusCode, 404);
+  assert.equal((await f.browser("POST", `/api/sessions/${f.session.id}/messages`, { text: "What is the image status?", attachmentIds: [] })).statusCode, 202);
+  await until(() => f.turns.length === 2);
+  assert.ok(f.turns[1].text.includes(original.id));
+  assert.match(f.turns[1].text, /completed/);
+  assert.ok(f.turns[1].text.includes(artifact.id));
+  assert.ok(!f.turns[1].text.includes(body.prompt), "status context omits the private image prompt");
+  assert.deepEqual(f.store.message(finalId), historicalFinal);
+  f.turns[1].finish();
+  await f.broker.idle();
+  assert.equal(f.requests.length, 1);
+  assert.equal(resultEvents().length, 1);
 });
 
 test("approval token route refuses direct requests/forged forwarding/bearer and accepts only protected proxy capability", async (t) => {

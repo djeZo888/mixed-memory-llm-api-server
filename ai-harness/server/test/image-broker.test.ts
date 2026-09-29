@@ -241,6 +241,12 @@ test("unknown completion is never replayed; readiness alone cannot clear durable
     new Error("secret transport detail must not escape"),
   );
   await until(() => f.broker.get(f.session.id, a.id).state === "failed");
+  const uncertainResult = f.store.messages(f.session.id).filter((message) => message.imageJobId === a.id);
+  assert.equal(uncertainResult.length, 1);
+  assert.equal(uncertainResult[0].origin, "image_service");
+  assert.match(uncertainResult[0].content, /unknown|uncertain/i);
+  assert.ok(!uncertainResult[0].content.includes("secret transport detail"));
+  assert.ok(!uncertainResult[0].content.includes("/api/artifacts/"));
   assert.equal(f.broker.snapshot().lane, "quarantined");
   assert.equal((await f.submit("unknown")).id, a.id);
   assert.equal(f.backend.calls.length, 1);
@@ -280,6 +286,10 @@ test("known429 observes Retry-After and original queue deadline, reuses seed", a
     f.broker.get(f.session.id, job.id).error?.code,
     "image_queue_timeout",
   );
+  const result = f.store.messages(f.session.id).filter((message) => message.imageJobId === job.id);
+  assert.equal(result.length, 1);
+  assert.match(result[0].content, /failed/);
+  assert.ok(!result[0].content.includes("/api/artifacts/"));
 });
 
 test("immutable snapshots, detached browser approval, idempotent decision, original bytes and run provenance", async (t) => {
@@ -386,6 +396,13 @@ test("approval rejects tampered snapshot; rejection and explicit Stop while text
   f.broker.cancelSession(f.session.id);
   assert.equal(f.broker.get(f.session.id, stopped.id).state, "cancelled");
   assert.equal(f.backend.calls.length, 0);
+  for (const job of [j, stopped]) {
+    const result = f.store.messages(f.session.id).filter((message) => message.imageJobId === job.id);
+    assert.equal(result.length, 1);
+    assert.equal(result[0].origin, "image_service");
+    assert.match(result[0].content, /cancelled/);
+    assert.ok(!result[0].content.includes("/api/artifacts/"));
+  }
 });
 
 test("Stop and soft Delete retain active ownership and late artifact without reviving assistant text", async (t) => {
@@ -398,6 +415,7 @@ test("Stop and soft Delete retain active ownership and late artifact without rev
   assert.equal(f.broker.get(f.session.id, j.id).state, "running");
   assert.equal(f.broker.get(f.session.id, j.id).cancelRequested, true);
   assert.equal(f.broker.snapshot().lane, "active");
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === j.id).length, 0, "Stop while running is draining, not completed");
   f.store.requestDelete(f.session.id);
   f.store.finishDelete(f.session.id);
   await f.backend.complete();
@@ -413,9 +431,156 @@ test("Stop and soft Delete retain active ownership and late artifact without rev
   assert.ok(record.job.artifactId);
   assert.equal(f.store.file(record.job.artifactId).messageId, null);
   assert.equal(
-    f.store.messages(f.session.id).filter((m) => m.role === "assistant").length,
+    f.store.messages(f.session.id).filter((m) => m.role === "assistant" && m.origin !== "image_service").length,
     0,
   );
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === j.id).length, 0, "deleted sessions receive no late result message");
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === q.id).length, 1, "the earlier queued cancellation remains history");
+});
+
+test("terminal result crash gap reconciles once across restart, repeated delivery and event replay without execution", async (t) => {
+  const f = await fixture(t), job = await f.submit("crash-gap");
+  await until(() => f.backend.calls.length === 1);
+  f.endText();
+  // Simulate termination after durable artifact/job save and before result delivery.
+  const deliver = f.store.deliverImageResult.bind(f.store);
+  f.store.deliverImageResult = () => undefined;
+  await f.backend.complete();
+  await until(() => f.broker.get(f.session.id, job.id).state === "completed");
+  f.store.deliverImageResult = deliver;
+  const completed = f.broker.get(f.session.id, job.id),
+    originalArtifact = f.store.file(completed.artifactId!);
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === job.id).length, 0);
+  const copy = path.join(f.dir, "terminal-restart.sqlite");
+  f.store.db.prepare("VACUUM INTO ?").run(copy);
+  const recoveredStore = new Store(copy), backend = new Fake();
+  const recovered = new ImageBroker({ store: recoveredStore, files: new Files(f.dir, recoveredStore), backend, currentRun: () => undefined, tickMs: 5 });
+  t.after(async () => { await recovered.close(); recoveredStore.close(); });
+  const resultMessages = () => recoveredStore.messages(f.session.id).filter((m) => m.imageJobId === job.id);
+  assert.equal(resultMessages().length, 1);
+  const result = resultMessages()[0];
+  assert.equal(result.origin, "image_service");
+  assert.equal(result.runId, f.run.id);
+  assert.equal(result.phase, "unclassified");
+  assert.ok(result.content.includes(originalArtifact.id));
+  assert.deepEqual(recoveredStore.file(originalArtifact.id), originalArtifact);
+  for (let i = 0; i < 3; i++) {
+    recovered.get(f.session.id, job.id);
+    recoveredStore.deliverImageResult(completed);
+    await recovered.reconcile();
+  }
+  assert.equal(resultMessages().length, 1);
+  assert.equal(backend.calls.length, 0);
+  const events = recoveredStore.allEvents(f.session.id).filter((e) => e.type === "message" && (e.data.message as { imageJobId?: string }).imageJobId === job.id);
+  assert.equal(events.length, 1);
+  assert.equal((events[0].data.message as { id: string }).id, result.id);
+  await recovered.close();
+  const reopened = new ImageBroker({ store: recoveredStore, files: new Files(f.dir, recoveredStore), backend, currentRun: () => undefined, tickMs: 5 });
+  try {
+    await reopened.reconcile();
+    assert.equal(resultMessages().length, 1);
+    assert.equal(resultMessages()[0].id, result.id);
+    assert.equal(recoveredStore.allEvents(f.session.id).filter((e) => e.type === "message" && (e.data.message as { imageJobId?: string }).imageJobId === job.id).length, 1);
+    assert.equal(backend.calls.length, 0);
+    assert.equal(reopened.get(f.session.id, job.id).artifactId, originalArtifact.id);
+  } finally { await reopened.close(); }
+});
+
+test("app result message, provenance and event commit atomically and refuse forged owner or artifact", async (t) => {
+  const f = await fixture(t), job = await f.submit("atomic-result");
+  await until(() => f.backend.calls.length === 1);
+  const deliver = f.store.deliverImageResult.bind(f.store);
+  f.store.deliverImageResult = () => undefined;
+  await f.backend.complete();
+  await until(() => f.broker.get(f.session.id, job.id).state === "completed");
+  f.store.deliverImageResult = deliver;
+  const completed = f.broker.get(f.session.id, job.id), other = f.store.createSession();
+  const assertForgedRefused = () => {
+    for (const forged of [{ ...completed, sessionId: other.id }, { ...completed, artifactId: "foreign-artifact" }, { ...completed, runId: "foreign-run" }]) {
+      let returned;
+      try { returned = deliver(forged); }
+      catch (error) { assert.match(String(error), /durable owner/); }
+      assert.equal(returned, undefined, "a forged owner/artifact cannot receive any existing result");
+    }
+  };
+  assertForgedRefused();
+  const beforeMessages = f.store.messages(f.session.id), beforeEvents = f.store.allEvents(f.session.id);
+  f.store.db.exec("CREATE TRIGGER fixture_result_event_failure BEFORE INSERT ON events WHEN NEW.type='message' BEGIN SELECT RAISE(ABORT, 'fixture result event failure'); END;");
+  assert.throws(() => deliver(completed), /fixture result event failure/);
+  assert.deepEqual(f.store.messages(f.session.id), beforeMessages);
+  assert.deepEqual(f.store.allEvents(f.session.id), beforeEvents);
+  assert.equal(f.store.db.prepare("SELECT COUNT(*) AS count FROM h035_image_results WHERE job_id=?").get(job.id)!.count, 0);
+  f.store.db.exec("DROP TRIGGER fixture_result_event_failure");
+  const listener = () => { throw new Error("fixture disconnected event listener"); };
+  f.store.events.on(f.session.id, listener);
+  const result = deliver({ ...completed, prompt: "caller-private-prompt", finishedAt: "caller-false-time", error: { code: "caller-injected-error", message: "caller-private-error" } })!;
+  f.store.events.off(f.session.id, listener);
+  assert.equal(result.origin, "image_service");
+  assert.equal(result.imageJobId, job.id);
+  assert.ok(result.content.includes(completed.finishedAt!));
+  assert.ok(!result.content.includes("caller-"), "result formatting reads only the durable record");
+  assert.equal(deliver(completed)!.id, result.id);
+  assertForgedRefused();
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === job.id).length, 1);
+  assert.equal(f.store.allEvents(f.session.id).filter((e) => e.type === "message" && (e.data.message as { imageJobId?: string }).imageJobId === job.id).length, 1);
+  assert.equal(f.store.messages(other.id).length, 0);
+  assert.equal(f.backend.calls.length, 1);
+});
+
+test("historical completed jobs without result eligibility stay immutable on startup and explicit status reads", async (t) => {
+  const f = await fixture(t), job = await f.submit("historical-completed");
+  await until(() => f.backend.calls.length === 1);
+  f.endText();
+  f.store.deliverImageResult = () => undefined;
+  await f.backend.complete();
+  await until(() => f.broker.get(f.session.id, job.id).state === "completed");
+  const completed = f.broker.get(f.session.id, job.id), copy = path.join(f.dir, "historical-restart.sqlite");
+  f.store.db.prepare("VACUUM INTO ?").run(copy);
+  const historicalStore = new Store(copy);
+  const row = historicalStore.db.prepare("SELECT data FROM h003_image_jobs WHERE id=?").get(job.id)!;
+  const record = JSON.parse(String(row.data));
+  delete record.resultEligible;
+  delete completed.resultEligible; // Exact legacy public snapshot has no H035 marker.
+  historicalStore.db.prepare("UPDATE h003_image_jobs SET data=? WHERE id=?").run(JSON.stringify(record), job.id);
+  const historicalMessages = historicalStore.messages(f.session.id), historicalEvents = historicalStore.allEvents(f.session.id), backend = new Fake();
+  const reopened = new ImageBroker({ store: historicalStore, files: new Files(f.dir, historicalStore), backend, currentRun: () => undefined, tickMs: 5 });
+  try {
+    await reopened.reconcile();
+    assert.deepEqual(reopened.get(f.session.id, job.id), completed);
+    assert.equal(historicalStore.deliverImageResult(completed), undefined);
+    assert.equal(historicalStore.file(completed.artifactId!).image?.jobId, job.id);
+    assert.deepEqual(historicalStore.messages(f.session.id), historicalMessages);
+    assert.deepEqual(historicalStore.allEvents(f.session.id), historicalEvents);
+    assert.equal(backend.calls.length, 0);
+  } finally { await reopened.close(); historicalStore.close(); }
+});
+
+test("Stop while saving drains original output and reports cancellation with retained artifact without successful preview", async (t) => {
+  const f = await fixture(t), job = await f.submit("stop-saving");
+  await until(() => f.backend.calls.length === 1);
+  let release = () => {};
+  const held = new Promise<void>((resolve) => { release = resolve; });
+  const save = f.broker.imageFiles.save.bind(f.broker.imageFiles);
+  f.broker.imageFiles.save = async (...args) => { await held; return save(...args); };
+  await f.backend.complete();
+  await until(() => f.broker.get(f.session.id, job.id).state === "saving");
+  f.broker.cancel(f.session.id, job.id);
+  const draining = f.broker.get(f.session.id, job.id);
+  assert.equal(draining.state, "saving");
+  assert.equal(draining.cancelRequested, true);
+  assert.equal(f.store.messages(f.session.id).filter((m) => m.imageJobId === job.id).length, 0);
+  release();
+  await until(() => f.broker.get(f.session.id, job.id).state === "cancelled");
+  const terminal = f.broker.get(f.session.id, job.id), artifact = f.store.file(terminal.artifactId!);
+  assert.equal(artifact.runId, f.run.id);
+  assert.equal(artifact.image?.jobId, job.id);
+  const results = f.store.messages(f.session.id).filter((m) => m.imageJobId === job.id);
+  assert.equal(results.length, 1);
+  assert.match(results[0].content, /cancelled/);
+  assert.match(results[0].content, /retained/i);
+  assert.ok(results[0].content.includes(f.store.publicFile(artifact).downloadUrl!));
+  assert.ok(!results[0].content.includes("!["));
+  assert.equal(f.backend.calls.length, 1);
 });
 
 test("owned references reject cross-session files, traversal, absolute paths, URLs, symlinks and hardlinks", async (t) => {

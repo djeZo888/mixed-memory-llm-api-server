@@ -34,7 +34,7 @@ class OverlayChecks:
             base.PATCHSET = ENGINE_PATCHSET
         base.LauncherContract.setUp(self)
         self.source = self.root / "reviewed source with spaces" / "ai-harness"
-        for relative in ("deploy", "tools/image", "skills/image"):
+        for relative in ("deploy", "tools/image", "skills/image", "skills/pdf"):
             shutil.copytree(SOURCE / relative, self.source / relative)
         base.LAUNCHER = self.source / "deploy" / f"run-{self.runtime}.sh"
         self.artifacts = [
@@ -44,6 +44,7 @@ class OverlayChecks:
         if self.runtime == "engine":
             self.artifacts += [
                 ("skills/image/SKILL.md", "/opt/ai-harness/skills/image/SKILL.md"),
+                ("skills/pdf/SKILL.md", "/opt/ai-harness/skills/pdf/SKILL.md"),
                 ("deploy/engine/configure-profile.mjs", "/opt/ai-harness/engine/configure-profile.mjs"),
             ]
 
@@ -137,15 +138,18 @@ class OverlayChecks:
                         source.chmod(original_mode)
 
     def test_symlinked_source_ancestor_is_refused(self):
-        parent = self.source / "tools/image"
-        external = self.root / "external-image-tree"
-        parent.rename(external)
-        parent.symlink_to(external, target_is_directory=True)
-        try:
-            self.assert_refused_before_runtime()
-        finally:
-            parent.unlink()
-            external.rename(parent)
+        directories = {str(Path(relative).parent) for relative, _ in self.artifacts}
+        for relative in sorted(directories):
+            with self.subTest(directory=relative):
+                parent = self.source / relative
+                external = self.root / "external-reviewed-tree"
+                parent.rename(external)
+                parent.symlink_to(external, target_is_directory=True)
+                try:
+                    self.assert_refused_before_runtime()
+                finally:
+                    parent.unlink()
+                    external.rename(parent)
 
     def test_writable_source_ancestors_including_root_are_refused(self):
         directories = {self.source, self.source.parent}
