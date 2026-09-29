@@ -111,7 +111,8 @@ export class CodexEngine implements Engine {
     resolve: (v: "completed" | "cancelled") => void;
     reject: (e: Error) => void;
   };
-  private completedTurn?: { id: string; status: string };
+  private completedTurn?: { id: string; status: string; snapshot: string; finalMessageId?: string };
+  private lastSummaryAgentMessageId?: string;
   private items = new Map<
     string,
     {
@@ -312,6 +313,19 @@ export class CodexEngine implements Engine {
       const outcome = await promise;
       if (this.failed) throw this.failed;
       await this.cleanup();
+      // An absent native phase is not a reasoning/final split. Only the last
+      // matching completed agent message in the successful owned turn summary
+      // can become the run final, after native descendants and gateway settle.
+      if (this.failed) throw this.failed;
+      if (outcome === "completed" && !this.cancelRequested && this.completedTurn?.finalMessageId)
+        this.options.onUpdate({
+          type: "phase",
+          nativeMessageId: this.completedTurn.finalMessageId,
+          nativeTurnId: this.completedTurn.id,
+          channel: "final",
+          streamState: "completed",
+          phaseSource: "codex.completed_agent_message+settled_root_turn",
+        });
       return outcome;
     } catch (error) {
       this.fail(
@@ -525,7 +539,8 @@ export class CodexEngine implements Engine {
       if (method === "turn/completed" && this.completedTurn) {
         if (
           p.turn.id !== this.completedTurn.id ||
-          p.turn.status !== this.completedTurn.status
+          p.turn.status !== this.completedTurn.status ||
+          JSON.stringify(p.turn) !== this.completedTurn.snapshot
         )
           fault("Conflicting duplicate terminal event");
         return;
@@ -552,6 +567,30 @@ export class CodexEngine implements Engine {
           fault(
             "Native items or descendants are incomplete; completion cannot be accepted",
           );
+        if (p.turn.status === "completed" && p.turn.error != null)
+          fault("Successful native turn contains an error");
+        let finalMessageId: string | undefined;
+        if (p.turn.status === "completed" && !this.cancelRequested && p.turn.itemsView === "summary") {
+          // Pinned 0.158.0 emits exactly its last completed agent message here,
+          // not all turn items (bespoke_event_handling.rs / thread_state.rs).
+          // Match completion order as well as content; a valid earlier subset
+          // or reordered list must never become the final answer.
+          if (!Array.isArray(p.turn.items) || p.turn.items.length !== 1)
+            fault("Invalid native terminal summary");
+          const last = p.turn.items[0];
+          if (!isRecord(last) || !identifier(last.id) || last.type !== "agentMessage" ||
+              last.id !== this.lastSummaryAgentMessageId)
+            fault("Terminal native summary is not the last completed owned message");
+          const local = this.items.get(last.id);
+          if (!local?.completed || last.text !== local.text ||
+              (last.phase ?? null) !== (JSON.parse(local.completed).phase ?? null))
+            fault("Terminal native message does not match completed owned item");
+          // Explicit phases remain authoritative. Earlier unclassified messages
+          // stay unclassified; content and task_complete text are never guessed.
+          if (last.phase == null &&
+              ![...this.items.values()].some(item => item.channel === "final"))
+            finalMessageId = last.id;
+        }
         if (p.turn.status !== "completed") {
           for (const compactionId of this.compacting)
             this.options.onUpdate({
@@ -564,6 +603,8 @@ export class CodexEngine implements Engine {
         this.completedTurn = {
           id: this.turnId!,
           status: String(p.turn.status),
+          snapshot: JSON.stringify(p.turn),
+          finalMessageId,
         };
         if (p.turn.status === "failed")
           this.terminal!.reject(
@@ -671,6 +712,10 @@ export class CodexEngine implements Engine {
             phaseSource: "codex.item.phase",
           });
         state.text = value.text;
+        // Exact pinned TurnSummary predicate: a completed nonempty message with
+        // absent/final phase. Explicit commentary never replaces its candidate.
+        if (channel !== "commentary" && value.text.trim())
+          this.lastSummaryAgentMessageId = value.id;
       }
       this.options.onUpdate({
         type: "phase",

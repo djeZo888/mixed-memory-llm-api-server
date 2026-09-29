@@ -29,9 +29,9 @@ export function codexCapabilities(
   return {
     compaction: {
       supported: true,
-      qualification: "scripted_fixture",
+      qualification: "live",
       reason:
-        "Pinned private compaction operation; local model recall remains unqualified",
+        "H030 small manual compaction and recall passed; H031 retained cold continuation passed. Long-context compaction and recall remain unqualified",
     },
     attachments: {
       supported: true,
@@ -52,7 +52,7 @@ export function codexCapabilities(
     },
     pdf: {
       supported: true, qualification: "native_fixture",
-      reason: "Direct rootless Linux extraction/render/creation helpers passed. Matched Codex PDF workflow FAILED: no summary PDF or final numeric answer. Full workflow remains unqualified; the H024 diagnostic was blocked before generation by current Qwen identity verification",
+      reason: "Direct rootless Linux extraction/render/creation helpers passed. H032 numeric answer with page citation and readable summary PDF passed. Full workflow FAILED because the final answer falsely reported no tool failures; H031 original incomplete workflow remains failed",
     },
     coding: {
       supported: true, qualification: "live",
