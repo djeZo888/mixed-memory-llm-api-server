@@ -1,3 +1,20 @@
+# Sova — H032 active Codex completion window
+
+Latest user explicitly renewed execution for September29,2026 11:17–13:17UTC.
+This authorization supersedes H031's closed-window statement below. Root plans,
+reviews and publishes; mac-worker1/mac-worker2 implement/test through fresh
+bounded native CLI sessions and isolated copies. Current task records are in
+orchestration/tasks/H032-20260929 outside this checkout. No new long jobs after
+12:52, short submissions13:02, all worker/native jobs settled13:07, publication
+13:17. No automatic extension or baseline restoration. Preserve histories/files.
+
+W1 owns image recovery/source and sole ai-vm lifecycle/deploy writes. W2 prepares
+MiMo immutable successor-source amendment from exact current proof supplied by
+W1, then PDF/Codex completion. Independent source work is parallel; coordinate
+one shared VM activation schedule. Do not redo passed benchmarks/workflows.
+Initial source baseline5cc21ba. Read H031 reports for retained evidence; refresh
+mutable VM state before relying on it. The following H031 state is historical.
+
 # Sova — H031 closed checkpoint
 
 The September 29 H031 two-hour window was 08:46–10:46 UTC. Worker native sessions
