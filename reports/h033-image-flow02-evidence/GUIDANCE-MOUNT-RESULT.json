@@ -1,0 +1,22 @@
+{
+  "utc": "2026-09-29T15:27:59.037490+00:00",
+  "base": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+  "state": "SOURCE_FIX_TESTED_UNDEPLOYED",
+  "patchSha256": "41d7804b4f145e3d99e3e15a931a26ac57cc2527df4c1265eee7ab75937fa5c2",
+  "launcherSha256": "c8f8c378efb992ec720dd6ad3ddc48402debca42a3596e8fb7f8b9fd43d76e4f",
+  "catalogSha256": "cfb03e7b20dc847c5b9f9b8c98e07b6b62a288e3f374f8d1d1970a9c720f9cd6",
+  "catalogUnchanged": true,
+  "toolPolicy": "b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5",
+  "nativeImageUnchanged": true,
+  "tests": {
+    "launcherEmittedArgumentsForDefaultAndImageConfigs": 2,
+    "result": "PASS",
+    "logSha256": "4762b6757077b79f160db8962280d3c0a39c546124727d4ea7fa0dfe5337d115",
+    "bashSyntax": "PASS",
+    "diffCheck": "PASS"
+  },
+  "liveCurrentCatalogSha256": "75f39aa38c42d99265101686c15e0f3154aacecc325a3fb6c598e0a185a51823",
+  "liveCurrentQwenTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+  "expectedCorrectedQwenTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+  "liveWorkflowActive": true
+}

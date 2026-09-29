@@ -1,0 +1,51 @@
+{
+  "image": {
+    "imageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "policySha256": "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec"
+  },
+  "hostPolicySha256": "b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5",
+  "specialistRecords": [
+    {
+      "name": "h033-codex-specialists.json",
+      "inputFile": "h033-codex-specialists.json",
+      "sha256": "c702c20c9672d1c954a23497d8c4c09108eff767c8219b6c042c4c7a3e0e3e99"
+    },
+    {
+      "name": "h033-frontier-evidence.json",
+      "inputFile": "h033-frontier-evidence.json",
+      "sha256": "44a6ed04da35be86f600b93e2d8e1e3e1fe5010b9d7986bc2da65d0c44c8f90f"
+    },
+    {
+      "name": "h033-frontier-review.json",
+      "inputFile": "h033-frontier-review.json",
+      "sha256": "baa5fce297e843e79150d08d3749106f514438718f92d07e6cda07c35720f0eb"
+    }
+  ],
+  "sourceHead": "d55eb2b2eafd4e0d7df8ca2311277b797f3bad23",
+  "sourceProductTreeEqualTo": "d55eb2b2eafd4e0d7df8ca2311277b797f3bad23",
+  "files": {
+    "server/dist/app.js": "9f9693b44d4e31786681e0e624f7e50387db053c024c1210c8bc75e15c9bb7c5"
+  },
+  "sourceHashes": {
+    "ai-harness/server/src/app.ts": "a6bb107814afbde8ba8d92996c12bbb2d38cffe4aa92f132cb95f880df581979",
+    "ai-harness/server/test/app.test.ts": "03493b5e71949d26a10b8c4187fe6c5d67fd789dc1de5a63951a18e0741781cd",
+    "ai-harness/web/src/Markdown.tsx": "f07b3e4748f0715c59477a1a5dfdc70d5eb76ad8cf75d9f07f12c71a08c9704a",
+    "ai-harness/web/tests/markdown-downloads.test.tsx": "1b3b877f32025c880dd9d9c231b872fc24b09189ef20c0681bf4baf1563c529f"
+  },
+  "configReplacements": [],
+  "deployReplacements": [],
+  "webArchiveSha256": "19048855b712006c1dd70021fc47109f5259fb590e1b4411304c2fd569406036",
+  "scope": "Only exact app.js expression plus prebuilt W1 web overlay; oldassets retained. Reuse all remaining modules/config/native.",
+  "tests": {
+    "health": {
+      "passed": 8,
+      "receipt": "output/HEALTH-SUMMARY-TESTS.txt"
+    },
+    "web": {
+      "passed": 41,
+      "build": "PASS",
+      "reused": true
+    }
+  },
+  "createdUtc": "2026-09-29T15:56:19.758471+00:00"
+}

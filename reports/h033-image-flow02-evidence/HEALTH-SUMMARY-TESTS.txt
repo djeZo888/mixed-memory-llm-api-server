@@ -1,0 +1,26 @@
+UTC: 2026-09-29T15:52:02.052143+00:00
+Node: v24.21.0
+Focused source-to-HTTP checks; no deploy or rebuild.
+Dependency reuse: existing predecessor node_modules; Node registerHooks bare-package fallback only. No installation.
+Initial NODE_PATH-only attempt: ERR_MODULE_NOT_FOUND fastify before test execution; corrected harness resolver below.
+Prior summary-only iteration: 5/5 passed; latest INBOX availability guard incorporated below.
+Command: node [existing-dependency import resolver] --import [predecessor tsx loader] --test --test-timeout=15000 --test-name-pattern="health frontier summary|JSON contract, durable" ai-harness/server/test/app.test.ts
+
+✔ health frontier summary reflects effective capability: enabled (65.5375ms)
+✔ health frontier summary reflects effective capability: disabled (10.645416ms)
+✔ health frontier summary reflects effective capability: missing-capability (11.523458ms)
+✔ health frontier summary reflects effective capability: missing-policy (9.200375ms)
+✔ health frontier summary reflects effective capability: disabled-engine (9.264375ms)
+✔ health frontier summary reflects effective capability: unqualified-protocol (8.664417ms)
+✔ health frontier summary reflects effective capability: missing-factory (9.105209ms)
+✔ JSON contract, durable messages/native identity/events and unknown context survive reopening (37.173667ms)
+ℹ tests 8
+ℹ suites 0
+ℹ pass 8
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 434.858875
+
+Exit code: 0
