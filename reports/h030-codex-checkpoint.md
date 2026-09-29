@@ -1,6 +1,6 @@
 # H030 Codex completion — active checkpoint
 
-September 29, 2026. Authorized window **06:53–08:53 UTC**. Updated07:39 UTC;
+September 29, 2026. Authorized window **06:53–08:53 UTC**. Updated07:57 UTC;
 work is still in progress. Public Sova chat routes remain in maintenance (HTTP503),
 with status/admin available. The user requests the latest deployed state remain
 in place even if qualification is incomplete at the deadline.
@@ -46,15 +46,30 @@ both the unchanged baseline and the candidate and is retained separately.
 
 The model, weights, runtime image, GPU,950K configured capacity, eight decode
 threads, thermal/fan/power/ECC policies and selection generation are unchanged.
-Live startup is in progress; no benchmark or occupied950K test is being run.
+The normal start completed: the07:50:34 readback confirms RUNNING, ready950K,
+proxy available and hardware guard healthy. No benchmark or occupied950K test
+was performed.
 
 ## Preserved interruption and remaining acceptance
 
 The first PDF attempt was accepted07:35:07, then deliberately cancelled07:35:35
 because a native worker missed the shared lifecycle hold. It settled07:35:48.
 There was no overlapping MiMo mutation. This is a scheduling interruption, not
-a PDF model result. One replacement of the unchanged fixture is authorized after
-model-start publication, using a fresh explicit submission identity.
+a PDF model result. The replacement ran07:40:51–07:43:45. Two provider/tool turns passed, then
+count/node_before rejected hardware_state before the third generation. The
+exact failed node fields were not retained; a later passing snapshot does not
+establish the historical cause. The PDF workflow has not passed.
+
+A separate native compaction request exposed a deterministic Responses adapter
+bug: it carries completed tool-call history with an empty list of current tools.
+The adapter incorrectly required those historical tools in the current list. A
+reviewed correction preserves matched history and leaves new-call authorization
+strict. The captured failing request now translates correctly;35 affected checks
+and the build pass. Deployment and corrected live compaction remain pending.
+
+The image backend was warm but its API owner remained closed. The supported
+API restart began07:55:46 and necessarily reloads/warms the image backend. No
+new image job or capability qualification is implied.
 
 Remaining live checks include PDF completion, compaction/recall/cold continuation,
 image generation/edit/child workflows, MiMo delegation, cross-engine handoff and

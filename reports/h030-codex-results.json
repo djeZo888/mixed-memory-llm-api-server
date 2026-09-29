@@ -2,7 +2,7 @@
   "schema": 1,
   "task": "H030-20260929",
   "status": "IN_PROGRESS",
-  "updatedUtc": "2026-09-29T07:39:00Z",
+  "updatedUtc": "2026-09-29T07:57:00Z",
   "deadlineUtc": "2026-09-29T08:53:00Z",
   "source": {
     "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
@@ -10,7 +10,9 @@
     "handoffWorker": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
     "handoffIntegrated": "64a0693",
     "mimoOwnerWorker": "97b5daaf0b84654fd35f65bb03bdc14f1bc8a588",
-    "mimoOwnerIntegrated": "9d3fefd"
+    "mimoOwnerIntegrated": "9d3fefd",
+    "compactionWorker": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
+    "compactionIntegrated": "b021a7d"
   },
   "acceptance": {
     "ordinaryCoding": "PASS",
@@ -19,8 +21,8 @@
     "completedSubmissionReplay": "PASS",
     "payloadConflicts": "PASS",
     "crossEngineHandoffLive": "NOT_TESTED",
-    "pdf": "SCHEDULING_INTERRUPTED",
-    "compactionRecall": "NOT_TESTED",
+    "pdf": "FAIL_COUNT_HARDWARE_STATE",
+    "compactionRecall": "FAIL_HISTORICAL_TOOL_TRANSLATION_REPAIR_NOT_YET_LIVE",
     "imageCodex": "NOT_TESTED",
     "mimoCodex": "NOT_TESTED"
   },
@@ -40,7 +42,8 @@
     "mimoOwner": 104,
     "newMimoRecoverySubset": 25,
     "countsOverlap": true,
-    "unrelatedBaselineProxyExpectation": "FAIL_REPRODUCED_ON_BASELINE"
+    "unrelatedBaselineProxyExpectation": "FAIL_REPRODUCED_ON_BASELINE",
+    "compactionResponses": 35
   },
   "deployment": {
     "appSource": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
@@ -54,5 +57,14 @@
     "hardwarePolicyChanges": false,
     "occupied950kTest": false,
     "modelWeightsOrRuntimeChanges": false
+  },
+  "services": {
+    "mimo": "READY_950000_CURRENT_READBACK_075034",
+    "image": "API_RECOVERY_STARTED_075546",
+    "qwen": "THREE_NATIVE_INSTANCES_RETAINED"
+  },
+  "findings": {
+    "pdf": "Two native tool turns passed; third request blocked before generation at count/node_before. Exact failed node fields were not retained. Current passing readback is not historical cause evidence.",
+    "compaction": "Native tools:[] memento includes completed history; old adapter rejected historical tool names. Reviewed repair preserves matched history without authorizing new undeclared calls. Actual captured fixture passed; live corrected action pending."
   }
 }
