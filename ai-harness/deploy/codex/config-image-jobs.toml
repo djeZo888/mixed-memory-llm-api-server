@@ -48,7 +48,7 @@ tool_timeout_sec = 30
 command = "/usr/local/bin/node"
 args = ["/opt/ai-harness/tools/image/image-mcp.mjs"]
 env_vars = ["AI_HARNESS_GATEWAY_TOKEN"]
-enabled_tools = ["image_capabilities", "image_generate", "image_edit"]
+enabled_tools = ["image_capabilities", "image_status", "image_generate", "image_edit"]
 startup_timeout_sec = 10
 tool_timeout_sec = 3300
 

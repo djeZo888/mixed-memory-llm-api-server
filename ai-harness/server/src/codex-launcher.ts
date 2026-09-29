@@ -21,7 +21,7 @@ export interface OwnedCodexProcess {
 }
 export const CODEX_MODEL_POLICY = "sova-codex-0.158.0-qwen-text-v2";
 /** Mounted tool/instruction policy is separate from the persisted model profile. */
-export const CODEX_TOOL_POLICY_SHA256: string = "73e00d27521f880f61418e2f8d3334909f5c62e61c9351affbb82a5152d8a63c";
+export const CODEX_TOOL_POLICY_SHA256: string = "4ab2f4935c2a90691b9abdd713b74e389922baeab2262ddc6d41a3b1ddd88b87";
 /** Fixed reviewed script uses task-egress.py and redact-acp.py. Supervisor exit0
  * attests exact random container rm + explicit exists exit1, not mere PID exit.
  * Unclean exits/timeout stay uncertain. Gateway settlement is a separate proof.

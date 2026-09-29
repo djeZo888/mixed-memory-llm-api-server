@@ -37,3 +37,25 @@ test('mounted guidance changes only separate tool identity and retains old chat 
   assert.equal(CODEX_MODEL_POLICY, 'sova-codex-0.158.0-qwen-text-v2');
   assert.match(launcher, /d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad/);
 });
+
+test('both installed instruction surfaces select dimensions per operation before creation and follow the existing status ID', () => {
+  const ordinary = readFileSync(new URL('../../skills/image/SKILL.md', import.meta.url), 'utf8');
+  const models = JSON.parse(profile('models.json')).models;
+  for (const guidance of [ordinary, profile('skills/sova-local-tools/SKILL.md'), profile('sova-overlay.md'), ...models.map((m: any) => m.model_messages.instructions_template)]) {
+    assert.match(guidance, /1536x864/);
+    assert.match(guidance, /1024x1024/);
+    assert.match(guidance, /BEFORE.*creative call/);
+    assert.match(guidance, /generation.*(?:not qualify FullHD|not edit sizes)/i);
+    assert.match(guidance, /image_status/);
+    assert.match(guidance, /"jobId":"<existing job.id>"/);
+    assert.match(guidance, /read-only lookup/);
+    assert.match(guidance, /Only `?completed`?.*(?:successful|delivery)/);
+    assert.match(guidance, /image_completion_unknown/);
+  }
+});
+
+test('restricted Codex catalog offers only capability and owned status lookup; creative catalog retains explicit gated tools', () => {
+  const enabled = (name: string) => JSON.parse(profile(name).match(/^enabled_tools = (.+)$/m)![1]!);
+  assert.deepEqual(enabled('config.toml'), ['image_capabilities', 'image_status']);
+  assert.deepEqual(enabled('config-image-jobs.toml'), ['image_capabilities', 'image_status', 'image_generate', 'image_edit']);
+});

@@ -4,7 +4,7 @@ import { lstat, open, realpath } from "node:fs/promises";
 import { dirname, isAbsolute, join, resolve } from "node:path";
 import { CODEX_TOOL_POLICY_SHA256 } from "./codex-launcher.js";
 
-export const CODEX_RESUME_INSTRUCTIONS_SHA256 = "84260e8947aa0e146a75ebbea318ad33e3c99ea19b6c2bf09551c8c240892971";
+export const CODEX_RESUME_INSTRUCTIONS_SHA256 = "f7bb7510b3df3546210fee7e6d305f86df9e45c971186088dc6c157977dbecc7";
 export interface CodexResumeInstructions {
   readonly text: string;
   readonly sha256: string;
