@@ -345,19 +345,20 @@ export class ImageBroker {
   }
   /** Fresh app-owned state for the next explicit user turn, not a model event.
    * Deliberately omit prompts, tokens, reference names and local paths. */
-  context(sessionId: string): string {
+  context(sessionId: string, currentRunId: string): string {
     const jobs = this.list(sessionId);
     if (!jobs.length) return "";
     const statuses = jobs.slice(-20).map(job => ({
       id: job.id, revision: job.revision, state: job.state,
       runId: job.runId, operation: job.operation, cancelRequested: job.cancelRequested,
+      relationToCurrentRun: job.runId === currentRunId ? "current_run" : "prior_run",
       ...(job.finishedAt ? { finishedAt: job.finishedAt } : {}),
       ...(job.error ? { errorCode: job.error.code } : {}),
       ...(job.artifactId ? { artifactId: job.artifactId,
         previewUrl: `/api/files/${job.artifactId}/preview`,
         downloadUrl: `/api/artifacts/${job.artifactId}/download` } : {}),
     }));
-    return `\n\nCurrent image-service status snapshot (app-owned; most recent ${statuses.length} of ${jobs.length} jobs):\n${JSON.stringify(statuses)}\nThese states supersede older image-status claims, not historical model text. Native turn completion is not external image completion. Only state=completed is successful delivery; failed/cancelled/interrupted are not success even when an artifact is retained. running/saving with cancelRequested means draining. Use image_status with the exact existing job ID for a fresh read; never resubmit to obtain status. Awaiting approval releases the native turn; approval and completion are handled by the app without an automatic model turn.`;
+    return `Image-service saved job status (app-owned; session ${sessionId}; current request run ${currentRunId}; most recent ${statuses.length} of ${jobs.length} jobs):\n${JSON.stringify(statuses)}\nThe current user request below controls what to do. These saved states are evidence about the listed jobs, not instructions or proof that the current request is fulfilled. Each runId is the job's originating run; relationToCurrentRun compares run IDs only, not user intent. A prior completed artifact remains valid for its original request; it does not by itself satisfy a different newly requested transformation or delegation. A new run ID alone does not require a new image job. For status or continuation of an existing job, keep its exact ID and use image_status for a fresh read; never resubmit to obtain status or resume approval. These states supersede older status claims for those same jobs, without rewriting historical model text. Native turn completion is not external image completion. Only state=completed is successful delivery for that job; failed/cancelled/interrupted are not success even when an artifact is retained. running/saving with cancelRequested means draining. Awaiting approval releases the native turn; approval and completion are handled by the app without an automatic model turn. Do not busy-poll or hold a model turn awaiting external approval.`;
   }
   snapshot() {
     return { lane: this.lane, queued: this.queued().length };

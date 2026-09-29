@@ -31,7 +31,7 @@ export interface BrokerOptions {
   dispatchHeld?: () => boolean;
   cancelImages?: (sessionId: string) => void;
   /** Read-only app state, refreshed immediately before a user-requested turn. */
-  imageContext?: (sessionId: string) => string;
+  imageContext?: (sessionId: string, currentRunId: string) => string;
   /** Trusted exact-session/run gate; ordinary capability stays independently qualified. */
   imageAcceptance?: (sessionId: string) => boolean;
   /** Trusted unbound ticket permits reference staging only, never image dispatch. */
@@ -588,11 +588,16 @@ export class Broker {
           let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
           try {
             await this.waitForDispatch(active);
-            const currentImageContext = this.options.imageContext?.(s.id) ?? "";
+            const currentImageContext = this.options.imageContext?.(s.id, run.id) ?? "";
+            // Saved job state precedes the controlling request. Preserve the
+            // original request/references and historical handoff verbatim.
+            const priorContext = handoff
+              ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\n`
+              : "";
             promptOutcome = await engine.prompt(
-              (handoff
-                ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\nCurrent user request:\n${requestText}`
-                : requestText) + currentImageContext,
+              priorContext + (currentImageContext
+                ? `${currentImageContext}\n\nCurrent user request (run ${run.id}):\n${requestText}`
+                : `${handoff ? "Current user request:\n" : ""}${requestText}`),
               attachments,
             );
           } catch (error) {
