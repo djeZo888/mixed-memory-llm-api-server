@@ -967,18 +967,22 @@ def settled_source_names(boot, manifest_sha):
     return stem + '-archive.json', stem + '-receipt.json', stem + '-consumed.json'
 
 
-def reviewed_source_amendment(old, new, delta):
-    """Only exact separately reviewed control leaves and this owner may advance."""
+def source_amendment_paths():
     allowed = {str(BASE / 'source/owner.py')}
     allowed |= {'/usr/local/lib/llm-server/' + root + '/scripts/lifecycle/' + leaf
                 for root in ('control-api', 'node-api') for leaf in ('hardware_policy.py', 'manager.py')}
     allowed |= {'/usr/local/lib/llm-server/node-api/scripts/control/' + leaf for leaf in
                 ('adapter.py', 'core.py', 'node.py', 'node_collectors.py', 'node_observation.py',
                  'passive.py', 'private_network.py', 'protocol.py')}
+    return allowed
+
+
+def reviewed_source_amendment(old, new, delta):
+    """Only exact separately reviewed control leaves and this owner may advance."""
     a, b = json.loads(json.dumps(old)), json.loads(json.dumps(new))
     before, after = a.pop('source_sha256'), b.pop('source_sha256')
     require(a == b and set(before) == set(after) and isinstance(delta, dict) and delta
-            and set(delta) <= allowed, 'source_successor_invalid')
+            and set(delta) <= source_amendment_paths(), 'source_successor_invalid')
     actual = {path: {'old': before[path], 'new': after[path]}
               for path in before if before[path] != after[path]}
     require(actual == delta, 'source_successor_invalid')
@@ -986,11 +990,159 @@ def reviewed_source_amendment(old, new, delta):
         require(all(isinstance(v, str) and HEX.fullmatch(v) for v in pins.values())
                 and hashlib.sha256(protected(path)).hexdigest() == pins['new'], 'source_successor_invalid')
 
-def settled_source_absence(old, state, boot, *, successor=None):
+
+def source_stop_name(state):
+    recovery_names(state.get('boot_id'))
+    require(isinstance(state.get('launch_id'), str)
+            and re.fullmatch('[0-9a-f]{32}', state['launch_id']), 'source_successor_invalid')
+    return 'source-stop-' + state['boot_id'] + '-' + state['launch_id'] + '.json'
+
+
+def source_idle_proxy(state, proxy):
+    expected = state.get('proxy', {})
+    require(state.get('proxy_started') is True and proxy.get('schema_version') == 2
+            and all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
+            and type(expected.get('pid')) is int and expected['pid'] > 0
+            and isinstance(expected.get('pid_start_ticks'), str)
+            and expected.get('parent_pid') == state['supervisor']['pid']
+            and all(proxy.get(k) == expected[k] for k in ('pid', 'pid_start_ticks', 'parent_pid'))
+            and type(proxy.get('active_requests')) is int and proxy['active_requests'] == 0
+            and proxy.get('quarantined') is False, 'source_successor_invalid')
+
+
+def source_stop_guard(old, state, guard):
+    require(guard.get('schema_version') == 2 and guard.get('status') == 'ok'
+            and guard.get('manifest_sha256') == digest(old)
+            and all(guard.get(k) == state.get(k) for k in
+                    ('boot_id', 'selection', 'supervisor', 'native', 'proxy'))
+            and guard.get('hardware_latched') is False, 'source_successor_invalid')
+
+
+def source_hardware(h, boot, lease):
+    # No stale/unknown-latch repair in this administrative transition. The normal
+    # hardware producer must supply current exact proof; positive faults persist.
+    started = time.monotonic()
+    with bounded():
+        proof = latch(h, boot, deadline=started + 5, lease=lease)
+        require(proof.get('hardware_latched') is False
+                and BOOT.read_text().strip() == boot, 'owned_gpu_latch_unproven')
+    return proof
+
+
+def prepare_source_stop(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
+                        expected_delta_sha256):
+    """Record reviewed intent before the unchanged old owner's normal stop.
+
+    This command neither signals the owner nor changes its state/admission.
+    Final idle disposition and physical release must still be proved afterward.
+    """
+    require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
+                (expected_state_sha256, expected_manifest_sha256, expected_delta_sha256)),
+            'source_successor_invalid')
+    recovery_names(expected_boot_id)
+    h, old = setup(), read(BASE / 'manifest.json')
+    require(digest(old) == expected_manifest_sha256, 'source_successor_invalid')
+    source_preflight(h, old)
+    with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as guard:
+        storage_paths(h, guard)
+        h.s.root_payload_guard()
+        names = ('state.json', 'manifest.json', 'selection.json', 'proxy-state.json',
+                 'guard.json', 'source-successor-delta.json')
+        files = {name: protected(BASE / name).decode() for name in names}
+        state = json.loads(files['state.json'])
+        require(hashlib.sha256(files['state.json'].encode()).hexdigest() == expected_state_sha256
+                and digest(json.loads(files['manifest.json'])) == digest(old)
+                and hashlib.sha256(files['source-successor-delta.json'].encode()).hexdigest() == expected_delta_sha256
+                and state.get('schema_version') == 2 and state.get('status') == 'RUNNING'
+                and state.get('boot_id') == expected_boot_id == BOOT.read_text().strip()
+                and state.get('manifest_sha256') == digest(old) and state.get('request_hold') is False
+                and not any(k.endswith('_failure') for k in state), 'source_successor_invalid')
+        delta = json.loads(files['source-successor-delta.json'])
+        require(isinstance(delta, dict) and delta and set(delta) <= source_amendment_paths(),
+                'source_successor_invalid')
+        for path, pins in delta.items():
+            require(isinstance(pins, dict) and set(pins) == {'old', 'new'}
+                    and pins['old'] == old['source_sha256'].get(path) and pins['old'] != pins['new']
+                    and all(isinstance(v, str) and HEX.fullmatch(v) for v in pins.values()),
+                    'source_successor_invalid')
+        require_selected(old, state['selection'])
+        source_idle_proxy(state, json.loads(files['proxy-state.json']))
+        prior_guard = json.loads(files['guard.json'])
+        source_stop_guard(old, state, prior_guard)
+        observed = prior_guard.get('observed_monotonic_s')
+        require(type(observed) in (int, float) and 0 <= time.monotonic() - observed <= 15,
+                'source_successor_invalid')
+        unit = dict(x.split('=', 1) for x in run(['systemctl', 'show', UNIT, '-p',
+                    'MainPID,ActiveState,InvocationID,Job,ControlGroup'], 2).splitlines())
+        require(unit.get('MainPID') == str(state['supervisor']['pid'])
+                and unit.get('InvocationID') == state['supervisor']['invocation_id']
+                and unit.get('ActiveState') == 'active' and unit.get('Job') in ('', '0'),
+                'source_successor_invalid')
+        service_group = '/system.slice/' + UNIT
+        require(unit.get('ControlGroup') == service_group
+                and Path('/proc', str(state['supervisor']['pid']), 'cgroup').read_text().strip()
+                    == '0::' + service_group, 'source_successor_invalid')
+        native = exact_container(inspect(state['native']['container_id']), old, state)
+        require(native['State']['Running'] is True and native['State']['Pid'] == state['native']['pid'],
+                'source_successor_invalid')
+        require(all(Path('/proc', str(state[k]['pid'])).exists()
+                    and ticks(state[k]['pid']) == state[k]['pid_start_ticks']
+                    for k in ('native', 'proxy')), 'source_successor_invalid')
+        hardware = source_hardware(h, expected_boot_id, lease)
+        # Guard/proxy observations may advance while idle. A changed snapshot
+        # refuses before writing intent, so the operator can capture fresh pins.
+        require(all(protected(BASE / name).decode() == raw for name, raw in files.items())
+                and BOOT.read_text().strip() == expected_boot_id, 'source_successor_invalid')
+        lease.validate()
+        intent = {'schema_version': 1, 'status': 'SOURCE_STOP_PREPARED', 'files': files,
+                  'prior_state_digest': digest(state), 'prior_manifest_sha256': digest(old),
+                  'current_boot_id': expected_boot_id, 'launch_id': state['launch_id'],
+                  'reviewed_delta_sha256': expected_delta_sha256, 'hardware_proof': hardware}
+        exclusive_recovery_write(h, guard, source_stop_name(state), intent)
+        h.s.root_payload_guard()
+        lease.validate()
+    return intent
+
+
+def intentional_source_stop(old, state, boot, files, delta_sha):
+    """Validate a real old-owner SIGTERM settlement against pre-stop intent.
+
+    owner_interrupted remains archived as emitted by the old owner. It is not
+    converted to a successful request outcome; only idle stop disposition is new.
+    """
+    intent = json.loads(files[source_stop_name(state)])
+    before = json.loads(intent['files']['state.json'])
+    require(intent.get('schema_version') == 1 and intent.get('status') == 'SOURCE_STOP_PREPARED'
+            and intent.get('current_boot_id') == boot == state.get('boot_id')
+            and intent.get('launch_id') == state['launch_id']
+            and intent.get('prior_state_digest') == digest(before)
+            and intent.get('prior_manifest_sha256') == digest(old)
+            and json.loads(intent['files']['manifest.json']) == old
+            and json.loads(intent['files']['selection.json']) == state['selection']
+            and intent.get('reviewed_delta_sha256') == delta_sha
+            and hashlib.sha256(intent['files']['source-successor-delta.json'].encode()).hexdigest() == delta_sha
+            and before.get('status') == 'RUNNING' and before.get('request_hold') is False
+            and not any(k.endswith('_failure') for k in before), 'source_successor_invalid')
+    failure_fields = {k for k in state if k.endswith('_failure')}
+    require(failure_fields == {'primary_failure'}
+            and isinstance(state['primary_failure'], dict)
+            and state['primary_failure'].get('code') == 'owner_interrupted'
+            and state['primary_failure'].get('phase') == 'RUNNING', 'source_successor_invalid')
+    unchanged = lambda value: {k: v for k, v in value.items()
+                               if k not in ('status', 'settlement', 'primary_failure')}
+    require(unchanged(before) == unchanged(state), 'source_successor_invalid')
+    source_idle_proxy(before, json.loads(intent['files']['proxy-state.json']))
+    source_stop_guard(old, before, json.loads(intent['files']['guard.json']))
+    source_idle_proxy(state, json.loads(files['proxy-state.json']))
+    source_stop_guard(old, state, json.loads(files['guard.json']))
+
+
+def settled_source_absence(old, state, boot, *, successor=None, same_boot=False):
     """Physical absence only; never turns an uncertain request into success."""
     recovery_names(boot)
     recovery_names(state['boot_id'])
-    require(state['boot_id'] != boot and BOOT.read_text().strip() == boot
+    require((state['boot_id'] == boot if same_boot else state['boot_id'] != boot)
+            and BOOT.read_text().strip() == boot
             and state.get('schema_version') == 2 and state.get('status') == 'SETTLED'
             and state.get('request_hold') is False and state.get('settlement') == {'pid_released': True, 'cgroup_empty': True, 'gpu_compute_empty': True} and state.get('manifest_sha256') == digest(old),
             'new_boot_recovery_invalid')
@@ -1007,6 +1159,19 @@ def settled_source_absence(old, state, boot, *, successor=None):
         require(unit['MainPID'] == str(os.getpid()) == str(successor['pid'])
                 and unit['InvocationID'] == successor['invocation_id']
                 and unit['ActiveState'] in ('activating', 'active'), 'new_boot_owner_present')
+    if same_boot:
+        # Check descendants too; MainPID=0 alone does not prove the service's
+        # proxy/subprocess work is gone. On start only this successor may exist.
+        group = run(['systemctl', 'show', UNIT, '-p', 'ControlGroup', '--value'], 2).strip()
+        require(group in (('', '/system.slice/' + UNIT) if successor is None
+                          else ('/system.slice/' + UNIT,)), 'new_boot_owner_present')
+        service_cg = Path('/sys/fs/cgroup/system.slice') / UNIT
+        if service_cg.exists():
+            pids = set()
+            for procs in [service_cg / 'cgroup.procs', *service_cg.rglob('cgroup.procs')]:
+                pids.update(procs.read_text().split())
+            require(pids == (set() if successor is None else {str(successor['pid'])}),
+                    'new_boot_owner_present')
     c = exact_container(inspect(state['native']['container_id']), old, state)
     require(c['State']['Running'] is False and c['State']['Pid'] == 0
             and c['State']['Status'] == 'exited', 'new_boot_owner_present')
@@ -1014,6 +1179,9 @@ def settled_source_absence(old, state, boot, *, successor=None):
     require(str(cg) == '/sys/fs/cgroup/' + MEMORY_SLICE + '/docker-' + c['Id'] + '.scope'
             and (not cg.exists() or not (cg / 'cgroup.procs').read_text().strip()),
             'new_boot_owner_present')
+    if same_boot and cg.exists():
+        require(all(not procs.read_text().strip() for procs in cg.rglob('cgroup.procs')),
+                'new_boot_owner_present')
     require(not run(['nvidia-smi', '--id=' + GPU, '--query-compute-apps=pid',
                      '--format=csv,noheader,nounits'], 2).strip(), 'new_boot_owner_present')
     # MiMo proxy binds private IPv4:30012; native binds loopback:30012.
@@ -1023,11 +1191,12 @@ def settled_source_absence(old, state, boot, *, successor=None):
     return {'old_boot_id': state['boot_id'], 'current_boot_id': boot,
             'container_id': c['Id'], 'native_pid_absent': True, 'cgroup_empty': True,
             'gpu_compute_empty': True, 'owner_absent': True,
-            'physical_release': 'REBOOT', 'prior_request_outcome': 'FAILED_OR_UNKNOWN'}
+            'physical_release': 'NORMAL_OWNER_STOP' if same_boot else 'REBOOT',
+            'prior_request_outcome': 'IDLE_INTENTIONAL_STOP' if same_boot else 'FAILED_OR_UNKNOWN'}
 
 
 def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
-                             expected_delta_sha256):
+                             expected_delta_sha256, *, same_boot=False):
     require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
                 (expected_state_sha256, expected_manifest_sha256, expected_delta_sha256)), 'source_successor_invalid')
     archive_name, receipt_name, consumed_name = settled_source_names(expected_boot_id, expected_manifest_sha256)
@@ -1055,11 +1224,20 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
                 and prior_guard.get('boot_id') == state['boot_id']
                 and prior_guard.get('manifest_sha256') == digest(old), 'source_successor_invalid')
         selected = require_selected(old, state['selection'])
-        physical = settled_source_absence(old, state, expected_boot_id)
+        if same_boot:
+            intent_name = source_stop_name(state)
+            files[intent_name] = protected(BASE / intent_name).decode()
+            intentional_source_stop(old, state, expected_boot_id, files, expected_delta_sha256)
+        physical = settled_source_absence(old, state, expected_boot_id, same_boot=same_boot)
+        outcome = 'IDLE_INTENTIONAL_STOP' if same_boot else 'FAILED_OR_UNKNOWN'
+        transition = 'SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT'
+        hardware = source_hardware(h, expected_boot_id, lease) if same_boot else None
+        require(all(protected(BASE / name).decode() == raw for name, raw in files.items()),
+                'source_successor_invalid')
         require(not (BASE / consumed_name).exists() and not (BASE / receipt_name).exists(), 'new_boot_recovery_consumed')
         archive = {'schema_version': 1, 'files': files,
                    'sha256': {k: hashlib.sha256(v.encode()).hexdigest() for k, v in files.items()},
-                   'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN'}
+                   'physical_absence': physical, 'prior_request_outcome': outcome, 'transition': transition}
         exclusive_recovery_write(h, guard, archive_name, archive)
         amended = {**selected, 'manifest_sha256': digest(m)}
         receipt = {'schema_version': 1, 'status': 'SETTLED_SOURCE_RECONCILED',
@@ -1068,8 +1246,10 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
                    'selection': amended, 'archive_name': archive_name,
                    'archive_sha256': hashlib.sha256(protected(BASE / archive_name)).hexdigest(),
                    'reviewed_delta_sha256': expected_delta_sha256, 'consumed_name': consumed_name,
-                   'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN',
+                   'physical_absence': physical, 'prior_request_outcome': outcome, 'transition': transition,
                    'preserved_container_name': old['container_name'] + '-prior-' + state['launch_id']}
+        if same_boot:
+            receipt['hardware_proof'] = hardware
         exclusive_recovery_write(h, guard, receipt_name, receipt)
         require(read(BASE / 'state.json') == state and selection() == selected
                 and BOOT.read_text().strip() == expected_boot_id, 'source_successor_invalid')
@@ -1083,12 +1263,16 @@ def settled_source_for_start(m, selected, previous):
     boot = BOOT.read_text().strip()
     archive_name, receipt_name, consumed_name = settled_source_names(boot, digest(m))
     receipt = read(BASE / receipt_name)
+    same_boot = previous.get('boot_id') == boot
+    transition = 'SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT'
+    outcome = 'IDLE_INTENTIONAL_STOP' if same_boot else 'FAILED_OR_UNKNOWN'
     require(not (BASE / consumed_name).exists(), 'new_boot_recovery_consumed')
     require(receipt.get('schema_version') == 1 and receipt.get('status') == 'SETTLED_SOURCE_RECONCILED'
             and receipt.get('current_boot_id') == boot and receipt.get('archive_name') == archive_name
             and receipt.get('consumed_name') == consumed_name and receipt.get('manifest_sha256') == digest(m)
             and receipt.get('selection') == selected and receipt.get('prior_state_digest') == digest(previous)
-            and receipt.get('prior_request_outcome') == 'FAILED_OR_UNKNOWN', 'source_successor_invalid')
+            and receipt.get('transition', 'NEW_BOOT') == transition
+            and receipt.get('prior_request_outcome') == outcome, 'source_successor_invalid')
     raw = protected(BASE / archive_name)
     require(hashlib.sha256(raw).hexdigest() == receipt['archive_sha256'], 'new_boot_archive_changed')
     archive = json.loads(raw)
@@ -1105,6 +1289,19 @@ def settled_source_for_start(m, selected, previous):
             == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
     reviewed_source_amendment(old, m, json.loads(delta_raw))
     require(previous.get('manifest_sha256') == digest(old), 'source_successor_invalid')
+    if same_boot:
+        require(archive.get('transition') == transition and archive.get('prior_request_outcome') == outcome
+                and archive.get('physical_absence') == receipt.get('physical_absence')
+                and receipt['physical_absence'].get('physical_release') == 'NORMAL_OWNER_STOP'
+                and receipt['physical_absence'].get('prior_request_outcome') == outcome
+                and receipt['physical_absence'].get('old_boot_id') == boot
+                and receipt['physical_absence'].get('current_boot_id') == boot,
+                'source_successor_invalid')
+        intentional_source_stop(old, previous, boot, archive['files'], receipt['reviewed_delta_sha256'])
+        # A receipt cannot hide new request/fault evidence or a replaced intent.
+        require(all(protected(BASE / name).decode() == archive['files'][name]
+                    for name in ('proxy-state.json', 'guard.json', source_stop_name(previous))),
+                'source_successor_invalid')
     assert_launch_admission(old, previous['selection'], previous)
     return receipt, old
 
@@ -1264,7 +1461,8 @@ def supervise(dry_run=False):
                         and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
                 if recovery['status'] == 'SETTLED_SOURCE_RECONCILED':
                     recovery, prior_manifest = settled_source_for_start(m, selected, previous)
-                    settled_source_absence(prior_manifest, previous, boot, successor=supervisor)
+                    settled_source_absence(prior_manifest, previous, boot, successor=supervisor,
+                                           same_boot=recovery.get('transition') == 'SAME_BOOT_INTENTIONAL_STOP')
                 else:
                     recovery, prior_manifest = recovery_for_start(m, selected, previous)
                     old_boot_absence(prior_manifest, previous, boot, successor=supervisor)
@@ -1281,7 +1479,9 @@ def supervise(dry_run=False):
                 limit = temperature_limit(run(['nvidia-smi', '--id=' + GPU, '-q', '-x'], 2))
                 sample = sample_guard(m, baseline, limit, proof_boot=boot)
                 memory_policy(m)
-                latch(h, boot, evidence=sample.get('hardware_validation'),
+                latch(h, boot, evidence=(None if recovery is not None and
+                      recovery.get('transition') == 'SAME_BOOT_INTENTIONAL_STOP'
+                      else sample.get('hardware_validation')),
                       deadline=launch_guard_started + 5, lease=lease)
             found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
             require(recovery is None or bool(found), 'owned_container_missing_requires_review')
@@ -1423,18 +1623,28 @@ def rollback_glm(h, m, expected, *, dry_run=False):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source'])
+    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source', 'prepare-source-stop'])
     p.add_argument('--service', choices=[MODEL, GLM])
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--expected-delta-sha256')
     p.add_argument('--expected-state-sha256')
     p.add_argument('--expected-boot-id')
     p.add_argument('--expected-manifest-sha256')
+    p.add_argument('--same-boot-intentional-stop', action='store_true')
     args = p.parse_args()
+    require(not args.same_boot_intentional_stop or args.action == 'reconcile-settled-source',
+            'source_successor_invalid')
+    if args.action == 'prepare-source-stop':
+        require(not args.dry_run, 'source_successor_invalid')
+        result = prepare_source_stop(args.expected_state_sha256, args.expected_boot_id,
+                                     args.expected_manifest_sha256, args.expected_delta_sha256)
+        print(json.dumps({'status': result['status'], 'prior_state_digest': result['prior_state_digest']}))
+        return 0
     if args.action == 'reconcile-settled-source':
         require(not args.dry_run, 'source_successor_invalid')
         result = reconcile_settled_source(args.expected_state_sha256, args.expected_boot_id,
-                                          args.expected_manifest_sha256, args.expected_delta_sha256)
+                                          args.expected_manifest_sha256, args.expected_delta_sha256,
+                                          same_boot=args.same_boot_intentional_stop)
         print(json.dumps({'status': result['status'], 'archive_sha256': result['archive_sha256']}))
         return 0
     if args.action == 'reconcile-new-boot':
