@@ -1,0 +1,385 @@
+{
+  "schema": 1,
+  "task": "H029-CONTROLDEPLOY02",
+  "state": "ORIGINAL_CORE_READY_AFTER_ROLLBACK",
+  "observedUtc": "2026-09-29T02:46:47.002560+00:00",
+  "bootId": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+  "receipt": {
+    "sourceCommit": "ccd0eb7bc2f4ce4385b15f1421c2dcbdae25fe4d",
+    "rawFileSha256": "4413086d2cb486501225cd4adac34ad7ee914a8c7a998b330d2f908e2aab29d7",
+    "canonicalReceiptSha256": "4435c20b4a1fc4efc327f8608a2f9f3a88242d95bad85f4c7c0a8d6c944ae9ce",
+    "coreSha256": "d2098aed6d5c3dc8e7ccf1eef9b42654c3e1203d76092286cf69c40a7d6d9ad7",
+    "adapterSha256": "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+    "managerSha256": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be"
+  },
+  "allClosureFiles": 82,
+  "closuresMatch": {
+    "/usr/local/lib/llm-server/control-api": true,
+    "/usr/local/lib/llm-server/node-api": true,
+    "/data/services/releases/h009-flash-r1-20260926": true
+  },
+  "rollback": {
+    "receiptBytesExact": true,
+    "instanceBytesExact": true
+  },
+  "inferenceByWorker1": 0,
+  "modelsStarted": false,
+  "modelsStopped": false,
+  "historicalCause": "UNKNOWN",
+  "w2AdmissionGapReleased": true,
+  "containers": [
+    {
+      "name": "/llm-qwen-ada200k-h028",
+      "id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "running": true,
+      "startedAt": "2026-09-28T23:44:52.546510973Z",
+      "pid": 833565,
+      "gpuUuids": [
+        "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+      ],
+      "launchSha256": "1254e37f0c8eb4651476b1e4b6343850675c4054cf47ba65fba37caaaa73cac8",
+      "identityExceptLaunchHashMatches": true,
+      "mountOrderOnlyEquivalent": true
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "running": true,
+      "startedAt": "2026-09-29T02:07:52.812113852Z",
+      "pid": 3647349,
+      "gpuUuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "launchSha256": "450536596a16f8198d7711dc4f46cfa91487018f17c8bef675081b51c9d1a888",
+      "identityExceptLaunchHashMatches": true,
+      "mountOrderOnlyEquivalent": false
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "running": true,
+      "startedAt": "2026-09-29T02:10:08.065244144Z",
+      "pid": 3745649,
+      "gpuUuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ],
+      "launchSha256": "f5a512a8d3eaaafdf049f7a099b7e17d0f8da6c105d9d18a51c4cfabe713a21a",
+      "identityExceptLaunchHashMatches": true,
+      "mountOrderOnlyEquivalent": false
+    }
+  ],
+  "controlHttp": 200,
+  "slots": {
+    "glm": {
+      "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "desired": "running",
+      "observed": "ready",
+      "observed_deployment": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "container_running": true,
+      "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+      "observed_at": 1790650189.3892744,
+      "observation_available": true,
+      "storage_available": true,
+      "state_persisted": true,
+      "failure_code": null,
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30002/v1",
+        "served_model": "qwen3.8-27b-gpu0",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      },
+      "slot": "glm",
+      "generation": 57,
+      "generation_current": true,
+      "current_operation": null,
+      "last_operation": {
+        "id": "f70b723200954ad7826269e2fa2d2e74",
+        "kind": "start",
+        "target": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "status": "succeeded",
+        "created_at": 1790647629.5946982,
+        "updated_at": 1790647713.9747257,
+        "deadline": 1790655624.1330216,
+        "completed_at": 1790647713.974726,
+        "generation": 57,
+        "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+        "failure_code": null,
+        "observed": {
+          "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+          "desired": "running",
+          "observed": "ready",
+          "container_running": true,
+          "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+          "generation": 57,
+          "state_persisted": true,
+          "observed_at": 1790647713.8201773
+        },
+        "state_persisted": true,
+        "poll_url": "/control/v1/operations/f70b723200954ad7826269e2fa2d2e74",
+        "slot": "glm"
+      },
+      "freshness": "fresh",
+      "switch_effect": "interrupts_target_inference",
+      "schema_version": 2,
+      "instance_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "placement": "gpu0",
+      "configured_context": {
+        "tokens": 480000,
+        "provenance": "declared"
+      },
+      "readiness": "ready",
+      "degraded": false,
+      "inference_busy": {
+        "status": "unknown",
+        "running_requests": null,
+        "queued_requests": null,
+        "observed_at": null,
+        "freshness": null
+      },
+      "mutation_busy": false,
+      "switch_cost": {
+        "kind": "cold_model_load",
+        "seconds": null,
+        "provenance": "unmeasured",
+        "running_target_requires_allow_interrupt": true,
+        "atomic_drain_guarantee": false,
+        "peer_preserved": true
+      }
+    },
+    "qwen": {
+      "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "desired": "running",
+      "observed": "ready",
+      "observed_deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "container_running": true,
+      "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+      "observed_at": 1790650189.3893032,
+      "observation_available": true,
+      "storage_available": true,
+      "state_persisted": true,
+      "failure_code": null,
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30004/v1",
+        "served_model": "qwen3.8-27b",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      },
+      "slot": "qwen",
+      "generation": 53,
+      "generation_current": true,
+      "current_operation": null,
+      "last_operation": {
+        "id": "6252154567174f6db786b5902a53d6d3",
+        "kind": "start",
+        "target": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "status": "succeeded",
+        "created_at": 1790647761.1058764,
+        "updated_at": 1790647863.5022874,
+        "deadline": 1790655751.542988,
+        "completed_at": 1790647863.5022876,
+        "generation": 53,
+        "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+        "failure_code": null,
+        "observed": {
+          "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+          "desired": "running",
+          "observed": "ready",
+          "container_running": true,
+          "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+          "generation": 53,
+          "state_persisted": true,
+          "observed_at": 1790647863.3467112
+        },
+        "state_persisted": true,
+        "poll_url": "/control/v1/operations/6252154567174f6db786b5902a53d6d3",
+        "slot": "qwen"
+      },
+      "freshness": "fresh",
+      "switch_effect": "interrupts_target_inference",
+      "schema_version": 2,
+      "instance_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "placement": "gpu1",
+      "configured_context": {
+        "tokens": 480000,
+        "provenance": "declared"
+      },
+      "readiness": "ready",
+      "degraded": false,
+      "inference_busy": {
+        "status": "unknown",
+        "running_requests": null,
+        "queued_requests": null,
+        "observed_at": null,
+        "freshness": null
+      },
+      "mutation_busy": false,
+      "switch_cost": {
+        "kind": "cold_model_load",
+        "seconds": null,
+        "provenance": "unmeasured",
+        "running_target_requires_allow_interrupt": true,
+        "atomic_drain_guarantee": false,
+        "peer_preserved": true
+      }
+    }
+  },
+  "controlError": null,
+  "nodeHttp": 200,
+  "services": [
+    {
+      "state": "ok",
+      "observed_at": "2026-09-29T02:46:51.443392+00:00",
+      "age_ms": 4784,
+      "freshness": "fresh",
+      "reason": null,
+      "service_id": "qwen-gpu0",
+      "generation": 5010297804242733,
+      "affected_services": [
+        "qwen-gpu0"
+      ],
+      "installed_capabilities": [
+        "chat.completions"
+      ],
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    },
+    {
+      "state": "ok",
+      "observed_at": "2026-09-29T02:46:51.436431+00:00",
+      "age_ms": 4791,
+      "freshness": "fresh",
+      "reason": null,
+      "service_id": "qwen-gpu1",
+      "generation": 7170410416647524,
+      "affected_services": [
+        "qwen-gpu1"
+      ],
+      "installed_capabilities": [
+        "chat.completions"
+      ],
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b",
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    },
+    {
+      "state": "ok",
+      "observed_at": "2026-09-29T02:46:51.596094+00:00",
+      "age_ms": 4631,
+      "freshness": "fresh",
+      "reason": null,
+      "service_id": "qwen-ada200k",
+      "generation": null,
+      "affected_services": [],
+      "required_gpu_uuids": [
+        "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+      ],
+      "model_alias": "qwen3.8-27b-ada200k",
+      "deployment_id": "qwen-ada200k-h028-20260929",
+      "configured_context_tokens": 200000,
+      "ready": true,
+      "admitting": null,
+      "functional_qualified": null,
+      "hardware_latched": null,
+      "installed_capabilities": [
+        "chat.completions"
+      ],
+      "activity": "unknown",
+      "active_requests": null,
+      "queue_depth": null,
+      "availability": "available",
+      "observation_only": true
+    }
+  ],
+  "native": {
+    "qwen3.8-27b-gpu0": {
+      "http": 200,
+      "status": "ready",
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b-gpu0",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "max_running_requests": 1,
+      "default_chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    },
+    "qwen3.8-27b": {
+      "http": 200,
+      "status": "ready",
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "max_running_requests": 1,
+      "default_chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    },
+    "qwen3.8-27b-ada200k": {
+      "http": 200,
+      "status": "ready",
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b-ada200k",
+      "context_length": 200000,
+      "max_total_tokens": 200000,
+      "max_total_num_tokens": 200000,
+      "max_running_requests": 1,
+      "default_chat_template_kwargs": {
+        "enable_thinking": false
+      },
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    }
+  },
+  "controlNodeSystemd": "MainPID=355734\nId=llm-control.service\nActiveState=active\nSubState=running\nInvocationID=ad3c2178e97a455aa81b76e0159423ee\n\nMainPID=355736\nId=llm-node.service\nActiveState=active\nSubState=running\nInvocationID=45e423a0313945829c8064325907f5be",
+  "observedEndUtc": "2026-09-29T02:46:56.248038+00:00",
+  "w2AdmissionReleaseBasis": "Root 02:47 rollback disposition: original core only; all pinned IDs/PIDs/StartedAt/running preserved, exact predecessor closure and receipt/instance restored, native/node ready and Qwen hardware guards clear",
+  "w2AdmissionReleaseUtc": "2026-09-29T02:50:24.934142+00:00",
+  "installedCorrection": false,
+  "controlFailureCode": null,
+  "controlObservationAvailable": true,
+  "controlReady": true,
+  "controlObservedUtc": "2026-09-29T02:49:49.466033+00:00",
+  "controlReadSeconds": 9.27049683199948,
+  "activeLifecycleOperations": 0
+}
