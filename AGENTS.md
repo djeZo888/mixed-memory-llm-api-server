@@ -1,60 +1,52 @@
-# Sova — H030 closed checkpoint
+# Sova — H031 active Codex completion window
 
-H030 used the user-authorized September29,2026 **06:53–08:53 UTC** window.
-Worker implementation ended08:39UTC. Both paid native sessions exited0 with
-owned work settled. Do not reopen or extend that window without new user
-instructions. Root coordinates/reviews/publishes; mac-worker1 and mac-worker2
-implement, build, test and operate VMs through bounded fresh native CLI sessions.
+The user renewed execution: **September29,2026 08:46–10:46UTC**. H030 is closed.
+Root coordinates/reviews/publishes; mac-worker1 and mac-worker2 implement/build/
+test/operate VMs in fresh bounded native CLI sessions with isolated copies.
+No new long jobs after10:21, no new short submissions10:31; settle worker/native
+work by10:36, root publication10:46. No automatic extension or old-baseline restore.
 
-## Current durable state
+Read reports/h030-codex-checkpoint.md, reports/h030-codex-results.json and
+reports/h030-next-execution.md for exact retained state. Current scope remains
+ai-harness/PLAN-CODEX-COMPLETION-20260929.md. Private H031 task state is outside
+this checkout in root orchestration/tasks/H031-20260929.
 
-Read `reports/h030-codex-checkpoint.md`, `reports/h030-codex-results.json` and
-`reports/h030-next-execution.md`. Private root records are under
-`orchestration/tasks/H030-20260929/` outside this checkout. Accepted scope remains
-`ai-harness/PLAN-CODEX-COMPLETION-20260929.md`.
+## First parallel batch and ownership
 
-- Full Codex integration is incomplete. Public Sova chat remains503; status is
-  available. The latest user requires keeping the newest deployed state and
-  leaving Sova unavailable until complete. Do not restore an older baseline.
-- Deployed app2b40610 activated08:15:31. AppPID118087/statusPID14480 were observed
-  unchanged; use timestamps, not assumed future health. MiniMax stays default.
-- Ordinary coding, same-native follow-up, durable submission dedupe/conflicts,
-  corrected small native compaction and four-fact recall passed. Reuse these
-  results when contracts are unchanged. Cross-engine handoff has source/UI
-  coverage but no live acceptance.
-- Actual cold resume failed08:22:36 count/node_after with hardwareLatched=null
-  and exact GPU UUID. No generation ran. Earlier PDF also failed admission.
-  Historical producer cause remains unproved; do not claim a later fixture or
-  good snapshot proves that historical event.
-- Source-only5176ca4/831ace6 correct hardware-refresh entry scheduling and add
-  bounded proof metadata.29 combined focused tests pass. NOT DEPLOYED: these
-  node files are in MiMo's protected source closure. Review the complete source
-  transition before any write; preserve15s validity and hardware guards.
-- Image startup holds the common lifecycle lease through load/warm-up. It can
-  starve MiMo's mandatory guard, including on image error recovery. This remains
-  a production defect. Fix ownership/publication phases, not guard timeouts.
-- MiMo recovered to exact owned RUNNING950000/65536 with current guard and idle
-  native slot at08:28:28. No inference or occupied950K test was run. Candidate
-  enabled/qualified flags remainfalse/false; ordinary Codex specialist gates
-  remain closed until actual workflow qualification.
-- Three Qwens retain480K/480K/200K. The Ada200K instance is not a fallback for a
-  480K chat. Image remains guarded FullHD. No hardware policies were changed.
+- W1 owns scripts/image_runtime and its tests: remove long global-lock ownership
+  through startup/warm-up while retaining exclusive image operation ownership,
+  before/after identity/storage/hardware validation and correct error settlement.
+  W1 alone reads current combined ai-vm closure inventory and later deploys there.
+- W2 owns scripts/runtime/mimo/owner.py and source-transition tests: determine
+  whether the already-supported owner can accept a fully stopped same-boot
+  source-only successor; if not, implement the narrow explicit transition with
+  archived predecessor, reviewed exact delta, physical absence, current hardware
+  proof and one-time consumption. Do not relax HELD recovery or erase faults.
+  This is source-only until combined review; W2 does not mutate ai-vm.
+- Other shared files require coordination. W2 retains app/config deployment
+  ownership. One combined activation; no interleaved image/frontier recovery.
 
-## Next bounded work
+## Retained state and acceptance
 
-Use the ordered handoff in `reports/h030-next-execution.md`: complete shared
-lifecycle fixes in one source batch, activate once with valid source/owner
-transitions, then run retained cold/PDF and specialist workflows and remaining
-queue/lifecycle/handoff cases. Do not repeat passed benchmarks or old bootstrap.
+Public chat503/statusavailable. App2b40610 (08:15 deployment) remains; MiniMax
+default. Source5176ca4/831ace6 health-refresh/metadata fixes passed29checks but
+are NOT deployed: MiMo pins both node files. Latest MiMo currentproof08:28:28
+RUNNING950K/65536/8decode; do not assume later health without fresh observation.
+MiMo candidatefalse/false; ordinary Codex specialist gatesclosed. ThreeQwens
+480K/480K/200K, image guardedFullHD; Ada200K is not a480K fallback.
 
-Preserve chats/files, original failures, two historical uncertain owners and
-three quarantines. Never replay uncertain inference or release a slot before
-settlement. Keep credentials and bulky traces outside Git. No new weights,
-driver/runtime update, GPU stress,950K test, fan/power/ECC tuning, GLM restoration,
-accounts/scaling/installer work or automatic extension in this Codex workstream.
+Reuse passed ordinarycoding/followup/dedupe/compaction/recall if contractsunchanged.
+Retain coldresume/PDF failures; historical null-hardware trigger unproved.
+Image startup's common-lock scope is a demonstrated source defect, although the
+historical competing holder was not sampled. Source fixture is not live proof.
+After coordinated deployment run retained affected workflows, then specialists
+and remaining handoff/sharedlifecycle/profile gates. Capabilities open only on
+actual retained livePASS. No prompt rescue or unbounded unchanged retries.
 
-Worker2 owns app/config deployment; Worker1 owns ai-vm/control/model lifecycle.
-One deployment writer at a time. Check acknowledged current instructions before
-inference; do not keep paid worker sessions alive only to wait for model loads.
-Publish reviewed changes on `feature/glm53-flash` / draftPR10. Keep the incomplete
-branch out of main until release-qualified. Older windows remain closed.
+Preserve chats/files, failures, two old uncertainowners and threequarantines.
+Never replay uncertain inference/release slots early. No new weights/runtimes,
+driver change, benchmark/950K test, hardware/fan/power/ECC tuning, GLM restore,
+accounts/scaling/installer or automaticextension. Keep credentials/rawtraces
+private. Check acknowledged current instructions before live submissions.
+Close paid CLI sessions when only independent model loading/waiting remains.
+Root publishes to feature/glm53-flash/draftPR10; no incomplete main merge.
