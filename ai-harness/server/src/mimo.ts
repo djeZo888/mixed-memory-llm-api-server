@@ -304,11 +304,12 @@ export async function countMimo(prepared: MimoPrepared, proof: MimoQualification
     text += decoder.decode();
   } finally { void reader.cancel().catch(() => {}); }
   let v: unknown; try { v = JSON.parse(text); } catch { fail('mimo_count_malformed'); }
-  // The pinned endpoint returns one integer field. Require that exact JSON
-  // grammar too, so duplicate keys or exponent/fraction spellings cannot hide
-  // a different count behind JSON.parse's last-key-wins/coercion behavior.
-  if (!/^\s*\{\s*"input_tokens"\s*:\s*(?:0|[1-9][0-9]*)\s*\}\s*$/.test(text) ||
-    !object(v) || Object.keys(v).length !== 1 || !uint(v.input_tokens)) fail('mimo_count_malformed');
+  // The pinned OpenAI endpoint adds this exact object tag; retain legacy counts.
+  // Match both field orders without accepting extras, duplicate keys or numeric
+  // spellings that JSON.parse would otherwise coerce (fractions/exponents).
+  if (!/^\s*\{\s*(?:"input_tokens"\s*:\s*(?:0|[1-9][0-9]*)(?:\s*,\s*"object"\s*:\s*"response\.input_tokens")?|"object"\s*:\s*"response\.input_tokens"\s*,\s*"input_tokens"\s*:\s*(?:0|[1-9][0-9]*))\s*\}\s*$/.test(text) ||
+    !object(v) || !(Object.keys(v).length === 1 || (Object.keys(v).length === 2 && v.object === 'response.input_tokens')) ||
+    !uint(v.input_tokens)) fail('mimo_count_malformed');
   match(q, await withinSignal(() => transport.observe(boundedSignal), boundedSignal));
   return admitMimo(prepared, q, q.identity, v.input_tokens);
 }
