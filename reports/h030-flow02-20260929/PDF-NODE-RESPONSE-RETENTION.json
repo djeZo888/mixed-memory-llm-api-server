@@ -1,0 +1,19 @@
+{
+  "status": "NOT_RETAINED",
+  "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+  "failingStep": "count/node_before",
+  "reason": "hardware_state",
+  "time": "2026-09-29T07:43:43.159Z",
+  "fieldsNotRetained": [
+    "hardware_latched",
+    "required GPU UUIDs",
+    "response age/freshness fields"
+  ],
+  "retained": [
+    "admission diagnostic steps/timestamps/outcomes/reason",
+    "provider diagnostic codex_qwen_identity_unqualified",
+    "native error and settled cleanup",
+    "pre-normalization request"
+  ],
+  "inspection": "Existing private admission, scoped capture, DB/native records only; no current probe used as historical proof"
+}
