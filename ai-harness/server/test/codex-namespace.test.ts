@@ -84,7 +84,7 @@ test('captured image schema and raw function arguments survive alias response an
  assert.deepEqual(declaration.parameters,nativeTool.parameters);
  assert.deepEqual(declaration.parameters,{type:'object',properties:{},additionalProperties:false});
  assert.equal(declaration.strict,false); // Native strict flag stays as captured; MCP validation stays strict.
- for(const args of ['{}',' { "__ns" : "10" }\n','{"ns":"10"}','{"ns":"\\u0031\\u0030"}']){
+ for(const args of ['{}','{"references":"[]"}','{"skill":"sova-local-tools"}','{"__v":1}',' { "__ns" : "10" }\n','{"ns":"10"}','{"ns":"\\u0031\\u0030"}']){
   const frames:string[]=[];const stream=new ResponsesStream(t,x=>frames.push(x));
   const chunks=[args.slice(0,2),args.slice(2)];
   for(const [index,chunk] of chunks.entries())stream.push(Buffer.from(`data: ${JSON.stringify({choices:[{delta:{tool_calls:[{index:0,...(index===0?{id:'cap-call',type:'function',function:{name:alias,arguments:chunk}}:{function:{arguments:chunk}})}]},finish_reason:null}]})}\n\n`));

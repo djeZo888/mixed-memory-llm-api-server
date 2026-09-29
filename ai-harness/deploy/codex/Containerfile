@@ -9,5 +9,5 @@ COPY skills/ /opt/sova/codex/skills/
 COPY upstream/ /opt/sova/codex/upstream/
 COPY sova-overlay.md /opt/sova/codex/sova-overlay.md
 RUN echo "167c0148a849d2444f1b5a7fb5f8bb2de1de5ae13a2a504b833fc765980f5cd9  /opt/sova/bin/codex" | sha256sum -c - && chmod 0555 /opt/sova/bin/codex && mkdir -p /etc/codex && cp /opt/sova/codex/requirements.toml /etc/codex/requirements.toml && chmod 0444 /etc/codex/requirements.toml /opt/sova/codex/*.toml /opt/sova/codex/models.json && chmod -R a+rX /opt/sova/browser /opt/sova/codex/skills /opt/sova/codex/upstream /opt/sova/codex/sova-overlay.md
-LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956"
+LABEL org.opencontainers.image.revision="064c6b8c737f5b41d171fdda80bd9ef10ad06eb3" org.opencontainers.image.ai-harness.patchset="b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5"
 ENTRYPOINT ["/opt/sova/bin/codex", "app-server", "--listen", "stdio://"]

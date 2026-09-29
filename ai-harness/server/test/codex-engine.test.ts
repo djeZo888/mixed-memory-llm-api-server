@@ -777,3 +777,121 @@ test('drain observation timeout or unconfirmed native process never releases can
   await assert.rejects(f.engine.close(),/unconfirmed/);
  }
 });
+
+const retainedFinal = JSON.parse(readFileSync(new URL('./fixtures/codex/h032-unclassified-final.json', import.meta.url), 'utf8'));
+const finalItem = () => ({ type: 'agentMessage', id: retainedFinal.message.payload.id,
+  text: retainedFinal.message.payload.content[0].text, phase: null });
+const promotion = (f: ReturnType<typeof fixture>) => f.updates.filter(u =>
+  u.type === 'phase' && u.phaseSource === 'codex.completed_agent_message+settled_root_turn');
+function finishRetained(f: ReturnType<typeof fixture>, override: Record<string, unknown> = {}) {
+  const item = finalItem();
+  f.item(item.id, item.type, { text: '', phase: null }, 'started');
+  f.item(item.id, item.type, { text: item.text, phase: null });
+  const turn = { id: 'turn-1', items: [item], itemsView: 'summary', status: 'completed', error: null, ...override };
+  return turn;
+}
+test('H032 retained unclassified native answer is associated only after matching successful turn and settlement', async () => {
+  assert.equal(retainedFinal.message.payload.phase, undefined);
+  assert.equal(retainedFinal.terminal.payload.last_agent_message, finalItem().text);
+  assert.equal(retainedFinal.terminal.payload.error, undefined);
+  const proof = deferred<boolean>(), f = fixture({ gateway: () => proof.promise });
+  const pending = f.engine.prompt('retained event fixture'); await tick();
+  const turn = finishRetained(f);
+  f.events('task_complete', retainedFinal.terminal.payload);
+  assert.equal(promotion(f).length, 0, 'task_complete alone never associates final');
+  f.events('turn/completed', { turn }); f.events('turn/completed', { turn }); await tick();
+  assert.equal(promotion(f).length, 0, 'gateway still draining');
+  proof.resolve(true); assert.equal(await pending, 'completed');
+  assert.deepEqual(promotion(f), [{ type: 'phase', nativeMessageId: finalItem().id,
+    nativeTurnId: 'turn-1', channel: 'final', streamState: 'completed',
+    phaseSource: 'codex.completed_agent_message+settled_root_turn' }]);
+  assert.equal(f.updates.filter(u => u.type === 'text').map(u => u.text).join(''), finalItem().text);
+});
+for (const mode of ['failed', 'interrupted', 'cancelled', 'incomplete', 'mismatched-turn', 'mismatched-message', 'mismatched-text', 'mismatched-phase', 'duplicate-message', 'conflicting-terminal', 'error', 'unsettled'] as const) {
+  test(`retained final is never promoted for ${mode}`, async () => {
+    const f = fixture({ gateway: async () => mode !== 'unsettled' });
+    const pending = f.engine.prompt('retained rejection fixture');
+    const bad = !['interrupted', 'cancelled'].includes(mode);
+    const checked = bad ? assert.rejects(pending) : pending;
+    await tick(); const turn: any = finishRetained(f);
+    if (mode === 'failed' || mode === 'interrupted') turn.status = mode;
+    let cancel: Promise<void> | undefined;
+    if (mode === 'cancelled') cancel = f.engine.cancel();
+    if (mode === 'incomplete') f.item('pending-tool', 'commandExecution', { status: 'inProgress' }, 'started');
+    if (mode === 'mismatched-turn') turn.id = 'foreign-turn';
+    if (mode === 'mismatched-message') turn.items[0].id = 'foreign-message';
+    if (mode === 'mismatched-text') turn.items[0].text = 'different';
+    if (mode === 'mismatched-phase') turn.items[0].phase = 'final_answer';
+    if (mode === 'duplicate-message') turn.items.push(turn.items[0]);
+    if (mode === 'error') turn.error = { message: 'failed' };
+    f.events('turn/completed', { turn });
+    if (mode === 'conflicting-terminal') f.events('turn/completed', { turn: { ...turn, status: 'failed' } });
+    await checked; await cancel;
+    assert.equal(promotion(f).length, 0);
+    if (mode === 'unsettled') await assert.rejects(f.engine.close()); else await f.engine.close();
+  });
+}
+test('explicit native phases remain authoritative and earlier absent phases stay unknown', async () => {
+  for (const explicit of ['commentary', 'final_answer', null]) {
+    const f = fixture(), pending = f.engine.prompt('phase fixture'); await tick();
+    const first = { id: 'first', type: 'agentMessage', text: 'earlier', phase: null };
+    f.item(first.id, first.type, { text: '', phase: null }, 'started'); f.item(first.id, first.type, first);
+    const turn: any = finishRetained(f);
+    // Keep the terminal and completed item exactly matched for this variant.
+    if (explicit !== null) {
+      const item = { id: 'explicit', type: 'agentMessage', text: 'explicit', phase: explicit };
+      f.item(item.id, item.type, { text: '', phase: explicit }, 'started'); f.item(item.id, item.type, item);
+      if (explicit === "final_answer") turn.items = [item];
+    }
+
+    f.events('turn/completed', { turn }); await pending;
+    assert.equal(promotion(f).length, explicit === 'final_answer' ? 0 : 1);
+    assert.ok(f.updates.filter(u => u.type === 'phase' && u.nativeMessageId === 'first').every(u => u.type === 'phase' && u.channel === 'unknown'));
+  }
+});
+
+test('actual H032 pinned native default terminal summary contains the completed null-phase message', async () => {
+  const capture = JSON.parse(readFileSync(new URL('./fixtures/codex/h032-native-null-phase-events.json', import.meta.url), 'utf8'));
+  const terminal = capture.events.find((e: any) => e.method === 'turn/completed');
+  assert.equal(terminal.params.turn.itemsView, 'summary');
+  assert.equal(terminal.params.turn.items.length, 1);
+  assert.equal(terminal.params.turn.items[0].phase, null);
+  const f = fixture(), pending = f.engine.prompt('actual H032 native capture'); await tick();
+  for (const event of capture.events) {
+    const p = structuredClone(event.params); p.threadId = 'thread-1';
+    if (p.turnId) p.turnId = 'turn-1'; if (p.turn) p.turn.id = 'turn-1';
+    f.events(event.method, p);
+  }
+  assert.equal(await pending, 'completed');
+  assert.equal(promotion(f).length, 1);
+  assert.equal((promotion(f)[0] as any).nativeMessageId, terminal.params.turn.items[0].id);
+});
+for (const mode of ['omitted-last', 'reordered', 'empty-summary', 'not-loaded', 'no-items-view'] as const) {
+  test(`terminal summary ${mode} cannot associate an earlier or unsupported final`, async () => {
+    const f = fixture(), pending = f.engine.prompt('summary integrity');
+    const invalid = !['not-loaded', 'no-items-view'].includes(mode);
+    const checked = invalid ? assert.rejects(pending) : pending;
+    await tick(); const turn: any = finishRetained(f), earlier = turn.items[0];
+    const last = { type: 'agentMessage', id: 'later', text: 'later content', phase: null };
+    f.item(last.id, last.type, { text: '', phase: null }, 'started'); f.item(last.id, last.type, last);
+    if (mode === 'reordered') turn.items = [last, earlier];
+    if (mode === 'empty-summary') turn.items = [];
+    if (mode === 'not-loaded') { turn.items = []; turn.itemsView = 'notLoaded'; }
+    if (mode === 'no-items-view') { turn.items = [last]; delete turn.itemsView; }
+    f.events('turn/completed', { turn }); await checked;
+    assert.equal(promotion(f).length, 0); await f.engine.close();
+  });
+}
+test('late cancellation during settlement cannot retroactively promote a completed native message', async () => {
+  const proof = deferred<boolean>(), f = fixture({ gateway: () => proof.promise });
+  const pending = f.engine.prompt('late stop'); await tick();
+  f.events('turn/completed', { turn: finishRetained(f) }); await tick();
+  const cancelled = f.engine.cancel(); proof.resolve(true);
+  await pending; await cancelled; assert.equal(promotion(f).length, 0);
+});
+test('same-status terminal duplicate with changed summary is conflicting, never a final', async () => {
+  const f = fixture(), pending = f.engine.prompt('duplicate conflict'), checked = assert.rejects(pending);
+  await tick(); const turn = finishRetained(f);
+  f.events('turn/completed', { turn }); f.events('turn/completed', { turn: { ...turn, items: [] } });
+  await checked; assert.equal(promotion(f).length, 0); await f.engine.close();
+});

@@ -1,0 +1,60 @@
+{
+  "provenance": {
+    "sourceSessionId": "8f3070a0-6a03-4010-b651-f98550a007a6",
+    "nativeRollout": {
+      "name": "rollout-2026-09-29T14-43-00-01a0ed30-99a6-7353-82d2-a91218d97270.jsonl",
+      "sha256": "70ef7e482311952e7e461ee8fcfe59205f771763df36e541ddad0abc6e16f923"
+    },
+    "appSource": "e9e4f71c53b2caade69c345aadb231f788323a3d",
+    "note": "Actual H032 retained rollout message and task_complete. Tests project these into the pinned App Server item/turn protocol; this is not a captured App Server notification transcript. The original child failed before generation and remains failed."
+  },
+  "message": {
+    "timestamp": "2026-09-29T12:47:08.027Z",
+    "ordinal": 27,
+    "type": "response_item",
+    "payload": {
+      "type": "message",
+      "id": "msg_951f6c2e-c9c5-49ea-ba82-2fa0df02591b",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "text": "**Result**\n- Spawned exactly one child (`Gauss`, model `mimo-v2.6-pro-rl`) with the instructed task; no other work was delegated.\n- The child errored before running anything: `503 Service Unavailable \u2014 MiMo request or qualification rejected (http://10.0.2.2:8081/v1/responses)`, i.e., this host's MiMo frontier eligibility was rejected, so it never reached its shell call.\n- I closed the errored child to free it up.\n\nSo there is no answer to report: the delegation failed at the model gate, not at the calculation. If MiMo access is enabled on this host, I can re-run the same delegation \u2014 or, if you'd rather have the result now, I can compute `19 * 23 = 437` locally myself."
+        }
+      ],
+      "internal_chat_message_metadata_passthrough": {
+        "turn_id": "01a0ed30-99be-7821-90b3-f574ba3408f0",
+        "content_item_kinds": [
+          "unknown"
+        ]
+      }
+    },
+    "metadata": {
+      "retained_source": {
+        "id": {
+          "message_id": "msg_951f6c2e-c9c5-49ea-ba82-2fa0df02591b",
+          "turn_id": "01a0ed30-99be-7821-90b3-f574ba3408f0",
+          "role": "assistant"
+        },
+        "revision": "retained_01a0ed34-60fb-7012-bc2b-01457e70882b",
+        "complete": true
+      },
+      "client_authored": false,
+      "user_input_order": 4
+    }
+  },
+  "terminal": {
+    "timestamp": "2026-09-29T12:47:08.031Z",
+    "ordinal": 30,
+    "type": "event_msg",
+    "payload": {
+      "type": "task_complete",
+      "turn_id": "01a0ed30-99be-7821-90b3-f574ba3408f0",
+      "last_agent_message": "**Result**\n- Spawned exactly one child (`Gauss`, model `mimo-v2.6-pro-rl`) with the instructed task; no other work was delegated.\n- The child errored before running anything: `503 Service Unavailable \u2014 MiMo request or qualification rejected (http://10.0.2.2:8081/v1/responses)`, i.e., this host's MiMo frontier eligibility was rejected, so it never reached its shell call.\n- I closed the errored child to free it up.\n\nSo there is no answer to report: the delegation failed at the model gate, not at the calculation. If MiMo access is enabled on this host, I can re-run the same delegation \u2014 or, if you'd rather have the result now, I can compute `19 * 23 = 437` locally myself.",
+      "started_at": 1790685780,
+      "completed_at": 1790686028,
+      "duration_ms": 247616,
+      "time_to_first_token_ms": 62245
+    }
+  }
+}

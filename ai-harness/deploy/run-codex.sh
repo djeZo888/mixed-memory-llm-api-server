@@ -126,7 +126,7 @@ image_patchset=${image_labels#*|}
 # The cached native image retains its original label; mounted host policy has its own pin.
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == 'b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the

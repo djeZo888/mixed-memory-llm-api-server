@@ -1,0 +1,94 @@
+{
+  "provenance": {
+    "task": "H032-PDF-CODEX01",
+    "kind": "actual pinned native AppServer with loopback scripted provider; no model qualification",
+    "binarySha256": "788a818fbb9596869c7a487554507cb8bdca17584b8671112b23f9e225ba35c8",
+    "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "captureSha256": "6fdf0828b12ad4a32875079bcb45d42e18daf31247c00fe79ff08fe78d3e46e8",
+    "profile": "config.toml",
+    "threadStartItemsView": "omitted as in production",
+    "note": "Events copied unchanged. Test remaps owned thread/turn IDs only."
+  },
+  "events": [
+    {
+      "method": "turn/started",
+      "params": {
+        "threadId": "01a0ed01-3d8e-7012-be0f-1c0b9ed25f63",
+        "turn": {
+          "id": "01a0ed01-3da3-7ba3-b639-dcab55744c98",
+          "items": [],
+          "itemsView": "notLoaded",
+          "status": "inProgress",
+          "error": null,
+          "startedAt": 1790682676,
+          "completedAt": null,
+          "durationMs": null
+        }
+      },
+      "emittedAtMs": 1790682676650
+    },
+    {
+      "method": "item/started",
+      "params": {
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_e88ff665-258e-42a6-adaf-55dacefdbf0f",
+          "text": "",
+          "phase": null,
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        "threadId": "01a0ed01-3d8e-7012-be0f-1c0b9ed25f63",
+        "turnId": "01a0ed01-3da3-7ba3-b639-dcab55744c98",
+        "startedAtMs": 1790682676662
+      },
+      "emittedAtMs": 1790682676662
+    },
+    {
+      "method": "item/completed",
+      "params": {
+        "item": {
+          "type": "agentMessage",
+          "id": "msg_e88ff665-258e-42a6-adaf-55dacefdbf0f",
+          "text": "Offline fixture ended.",
+          "phase": null,
+          "memoryCitation": null,
+          "delivery": null,
+          "questions": null
+        },
+        "threadId": "01a0ed01-3d8e-7012-be0f-1c0b9ed25f63",
+        "turnId": "01a0ed01-3da3-7ba3-b639-dcab55744c98",
+        "completedAtMs": 1790682676662
+      },
+      "emittedAtMs": 1790682676663
+    },
+    {
+      "method": "turn/completed",
+      "params": {
+        "threadId": "01a0ed01-3d8e-7012-be0f-1c0b9ed25f63",
+        "turn": {
+          "id": "01a0ed01-3da3-7ba3-b639-dcab55744c98",
+          "items": [
+            {
+              "type": "agentMessage",
+              "id": "msg_e88ff665-258e-42a6-adaf-55dacefdbf0f",
+              "text": "Offline fixture ended.",
+              "phase": null,
+              "memoryCitation": null,
+              "delivery": null,
+              "questions": null
+            }
+          ],
+          "itemsView": "summary",
+          "status": "completed",
+          "error": null,
+          "startedAt": 1790682676,
+          "completedAt": 1790682676,
+          "durationMs": 20
+        }
+      },
+      "emittedAtMs": 1790682676665
+    }
+  ]
+}
