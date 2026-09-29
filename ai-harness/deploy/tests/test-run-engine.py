@@ -176,7 +176,15 @@ os.execv(sys.executable, [sys.executable, *args])
         self.assertEqual(calls[-2]["argv"], ["--remote=false", "rm", "--force", "--time", "20", "--ignore", container_name])
         self.assertEqual(calls[-1]["argv"], ["--remote=false", "container", "exists", container_name])
         mounts = [argv[index + 1] for index, item in enumerate(argv) if item == "--volume"]
-        self.assertEqual(mounts, [f"{self.profile}:{self.profile}:rw,rprivate", f"{self.workspace}:{self.workspace}:rw,rprivate"])
+        source = LAUNCHER.parent.parent
+        self.assertEqual(mounts, [
+            f"{self.profile}:{self.profile}:rw,rprivate",
+            f"{self.workspace}:{self.workspace}:rw,rprivate",
+            f"{source}/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate",
+            f"{source}/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate",
+            f"{source}/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate",
+            f"{source}/deploy/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate",
+        ])
         self.assertEqual(argv[-1], IMAGE_ID)
         self.assertEqual(argv[argv.index("--network") + 1], "slirp4netns:allow_host_loopback=true")
         self.assertEqual(argv[argv.index("--user") + 1], f"{os.getuid()}:{os.getgid()}")

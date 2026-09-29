@@ -36,7 +36,16 @@ class CodexLauncherContract(base.LauncherContract):
             self.assertFalse({'OPENAI_API_KEY','SSH_AUTH_SOCK','CODEX_HOME','NODE_OPTIONS','CONTAINER_HOST','HTTP_PROXY'} & c['env'].keys())
             self.assertNotIn(base.TOKEN,' '.join(c['argv']))
         mounts=[run[i+1] for i,v in enumerate(run) if v=='--volume']
-        self.assertEqual(mounts,[f'{self.profile}:{self.profile}:rw,rprivate',f'{self.workspace}:{self.workspace}:rw,rprivate',f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate', f'{base.LAUNCHER.parent}/codex/models.json:/opt/sova/codex/models.json:ro,rprivate', f'{base.LAUNCHER.parent}/codex/skills/sova-local-tools:{self.profile}/codex-home/skills/sova-local-tools:ro,rprivate'])
+        source = base.LAUNCHER.parent.parent
+        self.assertEqual(mounts,[
+            f'{self.profile}:{self.profile}:rw,rprivate',
+            f'{self.workspace}:{self.workspace}:rw,rprivate',
+            f'{source}/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate',
+            f'{source}/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate',
+            f'{base.LAUNCHER.parent}/codex/config.toml:{self.profile}/codex-home/config.toml:ro,rprivate',
+            f'{base.LAUNCHER.parent}/codex/models.json:/opt/sova/codex/models.json:ro,rprivate',
+            f'{base.LAUNCHER.parent}/codex/skills/sova-local-tools:{self.profile}/codex-home/skills/sova-local-tools:ro,rprivate',
+        ])
         self.assert_catalog_selected_by_container_config_is_mounted(run, 'config.toml')
         env=[run[i+1] for i,v in enumerate(run) if v=='--env']
         self.assertIn(f'CODEX_HOME={self.profile}/codex-home',env)

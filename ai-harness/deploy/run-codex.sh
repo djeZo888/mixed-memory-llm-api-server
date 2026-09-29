@@ -11,7 +11,8 @@ Run the reviewed Codex image through local, rootless Podman using private AppSer
 Both existing directories must be owned by this user, resolve without symlinks,
 and be distinct. They are mounted at the identical absolute paths. The profile
 gets isolated state/ and state/home directories; native sibling lock files stay
-inside that mount. No other host directory or socket is mounted.
+inside that mount. Reviewed delivery files are individually hash-checked and
+mounted read-only; no additional writable directory or socket is mounted.
 
 Required environment:
   AI_HARNESS_GATEWAY_TOKEN  Ephemeral per-runner text/image gateway token;
@@ -95,6 +96,7 @@ podman_bin=$(type -P podman) || die 'Podman is not installed; the reviewed boots
 python_bin=$(type -P python3) || die 'Python 3 is required for bounded private AppServer supervision and token redaction'
 [[ "$python_bin" = /* && -x "$python_bin" ]] || die 'Python 3 must resolve to an absolute executable in the service PATH'
 launcher_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
+overlay_root=$(cd -- "$launcher_dir/.." && pwd -P)
 
 # Remove export attributes without logging or placing credential values in argv.
 # In particular, drop CONTAINER_HOST/CONTAINER_CONNECTION, proxy variables,
@@ -108,6 +110,10 @@ export AI_HARNESS_GATEWAY_URL="$gateway_url"
 export AI_HARNESS_GATEWAY_TOKEN="$gateway_token"
 export AI_HARNESS_SESSION_ID="$session_id"
 unset gateway_token
+
+# Fixed reviewed source overlays keep the baked runtime and dependency pins intact.
+"$python_bin" "$launcher_dir/engine/validate-image-overlays.py" \
+  "$launcher_dir" codex "$profile_dir" "$workspace" || die 'reviewed image delivery overlay validation failed'
 
 rootless=$("$podman_bin" --remote=false info --format '{{.Host.Security.Rootless}}' 2>/dev/null) || die 'local Podman rootless readiness check failed'
 [[ "$rootless" = true ]] || die 'Podman must report rootless=true'
@@ -174,6 +180,8 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --stop-signal SIGTERM --stop-timeout 20 \
   --volume "$profile_dir:$profile_dir:rw,rprivate" \
   --volume "$workspace:$workspace:rw,rprivate" \
+  --volume "$overlay_root/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate" \
+  --volume "$overlay_root/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate" \
   --volume "$launcher_dir/codex/$image_config:$container_data/config.toml:ro,rprivate" \
   --volume "$launcher_dir/codex/models.json:/opt/sova/codex/models.json:ro,rprivate" \
   --volume "$launcher_dir/codex/skills/sova-local-tools:$container_data/skills/sova-local-tools:ro,rprivate" \
