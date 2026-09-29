@@ -1,4 +1,25 @@
-# Latest checkpoint — H029 closed within its two-hour window
+# Active H030 — Codex continuation, 06:53–08:53 UTC September 29
+
+The user explicitly authorized this new two-hour continuation with both workers.
+Root coordinates/reviews/publishes; mac-worker1 and mac-worker2 implement, build,
+test and operate VMs in fresh bounded native CLI sessions and isolated copies.
+First fix the captured lifecycle_busy publication contention, then unchanged
+ordinary Codex tool/follow-up, PDF, compaction and remaining specialist/lifecycle
+acceptance in the accepted completion plan. Preserve data and hardware guards.
+
+The latest user instruction supersedes older end-window restoration requirements:
+leave the newest deployed state in place and Sova unavailable for ordinary use
+until Codex fully qualifies. Do not restore an old service baseline just to end
+this window. Keep necessary acceptance services available internally; preserve
+history/files and settle accepted work. No new model/runtime/driver or hardware
+tuning, GPU stress or950K test. No blanket retries or relaxed identity checks.
+
+Stop new long jobs08:28, new short live requests08:38, settle workers08:43, publish
+by08:53. No automatic extension. See root task H030-20260929/STATUS.md and the
+accepted PLAN-CODEX-COMPLETION-20260929.md. Publish to feature/glm53-flash / PR10;
+do not merge the incomplete branch into main.
+
+# Previous checkpoint — H029 closed within its two-hour window
 
 September 29, 2026. Both final native workers exited cleanly by 03:05:51 UTC;
 all assigned implementation/test/VM work is settled. Read
