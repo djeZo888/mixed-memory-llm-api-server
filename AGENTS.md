@@ -1,3 +1,16 @@
+# Sova — H033 active continuation
+
+The user renewed work for two hours, September 29 14:22:49–16:22:49 UTC.
+Read reports/h033-execution-plan.md and reports/h032-next-execution.md first.
+Root plans/reviews/publishes; both Mac workers implement/build/test through fresh
+bounded native CLI sessions. End worker work by16:12 UTC for final review and
+publication. Sova may remain in maintenance; no old baseline restoration.
+Current base aec3d596, deployed app c863d498. Reuse completed checks. Preserve
+histories and historical uncertain owners/quarantines. This authorization
+supersedes the closed-window restrictions below, within the H033 plan scope.
+
+The following H032 checkpoint remains evidence, not a new execution restriction.
+
 # Sova — H032 closed checkpoint
 
 The September 29 H032 two-hour window was 11:17–13:17 UTC. Implementation and
