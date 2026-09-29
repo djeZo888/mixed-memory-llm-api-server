@@ -979,7 +979,7 @@ def source_amendment_paths():
     return allowed
 
 
-def reviewed_source_amendment(old, new, delta):
+def reviewed_source_amendment(old, new, delta, *, installed_owner_sha=None):
     """Only exact separately reviewed control leaves and this owner may advance."""
     a, b = json.loads(json.dumps(old)), json.loads(json.dumps(new))
     before, after = a.pop('source_sha256'), b.pop('source_sha256')
@@ -990,7 +990,9 @@ def reviewed_source_amendment(old, new, delta):
     require(actual == delta, 'source_successor_invalid')
     for path, pins in delta.items():
         require(all(isinstance(v, str) and HEX.fullmatch(v) for v in pins.values())
-                and hashlib.sha256(protected(path)).hexdigest() == pins['new'], 'source_successor_invalid')
+                and hashlib.sha256(protected(path)).hexdigest() ==
+                (installed_owner_sha if installed_owner_sha is not None
+                 and path == str(BASE / 'source/owner.py') else pins['new']), 'source_successor_invalid')
 
 
 def source_stop_name(state):
@@ -1454,7 +1456,7 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
     return receipt
 
 
-def settled_source_for_start(m, selected, previous):
+def original_settled_source_for_start(m, selected, previous, *, installed_owner_sha=None):
     boot = BOOT.read_text().strip()
     archive_name, receipt_name, consumed_name = settled_source_names(boot, digest(m))
     receipt = read(BASE / receipt_name)
@@ -1485,7 +1487,7 @@ def settled_source_for_start(m, selected, previous):
             'source_successor_invalid')
     require(hashlib.sha256(archive['files']['source-successor-prior-owner.py'].encode()).hexdigest()
             == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
-    reviewed_source_amendment(old, m, json.loads(delta_raw))
+    reviewed_source_amendment(old, m, json.loads(delta_raw), installed_owner_sha=installed_owner_sha)
     require(previous.get('manifest_sha256') == digest(old), 'source_successor_invalid')
     if same_boot:
         require(archive.get('transition') == transition and archive.get('prior_request_outcome') == outcome
@@ -1509,6 +1511,168 @@ def settled_source_for_start(m, selected, previous):
                 'source_successor_invalid')
     assert_launch_admission(old, previous['selection'], previous)
     return receipt, old
+
+
+def source_owner_amendment_name(state):
+    return source_stop_name(state).replace('source-stop-', 'source-owner-amendment-')
+
+
+def owner_amendment_delta(old, new, raw):
+    """A single owner pin, with all other source/runtime/model/config fields fixed."""
+    path = str(BASE / 'source/owner.py')
+    expected = json.loads(json.dumps(old))
+    expected['source_sha256'][path] = new['source_sha256'][path]
+    delta = {path: {'old': old['source_sha256'][path], 'new': new['source_sha256'][path]}}
+    require(expected == new and json.loads(raw) == delta
+            and all(isinstance(v, str) and HEX.fullmatch(v) for v in delta[path].values())
+            and delta[path]['old'] != delta[path]['new'], 'source_only_amendment_required')
+    return delta
+
+
+def prepare_source_owner_amendment(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
+                                   expected_receipt_sha256, successor_manifest, expected_successor_manifest_sha256,
+                                   amendment_delta, expected_delta_sha256):
+    """Stage exact evidence while installed owner, manifest and selection stay unchanged."""
+    require(all(isinstance(v, str) and HEX.fullmatch(v) for v in
+                (expected_state_sha256, expected_manifest_sha256, expected_receipt_sha256,
+                 expected_successor_manifest_sha256, expected_delta_sha256)), 'source_successor_invalid')
+    recovery_names(expected_boot_id)
+    h = setup()  # Separately pinned PREP is mandatory even for staged preparation.
+    with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as guard:
+        storage_paths(h, guard)
+        h.s.root_payload_guard()
+        old_raw, state_raw = protected(BASE / 'manifest.json'), protected(BASE / 'state.json')
+        selected_raw, owner_raw = protected(BASE / 'selection.json'), protected(BASE / 'source/owner.py')
+        old, state, selected = json.loads(old_raw), json.loads(state_raw), json.loads(selected_raw)
+        require(digest(old) == expected_manifest_sha256
+                and hashlib.sha256(state_raw).hexdigest() == expected_state_sha256
+                and state.get('boot_id') == expected_boot_id == BOOT.read_text().strip(), 'source_successor_invalid')
+        source_preflight(h, old)
+        require_selected(old, selected)
+        receipt, native_manifest = original_settled_source_for_start(old, selected, state)
+        require(receipt.get('transition') == STOP_TIMEOUT_TRANSITION, 'source_successor_invalid')
+        archive_name, receipt_name, _ = settled_source_names(expected_boot_id, digest(old))
+        require(hashlib.sha256(protected(BASE / receipt_name)).hexdigest() == expected_receipt_sha256,
+                'source_successor_invalid')
+        proposed_raw, delta_raw = protected(successor_manifest), protected(amendment_delta)
+        proposed = json.loads(proposed_raw)
+        delta = owner_amendment_delta(old, proposed, delta_raw)
+        require(digest(proposed) == expected_successor_manifest_sha256
+                and hashlib.sha256(delta_raw).hexdigest() == expected_delta_sha256
+                and hashlib.sha256(protected(__file__)).hexdigest() ==
+                    delta[str(BASE / 'source/owner.py')]['new'], 'source_successor_invalid')
+        # Reuse the complete retained archive file set; never rewrite its contents.
+        archived_files = read(BASE / archive_name)['files']
+        require(all(protected(BASE / n).decode() == raw for n, raw in archived_files.items()
+                    if n != 'selection.json'), 'source_successor_invalid')
+        names = (set(archived_files) - {'selection.json'}) | {archive_name, receipt_name}
+        frozen = {n: hashlib.sha256(protected(BASE / n)).hexdigest() for n in names}
+        physical = timeout_physical(native_manifest, state, expected_boot_id)
+        hardware = source_hardware(h, expected_boot_id, lease)
+        require(protected(BASE / 'manifest.json') == old_raw
+                and protected(BASE / 'state.json') == state_raw
+                and protected(BASE / 'selection.json') == selected_raw
+                and protected(BASE / 'source/owner.py') == owner_raw
+                and all(hashlib.sha256(protected(BASE / n)).hexdigest() == pin for n, pin in frozen.items())
+                and BOOT.read_text().strip() == expected_boot_id, 'source_successor_invalid')
+        lease.validate()
+        result = {'schema_version': 1, 'status': 'STOPPED_SOURCE_OWNER_AMENDMENT_PREPARED',
+                  'current_boot_id': expected_boot_id, 'launch_id': state['launch_id'],
+                  'installed_manifest_raw': old_raw.decode(), 'installed_selection_raw': selected_raw.decode(),
+                  'installed_owner_raw': owner_raw.decode(), 'successor_manifest_raw': proposed_raw.decode(),
+                  'delta_raw': delta_raw.decode(), 'delta_sha256': expected_delta_sha256,
+                  'manifest_sha256': digest(proposed), 'prior_manifest_sha256': digest(old),
+                  'receipt_sha256': expected_receipt_sha256, 'frozen_sha256': frozen,
+                  'physical_absence': physical, 'hardware_proof': hardware}
+        exclusive_recovery_write(h, guard, source_owner_amendment_name(state), result)
+        h.s.root_payload_guard()
+        lease.validate()
+    return result
+
+
+def source_owner_amendment_for_start(m, previous):
+    """Validate the old chain under the one exact new owner; consume its ORIGINAL name."""
+    raw = protected(BASE / source_owner_amendment_name(previous))
+    amendment = json.loads(raw)
+    old = json.loads(amendment['installed_manifest_raw'])
+    selected = json.loads(amendment['installed_selection_raw'])
+    boot = BOOT.read_text().strip()
+    require(amendment.get('schema_version') == 1
+            and amendment.get('status') == 'STOPPED_SOURCE_OWNER_AMENDMENT_PREPARED'
+            and amendment.get('current_boot_id') == previous.get('boot_id') == boot
+            and amendment.get('launch_id') == previous.get('launch_id')
+            and amendment.get('prior_manifest_sha256') == digest(old)
+            and amendment.get('manifest_sha256') == digest(m)
+            and protected(BASE / 'manifest.json').decode() == amendment['successor_manifest_raw']
+            and json.loads(amendment['successor_manifest_raw']) == m
+            and hashlib.sha256(amendment['delta_raw'].encode()).hexdigest() == amendment.get('delta_sha256')
+            and hashlib.sha256(amendment['installed_owner_raw'].encode()).hexdigest() ==
+                old['source_sha256'][str(BASE / 'source/owner.py')]
+            and amendment.get('hardware_proof', {}).get('hardware_latched') is False,
+            'source_successor_invalid')
+    delta = owner_amendment_delta(old, m, amendment['delta_raw'])
+    reviewed_source_amendment(old, m, delta)
+    archive_name, receipt_name, consumed_name = settled_source_names(boot, digest(old))
+    require(not (BASE / consumed_name).exists(), 'new_boot_recovery_consumed')
+    require(hashlib.sha256(protected(BASE / receipt_name)).hexdigest() == amendment.get('receipt_sha256'),
+            'source_successor_invalid')
+    frozen = amendment['frozen_sha256']
+    require(set(frozen) == (set(read(BASE / archive_name)['files']) - {'selection.json'}) | {archive_name, receipt_name}
+            and all(hashlib.sha256(protected(BASE / n)).hexdigest() == pin for n, pin in frozen.items()),
+            'source_successor_invalid')
+    receipt, native_manifest = original_settled_source_for_start(old, selected, previous,
+        installed_owner_sha=m['source_sha256'][str(BASE / 'source/owner.py')])
+    require(receipt.get('transition') == STOP_TIMEOUT_TRANSITION
+            and amendment.get('physical_absence', {}).get('container_id') == previous['native']['container_id']
+            and all(amendment['physical_absence'].get(k) is True for k in
+                    ('native_pid_absent', 'cgroup_empty', 'gpu_compute_empty', 'owner_absent')),
+            'source_successor_invalid')
+    return {**receipt, 'manifest_sha256': digest(m),
+            'selection': {**selected, 'manifest_sha256': digest(m)},
+            'source_owner_amendment_sha256': hashlib.sha256(raw).hexdigest(),
+            'original_receipt_sha256': amendment['receipt_sha256']}, native_manifest
+
+
+def activate_source_owner_amendment(expected_state_sha256, expected_boot_id,
+                                    expected_manifest_sha256, expected_amendment_sha256):
+    """After exact reviewed install, perform the sole selection CAS via supported I/O."""
+    require(all(isinstance(v, str) and HEX.fullmatch(v) for v in
+                (expected_state_sha256, expected_manifest_sha256, expected_amendment_sha256)),
+            'source_successor_invalid')
+    recovery_names(expected_boot_id)
+    h = setup()
+    with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as guard:
+        storage_paths(h, guard)
+        h.s.root_payload_guard()
+        m, state = read(BASE / 'manifest.json'), read(BASE / 'state.json')
+        name = source_owner_amendment_name(state)
+        raw = protected(BASE / name)
+        require(digest(m) == expected_manifest_sha256
+                and hashlib.sha256(protected(BASE / 'state.json')).hexdigest() == expected_state_sha256
+                and state.get('boot_id') == expected_boot_id == BOOT.read_text().strip()
+                and hashlib.sha256(raw).hexdigest() == expected_amendment_sha256, 'source_successor_invalid')
+        source_preflight(h, m)
+        receipt, native_manifest = source_owner_amendment_for_start(m, state)
+        prior_selection_raw = json.loads(raw)['installed_selection_raw']
+        require(protected(BASE / 'selection.json').decode() == prior_selection_raw, 'source_successor_invalid')
+        timeout_physical(native_manifest, state, expected_boot_id)
+        source_hardware(h, expected_boot_id, lease)
+        require(source_owner_amendment_for_start(m, state)[0] == receipt
+                and protected(BASE / name) == raw
+                and protected(BASE / 'selection.json').decode() == prior_selection_raw, 'source_successor_invalid')
+        lease.validate()
+        write(h, 'selection.json', receipt['selection'])
+        h.s.root_payload_guard()
+        lease.validate()
+    return receipt
+
+
+def settled_source_for_start(m, selected, previous):
+    if (BASE / source_owner_amendment_name(previous)).exists():
+        receipt, old = source_owner_amendment_for_start(m, previous)
+        require(selected == receipt['selection'], 'source_successor_invalid')
+        return receipt, old
+    return original_settled_source_for_start(m, selected, previous)
 
 
 def exclusive_recovery_write(h, guard, name, value):
@@ -1879,7 +2043,7 @@ def rollback_glm(h, m, expected, *, dry_run=False):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source', 'prepare-source-stop', 'prepare-source-stop-timeout'])
+    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source', 'prepare-source-stop', 'prepare-source-stop-timeout', 'prepare-source-owner-amendment', 'activate-source-owner-amendment'])
     p.add_argument('--service', choices=[MODEL, GLM])
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--expected-delta-sha256')
@@ -1892,11 +2056,31 @@ def main():
     p.add_argument('--expected-corrected-delta-sha256')
     p.add_argument('--expected-successor-manifest-sha256')
     p.add_argument('--expected-supplement-sha256')
+    p.add_argument('--expected-receipt-sha256')
+    p.add_argument('--successor-manifest')
+    p.add_argument('--amendment-delta')
+    p.add_argument('--expected-amendment-sha256')
     args = p.parse_args()
     require(not args.same_boot_intentional_stop or args.action == 'reconcile-settled-source',
             'source_successor_invalid')
     require(not args.idle_stop_timeout_settled or (args.action == 'reconcile-settled-source'
             and args.same_boot_intentional_stop), 'source_successor_invalid')
+    if args.action == 'prepare-source-owner-amendment':
+        require(not args.dry_run, 'source_successor_invalid')
+        result = prepare_source_owner_amendment(args.expected_state_sha256, args.expected_boot_id,
+            args.expected_manifest_sha256, args.expected_receipt_sha256, args.successor_manifest,
+            args.expected_successor_manifest_sha256, args.amendment_delta, args.expected_delta_sha256)
+        print(json.dumps({'status': result['status'], 'amendment_sha256': hashlib.sha256(protected(
+            BASE / source_owner_amendment_name({'boot_id': result['current_boot_id'],
+                                                'launch_id': result['launch_id']}))).hexdigest()}))
+        return 0
+    if args.action == 'activate-source-owner-amendment':
+        require(not args.dry_run, 'source_successor_invalid')
+        result = activate_source_owner_amendment(args.expected_state_sha256, args.expected_boot_id,
+            args.expected_manifest_sha256, args.expected_amendment_sha256)
+        print(json.dumps({'status': 'STOPPED_SOURCE_OWNER_AMENDMENT_ACTIVATED',
+                          'manifest_sha256': result['manifest_sha256']}))
+        return 0
     if args.action == 'prepare-source-stop-timeout':
         require(not args.dry_run, 'source_successor_invalid')
         result = prepare_source_stop_timeout(args.expected_state_sha256, args.expected_boot_id,
