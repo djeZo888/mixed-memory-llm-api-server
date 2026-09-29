@@ -31,7 +31,11 @@ from lifecycle.hardware_policy import (GPU_UUIDS, HardwarePolicy,
 from lifecycle.runtime_io import LifecycleError
 from tests.test_hardware_latch import BOOT, NEXT_BOOT, MemoryProtectedStore, inventory
 
-Q0, Q1, ADA = GPU_UUIDS
+# These fixtures exercise the two Qwen owners and the image Ada peer. The
+# hardware allowlist also contains other owners; its order is not a role map.
+Q0 = 'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237'
+Q1 = 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc'
+ADA = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 EPOCH = 1790337600.0
 PRIVATE = 'fixture_private_probe_output_must_not_escape'
 
@@ -60,6 +64,10 @@ def prior_proofs():
 
 
 class BootHardwarePolicyTests(unittest.TestCase):
+    def test_fixture_gpu_roles_are_distinct_members_of_hardware_allowlist(self):
+        self.assertEqual(len({Q0, Q1, ADA}), 3)
+        self.assertTrue({Q0, Q1, ADA}.issubset(GPU_UUIDS))
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
