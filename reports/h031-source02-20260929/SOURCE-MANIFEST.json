@@ -1,0 +1,69 @@
+{
+  "base_commit": "9cd941cdbd9170fb56ccacbc87f3238e3bd40f0e",
+  "corrected_delta": {
+    "/data/services/mimo-h016-20260927/source/owner.py": {
+      "new": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090",
+      "old": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node.py": {
+      "new": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59",
+      "old": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py": {
+      "new": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77",
+      "old": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027"
+    }
+  },
+  "focused_tests": 54,
+  "live_deployment": false,
+  "native_session_id": "01a0ec81-89f3-7340-b7fe-d5b67e6d9c06",
+  "original_delta": {
+    "/data/services/mimo-h016-20260927/source/owner.py": {
+      "new": "206ccfe397d3b855836f28a05170ac1d5af56c7d93cb85e1bd1cb4ff6c84f5bc",
+      "old": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node.py": {
+      "new": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59",
+      "old": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py": {
+      "new": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77",
+      "old": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027"
+    }
+  },
+  "pins": {
+    "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "corrected_delta_raw_sha256": "bf7c1ad0f197a2191f711c314b5ceccb6ce3a0c3f44c6e7b307cfc4e1dcdb167",
+    "corrected_manifest_canonical_sha256": "9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9",
+    "corrected_manifest_raw_sha256": "56ad1378aeab24215e0b064d731a688ab0c1df4302994a82c976b697be78ad7d",
+    "corrected_owner_raw_sha256": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090",
+    "installed_old_manifest_canonical_sha256": "5c364e58cba01a569f13f6a239c6383dec1d5b92a94f3ab8d608962c0a178a39",
+    "installed_old_manifest_raw_sha256": "ad6b438f17154d7434426b3b9a4b0238558a86ba5ab764ccb5c3c2b0f0099c8b",
+    "original_delta_raw_sha256": "cd9b4a0fbb22e9d97f6ab826492282f6560402685c73b7e1023d94a6a7914e59",
+    "original_intent_raw_sha256": "9cabae3e1335bda0028497638e5e968623e0870ef7cc339bd8d9a576243d8eee",
+    "original_owner_raw_sha256": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098",
+    "original_proposed_manifest_canonical_sha256": "d713d660b691a2573b2493ae82e8afd79e11d905aaa8f5a3795a28a3f63371b5",
+    "original_proposed_manifest_raw_sha256": "d0dfb09b126cff0ba132eb59cdcdc11b8538a53f1ef58e91c4ab990059e1492e",
+    "stopped_state_raw_sha256": "b1ba8b36d09aef570a0d90f769268a61d05a6dbb11899720a163a5bab8fa7420"
+  },
+  "private_captures_committed": false,
+  "production_changed": [
+    "scripts/runtime/mimo/owner.py"
+  ],
+  "raw_file_sha256": {
+    "SOURCE.bundle": "53f35c6aa32af3e8968f87b9ed926c124c3092d817723e3dc120c3e2cda9f585",
+    "SOURCE.patch": "321adbf8adbfb4a0ed274367373b347022fb7f81e0777618ed37faa3d7f64caa",
+    "TESTS.log": "a5f2faf8c73160ce7e0043f587b07d0f3b3c1f76dcb8990c3c2c7980686cf570",
+    "reviewed-source/owner.py": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090"
+  },
+  "schema_version": 1,
+  "skipped": 0,
+  "source_commit": "b2ecf727d1a5192e5e791db4b088ef9b9a3ee865",
+  "source_fixture_is_live_qualification": false,
+  "status": "SOURCE_ONLY_FOCUSED_PASS_NOT_DEPLOYED",
+  "test_file_raw_sha256": "972ce6712a16a647c52cf71f5724c7b68d9f28d8044da63204e2d424335b8f8d",
+  "tests_changed": [
+    "tests/test_mimo_stop_timeout_source.py"
+  ],
+  "utc": "2026-09-29T09:42:52.378938+00:00"
+}
