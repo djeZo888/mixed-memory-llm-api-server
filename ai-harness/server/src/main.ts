@@ -1,4 +1,5 @@
 import { readFileSync } from "node:fs";
+import { loadCodexSpecialists } from "./codex-specialist-qualification.js";
 import { createHostOwnedAcceptance } from "./owned-acceptance.js";
 import { loadFrontierSelection, loadActiveFrontier } from "./active-frontier.js";
 import { FRONTIER_MODEL } from "./frontier.js";
@@ -41,7 +42,7 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -53,10 +54,13 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     // Host composition revalidates current owner identity for every admission;
     // counter revalidates again before/after counting on the selected lane.
     const qualifiedAliases = Object.keys(receipt.lanes);
+    // Legacy positional flags remain accepted, but cannot substitute for live evidence.
+    const specialists = loadCodexSpecialists(specialistQualificationPath);
     qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, onAdmissionDiagnostic, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
       ...(acceptance ? { frontierAcceptance: acceptance.frontier, imageAcceptance: acceptance.image } : {}),
-      ...(frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
-      ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),
+      ...(specialists.frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
+      ...(specialists.imageJobsQualified ? { imageJobsQualified: true as const } : {}),
+      capabilities: specialists.capabilities,
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");

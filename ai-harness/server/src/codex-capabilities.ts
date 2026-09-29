@@ -75,7 +75,7 @@ export function codexCapabilities(
         )),
       supported: gates.imageToolEnabled === true,
     },
-    frontier: unavailable(
+    frontier: reviewed.frontier ?? unavailable(
       "MiMo native Responses and tool-continuation qualification pending; 950000 configured tokens, not qualified occupied context",
     ),
   };
