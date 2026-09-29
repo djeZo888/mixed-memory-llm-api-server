@@ -1,0 +1,262 @@
+{
+  "boot": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+  "containers": [
+    {
+      "id": "bda550d0e1f4e08fd058772091bc109c321ce2f2ca6f3d281ee3d53bcda646a9",
+      "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "state": {
+        "FinishedAt": "2026-09-28T18:04:43.491599174Z",
+        "Pid": 0,
+        "Running": false,
+        "StartedAt": "2026-09-28T17:18:34.92651034Z",
+        "Status": "exited"
+      }
+    },
+    {
+      "id": "8db563cf81435dbf017e5d00036e8ea51e7f0df089ab8f8e53946f4f13622d16",
+      "image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "name": "llm-image-backend",
+      "state": {
+        "FinishedAt": "2026-09-28T21:20:44.790555942Z",
+        "Pid": 0,
+        "Running": false,
+        "StartedAt": "2026-09-28T20:17:29.275029796Z",
+        "Status": "exited"
+      }
+    },
+    {
+      "id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "name": "llm-qwen-ada200k-h028",
+      "state": {
+        "FinishedAt": "2026-09-28T23:40:42.038153812Z",
+        "Pid": 833565,
+        "Running": true,
+        "StartedAt": "2026-09-28T23:44:52.546510973Z",
+        "Status": "running"
+      }
+    },
+    {
+      "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "name": "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "state": {
+        "FinishedAt": "2026-09-28T21:20:29.264336177Z",
+        "Pid": 3647349,
+        "Running": true,
+        "StartedAt": "2026-09-29T02:07:52.812113852Z",
+        "Status": "running"
+      }
+    },
+    {
+      "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "name": "llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "state": {
+        "FinishedAt": "2026-09-28T21:20:38.712067455Z",
+        "Pid": 3745649,
+        "Running": true,
+        "StartedAt": "2026-09-29T02:10:08.065244144Z",
+        "Status": "running"
+      }
+    }
+  ],
+  "image": {
+    "compute": {
+      "rc": 0,
+      "stdout": ""
+    },
+    "configRawSha256": "439751ac672fc183799e65a434449aadd60d5b421d1f4887e47c35d3cb9088f7",
+    "ownerSha256": "748b94a5b17e6c2cb4229d69f4dd142dc9cf099b05206f0f97e6c04173cab052",
+    "sourceMismatches": [],
+    "state": {
+      "container": {
+        "id": "8db563cf81435dbf017e5d00036e8ea51e7f0df089ab8f8e53946f4f13622d16",
+        "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+      },
+      "failure": null,
+      "failure_code": null,
+      "last_failure": null,
+      "phase": "warm",
+      "run_id": "fbcd13980e37407c97ec57449080d5ed",
+      "updated_utc": "2026-09-28T20:18:41.897773+00:00",
+      "warm": true
+    },
+    "stateRawSha256": "d50bab5b776b9ebf554c3db900bdb43039daa088114daff9887ae26839873b9c"
+  },
+  "latch": {
+    "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": {
+      "target": null,
+      "validated": {
+        "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "observation_id": "81a6f24b080145dc8d34340bf4349ba9",
+        "observed_at": "2026-09-29T07:22:45.019982+00:00"
+      }
+    },
+    "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": {
+      "target": null,
+      "validated": {
+        "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "observation_id": "aff134cc48a84748a02f1afa58ed0dbc",
+        "observed_at": "2026-09-29T07:22:45.016727+00:00"
+      }
+    }
+  },
+  "listeners": {
+    "rc": 0,
+    "stdout": ""
+  },
+  "mimo": {
+    "compute": {
+      "rc": 0,
+      "stdout": ""
+    },
+    "context": 950000,
+    "dryRun": {
+      "rc": 255,
+      "stdout": "{\"status\": \"REFUSED\", \"phase\": \"CLI\", \"code\": \"reviewed_file_changed\", \"observed_at\": \"2026-09-29T07:22:47.890558+00:00\"}\n"
+    },
+    "manifestCanonicalSha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+    "manifestRawSha256": "03b5b9ffe35996d65529681f97f6d156445c08453b2d321753ae0ad7b85716e9",
+    "ownerSha256": "6a503de2e6340130dae54c02c7d6b36548e921261709d8a6710cc8a57573182f",
+    "selection": {
+      "generation": 12,
+      "manifest_sha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "sourceMismatches": [
+      {
+        "actual": "05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18",
+        "expected": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py"
+      },
+      {
+        "actual": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be",
+        "expected": "b0f1ef12151757cd8432d84a03406efdb35089abaf5bac78066c887de43c2a6f",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py"
+      },
+      {
+        "actual": "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+        "expected": "2cd11234ce8e91b22cbf89a6fa1344d598083548860819b584c3eb79203a3bd4",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/adapter.py"
+      },
+      {
+        "actual": "a84c8c0d6ddfe2e315d4dc7a869d689dd0fa5bb75222ea4449fa9114731fe463",
+        "expected": "6617d63d9ef6e0cdff6c6317c04e8c1c7dd3932e2826b5024a59660d87718ab7",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/core.py"
+      },
+      {
+        "actual": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+        "expected": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/node.py"
+      },
+      {
+        "actual": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+        "expected": "347b4667146bd2fa6fe0e95035f59817c860528ee50575fa2d278c439ac207dd",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py"
+      },
+      {
+        "actual": "0f9fd71419b81c6bd2d3dc33ae4e4beb12e17e551cfade680661b7ef8806e6e1",
+        "expected": "da330ab85bd2beb44ab71e5996743b4519ff2958c3ac7ad8ebb0f309e4b04ee2",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/node_observation.py"
+      },
+      {
+        "actual": "aa016a7659923381097fe056f580ad3c7fb564291556861798a2e545557cd348",
+        "expected": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/passive.py"
+      },
+      {
+        "actual": "ca5c52e774a33458633118cb1399421de8ca15eb464da412f1993c9af0e764e0",
+        "expected": "bb5d6731e0c1374d67e8773cc29d42e6ada064db8224c5593d62d207b574da7e",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/private_network.py"
+      },
+      {
+        "actual": "c12ba52e4407d9a3fb60429f73fab92c1f2ab30816995d522ea7fee326cb1098",
+        "expected": "2748ac241feb6302062555a4f1b10e1aad161911f7d2657cdcb79c04670b6478",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/control/protocol.py"
+      },
+      {
+        "actual": "05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18",
+        "expected": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/lifecycle/hardware_policy.py"
+      },
+      {
+        "actual": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be",
+        "expected": "b0f1ef12151757cd8432d84a03406efdb35089abaf5bac78066c887de43c2a6f",
+        "field": "source_sha256",
+        "path": "/usr/local/lib/llm-server/node-api/scripts/lifecycle/manager.py"
+      }
+    ],
+    "state": {
+      "boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+      "launch_id": "71665bfa2d2e4d26b33fd648bddae412",
+      "manifest_sha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+      "native": {
+        "container_id": "bda550d0e1f4e08fd058772091bc109c321ce2f2ca6f3d281ee3d53bcda646a9",
+        "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+        "name": "llm-frontier-mimo-production",
+        "pid": 2666305,
+        "pid_start_ticks": "831475",
+        "started_at": "2026-09-28T17:18:34.92651034Z"
+      },
+      "primary_failure": {
+        "code": "mandatory_guard_timeout",
+        "cycle_elapsed_s": 5.000095,
+        "hardware_evidence": {
+          "lease_contentions": 54,
+          "pre": {
+            "hardware_latched": null,
+            "hardware_latched_boot_id": null,
+            "identity": [
+              [
+                "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+                "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+                "validated"
+              ]
+            ],
+            "reason": "hardware_latch_unknown"
+          },
+          "refresh_attempted": false,
+          "stage": "canonical_lease"
+        },
+        "observed_at": "2026-09-28T18:04:30.560063+00:00",
+        "operation": "hardware_latch",
+        "phase": "RUNNING"
+      },
+      "request_hold": false,
+      "settlement": {
+        "cgroup_empty": true,
+        "gpu_compute_empty": true,
+        "pid_released": true
+      },
+      "settlement_failure": {
+        "code": "command_timeout",
+        "observed_at": "2026-09-28T18:04:39.128397+00:00",
+        "operation": "settlement",
+        "phase": "SETTLING"
+      },
+      "status": "SETTLED",
+      "supervisor": {
+        "invocation_id": "70d0bbe145b74f71afb459989cc91427",
+        "pid": 2665046,
+        "unit": "llm-frontier-mimo.service"
+      }
+    },
+    "stateRawSha256": "544fb055e8e4b913c3965992bd0091d860521c8adaf35e317e8be298759ea37b"
+  },
+  "readOnly": true,
+  "utc": "2026-09-29T07:22:47.691952+00:00"
+}

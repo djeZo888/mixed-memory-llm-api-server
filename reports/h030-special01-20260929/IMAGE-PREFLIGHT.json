@@ -1,0 +1,25 @@
+{
+  "checks": [
+    "protected_config_source_checkpoint_binding",
+    "registered_storage_root_guards",
+    "exact_owned_stopped_container",
+    "exact_network",
+    "listener_absence",
+    "target_gpu_compute_absence"
+  ],
+  "device": {
+    "free_bytes": 50866421760,
+    "total_bytes": 51527024640,
+    "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+  },
+  "host": {
+    "MemAvailable": 922440278016,
+    "MemTotal": 946820820992,
+    "SwapFree": 3157258240,
+    "SwapTotal": 3157258240
+  },
+  "owner": "/data/services/image21-runtime-20260923/source/service.py",
+  "pass": true,
+  "readOnly": true,
+  "utc": "2026-09-29T07:23:31.918912+00:00"
+}

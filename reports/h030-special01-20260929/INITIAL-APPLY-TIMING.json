@@ -1,0 +1,11 @@
+{
+  "basis": "local receipt file completion mtime, not remote mutation timestamp",
+  "utc": {
+    "STAGE-TRANSFER.txt": "2026-09-29T07:34:07.208147+00:00",
+    "MIMO-DEPLOYMENT.json": "2026-09-29T07:34:07.425523+00:00",
+    "MIMO-FIRST-APPLY-UNCHANGED.json": "2026-09-29T07:34:31.379586+00:00"
+  },
+  "miMoProductionWrites": 0,
+  "miMoReconciles": 0,
+  "miMoStarts": 0
+}

@@ -1,0 +1,101 @@
+{
+  "reviewedSourceCommit": "64a0693b7a5e925483370870c42cc5c3c010cfab",
+  "delta": [
+    {
+      "actual": "05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18",
+      "expected": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+      "local": "scripts/lifecycle/hardware_policy.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be",
+      "expected": "b0f1ef12151757cd8432d84a03406efdb35089abaf5bac78066c887de43c2a6f",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/manager.py",
+      "local": "scripts/lifecycle/manager.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+      "expected": "2cd11234ce8e91b22cbf89a6fa1344d598083548860819b584c3eb79203a3bd4",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/adapter.py",
+      "local": "scripts/control/adapter.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "a84c8c0d6ddfe2e315d4dc7a869d689dd0fa5bb75222ea4449fa9114731fe463",
+      "expected": "6617d63d9ef6e0cdff6c6317c04e8c1c7dd3932e2826b5024a59660d87718ab7",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/core.py",
+      "local": "scripts/control/core.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+      "expected": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/node.py",
+      "local": "scripts/control/node.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+      "expected": "347b4667146bd2fa6fe0e95035f59817c860528ee50575fa2d278c439ac207dd",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py",
+      "local": "scripts/control/node_collectors.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "0f9fd71419b81c6bd2d3dc33ae4e4beb12e17e551cfade680661b7ef8806e6e1",
+      "expected": "da330ab85bd2beb44ab71e5996743b4519ff2958c3ac7ad8ebb0f309e4b04ee2",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/node_observation.py",
+      "local": "scripts/control/node_observation.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "aa016a7659923381097fe056f580ad3c7fb564291556861798a2e545557cd348",
+      "expected": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/passive.py",
+      "local": "scripts/control/passive.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "ca5c52e774a33458633118cb1399421de8ca15eb464da412f1993c9af0e764e0",
+      "expected": "bb5d6731e0c1374d67e8773cc29d42e6ada064db8224c5593d62d207b574da7e",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/private_network.py",
+      "local": "scripts/control/private_network.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "c12ba52e4407d9a3fb60429f73fab92c1f2ab30816995d522ea7fee326cb1098",
+      "expected": "2748ac241feb6302062555a4f1b10e1aad161911f7d2657cdcb79c04670b6478",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/control/protocol.py",
+      "local": "scripts/control/protocol.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18",
+      "expected": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/lifecycle/hardware_policy.py",
+      "local": "scripts/lifecycle/hardware_policy.py",
+      "reviewedCheckoutMatch": true
+    },
+    {
+      "actual": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be",
+      "expected": "b0f1ef12151757cd8432d84a03406efdb35089abaf5bac78066c887de43c2a6f",
+      "field": "source_sha256",
+      "path": "/usr/local/lib/llm-server/node-api/scripts/lifecycle/manager.py",
+      "local": "scripts/lifecycle/manager.py",
+      "reviewedCheckoutMatch": true
+    }
+  ]
+}
