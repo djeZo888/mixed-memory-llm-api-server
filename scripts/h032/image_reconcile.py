@@ -72,6 +72,18 @@ def immutable(anchor, name, content):
     return sha(content)
 
 
+def operational_stage(anchor, name, content):
+    """Private operational leaves retain 0600 through anchored replacement."""
+    with anchor.open(name, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600) as stream:
+        need(stat.S_IMODE(stream.stat().st_mode) == 0o600, 'install_stage_mode')
+        stream.write(content)
+        stream.fsync()
+        os.fsync(stream.parent)
+        stream.check()
+    need(raw(anchor, name, max(LIMIT, len(content))) == content, 'install_readback_changed')
+    return sha(content)
+
+
 def protected(path):
     lineage = []
     for parent in (path, *path.parents):
@@ -407,7 +419,7 @@ def install(runtime, anchor, lock, plan, plan_sha, archive_sha, settlement_sha, 
                 need(sha(raw(anchor, name)) == old, 'install_cas_changed')
                 # Exclusive staging leaves survive all failed attempts.
                 temp = PREFIX + 'install-' + name.replace('/', '-')
-                immutable(anchor, temp, content)
+                operational_stage(anchor, temp, content)
                 anchor.replace(temp, name)
         # Source/config are now consistent. New owner checks complete closure.
         updated_module = load_owner(plan['new_service_sha256'])

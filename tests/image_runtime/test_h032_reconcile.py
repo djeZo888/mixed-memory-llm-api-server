@@ -22,6 +22,7 @@ from unittest.mock import Mock, patch
 HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 import test_operation_protocol as protocol
+from lifecycle.storage_binding import BindingError, RegisteredStorageBinding
 
 SPEC = importlib.util.spec_from_file_location('h032_reconcile_fixture',
     protocol.REPO / 'scripts/h032/image_reconcile.py')
@@ -218,8 +219,18 @@ class Harness:
     def load_owner(self, expected):
         assert expected == self.plan['new_service_sha256']
         self.events.append('load-corrected-owner')
+        # Only registered path discovery is substituted. Use the production
+        # JSON reader's actual open/fstat/0600 checks after anchored install.
+        binding = RegisteredStorageBinding(types.SimpleNamespace(owner=os.geteuid()),
+                                           self.base.snapshot)
+        def validate_path(role, path):
+            assert role == 'services' and Path(path) == self.root / 'config.json'
+            return Path(path)
+        binding.validate_path = validate_path
+        config = binding.read_json('services', self.root / 'config.json')
+        assert config == self.new_config
         updated = self.base.make_runtime()
-        updated.config = copy.deepcopy(self.new_config)
+        updated.config = config
         updated.boot = reconcile.BOOT
         return types.SimpleNamespace(Runtime=lambda: updated)
 
@@ -255,12 +266,36 @@ class H032ReconcileTests(unittest.TestCase):
             self.assertNotEqual(recovery['token'], h.recovery['token'])
             self.assertEqual(h.read('source/service.py'), h.new_source)
             self.assertEqual(h.anchor.read_json('config.json'), h.new_config)
+            for name in ('source/service.py', 'config.json'):
+                self.assertEqual(h.anchor.stat(name).st_mode & 0o777, 0o600)
+            for name in ('archive-manifest.json', 'consumed.json', 'settlement.json'):
+                self.assertEqual(h.anchor.stat(reconcile.PREFIX + name).st_mode & 0o777, 0o400)
+            self.assertEqual(h.anchor.stat('h032-image-handoff.json').st_mode & 0o777, 0o400)
             self.assertTrue(h.anchor.read_json(reconcile.PREFIX + 'settlement.json')['physically_absent'])
             self.assertIsNotNone(h.anchor.stat('h032-image-handoff.json'))
             with self.assertRaisesRegex(RuntimeError, 'plan_already_consumed'):
                 h.run()
             self.assertEqual([a[1] for a in h.commands if a[0] == 'docker' and a[1] in ('stop', 'rm')],
                              ['stop', 'rm'])
+
+    def test_original_immutable_install_fails_real_config_reader_after_replacement(self):
+        with Harness() as h:
+            with patch.object(reconcile, 'operational_stage', reconcile.immutable):
+                with self.assertRaisesRegex(BindingError, 'unsafe_storage_json'):
+                    h.run()
+            for name, expected in [('source/service.py', h.new_source),
+                                   ('config.json', reconcile.js(h.new_config))]:
+                self.assertEqual(h.read(name), expected)
+                self.assertEqual(h.anchor.stat(name).st_mode & 0o777, 0o400)
+            self.assertEqual(h.read(reconcile.PREFIX + 'archive/config.json'),
+                             h.originals['config.json'])
+            self.assertEqual(h.anchor.stat(reconcile.PREFIX + 'archive/config.json').st_mode & 0o777,
+                             0o400)
+            self.assertEqual(h.runtime.record('recovery.json')['status'], 'active')
+            self.assertIsNone(h.anchor.stat('h032-image-handoff.json', missing_ok=True))
+            with self.assertRaisesRegex(RuntimeError, 'plan_already_consumed'):
+                h.run()
+            self.assertEqual(h.events, ['stop', 'rm', 'load-corrected-owner'])
 
     def test_exact_no_log_driver_archives_bind_files_without_docker_log_query(self):
         with Harness() as h:

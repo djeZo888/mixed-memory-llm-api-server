@@ -1,0 +1,32 @@
+2026-09-29T12:08:35.590349+00:00
+$ python3 -m unittest discover -s tests/image_runtime -p test_h032_reconcile.py
+........................
+----------------------------------------------------------------------
+Ran 24 tests in 2.164s
+
+OK
+exit=0
+2026-09-29T12:08:37.816681+00:00
+$ python3 -m unittest discover -s tests/image_runtime -p test_h032_mode02.py
+.....
+----------------------------------------------------------------------
+Ran 5 tests in 0.856s
+
+OK
+exit=0
+2026-09-29T12:08:38.733051+00:00
+$ python3 -m unittest discover -s tests/lifecycle -p test_storage_binding.py
+..............
+----------------------------------------------------------------------
+Ran 14 tests in 0.061s
+
+OK
+exit=0
+2026-09-29T12:08:38.843139+00:00
+$ python3 -m unittest discover -s tests/image_runtime -p test_reconcile_handoff.py
+................
+----------------------------------------------------------------------
+Ran 16 tests in 0.658s
+
+OK
+exit=0

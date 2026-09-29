@@ -1,0 +1,199 @@
+{
+  "schema": 1,
+  "task": "H032-MODE02-20260929",
+  "worker": "mac-worker1",
+  "nativeActualId": "01a0ed0a-4c58-7b52-893c-21f1a185a4c6",
+  "nativeWrapperStartedUtc": "2026-09-29T12:01:09.809931+00:00",
+  "writtenUtc": "2026-09-29T12:15:42.156091+00:00",
+  "baseCommit": "45e435e9b9f83bbe1739b4605d8aa41e878fa58a",
+  "status": "MODE_CORRECTED_HANDOFF_CONSUMED_ONE_API_START",
+  "sourcePass": true,
+  "focusedTests": {
+    "staging": 24,
+    "continuation": 5,
+    "storageBinding": 14,
+    "ordinaryHandoff": 16,
+    "total": 59
+  },
+  "retainedRecordScenarios": 17,
+  "sourcePins": {
+    "scripts/h032/image_reconcile.py": "3f163aac00875e2388e91ae5cd3064e4dc53117752e6d57a3df960f1bf7079f8",
+    "scripts/h032/image_mode02.py": "d622ebd7873230ef0db189a19a767b88c4ada2b0bf760a6f8504299d5dfd1288",
+    "tests/image_runtime/test_h032_reconcile.py": "68e454c4676de00580a5176d0870b4e295c531bdad49a96765d957dad6336775",
+    "tests/image_runtime/test_h032_mode02.py": "4a18dcbf9332ca471bc1d6ecdc6e85b39e5d975f0b7cdfff08b9f897753780b3"
+  },
+  "productionServiceUnchanged": "6b7ac0a1ff946b3b7be62caf24926b33adad566f595abd5398e7db3486b88fa6",
+  "continuation": {
+    "invocations": 1,
+    "startUtc": "2026-09-29T12:10:50.163219+00:00",
+    "endUtc": "2026-09-29T12:10:53.060014+00:00",
+    "exitCode": 0,
+    "attemptId": "6c5bca4eadca46ba821a8680ab75a31f",
+    "onlyOperationalModeChanges": [
+      "source/service.py",
+      "config.json"
+    ],
+    "mode": "0600",
+    "bytesInodeOwnershipMtimePreserved": true,
+    "handoffSha256": "205ffceaf2b8463fa95c1e9a53b0097e2b2703f52d9a470e0b555ca0ad60eab1",
+    "preApiRecoverySha256": "47f69d4c9b018b8c0b323ef20229bb8c1d2d31275f7931885834f159bee6ecde",
+    "originalHelperAttemptRetained": "32a3ea39cefa48a598ca64c2ef2e6427",
+    "originalHelperFailureStillFailed": true,
+    "nativeCleanupReplayed": false
+  },
+  "apiStart": {
+    "count": 1,
+    "startUtc": "2026-09-29T12:11:42.441077+00:00",
+    "endUtc": "2026-09-29T12:11:42.638266+00:00",
+    "exitCode": 0,
+    "handoffConsumedUtc": "2026-09-29T12:11:43.823653+00:00",
+    "handoffConsumedSha256": "d59bd492dbff4f91a316369e11b79b50cf6f18894d54615e8175591430fff3e5"
+  },
+  "image": {
+    "directObservedUtc": "2026-09-29T12:12:05.221760+00:00",
+    "directPhase": "loading",
+    "runId": "4eadb06f249648b8a21a901e0fb779d5",
+    "nativeContainerId": "8813318a121ec3cf5150eb5f49d381b464f679f7b10cfa2b3bdcb2b92fd4b761",
+    "nativePid": 999603,
+    "directCapabilities": "ConnectionRefusedError at12:12:05; no repeat",
+    "laterNodeProjection": {
+      "state": "ok",
+      "ready": true,
+      "admitting": true,
+      "freshness": "fresh",
+      "availability": "available",
+      "configured_context_tokens": null,
+      "hardware_latched": false,
+      "reason": null,
+      "observed_at": "2026-09-29T12:13:27.518120+00:00"
+    },
+    "specialistAcceptance": "NOT_TESTED_CLOSED"
+  },
+  "mimo": {
+    "readinessProof": {
+      "utc": "2026-09-29T12:13:30.484494+00:00",
+      "stateStatus": "RUNNING",
+      "requestHold": false,
+      "nativeProfileMatchesNormalReadyPredicate": true,
+      "configuredContext": 950000,
+      "noBenchmark": true,
+      "propsHttp": 200,
+      "slotsHttp": 200,
+      "guard": {
+        "status": "ok",
+        "observedAt": "2026-09-29T12:13:29.736766+00:00",
+        "hardwareLatched": false,
+        "hardwareValidationAgeMs": 2913.0964279174805,
+        "nativeMatchesState": true
+      },
+      "proxy": {
+        "activeRequests": 0,
+        "quarantined": false,
+        "pid": 774838,
+        "parentPid": 531588,
+        "launchId": "e5984f1e7e08434c89a7367a07b048fa",
+        "nativeMatchesState": true
+      },
+      "node": {
+        "http": 200,
+        "state": "ok",
+        "freshness": "fresh",
+        "services": {
+          "qwen-gpu0": {
+            "state": "ok",
+            "ready": true,
+            "admitting": null,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": 480000,
+            "hardware_latched": false,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:26.736139+00:00"
+          },
+          "qwen-gpu1": {
+            "state": "ok",
+            "ready": true,
+            "admitting": null,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": 480000,
+            "hardware_latched": false,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:26.730034+00:00"
+          },
+          "image": {
+            "state": "ok",
+            "ready": true,
+            "admitting": true,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": null,
+            "hardware_latched": false,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:27.518120+00:00"
+          },
+          "glm-5.3-flash": {
+            "state": "ok",
+            "ready": false,
+            "admitting": false,
+            "freshness": "fresh",
+            "availability": "unavailable",
+            "configured_context_tokens": null,
+            "hardware_latched": false,
+            "reason": "unqualified",
+            "observed_at": "2026-09-29T12:13:27.568244+00:00"
+          },
+          "mimo-v2.6-pro-rl": {
+            "state": "ok",
+            "ready": true,
+            "admitting": null,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": 950000,
+            "hardware_latched": false,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:27.038691+00:00"
+          },
+          "control": {
+            "state": "ok",
+            "ready": true,
+            "admitting": null,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": null,
+            "hardware_latched": false,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:26.556061+00:00"
+          },
+          "qwen-ada200k": {
+            "state": "ok",
+            "ready": true,
+            "admitting": null,
+            "freshness": "fresh",
+            "availability": "available",
+            "configured_context_tokens": 200000,
+            "hardware_latched": null,
+            "reason": null,
+            "observed_at": "2026-09-29T12:13:26.876311+00:00"
+          }
+        }
+      },
+      "qualification": "READINESS_ONLY_NOT_SPECIALIST_WORKFLOW_ACCEPTANCE"
+    },
+    "mutation": false,
+    "specialistAcceptance": "NOT_TESTED_CLOSED"
+  },
+  "preserved": {
+    "threeQwenNativeIdsUnchanged": true,
+    "originalPlanArchiveConsumedSettlementAndFailure": true,
+    "noMiMoMapsOrLifecycleChange": true,
+    "publicMaintenanceAndCandidateGates": "UNCHANGED",
+    "credentialsAndRawCapturesOutsideGit": true,
+    "noInferenceOrBenchmark": true,
+    "noGitHubPush": true
+  },
+  "vmWriterReleasedUtc": "2026-09-29T12:12:05.312259+00:00",
+  "lastVmActionReadonlySupplementEndedUtc": "2026-09-29T12:13:30.423313+00:00",
+  "noMoreVmActions": true,
+  "wrapperTerminal": "Supervisor writes ../exit-code and ../finished-utc after native final return; not yet observable inside session."
+}
