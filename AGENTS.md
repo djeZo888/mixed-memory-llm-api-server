@@ -1,57 +1,67 @@
-# H036 active — latest user authorization
+# Sova — H036 current coordination
 
-Read reports/h036-execution-plan.md first. The user authorized image workflow
-repair, MiMo480K, normal chat/follow-up/document/visual/automatic-compaction checks
-and conditional merge to the repository default branch. These supersede the
-closed H035 restrictions below only for this scope. Root orchestrates; workers
-implement/test in fresh bounded native sessions. Preserve evidence and data.
+Read the [H036 execution plan](reports/h036-execution-plan.md),
+[current completion checkpoint](reports/h036-completion-checkpoint.md) and
+[results](reports/h036-completion-results.json) first. H036 remains authorized
+for the specified image repair, MiMo 480K transition, normal workflow and
+compaction acceptance, with default-branch merge conditional on final gates and
+required CI. H036 has no new hard user deadline; individual native assignments
+remain bounded. Historical [H035](reports/h035-codex-checkpoint.md),
+[results](reports/h035-codex-results.json) and
+[next plan](reports/h035-next-execution.md) retain their original scope.
 
-# Sova — H035 closed checkpoint
+Root coordinates, reviews and publishes. mac-worker1/mac-worker2 implement and
+test through fresh bounded native CLI sessions in isolated copies. One assigned
+owner controls deployment/live admission. Preserve session IDs and actual
+outer-wrapper exits. Coordinate recovery centrally; do not duplicate another
+owner's live work or wait in a paid native session for missing external evidence.
 
-Read reports/h035-codex-checkpoint.md, reports/h035-codex-results.json and
-reports/h035-next-execution.md before older plans. H035 was authorized for
-September 29, 19:45:31–21:45:31 UTC. All native worker sessions and current test
-jobs are closed. Another implementation window requires a new user instruction.
+## Current evidence and remaining gates
 
-## Current state
+- MiniMax remains default; Codex is a per-chat preview. Ordinary release and main
+  merge are held for reachability and settlement. Root/W2 report both VM endpoints
+  unreachable; W2 reports BMC healthy. One authorized Mac1 check independently
+  timed out on all three assigned TCP endpoints. The user reports Proxmox
+  reachable and no changes; the VM outage cause remains unknown. W2 CLI exit
+  at 23:40:42 UTC is not evidence that guest jobs settled.
+- Child image edit, saved-result follow-up with inline/download/reload, fresh
+  generation, coding/follow-up and PDF/OCR passed their stated cases. Actual image
+  download passed. ZIP HTTP/CRC passed; browser ZIP completion is NOT_CONFIRMED
+  (1,038-byte partial). Preserve the original H035/H036 failures.
+- Qwen native compaction completed at 23:28:57 UTC: 402,104 input / 237 output,
+  four facts retained; next request 92,320 and UI estimate 92,544. Automatic
+  triggering is inferred from the ordinary UI and native source path; RAW_AUTO
+  metadata is absent. Initial paste run `d17d4942` completed. Compaction/follow-up
+  owner `346c89f0-a3f6-4668-b3ed-e6230111cf8f` has unknown final/tool result and
+  settlement after the outage; session `f006fc27` remains the recovery reference.
+- MiMo native 480K readiness passed at 23:07:48 UTC, not occupied-context
+  qualification. A tiny first-turn read passed; the second tool-result turn sent
+  at 23:28:20 UTC has unknown completion/settlement. Fresh both-engine delegation
+  remains pending. Profile fix `47d386` / root `4d927fee` is reviewed and
+  source-tested but UNDEPLOYED; the effective MiniMax profile still reports 950K.
+- MiniMax native image transport works, recognition PARTIAL; Codex native vision
+  UNSUPPORTED. Document extraction/OCR is separate from native vision.
+- Prior local checks passed 888 lifecycle tests with 2 existing skips, 5 shell
+  suites and whitespace checks. Root verified all eight GitHub checks at
+  `92325eff` SUCCESS and now reports all eight push/PR checks at root candidate
+  `4d927fee` SUCCESS. The profile fix remains UNDEPLOYED. Neither receipt
+  establishes checks for later commits; global capability gates remain closed.
 
-- Deployed source cbaf28409a30fc3329a6ed05a9466d7db2f3d332. MiniMax default;
-  public chat503/status200, maintenance authorized until Codex is finished.
-- H035 original PDF regression passed actual extraction, calculation, PDF output,
-  honest tool-error/recovery disclosure, exact final delivery and root visual/UI
-  reload review. Browser PDF/ZIP download action remains unconfirmed.
-- Earlier original/child image generation and guarded edit produced correct
-  images. Both H035 retained-edit requests stopped with a promise but zero tools,
-  children or new jobs. Actual provider output arrived unchanged through all
-  layers; the unique cause remains unproven. Do not silently retry or force calls.
-- Read-only image_status, operation-aware guidance and durable late result
-  delivery are deployed; live approval/result acceptance did not reach the tool.
-- Frontier qualification remains true through reviewed reuse of actual c863/aee
-  evidence. Full image qualification stays false; native media input unsupported.
-- Latest readback21:03:43UTC: active runs/task containers/tickets/pending provider
-  requests/image jobs zero. Histories/files and two historical uncertain owners/
-  three quarantines preserved. Last native exited0 at21:05:24.887777UTC.
-- Open-source native compaction is integrated; small actual Qwen compaction,
-  recall and continuation passed. Automatic near-full triggering, MiMo-specific
-  summary quality and web compaction progress remain untested.
-- Qwen capacities remain480K/480K/200K. Ada200K is not a480K fallback. MiMo950K
-  configured capacity does not establish occupied-context qualification.
-  No weights/runtime/GPU/fan/ECC/power changes in H035.
+## Recovery and publication
 
-## Continuation rules
+On restored connectivity, the assigned owner first verifies maintenance and
+actual owned jobs. The last browser acceptance window was OPEN; do not assume
+the scheduled 23:59:10 UTC watcher ran through a possible reboot. Preserve
+uncertain ownership and inspect existing operations before any distinct action.
+Collect the current compaction/follow-up final, tool continuation, reload and
+settlement receipts; then finish protected profile delivery and fresh MiMo 480K
+qualification within root's coordinated assignments. Reuse passed evidence.
 
-Root coordinates, reviews and publishes. mac-worker1/mac-worker2 implement,
-build and test through fresh bounded native CLI sessions in isolated copies;
-retain session IDs and actual exit receipts. One owner handles deployment and
-live admission. Reuse passed evidence and do not repeat bootstrap, benchmarks,
-or uncertain actions. Preserve real tool arguments/errors and original failures.
-
-Next priorities: evidence-led isolation of the promise-only retained image
-request, then actual approval/result handoff and the small remaining browser
-checks. Reuse passed PDF and MiMo work. Do not restore GLM or an old baseline.
-
-Publish reviewed work to feature/glm53-flash / existing draft PR10 (base
-feature/system-topology). No main merge, model/runtime/hardware changes, accounts,
-scaling or installer work in this integration scope. Keep credentials and bulky
-raw captures private. Durable local data: orchestration/tasks/H035-20260929
-outside this checkout. No automatic continuation is authorized.
+Root reviews final capability descriptors, public readiness and required checks
+for the exact integrated candidate before lifting maintenance or merging to the
+actual repository default branch. Keep MiniMax default unless the user changes
+that preference. Preserve chats/files, original errors, historical uncertain
+owners/quarantines and benchmark failures. Do not replay uncertain work, force
+calls, restore GLM or relabel old 950K evidence as 480K. Keep credentials, private
+prompts and bulky captures outside Git. This checkpoint does not expand H036's
+already-authorized scope into new models, hardware, accounts or installer work.

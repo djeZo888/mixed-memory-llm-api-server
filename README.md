@@ -5,9 +5,10 @@ chat/task harness, MiniMax and optional Codex agent runtimes, three configured Q
 frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
-names and runtime identifiers retain their existing names. The intended
-top-level Apache-2.0 license text remains outstanding; see [License](#license)
-and the [harness component licenses](ai-harness/README.md#licenses).
+names and runtime identifiers retain their existing names. First-party harness
+additions are MIT; upstream tools, dependencies and models retain their own
+licenses. The intended top-level Apache-2.0 text remains outstanding; see
+[License](#license) and [component licenses](ai-harness/README.md#licenses).
 
 Start with the [harness user guide](ai-harness/README.md),
 [architecture and future routing design](docs/sova-architecture.md), and
@@ -23,41 +24,30 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-**Codex is implemented as a new-chat preview alongside MiniMax; public chat is
-currently in maintenance while integration is completed.** MiniMax remains
-the default, and each conversation keeps its selected engine. Codex uses the
-local Qwen service without hosted OpenAI inference. See the
-[implementation and acceptance report](reports/h021-codex-preview.md) for tested
-workflows and remaining limits, and the
-[original integration plan](ai-harness/PLAN-CODEX-HARNESS.md) for its scope.
-The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
-remaining tool, model-routing, compression and reliability qualification.
-The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
-the deployed follow-up changes and remaining live qualification failures.
-The [H035 checkpoint](reports/h035-codex-checkpoint.md) records a successful
-live PDF regression, read-only image-job status, durable image-result delivery
-code and updated operation-specific guidance. The retained guarded-edit request
-still stopped after promising to delegate, with no tool call or new image job;
-full Codex image qualification remains closed. Earlier original/child generation
-and an approved edit produced correct images, with the edit's final handoff
-incomplete. Codex frontier access is enabled through reviewed reuse of the actual
-H033 MiMo delegation evidence. The [remaining work](reports/h035-next-execution.md)
-focuses on that image task-completion failure and the unexercised live handoff.
-Open-source native Codex compaction is integrated and passed a small live
-summary/recall/continuation check; automatic triggering near the configured
-limits remains untested. See [context behavior](ai-harness/README.md#capacity-and-context).
-Three Qwen configurations remain 480K, 480K and 200K; native image recognition
-is unsupported in Codex. Complete integration remains unfinished, MiniMax stays
-the default, and public chat remains in maintenance.
-The [H025 fan-control and load-test report](reports/h025-overview.md) records the
-deployed GPU fan policies, improved sampled temperatures, measured power and the
-remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
-The [H028 added-Ada and status report](reports/h028-overview.md) records the fifth
-GPU, a separate Qwen 200K API, its 16K benchmark, and recovery from the NIC change.
-The new Ada instance is not yet part of harness routing.
-The [H020 status repair](docs/h020-results.md) now separates configured models,
-selected frontier and fresh native identity, with measured GPU UUID dependency
-joins. The status-only deployment preserves the running model services.
+**H036 checkpoint, September 29, 2026:** MiniMax remains the default; Codex is a
+per-chat preview using local Qwen without hosted OpenAI inference. Ordinary
+release and the default-branch merge remain conditional on final acceptance and
+CI. Root reported ai-harness HTTP/SSH unreachable around 23:32 UTC; current
+follow-up completion, reconnect and settlement are unknown. Maintenance has not
+been declared lifted. See the [completion checkpoint](reports/h036-completion-checkpoint.md)
+and [compact results](reports/h036-completion-results.json).
+
+Current evidence supports guarded child image editing, saved-image follow-up
+with inline preview/download/reload, fresh generation, coding and follow-up,
+and PDF text extraction/OCR. Actual image browser download passed; ZIP HTTP/CRC
+passed, but browser ZIP completion is **NOT_CONFIRMED**. Qwen compaction completed at 23:28:57 UTC and retained
+four facts; automatic triggering is inferred from the UI/native path because
+RAW_AUTO metadata is absent. Its follow-up and settlement
+remain unresolved after connectivity loss. Earlier H035/H036 failures remain
+failures. MiniMax native image transport works, but recognition is **PARTIAL**;
+Codex native vision is **UNSUPPORTED**. Document/OCR support is separate.
+
+The [harness guide](ai-harness/README.md#capacity-and-context) explains context and
+compaction. The [H036 plan](reports/h036-execution-plan.md) defines the authorized
+work; [H035](reports/h035-codex-checkpoint.md) remains the unchanged earlier
+checkpoint. Status and hardware history remain in
+[H020](docs/h020-results.md), [H025](reports/h025-overview.md) and
+[H028](reports/h028-overview.md). The separate Ada 200K API is not in harness routing.
 
 ```mermaid
 flowchart TB
@@ -81,7 +71,7 @@ flowchart TB
         Q0["Qwen text instance 0 / fast Blackwell"]
         Q1["Qwen text instance 1 / Server Blackwell"]
         Q2["Qwen text instance 2 / new Ada / separate 200K API"]
-        Frontier["Selected frontier: MiMo or GLM / CPU experts + fast Blackwell"]
+        Frontier["Selected frontier: MiMo / CPU experts + fast Blackwell"]
         Image["Separate image API and Qwen-Image service / Ada"]
     end
     subgraph Future["FUTURE / OPTIONAL — not deployed"]
@@ -142,123 +132,43 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 29 H035 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
-profile at 950,000 configured tokens. Actual tool continuation and parent/child
-delegation through Codex and MiniMax passed in H033; the current application
-retains that qualification through an explicit compatibility review.
-The earlier near-950K test failed without a completed answer and remains
-unqualified; its [original evidence](reports/h022-950k-status.md) is preserved.
+MiMo V2.6 Pro-RL is active at **480,000 native context tokens**. The single
+September 29, 23:07:48 UTC readiness receipt confirms native properties, one idle
+480K slot, current owner/target guard and unchanged peers. About **33,503 MiB**
+of GPU allocation is readiness/allocation evidence, not occupied-480K
+qualification. A tiny native first-turn read passed and a second tool-result
+turn was sent at 23:28:20 UTC; complete continuation and settlement are unknown.
+Fresh delegation through both engines remains **PENDING**. MiniMax's stale baked
+950K profile correction is source-ready (`47d386`, root import `4d927fee`) with
+focused tests passed, but **UNDEPLOYED** during the outage. Earlier H033 950K workflow evidence is historical, not a new 480K pass.
 
-Sova's updated application is deployed with MiniMax default and optional Codex
-preview. Public chat remains in maintenance. Codex frontier access is enabled;
-full image-workflow qualification remains closed pending the
-[remaining fixes](reports/h035-next-execution.md). Histories and files are
-preserved. Current backend availability comes from the status API; the
-measurements below are dated evidence.
+Qwen0 and Qwen1 retain 480,000-token configurations and the two shared harness
+lanes. The separate Qwen Ada API has 200,000 allocated tokens and is not a 480K
+fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
+GLM are alternate owners of frontier hardware, not simultaneously resident.
+Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing;
+see [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
-| Model / instance | Configured context | Private API base | Role |
-|---|---:|---|---|
-| Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
-| Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
-| Qwen Ada | 200,000 allocated | `http://10.156.100.60:30014/v1` | Separate API, tested through 15,625 input tokens; harness routing deferred |
-| MiMo V2.6 Pro-RL | 950,000 configured target | `http://10.156.100.60:30012/v1` | Selected frontier; short tool/delegation workflows qualified, occupied 950K unqualified |
-| GLM-5.3-Flash | 1,048,576 retained profile | `http://10.156.100.60:30010/v1` | Dormant alternative, not the running frontier |
-
-MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a
-**1,000,000-token usable allocation**, the selected eight-decode-thread profile
-passed 4K/16K inputs at **71.49/69.56 input tokens/s** and **9.58/9.41 output
-tokens/s**. Sampled peak GPU usage was **87.67 GiB**, with **7.31 GiB free**;
-sampled cgroup memory reached **573.37 GiB**, including reclaimable file cache.
-Native tool-call continuation passed. Optimized 64K was skipped and near-million
-occupied context remains unqualified after the failed H019 test; allocation
-does not establish long-context correctness.
-[MiMo results, configuration and limits](docs/h016-mimo-results-20260927.md).
-
-The latest **950,000-token allocation** showed **85.74 GiB device memory
-used and 9.85 GiB free**. After the supervisor repairs, two native tool turns
-processed 9,536/9,635 input tokens at **67.37/65.43 input tokens/s** and
-**9.39/9.58 output tokens/s**. The final 948,975-input-token request was submitted
-once at 03:36:16 UTC, with an independent deadline of 11:36:11 UTC. It failed
-before that deadline and has no completed correctness or speed result. Its
-retained resource samples are in the [H022 result](reports/h022-950k-status.md).
-The optimized 64K test was skipped as requested.
-[Earlier native and application evidence](docs/h019-mimo-finalization-results.md).
-
-The earlier GLM test with exactly **1,000,000 input tokens** passed at approximately
-**145.85 input tokens/s** and **12.26 output tokens/s**, taking **6,876.78 seconds**.
-Its production promotion and ECC-off state are recorded in the
-[H013 evidence](docs/h013-status-20260927.md). Sustained four-model
-load is still unqualified: the server Blackwell reached the 85°C guard during
-the concurrency repeat. Further stress testing awaits improved physical cooling.
-The separate warmed Qwen1 64K test reached **7,279 input tokens/s** and
-**36.28 output tokens/s** on the Server Blackwell's limited PCIe link.
-[Qwen migration evidence](docs/h008-status-20260926.md). These are separate tests,
-not simultaneous aggregate throughput or comparative model-quality scores.
-
-Qwen-Image-2.1 remains a separate resident Ada service, with Full HD generation
-and the documented guarded editing policy. GLM and MiMo are alternate owners
-of the same frontier hardware; this release does not claim simultaneous residency.
-
-### Historical two-GPU deployment — September 21
-
-Text profiles cover **Qwen3.8-27B FP8** and optional **GLM5.3 UD-Q4_K_XL**;
-the dedicated image model is **Qwen-Image-2.1**.
-Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
-as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
-GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
-
-**Live production acceptance PASS — 2026-09-21, 03:21 UTC.** The saved
-[activation proof](reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
-records both Qwen instances warm/ready with persisted running/resume intent.
-GPU0 Qwen → GLM → Qwen took 255.585590 / 120.568066 s per operation, excluding
-pre-admission/status overhead; GPU1 retained its identity through both switches.
-Qwen schema/tool continuation and GLM native 480K plus a correct smoke passed.
-Refresh status before use; this is a dated snapshot.
-
-| Placement / control target | Deployment ID and public instance ID | Inference alias / port |
-| --- | --- | --- |
-| GPU0 / `glm`, default | `qwen38-27b-q0-480000-yarn4-bf16kv` | `qwen3.8-27b-gpu0` / 30002 |
-| GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
-| GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
-
-All three text deployment profiles configure **480,000 tokens** on the existing **72-vCPU guest**.
-Both Qwen instances share guest CPUs 0–7 (union 8); optional GLM uses 0–71,
-sharing 0–7 with GPU1 Qwen. These are guest affinity masks, not exclusive cores
-or physical host pinning. [Model matrix](docs/model-matrix.md) records resources
-and the distinction between configured, accepted and measured occupied context.
-
-The [one-pair dual-Q benchmark](reports/dualq-480k-20260921.md) completed in
-258.9091 s: occupied context 479,490 / 479,495. Both semantic checks passed;
-Q1's outer JSON fence failed strict formatting. Output windows did not overlap.
-Its STOPPED/manual restoration is historical benchmark state, not production
-state or activation acceptance.
-
-The dedicated Ada image service preserves both warm text Qwens and their 480,000-token
-profiles. Its six accepted opaque generation sizes are **1024x1024, 1024x576,
-1216x704, 1472x832, 1760x992 and 1920x1080**. The public hard ceiling is
-1920x1080 / 2073600 pixels. Full HD uses native 1920x1088 and removes exactly eight
-bottom rows; smaller profiles keep native=public. No resize. Qualified guarded
-editing is recorded in the [current acceptance report](docs/service-resilience-acceptance.md)
-and [harness guide](ai-harness/README.md#image-generation-and-editing). Transparency,
-public 1920x1088 and UHD remain outside the accepted scope.
-
-**Historical Full HD checkpoint — 2026-09-23:** image API/helper source was
-`36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e`.
-One Full HD Lake Bled acceptance returned a fully decoded RGB PNG in 54.8s helper
-time, with the API ready/idle afterward and both original text containers unchanged.
-See [Full HD deployment and acceptance](reports/image21-fhd-20260923/RESULT.md)
-and [ready-to-run examples with full prompts](examples/image-api/README.md).
-The [historical qualification](reports/image21-qualify-20260923/RESULT.md) retains
-native 1920x1088 timing/memory evidence (8.88% sampled device-free margin); no new
-memory benchmark was run for the identical native workload.
+No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the
+[failed near-950K result](reports/h022-950k-status.md),
+[earlier MiMo measurements](docs/h016-mimo-results-20260927.md),
+[GLM 1M evidence](docs/h013-status-20260927.md),
+[Qwen migration measurements](docs/h008-status-20260926.md) and
+[historical dual-Q acceptance](reports/dualq-480k-20260921.md).
+Those dated measurements do not establish current readiness or aggregate
+throughput. Sustained four-model load remains unqualified after the retained
+thermal-guard failure. [Full HD image acceptance](reports/image21-fhd-20260923/RESULT.md)
+and [guarded editing limits](reports/h003-edit-capacity-20260923/RESULT.md)
+retain their original scope.
 
 ## Use the APIs
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
-explicitly address separate inference bases on ports 30002, 30004 and 30010, each
-with `/v1`; the aliases above identify the loaded instance. These direct ai-vm
+explicitly address separate inference bases: Qwen0 on 30002, Qwen1 on 30004,
+MiMo on 30012, separate Ada Qwen on 30014, and dormant GLM on 30010, each with
+`/v1`. Discover current identity and readiness before use. These direct ai-vm
 APIs have no common inference router or automatic fallback; the harness's
-Qwen/Flash gateway is a separate client-side component. Native listeners stay
+Qwen/frontier gateway is a separate client-side component. Native listeners stay
 authenticated IPv4 loopback behind the reviewed private transport.
 
 - [Image API source and integration](docs/image-api.md): private image API interface.
@@ -286,8 +196,8 @@ in the linked historical record.
 Tools, browsing and file work run as an ordinary user in trusted client
 workspaces, currently through [ai-harness](ai-harness/README.md) on its own VM.
 It provides the deployed shared-LAN chat and task interface; that placement is
-not a requirement for all Sova deployments. **Installer implementation and tests
-remain paused.**
+not a requirement for all Sova deployments. General installer expansion remains
+deferred; H036 included narrow existing CI fixture/temporary-path repairs.
 
 ## Status and administration
 
@@ -313,5 +223,9 @@ acceptance. Historical reports are unchanged.
 
 ## License
 
-Apache-2.0 is intended; the full license text remains outstanding.
-See [LICENSE.todo.md](LICENSE.todo.md).
+First-party harness server, tool and skill additions are MIT; see the
+[component licenses and notices](ai-harness/README.md#licenses). Upstream tools,
+dependencies and model weights keep their own terms, including the separate
+AGPL-3.0-or-later SearXNG service. This is not a blanket MIT relicensing.
+The intended top-level Apache-2.0 text is still outstanding:
+[LICENSE.todo.md](LICENSE.todo.md).

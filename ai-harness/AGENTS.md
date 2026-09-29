@@ -1,13 +1,34 @@
-# ai-harness work
+# ai-harness work — H036
 
-Current v0.0.3 outcome, 2026-09-23: the approved [image plan](PLAN-v0.0.3.md)
-and [current acceptance](docs/acceptance-v0.0.3.md) cover resident generation and
-qualified guarded editing. Three bounded edits passed actual main/fresh ordinary
-worker MCP and external resize approval, with root visual A/B/C PASS. The window
-is settled/released; this pointer grants no new inference, host or deployment
-work. It supersedes older image/harness exclusions only for the reviewed scope.
-Preserve explore/verifier/custom restrictions, known seed/geometry limits,
-original files, warm model identities and state; production remains Worker1-owned.
+Read root [AGENTS](../AGENTS.md), the [H036 plan](../reports/h036-execution-plan.md)
+and [current checkpoint](../reports/h036-completion-checkpoint.md) first. H036's
+already-authorized scope supersedes historical limits only for its specified
+work. Root coordinates/reviews/publishes; assigned workers use fresh bounded
+native sessions in isolated copies. One owner handles deployment/live admission;
+W2 currently owns acceptance and diagnosis. H036 has no new hard user deadline.
+
+MiniMax remains default; Codex is a per-chat preview. Release/merge remain held
+for VM reachability and settlement. Native Qwen compaction completed; automatic
+triggering is inferred because RAW_AUTO metadata is absent. Initial paste run
+`d17d4942` completed; compaction/follow-up owner `346c89f0` has unknown final/tool
+result and settlement. MiMo 480K readiness and a tiny first-turn read passed;
+second-turn completion is unknown. Profile fix `47d386` / root `4d927fee` is
+reviewed and source-tested but UNDEPLOYED; fresh both-engine delegation is pending.
+Native MiniMax image transport works with PARTIAL recognition; Codex native vision
+is UNSUPPORTED. Document/OCR support is separate. Preserve all original failures.
+
+On connectivity recovery, first verify maintenance and actual owned jobs. The
+last browser acceptance window was OPEN; do not assume its scheduled watcher ran.
+Do not replay uncertain work. Root finalizes capability gates, public readiness
+and publication from exact receipts; reuse already-passed evidence. Preserve
+session identities and actual outer-wrapper exits, chats, files and protected
+uncertainty. Keep source changes, live work and deployment ownership coordinated.
+
+The historical [v0.0.3 image acceptance](docs/acceptance-v0.0.3.md) covers three
+bounded native edits; H036 records later child-edit and result-handoff passes.
+Neither grants new inference or deployment. Preserve explore/verifier/custom
+restrictions, known seed/geometry limits, original files and runtime identities.
+The following earlier authorizations are historical context, not open windows.
 
 The user authorized implementation and deployment of [v0.0.1](PLAN-v0.0.1.md)
 and the [v0.0.2 work](PLAN-v0.0.2.md) on 2026-09-22. This supersedes earlier

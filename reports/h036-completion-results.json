@@ -1,0 +1,307 @@
+{
+  "schema": 1,
+  "task": "H036-FINAL-DOCS03",
+  "state": "DOCUMENTATION_CHECKPOINT_RELEASE_PENDING",
+  "preparedUtc": "2026-09-29T23:51:25.102241+00:00",
+  "evidenceCutoff": "Supplied snapshots, root final-review INBOX and completed authorized Mac1 one-shot TCP receipt",
+  "sourceBase": "92325effe103b638f64a944e751e31f28edf9ad0",
+  "lastKnownDeployment": {
+    "serverSource": "74507f64c1ea8e303e16d279703f307467b35618",
+    "activatedUtc": "2026-09-29T23:03:28.926585+00:00",
+    "webSource": "79f011b38e16b2ee8b4f28cac9f2d0a90a79e812",
+    "webActivatedUtc": "2026-09-29T23:17:40.700860+00:00",
+    "webImportedCommit": "fcddd40",
+    "currentReachability": "UNKNOWN_AFTER_ROOT_REPORTED_HTTP_SSH_LOSS_AROUND_23_32_UTC",
+    "reachabilityEvidence": {
+      "vmEndpoints": "BOTH_UNREACHABLE_PER_ROOT_W2",
+      "bmc": "HEALTHY_PER_W2_UPDATE",
+      "mac1OneShot": "ALL_THREE_TCP_ATTEMPTS_TIMED_OUT",
+      "cause": "UNKNOWN; no host, kernel, hypervisor or power cause assigned",
+      "proxmox": "REACHABLE_WITH_NO_CHANGES_PER_USER_REPORTED_THROUGH_ROOT",
+      "w2CliExitUtc": "2026-09-29T23:40:42Z",
+      "w2CliExitEstablishesGuestSettlement": false
+    }
+  },
+  "release": {
+    "miniMaxDefault": true,
+    "codexPerChatPreview": true,
+    "complete": false,
+    "maintenanceLifted": "NOT_CONFIRMED",
+    "ordinaryRelease": "PENDING",
+    "defaultBranchMerge": "HELD_FOR_LIVE_REACHABILITY_AND_SETTLEMENT",
+    "finalGitHubCandidateChecks": {
+      "source": "4d927fee",
+      "sourceIdentity": "Root-supplied short commit; full hash not supplied in INBOX",
+      "state": "ALL_8_SUCCESS_ROOT_VERIFIED",
+      "events": [
+        "push",
+        "PR"
+      ],
+      "checks": [
+        "repository-sanity",
+        "client-regressions",
+        "installer-fixtures",
+        "deterministic-worker-tests"
+      ],
+      "profileFixDeployment": "UNDEPLOYED",
+      "laterCommits": "NO_RESULT_CLAIM_FOR_THIS_DOCS_COMMIT_OR_LATER_CANDIDATES"
+    },
+    "globalCapabilityGates": "CLOSED_PENDING_PROOF",
+    "lastBrowserAcceptanceWindow": "OPEN; do not assume 23:59:10 watcher ran through possible reboot; verify maintenance on recovery",
+    "earlierSourceBaseGitHubChecks": {
+      "source": "92325effe103b638f64a944e751e31f28edf9ad0",
+      "state": "ALL_8_SUCCESS_ROOT_VERIFIED",
+      "events": [
+        "push",
+        "PR"
+      ],
+      "checks": [
+        "repository-sanity",
+        "client-regressions",
+        "installer-fixtures",
+        "deterministic-worker-tests"
+      ],
+      "laterCommits": "NOT_QUERIED_NO_NEW_RUN_CLAIM"
+    }
+  },
+  "actualEvidence": {
+    "childEdit": {
+      "state": "PASS_REPORTED_BY_ROOT",
+      "jobId": "8c9a96f6-d028-40da-806b-ee190513be06",
+      "artifactId": "5786723e-4ac4-41e9-987e-ab00836b3f70",
+      "sha256": "0eab57b0b67ea008b363858c386cb53952e61d7f7526bf77d5229e64fe234bc9",
+      "scope": "One guarded child edit, normal resize approval, original preserved, root visual review"
+    },
+    "savedImageFollowup": {
+      "state": "PASS",
+      "sessionId": "96e8adbb-f9eb-4c5b-a588-dc926bea4e01",
+      "runId": "09b78031-c2c8-4ceb-83d4-154b10299072",
+      "scope": "Native image_status; same job and original ownership; inline/download/reload; no new creative submission",
+      "browserDownloadBytes": 1630079
+    },
+    "freshGeneration": {
+      "state": "PASS",
+      "jobId": "af1324fe-5a80-4d7b-8e6e-2f71ef4894f1",
+      "artifactId": "5225362b-e290-46a4-a6a4-b018baec1e34",
+      "sha256": "5d5c7a04627ed5b4a6754842edd8990f600d143897f1c04d1ba7ab9198a7a33a",
+      "scope": "1024x576; one creative job; root visual review"
+    },
+    "codingAndFollowup": {
+      "state": "PASS",
+      "sessionId": "e5153e49-032e-411c-a916-a8123d952896",
+      "scope": "Actual Python checks; 0.825 W and zero current; follow-up 0.5 W"
+    },
+    "pdfAndOcr": {
+      "state": "PASS",
+      "sessionId": "acc1d636-a99c-4875-a7ea-31fc9236bbd8",
+      "scope": "PDF text extraction with page citation/calculation; later Tesseract OCR. H035 PDF output/error recovery retained separately"
+    },
+    "zip": {
+      "httpAndCrc": "PASS",
+      "uploads": 2,
+      "outputs": 2,
+      "artifactOnlyOutputCount": 2,
+      "visibleButton": true,
+      "browserCompletion": "NOT_CONFIRMED",
+      "observedPartialBytes": 1038
+    },
+    "httpUuid": {
+      "state": "PASS_SCOPED",
+      "focusedUnitPassed": 23,
+      "actualChromiumPassed": 2,
+      "staticActivationUtc": "2026-09-29T23:17:40.700860+00:00",
+      "normalBrowserLargePasteAccepted": true,
+      "originalFailure": "Preserved; unavailable randomUUID caused zero submissions before correction"
+    },
+    "nativeVision": {
+      "miniMaxTransport": "WORKS_PER_ROOT_LAUNCH_DISPOSITION",
+      "miniMaxRecognition": "PARTIAL_INCORRECT_EMPTY_LOWER_HALF_CLAIM",
+      "codex": "UNSUPPORTED",
+      "documentOcrIsVisionQualification": false
+    },
+    "automaticQwenCompaction": {
+      "state": "NATIVE_COMPACTION_COMPLETED; AUTOMATIC_REASON_INFERRED; FOLLOWUP_UNKNOWN",
+      "completedUtc": "2026-09-29T23:28:57Z",
+      "reportedInputTokens": 402104,
+      "reportedOutputTokens": 237,
+      "retainedFacts": 4,
+      "configuredThreshold": 400000,
+      "contextWindow": 480000,
+      "sessionId": "f006fc27-e488-4b82-b07c-65d63116da85",
+      "browserObserved": [
+        "Compaction to Running",
+        "estimated occupied context 92544"
+      ],
+      "followupFinal": "UNKNOWN_AFTER_CONNECTIVITY_LOSS",
+      "followupToolContinuation": "PENDING_FINAL_RECEIPT",
+      "reconnect": "FAILED_OBSERVATION_DURING_CONNECTIVITY_LOSS",
+      "currentSettlement": "UNKNOWN",
+      "finalEvidenceReview": "PENDING_ROOT; supplied snapshot has no final continuation or settlement receipt",
+      "firstResponseInputTokens": 407499,
+      "pasteBytes": 395631,
+      "nextRecallToolInputTokens": 92320,
+      "nextRecallToolState": "COMPLETE_REQUEST_SENT; FINAL_PARENT_TOOL_RESULT_AND_SETTLEMENT_UNKNOWN",
+      "attribution": "Root final INBOX review of COMPACTION-INITIAL-AUDIT.json; raw final continuation and settlement absent",
+      "initialPasteRunId": "d17d4942-65b2-4c3d-9e7e-fd21e40049c3",
+      "initialPasteRunState": "COMPLETED",
+      "compactionFollowupOwnerRunId": "346c89f0-a3f6-4668-b3ed-e6230111cf8f",
+      "automaticReason": {
+        "classification": "INFERENCE",
+        "support": "Ordinary UI trigger and native source path, per root review",
+        "rawAutoMetadata": "ABSENT",
+        "auditName": "COMPACTION-INITIAL-AUDIT.json",
+        "auditAccess": "Root reviewed; not included in this worker snapshot"
+      }
+    }
+  },
+  "mimo": {
+    "nativeContext": 480000,
+    "readiness": "PASS_ONE_READ_ONLY_RECEIPT",
+    "readinessUtc": "2026-09-29T23:07:48.204388+00:00",
+    "selectionGeneration": 13,
+    "ownerSha256": "6e59b5ae7d4cc88a8f67bdc4fb6eebb34ae97b206255a5424f144327f7de1c53",
+    "manifestSha256": "da9b2c00422bd7a65c8cec7f9faa5a6c6804a5a71bdb141a986f824858ce09b7",
+    "idleSlotContext": 480000,
+    "peersUnchanged": true,
+    "gpuAllocationMiB": 33503,
+    "occupied480KQualified": false,
+    "tinyNativeCountToolContinuation": {
+      "firstTurnRead": "PASS_PER_W2_UPDATE",
+      "secondToolResultSentUtc": "2026-09-29T23:28:20Z",
+      "completeContinuation": "UNKNOWN_AFTER_CONNECTIVITY_LOSS",
+      "settlement": "UNKNOWN"
+    },
+    "freshCodexDelegation480K": "PENDING",
+    "freshMiniMaxDelegation480K": "PENDING",
+    "miniMaxBakedProfile": "EFFECTIVE_950K; CORRECTION_SOURCE_READY_UNDEPLOYED",
+    "historical950K": "PRESERVED_NOT_RELABELED",
+    "repeated1M950K480KOccupiedBenchmark": false,
+    "profileCorrection": {
+      "workerCommit": "47d386",
+      "rootImport": "4d927fee",
+      "state": "REVIEWED_SOURCE_READY_UNDEPLOYED",
+      "behavior": "Protected active-frontier JSON delivered read-only; both launcher-validator pins bound",
+      "tests": {
+        "overlayPassed": 19,
+        "engineLauncherPassed": 21,
+        "codexLauncherPassed": 19,
+        "configurePassed": 18,
+        "configureExistingSkip": 1,
+        "enginePassed": 86
+      },
+      "attribution": "Root INBOX; not imported or retested by this docs worker"
+    }
+  },
+  "priorLocalVerification": {
+    "attribution": "Supplied root disposition/STATUS and CI-WHITESPACE-REPORT; not rerun by FINAL-DOCS03",
+    "lifecycle": {
+      "tests": 888,
+      "existingSkips": 2,
+      "state": "PASS"
+    },
+    "shellSuites": {
+      "count": 5,
+      "state": "PASS"
+    },
+    "whitespace": "PASS_SUPPLIED_LOCAL_RECEIPTS; final GitHub candidate outcome remains pending",
+    "fixtureImport": "a226c5a",
+    "exactWhitespaceImport": "92325effe103b638f64a944e751e31f28edf9ad0",
+    "serverAt74507": {
+      "passed": 846,
+      "existingSkips": 4
+    },
+    "webAt74507": {
+      "passed": 250
+    }
+  },
+  "preservedFailures": [
+    "Both H035 promise-only retained-edit requests",
+    "H036 IMAGE-FLOW02 promise-only fresh edit",
+    "H036 original completed-image follow-up render failure efa75b90",
+    "Original HTTP Send zero-submission failure",
+    "Original stopped-timeout migration failure",
+    "Original 950K benchmark failure"
+  ],
+  "rootFinalization": [
+    {
+      "id": "CONNECTIVITY_SETTLEMENT",
+      "needed": "W2 bounded diagnosis, verify maintenance first, then current owned-work settlement; last window OPEN, do not assume watcher execution or replay unknown jobs"
+    },
+    {
+      "id": "COMPACTION_FOLLOWUP",
+      "needed": "Final parent/tool result, continuation, retained-fact/history check, browser reload and settlement for f006fc27 / owner 346c89f0-a3f6-4668-b3ed-e6230111cf8f; initial paste d17d4942 is already complete"
+    },
+    {
+      "id": "MIMO480K",
+      "needed": "Tiny native count-versus-usage/tool continuation and fresh both-engine parent-child receipts bound to exact480K; verified protected MiniMax profile delivery"
+    },
+    {
+      "id": "BROWSER_ZIP",
+      "needed": "Completed browser saved ZIP path/bytes/hash; HTTP/CRC already passed"
+    },
+    {
+      "id": "RELEASE_CI",
+      "needed": "Final capability descriptors, actual public readiness and guest settlement before root merge review. All eight checks at 92325 and now 4d927fee root-verified SUCCESS; later candidate checks require their own receipts. Profile correction remains UNDEPLOYED."
+    }
+  ],
+  "evidence": {
+    "location": "Durable private task inputs; only safe names and hashes published",
+    "files": {
+      "ROOT-REVIEW.md": {
+        "sha256": "a86ae4c0817fecc5dd64f4a9dcd087f28cd57cbd1502075f63b2c3c81d5fe08d"
+      },
+      "STATUS.md": {
+        "sha256": "7354c56d1da6e04934abee44fa8e9ac14d0fbb88a63cdd9584ce8a5147edac03"
+      },
+      "MIMO-480K-READY.json": {
+        "sha256": "3ae935a61b41f55d3c7d8a49bfad6118d3b649c3b227e975a63cd0fb46130b26"
+      },
+      "CI-WHITESPACE-REPORT.md": {
+        "sha256": "b9afd794c0f2f09d8ea1b94b35fa95ae76063cc96da8518d094255cc4be49782"
+      },
+      "FINAL-ACCEPTANCE-SNAPSHOT/FINITE-CORE-AUDIT.json": {
+        "sha256": "48483567588434c171077d9e78418d080b2b0791b7785ea735be427bad049fe5"
+      },
+      "FINAL-ACCEPTANCE-SNAPSHOT/STATUS-AUDIT.json": {
+        "sha256": "59cba55c3d4f272dc31bdf8844dc2963d2906a73f6f75387650053f88f05e80d"
+      },
+      "FINAL-ACCEPTANCE-SNAPSHOT/HTTP-UUID-FIX.json": {
+        "sha256": "ff4b35d939c9d7137e011c4c1988a6883ce71bbc9fb4afa6dc4f02e4ac6321ec"
+      },
+      "FINAL-ACCEPTANCE-SNAPSHOT/WEB-STATIC-ACTIVATION.json": {
+        "sha256": "e09555252f02421a2873fa277d4ce18af84e27b8fde0b3b3d84fcf3a12069e23"
+      },
+      "FINAL-ACCEPTANCE-SNAPSHOT/APP-READY.json": {
+        "sha256": "7a6e8a01afc1d2c8cf32d974e7e98e558a6b5f38294d09d4e66e4100704dd3b6"
+      },
+      "INBOX-checkpoint.md": {
+        "sha256": "065424ff770cb641b8e02acc5ef478bb55ed4735d32862cd9cc1bf43dfa6a5a0",
+        "scope": "Root final review plus final CI, Proxmox and W2 CLI-exit update; private task snapshot"
+      },
+      "MAC1-TCP-ONCE.json": {
+        "sha256": "7fb6baced10d5ad754d18e4ea8f06dfca2a412abc456b0646223f1a1c0ec1e7a",
+        "scope": "Task output; actual one-shot TCP connection attempts with process exit receipt"
+      }
+    }
+  },
+  "documentationTask": {
+    "nativeSessionId": "01a0ef84-66f5-7b70-980c-2261714dab62",
+    "worker": "mac-worker1",
+    "checks": {
+      "state": "PASS",
+      "localMarkdownLinksChecked": 98,
+      "historicalReportFilesUnchanged": 3113,
+      "strictJson": "PASS",
+      "whitespace": "PASS",
+      "sourceScope": "SEVEN_DOCUMENTATION_FILES_ONLY",
+      "receipts": "Task output docs-checks.receipt.json, final-whitespace.receipt.json and historical-preservation.receipt.json"
+    },
+    "nativeActualExitCode": null,
+    "outerWrapperReceipt": "WRAPPER-TERMINAL.json after this session ends; root must collect, never predicted",
+    "liveException": "Only three root-authorized one-shot TCP connects; all timed out, no protocol payload/auth/retry/polling or VM/harness application calls",
+    "codeOrApplicationLiveWorkPerformed": false,
+    "maximumSeconds": 1500,
+    "hardDeadlineUtc": "2026-09-29T23:58:46.460854Z",
+    "deadlineScope": "This native docs task only; H036 has no new hard user deadline"
+  }
+}
