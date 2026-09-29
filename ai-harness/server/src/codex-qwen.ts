@@ -13,18 +13,24 @@ export interface QwenCountQualification {
     contextWindow: number;
     instanceId: string;
 }
-export function createCodexQwenCounter(verifyLane: (alias: string, context?: QwenAdmissionContext) => Promise<QwenCountQualification>, observer?: QwenAdmissionObserver) {
+/** A verifier-owned operation uses one fresh identity bracket, never cached health. */
+export interface QwenLaneVerifier {
+    (alias: string, context?: QwenAdmissionContext): Promise<QwenCountQualification>;
+    withVerifiedLane?<T>(alias: string, operation: (qualification: QwenCountQualification) => Promise<T>, context?: QwenAdmissionContext, signal?: AbortSignal): Promise<T>;
+}
+export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: QwenAdmissionObserver) {
     return async (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal, context: QwenAdmissionContext = admissionContext("count")): Promise<{
         inputTokens: number;
         contextWindow: 480000;
     }> => {
-        const verify = async () => { const q = await verifyLane(lane.alias, context); if (!q.instanceId || q.alias !== lane.alias || q.modelRevision !== QWEN_CODEX_PIN.modelRevision || q.runtimeRevision !== QWEN_CODEX_PIN.runtimeRevision || q.templateSha256 !== QWEN_CODEX_PIN.templateSha256 || q.contextWindow !== 480000)
+        const qualified = (q: QwenCountQualification) => { if (!q.instanceId || q.alias !== lane.alias || q.modelRevision !== QWEN_CODEX_PIN.modelRevision || q.runtimeRevision !== QWEN_CODEX_PIN.runtimeRevision || q.templateSha256 !== QWEN_CODEX_PIN.templateSha256 || q.contextWindow !== 480000)
             throw new ApiError(503, "codex_qwen_identity_unqualified", "Qwen tokenizer/template/runtime allocation not qualified"); return q; };
         const started = performance.now();
         try {
-        const before = await verify();
         if (body.model !== lane.alias || body.reasoning_effort !== "none")
             throw new ApiError(400, "codex_qwen_profile", "Expected explicit Qwen nonthinking profile");
+        const tokenize = async (before: QwenCountQualification) => {
+        qualified(before);
         // Strip ONLY generation transport fields. Preserve history, tools, template,
         // sampling/output reservation and final served alias identically to inference.
         const countBody = Object.fromEntries(Object.entries(body).filter(([k]) => !["stream", "stream_options"].includes(k)));
@@ -59,11 +65,20 @@ export function createCodexQwenCounter(verifyLane: (alias: string, context?: Qwe
         }
         if (!Number.isSafeInteger(v.max_model_len) || v.max_model_len < 1 || !Array.isArray(v.tokens) || !v.tokens.length || v.tokens.length > 480000 || !Number.isSafeInteger(v.count) || v.count !== v.tokens.length || v.tokens.some((n: unknown) => !Number.isSafeInteger(n) || Number(n) < 0 || Number(n) >= 2 ** 31))
             throw new ApiError(503, "codex_qwen_count_invalid", "Native token IDs/count unavailable");
-        const after = await verify();
-        if (after.instanceId !== before.instanceId)
-            throw new ApiError(503, "codex_qwen_identity_changed", "Qwen instance changed during count");
+        return { inputTokens: v.count as number, contextWindow: 480000 as const };
+        };
+        let result: { inputTokens: number; contextWindow: 480000 };
+        if (verifyLane.withVerifiedLane) {
+            result = await verifyLane.withVerifiedLane(lane.alias, tokenize, context, signal);
+        } else {
+            const before = qualified(await verifyLane(lane.alias, context));
+            result = await tokenize(before);
+            const after = qualified(await verifyLane(lane.alias, context));
+            if (after.instanceId !== before.instanceId)
+                throw new ApiError(503, "codex_qwen_identity_changed", "Qwen instance changed during count");
+        }
         emitAdmission(observer, { schema: 1, ...context, lane: lane.alias, step: "tokenize", outcome: "pass", reason: "ok", elapsedMs: performance.now() - started });
-        return { inputTokens: v.count, contextWindow: 480000 };
+        return result;
         } catch (error) {
             const codes: Record<string, "tokenizer" | "identity_changed" | "count_profile" | "runtime_identity"> = { codex_qwen_identity_changed: "identity_changed", codex_qwen_profile: "count_profile", codex_qwen_identity_unqualified: "runtime_identity", codex_qwen_count_unavailable: "tokenizer", codex_qwen_count_invalid: "tokenizer" };
             const reason = error instanceof QwenAdmissionError ? admissionReason(error) : error instanceof ApiError ? codes[error.code] ?? "unexpected" : "transport";
