@@ -1,0 +1,26 @@
+{
+  "kind": "coordinator_closure",
+  "recordedUtc": "2026-09-29T21:07:30.089858+00:00",
+  "nativeSessionId": "01a0eecd-a817-7183-9484-4a5b98d5ea42",
+  "actualTerminal": {
+    "nativePid": 64414,
+    "actualExitCode": 0,
+    "finishedUtc": "2026-09-29T21:05:24.887777+00:00",
+    "deadlineTermination": false,
+    "method": "Popen.wait; persisted before any cleanup"
+  },
+  "nativeReport": "REPORT.md",
+  "nativeResult": "RESULT.json",
+  "nativeResultSha256": "fa449cd32d4b868ef4626e992bac8dc9021bb6fe73df0041901c5489124d61db",
+  "note": "Native result was written before process exit; this independent wrapper receipt supplies the actual exit without rewriting native evidence.",
+  "verifiedDeliveryManifest": "DELIVERY-MANIFEST.json",
+  "verifiedArtifacts": 29,
+  "finalReadback": "CAPABILITY-FINAL-READBACK.json",
+  "maintenanceRestore": "BROWSER-WINDOW-CLOSED.json",
+  "allWorkComplete": true,
+  "sourceBundle": "H035-REVIEWED-COMBINED.bundle",
+  "sourceBundleSha256": "029526333d77367eba77c0c84f88a98f2b339f6a5f97db19fd7773dc00487c00",
+  "deployedSource": "cbaf28409a30fc3329a6ed05a9466d7db2f3d332",
+  "overallAcceptance": "PARTIAL_IMAGE_ACCEPTANCE_FAILED_PDF_PASS",
+  "furtherActions": "NONE"
+}

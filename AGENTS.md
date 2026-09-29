@@ -1,36 +1,34 @@
-# H035 active — renewed two-hour user instruction
+# Sova — H035 closed checkpoint
 
-The user renewed implementation for September29 19:45:31–21:45:31 UTC.
-Read reports/h035-execution-plan.md. This supersedes the closed-window boundary
-below within the new scope. Root coordinates/reviews/publishes; both workers do
-implementation and tests via fresh bounded native sessions. No automatic extension.
-
-# Sova — H034 closed checkpoint
-
-Read reports/h034-codex-checkpoint.md, reports/h034-codex-results.json and
-reports/h034-next-execution.md before older plans. H034 was authorized for
-September 29, 17:09:44–19:09:44 UTC. All worker sessions and current test jobs are
-closed. Another implementation window requires a new user instruction.
+Read reports/h035-codex-checkpoint.md, reports/h035-codex-results.json and
+reports/h035-next-execution.md before older plans. H035 was authorized for
+September 29, 19:45:31–21:45:31 UTC. All native worker sessions and current test
+jobs are closed. Another implementation window requires a new user instruction.
 
 ## Current state
 
-- Deployed source 7b83be2d1f7bc6abcac82dd5b2ef203ded9b9aed. MiniMax default;
+- Deployed source cbaf28409a30fc3329a6ed05a9466d7db2f3d332. MiniMax default;
   public chat503/status200, maintenance authorized until Codex is finished.
-- Qwen/Codex original and native-child image generation passed after explicit
-  capability contract, current-instruction delivery and bounded error fixes.
-- Guarded edit produced a visually correct image after normal resize approval;
-  final handoff remains partial (stale approval, no inline final artifact).
-  Two edit tool attempts created one actual job; strict one-call fixture failed.
-- Historical-child-close fix passed targeted checks; direct live replay of that
-  exact close was not emitted. Normal retained continuation reached a new child.
+- H035 original PDF regression passed actual extraction, calculation, PDF output,
+  honest tool-error/recovery disclosure, exact final delivery and root visual/UI
+  reload review. Browser PDF/ZIP download action remains unconfirmed.
+- Earlier original/child image generation and guarded edit produced correct
+  images. Both H035 retained-edit requests stopped with a promise but zero tools,
+  children or new jobs. Actual provider output arrived unchanged through all
+  layers; the unique cause remains unproven. Do not silently retry or force calls.
+- Read-only image_status, operation-aware guidance and durable late result
+  delivery are deployed; live approval/result acceptance did not reach the tool.
 - Frontier qualification remains true through reviewed reuse of actual c863/aee
   evidence. Full image qualification stays false; native media input unsupported.
-- Latest readback18:51:05UTC: active runs/task containers/tickets/pending provider
+- Latest readback21:03:43UTC: active runs/task containers/tickets/pending provider
   requests/image jobs zero. Histories/files and two historical uncertain owners/
-  three quarantines preserved. Last native exited0 at18:53:43.929202UTC.
+  three quarantines preserved. Last native exited0 at21:05:24.887777UTC.
+- Open-source native compaction is integrated; small actual Qwen compaction,
+  recall and continuation passed. Automatic near-full triggering, MiMo-specific
+  summary quality and web compaction progress remain untested.
 - Qwen capacities remain480K/480K/200K. Ada200K is not a480K fallback. MiMo950K
   configured capacity does not establish occupied-context qualification.
-  No weights/runtime/GPU/fan/ECC/power changes in H034.
+  No weights/runtime/GPU/fan/ECC/power changes in H035.
 
 ## Continuation rules
 
@@ -40,12 +38,12 @@ retain session IDs and actual exit receipts. One owner handles deployment and
 live admission. Reuse passed evidence and do not repeat bootstrap, benchmarks,
 or uncertain actions. Preserve real tool arguments/errors and original failures.
 
-Next priorities: approval/result handoff without new image submissions,
-operation-specific edit sizes, PDF final-answer honesty and bounded remaining
-release checks. Do not restore GLM or an old application baseline.
+Next priorities: evidence-led isolation of the promise-only retained image
+request, then actual approval/result handoff and the small remaining browser
+checks. Reuse passed PDF and MiMo work. Do not restore GLM or an old baseline.
 
 Publish reviewed work to feature/glm53-flash / existing draft PR10 (base
 feature/system-topology). No main merge, model/runtime/hardware changes, accounts,
 scaling or installer work in this integration scope. Keep credentials and bulky
-raw captures private. Durable local data: orchestration/tasks/H034-20260929
+raw captures private. Durable local data: orchestration/tasks/H035-20260929
 outside this checkout. No automatic continuation is authorized.

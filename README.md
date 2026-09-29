@@ -34,14 +34,18 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
-The [H034 checkpoint](reports/h034-codex-checkpoint.md) records repaired Qwen
-image-tool arguments, current instructions for resumed sessions and fresh
-children, and successful original/child image generation. An approved edit
-produced the correct image, but its final reply retained stale approval status;
-full Codex image qualification remains closed. Codex frontier access is enabled
-through reviewed reuse of the actual H033 MiMo delegation evidence.
-The [remaining work](reports/h034-next-execution.md) targets that approval/result
-handoff, operation-specific edit dimensions, PDF reporting and release checks.
+The [H035 checkpoint](reports/h035-codex-checkpoint.md) records a successful
+live PDF regression, read-only image-job status, durable image-result delivery
+code and updated operation-specific guidance. The retained guarded-edit request
+still stopped after promising to delegate, with no tool call or new image job;
+full Codex image qualification remains closed. Earlier original/child generation
+and an approved edit produced correct images, with the edit's final handoff
+incomplete. Codex frontier access is enabled through reviewed reuse of the actual
+H033 MiMo delegation evidence. The [remaining work](reports/h035-next-execution.md)
+focuses on that image task-completion failure and the unexercised live handoff.
+Open-source native Codex compaction is integrated and passed a small live
+summary/recall/continuation check; automatic triggering near the configured
+limits remains untested. See [context behavior](ai-harness/README.md#capacity-and-context).
 Three Qwen configurations remain 480K, 480K and 200K; native image recognition
 is unsupported in Codex. Complete integration remains unfinished, MiniMax stays
 the default, and public chat remains in maintenance.
@@ -138,7 +142,7 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 29 H034 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
+**September 29 H035 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
 profile at 950,000 configured tokens. Actual tool continuation and parent/child
 delegation through Codex and MiniMax passed in H033; the current application
 retains that qualification through an explicit compatibility review.
@@ -148,7 +152,7 @@ unqualified; its [original evidence](reports/h022-950k-status.md) is preserved.
 Sova's updated application is deployed with MiniMax default and optional Codex
 preview. Public chat remains in maintenance. Codex frontier access is enabled;
 full image-workflow qualification remains closed pending the
-[remaining fixes](reports/h034-next-execution.md). Histories and files are
+[remaining fixes](reports/h035-next-execution.md). Histories and files are
 preserved. Current backend availability comes from the status API; the
 measurements below are dated evidence.
 

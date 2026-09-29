@@ -1,0 +1,122 @@
+{
+  "schema": 1,
+  "task": "H035",
+  "state": "CLOSED_PARTIAL",
+  "rootWindow": {
+    "startedUtc": "2026-09-29T19:45:31Z",
+    "hardDeadlineUtc": "2026-09-29T21:45:31Z",
+    "sourceTargetUtc": "2026-09-29T20:30:00Z",
+    "sourceHardUtc": "2026-09-29T20:40:00Z",
+    "noNewLongWorkflowUtc": "2026-09-29T21:15:00Z",
+    "settleUtc": "2026-09-29T21:25:00Z",
+    "workersExitUtc": "2026-09-29T21:30:00Z"
+  },
+  "deployedSource": "cbaf28409a30fc3329a6ed05a9466d7db2f3d332",
+  "lastNativeExitUtc": "2026-09-29T21:05:24.887777+00:00",
+  "fullCodexIntegrationComplete": false,
+  "miniMaxDefault": true,
+  "codexPreview": true,
+  "frontierQualified": true,
+  "imageQualified": false,
+  "maintenance": {
+    "restored": true,
+    "publicChatHttp": 503,
+    "publicStatusHttp": 200,
+    "readbackUtc": "2026-09-29T21:03:43.069849+00:00"
+  },
+  "actualThisWindow": {
+    "pdf": "PASS: extraction, calculation, PDF output, disclosed error and recovery, root visual review and browser reload",
+    "existingImageStatus": "PASS via direct application API; native MCP not exercised",
+    "guardedEdit": {
+      "result": "FAIL_TWICE",
+      "runIds": [
+        "cfe55e79-cea8-4282-ae5b-d8543a8980ab",
+        "a2dbab1c-fca0-46e0-995d-726157a620af"
+      ],
+      "providerToolCalls": 0,
+      "freshChildren": 0,
+      "newImageJobs": 0,
+      "sameFinalBytesAcrossBoundaries": true,
+      "furtherRetry": false
+    },
+    "liveNewImageResultHandoff": "NOT_EXERCISED because neither model request called a tool",
+    "browserDownload": "NOT_CONFIRMED: automation timeout before returned local path; ZIP not attempted",
+    "workerHttpPdfDownload": "PASS: actual bytes and SHA256 verified",
+    "idleDeploymentPreservation": "PASS"
+  },
+  "compaction": {
+    "implementation": "Open-source Codex native compaction with local provider",
+    "qwenContext": 480000,
+    "qwenAutoThreshold": 400000,
+    "mimoContext": 950000,
+    "mimoAutoThreshold": 880000,
+    "retainedActual": "H030 small manual Qwen compaction and four-fact recall; H031 same-thread continued tool work passed",
+    "nearFullAutoTrigger": "NOT_TESTED",
+    "mimoSpecificQuality": "NOT_TESTED",
+    "webProgress": "NOT_TESTED",
+    "historyAndFilesPreserved": true,
+    "knownLimit": "Summary misstated one incidental file byte count; not lossless"
+  },
+  "mimo": {
+    "model": "MiMo V2.6 Pro-RL",
+    "readyObservationUtc": "2026-09-29T20:01:49.974Z",
+    "currentShortWorkflowSupport": "H033 actual tool continuation and child-parent completion through Codex and MiniMax; explicitly reviewed reuse in H035",
+    "newInferenceThisWindow": false,
+    "configuredContext": 950000,
+    "occupied950K": "FAILED_PREVIOUSLY_NOT_RUNNING"
+  },
+  "focusedVerification": "Relevant source/build/typechecks passed; overlapping groups not summed. Three existing image-job expectation failures retained; no all-tests-pass claim.",
+  "settlement": {
+    "tickets": 0,
+    "nativeTaskContainers": 0,
+    "activeRuns": 0,
+    "unsettledProviderRequests": 0,
+    "unsettledImageJobs": 0,
+    "historicalUncertainOwners": 2,
+    "historicalQuarantines": 3,
+    "allProtectedRecordHashesPreserved": true
+  },
+  "sessions": [
+    {
+      "worker": "mac-worker1",
+      "task": "image-handoff-01",
+      "nativeSessionId": "01a0eeb7-b263-7261-9fe7-869f3748609f",
+      "actualExitCode": 0,
+      "finishedUtc": "2026-09-29T20:10:23.622691+00:00"
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "contract-pdf-01",
+      "nativeSessionId": "01a0eeb8-a5f7-7800-91f6-fb2adbd1dd16",
+      "actualExitCode": 0,
+      "finishedUtc": "2026-09-29T20:05:28.681849+00:00"
+    },
+    {
+      "worker": "mac-worker1",
+      "task": "release-review-01",
+      "nativeSessionId": "01a0eecd-f7bb-7e82-8fb2-feb69499a124",
+      "actualExitCode": 0,
+      "finishedUtc": "2026-09-29T20:21:02.856738+00:00"
+    },
+    {
+      "worker": "mac-worker1",
+      "task": "image-intent-02",
+      "nativeSessionId": "01a0eedc-0432-76c3-9487-7db91e8ee18d",
+      "actualExitCode": 0,
+      "finishedUtc": "2026-09-29T20:40:01.259088+00:00"
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "activation-acceptance-01",
+      "nativeSessionId": "01a0eecd-a817-7183-9484-4a5b98d5ea42",
+      "nativePid": 64414,
+      "actualExitCode": 0,
+      "finishedUtc": "2026-09-29T21:05:24.887777+00:00",
+      "deadlineTermination": false,
+      "method": "Popen.wait; persisted before any cleanup"
+    }
+  ],
+  "modelRuntimeGpuChanges": false,
+  "nextPlan": "h035-next-execution.md",
+  "rawEvidence": "Private outside Git; no additional live work authorized by this checkpoint"
+}

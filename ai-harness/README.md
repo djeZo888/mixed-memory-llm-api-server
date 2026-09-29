@@ -15,14 +15,16 @@ uses local Qwen through Sova's shared gateway, without OpenAI model login or
 paid inference. MiniMax remains the default. See the
 [execution record](../docs/h021-codex-execution.md) and
 [historical preview acceptance report](../reports/h021-codex-preview.md) for
-earlier checks. The [H033 checkpoint](../reports/h033-codex-checkpoint.md)
-records successful MiMo tool execution and complete child/parent replies through
-both engines; ordinary Codex frontier access is now enabled. Reviewed fixes
-cover final-answer association, catalog mounting, artifact download rendering,
-frontier status and repeated token-count verification. Codex's general image
-gate remains closed: one child generation passed, but the original regression
-and guarded edit failed bounded acceptance. Native visual recognition is
-unsupported. See [remaining work](../reports/h033-next-execution.md). The
+earlier checks. The [H035 checkpoint](../reports/h035-codex-checkpoint.md)
+retains the successful H033 MiMo tool execution and complete child/parent replies
+through both engines; ordinary Codex frontier access is enabled. H035 adds
+read-only image-job status and durable result-delivery code, and the live PDF
+regression now passes with accurate error disclosure and recovery. Original and
+native-child image generation passed in H034. Its guarded edit produced the
+correct image but an incomplete final handoff; both H035 follow-ups stopped with
+a promise and no actual tool call. Codex's full image gate remains closed.
+Native visual recognition is unsupported. See
+[remaining work](../reports/h035-next-execution.md). The
 [H032 checkpoint](../reports/h032-codex-checkpoint.md) preserves earlier failures
 and partial PDF acceptance.
 Real Stop, same-thread
@@ -141,13 +143,14 @@ explore/verifier/custom restrictions remain unchanged.
 
 ## Capacity and context
 
-Qwen main and child sessions have a fixed **480,000-token context**. At the
-September 29 H032 checkpoint, **MiMo V2.6 Pro-RL** is selected and ready with
-**950,000 configured tokens**. Its earlier near-950K occupied-context test failed
-and is not running. Native readiness does not qualify the current harness
-delegation path: both actual child attempts failed token-count validation before
-generation. GLM's retained **1,048,576-token** profile is dormant. Histories and
-files are preserved. See the [current checkpoint](../reports/h032-codex-checkpoint.md)
+Qwen main and child sessions have a fixed **480,000-token context**.
+**MiMo V2.6 Pro-RL** is the selected frontier with **950,000 configured tokens**.
+Actual MiMo tool continuation and child-to-parent completion through both Codex
+and MiniMax passed in H033; H035 retains those results through an explicit
+compatibility review. The earlier near-950K occupied-context test failed and is
+not running. Short workflow acceptance does not qualify the full context window.
+GLM's retained **1,048,576-token** profile is dormant. Histories and files are
+preserved. See the [frontier acceptance](../reports/h033-codex-checkpoint.md)
 and [retained long-test result](../reports/h022-950k-status.md).
 The maximum
 output is **65,536 tokens per inference request**, including reasoning where
@@ -161,9 +164,9 @@ queue. A waiting parent does not reserve a slot. Qwen remains the default for
 coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
 then reviews the returned result. The selected MiMo release permits eight hours
-of active inference plus a separate 30-minute queue. Its native qualification
-does not resolve the ordinary-chat failure described above. Qwen retains its
-existing limits; historical GLM acceptance is recorded separately below.
+of active inference plus a separate 30-minute queue. Current readiness is checked
+independently of retained workflow acceptance. Qwen retains its existing limits;
+historical GLM acceptance is recorded separately below.
 
 The [H009 native acceptance](../reports/h009-frontier-20260926/ACCEPTANCE-02.md)
 passed one full-roster code workflow: Flash read, patched and tested a file,
@@ -182,13 +185,19 @@ unavailable means no usable measurement, not zero. Native automatic compression
 keeps original visible history and archived tool results. There is no user
 context setting. MiniMax's Qwen budget starts normal compression near 412,416
 input tokens to reserve output space; tool results may be archived earlier.
-The Codex preview uses a 400,000-token compaction threshold within the same
-480,000-token window. Its native fixture passed; local-model recall after
-compaction still requires separate acceptance.
+Codex uses its open-source native compaction with the local inference provider.
+The configured thresholds are **400,000 tokens for Qwen** within its 480,000-token
+window and **880,000 for MiMo** within its 950,000-token window. A small actual
+compaction followed by four-fact recall and continued work passed in
+[H030](../reports/h030-flow03-20260929/COMPACTION-RESULT.json) and
+[H031](../reports/h031-flow01-20260929/COLD-RESULT.json). Original visible history
+and files remain saved; the active model receives summarized context. Summaries
+can omit or misstate details, so durable project files remain important.
 Native CLI slash commands such as `/status`, `/context` and `/compact` are
 unsupported and rejected in the web integration. Automatic compression remains
-supported. A manual native compaction/recall probe passed; production-threshold
-compression and web compression rendering remain untested.
+supported. Automatic triggering at the configured near-full thresholds and web
+compression rendering remain untested. This does not claim identical summary
+quality to the hosted OpenAI models used by the Codex Mac app.
 
 ## Work supported by the approved scope
 

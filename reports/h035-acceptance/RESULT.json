@@ -1,0 +1,179 @@
+{
+  "task": "H035-ACTIVATION-ACCEPTANCE01",
+  "state": "WORK_COMPLETE_PARTIAL_ACCEPTANCE_RETURNING_NATIVE",
+  "updatedUtc": "2026-09-29T21:04:42.120756+00:00",
+  "worker": "Mac-Worker2",
+  "nativeSessionId": "01a0eecd-a817-7183-9484-4a5b98d5ea42",
+  "nativeExit": "RETURNING_NOW_EXTERNAL_WRAPPER_MUST_RECORD_ACTUAL_EXIT",
+  "reviewedImplementationBasis": "dbcd579f8b5ee91ff86c4035bfe643d51e8cd3d1",
+  "policySha256": "4ab2f4935c2a90691b9abdd713b74e389922baeab2262ddc6d41a3b1ddd88b87",
+  "currentActivatedSource": "cbaf28409a30fc3329a6ed05a9466d7db2f3d332",
+  "approvedFinalSource": "cbaf28409a30fc3329a6ed05a9466d7db2f3d332",
+  "releaseAcceptance": "PARTIAL_IMAGE_GATE_FAILED",
+  "frontierQualification": {
+    "enabled": true,
+    "basis": "Explicit root-reviewed reuse of original c863/aee source/pins/transcripts/settlement; no target live pass fabricated."
+  },
+  "imageQualification": false,
+  "miniMaxDefault": true,
+  "nativeMediaInputSupported": false,
+  "mimo950K": "configured only; no occupied-context qualification",
+  "acceptance": {
+    "existingEditStatus": {
+      "result": "PASS_DIRECT_BROWSER_API",
+      "jobId": "21b33898-8c22-4366-903a-ef60f9946b23",
+      "artifactId": "e9149151-0896-400e-8236-ecf28271ca69",
+      "nativeMcpExercised": false,
+      "modelTurn": false,
+      "historicalMessagesUnchanged": true
+    },
+    "editFirst": {
+      "result": "FAIL",
+      "source": "d0d4543e8fe8862f08d4186cb0734efba0ef854e",
+      "runId": "cfe55e79-cea8-4282-ae5b-d8543a8980ab",
+      "freshChildren": 0,
+      "creativeCalls": 0,
+      "newImageJobs": 0,
+      "physicalSettlement": true,
+      "ticketRemoved": true,
+      "audit": "EDIT-AUDIT.json"
+    },
+    "editReviewedCorrectionRetest": {
+      "result": "FAIL",
+      "source": "2a7978f503da9c2ff049baa0c99f5e138840325e",
+      "runId": "a2dbab1c-fca0-46e0-995d-726157a620af",
+      "freshChildren": 0,
+      "creativeCalls": 0,
+      "newImageJobs": 0,
+      "physicalSettlement": true,
+      "ticketRemoved": true,
+      "audit": "EDIT-RETEST-AUDIT.json",
+      "furtherRetry": false
+    },
+    "pdf": {
+      "result": "PASS",
+      "source": "d0d4543e8fe8862f08d4186cb0734efba0ef854e",
+      "sessionId": "e16ef809-f2c3-431c-8070-4c2b2c690b83",
+      "runId": "9d8897e3-85e3-4ecd-b124-b9b0208d5cf0",
+      "artifactId": "caf59484-655b-46f9-a985-95d2fa6ea6c8",
+      "audit": "PDF-AUDIT.json",
+      "honestFailureDisclosure": true,
+      "physicalSettlement": true,
+      "ticketRemoved": true,
+      "rootActualVisualPassReceipt": "input/ROOT-PDF-VISUAL-REVIEW.json"
+    },
+    "ordinaryBrowserPreviewDownloadReload": {
+      "result": "PARTIAL_BROWSER_FILE_DOWNLOAD_NOT_TESTED",
+      "rootActualReceipt": "ROOT-UI-REVIEW.json",
+      "pdfUi": "PASS actual final/history/files/context display and reconnect",
+      "retainedImageUi": "H034 job/card/inline preview visible; historical evidence only, not a new H035 handoff",
+      "browserDownload": "NOT_TESTED: downloadMedia timed out/reset before returning a file; retain separate verified HTTP/hash receipts",
+      "availability": "Transient unknown; subsequent normal UI available and one server readback healthy. Persistent app failure not established.",
+      "windowReceipt": "BROWSER-WINDOW.json",
+      "closedReceipt": "BROWSER-WINDOW-CLOSED.json",
+      "windowWatcherGone": true,
+      "httpArtifactDownloadAndHash": "PASS_SEPARATE_WORKER_RECEIPTS",
+      "healthReceipt": "BROWSER-HEALTH-READBACK.json"
+    },
+    "guardedEditApprovalAndAppResult": {
+      "result": "NOT_EXERCISED_IN_H035_LIVE_RETEST",
+      "reason": "Neither H035 parent called a tool or created a fresh child/job/card, so operation-specific size selection, same-job post-turn approval continuation and app-owned terminal result were not reached. Deterministic source checks do not substitute for the missing live acceptance."
+    },
+    "existingReleaseChecks": {
+      "result": "REUSED_WHERE_PATH_UNCHANGED",
+      "basis": "Root authorized retained coding, research, small compaction, cold resume, two-lane API replay and frontier delegation passes; current idle deployment restart/preservation is the actual restart check. No duplicate restart or broad test matrix."
+    }
+  },
+  "scopeBoundaries": {
+    "modelRuntimeGpuChanges": false,
+    "nativeImageBuild": false,
+    "newMiMoInference": false,
+    "githubPush": false,
+    "mainMerge": false,
+    "baselineRestore": false,
+    "newQualificationRecordsInstalled": 3,
+    "oldRecordBytesPreserved": true,
+    "historicalUncertainOwners": 2,
+    "historicalQuarantines": 3
+  },
+  "rawEvidence": "private/ outside Git; exact boundary bytes, errors and native history retained",
+  "deadlines": {
+    "noNewLongAfter": "2026-09-29T21:15:00Z",
+    "settle": "2026-09-29T21:25:00Z",
+    "actualNativeExit": "2026-09-29T21:30:00Z"
+  },
+  "finalActivationReceipt": "CAPABILITY-APP-READY.json",
+  "finalActivationUtc": "2026-09-29T20:52:39.636085+00:00",
+  "finalUnitSha256": "8af51bc284a1a14c8c85f7d668cd6d60cccdee5d92cfcd88592a89767f555a1e",
+  "offlineBoundaryComparison": {
+    "result": "NO_CAPTURED_TOOL_SCHEMA_OR_PROVIDER_CONFIG_BLOCKER",
+    "packet": "EDIT-BOUNDARY-COMPARISON.json",
+    "sharedProviderDeclarationsIdentical": 21,
+    "spawnAgentDeclarationIdentical": true,
+    "onlyAddedTool": "image_status",
+    "comparedRequestControlsIdentical": true,
+    "providerToolCalls": {
+      "H034_success": 1,
+      "H035_first": 0,
+      "H035_retest": 0
+    },
+    "providerFinish": {
+      "H034_success": "tool_calls",
+      "H035_first": "stop",
+      "H035_retest": "stop"
+    },
+    "noObservedLengthTruncation": true,
+    "causalConclusion": "Unproven; different requests, instructions and histories remain."
+  },
+  "nativeHistoricalPreservation": {
+    "result": "PASS",
+    "packet": "NATIVE-HISTORY-PRESERVATION-FINAL.json",
+    "filesComparedAgainstEachPriorCapture": 5,
+    "historicalCaptures": [
+      "H034 edit2-final",
+      "H035 first failed edit"
+    ],
+    "unchangedChildFiles": 4,
+    "parentHistoricalPrefixesPreserved": true
+  },
+  "finalReadbackReceipt": "CAPABILITY-FINAL-READBACK.json",
+  "finalReadbackUtc": "2026-09-29T21:03:43.069849+00:00",
+  "finalReadbackActualExitCode": 0,
+  "maintenanceRestored": true,
+  "publicChatHttp": 503,
+  "publicStatusHttp": 200,
+  "windowWatcherSettled": true,
+  "allOwnedAppWorkSettled": true,
+  "newLongWorkQueued": false,
+  "finalState": {
+    "tickets": 0,
+    "nativeTaskContainers": 0,
+    "activeRuns": 0,
+    "unsettledProviderRequests": 0,
+    "unsettledImageJobs": 0,
+    "historicalUncertainOwners": 2,
+    "historicalQuarantines": 3,
+    "completedHandoffsRetainedAndIdle": true,
+    "allProtectedRecordHashesPreserved": true,
+    "imageServiceResultRows": [],
+    "defaultModel": "minimax",
+    "capabilities": {
+      "frontier": true,
+      "image": false,
+      "nativeMedia": false,
+      "preview": true
+    },
+    "preservation": {
+      "allOriginalApplicationRowsAndEventsPreserved": true,
+      "historicalUncertaintyPreserved": true,
+      "normalStartupEvents": 6,
+      "volatileLaneTablesSeparatelyChecked": [
+        "gateway_lanes",
+        "h003_image_lane",
+        "h005_image_ownership"
+      ],
+      "existingImageResultsPreserved": true,
+      "addedTables": []
+    }
+  }
+}
