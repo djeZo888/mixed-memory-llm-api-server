@@ -5,7 +5,7 @@
 import { createHash } from "node:crypto";
 import { isDeepStrictEqual } from "node:util";
 import { CODEX_PIN } from "./codex-engine.js";
-import { CODEX_MODEL_POLICY } from "./codex-launcher.js";
+import { CODEX_MODEL_POLICY, CODEX_TOOL_POLICY_SHA256 } from "./codex-launcher.js";
 import { codexProvider } from "./codex-provider.js";
 import { QWEN_CODEX_PIN } from "./codex-qwen.js";
 import { QWEN_SOURCE_PIN, QWEN_OWNER_POLICY } from "./codex-production.js";
@@ -17,13 +17,19 @@ export const CODEX_SPECIALIST_DIRECTORY = "/etc/sova-qualification";
 export const CODEX_SPECIALIST_PINS = {
   engine: CODEX_PIN,
   policy: CODEX_MODEL_POLICY,
+  toolPolicySha256: CODEX_TOOL_POLICY_SHA256,
   qwen: { ...QWEN_CODEX_PIN, ...QWEN_SOURCE_PIN, ownerPolicy: QWEN_OWNER_POLICY, profile: codexProvider("qwen3.8-27b") },
   frontier: { profile: codexProvider("mimo-v2.6-pro-rl"), runtimeRevision: MIMO_RUNTIME,
     artifactRevision: MIMO_ARTIFACT_REVISION, artifactManifestSha256: MIMO_ARTIFACT_MANIFEST_SHA256,
     templateSha256: "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4" },
   image: { model: "qwen-image-2.1", modelRevision: "790c92633540aa0cb11d9abf19eb46d861714758",
     runtimeRevision: "0cd8be351d0825488f4b81c8931167bbab618eca",
-    runtimeImage: "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    // configs/runtimes/h005-runtime-binding.json distinguishes the tested native
+    // platform manifest/config from its parent; a parent-only receipt is stale.
+    runtimeImage: "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+    runtimeImageIdDomain: "oci_platform_manifest",
+    runtimeConfigDigest: "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+    parentImageReference: "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
     maximumGenerationSize: "1920x1080", maximumReferences: 2 },
 } as const;
 const workflows = {

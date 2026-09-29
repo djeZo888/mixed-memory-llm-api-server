@@ -1,15 +1,17 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { createServer } from "node:http";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, mkdir, writeFile, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { tmpdir } from "node:os";
 import { PassThrough } from "node:stream";
 import { createApp } from "../src/app.js";
 import { codexDeployment } from "../src/codex-deployment.js";
 import { CODEX_PIN, type CodexRuntime } from "../src/codex-engine.js";
+import { CODEX_MODEL_POLICY } from "../src/codex-launcher.js";
+import { Store } from "../src/store.js";
 
-test("two loopback HTTP fixture requests use fresh live tokens, resume native history and replay browser events without inference", async (t) => {
+for (const retainedV2 of [false, true]) test(`${retainedV2 ? 'persisted old v2 session' : 'new session'} crosses broker/engine with fresh tokens, native resume and browser replay without inference`, async (t) => {
   const alive = new Set<string>(),
     observed: string[] = [],
     resumes: string[] = [];
@@ -24,10 +26,24 @@ test("two loopback HTTP fixture requests use fresh live tokens, resume native hi
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
   const address = server.address() as { port: number };
   const dir = await mkdtemp(join(tmpdir(), "h021-followup-"));
+  let priorSession;
+  let priorFile: string | undefined;
+  if (retainedV2) {
+    const prior = new Store(join(dir, "harness.sqlite"), join(dir, "workspaces"));
+    priorSession = prior.createSession(undefined, "codex", {
+      engineVersion: "0.158.0", modelPolicyVersion: "sova-codex-0.158.0-qwen-text-v2",
+    });
+    prior.setNative(priorSession.id, `native-${priorSession.id}`, "codex");
+    prior.addMessage(priorSession.id, "user", "retained before policy update");
+    await mkdir(join(dir, "workspaces", priorSession.workspaceId), { recursive: true });
+    priorFile = join(dir, "workspaces", priorSession.workspaceId, "original.txt");
+    await writeFile(priorFile, "original workspace bytes");
+    prior.close();
+  }
   const runtime: CodexRuntime = {
     pin: CODEX_PIN,
     protocolQualified: true,
-    modelPolicyVersion: "fixture-policy",
+    modelPolicyVersion: CODEX_MODEL_POLICY,
     model: "qwen3.8-27b",
     provider: "sova",
     contextLimit: 480000,
@@ -150,7 +166,7 @@ test("two loopback HTTP fixture requests use fresh live tokens, resume native hi
     await new Promise<void>((resolve) => server.close(() => resolve()));
     await rm(dir, { recursive: true, force: true });
   });
-  const session = await app.broker.createSession(undefined, "codex");
+  const session = priorSession ?? await app.broker.createSession(undefined, "codex");
   app.broker.enqueue(session.id, "message", "first");
   await app.broker.idle();
   app.broker.enqueue(session.id, "message", "follow up");
@@ -159,7 +175,9 @@ test("two loopback HTTP fixture requests use fresh live tokens, resume native hi
     "Bearer fixture-token-1",
     "Bearer fixture-token-2",
   ]);
-  assert.deepEqual(resumes, [`native-${session.id}`]);
+  assert.deepEqual(resumes, Array(retainedV2 ? 2 : 1).fill(`native-${session.id}`));
+  if (priorFile) assert.equal(await readFile(priorFile, "utf8"), "original workspace bytes");
+  assert.equal(app.store.getSession(session.id).modelPolicyVersion, "sova-codex-0.158.0-qwen-text-v2");
   assert.equal(alive.size, 0);
   const snap = app.store.snapshot(session.id);
   assert.equal(
@@ -168,7 +186,7 @@ test("two loopback HTTP fixture requests use fresh live tokens, resume native hi
   );
   assert.deepEqual(
     snap.messages.filter((m) => m.role === "user").map((m) => m.content),
-    ["first", "follow up"],
+    [...(retainedV2 ? ["retained before policy update"] : []), "first", "follow up"],
   );
   assert.deepEqual(
     snap.messages.filter((m) => m.role === "assistant").map((m) => m.content),
