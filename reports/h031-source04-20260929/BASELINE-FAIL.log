@@ -1,0 +1,24 @@
+Exact base supervise AST; unchanged helper globals; real temporary flock fixture.
+test_transient_real_holder_release_reaches_body_once (tests.test_mimo_startup_admission.StartupAdmissionTests.test_transient_real_holder_release_reaches_body_once) ... ERROR
+
+======================================================================
+ERROR: test_transient_real_holder_release_reaches_body_once (tests.test_mimo_startup_admission.StartupAdmissionTests.test_transient_real_holder_release_reaches_body_once)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H031-SOURCE04-20260929/repo/tests/test_mimo_startup_admission.py", line 127, in test_transient_real_holder_release_reaches_body_once
+    o.supervise()
+    ~~~~~~~~~~~^^
+  File "<exact-base-supervise>", line 1658, in supervise
+    with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as g:
+         ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H031-SOURCE04-20260929/repo/scripts/common/lifecycle_lease.py", line 193, in acquire_lease
+    raise LeaseBusy() from None
+common.lifecycle_lease.LeaseBusy: lifecycle_busy
+
+----------------------------------------------------------------------
+Ran 1 test in 0.009s
+
+FAILED (errors=1)
+EXPECTED ORIGINAL FAILURE VERIFIED; no historical replay or VM operation.

@@ -72,6 +72,10 @@ class RecoveryTests(unittest.TestCase):
         self.helper = SimpleNamespace(acquire_lease=acquire, MountedStorageGuard=lambda _:contextlib.nullcontext(None),
             AnchoredRoot=Root, s=SimpleNamespace(root_payload_guard=lambda: self.assertTrue(self.held)))
         self.stack.enter_context(patch.object(o, 'setup', return_value=self.helper))
+        # This fixture owns a synthetic lease; real admission is covered by
+        # test_mimo_startup_admission's actual temporary canonical flock.
+        self.stack.enter_context(patch.object(o, 'startup_lease',
+            side_effect=lambda h, boot: h.acquire_lease(blocking=False)))
         self.stack.enter_context(patch.object(o, 'source_preflight'))
         self.stack.enter_context(patch.object(o, 'storage_paths'))
         def write(h, name, v):

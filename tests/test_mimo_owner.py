@@ -208,6 +208,7 @@ class OwnerTests(unittest.TestCase):
             return ''
         with contextlib.ExitStack() as stack:
             replacements=dict(setup=Mock(return_value=helper),source_preflight=Mock(),
+                startup_lease=lambda h, boot: h.acquire_lease(blocking=False),
                 read=Mock(side_effect=read),require_selected=Mock(return_value=selected),
                 unit_identity=Mock(return_value={'pid':1,'invocation_id':'fixture'}),
                 BOOT=SimpleNamespace(read_text=lambda:'fixture-boot'),storage_paths=Mock(),

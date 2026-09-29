@@ -41,6 +41,7 @@ HEX = re.compile(r'[0-9a-f]{64}\Z')
 BOOT = Path('/proc/sys/kernel/random/boot_id')
 LEASE_PATH = Path('/run/llmctl/lifecycle.lock')
 SETTLEMENT_LEASE_SECONDS = 10
+STARTUP_LEASE_SECONDS = 2
 MEMORY_SLICE = 'llmmimo.slice'
 MEMORY_SLICE_PATH = Path('/sys/fs/cgroup') / MEMORY_SLICE
 MEMORY_SLICE_UNIT = Path('/etc/systemd/system') / MEMORY_SLICE
@@ -76,6 +77,7 @@ OWNER_FAILURE_CODES = frozenset({
     'verified_artifact_required', 'verified_shard_changed',
     'new_boot_recovery_invalid', 'new_boot_owner_present', 'new_boot_archive_changed',
     'new_boot_recovery_consumed', 'source_only_amendment_required', 'guard_lock_changed', 'source_successor_invalid',
+    'startup_lock_changed', 'startup_state_changed', 'startup_lease_deadline',
 })
 
 
@@ -1623,6 +1625,44 @@ def assert_launch_admission(m, selected, previous, recovery=None):
                 and previous.get('request_hold') is False, 'prior_owner_or_request_unsettled')
 
 
+@contextlib.contextmanager
+def startup_lease(h, boot):
+    """Bound only initial entry; never replay acquired launch/guard work."""
+    from common.lifecycle_lease import LeaseBusy
+    def identity():
+        info = LEASE_PATH.lstat()
+        return info.st_dev, info.st_ino
+    original = None
+    deadline = time.monotonic() + STARTUP_LEASE_SECONDS
+    def check(allow_absent=False):
+        nonlocal original
+        require(BOOT.read_text().strip() == boot, 'boot_changed')
+        try:
+            observed = identity()
+        except FileNotFoundError:
+            # Only canonical acquire_lease may create an initially absent lock.
+            require(allow_absent and original is None, 'startup_lock_changed')
+        else:
+            if original is None:
+                original = observed
+            require(observed == original, 'startup_lock_changed')
+        require(time.monotonic() < deadline, 'startup_lease_deadline')
+    with contextlib.ExitStack() as stack:
+        while True:
+            check(allow_absent=True)
+            try:
+                lease = stack.enter_context(h.acquire_lease(blocking=False))
+            except LeaseBusy:
+                check()
+                time.sleep(min(.025, max(0, deadline - time.monotonic())))
+                continue
+            break
+        check()
+        lease.validate()
+        yield lease
+        lease.validate()
+
+
 def supervise(dry_run=False):
     m = read(BASE / 'manifest.json')
     h = setup()
@@ -1655,7 +1695,17 @@ def supervise(dry_run=False):
         nonlocal operation
         operation = value
     try:
-        with h.acquire_lease(blocking=False) as lease, h.MountedStorageGuard(h.s) as g:
+        with startup_lease(h, boot) as lease, h.MountedStorageGuard(h.s) as g:
+            # Admission may have waited. Recheck the complete current source and
+            # predecessor before trusting the earlier read-only launch decision.
+            require(read(BASE / 'manifest.json') == m, 'launch_source_changed')
+            try:
+                current_previous = read(BASE / 'state.json')
+            except FileNotFoundError:
+                current_previous = None
+            require(current_previous == previous, 'startup_state_changed')
+            require(unit_identity() == supervisor, 'supervisor_not_current')
+            source_preflight(h, m)
             storage_paths(h, g)
             h.s.root_payload_guard()
             require_selected(m, selected)

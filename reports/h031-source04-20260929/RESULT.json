@@ -1,0 +1,57 @@
+{
+  "acquiredBodyReplayAllowed": false,
+  "activeGuardBudgetSeconds": 5,
+  "admissionBudgetSeconds": 2,
+  "authorization": {
+    "scope": "2-second initial canonical admission; entry-only retry; full current revalidation under lease; no deployment",
+    "source": "../INBOX.md",
+    "utc": "2026-09-29T10:24:00Z"
+  },
+  "baseCommit": "711b24e283c16b61067621de39b796a8657ee309",
+  "deployment": false,
+  "futureActivationPrerequisites": [
+    "Exact final owner/dependency hashes and updated pinned closure reviewed by root.",
+    "Precise approved source delta and compatible explicit source transition/reconciliation.",
+    "Immutable predecessor archives, intent/supplement/receipt chain, failures, uncertain owners and quarantines preserved.",
+    "Separately authorized current physical-absence and exact MiMo-target hardware proof.",
+    "No replay of uncertain/consumed work; no silent reuse of prior receipt for amended manifest."
+  ],
+  "futureActivationRequired": true,
+  "generatedUtc": "2026-09-29T10:26:25.933924+00:00",
+  "historicalHolderProved": false,
+  "historicalThrowSiteProved": false,
+  "imageScopeChanged": false,
+  "inference": false,
+  "installedManifestChanged": false,
+  "installedSelectionChanged": false,
+  "liveAcceptance": false,
+  "pins": {
+    "capturedManifestBaseMatches": 96,
+    "differentManifestBaseSourcePins": 0,
+    "externalPrepExactBytesVerified": false,
+    "finalSourcePinComparison": {
+      "unchanged": 95,
+      "authorizedOwnerChanged": 1
+    },
+    "missingManifestBaseSourcePins": 0
+  },
+  "privateCapturesCommitted": false,
+  "productionOwnerNewSha256": "2875de12f543ba06de36d57d06f4a8d87553765f74cd4cb69e0d7c76942a698c",
+  "productionOwnerOldSha256": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090",
+  "productionSourceChanged": true,
+  "schema": 1,
+  "status": "SOURCE_FIX_COMPLETE_FOCUSED_PASS_NOT_DEPLOYED",
+  "task": "H031-SOURCE04",
+  "tests": {
+    "correctedPassed": 61,
+    "historicalReplay": false,
+    "kind": "SOURCE_FIXTURE_ONLY",
+    "priorDiagnosticPassed": 21,
+    "priorNewDiagnosticCases": 3,
+    "status": "PASS",
+    "newAdmissionCases": 10,
+    "originalTransientFixture": "EXPECTED_LeaseBusy_FAILURE"
+  },
+  "verifiedPathNestedAcquireFound": false,
+  "vmOperations": 0
+}

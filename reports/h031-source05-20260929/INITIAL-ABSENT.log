@@ -1,0 +1,6 @@
+test_initially_absent_lock_is_created_by_canonical_acquire_once (tests.test_mimo_startup_admission.StartupAdmissionTests.test_initially_absent_lock_is_created_by_canonical_acquire_once) ... ok
+
+----------------------------------------------------------------------
+Ran 1 test in 0.027s
+
+OK

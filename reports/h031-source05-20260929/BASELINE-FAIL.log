@@ -1,0 +1,25 @@
+test_initially_absent_lock_is_created_by_canonical_acquire_once (tests.test_mimo_startup_admission.StartupAdmissionTests.test_initially_absent_lock_is_created_by_canonical_acquire_once) ... ERROR
+
+======================================================================
+ERROR: test_initially_absent_lock_is_created_by_canonical_acquire_once (tests.test_mimo_startup_admission.StartupAdmissionTests.test_initially_absent_lock_is_created_by_canonical_acquire_once)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H031-SOURCE05-20260929/repo/tests/test_mimo_startup_admission.py", line 235, in test_initially_absent_lock_is_created_by_canonical_acquire_once
+    o.supervise()
+    ~~~~~~~~~~~^^
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H031-SOURCE05-20260929/repo/scripts/runtime/mimo/owner.py", line 1698, in supervise
+    with startup_lease(h, boot) as lease, h.MountedStorageGuard(h.s) as g:
+         ~~~~~~~~~~~~~^^^^^^^^^
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/contextlib.py", line 141, in __enter__
+    return next(self.gen)
+  File "<SOURCE04 startup_lease>", line 1635, in startup_lease
+  File "<SOURCE04 startup_lease>", line 1633, in identity
+  File "/opt/homebrew/Cellar/python@3.14/3.14.7/Frameworks/Python.framework/Versions/3.14/lib/python3.14/pathlib/__init__.py", line 661, in lstat
+    return os.lstat(self)
+           ~~~~~~~~^^^^^^
+FileNotFoundError: [Errno 2] No such file or directory: '/private/var/folders/sg/j0dknh91465dbffgf91jksdh0000gp/T/tmpza10_i4h/run/llmctl/lifecycle.lock'
+
+----------------------------------------------------------------------
+Ran 1 test in 0.008s
+
+FAILED (errors=1)
