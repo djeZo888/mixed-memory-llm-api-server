@@ -53,8 +53,8 @@ publication because Docker reordered otherwise identical Mounts entries. That
 failure is retained. A focused correction canonicalizes complete mount entries,
 preserving multiplicity and rejecting missing/non-list/non-dictionary shape.
 Source/Destination/RW/content changes still invalidate the observation. The
-corrected adapter passes 36 affected refresh/production fixtures. This is the
-only post-deployment source correction; it needs the reviewed successor receipt.
+corrected adapter passes 36 affected refresh/production fixtures. A second,
+separate Ada coexistence correction is described below.
 
 The corrected adapter `127f1e71...` was applied at 01:57:07 UTC with source-only
 receipt successor `7ead1d1f...`. The first successful status took 0.924258 s and
@@ -107,3 +107,10 @@ combined harness activation and actual tool/follow-up/replay acceptance; Worker1
 submitted zero inference requests. MiMo/image/frontier were not started. No
 model/engine/driver, power/fan/ECC, capacity policy, history, hold or quarantine
 was changed. Root owns publication and any later task; no worker GitHub push.
+
+Evidence chronology: `activation.json` includes earlier source-transition,
+preflight and start-acceptance snapshots. Its nested `laneReadiness` value and
+earlier container states describe those historical steps. Use `finalWarmRefresh`
+and `ready-handoff.json`'s top-level slots/native/services for final readiness;
+the receipt metadata itself is source evidence, not a live readiness claim.
+CORE01 exited successfully at 02:14:51 UTC, before its hard deadline.
