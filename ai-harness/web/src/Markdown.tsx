@@ -52,6 +52,7 @@ function InlineImage({ file, alt }: { file: Artifact; alt?: string }) {
   );
 }
 const ArtifactCatalog = createContext<ReturnType<typeof artifactReferences>>(new Map());
+const InlineDownloadDisabled = createContext(false);
 function MarkdownAnchor({ href, children }: ComponentProps<'a'>) {
   const references = useContext(ArtifactCatalog);
   return href ? (
@@ -61,10 +62,25 @@ function MarkdownAnchor({ href, children }: ComponentProps<'a'>) {
         ? { download: true }
         : { target: '_blank', rel: 'noopener noreferrer' })}
     >
-      {children}
+      <InlineDownloadDisabled.Provider value={true}>{children}</InlineDownloadDisabled.Provider>
     </a>
   ) : (
-    <span>{children}</span>
+    <span>
+      <InlineDownloadDisabled.Provider value={true}>{children}</InlineDownloadDisabled.Provider>
+    </span>
+  );
+}
+function MarkdownCode({ children, className }: ComponentProps<'code'>) {
+  const references = useContext(ArtifactCatalog);
+  const disabled = useContext(InlineDownloadDisabled);
+  const file = typeof children === 'string' ? references.get(children) : undefined;
+  const url = file && artifactDownloadUrl(file.id);
+  // Only the exact owned download route qualifies, never a path/preview alias.
+  // Render locally: retain the original message and all fenced-code examples.
+  return !disabled && file && url && children === url ? (
+    <MarkdownAnchor href={url}>Download {file.name}</MarkdownAnchor>
+  ) : (
+    <code className={className}>{children}</code>
   );
 }
 function MarkdownImage({ src, alt }: ComponentProps<'img'>) {
@@ -84,7 +100,11 @@ function MarkdownTable({ children }: ComponentProps<'table'>) {
   );
 }
 function MarkdownPre({ children }: ComponentProps<'pre'>) {
-  return <pre tabIndex={0}>{children}</pre>;
+  return (
+    <pre tabIndex={0}>
+      <InlineDownloadDisabled.Provider value={true}>{children}</InlineDownloadDisabled.Provider>
+    </pre>
+  );
 }
 // Stable component types preserve table scroll position and image error state
 // when an SSE update refreshes the surrounding reply/catalog.
@@ -93,6 +113,7 @@ const components = {
   img: MarkdownImage,
   table: MarkdownTable,
   pre: MarkdownPre,
+  code: MarkdownCode,
 };
 export const Markdown = memo(function Markdown({
   children,
