@@ -101,10 +101,13 @@ export async function boundedControlGet(url: string, key: string, signal?: Abort
   });
 }
 export function createProductionQwenVerifier(receiptValue: unknown, credentials: { controlKey: string; inferenceKey: string },
-  get: (url: string, key: string) => Promise<any> = boundedControlGet, now: () => number = Date.now,
+  get: (url: string, key: string, signal?: AbortSignal) => Promise<any> = boundedControlGet, now: () => number = Date.now,
   observer?: QwenAdmissionObserver) {
   const receipt = validateQwenReceipt(receiptValue);
-  return async (alias: string, context: QwenAdmissionContext = admissionContext("admission")): Promise<QwenCountQualification> => {
+  const run = async <T>(alias: string, context: QwenAdmissionContext,
+    operation?: (qualification: QwenCountQualification) => Promise<T>, signal?: AbortSignal): Promise<{ qualification: QwenCountQualification; value: T | undefined }> => {
+    const active = () => { if (signal?.aborted) fail("cancelled"); };
+    active();
     if (!Object.hasOwn(receipt.lanes, alias)) return fail();
     const pin = receipt.lanes[alias] ?? fail();
     const stage = async <T>(step: QwenAdmissionDiagnostic["step"], work: () => Promise<T>): Promise<T> => {
@@ -119,7 +122,7 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
       }
     };
     const read = async (url: string, key: string) => {
-      try { const value = await get(url, key); if (!value || typeof value !== "object") return fail("transport"); return value; }
+      try { active(); const value = await get(url, key, signal); active(); if (!value || typeof value !== "object") return fail("transport"); return value; }
       catch (error) { if (error instanceof QwenAdmissionError) throw error; return fail("transport"); }
     };
     const fresh = (x: any) => x?.state === "ok" && x.freshness === "fresh" && Number.isFinite(x.age_ms) && x.age_ms >= 0 && x.age_ms <= 15000 &&
@@ -143,9 +146,10 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
         if (receipt.schema === 2 && (v.observed !== "ready" || v.endpoint.ready !== true)) fail("owner_ready");
         return v;
       });
-      if (receipt.schema === 1) return `${v.active_identity}:${v.generation}:${pin.containerId}:${pin.startedAt}`;
+      if (receipt.schema === 1) return { instanceId: `${v.active_identity}:${v.generation}:${pin.containerId}:${pin.startedAt}`, observedAt: [v.observed_at * 1000] };
       return stage(`node_${phase}`, async () => {
         const node = await read(receipt.nodeUrl!, credentials.controlKey);
+        const receivedAt = now();
         if (node.schema_version !== 1 || node.node_id !== "ai-vm") fail("node_schema");
         if (typeof node.boot_id !== "string" || !/^[a-f0-9-]{36}$/.test(node.boot_id)) fail("boot_identity");
         if (!fresh(node)) fail("freshness");
@@ -171,18 +175,49 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
         if (s.deployment_id !== pin.deploymentId || s.model_alias !== alias) fail("selected_profile");
         if (s.configured_context_tokens !== 480000) fail("token_capacity");
         if (!gpuUuidMatch) hardwareFailure();
-        return `${node.boot_id}:${v.active_identity}:${v.generation}:${s.generation}`;
+        return { instanceId: `${node.boot_id}:${v.active_identity}:${v.generation}:${s.generation}`,
+          observedAt: [v.observed_at * 1000, Date.parse(node.observed_at), Date.parse(s.observed_at),
+            receivedAt - node.age_ms, receivedAt - s.age_ms] };
       });
     };
+    const stillFresh = (proof: { observedAt: number[] }) => {
+      // Native metadata can consume its own deadline. Never start the operation
+      // with an identity proof that expired while collecting that metadata.
+      for (const observedAt of proof.observedAt) {
+        const age = now() - observedAt;
+        if (!Number.isFinite(age) || age < -2000 || age > 15000) fail("freshness");
+      }
+    };
     const before = await identity("before");
-    await stage("native", async () => {
+    const native = () => stage("native", async () => {
       const v = await read(new URL("/server_info", pin.nativeBaseUrl).href, credentials.inferenceKey);
       if (v.status !== "ready") fail("runtime_state");
       if (v.context_length !== 480000 || v.max_total_tokens !== 480000 || v.max_total_num_tokens !== 480000) fail("token_capacity");
       if (v.version !== "0.5.19" || v.served_model_name !== alias || v.max_running_requests !== 1 ||
           v.default_chat_template_kwargs?.enable_thinking !== false || v.tool_call_parser !== "qwen3_coder" || v.reasoning_parser !== "qwen3") fail("native_profile");
     });
-    if (await identity("after") !== before) fail("identity_changed");
-    return { ...QWEN_CODEX_PIN, alias, instanceId: before };
+    await native();
+    const qualification = { ...QWEN_CODEX_PIN, alias, instanceId: before.instanceId };
+    let value: T | undefined;
+    if (operation) {
+      active();
+      stillFresh(before);
+      value = await operation(qualification);
+      active();
+      // Count must retain native capacity/profile checks on both sides, while
+      // the fresh control/node observations bracket the entire operation.
+      await native();
+    }
+    const after = await identity("after");
+    stillFresh(after);
+    if (after.instanceId !== before.instanceId) fail("identity_changed");
+    active();
+    return { qualification, value };
   };
+  return Object.assign(
+    async (alias: string, context: QwenAdmissionContext = admissionContext("admission")): Promise<QwenCountQualification> =>
+      (await run(alias, context)).qualification,
+    { withVerifiedLane: async <T>(alias: string, operation: (qualification: QwenCountQualification) => Promise<T>,
+      context: QwenAdmissionContext = admissionContext("count"), signal?: AbortSignal): Promise<T> =>
+      (await run(alias, context, operation, signal)).value as T });
 }
