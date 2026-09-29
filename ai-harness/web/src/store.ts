@@ -11,6 +11,7 @@ import {
   type ImageCapabilities,
 } from './image-capabilities';
 import { uploadKey, uploadProblem } from './uploads';
+import { secureUUID } from './uuid';
 import type { Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
 
 export interface ViewState {
@@ -502,7 +503,7 @@ export class HarnessStore {
       if (readSubmission(id))
         throw new Error('A submitted message is awaiting acknowledgement. Retry the saved submission first.');
       const pending: PendingSubmission = {
-        version: 1, sessionId: id, submissionId: crypto.randomUUID(), text,
+        version: 1, sessionId: id, submissionId: secureUUID(), text,
         attachmentIds: attachments.map((a) => a.id),
         imageReferences: imageReferences.map((a) => a.id),
       };
@@ -682,7 +683,7 @@ export class HarnessStore {
       async () => {
         this.clearSettledCompaction(id);
         const saved = this.compactionAction(id);
-        const action = saved ?? { actionId: crypto.randomUUID() };
+        const action = saved ?? { actionId: secureUUID() };
         // Persist before dispatch: a lost acknowledgement or page refresh must
         // reconcile this exact action instead of compacting a second time.
         sessionStorage.setItem(`ai-harness:compaction:${id}`, JSON.stringify(action));
