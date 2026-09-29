@@ -280,17 +280,19 @@ export function translateResponses(value: unknown, outputLimit = 65536, selected
             if (pending.size && messages.at(-1)?.role === "tool")
                 reject("Interleaved new tool calls before pending results");
             const id = string(item.call_id), originalName = string(item.name), custom = item.type === "custom_tool_call";
-            if (item.namespace != null && (!Object.hasOwn(NAMESPACE_TOOLS, item.namespace) || custom)) reject("Unsupported history namespace");
+            if (!/^[A-Za-z0-9_-]{1,64}$/.test(originalName)) reject("Invalid history tool name");
+            if (item.namespace != null && (!Object.hasOwn(NAMESPACE_TOOLS, item.namespace) || custom ||
+                !NAMESPACE_TOOLS[item.namespace]!.includes(originalName))) reject("Unsupported history namespace");
             const name = item.namespace == null ? originalName : `sova_ns_${item.namespace}_${originalName}`;
+            if (name.length > 64) reject("Invalid history tool name");
             if (item.namespace == null && originalName.startsWith("sova_ns_")) reject("Transport name is not a native history identity");
             if (!id || calls.has(id))
                 reject("Duplicate tool call ID");
-            const spec = tools.get(name);
-            if (!spec || spec.custom !== custom)
-                reject("Unknown history tool");
+            // Native compaction sends tools:[] with completed call/result history.
+            // Historical identity and type come from those records, not today's
+            // declarations. Preserve their payloads, including prior tool errors.
+            // Do not add them to `tools`: that map alone authorizes new output.
             const args = custom ? JSON.stringify({ input: string(item.input) }) : string(item.arguments);
-            if (custom && spec!.grammar && !validPatch(item.input))
-                reject("Invalid pinned patch grammar");
             calls.set(id, { name, custom });
             pending.add(id);
             let prior = messages.at(-1);
