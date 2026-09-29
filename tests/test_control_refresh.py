@@ -1,11 +1,12 @@
-"""Finite refresh CAS/guard fixtures; no VM, model, sleep loop or fake lease."""
-from contextlib import contextmanager
+"""Finite refresh CAS/guard fixtures; no VM, model, unbounded loop or fake lease."""
+from contextlib import contextmanager, ExitStack
 from copy import deepcopy
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from threading import Event, Thread
 from unittest.mock import patch
 import os
+import json
 import sys
 import time
 import unittest
@@ -104,11 +105,193 @@ class RefreshTests(unittest.TestCase):
             self.assertEqual(error.exception.code, 'deadline_exceeded')
             write.assert_not_called()
 
-    def test_busy_publication_is_nonblocking_and_writes_nothing(self):
-        with acquire_lease(system_root=self.h.root, trusted_uid=os.getuid()):
-            with patch.object(self.h.journal, 'save', wraps=self.h.journal.save) as write:
-                with self.assertRaises(LeaseBusy): self.h.app._refresh(self.ticket())
-                write.assert_not_called()
+    @contextmanager
+    def competing_refresh(self, ticket=None):
+        """Real canonical lease, one worker, explicit bounded owner release."""
+        ticket = ticket or self.ticket()
+        missed, attempts, holds, failures = Event(), [], [], []
+        factory = self.h.app.lease_factory
+        @contextmanager
+        def tracked(**kwargs):
+            self.assertFalse(kwargs['blocking'])
+            attempts.append(time.monotonic())
+            with ExitStack() as stack:
+                try:
+                    lease = stack.enter_context(factory(**kwargs))
+                except LeaseBusy:
+                    missed.set()
+                    raise
+                started = time.monotonic()
+                try:
+                    yield lease
+                finally:
+                    holds.append(time.monotonic() - started)
+        def refresh():
+            try: self.h.app._refresh(ticket)
+            except Exception as exc: failures.append(exc)
+        with patch.object(self.h.app, 'lease_factory', tracked):
+            with acquire_lease(system_root=self.h.root, trusted_uid=os.getuid()):
+                thread = Thread(target=refresh)
+                thread.start()
+                self.assertTrue(missed.wait(1))
+                yield ticket, thread, attempts, holds, failures
+            thread.join(1.5)
+            self.assertFalse(thread.is_alive())
+
+    def test_short_competing_owner_releases_and_candidate_publishes_once(self):
+        with patch.object(self.h.journal, 'save', wraps=self.h.journal.save) as write:
+            with self.competing_refresh() as (ticket, thread, attempts, holds, failures):
+                self.assertIsNone(ticket.result)
+                # Match the observed ~843ms llm-node competing hold.
+                Event().wait(.85)
+            self.assertEqual(failures, [])
+            self.assertEqual(ticket.result[0], 200)
+            self.assertEqual(ticket.result[1][0]['observed'], 'ready')
+            self.assertGreaterEqual(len(attempts), 2)
+            self.assertEqual(len(holds), 1)
+            self.assertEqual(write.call_count, 1)
+
+    def test_lease_busy_inside_publication_body_is_never_retried(self):
+        with patch.object(self.h.app, 'lease_factory', wraps=self.h.app.lease_factory) as acquire, \
+             patch.object(SyntheticSession, 'publish_refresh', side_effect=LeaseBusy()) as publish, \
+             patch.object(self.h.journal, 'save') as write:
+            with self.assertRaises(LeaseBusy): self.h.app._refresh(self.ticket())
+            self.assertEqual(acquire.call_count, 1)
+            self.assertEqual(publish.call_count, 1)
+            write.assert_not_called()
+
+    def test_sustained_contention_exhausts_existing_budget_without_write(self):
+        self.h.app.read_seconds = .12
+        started = time.monotonic()
+        with patch.object(self.h.journal, 'save') as write:
+            with self.competing_refresh() as (ticket, thread, attempts, holds, failures):
+                thread.join(.5)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual([e.code for e in failures], ['deadline_exceeded'])
+            self.assertEqual(holds, [])
+            self.assertLess(time.monotonic() - started, .5)
+            self.assertLessEqual(len(attempts), 6)
+            write.assert_not_called()
+
+    def test_ticket_expiry_limits_wait_before_read_deadline(self):
+        ticket = self.ticket()
+        ticket.expires_at = time.monotonic() + .12
+        with patch.object(self.h.journal, 'save') as write:
+            with self.competing_refresh(ticket) as (_, thread, attempts, holds, failures):
+                thread.join(.5)
+                self.assertFalse(thread.is_alive())
+            self.assertEqual([e.code for e in failures], ['deadline_exceeded'])
+            self.assertEqual(holds, [])
+            write.assert_not_called()
+
+    def test_cancelled_wait_does_not_reacquire_or_publish(self):
+        with patch.object(self.h.journal, 'save') as write:
+            with self.competing_refresh() as (ticket, thread, attempts, holds, failures):
+                with ticket.condition:
+                    ticket.cancelled = True
+                    ticket.condition.notify_all()
+                thread.join(.5)
+                self.assertFalse(thread.is_alive())
+                count = len(attempts)
+            self.assertEqual(len(attempts), count)
+            self.assertEqual([e.code for e in failures], ['admission_timeout'])
+            self.assertEqual(holds, [])
+            write.assert_not_called()
+
+    def test_cancelled_during_final_anchor_never_publishes(self):
+        ticket, calls = self.ticket(), []
+        original = SyntheticSession.refresh_anchor
+        def anchor(session, deadline):
+            calls.append(1)
+            if len(calls) == 3:
+                with ticket.condition: ticket.cancelled = True
+            return original(session, deadline)
+        with patch.object(SyntheticSession, 'refresh_anchor', anchor), patch.object(self.h.journal, 'save') as write:
+            self.h.app._refresh(ticket)
+            write.assert_not_called()
+            self.assertIsNone(ticket.result)
+
+    def test_identity_generation_and_pending_changes_during_wait_never_publish(self):
+        changes = {
+            'boot': lambda: setattr(self.b, 'boot', 'new-boot'),
+            'profile': lambda: self.b.state.update(selected='beta'),
+            'source': lambda: self.b.records[0].update(revision='b' * 40),
+            'runtime': lambda: self.b.state['container'].update(id='replaced'),
+            'owner': lambda: self.b.state['container'].update(instance='new-owner'),
+            'owner_generation': lambda: self.b.state['container'].update(generation='new-start'),
+            'pending_create': lambda: self.b.state.update(pending_create={'dispatch': 'unknown'}),
+            'current_operation': lambda: setattr(self.h.app, '_current', 'changed'),
+            'control_generation': lambda: self.h.app._state.update(generation=100),
+        }
+        saved_state, records = deepcopy(self.b.state), deepcopy(self.b.records)
+        for name, mutate in changes.items():
+            with self.subTest(name=name):
+                self.b.state, self.b.records = deepcopy(saved_state), deepcopy(records)
+                self.b.boot = 'fixture-boot'
+                self.h.app._current = None
+                self.h.app._state['generation'] = 0
+                with patch.object(self.h.journal, 'save') as write:
+                    with self.competing_refresh() as (ticket, thread, attempts, holds, failures):
+                        mutate()
+                    self.assertEqual([e.code for e in failures], ['stale_state'])
+                    self.assertGreaterEqual(len(attempts), 2)
+                    self.assertIsNone(ticket.result)
+                    write.assert_not_called()
+        self.h.app._current = None
+
+    def test_collection_and_publication_wait_leave_guard_access_and_short_hold(self):
+        ticket = self.ticket()
+        collecting, release_collection, waiting, release_wait = Event(), Event(), Event(), Event()
+        original_observe, original_wait = SyntheticSession.observe, ticket.condition.wait
+        guard_times, holds, failures = [], [], []
+        factory = self.h.app.lease_factory
+        @contextmanager
+        def tracked(**kwargs):
+            with factory(**kwargs) as lease:
+                start = time.monotonic()
+                try: yield lease
+                finally: holds.append(time.monotonic() - start)
+        def observe(session, deadline):
+            collecting.set()
+            if not release_collection.wait(1): raise AssertionError('collector timeout')
+            return original_observe(session, deadline)
+        def wait(seconds):
+            waiting.set()
+            if not release_wait.wait(1): raise AssertionError('wait fixture timeout')
+            return original_wait(seconds)
+        def refresh():
+            try: self.h.app._refresh(ticket)
+            except Exception as exc: failures.append(exc)
+        start = time.monotonic()
+        with patch.object(SyntheticSession, 'observe', observe), patch.object(ticket.condition, 'wait', wait), patch.object(self.h.app, 'lease_factory', tracked):
+            thread = Thread(target=refresh)
+            thread.start()
+            try:
+                self.assertTrue(collecting.wait(1))
+                before_guard = time.monotonic()
+                with acquire_lease(system_root=self.h.root, trusted_uid=os.getuid(), blocking=False):
+                    guard_times.append(time.monotonic() - before_guard)
+                    # Deliberately slow collection is wholly outside ownership.
+                    Event().wait(.06)
+                    release_collection.set()
+                    self.assertTrue(waiting.wait(1))
+                before_guard = time.monotonic()
+                with acquire_lease(system_root=self.h.root, trusted_uid=os.getuid(), blocking=False):
+                    guard_times.append(time.monotonic() - before_guard)
+                    Event().wait(.06)
+            finally:
+                release_collection.set(); release_wait.set(); thread.join(1.5)
+        total = time.monotonic() - start
+        self.assertFalse(thread.is_alive())
+        self.assertEqual(failures, [])
+        self.assertEqual(ticket.result[0], 200)
+        self.assertEqual(len(holds), 1)
+        self.assertLess(max(guard_times), .05)
+        self.assertLess(holds[0], .05)
+        self.assertGreater(total, .12)
+        print('REFRESH_TIMING ' + json.dumps({'wholeRefreshMs':round(total*1000,3),
+            'publicationLeaseHeldMs':round(holds[0]*1000,3),
+            'guardAcquireMs':[round(t*1000,3) for t in guard_times]}))
 
     def test_recovery_running_never_becomes_ready(self):
         self.b.storage_available = False

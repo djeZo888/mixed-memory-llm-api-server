@@ -9,7 +9,7 @@ Reads never wait for a model startup.
 from __future__ import annotations
 
 import copy
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 import hashlib
 import json
 import queue
@@ -667,6 +667,28 @@ class Application:
             if self._closed:
                 return
 
+    @contextmanager
+    def _publication_lease(self, ticket, deadline):
+        # Only acquisition is retried. No lease is held while waiting, and the
+        # existing publication budget includes both contention and publication.
+        with ExitStack() as stack:
+            while True:
+                with ticket.condition:
+                    if ticket.cancelled:
+                        raise ControlError("admission_timeout")
+                    deadline.remaining()
+                try:
+                    lease = stack.enter_context(self.lease_factory(blocking=False))
+                except LeaseBusy:
+                    with ticket.condition:
+                        if ticket.cancelled:
+                            raise ControlError("admission_timeout")
+                        ticket.condition.wait(min(0.025, deadline.remaining()))
+                else:
+                    break
+            deadline.remaining()
+            yield lease
+
     def _refresh(self, ticket):
         # No canonical ownership during manager loading, probes or catalog reads.
         deadline = Deadline.after(self.read_seconds)
@@ -683,10 +705,11 @@ class Application:
         records = session.catalog(deadline) if ticket.request.get("catalog") else None
         if session.refresh_anchor(deadline) != anchor:
             raise ControlError("stale_state", 409)
-        with self.lease_factory(blocking=False) as lease:
+        publication = Deadline(min(deadline.end, time.monotonic() + 1.0,
+                                   ticket.expires_at or deadline.end))
+        with self._publication_lease(ticket, publication) as lease:
             # Recheck only bounded identity anchors, never the slow readiness
             # probe or a second manager load. Expired candidates are discarded.
-            publication = Deadline(min(deadline.end, time.monotonic() + 1.0))
             with ticket.condition:
                 if ticket.cancelled:
                     return
@@ -697,6 +720,10 @@ class Application:
                         self._state, self._volatile, self._current, self._persisted,
                         self._journal_error, self._reconciled]):
                     raise ControlError("stale_state", 409)
+                with ticket.condition:
+                    if ticket.cancelled:
+                        return
+                    publication.remaining()
                 snapshot = session.publish_refresh(lease, publication, self.journal,
                     lambda: self._reconcile(snapshot, fingerprint, volatile=recovery))
             publication.remaining()
