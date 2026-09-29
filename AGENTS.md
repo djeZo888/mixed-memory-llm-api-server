@@ -1,4 +1,21 @@
-# Latest checkpoint — H028 complete; dedicated Ada Qwen resident
+# Active H029 — Codex completion, first two-hour window
+
+The user authorized `ai-harness/PLAN-CODEX-COMPLETION-20260929.md` with both
+workers; root orchestrates/reviews/publishes only. Window September 29,
+01:25–03:25 UTC; stop new live submissions 03:10 and settle/report by 03:25.
+Fresh bounded native CLI tasks on mac-worker1/mac-worker2 with isolated copies.
+Worker1 owns control-lock/provider/admission repairs and ai-vm; Worker2 owns
+Responses/MCP, submission IDs, app/store/UI and ai-harness deployments. Root
+coordinates shared edits and one reviewed combined release. MiniMax stays default.
+Package 1 is the priority; later packages proceed only after their prerequisites
+pass and within this window. Actual Qwen recovery/short qualification is now
+authorized. MiMo recovery only after its control-lock defect is repaired and
+reviewed. Preserve Ada200K, history/files, fan/power/ECC/runtime policies. No
+new models, capacity/stress benchmarks, full950K test, engine/driver updates,
+guard bypass, blanket retries or automatic extension. Keep first failure evidence.
+Publish to feature/glm53-flash / draft PR10; incomplete branch is not merge-ready.
+
+# Previous checkpoint — H028 complete; dedicated Ada Qwen resident
 
 September 29, 2026, Europe/Ljubljana. Read `reports/h028-overview.md` and its
 deployment/acceptance receipts. Five GPUs now have fresh status metrics with
