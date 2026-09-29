@@ -163,12 +163,22 @@ class ProductionAnchorTests(unittest.TestCase):
             before = self.anchor()
             mounts.reverse()
             self.assertEqual(self.anchor(), before)
-            mounts[0]['RW'] = True
+            for key, changed in [('Source', '/changed'), ('Destination', '/changed'), ('RW', True)]:
+                saved = mounts[0][key]
+                mounts[0][key] = changed
+                self.assertNotEqual(self.anchor(), before)
+                mounts[0][key] = saved
+            mounts.append(deepcopy(mounts[0]))
             self.assertNotEqual(self.anchor(), before)
+            for invalid in (None, {}, 'private', [None], ['private']):
+                item['Mounts'] = invalid
+                with self.assertRaises(ControlError): self.anchor()
+            del item['Mounts']
+            with self.assertRaises(ControlError): self.anchor()
 
     def test_native_runtime_changes_and_unknown_inventory_are_rejected(self):
         before = self.anchor()
-        with patch.object(self.session.manager.docker, 'inventory', return_value=[{'Id': 'new', 'State': {'Running': True, 'StartedAt': 'new'}}]):
+        with patch.object(self.session.manager.docker, 'inventory', return_value=[{'Id': 'new', 'Mounts': [], 'State': {'Running': True, 'StartedAt': 'new'}}]):
             self.assertNotEqual(self.anchor(), before)
         with patch.object(self.session.manager.docker, 'inventory', side_effect=OSError('private error')):
             with self.assertRaises(ControlError) as error: self.anchor()

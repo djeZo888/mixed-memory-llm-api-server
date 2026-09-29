@@ -201,11 +201,17 @@ class ManagerSession:
                                  stable + (meta.st_size, meta.st_mtime_ns, meta.st_ctime_ns))
                 # Fixtures supply their own native inventory; production uses
                 # Docker.run capped by the same one-second publication deadline.
+                def mounts(item):
+                    value = item.get('Mounts')
+                    if type(value) is not list or any(type(entry) is not dict for entry in value):
+                        raise ControlError('observation_unavailable')
+                    return sorted(value, key=digest)
+
                 native = [{key: item.get(key) for key in
                            ('Id', 'Name', 'Image', 'Config', 'HostConfig', 'NetworkSettings')}
                           # Docker emits Mounts in map iteration order; compare
                           # the complete unordered entries, not their wire order.
-                          | {'mounts': sorted(item.get('Mounts', []), key=digest),
+                          | {'mounts': mounts(item),
                              'runtime': {key: item.get('State', {}).get(key) for key in
                               ('Running', 'Restarting', 'Paused', 'StartedAt', 'FinishedAt', 'Pid')}}
                           for item in manager.docker.inventory()]
