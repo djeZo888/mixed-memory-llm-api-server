@@ -7,7 +7,7 @@ import { CODEX_SPECIALIST_PINS, loadCodexSpecialists, validateCodexSpecialists }
 const now = Date.parse("2026-09-29T15:25:00Z");
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const testedSource = "c863d4984f4a75c237b6de97b7ce40b8570fca81";
-const targetSource = "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e";
+const targetSource = "ef3d863a6eb78918019a512fe2c5da6f61384882";
 const testedPolicy = "aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956";
 const root = "/etc/sova-qualification/";
 /** Synthetic workflows only: no real acceptance receipt is generated/installed. */
@@ -145,4 +145,12 @@ test("protected loader enforces boundaries for record, evidence and review", t =
   defect = ""; opened.length = 0;
   for (const p of [undefined, "/tmp/record.json", root + "../record.json", root + "sub/record.json"]) assert.equal(loadCodexSpecialists(p).frontierResponsesQualified, false);
   assert.deepEqual(opened, []);
+});
+
+test("historical H033 target source and policy reject after exact H034 replacement", () => {
+  const f = fixture();
+  f.review.targetSourceRevision = "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e";
+  f.review.targetPins.toolPolicySha256 = "b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5";
+  f.refresh();
+  assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
 });
