@@ -17,7 +17,13 @@ class Default(unittest.TestCase):
         command=Manager.launch_command(d, {'image_id': d['_runtime']['validation']['image_id'], 'load_mode':'none'})
         kwargs=json.loads(command[command.index('--chat-template-kwargs')+1])
         self.assertEqual(kwargs, {'clear_thinking':True,'reasoning_effort':'low'})
-        for other in root.joinpath('configs/deployments').glob('glm*.json'):
+        # This is the llama.cpp UD model's launch contract. Flash profiles use
+        # a separate runtime and request_policy, not llama chat-template argv.
+        profiles = list(root.joinpath('configs/deployments').glob('glm-5.3-ud-q4-k-xl-*.json'))
+        self.assertEqual({other.stem for other in profiles}, {
+            'glm-5.3-ud-q4-k-xl-' + suffix
+            for suffix in ('8k', '32k', 'g1-480000', 'n76-32k', 'n76-native1m')})
+        for other in profiles:
             if other.stem == 'glm-5.3-ud-q4-k-xl-g1-480000':
                 self.assertEqual(json.loads(other.read_text())['launch']['chat_template_kwargs'],
                                  {'clear_thinking':True,'reasoning_effort':'low'})

@@ -35,6 +35,22 @@ class QwenMigration(unittest.TestCase):
         with self.assertRaisesRegex(LifecycleError, 'h008_slot_measurement_mismatch'):
             self.check()
 
+    def test_top_receipt_rehash_cannot_rewrite_unchanged_binding_or_slot(self):
+        original = copy.deepcopy(self.value)
+        cases = [
+            (lambda p: p.pop('h005_transition'), 'h008_unchanged_binding_modified'),
+            (lambda p: p.update(host_usable_bytes=900 * 1024**3), 'h008_unchanged_binding_modified'),
+            (lambda p: p['modes']['dual-qwen']['slots']['glm'].update(
+                minimum_free_gpu_bytes=24 * 1024**3), 'h008_slot_measurement_mismatch'),
+            (lambda p: p['modes']['dual-qwen']['slots']['qwen'].update(
+                gpu_total_bytes=80 * 1024**3), 'h008_slot_measurement_mismatch')]
+        for change, code in cases:
+            self.value = copy.deepcopy(original)
+            self.binding.documents[self.instance['concurrent_pair_acceptance']['path']] = self.value
+            change(self.value)
+            with self.subTest(code=code), self.assertRaisesRegex(LifecycleError, code):
+                self.check()
+
     def test_logical_launcher_slot_does_not_follow_physical_index(self):
         from lifecycle import qwen38
         self.assertEqual(self.d['concurrent_pair']['guest_gpu_index'], 3)

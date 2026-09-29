@@ -27,7 +27,7 @@ def bound(identifier, binding=None):
     return d
 
 
-def receipt(d):
+def receipt(d, *, gpu_memory=None):
     """In-memory schema fixture; this is not a live measurement or authority."""
     binding = d['_storage_binding']
     value = {'schema_version': 2, 'kind': 'root-reviewed-dualq-480k',
@@ -60,6 +60,10 @@ def receipt(d):
             if identifier in pair.QWEN_PROFILES:
                 proof.update(pair_launcher_sha256=pair.PINS['scripts/runtime/sglang38_pair_file_auth.py'],
                     native_auth_checks={name: 'PASS' for name in q.AUTH_CHECKS})
+            if gpu_memory is not None:
+                # Synthetic (total, minimum free) measurements must precede
+                # every dated snapshot and H005/H008 digest in this chain.
+                proof['gpu_total_bytes'], proof['minimum_free_gpu_bytes'] = gpu_memory[slot]
     path = binding.path('data', pair.ACCEPTANCE_SUFFIX)
     # Explicit dependency fixture: dated predecessor stays separate; this does
     # not mint deployed measurement or actual-image authentication evidence.

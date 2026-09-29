@@ -62,10 +62,8 @@ class CurrentMemory(unittest.TestCase):
 
     def asymmetric_case(self, identifier, resident_slots):
         """Deliberately distinct synthetic totals/peaks; never hardware evidence."""
-        for review in self.proof['modes'].values():
-            review['slots']['glm'].update(gpu_total_bytes=96 * GIB, minimum_free_gpu_bytes=24 * GIB)
-            review['slots']['qwen'].update(gpu_total_bytes=80 * GIB, minimum_free_gpu_bytes=20 * GIB)
-        self.instance['concurrent_pair_acceptance']['sha256'] = pair.receipt_sha256(self.proof)
+        self.proof, self.instance = receipt(self.d, gpu_memory={
+            'glm': (96 * GIB, 24 * GIB), 'qwen': (80 * GIB, 20 * GIB)})
         d = bound(identifier, self.d['_storage_binding'])
         mode = 'dual-qwen' if identifier == pair.QWEN0_PROFILE else 'glm-qwen'
         residents = {slot: resident(slot) for slot in resident_slots}

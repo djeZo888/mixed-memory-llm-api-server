@@ -1,6 +1,7 @@
 """Owner policy integration, real canonical leases; GPU/storage I/O explicit fixtures."""
 import copy
 import contextlib
+import json
 import os
 from pathlib import Path
 import subprocess
@@ -18,11 +19,18 @@ from lifecycle.manager import Manager
 from lifecycle.runtime_io import LifecycleError
 from tests.lifecycle.test_concurrent_profiles import bound, pair
 
-GPU, PEER, IMAGE_GPU = GPU_UUIDS
+# The hardware allowlist is not a role map: it also contains frontier and
+# dedicated Ada owners. Bind these tests to the reviewed text/image roles.
+GPU, PEER = pair.GPU_UUIDS
+IMAGE_GPU = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 
 
 class PolicyTests(unittest.TestCase):
     def setUp(self):
+        self.assertEqual(len({GPU, PEER, IMAGE_GPU}), 3)
+        self.assertEqual(IMAGE_GPU, service.GPU_UUID)
+        for gpu in (GPU, PEER, IMAGE_GPU):
+            self.assertIn(gpu, GPU_UUIDS)
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name).resolve()
@@ -164,10 +172,10 @@ class PolicyTests(unittest.TestCase):
             self.policy.validate_required(PEER, current_boot_id=BOOT, observed_at=stamp, observation_id='old-boot')
 
     def test_storage_delay_does_not_refresh_absence_evidence(self):
-        ticks = iter([0, 16, 16, 16])
-        self.policy.monotonic = lambda: next(ticks)
+        self.policy.monotonic = Mock(side_effect=[0] + [16] * len(GPU_UUIDS))
         self.policy.observe_inventory(inventory(0, uuids=[]), boot_age_seconds=150)
         self.assertEqual(self.store.state['targets'], {})
+        self.assertEqual(self.policy.monotonic.call_count, 1 + len(GPU_UUIDS))
 
     def test_missing_or_unreadable_store_denies_without_target_query(self):
         self.store.read = Mock(side_effect=OSError('missing'))
@@ -241,28 +249,49 @@ class ImageOwnerIntegration(unittest.TestCase):
     def tearDown(self):
         service.OPERATION_DEADLINE = None
 
+    def operation_fixture(self):
+        # Reuse the current real anchored-file/flock fixture. Only external
+        # source/hardware observations and command responses are synthetic.
+        from tests.image_runtime import test_operation_protocol as protocol
+        fixture = protocol.OperationProtocol()
+        fixture.setUp()
+        self.addCleanup(fixture.doCleanups)
+        fixture.runtime.boot = fixture.boot
+        return fixture.runtime, protocol.service
+
     def test_manual_and_systemd_image_start_gate_precedes_owned_mutation(self):
-        runtime = object.__new__(service.Runtime)
-        runtime.guards = Mock()
+        runtime, current_service = self.operation_fixture()
         runtime.require_hardware = Mock(side_effect=LifecycleError('hardware_missing'))
         runtime.state = Mock()
-        with patch.dict(service.os.environ, {'INVOCATION_ID': RUN_ID}), \
-                patch.object(service, 'OPERATION_DEADLINE', 900):
+        runtime.dispatch, runtime.publish = Mock(), Mock()
+        with patch.dict(current_service.os.environ, {'INVOCATION_ID': RUN_ID}), \
+                patch.object(current_service, 'OPERATION_DEADLINE', current_service.time.monotonic() + 30), \
+                patch.object(current_service, 'run') as run:
             with self.assertRaisesRegex(LifecycleError, 'hardware_missing'):
                 runtime.start()
+        runtime.require_hardware.assert_called_once()
         runtime.state.assert_not_called()
+        runtime.dispatch.assert_not_called()
+        runtime.publish.assert_not_called()
+        run.assert_not_called()
 
     def test_explicit_image_recovery_latch_refusal_does_not_reset_or_stop(self):
-        runtime = Mock()
-        runtime.require_hardware.side_effect = LifecycleError('hardware_fault')
-        with patch.object(service, 'Runtime', return_value=runtime), \
-                patch.object(service, 'acquire_lease', return_value=contextlib.nullcontext('borrowed')), \
-                patch.object(service, 'run') as run:
+        runtime, current_service = self.operation_fixture()
+        runtime.require_hardware = Mock(side_effect=LifecycleError('hardware_fault'))
+        runtime.reset_owned, runtime.write_record = Mock(), Mock()
+        query = ['systemctl', 'show', current_service.UNIT, '-p', 'InvocationID']
+        def read_only(argv, **kwargs):
+            self.assertEqual(argv, query)
+            return completed(argv, 'InvocationID=' + RUN_ID + '\n')
+        with patch.object(current_service, 'Runtime', return_value=runtime), \
+                patch.object(current_service, 'run', side_effect=read_only) as run:
             with self.assertRaisesRegex(LifecycleError, 'hardware_fault'):
-                service.recover()
+                current_service.recover()
+        runtime.require_hardware.assert_called_once()
         runtime.reset_owned.assert_not_called()
-        run.assert_not_called()
-        self.assertIsNone(service.OPERATION_DEADLINE)
+        runtime.write_record.assert_not_called()
+        run.assert_called_once_with(query, timeout=2)
+        self.assertIsNone(current_service.OPERATION_DEADLINE)
 
     def test_resident_process_proof_does_not_query_peer_or_spare(self):
         runtime = object.__new__(service.Runtime)
@@ -293,18 +322,14 @@ class ImageOwnerIntegration(unittest.TestCase):
 
 class DurableOwnerIntegration(unittest.TestCase):
     def test_real_registered_writer_persists_latch_and_refuses_lost_mount_or_lease(self):
-        from tests.lifecycle.test_real_storage_io import LocalStorageFixture
+        from tests.lifecycle.test_real_storage_roles import RealRoleFixture
         from control.hardware_latch import empty_state, ProtectedHardwareLatch
-        fixture = LocalStorageFixture()
+        fixture = RealRoleFixture()
         self.addCleanup(fixture.close)
-        # Older fixture injects full mount discovery only; preserve the real
-        # root-payload scanner while adapting its verify roles call explicitly.
-        original_verify = fixture.storage.verify
-        verify = patch.object(fixture.storage, 'verify', side_effect=lambda registration=None, **kwargs: original_verify(registration))
-        verify.start()
-        self.addCleanup(verify.stop)
         path = fixture.binding.path('services', STATE_SUFFIX)
-        fixture.jsonfile(path, empty_state())  # reviewed first activation fixture only
+        Path(path).parent.mkdir(mode=0o700)
+        Path(path).write_text(json.dumps(empty_state()))
+        Path(path).chmod(0o600)  # Explicit provisioned synthetic state.
         with fixture.lease() as lease:
             store = RegisteredLatchStore(fixture.binding, lease=lease, storage_io=fixture.api,
                                          system_root=fixture.base, trusted_uid=os.geteuid())
@@ -317,15 +342,18 @@ class DurableOwnerIntegration(unittest.TestCase):
             root_payload = fixture.base / 'var/lib/docker/fixture-layer'
             root_payload.parent.mkdir(parents=True)
             root_payload.write_text('synthetic-root-payload')
+            # Root scans belong to lifecycle admission. Periodic latch writes
+            # use the exact mounted/anchored path guards tested below.
             with self.assertRaisesRegex(Exception, 'existing container payload remains on root'):
-                store.write(empty_state())
+                fixture.manager.host_guards()
             self.assertEqual(Path(path).read_bytes(), before)
             root_payload.unlink()
-            fixture.lost = True
+            mountinfo = fixture.mountinfo
+            fixture.mountinfo = '1 0 65000:2 / / rw - ext4 /dev/fixture-root1 rw\n'
             with self.assertRaises(Exception):
                 store.write(empty_state())
             self.assertEqual(Path(path).read_bytes(), before)
-        fixture.lost = False
+        fixture.mountinfo = mountinfo
         with self.assertRaises(LeaseError):
             store.write(empty_state())
         self.assertEqual(Path(path).read_bytes(), before)

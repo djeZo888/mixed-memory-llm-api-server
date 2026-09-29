@@ -79,38 +79,50 @@ class BindingTests(unittest.TestCase):
 
 
 class TransitionTests(unittest.TestCase):
+    def historical_fixture(self):
+        d = bound(pair.QWEN0_PROFILE)
+        current, instance = receipt(d)
+        storage = d['_storage_binding']
+        prior = storage.documents[storage.path('data',
+            'services/llm-manager/evidence/h008-predecessor.accepted.json')]
+
+        def check():
+            # Exercise H005 inside the actual H008 chain. Only the outer
+            # synthetic reference is rebound; the dated H005 digest and
+            # measurements stay protected from the deliberate mutations.
+            current['h008_transition']['predecessor_sha256'] = pair.receipt_sha256(prior)
+            instance['concurrent_pair_acceptance']['sha256'] = pair.receipt_sha256(current)
+            return pair.check_acceptance(d, instance)
+
+        check()
+        return d, prior, check
+
     def test_missing_transition_or_dated_receipt_drift_rejected(self):
-        d=bound(pair.QWEN0_PROFILE); value,instance=receipt(d)
-        pair.check_acceptance(d,instance)
+        d,value,check=self.historical_fixture()
         transition=value.pop('h005_transition')
-        instance['concurrent_pair_acceptance']['sha256']=pair.receipt_sha256(value)
         with self.assertRaisesRegex(Exception,'h005_reviewed_transition_required'):
-            pair.check_acceptance(d,instance)
+            check()
         value['h005_transition']=transition
         old=d['_storage_binding'].documents[d['_storage_binding'].path('data',pair.PREDECESSOR_SUFFIX)]
         old['modes']['dual-qwen']['slots']['glm']['largest_occupied_context']-=1
-        instance['concurrent_pair_acceptance']['sha256']=pair.receipt_sha256(value)
         with self.assertRaisesRegex(Exception,'h005_predecessor_receipt_mismatch'):
-            pair.check_acceptance(d,instance)
+            check()
 
     def test_cannot_relabel_measurement_as_fresh_or_change_capacity(self):
         for field in ('largest_occupied_context','host_peak_bytes','sampled_required_working_set_estimate_bytes'):
-            d=bound(pair.QWEN0_PROFILE); value,instance=receipt(d)
+            d,value,check=self.historical_fixture()
             value['modes']['dual-qwen']['slots']['glm'][field]-=1
-            instance['concurrent_pair_acceptance']['sha256']=pair.receipt_sha256(value)
             with self.assertRaisesRegex(Exception,'h005_inherited_measurement_changed'):
-                pair.check_acceptance(d,instance)
+                check()
         for field,value in (('host_usable_bytes',900*1024**3),('gpu_inventory',[[0,'GPU-synthetic']])):
-            d=bound(pair.QWEN0_PROFILE);current,instance=receipt(d)
+            d,current,check=self.historical_fixture()
             current[field]=value
-            instance['concurrent_pair_acceptance']['sha256']=pair.receipt_sha256(current)
             with self.assertRaisesRegex(Exception,'h005_inherited_measurement_changed'):
-                pair.check_acceptance(d,instance)
-        d=bound(pair.QWEN0_PROFILE);value,instance=receipt(d)
+                check()
+        d,value,check=self.historical_fixture()
         value['h005_transition']['live_acceptance']='PASS'
-        instance['concurrent_pair_acceptance']['sha256']=pair.receipt_sha256(value)
         with self.assertRaisesRegex(Exception,'h005_reviewed_transition_required'):
-            pair.check_acceptance(d,instance)
+            check()
 
     def test_no_parent_native_auth_receipt_can_admit_new_pair(self):
         d=bound(pair.QWEN0_PROFILE)

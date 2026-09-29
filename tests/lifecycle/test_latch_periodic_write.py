@@ -14,7 +14,7 @@ from lifecycle import hardware_policy as hp
 
 
 class PeriodicLatchWrite(unittest.TestCase):
-    def test_four_changed_gpu_proofs_keep_guards_without_recursive_root_scans(self):
+    def test_all_current_gpu_proofs_keep_guards_without_recursive_root_scans(self):
         fixture = RealRoleFixture()
         self.addCleanup(fixture.close)
         path = Path(fixture.binding.path('services', hp.STATE_SUFFIX))
@@ -54,20 +54,27 @@ class PeriodicLatchWrite(unittest.TestCase):
             policy = hp.HardwarePolicy(store, lease=lease, system_root=fixture.base,
                 trusted_uid=os.geteuid(), boot=lambda: {'boot_id': BOOT, 'uptime_seconds': 150},
                 wall=lambda: wall)
-            self.assertEqual(len(hp.GPU_UUIDS), 4)
+            self.assertEqual(set(hp.GPU_UUIDS), {
+                'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
+                'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
+                'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',
+                'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',
+                'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'})
+            proof_count = len(hp.GPU_UUIDS)
+            self.assertEqual(proof_count, 5)
             for index, gpu in enumerate(hp.GPU_UUIDS):
                 policy.validate_required(gpu, current_boot_id=BOOT, observed_at=stamp,
                     observation_id=f'changed-proof-{index}')
 
-            self.assertEqual(writes.call_count, 4)
+            self.assertEqual(writes.call_count, proof_count)
             # Each proof: protected read validates path twice, write validates once;
             # policy validates its lease once, store validates before/after write.
-            self.assertEqual(paths.call_args_list, [call('services', str(path))] * 12)
-            self.assertEqual(mounted.call_args_list, [call(fixture.api, roles=('data',))] * 4)
+            self.assertEqual(paths.call_args_list, [call('services', str(path))] * (3 * proof_count))
+            self.assertEqual(mounted.call_args_list, [call(fixture.api, roles=('data',))] * proof_count)
             self.assertEqual(leases.call_args_list, [call(lease, system_root=fixture.base,
-                trusted_uid=os.geteuid())] * 12)
-            self.assertEqual(latch_validation.call_count, 8)  # Old and proposed JSON.
-            self.assertEqual(len(anchors), 4)
+                trusted_uid=os.geteuid())] * (3 * proof_count))
+            self.assertEqual(latch_validation.call_count, 2 * proof_count)  # Old and proposed JSON.
+            self.assertEqual(len(anchors), proof_count)
             for index, (anchor, recorder) in enumerate(anchors):
                 anchor.read_json.assert_called_once_with(hp.STATE_SUFFIX, max_bytes=65536)
                 anchor.atomic_json.assert_called_once()
