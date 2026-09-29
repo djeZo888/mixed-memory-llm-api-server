@@ -21,6 +21,8 @@ All required paths must exist, except DATA_DIR (created private if needed).
 An explicitly reviewed --codex-preview-receipt ABS enables the optional local preview;
 --codex-image-jobs-reviewed independently enables the reviewed specialist catalog/broker gate.
 --codex-preview-output-limit defaults65536 and may be1024 for bounded acceptance.
+--codex-specialist-qualification ABS forwards a protected specialist record and
+requires both --codex-preview-receipt and --codex-owned-acceptance-policy.
 Receipt failure disables only Codex. MiniMax remains the default engine.
 Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
@@ -28,11 +30,12 @@ EOF
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
 node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536; codex_images=false
 owned_acceptance_policy=""
+codex_specialist_qualification=""
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy|--codex-specialist-qualification)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -45,6 +48,9 @@ while (($#)); do
         --engine-launcher) engine_launcher=$2 ;;
         --codex-preview-receipt) codex_receipt=$2 ;;
         --codex-owned-acceptance-policy) owned_acceptance_policy=$2 ;;
+        --codex-specialist-qualification)
+          [[ "$2" == /* && "$2" != *$'\n'* && "$2" != *$'\r'* ]] || fail 'specialist qualification path must be absolute and single-line'
+          codex_specialist_qualification=$2 ;;
       esac
       shift 2 ;;
     --codex-image-jobs-reviewed)
@@ -94,6 +100,9 @@ if os.stat(sys.argv[1]).st_mode & 0o077:
     raise SystemExit("data directory must have no group/other permissions")
 PY
 [[ "$codex_images" = false || -n "$codex_receipt" ]] || fail 'image gate requires reviewed Codex preview'
+if [[ -n "$codex_specialist_qualification" ]]; then
+  [[ -n "$codex_receipt" && -n "$owned_acceptance_policy" ]] || fail 'specialist qualification requires reviewed Codex preview and owned acceptance policy'
+fi
 entry_args=("$app_dir/server/dist/main.js")
 if [[ -n "$codex_receipt" ]]; then
   [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
@@ -104,6 +113,7 @@ if [[ -n "$codex_receipt" ]]; then
     [[ "$owned_acceptance_policy" == /* && "$owned_acceptance_policy" != *$'\n'* && "$owned_acceptance_policy" != *$'\r'* ]] || fail 'owned policy path must be absolute and single-line'
     entry_args+=("$owned_acceptance_policy")
   fi
+  if [[ -n "$codex_specialist_qualification" ]]; then entry_args+=("$codex_specialist_qualification"); fi
 fi
 cd -- "$app_dir/server"
 service_user=$(id -un)
