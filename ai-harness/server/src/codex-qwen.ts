@@ -1,6 +1,7 @@
 /** Source-qualified nonthinking Qwen counter; host identity proof remains required.
  * Mirrors scripts/benchmark/accounting.py (no benchmark is invoked or polled).
  */
+import { admissionContext, emitAdmission, admissionReason, QwenAdmissionError, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import type { GatewayUpstream } from "./gateway.js";
 import { ApiError } from "./errors.js";
 export const QWEN_CODEX_PIN = Object.freeze({ modelRevision: "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a", runtimeRevision: "0bcd822377da7b5718e674eaf9c870d349424dd1", templateSha256: "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041", contextWindow: 480000 as const });
@@ -12,13 +13,15 @@ export interface QwenCountQualification {
     contextWindow: number;
     instanceId: string;
 }
-export function createCodexQwenCounter(verifyLane: (alias: string) => Promise<QwenCountQualification>) {
-    return async (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal): Promise<{
+export function createCodexQwenCounter(verifyLane: (alias: string, context?: QwenAdmissionContext) => Promise<QwenCountQualification>, observer?: QwenAdmissionObserver) {
+    return async (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal, context: QwenAdmissionContext = admissionContext("count")): Promise<{
         inputTokens: number;
         contextWindow: 480000;
     }> => {
-        const verify = async () => { const q = await verifyLane(lane.alias); if (!q.instanceId || q.alias !== lane.alias || q.modelRevision !== QWEN_CODEX_PIN.modelRevision || q.runtimeRevision !== QWEN_CODEX_PIN.runtimeRevision || q.templateSha256 !== QWEN_CODEX_PIN.templateSha256 || q.contextWindow !== 480000)
+        const verify = async () => { const q = await verifyLane(lane.alias, context); if (!q.instanceId || q.alias !== lane.alias || q.modelRevision !== QWEN_CODEX_PIN.modelRevision || q.runtimeRevision !== QWEN_CODEX_PIN.runtimeRevision || q.templateSha256 !== QWEN_CODEX_PIN.templateSha256 || q.contextWindow !== 480000)
             throw new ApiError(503, "codex_qwen_identity_unqualified", "Qwen tokenizer/template/runtime allocation not qualified"); return q; };
+        const started = performance.now();
+        try {
         const before = await verify();
         if (body.model !== lane.alias || body.reasoning_effort !== "none")
             throw new ApiError(400, "codex_qwen_profile", "Expected explicit Qwen nonthinking profile");
@@ -59,6 +62,13 @@ export function createCodexQwenCounter(verifyLane: (alias: string) => Promise<Qw
         const after = await verify();
         if (after.instanceId !== before.instanceId)
             throw new ApiError(503, "codex_qwen_identity_changed", "Qwen instance changed during count");
+        emitAdmission(observer, { schema: 1, ...context, lane: lane.alias, step: "tokenize", outcome: "pass", reason: "ok", elapsedMs: performance.now() - started });
         return { inputTokens: v.count, contextWindow: 480000 };
+        } catch (error) {
+            const codes: Record<string, "tokenizer" | "identity_changed" | "count_profile" | "runtime_identity"> = { codex_qwen_identity_changed: "identity_changed", codex_qwen_profile: "count_profile", codex_qwen_identity_unqualified: "runtime_identity", codex_qwen_count_unavailable: "tokenizer", codex_qwen_count_invalid: "tokenizer" };
+            const reason = error instanceof QwenAdmissionError ? admissionReason(error) : error instanceof ApiError ? codes[error.code] ?? "unexpected" : "transport";
+            emitAdmission(observer, { schema: 1, ...context, lane: lane.alias, step: "tokenize", outcome: "reject", reason, elapsedMs: performance.now() - started });
+            throw error;
+        }
     };
 }

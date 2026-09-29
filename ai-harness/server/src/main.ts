@@ -15,7 +15,7 @@ import { createEngine } from "./engine.js";
 import { composeCodexHost, type CodexHostQualification } from "./codex-host.js";
 import { GatewayOwnershipLedger } from "./gateway-ownership.js";
 import { createProductionQwenVerifier, loadQwenReceipt } from "./codex-production.js";
-import { createResponsesDiagnostics } from "./codex-diagnostics.js";
+import { createResponsesDiagnostics, createQwenAdmissionDiagnostics } from "./codex-diagnostics.js";
 import { codexDeployment } from "./codex-deployment.js";
 import {
   NodeAvailability,
@@ -47,12 +47,13 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     const receipt = await loadQwenReceipt(receiptPath);
     const inferenceKey = await readProtectedCredential(required("AI_HARNESS_INFERENCE_KEY_FILE"));
     const controlKey = await readProtectedCredential(required("AI_HARNESS_NODE_CONTROL_KEY_FILE"));
-    const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey });
+    const onAdmissionDiagnostic = createQwenAdmissionDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-qwen-admission.jsonl"));
+    const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey }, undefined, undefined, onAdmissionDiagnostic);
     // This list pins reviewed lane policy, not ephemeral startup readiness.
     // Host composition revalidates current owner identity for every admission;
     // counter revalidates again before/after counting on the selected lane.
     const qualifiedAliases = Object.keys(receipt.lanes);
-    qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
+    qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, onAdmissionDiagnostic, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
       ...(acceptance ? { frontierAcceptance: acceptance.frontier, imageAcceptance: acceptance.image } : {}),
       ...(frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
       ...(imageJobsQualified ? { imageJobsQualified: true as const, capabilities: { image: { supported: true, qualification: "scripted_fixture" as const, reason: "Reviewed existing specialist broker integration; live Codex image generation/edit acceptance pending" } } } : {}),

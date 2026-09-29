@@ -9,6 +9,8 @@ from contextlib import contextmanager
 import copy
 import hashlib
 import hmac
+import stat
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -32,10 +34,22 @@ class ManagerJournalStore:
     """Use L1's registered reader/writer; no guessed disk or root fallback."""
     def __init__(self, manager_loader):
         self.manager_loader = manager_loader
+        self._prepared = threading.local()
+
+    @contextmanager
+    def prepared(self, manager):
+        self._prepared.manager = manager
+        try:
+            yield
+        finally:
+            del self._prepared.manager
+
+    def _manager(self):
+        return getattr(self._prepared, "manager", None) or self.manager_loader()
 
     def read(self):
         try:
-            manager = self.manager_loader()
+            manager = self._manager()
             path = manager.binding.path('data', JOURNAL_SUFFIX)
             local = manager.binding.validate_path('data', path)
             # Absence is checked only after mounted identity/path verification.
@@ -48,7 +62,7 @@ class ManagerJournalStore:
 
     def write(self, value):
         try:
-            manager = self.manager_loader()
+            manager = self._manager()
             manager.persistent_json(manager.binding.path('data', JOURNAL_SUFFIX), value)
         except Exception:
             raise JournalUnavailable() from None
@@ -125,6 +139,95 @@ class ManagerSession:
                 manager.docker.run = docker_run
             if storage_run is not None:
                 storage_runner.run = storage_run
+
+    def refresh_anchor(self, deadline):
+        """Read-only CAS token, with no readiness/network/storage discovery.
+
+        Stable file metadata covers state, owner/config/source replacement; boot
+        and mount identity plus one bounded Docker inventory cover external
+        writers as well as this process. Unknown anchors fail closed. Metadata
+        is never published. The full readiness checks remain in observe().
+        """
+        manager = self.manager
+        with self._bounded(deadline):
+            try:
+                state = manager.read_state(recovery=manager.recovery_only, offline=True)
+                paths = {manager.recovery_file}
+                from .installation import RECOVERY_FILES, NORMAL_FILES
+                root = manager.config_root.parent
+                paths.update(root / name for name in RECOVERY_FILES)
+                if not manager.recovery_only:
+                    paths.add(manager.state_file)
+                    paths.add(Path(manager.binding.path('data', JOURNAL_SUFFIX)))
+                    paths.add(Path(manager.binding.path('data', 'services/llm-manager/deployment-instance.json')))
+                    # Registered source/profile snapshots are small; never walk weights.
+                    from .node_installation import SOURCE_FILES
+                    paths.update(root / name for name in set(NORMAL_FILES) | set(SOURCE_FILES))
+                    if not manager.test_paths:
+                        from lifecycle.manager import protected_json
+                        instance_path = Path(manager.binding.path('data', 'services/llm-manager/deployment-instance.json'))
+                        if protected_json(instance_path) != manager.instance:
+                            raise ControlError('stale_state', 409)
+                        from install.storage import REGISTRATION_PATH
+                        paths.add(Path(REGISTRATION_PATH))
+                    for kind in ('deployments', 'models', 'runtimes'):
+                        directory = manager.config_root / kind
+                        paths.add(directory)
+                        paths.update(directory.glob('*.json'))
+                    # Receipt paths in the loaded owner are part of that proof.
+                    def receipt_paths(value):
+                        if isinstance(value, dict):
+                            for child in value.values(): receipt_paths(child)
+                        elif isinstance(value, list):
+                            for child in value: receipt_paths(child)
+                        elif isinstance(value, str) and value.startswith('/'):
+                            paths.add(Path(value))
+                    receipt_paths(manager.instance)
+                # Ancestors cover directory/mount replacement and optional-file
+                # creation. ctime prevents a same-content or mtime-restored ABA.
+                paths.update(parent for path in list(paths) for parent in path.parents)
+                files = []
+                for path in sorted(paths):
+                    deadline.remaining()
+                    try:
+                        meta = path.lstat()
+                    except FileNotFoundError:
+                        files.append((str(path), None))
+                        continue
+                    if stat.S_ISLNK(meta.st_mode):
+                        raise ControlError('observation_unavailable')
+                    stable = (str(path), meta.st_dev, meta.st_ino, meta.st_mode, meta.st_uid)
+                    files.append(stable if stat.S_ISDIR(meta.st_mode) else
+                                 stable + (meta.st_size, meta.st_mtime_ns, meta.st_ctime_ns))
+                # Fixtures supply their own native inventory; production uses
+                # Docker.run capped by the same one-second publication deadline.
+                native = [{key: item.get(key) for key in
+                           ('Id', 'Name', 'Image', 'Config', 'HostConfig', 'Mounts', 'NetworkSettings')}
+                          | {'runtime': {key: item.get('State', {}).get(key) for key in
+                              ('Running', 'Restarting', 'Paused', 'StartedAt', 'FinishedAt', 'Pid')}}
+                          for item in manager.docker.inventory()]
+                system = manager.lease_system_root
+                boot_path = system / 'proc/sys/kernel/random/boot_id'
+                mounts_path = system / 'proc/self/mountinfo'
+                boot = boot_path.read_text() if not manager.test_paths else 'fixture-boot'
+                mounts = mounts_path.read_text() if not manager.test_paths else 'fixture-mounts'
+                return digest([boot, mounts, state, manager.instance, files,
+                               sorted(native, key=lambda item: item['Id'])])
+            except ControlError:
+                raise
+            except Exception:
+                raise ControlError('observation_unavailable') from None
+
+    def publish_refresh(self, lease, deadline, journal, reconcile):
+        _lease(self.manager, lease)
+        with self._bounded(deadline):
+            # Reuse the manager whose identity was just checked; do not perform
+            # another slow open/load inside publication. Existing anchored I1b
+            # writes and journal corruption/unavailable behavior are unchanged.
+            if isinstance(journal.store, ManagerJournalStore):
+                with journal.store.prepared(self.manager):
+                    return reconcile()
+            return reconcile()  # Explicit constructor-owned fixture store.
 
     def _separate_key(self, deployment):
         if self.control_key is None:  # Explicit test construction only.

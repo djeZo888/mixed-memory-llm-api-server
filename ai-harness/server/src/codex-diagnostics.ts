@@ -3,6 +3,7 @@ import {
   openSync, readSync, writeSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { QWEN_ADMISSION_REASONS, type QwenAdmissionObserver } from "./codex-admission.js";
 import type { GatewayOptions } from "./gateway.js";
 
 type ResponsesErrorHandler = NonNullable<NonNullable<GatewayOptions["responses"]>["onError"]>;
@@ -70,7 +71,6 @@ function writeAll(fd: number, bytes: Buffer, position: number): void {
 export function createResponsesDiagnostics(path: string): ResponsesErrorHandler {
   const destination = resolve(path);
   return event => {
-    let fd: number | undefined;
     try {
       const { phase, requestId, sessionId, lane, code } = event;
       if (phase !== "stream" && phase !== "terminal") return;
@@ -82,6 +82,14 @@ export function createResponsesDiagnostics(path: string): ResponsesErrorHandler 
         phase,
         code: CODES.has(code) ? code : "unqualified_output",
       }) + "\n");
+      writeProtectedDiagnostic(destination, line);
+    } catch { /* Never affect gateway ownership or disclose logging failures. */ }
+  };
+}
+
+function writeProtectedDiagnostic(destination: string, line: Buffer): void {
+  let fd: number | undefined;
+  try {
       checkDirectory(destination);
       fd = protectedFile(destination);
       let size = fstatSync(fd).size;
@@ -104,7 +112,23 @@ export function createResponsesDiagnostics(path: string): ResponsesErrorHandler 
         } finally { closeSync(previous); }
       }
       writeAll(fd, line, size);
-    } catch { /* Never affect gateway ownership or disclose logging failures. */ }
-    finally { if (fd !== undefined) { try { closeSync(fd); } catch { /* best effort */ } } }
+  } finally { if (fd !== undefined) { try { closeSync(fd); } catch { /* best effort */ } } }
+}
+
+/** Same protected bounded storage, separate static projection and file. */
+export function createQwenAdmissionDiagnostics(path: string): QwenAdmissionObserver {
+  const destination = resolve(path);
+  const steps = new Set(["control_before", "node_before", "native", "control_after", "node_after", "lane", "tokenize", "capacity"]);
+  return event => {
+    try {
+      if (event.schema !== 1 || !ownerId(event.requestId) || !LANES.has(event.lane) ||
+          !["admission", "count"].includes(event.phase) || !steps.has(event.step) ||
+          !["pass", "reject"].includes(event.outcome) || !QWEN_ADMISSION_REASONS.includes(event.reason) ||
+          !Number.isFinite(event.elapsedMs) || event.elapsedMs < 0) return;
+      const line = Buffer.from(JSON.stringify({ time: new Date().toISOString(), schema: 1,
+        requestId: event.requestId, lane: event.lane, phase: event.phase, step: event.step,
+        outcome: event.outcome, reason: event.reason, elapsedMs: Math.min(3600000, Math.round(event.elapsedMs)) }) + "\n");
+      writeProtectedDiagnostic(destination, line);
+    } catch { /* Logging never affects admission or discloses the caught error. */ }
   };
 }

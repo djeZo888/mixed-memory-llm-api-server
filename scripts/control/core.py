@@ -2,9 +2,9 @@
 
 The private handoff slot is never a FIFO: one nonblocking admission guard covers
 handoff AND the complete transition. Only its single executor thread acquires
-the canonical lease, creates a fresh backend session, and holds that same lease
-through validation, compare-and-swap, persistence and outcome. Reads use separate
-fresh sessions and never wait for a model startup.
+the canonical lease for lifecycle transitions. Refresh collects read-only proof
+outside that lease, then rechecks identity before short serialized publication.
+Reads never wait for a model startup.
 """
 from __future__ import annotations
 
@@ -423,6 +423,11 @@ class Application:
         (snapshot, fingerprint), raw = self._fresh(session, deadline)
         if raw.get("recovery_trusted") is not True or fingerprint is None:
             raise ControlError("recovery_identity_unavailable")
+        self._mask_recovery(snapshot)
+        return snapshot, fingerprint
+
+    @staticmethod
+    def _mask_recovery(snapshot):
         snapshot["state_persisted"] = False
         snapshot["storage_available"] = False
         for item in snapshot["slots"].values() if snapshot.get("mode") == "pair" else [snapshot]:
@@ -431,26 +436,31 @@ class Application:
             if item["container_running"] is not False:
                 item["observed"] = "unavailable"
                 item["ready_proof"] = {key: False for key in item["ready_proof"]}
-        return snapshot, fingerprint
 
-    def _try_refresh(self):
+    def _try_refresh(self, catalog=False):
         if self._closed or not self._admission.acquire(blocking=False):
             return
-        ticket = _Ticket("refresh")
+        ticket = _Ticket("refresh", {"catalog": catalog})
         self._handoff.put_nowait(ticket)
         try:
-            ticket.wait(self.admission_seconds)
-        except ControlError:
-            pass
+            return ticket.wait(self.admission_seconds)
+        except ControlError as exc:
+            return exc.status, {"error": {"code": safe_error(exc)}}
 
     def _read(self, catalog=False, target=None):
-        self._try_refresh()
+        refreshed = self._try_refresh(catalog)
         raw = {}
         try:
             deadline = Deadline.after(self.read_seconds)
-            session = self.backend.open()
-            (snapshot, fingerprint), raw = self._fresh(session, deadline)
-            records = session.catalog(deadline) if catalog else None
+            if refreshed is not None:
+                status, result = refreshed
+                if status != 200:
+                    raise ControlError(result["error"]["code"], status)
+                snapshot, fingerprint, raw, records = copy.deepcopy(result)
+            else:
+                session = self.backend.open()
+                (snapshot, fingerprint), raw = self._fresh(session, deadline)
+                records = session.catalog(deadline) if catalog else None
             deadline.remaining()
         except Exception as exc:
             raw = {}
@@ -629,19 +639,13 @@ class Application:
             if ticket is None:
                 return
             try:
-                with self.lease_factory(blocking=False) as lease:
-                    with ticket.condition:
-                        if ticket.cancelled:
-                            continue
-                    if ticket.kind == "refresh":
-                        try:
-                            (snapshot, fingerprint), _ = self._fresh()
-                            self._reconcile(snapshot, fingerprint)
-                        except StorageUnavailable:
-                            snapshot, fingerprint = self._recovery_observation(Deadline.after(self.read_seconds))
-                            self._reconcile(snapshot, fingerprint, volatile=True)
-                        ticket.reply((200, {}))
-                    else:
+                with ticket.condition:
+                    if ticket.cancelled:
+                        continue
+                if ticket.kind == "refresh":
+                    self._refresh(ticket)
+                else:
+                    with self.lease_factory(blocking=False) as lease:
                         self._transition(ticket, lease)
             except LeaseBusy:
                 ticket.reply((409, {"error": {"code": "lifecycle_busy"}}))
@@ -656,6 +660,41 @@ class Application:
                 self._admission.release()
             if self._closed:
                 return
+
+    def _refresh(self, ticket):
+        # No canonical ownership during manager loading, probes or catalog reads.
+        deadline = Deadline.after(self.read_seconds)
+        with self._state_lock:
+            state_anchor = digest([self._state, self._volatile, self._current,
+                                   self._persisted, self._journal_error, self._reconciled])
+        session, recovery = self._get_session(stop=True)
+        anchor = session.refresh_anchor(deadline)
+        (snapshot, fingerprint), raw = self._fresh(session, deadline)
+        if recovery:
+            if raw.get("recovery_trusted") is not True:
+                raise ControlError("recovery_identity_unavailable")
+            self._mask_recovery(snapshot)
+        records = session.catalog(deadline) if ticket.request.get("catalog") else None
+        if session.refresh_anchor(deadline) != anchor:
+            raise ControlError("stale_state", 409)
+        with self.lease_factory(blocking=False) as lease:
+            # Recheck only bounded identity anchors, never the slow readiness
+            # probe or a second manager load. Expired candidates are discarded.
+            publication = Deadline(min(deadline.end, time.monotonic() + 1.0))
+            with ticket.condition:
+                if ticket.cancelled:
+                    return
+            if session.refresh_anchor(publication) != anchor:
+                raise ControlError("stale_state", 409)
+            with self._state_lock:
+                if self._current is not None or state_anchor != digest([
+                        self._state, self._volatile, self._current, self._persisted,
+                        self._journal_error, self._reconciled]):
+                    raise ControlError("stale_state", 409)
+                snapshot = session.publish_refresh(lease, publication, self.journal,
+                    lambda: self._reconcile(snapshot, fingerprint, volatile=recovery))
+            publication.remaining()
+        ticket.reply((200, (snapshot, fingerprint, raw, records)))
 
     def _transition(self, ticket, lease):
         transition_deadline = Deadline.after(self.transition_seconds)

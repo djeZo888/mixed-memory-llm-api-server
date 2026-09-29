@@ -29,6 +29,13 @@ class StopBackendFixture:
     def open(self, *, recovery=False):
         return self
 
+    def refresh_anchor(self, deadline):
+        return digest(self.observe(deadline))
+
+    def publish_refresh(self, lease, deadline, journal, reconcile):
+        deadline.remaining()
+        return reconcile()
+
     def observe(self, deadline):
         deadline.remaining()
         return {"selected": None, "desired": "stopped", "container": None,

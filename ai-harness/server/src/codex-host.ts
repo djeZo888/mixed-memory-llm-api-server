@@ -1,4 +1,5 @@
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
+import { admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { CODEX_PIN, type CodexRuntime } from "./codex-engine.js";
 import { CODEX_MODEL_POLICY, createRootlessCodexLauncher } from "./codex-launcher.js";
 import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwen.js";
@@ -8,7 +9,8 @@ export interface CodexHostQualification {
   protocolQualified: true;
   rootlessQualified: true;
   /** Revalidates deployed model/runtime/template/allocation and current instance each call. */
-  verifyLane(alias: string): Promise<QwenCountQualification>;
+  verifyLane(alias: string, context?: QwenAdmissionContext): Promise<QwenCountQualification>;
+  onAdmissionDiagnostic?: QwenAdmissionObserver;
   outputLimit?: number;
   /** MiMo protocol/live qualification is separate from Qwen/rootless proof. */
   frontierResponsesQualified?: true;
@@ -52,11 +54,23 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
     frontierQualified: qualification.frontierResponsesQualified, frontierAcceptance: qualification.frontierAcceptance,
     onError: qualification.onResponsesError, onDiagnostic: qualification.onResponsesDiagnostic,
-    currentAliases: async () => {
+    onAdmissionDiagnostic: qualification.onAdmissionDiagnostic,
+    currentAliases: async (context: QwenAdmissionContext = admissionContext("admission")) => {
       const aliases = qualification.qualifiedAliases ?? ["qwen3.8-27b-gpu0", "qwen3.8-27b"];
-      const results = await Promise.allSettled(aliases.map(alias => qualification.verifyLane(alias)));
+      const results = await Promise.allSettled(aliases.map(async alias => {
+        const start = performance.now();
+        try {
+          const result = await qualification.verifyLane(alias, context);
+          if (result.alias !== alias) throw new Error("Unqualified lane alias");
+          emitAdmission(qualification.onAdmissionDiagnostic, { schema: 1, ...context, lane: alias, step: "lane", outcome: "pass", reason: "ok", elapsedMs: performance.now() - start });
+          return result;
+        } catch (error) {
+          emitAdmission(qualification.onAdmissionDiagnostic, { schema: 1, ...context, lane: alias, step: "lane", outcome: "reject", reason: admissionReason(error), elapsedMs: performance.now() - start });
+          throw error;
+        }
+      }));
       return aliases.filter((alias, index) => results[index]?.status === "fulfilled" &&
         (results[index] as PromiseFulfilledResult<QwenCountQualification>).value.alias === alias);
     },
-    countQwen: createCodexQwenCounter(qualification.verifyLane) } : undefined };
+    countQwen: createCodexQwenCounter(qualification.verifyLane, qualification.onAdmissionDiagnostic) } : undefined };
 }

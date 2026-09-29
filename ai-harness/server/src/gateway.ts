@@ -1,3 +1,4 @@
+import { emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
 import type { ProviderBoundaryCapture, ProviderFailure } from "./provider-diagnostics.js";
 import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT, type ResponsesDiagnostic } from "./codex-responses.js";
@@ -59,7 +60,8 @@ export interface GatewayOptions {
     /** Per-request filter inside the existing shared queue; MiniMax keeps all lanes. */
     qualifiedAliases?: readonly string[];
     /** Revalidate current owner policy for each admission, not startup-only IDs. */
-    currentAliases?: () => Promise<readonly string[]>;
+    currentAliases?: (context?: QwenAdmissionContext) => Promise<readonly string[]>;
+    onAdmissionDiagnostic?: QwenAdmissionObserver;
     /** Independent reviewed MiMo Responses acceptance gate; holds still win. */
     frontierQualified?: true;
     frontierAcceptance?: (sessionId: string) => boolean;
@@ -69,7 +71,7 @@ export interface GatewayOptions {
     onTrace?: (event: {requestId:string;sessionId:string;lane:string;chunk:Buffer}) => void;
     onError?: (event: {requestId:string;sessionId:string;lane:string;phase:'stream'|'terminal';code:string}) => void;
     /** Count the EXACT final Qwen chat template/history/tool payload on this lane. */
-    countQwen: (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal) => Promise<{inputTokens:number; contextWindow:480000}>;
+    countQwen: (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal, context?: QwenAdmissionContext) => Promise<{inputTokens:number; contextWindow:480000}>;
   };
   frontier?: FrontierOptions | MimoFrontierOptions;
   /** Actual selected identity even when qualification fails; never fallback. */
@@ -825,7 +827,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     reply.raw.once("close", disconnect);
     let lane: Lane;
     try {
-      const aliases = translated && !frontier ? await options.responses?.currentAliases?.() ?? options.responses?.qualifiedAliases : undefined;
+      const aliases = translated && !frontier ? await options.responses?.currentAliases?.({ requestId: ownedRequest.id, phase: "admission" }) ?? options.responses?.qualifiedAliases : undefined;
       if (aliases && !aliases.length) throw new ApiError(503, "codex_qwen_identity_unqualified", "No currently qualified Qwen lane");
       lane = await selectedAdmission.acquire(cancelled.signal, bodyBytes, aliases);
     } catch (error) {
@@ -920,10 +922,11 @@ export function createGateway(options: GatewayOptions): Gateway {
       try {
         ownership.transition(ownedRequest, "counting", lane.upstream.alias);
         const finalBody = { ...body, model: lane.upstream.alias };
-        const count = await options.responses!.countQwen(finalBody, lane.upstream, key, cancelled.signal);
+        const count = await options.responses!.countQwen(finalBody, lane.upstream, key, cancelled.signal, { requestId: ownedRequest.id, phase: "count" });
         if (count.contextWindow !== CODEX_CONTEXT["qwen3.8-27b"] || !Number.isSafeInteger(count.inputTokens) || count.inputTokens < 0)
           throw new ApiError(503,"codex_tokenizer_unqualified","Exact input count is unavailable");
         ownership.account(ownedRequest, { inputTokens: count.inputTokens, reservedOutputTokens: Number(body.max_tokens) });
+        emitAdmission(options.responses?.onAdmissionDiagnostic, { schema: 1, requestId: ownedRequest.id, phase: "count", lane: lane.upstream.alias, step: "capacity", outcome: count.inputTokens + Number(body.max_tokens) > count.contextWindow ? "reject" : "pass", reason: count.inputTokens + Number(body.max_tokens) > count.contextWindow ? "token_capacity" : "ok", elapsedMs: 0 });
         if (count.inputTokens + Number(body.max_tokens) > count.contextWindow)
           throw new ApiError(413,"codex_context_full","Input plus reserved output exceeds model context");
         if (cancelled.signal.aborted || tokens.get(token) !== sessionId) throw new ApiError(499,"cancelled","Request cancelled before dispatch");

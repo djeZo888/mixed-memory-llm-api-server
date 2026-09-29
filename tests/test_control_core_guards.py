@@ -165,7 +165,7 @@ class DeadlineBudgetGuards(unittest.TestCase):
     def test_default_read_and_catalog_share_one_ten_second_deadline(self):
         app = self.application()
         session = app.backend.open.return_value
-        with patch.object(app, "_try_refresh"), \
+        with patch.object(app, "_try_refresh", return_value=None), \
                 patch("control.protocol.time.monotonic", return_value=100):
             status, snapshot = app._read(catalog=True)
         self.assertEqual(status, 200)

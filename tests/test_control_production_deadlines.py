@@ -82,7 +82,7 @@ class ProductionDeadlineTests(unittest.TestCase):
         for production in (False, True):
             with self.subTest(production=production):
                 app = self.application(production)
-                with patch.object(app, "_try_refresh"):
+                with patch.object(app, "_try_refresh", return_value=None):
                     status, result = app._read(catalog=True)
                 self.assertEqual(status, 200)
                 if production:
@@ -97,7 +97,7 @@ class ProductionDeadlineTests(unittest.TestCase):
     def test_production_read_still_expires_at_sixty_seconds(self):
         self.session.observe.side_effect = lambda deadline: self.advance(60, deadline)
         app = self.application()
-        with patch.object(app, "_try_refresh"):
+        with patch.object(app, "_try_refresh", return_value=None):
             status, result = app._read()
         self.assertEqual(status, 200)
         self.assertEqual(result["failure_code"], "deadline_exceeded")
