@@ -7,7 +7,7 @@ import { CODEX_SPECIALIST_PINS, loadCodexSpecialists, validateCodexSpecialists }
 const now = Date.parse("2026-09-29T15:25:00Z");
 const sha = (s: string) => createHash("sha256").update(s).digest("hex");
 const testedSource = "c863d4984f4a75c237b6de97b7ce40b8570fca81";
-const targetSource = "ef3d863a6eb78918019a512fe2c5da6f61384882";
+const targetSource = "dbcd579f8b5ee91ff86c4035bfe643d51e8cd3d1";
 const testedPolicy = "aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956";
 const root = "/etc/sova-qualification/";
 /** Synthetic workflows only: no real acceptance receipt is generated/installed. */
@@ -54,8 +54,10 @@ test("schema1 current pins pass but original old tool policy cannot implicitly c
 const invalid: Record<string, (f: ReturnType<typeof fixture>) => void> = {
   "unknown old policy": f => { f.value.pins.toolPolicySha256 = "0".repeat(64); f.review.testedPins = structuredClone(f.value.pins); },
   "relabelled old evidence": f => { f.value.pins.toolPolicySha256 = CODEX_SPECIALIST_PINS.toolPolicySha256; f.review.testedPins = structuredClone(f.value.pins); },
+  "historical H034 target policy": f => f.review.targetPins.toolPolicySha256 = "73e00d27521f880f61418e2f8d3334909f5c62e61c9351affbb82a5152d8a63c",
   "future target policy": f => f.review.targetPins.toolPolicySha256 = "0".repeat(64),
   "unknown tested source": f => { f.value.sourceRevision = "0".repeat(40); f.review.testedSourceRevision = f.value.sourceRevision; },
+  "historical H034 target source": f => f.review.targetSourceRevision = "ef3d863a6eb78918019a512fe2c5da6f61384882",
   "unknown target source": f => f.review.targetSourceRevision = "0".repeat(40),
   "mismatched source review": f => f.review.testedSourceRevision = targetSource,
   "mismatched pin review": f => f.review.testedPins.toolPolicySha256 = "0".repeat(64),
@@ -147,10 +149,39 @@ test("protected loader enforces boundaries for record, evidence and review", t =
   assert.deepEqual(opened, []);
 });
 
-test("historical H033 target source and policy reject after exact H034 replacement", () => {
+test("historical H033 target source and policy reject after exact H035 replacement", () => {
   const f = fixture();
   f.review.targetSourceRevision = "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e";
   f.review.targetPins.toolPolicySha256 = "b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5";
   f.refresh();
   assert.throws(() => validateCodexSpecialists(f.record, f.read, now));
+});
+
+test("H035 protected records bind the reviewed combined basis and retain original H034 evidence bytes", () => {
+  const read = (directory: string, name: string) => {
+    const text = fs.readFileSync(new URL(`../../../reports/${directory}/${name}`, import.meta.url), "utf8");
+    return { text, value: JSON.parse(text) };
+  };
+  const oldDigests = {
+    "h034-codex-specialists.json": "d8b8f0cd03c44b65ef56aa8a80caae548f137249f7f6f995f26271276bf8597e",
+    "h034-frontier-evidence.json": "f475730979355801f2d1cf224c6de0d905768dc5e663c1e7aa1f63436f83e24f",
+    "h034-frontier-review.json": "b40540bb1a49c1bfa72ded4ac630cad74e629e7540c2e85b39cbdb93a21440ba",
+  };
+  for (const [name, expected] of Object.entries(oldDigests)) {
+    assert.equal(sha(read("h034-flow01-compatibility", name).text), expected, name);
+  }
+  const oldEvidence = read("h034-flow01-compatibility", "h034-frontier-evidence.json").value;
+  const readCurrent = (name: string) => read("h035-activation-compatibility", name);
+  const record = readCurrent("h035-codex-specialists.json").value;
+  const evidence = readCurrent("h035-frontier-evidence.json").value;
+  const review = readCurrent("h035-frontier-review.json").value;
+  assert.deepEqual(evidence, { ...oldEvidence, review: evidence.review });
+  assert.equal(review.targetSourceRevision, targetSource);
+  assert.equal(review.reviewedBy, "Mac-Orchestrator / root");
+  assert.equal(review.reviewedAt, "2026-09-29T20:10:00Z");
+  assert.deepEqual(review.testedPins, oldEvidence.pins);
+  assert.deepEqual(review.targetPins, CODEX_SPECIALIST_PINS);
+  const qualification = validateCodexSpecialists(record, readCurrent, Date.parse("2026-09-29T20:11:00Z"));
+  assert.equal(qualification.frontierResponsesQualified, true);
+  assert.equal(qualification.imageJobsQualified, false);
 });

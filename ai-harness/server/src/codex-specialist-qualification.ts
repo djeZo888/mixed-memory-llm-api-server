@@ -57,12 +57,12 @@ const digest = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
 const fileName = (v: unknown): v is string => typeof v === "string" && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}\.json$/.test(v);
 const sha = (text: string) => createHash("sha256").update(text).digest("hex");
-/** Explicit H034 compatibility review only, not a policy migration mechanism. */
+/** Explicit H035 compatibility review only, not a policy migration mechanism. */
 const reviewedToolPolicy = {
   tested: "aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956",
-  target: "73e00d27521f880f61418e2f8d3334909f5c62e61c9351affbb82a5152d8a63c",
+  target: "4ab2f4935c2a90691b9abdd713b74e389922baeab2262ddc6d41a3b1ddd88b87",
   testedSource: "c863d4984f4a75c237b6de97b7ce40b8570fca81",
-  targetSource: "ef3d863a6eb78918019a512fe2c5da6f61384882",
+  targetSource: "dbcd579f8b5ee91ff86c4035bfe643d51e8cd3d1",
 } as const;
 type EvidenceReader = (name: string) => { text: string; value: any };
 function referencedEvidence(ref: any, readEvidence: EvidenceReader) {
