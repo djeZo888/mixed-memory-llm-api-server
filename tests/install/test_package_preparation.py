@@ -91,7 +91,7 @@ class PackagePreparationTests(unittest.TestCase):
         # this fixture makes no assertion about parent /proc anchor persistence.
         with patch("install.container.AnchoredRoot") as anchor, \
                 patch.object(subject, "_paths"), \
-                patch.object(subject, "package_transaction", return_value="") as transaction, \
+                patch("install.prerequisites.Prerequisites.package_transaction", return_value="") as transaction, \
                 patch.object(runner, "_package_preparation", wraps=runner._package_preparation) as parser, \
                 patch("install.core.subprocess.run", side_effect=command_result) as command:
             anchor.return_value.__enter__.return_value.proc_path.return_value = anchor_path
@@ -110,11 +110,23 @@ class PackagePreparationTests(unittest.TestCase):
             transaction.assert_called_once()
             mutation_argv = transaction.call_args.args[0]
             self.assertIn("--no-download", mutation_argv)
+            for name in ("TMPDIR", "TMP", "TEMP"):
+                self.assertEqual(transaction.call_args.kwargs["env"][name],
+                                 anchor_path + "/cache/installer-apt/tmp")
             command.reset_mock()
             with self.assertRaisesRegex(InstallError, "owned_package_transaction_required"):
                 runner.run(mutation_argv)
             command.assert_not_called()
         self.assertIsNone(subject._anchor)
+
+    def test_container_mutation_without_live_anchor_refuses_before_owned_scope(self):
+        subject = ContainerPackages({"data_dir": "/fixture/data"}, Runner(writable=True),
+                                    lambda: None, lock={})
+        with patch("install.prerequisites.Prerequisites.package_transaction") as transaction:
+            with self.assertRaisesRegex(InstallError, "package_storage_anchor_required"):
+                subject.package_transaction(["apt-get", "--no-download", "install", "fixture=1.0"],
+                                            env={"TMPDIR": "/fixture/data/tmp"})
+            transaction.assert_not_called()
 
 
 if __name__ == "__main__":
