@@ -1,52 +1,50 @@
-# Sova — H031 active Codex completion window
+# Sova — H031 closed checkpoint
 
-The user renewed execution: **September29,2026 08:46–10:46UTC**. H030 is closed.
-Root coordinates/reviews/publishes; mac-worker1 and mac-worker2 implement/build/
-test/operate VMs in fresh bounded native CLI sessions with isolated copies.
-No new long jobs after10:21, no new short submissions10:31; settle worker/native
-work by10:36, root publication10:46. No automatic extension or old-baseline restore.
+The September 29 H031 two-hour window was 08:46–10:46 UTC. Worker native sessions
+ended by 10:35:26 UTC; no new work is authorized by this file. The user permits
+Sova to stay unavailable until Codex integration qualifies; do not restore an old
+baseline or start an automatic continuation.
 
-Read reports/h030-codex-checkpoint.md, reports/h030-codex-results.json and
-reports/h030-next-execution.md for exact retained state. Current scope remains
-ai-harness/PLAN-CODEX-COMPLETION-20260929.md. Private H031 task state is outside
-this checkout in root orchestration/tasks/H031-20260929.
+Read reports/h031-codex-checkpoint.md, reports/h031-codex-results.json and
+reports/h031-next-execution.md first. They supersede H030 runtime observations.
+Root plans/reviews/publishes. Implementation, builds, tests and VM operations use
+mac-worker1/mac-worker2 through fresh bounded native CLI sessions and isolated
+copies; preserve session IDs and durable task state.
 
-## First parallel batch and ownership
+## Current disposition
 
-- W1 owns scripts/image_runtime and its tests: remove long global-lock ownership
-  through startup/warm-up while retaining exclusive image operation ownership,
-  before/after identity/storage/hardware validation and correct error settlement.
-  W1 alone reads current combined ai-vm closure inventory and later deploys there.
-- W2 owns scripts/runtime/mimo/owner.py and source-transition tests: determine
-  whether the already-supported owner can accept a fully stopped same-boot
-  source-only successor; if not, implement the narrow explicit transition with
-  archived predecessor, reviewed exact delta, physical absence, current hardware
-  proof and one-time consumption. Do not relax HELD recovery or erase faults.
-  This is source-only until combined review; W2 does not mutate ai-vm.
-- Other shared files require coordination. W2 retains app/config deployment
-  ownership. One combined activation; no interleaved image/frontier recovery.
+- Public chat503/status200. App2b40610 unchanged; MiniMax remains default. Three
+  Qwen processes retained; both480K instances passed small normal workflow calls.
+  Ada200K is not a480K chat fallback. User histories/project files preserved.
+- MiMo STOPPED. Old SETTLED state and timeout failures preserved; unconsumed
+  same-boot source transition retained. Two starts refused lifecycle_busy before
+  admission. Historical competing holder is unknown. Deployed owner687aa9e5.
+- Image API CLOSED/unavailable. Exact native d66478c5 warmed but interrupted owner
+  left active operation/recovery records. Do not equate warm with ready or replay
+  the old request. Explicit reconciliation is proposed, not implemented.
+- Node refresh/projection and image short-lock changes were deployed09:51:58.
+  Image serialization fix4ebe25cf and MiMo startup correction8bd2a30a are reviewed,
+  tested and UNDEPLOYED. Do not deploy superseded MiMo2875de12.
+- Codex image/frontier gates and MiMo candidate flags remain closed. Preserve
+  historical two uncertain owners and three quarantines; no generic clearing.
 
-## Retained state and acceptance
+## Continue efficiently after renewed authorization
 
-Public chat503/statusavailable. App2b40610 (08:15 deployment) remains; MiniMax
-default. Source5176ca4/831ace6 health-refresh/metadata fixes passed29checks but
-are NOT deployed: MiMo pins both node files. Latest MiMo currentproof08:28:28
-RUNNING950K/65536/8decode; do not assume later health without fresh observation.
-MiMo candidatefalse/false; ordinary Codex specialist gatesclosed. ThreeQwens
-480K/480K/200K, image guardedFullHD; Ada200K is not a480K fallback.
+Reuse H030 coding/follow-up/dedupe/small-compaction/recall and H031 retained
+continuation/handoff/Stop/API-reconnect results when contracts are unchanged.
+H031 PDF extraction/rendering succeeded but task completion FAILED; raw content
+was unchanged through translation. Native image viewing was unsupported. No
+summary PDF or numeric final was produced. Original fixture/evidence retained.
 
-Reuse passed ordinarycoding/followup/dedupe/compaction/recall if contractsunchanged.
-Retain coldresume/PDF failures; historical null-hardware trigger unproved.
-Image startup's common-lock scope is a demonstrated source defect, although the
-historical competing holder was not sampled. Source fixture is not live proof.
-After coordinated deployment run retained affected workflows, then specialists
-and remaining handoff/sharedlifecycle/profile gates. Capabilities open only on
-actual retained livePASS. No prompt rescue or unbounded unchanged retries.
+First review the exact stopped MiMo source-transition chain and separately pinned
+PREP helper (deployed bytes not yet verified), then activate the reviewed startup
+correction without rewriting original receipts. In parallel implement the exact
+image ownership reconciliation and deploy serialization fix. Coordinate one VM
+writer and avoid active inference during affected lifecycle changes. Never replay
+uncertain native/inference actions. Close paid CLI sessions while native loading
+owns itself. Finish specialist/PDF and remaining release gates before lifting
+maintenance. No new weights/runtime,950K benchmark,hardware/fan/ECC/power tuning,
+GLM restore,accounts/scaling/installer or main merge in this continuation scope.
 
-Preserve chats/files, failures, two old uncertainowners and threequarantines.
-Never replay uncertain inference/release slots early. No new weights/runtimes,
-driver change, benchmark/950K test, hardware/fan/power/ECC tuning, GLM restore,
-accounts/scaling/installer or automaticextension. Keep credentials/rawtraces
-private. Check acknowledged current instructions before live submissions.
-Close paid CLI sessions when only independent model loading/waiting remains.
-Root publishes to feature/glm53-flash/draftPR10; no incomplete main merge.
+Root publishes feature/glm53-flash/draftPR10; credentials and bulky traces private.
+Local H031 records: orchestration/tasks/H031-20260929 (outside this checkout).
