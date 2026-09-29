@@ -191,6 +191,7 @@ test("trusted host HOME ignores ambient spoofing while reviewed launcher confine
     "$overlay_root/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate",
     "$overlay_root/skills/pdf/SKILL.md:/opt/ai-harness/skills/pdf/SKILL.md:ro,rprivate",
     "$launcher_dir/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate",
+    "$overlay_root/config/active-frontier.json:/opt/ai-harness/config/active-frontier.json:ro,rprivate",
   ]);
   assert.ok(invocation.includes('--env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data"'));
   assert.equal(/--(?:mount|env-file)\b/.test(invocation), false);
@@ -239,6 +240,7 @@ else process.exit(91);
       ["skills/image/SKILL.md", "/opt/ai-harness/skills/image/SKILL.md"],
       ["skills/pdf/SKILL.md", "/opt/ai-harness/skills/pdf/SKILL.md"],
       ["deploy/engine/configure-profile.mjs", "/opt/ai-harness/engine/configure-profile.mjs"],
+      ["config/active-frontier.json", "/opt/ai-harness/config/active-frontier.json"],
     ].map(([relative, target]) => `${fileURLToPath(new URL(`../../${relative}`, import.meta.url))}:${target}:ro,rprivate`),
   ]);
   assert.ok(values("--env").includes(`HOME=${canonicalProfile}/state/home`));

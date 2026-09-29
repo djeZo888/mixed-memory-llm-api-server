@@ -111,6 +111,16 @@ export AI_HARNESS_GATEWAY_TOKEN="$gateway_token"
 export AI_HARNESS_SESSION_ID="$session_id"
 unset gateway_token
 
+# Pin the validator before executing source-controlled overlay checks.
+"$python_bin" - "$launcher_dir/engine/validate-image-overlays.py" <<'PY_OVERLAY' || die 'reviewed overlay validator identity mismatch'
+import hashlib, sys
+try:
+    valid = hashlib.sha256(open(sys.argv[1], 'rb').read()).hexdigest() == '352e4f3ab089b5553948198e0feccff9bd3967f981c0e3d288740f08d1f67cf4'
+except OSError:
+    valid = False
+sys.exit(0 if valid else 1)
+PY_OVERLAY
+
 # Fixed reviewed source overlays keep the baked runtime and dependency pins intact.
 "$python_bin" "$launcher_dir/engine/validate-image-overlays.py" \
   "$launcher_dir" codex "$profile_dir" "$workspace" || die 'reviewed image delivery overlay validation failed'

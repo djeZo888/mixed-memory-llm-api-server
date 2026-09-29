@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
-"""Validate only the reviewed image and skill overlays; never select an image or policy."""
+"""Validate reviewed source overlays and protected frontier selection; never select an image."""
 import hashlib
+import json
 import os
 from pathlib import Path
 import stat
@@ -15,11 +16,57 @@ ENGINE = {
     "skills/pdf/SKILL.md": "f1e77bf04846cde401c900f0a817a6fc14685df438c050f7f6aad75d6a670211",
     "skills/image/SKILL.md": "9e503c891570d2c91975348f0954015c5b27fe658dd4926c88919a1c6a43c96d",
     "deploy/engine/configure-profile.mjs": "9c3b8a309a1cbc65529b5180a9d268424907cace0de2f363dfd4050057e498b5",
+    # Mutable host selection is bound to the protected native receipt below.
+    "config/active-frontier.json": None,
 }
 
 
 def protected(metadata):
     return metadata.st_uid in (0, os.getuid()) and not metadata.st_mode & 0o022
+
+
+def native_receipt():
+    source = Path("/etc/sova-qualification/mimo.json")
+    for directory in source.parents:
+        metadata = directory.lstat()
+        if not stat.S_ISDIR(metadata.st_mode) or metadata.st_uid != 0 or metadata.st_mode & 0o022:
+            raise ValueError("unsafe native receipt ancestry")
+    if source.resolve(strict=True) != source:
+        raise ValueError("noncanonical native receipt")
+    descriptor = os.open(source, os.O_RDONLY | os.O_NOFOLLOW | os.O_NONBLOCK)
+    with os.fdopen(descriptor, "rb") as stream:
+        before = os.fstat(stream.fileno())
+        if not stat.S_ISREG(before.st_mode) or before.st_uid != 0 or before.st_nlink != 1 or before.st_mode & 0o022 or before.st_size > 65536:
+            raise ValueError("unsafe native receipt")
+        raw = stream.read(65537)
+        after = source.lstat()
+        fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")
+        if len(raw) > 65536 or any(getattr(before, key) != getattr(after, key) for key in fields):
+            raise ValueError("native receipt changed")
+        return raw
+
+
+def validate_frontier_selection(raw):
+    selection = json.loads(raw)
+    fields = {"model", "mimoEnabled", "mimoQualificationSha256", "mimoContextWindow", "mimoMaxOutputTokens"}
+    if not isinstance(selection, dict) or set(selection) != fields:
+        raise ValueError("invalid frontier selection")
+    if selection == dict(model="glm-5.3-flash", mimoEnabled=False, mimoQualificationSha256=None,
+                         mimoContextWindow=None, mimoMaxOutputTokens=None):
+        return
+    context, output = selection["mimoContextWindow"], selection["mimoMaxOutputTokens"]
+    if selection["model"] != "mimo-v2.6-pro-rl" or selection["mimoEnabled"] is not True or type(context) is not int or not 2 <= context <= 1048576 or type(output) is not int or not 1 <= output <= 65536 or output >= context:
+        raise ValueError("invalid MiMo selection")
+    receipt = native_receipt()
+    if hashlib.sha256(receipt).hexdigest() != selection["mimoQualificationSha256"]:
+        raise ValueError("native receipt checksum mismatch")
+    record = json.loads(receipt)
+    qualification = record.get("qualification") if isinstance(record, dict) else None
+    identity = qualification.get("identity") if isinstance(qualification, dict) else None
+    if not isinstance(identity, dict):
+        raise ValueError("invalid native receipt")
+    if qualification.get("qualified") is not True or identity.get("model") != selection["model"] or identity.get("actualSlotContext") != context or type(identity.get("maxOutputTokens")) is not int or min(65536, identity["maxOutputTokens"]) != output:
+        raise ValueError("native receipt capacity mismatch")
 
 
 def validate(launcher, engine, profile, workspace):
@@ -55,7 +102,12 @@ def validate(launcher, engine, profile, workspace):
             metadata = os.fstat(stream.fileno())
             if not stat.S_ISREG(metadata.st_mode) or metadata.st_nlink != 1 or not protected(metadata):
                 raise ValueError("unsafe source file")
-            if hashlib.sha256(stream.read()).hexdigest() != expected:
+            raw = stream.read(65537) if expected is None else stream.read()
+            if expected is None:
+                if len(raw) > 65536:
+                    raise ValueError("oversized frontier selection")
+                validate_frontier_selection(raw)
+            elif hashlib.sha256(raw).hexdigest() != expected:
                 raise ValueError("source checksum mismatch")
             after = source.lstat()
             fields = ("st_dev", "st_ino", "st_mode", "st_uid", "st_gid", "st_nlink", "st_size", "st_mtime_ns", "st_ctime_ns")

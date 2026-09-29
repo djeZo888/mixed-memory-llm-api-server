@@ -185,6 +185,7 @@ os.execv(sys.executable, [sys.executable, *args])
             f"{source}/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate",
             f"{source}/skills/pdf/SKILL.md:/opt/ai-harness/skills/pdf/SKILL.md:ro,rprivate",
             f"{source}/deploy/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate",
+            f"{source}/config/active-frontier.json:/opt/ai-harness/config/active-frontier.json:ro,rprivate",
         ])
         self.assertEqual(argv[-1], IMAGE_ID)
         self.assertEqual(argv[argv.index("--network") + 1], "slirp4netns:allow_host_loopback=true")

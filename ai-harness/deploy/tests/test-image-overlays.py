@@ -2,10 +2,12 @@
 """Immutable image delivery contract; isolated source copies and fake Podman only."""
 import hashlib
 import importlib.util
+import json
 import os
 from pathlib import Path
 import shutil
 import unittest
+from unittest.mock import patch
 
 
 spec = importlib.util.spec_from_file_location(
@@ -34,7 +36,7 @@ class OverlayChecks:
             base.PATCHSET = ENGINE_PATCHSET
         base.LauncherContract.setUp(self)
         self.source = self.root / "reviewed source with spaces" / "ai-harness"
-        for relative in ("deploy", "tools/image", "skills/image", "skills/pdf"):
+        for relative in ("deploy", "tools/image", "skills/image", "skills/pdf", "config"):
             shutil.copytree(SOURCE / relative, self.source / relative)
         base.LAUNCHER = self.source / "deploy" / f"run-{self.runtime}.sh"
         self.artifacts = [
@@ -46,6 +48,7 @@ class OverlayChecks:
                 ("skills/image/SKILL.md", "/opt/ai-harness/skills/image/SKILL.md"),
                 ("skills/pdf/SKILL.md", "/opt/ai-harness/skills/pdf/SKILL.md"),
                 ("deploy/engine/configure-profile.mjs", "/opt/ai-harness/engine/configure-profile.mjs"),
+                ("config/active-frontier.json", "/opt/ai-harness/config/active-frontier.json"),
             ]
 
     def assert_refused_before_runtime(self, args=None):
@@ -76,6 +79,11 @@ class OverlayChecks:
         self.assertEqual(run[-1], base.IMAGE_ID)
         for flag in ("--read-only", "--pull=never", "no-new-privileges", "--cap-drop"):
             self.assertIn(flag, run)
+
+    def test_changed_validator_fails_before_runtime(self):
+        source = self.source / "deploy/engine/validate-image-overlays.py"
+        source.write_text("raise SystemExit(0)\n")
+        self.assert_refused_before_runtime()
 
     def test_each_changed_hash_fails_before_runtime_and_environment_cannot_override(self):
         for relative, _ in self.artifacts:
@@ -180,6 +188,23 @@ class OverlayChecks:
 @unittest.skipIf(os.geteuid() == 0, "launcher deliberately refuses root")
 class EngineOverlayContract(OverlayChecks, unittest.TestCase):
     runtime = "engine"
+
+    def test_mimo_selection_requires_exact_protected_receipt_capacity(self):
+        spec = importlib.util.spec_from_file_location("selection_overlay", SOURCE / "deploy/engine/validate-image-overlays.py")
+        validator = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(validator)
+        receipt = json.dumps({"qualification": {"qualified": True, "identity": {
+            "model": "mimo-v2.6-pro-rl", "actualSlotContext": 480000, "maxOutputTokens": 65536}}}).encode()
+        selection = dict(model="mimo-v2.6-pro-rl", mimoEnabled=True,
+                         mimoQualificationSha256=hashlib.sha256(receipt).hexdigest(),
+                         mimoContextWindow=480000, mimoMaxOutputTokens=65536)
+        with patch.object(validator, "native_receipt", return_value=receipt):
+            validator.validate_frontier_selection(json.dumps(selection))
+            for change in ({"mimoContextWindow": 950000}, {"mimoMaxOutputTokens": 4096},
+                           {"mimoQualificationSha256": "0" * 64}, {"mimoEnabled": False},
+                           {"model": "unknown"}, {"unreviewed": True}):
+                with self.subTest(change=change), self.assertRaises(ValueError):
+                    validator.validate_frontier_selection(json.dumps({**selection, **change}))
 
 
 @unittest.skipIf(os.geteuid() == 0, "launcher deliberately refuses root")
