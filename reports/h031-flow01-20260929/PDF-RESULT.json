@@ -1,0 +1,216 @@
+{
+  "schema": 1,
+  "task": "H031-FLOW01",
+  "case": "original PDF workflow",
+  "verdict": "FAIL",
+  "oraclePass": false,
+  "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "sessionId": "d52aa598-82fd-436d-9d7f-5b7d02f590d8",
+  "runId": "0fc84d4f-9854-4514-9acf-0ffc873b9a5c",
+  "submissionId": "f4ec4b7c-416c-4535-b200-a1cfdb136c8b",
+  "ticketId": "9930a3a7-33b0-49bb-903a-6b82206ed894",
+  "nativeThreadId": "01a0ecaa-84ec-7fa0-a018-6c536ac5db9e",
+  "nativeTurnId": "01a0ecaa-8505-7202-b7dc-a086d941a604",
+  "runStatus": "completed",
+  "settled": true,
+  "nativeOwnership": "idle",
+  "failurePhase": "post-tool provider final stop before requested summary creation and numeric answer",
+  "failureDescription": "Actual extraction and rendering succeeded. A native view_image call returned an unsupported-image diagnostic. One subsequent shell call inspected OCR help and the source header. The final provider response stopped with a planning statement, no tool call, no numeric answer, and no summary PDF. Its text reached Responses, native history, and app history unchanged.",
+  "acceptance": {
+    "actualPage1Extraction": true,
+    "actualPage1Rendering": true,
+    "sourceUnchanged": true,
+    "numericAnswerWithAmperesAndPageCitation": false,
+    "onePageSummaryPdfCreated": false,
+    "workflowPass": false
+  },
+  "sourcePdf": {
+    "bytes": 702,
+    "sha256": "7cd11f7c4a0369ce2a8f4c57cd375a1149df9e3b593ac22bf3de7e692b42f03e"
+  },
+  "artifacts": [
+    {
+      "id": "2bc14633-7959-40b5-9e0c-ceb58c6a7724",
+      "name": "source.pdf",
+      "bytes": 702,
+      "sha256": "7cd11f7c4a0369ce2a8f4c57cd375a1149df9e3b593ac22bf3de7e692b42f03e",
+      "privatePath": "private/pdf/download-0.pdf"
+    },
+    {
+      "id": "c653c211-e243-4d89-8c53-6a8844f23e81",
+      "name": "page-0001.png",
+      "bytes": 20901,
+      "sha256": "ac9ddbc1a4a16e176cc9fdb75d80e6c38674038187788b9c7f67752226daca8e",
+      "privatePath": "private/pdf/download-1.png"
+    },
+    {
+      "id": "03cd6351-0bd4-425b-b9bf-f46fb7faa03c",
+      "name": "page1.txt",
+      "bytes": 57,
+      "sha256": "1f136b9b04e79df35a439bc082833cc4de0f537b36c4c9ed0ec77cdf7a6fe3f3",
+      "privatePath": "private/pdf/download-2.bin"
+    }
+  ],
+  "renderPngDimensions": {
+    "width": 1275,
+    "height": 1650
+  },
+  "nativeToolAccounting": {
+    "providerRequests": 8,
+    "toolFinishResponses": 7,
+    "nativeTools": 8,
+    "execCommandCalls": 7,
+    "viewImageCalls": 1,
+    "nativeToolOutputs": 8,
+    "allShellExitCodes": 0,
+    "firstProviderResponseToolCalls": 2,
+    "explanation": "Seven app command activities correspond to seven shell calls; the eighth native tool is view_image. No missing native tool or result is indicated."
+  },
+  "nativeViewFailure": {
+    "requestId": "48cf9f32-ba82-4729-b239-1eab52a80da5",
+    "callId": "call_7e2b561c07764b568acb8874",
+    "classification": "unsupported native image view",
+    "nativeOutputLine": 45,
+    "outputBytes": 65,
+    "outputSha256": "d275f12f07bb5f9fe222be17371e89ccf3f281a28388abef0f1dc1b29ed3ea45",
+    "privateEvidencePath": "private/owned-pdf-d52aa598-82fd-436d-9d7f-5b7d02f590d8/native-0.jsonl",
+    "specialistImageRequest": false
+  },
+  "terminalEvidence": {
+    "requestId": "5078cbc7-9fa8-4f57-b11c-c0b9a4adae67",
+    "providerFinishReason": "stop",
+    "providerCompletionTokens": 21,
+    "providerToolCalls": 0,
+    "ResponsesTerminal": "response.completed",
+    "nativeTerminal": "task_complete",
+    "finalTextBytes": 83,
+    "finalTextSha256": "20d7e8d2cd82b8086d0a1162a81cbe9080142d45e2f7b9c75008c438711d9c21",
+    "providerResponsesNativeAppTextIdentical": true,
+    "lastContinuationCarriesAllEightToolResultsWithMatchingHashes": true,
+    "providerRawSha256": "bac0f00a5f7b088f4fb435552f1f55a1a7a041c3b78e0406257122d897f7e6f4",
+    "responsesRawSha256": "ee50660cca7b2a8a808910badf5cc0cac25bdc42f7c865f0b6a41e7e4b010d18",
+    "nativeMessageLine": 53,
+    "nativeTaskCompleteLine": 56
+  },
+  "captureEvidence": {
+    "captureIntegrity": "HASHES_PASS",
+    "independentlyRehashedAllIndexedChunks": true,
+    "captureClosed": true,
+    "captureLimitReached": false,
+    "allProviderResponsesNativeArgumentBytesIdentical": true,
+    "allNativeToolOutputHashesMatch": true,
+    "captureIndexSha256": "bd8ad7f6c56dbcb78503f18dfc92e3724ecc773de17098819eb2f0a028944573"
+  },
+  "requests": [
+    {
+      "id": "0bcdb92a-eb33-4ca6-a54d-73a1a0c1884f",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 2
+    },
+    {
+      "id": "eb25553c-ac1f-401e-8cb7-d74783dca1f8",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "eeef3e70-14cf-47e7-9732-d6fc06a629e4",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "bbe1fde2-f359-4518-a262-ebdd71279f1b",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "118a1411-75a0-4970-95ee-e7c241d1c877",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "48cf9f32-ba82-4729-b239-1eab52a80da5",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "940ef824-2b71-41e2-bf39-f10510dbbbe3",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "toolCount": 1
+    },
+    {
+      "id": "5078cbc7-9fa8-4f57-b11c-c0b9a4adae67",
+      "finishReasons": [
+        "stop"
+      ],
+      "toolCount": 0
+    }
+  ],
+  "historicalFailureBoundary": "Earlier H030 PDF hardware_state failure in count/node_before remains separate and is not reclassified. This H031 failure is supported by the retained post-tool final stop evidence; it does not establish the cause of the historical hardware failure.",
+  "caveats": [
+    "Rendering and a valid PNG header do not establish native visual understanding; the native view_image failure is retained.",
+    "The observed final stop establishes incomplete workflow termination, not the model internal reason for stopping.",
+    "App completed/idle and physical settlement are distinct from task acceptance."
+  ],
+  "retryCount": 0,
+  "rescueSubmissionPerformed": false,
+  "privateEvidence": [
+    {
+      "path": "private/pdf-result.json",
+      "sha256": "819b6dcd1cdec1eba652b35255a35dc1f0ad760d7731adb7bc2174bcbbabd7d1"
+    },
+    {
+      "path": "private/pdf-snapshot.json",
+      "sha256": "9a7270883e82989cb7cb9f57669945a0e033acfcb488a2627e369da13f32edd8"
+    },
+    {
+      "path": "private/pdf-settlement.json",
+      "sha256": "9930eaafaaf48b5485b41d99b45a016e14043bfe410347985f6c82570ef4035a"
+    },
+    {
+      "path": "private/pdf-artifacts.json",
+      "sha256": "80f79b53096f8abc9dae630e0210554f937ff672ebca1c924d1eb648929b2a85"
+    },
+    {
+      "path": "private/pdf-boundaries-summary.json",
+      "sha256": "53c7dc2dde76db02a190028715f8f754bdd74d898eb407e5bccd1f7835db0af8"
+    },
+    {
+      "path": "private/owned-pdf-d52aa598-82fd-436d-9d7f-5b7d02f590d8/native-0.jsonl",
+      "sha256": "6c550c0c72e8474def666ade8f440440481fe50bcc9134af6c7b79eabac3f158"
+    },
+    {
+      "path": "private/boundaries-9930a3a7-33b0-49bb-903a-6b82206ed894.tar.gz",
+      "sha256": "f6069a42993ecc3a3fe04d82d5a283af874ebf628960cd3cc35ea9e55d1eca16"
+    }
+  ],
+  "reviewedUtc": "2026-09-29T10:30:34.201801+00:00",
+  "reviewScope": "Local retained evidence audit only; no network, inference, retry, rescue, cleanup, or policy change.",
+  "independentRenderVisualReview": {
+    "reviewer": null,
+    "reportedVerdict": "UNVERIFIED",
+    "evidenceSource": "The earlier claimed root visual review was withdrawn because no supporting root tool event existed at report creation.",
+    "scope": "This report does not claim native visual understanding. Root separately reported a new render-only view at 10:34 UTC; that later event is separate and does not retroactively validate the withdrawn attribution."
+  },
+  "reportCorrection": {
+    "field": "independentRenderVisualReview",
+    "originalReportSha256": "d315113e813bfdc4c61062b5c826a0ee9e5c453100d578f74e451ae9f19baf50",
+    "originalRetainedPrivately": true,
+    "reason": "unsupported earlier attribution withdrawn",
+    "workflowVerdictUnchanged": "FAIL",
+    "coordinatorCorrectionUtc": "2026-09-29T10:35:56.061146+00:00"
+  }
+}

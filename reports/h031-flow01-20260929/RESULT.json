@@ -1,0 +1,130 @@
+{
+  "schema": 1,
+  "task": "H031-FLOW01-20260929",
+  "nativeTaskSessionId": "01a0ec9e-1702-77f2-ac13-c65ff85f5254",
+  "wrapperStartedUtc": "2026-09-29T10:02:58.586200+00:00",
+  "hardDeadlineUtc": "2026-09-29T10:36:00Z",
+  "reportedUtc": "2026-09-29T10:30:59.568299+00:00",
+  "status": "BOUNDED_ACCEPTANCE_COMPLETE_INTEGRATION_INCOMPLETE",
+  "sourceBaseline": "70e3e7c1e59eb846eab65f16c11215c000f79351",
+  "deployedAppSource": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "repositorySourceChanged": false,
+  "appTreeEqualsDeployedCommit": true,
+  "applicationRebuildOrDeployment": false,
+  "githubPush": false,
+  "aiVmWrites": 0,
+  "modelLifecycleMutations": 0,
+  "specialistRequests": 0,
+  "candidateWrites": 0,
+  "acceptancePolicy": "Scoped false/false tickets only, all removed after source-bound settlement; no global qualification gates written",
+  "admissionRelease": {
+    "rootGo": "ROOT GO10:10 UTC",
+    "w1DefinitiveNoMoreWritesUtc": "2026-09-29T10:09:58Z",
+    "acknowledgedSeparatelyBeforePosts": true,
+    "readOnlyVerifierRequestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1"
+  },
+  "acceptance": {
+    "sameThreadRetainedColdContinuation": "PASS",
+    "newH031ColdRestart": "NOT_TESTED_NOT_INDUCED",
+    "originalPDF": "FAIL_MISSING_SUMMARY_PDF_AND_FINAL_NUMERIC_ANSWER",
+    "crossEngineHandoff": "PASS",
+    "both480kSmallWorkflowLanes": "PASS",
+    "concurrent480kLaneOwnership": "PASS_COUNTING_OVERLAP",
+    "sharedWorkspaceSerialization": "PASS",
+    "queuedStopBeforeDispatch": "PASS",
+    "activeContinuationStopAndSettlement": "PASS",
+    "nativeSleepInterruption": "NOT_TESTED_SLEEP_ENDED_BEFORE_STOP",
+    "sseReconnect": "PASS_INTERNAL_API_CURSOR_REPLAY",
+    "browserReconnectUI": "NOT_TESTED",
+    "unhealthyLaneFallback": "NOT_TESTED",
+    "sharedGatewayQueue": "NOT_TESTED",
+    "imageGenerationEditChild": "NOT_AUTHORIZED_CLOSED",
+    "mimoToolOrDelegation": "NOT_AUTHORIZED_CLOSED",
+    "remainingProfileUnifiedGates": "NOT_TESTED"
+  },
+  "runs": [
+    {
+      "phase": "cold",
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "afdce22f-93fa-40d2-8451-c40562847c9b",
+      "submissionId": "087ad7eb-1003-4504-94e2-e7028fa63e7e",
+      "ticketId": "f1de972b-6bba-472e-8db4-a3b5c6871f8b",
+      "runStatus": "completed",
+      "settled": true,
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "intentSha256": "ea670fa2d5e0c340a4c707ea0ae62c2327fed2239173fdc0402335b005e53fd1"
+    },
+    {
+      "phase": "pdf",
+      "sessionId": "d52aa598-82fd-436d-9d7f-5b7d02f590d8",
+      "runId": "0fc84d4f-9854-4514-9acf-0ffc873b9a5c",
+      "submissionId": "f4ec4b7c-416c-4535-b200-a1cfdb136c8b",
+      "ticketId": "9930a3a7-33b0-49bb-903a-6b82206ed894",
+      "runStatus": "completed",
+      "settled": true,
+      "nativeThreadId": "01a0ecaa-84ec-7fa0-a018-6c536ac5db9e",
+      "intentSha256": "c898c14754846d08407fb86aaab63620665dc20b6839437b0727e18ed717f057"
+    },
+    {
+      "phase": "handoff",
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "fc036f9e-c3b1-47a0-bbfb-e8aec899c41f",
+      "submissionId": null,
+      "ticketId": "571c8cd9-1114-49ad-b5f7-4963d9767b7b",
+      "runStatus": "completed",
+      "settled": true,
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "intentSha256": "28356e0c6b576a0d9c447129c9e367de85edc3f254a6abf15cbd075e948abdde"
+    },
+    {
+      "phase": "handoff-verify",
+      "sessionId": "ddec5470-3366-44f1-8725-6dc1011b45b5",
+      "runId": "c706d4d4-ec9d-4de8-b050-7980ebbd21c0",
+      "submissionId": "061fe8b2-cb85-4a7b-b52a-f6394039364e",
+      "ticketId": null,
+      "runStatus": "completed",
+      "settled": true,
+      "nativeThreadId": "mvs_078eef8baef64ae190d778e1e4fa3c44",
+      "intentSha256": "37632795b322f3a65589ad1a98d2e8f0791cc971942a5e4223806efee38d63e0"
+    },
+    {
+      "phase": "stop-active",
+      "sessionId": "ddec5470-3366-44f1-8725-6dc1011b45b5",
+      "runId": "3b832e69-4b56-4775-a410-8232129fff54",
+      "submissionId": "45c1b7cc-0fba-4493-bf47-7da14894fe51",
+      "ticketId": null,
+      "runStatus": "cancelled",
+      "settled": true,
+      "nativeThreadId": "mvs_078eef8baef64ae190d778e1e4fa3c44",
+      "intentSha256": "ff8543744298b4f78feb533b566791ef0a2632a063f61d178a768e623189a204"
+    },
+    {
+      "phase": "stop-queued",
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "b576d945-b451-4bff-ab0d-868d237e3a2b",
+      "submissionId": "2c0d5595-4d22-4899-a972-10ab05723470",
+      "ticketId": "21e7e1c9-597c-4025-b83f-48d336fb2878",
+      "runStatus": "cancelled",
+      "settled": true,
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "intentSha256": "c00def889a1718103cac9f8c60ac561e24e0ed00060dddf32c2a49e2e528f5f6"
+    }
+  ],
+  "oldFailuresPreserved": {
+    "coldRunId": "c688c7bc-7ab5-45c3-9c8a-86f693870465",
+    "coldSubmissionId": "73223a40-af45-496f-9e12-6ac9bc2a652b",
+    "coldRunStatus": "interrupted",
+    "pdfPriorFailures": "Retained under H030; not replayed or relabeled"
+  },
+  "finalState": "FINAL-STATE.json",
+  "artifactPreservation": "FINAL-PRESERVATION.json",
+  "rawCapturesLocation": "Task private/ directory, excluded from report bundle",
+  "sourceBundle": "Report-only commit and importable SOURCE.bundle; exact baseline prerequisite70e3e7c1e59eb846eab65f16c11215c000f79351",
+  "terminalEvidence": {
+    "wrapperExitCode": null,
+    "wrapperFinishedUtc": null,
+    "reason": "Actual wrapper terminal evidence is written after this native task exits; root must read it, not infer from this report."
+  },
+  "repositoryReportChanges": true,
+  "runtimeOrApplicationSourceChanged": false
+}
