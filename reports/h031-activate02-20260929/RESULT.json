@@ -1,0 +1,656 @@
+{
+  "conditionalMiMoStart09_59": {
+    "condition": "image fully READY",
+    "conditionMet": false,
+    "reason": "image closed/not-ready with failed backend and unresolved ownership",
+    "submitted": false
+  },
+  "finalUnits": {
+    "llm-frontier-mimo.service": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainStatus": "255",
+      "InvocationID": "a2ae1474e0d24ecaa111a6382290fc23",
+      "Job": "",
+      "MainPID": "0",
+      "Result": "exit-code",
+      "SubState": "failed"
+    },
+    "llm-image-api.service": {
+      "ActiveState": "active",
+      "ControlGroup": "/system.slice/llm-image-api.service",
+      "ExecMainStatus": "0",
+      "InvocationID": "32af9e02739e449a84621814de680205",
+      "Job": "",
+      "MainPID": "1654648",
+      "Result": "success",
+      "SubState": "running"
+    },
+    "llm-image-backend.service": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainStatus": "1",
+      "InvocationID": "6e8aa276397a451cb5a480b2c0aa90ea",
+      "Job": "",
+      "MainPID": "0",
+      "Result": "exit-code",
+      "SubState": "failed"
+    },
+    "llm-node.service": {
+      "ActiveState": "active",
+      "ControlGroup": "/system.slice/llm-node.service",
+      "ExecMainStatus": "0",
+      "InvocationID": "941f3b29804f4983981c2fa9dc8023be",
+      "Job": "",
+      "MainPID": "1590070",
+      "Result": "success",
+      "SubState": "running"
+    }
+  },
+  "handoffDisposition": "NO_MORE_MUTATIONS; preserve unresolved image native and operation/recovery records; root disposition required for both failures; no retry/cleanup/restore.",
+  "image": {
+    "apiPid": 1654648,
+    "apiReadiness": {
+      "admitting": false,
+      "busy": false,
+      "ready": false,
+      "state": "closed"
+    },
+    "backendChildPidRecorded": 1656742,
+    "backendInvocationId": "6e8aa276397a451cb5a480b2c0aa90ea",
+    "backendUnit": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainStatus": "1",
+      "InvocationID": "6e8aa276397a451cb5a480b2c0aa90ea",
+      "Job": "",
+      "MainPID": "0",
+      "Result": "exit-code",
+      "SubState": "failed"
+    },
+    "furtherLifecycleActions": 0,
+    "nativeContainerId": "d66478c5449611e521af17e918b8929c0d7d2d0a6526788d9ed55386b57cd539",
+    "nativePid": 1661054,
+    "nativeRunning": true,
+    "nativeStartedAt": "2026-09-29T09:55:35.757660444Z",
+    "normalApiStopCount": 1,
+    "normalBackendStopCount": 1,
+    "oldContainerId": "88c5e402c4d277339c855b7ba56a39dbc0eff3b5880b2bcdbbb4f00fcf5e7906",
+    "oldContainerRemovedAndPidAbsent": true,
+    "operationRecord": {
+      "action": "start",
+      "invocationId": "6e8aa276397a451cb5a480b2c0aa90ea",
+      "pid": 1656742,
+      "recovery": "83be8882e6374f3fbc3918de6bc5107c",
+      "status": "active",
+      "token": "868d9b48784b44f4b702b52c05655a65"
+    },
+    "operationRecordSha256": "8eaaf68cd2bca7a4252c3e039c634a241c68a34e392a3a650a8366814e60e918",
+    "operationStatus": "active",
+    "owner": "IMAGE21-RUNTIME-20260923",
+    "ownershipStatus": "UNRESOLVED_NATIVE_RUNNING_OWNER_PROCESSES_ABSENT",
+    "parentChildProcessScan": "NO_MATCHES",
+    "phase": "warm",
+    "phaseAtPriorStoppedReadback": "stopped",
+    "readyAccepted": false,
+    "recoveryFailure": {
+      "code": "owned_systemd_restart_warm_failed",
+      "settlementCode": "image_operation_unresolved",
+      "utc": "2026-09-29T09:56:50.016107+00:00"
+    },
+    "recoveryOperationId": "83be8882e6374f3fbc3918de6bc5107c",
+    "recoveryParentPidRecorded": 1655508,
+    "recoveryRecord": {
+      "phase": "settle",
+      "pid": 1655508,
+      "status": "active",
+      "token": "83be8882e6374f3fbc3918de6bc5107c"
+    },
+    "runId": "6e8aa276397a451cb5a480b2c0aa90ea",
+    "startFailure": {
+      "code": "image_operation_changed",
+      "phase": "telemetry_verify",
+      "utc": "2026-09-29T09:56:48.510569+00:00"
+    },
+    "startSubmissions": 1,
+    "startUtc": "2026-09-29T09:55:21.909569+00:00",
+    "stateRawSha256AfterStop": "4992cc481553463eb409bafe3163a008449cc61d279107c6848c4c28aed3b5c8",
+    "stateUpdatedUtc": "2026-09-29T09:56:48.226657+00:00",
+    "warm": true,
+    "warmAtPriorStoppedReadback": false,
+    "warmFieldIsReadiness": false
+  },
+  "initialImageOwnership09_56": {
+    "apiPid": 1654648,
+    "backendChildPid": 1656742,
+    "nativeContainerId": "d66478c5449611e521af17e918b8929c0d7d2d0a6526788d9ed55386b57cd539",
+    "nativePid": 1661054,
+    "ownershipStatus": "SUPERVISED_PARENT_CHILD_NATIVE_LOADING",
+    "phase": "loading",
+    "recoveryParentPid": 1655508,
+    "warm": false
+  },
+  "initialRefusalReadback": {
+    "transitionFilesExist": {
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-archive.json": false,
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-consumed.json": false,
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-receipt.json": false
+    },
+    "units": {
+      "llm-frontier-mimo.service": {
+        "ActiveState": "failed",
+        "ExecMainStatus": "255",
+        "InvocationID": "a1aed8cfbc0046c8a247922dfbe11e70",
+        "Job": "",
+        "MainPID": "0",
+        "Result": "exit-code",
+        "SubState": "failed"
+      },
+      "llm-image-api.service": {
+        "ActiveState": "inactive",
+        "ExecMainStatus": "15",
+        "InvocationID": "b66c802a941f4ee0a25863300fe58efa",
+        "Job": "",
+        "MainPID": "0",
+        "Result": "success",
+        "SubState": "dead"
+      },
+      "llm-image-backend.service": {
+        "ActiveState": "inactive",
+        "ExecMainStatus": "0",
+        "InvocationID": "",
+        "Job": "",
+        "MainPID": "0",
+        "Result": "success",
+        "SubState": "dead"
+      },
+      "llm-node.service": {
+        "ActiveState": "active",
+        "ExecMainStatus": "0",
+        "InvocationID": "941f3b29804f4983981c2fa9dc8023be",
+        "Job": "",
+        "MainPID": "1590070",
+        "Result": "success",
+        "SubState": "running"
+      }
+    },
+    "utc": "2026-09-29T09:53:06.498566+00:00"
+  },
+  "installedFiles": {
+    "/data/services/image21-runtime-20260923/config.json": {
+      "new": "874794b83ed0182b6651b607517af44ac94f6125abc3b6c1509886aa82b359c9",
+      "old": "439751ac672fc183799e65a434449aadd60d5b421d1f4887e47c35d3cb9088f7",
+      "readback": "874794b83ed0182b6651b607517af44ac94f6125abc3b6c1509886aa82b359c9"
+    },
+    "/data/services/image21-runtime-20260923/source/service.py": {
+      "new": "26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556",
+      "old": "748b94a5b17e6c2cb4229d69f4dd142dc9cf099b05206f0f97e6c04173cab052",
+      "readback": "26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556"
+    },
+    "/data/services/mimo-h016-20260927/manifest.json": {
+      "new": "56ad1378aeab24215e0b064d731a688ab0c1df4302994a82c976b697be78ad7d",
+      "old": "ad6b438f17154d7434426b3b9a4b0238558a86ba5ab764ccb5c3c2b0f0099c8b",
+      "readback": "56ad1378aeab24215e0b064d731a688ab0c1df4302994a82c976b697be78ad7d"
+    },
+    "/data/services/mimo-h016-20260927/source/owner.py": {
+      "new": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090",
+      "old": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098",
+      "readback": "687aa9e57f59103b39f6c4aefcf51d5ffc0bb9cf697fb443747d3757c332b090"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node.py": {
+      "new": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59",
+      "old": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+      "readback": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py": {
+      "new": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77",
+      "old": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+      "readback": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77"
+    }
+  },
+  "miMo": {
+    "competingLockHolder": "NOT_SAMPLED_NOT_INFERRED",
+    "execStopPostRefusal": {
+      "code": "recovery_invocation_changed",
+      "phase": "CLI",
+      "utc": "2026-09-29T09:55:18.478603+00:00"
+    },
+    "newOwners": [],
+    "normalStopSubmissionsThisTask": 0,
+    "oldContainerStillExited": true,
+    "ownershipStatus": "START_REFUSED_NO_LOADING",
+    "priorContainerId": "87d2b6f131b9e6e98249f5ba148c0191c6a58fb17b58cf7f792ec27b14ef6d57",
+    "priorLaunchId": "fbfd46357f0d4e3482aa1c7da14f5147",
+    "readyAccepted": false,
+    "receiptConsumed": false,
+    "startRetries": 0,
+    "startSubmissions": 1,
+    "stateRawSha256": "b1ba8b36d09aef570a0d90f769268a61d05a6dbb11899720a163a5bab8fa7420",
+    "stateStatus": "SETTLED",
+    "supervisorRefusal": {
+      "code": "lifecycle_busy",
+      "phase": "CLI",
+      "utc": "2026-09-29T09:55:18.415682+00:00"
+    },
+    "unit": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainStatus": "255",
+      "InvocationID": "a2ae1474e0d24ecaa111a6382290fc23",
+      "Job": "",
+      "MainPID": "0",
+      "Result": "exit-code",
+      "SubState": "failed"
+    }
+  },
+  "nextReadinessUtc": null,
+  "noFurtherLifecycleActions": true,
+  "noMoreMutationsAsOfUtc": "2026-09-29T09:57:40.859047+00:00",
+  "node": {
+    "hardwareObservedUtc": "2026-09-29T09:52:18.200918+00:00",
+    "hardwareProof": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "hardware_validation_age_ms": 630.2249431610107,
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "validated"
+        ]
+      ],
+      "reason": null
+    },
+    "restartCount": 1,
+    "unit": {
+      "ActiveState": "active",
+      "ExecMainStatus": "0",
+      "InvocationID": "941f3b29804f4983981c2fa9dc8023be",
+      "Job": "",
+      "MainPID": "1590070",
+      "Result": "success",
+      "SubState": "running"
+    }
+  },
+  "nodeFinalObservation": {
+    "age_ms": 2507,
+    "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "freshness": "fresh",
+    "observed_at": "2026-09-29T09:57:38.349344+00:00",
+    "state": "ok"
+  },
+  "nodeServiceObservations": [
+    {
+      "admitting": null,
+      "availability": "available",
+      "configured_context_tokens": 480000,
+      "hardware_latched": false,
+      "observed_at": "2026-09-29T09:57:38.548098+00:00",
+      "ready": true,
+      "reason": null,
+      "service_id": "qwen-gpu0"
+    },
+    {
+      "admitting": null,
+      "availability": "available",
+      "configured_context_tokens": 480000,
+      "hardware_latched": false,
+      "observed_at": "2026-09-29T09:57:38.547699+00:00",
+      "ready": true,
+      "reason": null,
+      "service_id": "qwen-gpu1"
+    },
+    {
+      "admitting": false,
+      "availability": "unknown",
+      "configured_context_tokens": null,
+      "hardware_latched": false,
+      "observed_at": "2026-09-29T09:57:39.323578+00:00",
+      "ready": false,
+      "reason": "readiness_unknown",
+      "service_id": "image"
+    },
+    {
+      "admitting": null,
+      "availability": "unknown",
+      "configured_context_tokens": null,
+      "hardware_latched": null,
+      "observed_at": "2026-09-29T09:57:38.602898+00:00",
+      "ready": null,
+      "reason": "hardware_latch_unknown",
+      "service_id": "mimo-v2.6-pro-rl"
+    }
+  ],
+  "notExecuted": [
+    "MiMo repeated stop",
+    "direct image backend start",
+    "generation or inference",
+    "readiness acceptance",
+    "capability gates",
+    "app or config ticket writes",
+    "baseline restoration",
+    "MiMo start retry",
+    "MiMo LOADING acceptance",
+    "receipt consumption"
+  ],
+  "observedUtc": "2026-09-29T09:57:40.859047+00:00",
+  "phases": [
+    {
+      "phase": "preflight",
+      "status": "EXACT_STOPPED_PINS_IDENTITIES_IDLE_PASS",
+      "utc": "2026-09-29T09:49:38.554490+00:00"
+    },
+    {
+      "phase": "stage",
+      "status": "STAGED_OLD_INSTALLED_PINS_UNCHANGED",
+      "utc": "2026-09-29T09:51:11.306812+00:00"
+    },
+    {
+      "attempts": 1,
+      "phase": "prepare-source-stop-timeout",
+      "status": "IDLE_STOP_TIMEOUT_SUPPLEMENT_PREPARED",
+      "utc": "2026-09-29T09:51:15.572127+00:00"
+    },
+    {
+      "phase": "stop-image-and-node",
+      "status": "IMAGE_REMOVED_NODE_STOPPED",
+      "utc": "2026-09-29T09:51:36.538358+00:00"
+    },
+    {
+      "phase": "install",
+      "status": "SIX_EXACT_PATHS_INSTALLED",
+      "utc": "2026-09-29T09:51:58.604669+00:00"
+    },
+    {
+      "phase": "node-start",
+      "status": "STARTED_ONCE",
+      "utc": "2026-09-29T09:52:02.160445+00:00"
+    },
+    {
+      "phase": "hardware-read",
+      "status": "CURRENT_STRICT_NEGATIVE_PROOF",
+      "utc": "2026-09-29T09:52:18.200918+00:00"
+    },
+    {
+      "attempts": 1,
+      "phase": "reconcile",
+      "status": "LEASE_BUSY_AT_ACQUIRE_ENTER_BEFORE_BODY",
+      "utc": "2026-09-29T09:52:22Z",
+      "utcPrecision": "second; W1 checkpoint"
+    },
+    {
+      "phase": "refusal-readback",
+      "status": "UNCHANGED_STATE_AND_NO_TRANSITION_FILES",
+      "utc": "2026-09-29T09:53:06.498566+00:00"
+    },
+    {
+      "phase": "pre-retry-readback",
+      "status": "UNCHANGED_STATE_TUPLE_AND_NO_TRANSITION_FILES",
+      "utc": "2026-09-29T09:55:03.660188+00:00"
+    },
+    {
+      "phase": "reconcile-further-invocation-1",
+      "status": "SETTLED_SOURCE_RECONCILED",
+      "utc": "2026-09-29T09:55:04.950268+00:00"
+    },
+    {
+      "phase": "start",
+      "status": "ONE_NORMAL_START_EACH_SUBMITTED",
+      "utc": "2026-09-29T09:55:18.004446+00:00"
+    },
+    {
+      "phase": "mimo-supervisor",
+      "status": "REFUSED_CLI_LIFECYCLE_BUSY",
+      "utc": "2026-09-29T09:55:18.415682+00:00"
+    },
+    {
+      "phase": "mimo-ExecStopPost",
+      "status": "REFUSED_CLI_RECOVERY_INVOCATION_CHANGED",
+      "utc": "2026-09-29T09:55:18.478603+00:00"
+    },
+    {
+      "phase": "actual-ownership-readback",
+      "status": "MIMO_STOPPED_UNCONSUMED_IMAGE_LOADING",
+      "utc": "2026-09-29T09:56:00.124052+00:00"
+    },
+    {
+      "phase": "image-backend-start",
+      "status": "FAILED_IMAGE_OPERATION_CHANGED_TELEMETRY_VERIFY",
+      "utc": "2026-09-29T09:56:48.510569+00:00"
+    },
+    {
+      "phase": "image-recovery",
+      "status": "FAILED_OWNED_SYSTEMD_RESTART_WARM_FAILED_SETTLEMENT_UNRESOLVED",
+      "utc": "2026-09-29T09:56:50.016107+00:00"
+    },
+    {
+      "phase": "final-narrow-readback",
+      "status": "IMAGE_CLOSED_NOT_READY_NATIVE_RUNNING_WITH_UNRESOLVED_RECORDS_MIMO_NOT_STARTED",
+      "utc": "2026-09-29T09:57:40.859047+00:00"
+    }
+  ],
+  "preserved": {
+    "bootId": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "failureRecords": {
+      "primary_failure": {
+        "code": "owner_interrupted",
+        "cycle_elapsed_s": 4.80748,
+        "observed_at": "2026-09-29T09:24:39.606796+00:00",
+        "operation": "cycle_sleep",
+        "phase": "RUNNING"
+      },
+      "settlement_failure": {
+        "code": "command_timeout",
+        "observed_at": "2026-09-29T09:24:47.370273+00:00",
+        "operation": "settlement",
+        "phase": "SETTLING"
+      }
+    },
+    "guardRawSha256": "48b92ad581d6635ddb4cd519882e2302f3ba3531a338688d30bdb6e73f44f3de",
+    "originalAndSupplement": {
+      "source-stop-992bf979-efae-495b-9ab2-26e75ed5c5d0-fbfd46357f0d4e3482aa1c7da14f5147.json": "9cabae3e1335bda0028497638e5e968623e0870ef7cc339bd8d9a576243d8eee",
+      "source-stop-timeout-992bf979-efae-495b-9ab2-26e75ed5c5d0-fbfd46357f0d4e3482aa1c7da14f5147.json": "8a9597d54cdb1adcebf2e7fb9b6987653a6a994f099ad46ec5057f9ca625844a",
+      "source-successor-delta.json": "cd9b4a0fbb22e9d97f6ab826492282f6560402685c73b7e1023d94a6a7914e59"
+    },
+    "predecessorOwnerAndManifestArchived": true,
+    "proxyRawSha256": "78a7d329e835e53e90c6d9b632646ecc4ce7149ca539506cb455d48803ccd669",
+    "requestHold": false,
+    "selection": {
+      "generation": 12,
+      "manifest_sha256": "5c364e58cba01a569f13f6a239c6383dec1d5b92a94f3ab8d608962c0a178a39",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "settlement": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_released": true
+    },
+    "stateRawSha256": "b1ba8b36d09aef570a0d90f769268a61d05a6dbb11899720a163a5bab8fa7420",
+    "stateStatus": "SETTLED"
+  },
+  "provenance": {
+    "isolatedBase": "b502a1288443f7871225f76d3e8cab5b611b8fb9",
+    "localSourceImportCommits": [
+      "4661de9cc897cc93f2b6c20cc10b1c6fd988124a",
+      "04651d0d3488163492cb75bd82243f513c9570aa"
+    ],
+    "priorAct01EvidencePreserved": true,
+    "sourceFixtureIsLiveQualification": false,
+    "sourceReportsRetainSeparateProvenance": true,
+    "w1ImageSource": "752ecebc12ff439f7813197620522fab80f696dd",
+    "w2ProtocolSha256": "5a3828764780c9fd51a8a47671f4f8fd2f67bbd05313d89fec03cf0733e2690d",
+    "w2Source02": "b2ecf727d1a5192e5e791db4b088ef9b9a3ee865",
+    "w2Source02BundleSha256": "53f35c6aa32af3e8968f87b9ed926c124c3092d817723e3dc120c3e2cda9f585"
+  },
+  "receiptConsumption": false,
+  "reconcile": {
+    "archiveName": "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-archive.json",
+    "archiveSha256": "a2d1b5c58611cd9d98be68d4be3279548f6a7d53bbe899b168da2660ab328a47",
+    "attempts": 2,
+    "automaticRetry": false,
+    "bodyEntered": false,
+    "disposition": "RECONCILED_AFTER_EXPLICIT_ROOT_SCOPE_CLARIFICATION",
+    "entryRefusals": 1,
+    "exception": "LeaseBusy",
+    "firstFurtherInvocationSucceeded": true,
+    "furtherInvocations": 1,
+    "hardwareProof": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "hardware_validation_age_ms": 1381.2572956085205,
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "validated"
+        ]
+      ],
+      "reason": null
+    },
+    "priorRequestOutcome": "IDLE_STOP_TIMEOUT_PHYSICALLY_SETTLED",
+    "rootClarificationUtc": "2026-09-29T09:54:00Z",
+    "selection": {
+      "generation": 12,
+      "manifest_sha256": "9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "site": "acquire_lease.__enter__",
+    "transition": "SAME_BOOT_IDLE_STOP_TIMEOUT_SETTLED"
+  },
+  "schema_version": 1,
+  "selectionAfterReconcile": {
+    "generation": 12,
+    "manifest_sha256": "9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "sourceClosure": {
+    "correctedDeltaRawSha256": "bf7c1ad0f197a2191f711c314b5ceccb6ce3a0c3f44c6e7b307cfc4e1dcdb167",
+    "imageConfigChange": "service.py source hash only",
+    "installedPathCount": 6,
+    "miMoNonSourceManifestFieldsUnchanged": true,
+    "modelsRuntimesGpuFlagsUnchanged": true,
+    "newMiMoManifestCanonicalSha256": "9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9",
+    "pathListsUnchanged": true
+  },
+  "stage": {
+    "helperPath": "scripts/h031/activate02.py",
+    "helperSha256": "6c0bc8ea16319ff6f0040734e253e6c7363d120b307da09d8c6d4133aedce230",
+    "oldScratchPreserved": "/data/build/h031-activate01-20260929",
+    "packetChecksumsVerified": 27,
+    "path": "/data/build/h031-source02-20260929",
+    "wrapperSha256": "df6c50ef3ac69086b0b6f5b63c03eb4a18d3a58e3f4a1dc9bea5059bf08fd34e"
+  },
+  "startSubmission": {
+    "status": "ONE_NORMAL_START_EACH_SUBMITTED",
+    "units": {
+      "llm-frontier-mimo.service": {
+        "ActiveState": "activating",
+        "ExecMainStatus": "0",
+        "InvocationID": "a2ae1474e0d24ecaa111a6382290fc23",
+        "Job": "126341",
+        "MainPID": "0",
+        "Result": "success",
+        "SubState": "condition"
+      },
+      "llm-image-api.service": {
+        "ActiveState": "active",
+        "ExecMainStatus": "0",
+        "InvocationID": "32af9e02739e449a84621814de680205",
+        "Job": "",
+        "MainPID": "1654648",
+        "Result": "success",
+        "SubState": "running"
+      }
+    },
+    "utc": "2026-09-29T09:55:18.004446+00:00"
+  },
+  "status": "SIX_PATHS_INSTALLED_RECONCILED_MIMO_START_REFUSED_IMAGE_NOT_READY_UNRESOLVED_NATIVE",
+  "supplement": {
+    "hardware": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "hardware_validation_age_ms": 4084.805727005005,
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "validated"
+        ]
+      ],
+      "reason": null
+    },
+    "name": "source-stop-timeout-992bf979-efae-495b-9ab2-26e75ed5c5d0-fbfd46357f0d4e3482aa1c7da14f5147.json",
+    "physical": {
+      "cgroup_empty": true,
+      "container_id": "87d2b6f131b9e6e98249f5ba148c0191c6a58fb17b58cf7f792ec27b14ef6d57",
+      "current_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "gpu_compute_empty": true,
+      "native_pid_absent": true,
+      "old_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "owner_absent": true,
+      "physical_release": "LATE_SETTLEMENT_AFTER_STOP_TIMEOUT",
+      "prior_request_outcome": "IDLE_STOP_TIMEOUT_PHYSICALLY_SETTLED"
+    },
+    "sha256": "8a9597d54cdb1adcebf2e7fb9b6987653a6a994f099ad46ec5057f9ca625844a"
+  },
+  "task": "H031-ACTIVATE02-20260929",
+  "transitionFiles": {
+    "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-archive.json": {
+      "exists": true,
+      "sha256": "a2d1b5c58611cd9d98be68d4be3279548f6a7d53bbe899b168da2660ab328a47"
+    },
+    "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-consumed.json": {
+      "exists": false
+    },
+    "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-receipt.json": {
+      "exists": true,
+      "sha256": "de52387f3f4505b3529b16606e1a4d11628cf4aeb51bb0cae640965a7d67dcb5"
+    }
+  },
+  "unchangedQwenPeers": [
+    {
+      "containerId": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+      "name": "/llm-qwen-ada200k-h028",
+      "pid": 833565,
+      "running": true,
+      "startedAt": "2026-09-28T23:44:52.546510973Z"
+    },
+    {
+      "containerId": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "pid": 3647349,
+      "running": true,
+      "startedAt": "2026-09-29T02:07:52.812113852Z"
+    },
+    {
+      "containerId": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "pid": 3745649,
+      "running": true,
+      "startedAt": "2026-09-29T02:10:08.065244144Z"
+    }
+  ],
+  "validation": {
+    "liveWorkflowPassClaimed": false,
+    "priorW1SourceFocusedChecks": 83,
+    "priorW2Source02FocusedChecks": 54,
+    "privateRawEvidenceOutsideGit": true,
+    "sourceTestsRerun": false
+  },
+  "workflowAcceptance": false
+}
