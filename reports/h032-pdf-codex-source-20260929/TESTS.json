@@ -1,0 +1,67 @@
+{
+  "schema": 1,
+  "checkedAtUtc": "2026-09-29T11:53:54.956825+00:00",
+  "scope": "OFFLINE_SOURCE_ONLY_NOT_DEPLOYED",
+  "focusedTests": {
+    "server": {
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "log": "focused-server.tap",
+      "files": [
+        "codex-text-only-native.test.ts",
+        "codex-specialist-qualification.test.ts",
+        "codex-engine.test.ts",
+        "codex-capabilities.test.ts",
+        "codex-persistence.test.ts"
+      ]
+    },
+    "followup": {
+      "passed": 2,
+      "failed": 0,
+      "skipped": 0,
+      "log": "focused-followup.tap",
+      "files": [
+        "codex-followup.test.ts"
+      ]
+    },
+    "launcher": {
+      "passed": 19,
+      "failed": 0,
+      "skipped": 0,
+      "log": "focused-launcher.txt",
+      "files": [
+        "ai-harness/deploy/tests/test-run-codex.py"
+      ]
+    }
+  },
+  "totalPassed": 88,
+  "hostBuild": "PASS",
+  "webBuild": "NOT_NEEDED_NO_WEB_CHANGES",
+  "nativeImageBuild": "NOT_NEEDED_HOST_MOUNTS_ONLY",
+  "initialFixtureErrors": [
+    "HTTP header setup order",
+    "missing synthetic provider usage frame"
+  ],
+  "initialFixtureErrorLogs": [
+    "focused-server.initial.tap",
+    "focused-server.second.tap"
+  ],
+  "retainedOriginalPDF": {
+    "result": "FAIL_MISSING_NUMERIC_FINAL_AND_SUMMARY_PDF",
+    "sourceBytes": 702,
+    "sourceSha256": "7cd11f7c4a0369ce2a8f4c57cd375a1149df9e3b593ac22bf3de7e692b42f03e",
+    "finalBytes": 83,
+    "finalSha256": "20d7e8d2cd82b8086d0a1162a81cbe9080142d45e2f7b9c75008c438711d9c21",
+    "fourBoundariesExactlyEqual": true,
+    "providerRequests": 8,
+    "sourceStillUnchanged": true
+  },
+  "gates": {
+    "image": "CLOSED",
+    "frontier": "CLOSED",
+    "candidateEnabled": false,
+    "candidateQualified": false,
+    "publicMaintenance": "UNCHANGED_NO_LIVE_ACCESS"
+  }
+}

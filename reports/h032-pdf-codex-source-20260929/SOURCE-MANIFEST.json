@@ -1,0 +1,73 @@
+{
+  "schema": 1,
+  "task": "H032-PDF-CODEX01-20260929",
+  "worker": "mac-worker2",
+  "nativeSessionId": "01a0ecf9-f793-79d0-985f-7f482154b73d",
+  "createdUtc": "2026-09-29T11:56:24.926833+00:00",
+  "basePrerequisite": "5cc21bafa7ecda85bb20e50e45bee86a826ded76",
+  "sourceCommit": "e9e4f71c53b2caade69c345aadb231f788323a3d",
+  "appDeployedSourceUnchanged": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "files": [
+    {
+      "path": "ai-harness/deploy/codex/Containerfile",
+      "bytes": 1287,
+      "sha256": "6e6bc0afb39d9f06379cfad7e1aa261ade264e7a7d3dcc24a1361d7a866a68b4"
+    },
+    {
+      "path": "ai-harness/deploy/codex/config-image-jobs.toml",
+      "bytes": 1930,
+      "sha256": "6aa9b28745c1200ac7f0c5c7132eba78df91e86f04a9cb85dc4215eb04c10a14"
+    },
+    {
+      "path": "ai-harness/deploy/codex/config.toml",
+      "bytes": 1896,
+      "sha256": "97f0b812b30380a51da742810e2804fb6ce63546ac2773ddff38a8bb6f442ccd"
+    },
+    {
+      "path": "ai-harness/deploy/run-codex.sh",
+      "bytes": 11164,
+      "sha256": "acdb60228666a5122f9bed7a32b40feeb33a5468b41eb3f542d4aa516340c4d1"
+    },
+    {
+      "path": "ai-harness/deploy/tests/test-run-codex.py",
+      "bytes": 3939,
+      "sha256": "9d9bc187cb9322ddf4903cbf77a5c82e12604bc2ad35afb5efb2083bf92e71e7"
+    },
+    {
+      "path": "ai-harness/server/src/codex-launcher.ts",
+      "bytes": 3287,
+      "sha256": "1332d89df1de8520f4952bbe698bc1baff107f3a736d8a7020124ec5e757c12f"
+    },
+    {
+      "path": "ai-harness/server/src/codex-specialist-qualification.ts",
+      "bytes": 6620,
+      "sha256": "a569337d540b725f059431d65343ee9ce9825d152eeaabbffe88b36901ccc880"
+    },
+    {
+      "path": "ai-harness/server/test/codex-followup.test.ts",
+      "bytes": 8162,
+      "sha256": "612c0b01307d0750f36e6b7faa42f1f4cc8661a59be8029262c761017e20521d"
+    },
+    {
+      "path": "ai-harness/server/test/codex-specialist-qualification.test.ts",
+      "bytes": 9522,
+      "sha256": "c2d33a4907562da13379ab5c9f2279f968c421d282c3795a14397d7c12a9fa9c"
+    },
+    {
+      "path": "ai-harness/server/test/codex-text-only-native.test.ts",
+      "bytes": 9397,
+      "sha256": "d0f38e726a6c82ed5892c30f33ffbdf9d7a3c1bb9839d5cee1f364575a75b313"
+    }
+  ],
+  "sourcePatchSha256": "26cb97417d9a571254108597ee402bca0c07c385db46c0eeb14626cf65fd1049",
+  "sourceBundleSha256": "c78a86a486e09779180fa0b7a3b1ed98de064449715fc7d17e2b694e194be2c9",
+  "bundlePrerequisite": "5cc21bafa7ecda85bb20e50e45bee86a826ded76",
+  "excludes": [
+    "private raw evidence",
+    "credentials",
+    "native binary",
+    "node_modules",
+    "large captures"
+  ],
+  "status": "SOURCE_BUILT_OFFLINE_TESTED_UNDEPLOYED"
+}
