@@ -45,7 +45,7 @@ export interface CodexSpecialistQualification {
 const closed = (): CodexSpecialistQualification => ({
   imageJobsQualified: false, frontierResponsesQualified: false,
   capabilities: {
-    image: { supported: false, qualification: "not_tested", reason: "Protected live Codex image generation/edit/child evidence is absent or invalid" },
+    image: { supported: false, qualification: "not_tested", reason: "Retained H034 generation and fresh native child generation passed; protected full guarded-edit, approval and result-handoff evidence remains absent or invalid" },
     frontier: { supported: false, qualification: "not_tested", reason: "Protected live MiMo tool-continuation and Codex/MiniMax delegation evidence is absent or invalid; 950000 is configured capacity" },
   },
 });

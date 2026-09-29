@@ -52,7 +52,7 @@ export function codexCapabilities(
     },
     pdf: {
       supported: true, qualification: "native_fixture",
-      reason: "Direct rootless Linux extraction/render/creation helpers passed. H032 numeric answer with page citation and readable summary PDF passed. Full workflow FAILED because the final answer falsely reported no tool failures; H031 original incomplete workflow remains failed",
+      reason: "H035 unchanged PDF workflow passed extraction, page-1 rendering, numeric answer/citation, summary creation and truthful failure/recovery reporting; native visual inspection remains unsupported. H032 final falsely reported no tool failures; H031 original incomplete workflow remains failed",
     },
     coding: {
       supported: true, qualification: "live",
@@ -64,14 +64,14 @@ export function codexCapabilities(
         supported: false,
         qualification: "native_fixture" as const,
         reason:
-          "Pinned native mock lifecycle verified; shared gateway and live model acceptance are separate gates",
+          "H034 actual fresh native child image generation passed with retained live evidence; shared gateway and deployment enablement remain separate gates",
       }),
       supported: gates.delegationEnabled === true,
     },
     image: {
       ...(reviewed.image ??
         unavailable(
-          "Specialist image workflows remain unqualified after malformed MCP capability arguments; generation/edit acceptance pending",
+          "Retained H034 generation and fresh native child generation passed; full guarded-edit, approval and result-handoff qualification remains incomplete",
         )),
       supported: gates.imageToolEnabled === true,
     },
