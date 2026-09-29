@@ -296,12 +296,43 @@
       "sourceScope": "SEVEN_DOCUMENTATION_FILES_ONLY",
       "receipts": "Task output docs-checks.receipt.json, final-whitespace.receipt.json and historical-preservation.receipt.json"
     },
-    "nativeActualExitCode": null,
-    "outerWrapperReceipt": "WRAPPER-TERMINAL.json after this session ends; root must collect, never predicted",
+    "nativeActualExitCode": 0,
+    "outerWrapperReceipt": "Actual receipt collected by root; see rootClosure.workerExitReceipts",
     "liveException": "Only three root-authorized one-shot TCP connects; all timed out, no protocol payload/auth/retry/polling or VM/harness application calls",
     "codeOrApplicationLiveWorkPerformed": false,
     "maximumSeconds": 1500,
     "hardDeadlineUtc": "2026-09-29T23:58:46.460854Z",
-    "deadlineScope": "This native docs task only; H036 has no new hard user deadline"
+    "deadlineScope": "This native docs task only; H036 has no new hard user deadline",
+    "nativeFinishedUtc": "2026-09-29T23:52:33.020657+00:00"
+  },
+  "rootClosure": {
+    "recordedUtc": "2026-09-29T23:55:49.811213+00:00",
+    "workerExitReceipts": {
+      "worker1": {
+        "receipt": "final-docs-03/WRAPPER-TERMINAL.json",
+        "sha256": "2cd32e58e6bb553e613022d33fb8399851938b4faa72cf4db3fc6f48086c3400",
+        "nativePid": 12041,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-09-29T23:52:33.020657+00:00",
+        "method": "Popen.wait; persisted before cleanup"
+      },
+      "worker2": {
+        "receipt": "final-acceptance-01/report/WRAPPER-TERMINAL.json",
+        "sha256": "46a38c4563d295057efbd54afd1501b67ce22aa166233b730d9929db50d30300",
+        "nativePid": 76998,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-09-29T23:40:42.346617+00:00",
+        "deadlineTermination": false,
+        "method": "Popen.wait; persisted before any cleanup"
+      }
+    },
+    "reviewedCodeCandidate": "4d927feeef9f6b90b5169f655690f5fb4d6cddcf",
+    "allEightCodeGitHubChecks": "SUCCESS",
+    "documentationSource": "fc7d772e11c24c6cded3d865b5762d992635f2a2",
+    "documentationImportedAs": "9ce5b2f",
+    "remoteWorkOutcomes": "UNKNOWN_AFTER_VM_CONNECTIVITY_LOSS",
+    "release": "HELD",
+    "mainMerge": "NOT_PERFORMED",
+    "nextInput": "Proxmox status, bridge and guest-agent network output requested from user; no restart or replay performed"
   }
 }

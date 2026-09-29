@@ -113,3 +113,18 @@ exact 92325, DOCS.patch, hashes and actual documentation-check/command receipts.
 Native session `01a0ef84-66f5-7b70-980c-2261714dab62` is still running when this
 report is written. Its actual exit must come from the outer wrapper's later
 `WRAPPER-TERMINAL.json`; this report does not predict success or settlement.
+
+## Root review and actual worker closure
+
+Root reviewed and imported the profile correction as `4d927fee`, then the
+current documentation as `9ce5b2f`. All eight push/PR checks for the code candidate
+passed. The actual outer wrappers confirm Worker2 exited 0 at 23:40:42.346617 UTC
+and Worker1 exited 0 at 23:52:33.020657 UTC. Both bounded native sessions are
+closed; no paid worker is waiting for networking. These CLI exits do not establish
+settlement of the disconnected VM requests. Exact receipt hashes are in the
+machine-readable results.
+
+The reviewed code and checkpoint are ready for feature-branch publication.
+Default-branch merge and ordinary release remain held. The next input is the
+requested Proxmox VM status, bridge and guest-agent network output. No host/VM
+restart, uncertain request replay or additional model benchmark was performed.
