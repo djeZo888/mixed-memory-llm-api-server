@@ -1,0 +1,296 @@
+{
+  "schema": 1,
+  "task": "H034-VERIFY03",
+  "asOfUtc": "2026-09-29T18:23:16.607067+00:00",
+  "source": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+  "nativeSessionId": "01a0ee5d-198f-75e0-8a1b-327687b422a2",
+  "host": "mac-worker1",
+  "overall": "PARTIAL",
+  "scope": "Bounded independent release audit; no app writes/model requests/deployment/push",
+  "rows": [
+    {
+      "requirement": "ordinary_coding",
+      "result": "PASS",
+      "evidenceClass": "Retained live/independent artifact tests",
+      "finding": "H021 both engines Python/C++/Node repairs and research; historical H030 follow-up/deduplication summary. Not rerun on H034.",
+      "references": [
+        "reports/h021-matched-cases.json",
+        "reports/h021-codex-preview.md",
+        "reports/h030-codex-results.json"
+      ],
+      "identity": {
+        "h021Source": "5f95693e8c83bd40ca167b9b8fe2e1520ce51634",
+        "h030SummaryOwnOrdinaryPin": "not supplied; do not infer FLOW03 pin"
+      }
+    },
+    {
+      "requirement": "small_context",
+      "result": "PASS",
+      "evidenceClass": "Retained live",
+      "finding": "Small manual compaction, four-fact recall and files preserved; not long-context capacity.",
+      "references": [
+        "reports/h030-flow03-20260929/COMPACTION-RESULT.json",
+        "reports/h030-flow03-20260929/RECALL-RESULT.json"
+      ],
+      "identity": {
+        "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+        "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "runIds": [
+          "925ccb74-9a31-4ac9-8bf3-a1b798f9f34e",
+          "f2f9ee4f-3916-42cb-9803-c6564b21b73c"
+        ]
+      }
+    },
+    {
+      "requirement": "cold_resume_handoff",
+      "result": "PASS",
+      "evidenceClass": "Retained live",
+      "finding": "H021 cold resume; H031 retained same-thread continuation and Codex-to-MiniMax handoff. H031 induced no new app restart.",
+      "references": [
+        "reports/h021-codex-focused-cases.json",
+        "reports/h031-flow01-20260929/COLD-RESULT.json",
+        "reports/h031-flow01-20260929/HANDOFF-RESULT.json"
+      ],
+      "identity": {
+        "h021Source": "adb763cfd0d0e2b6174dfa28439e117f8a2a03be",
+        "h021Run": "52f6fd65-52e6-44a6-890b-8b7def804678",
+        "h031Source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+        "h031Runs": [
+          "afdce22f-93fa-40d2-8451-c40562847c9b",
+          "fc036f9e-c3b1-47a0-bbfb-e8aec899c41f",
+          "c706d4d4-ec9d-4de8-b050-7980ebbd21c0"
+        ]
+      }
+    },
+    {
+      "requirement": "queue_cancel",
+      "result": "PASS",
+      "evidenceClass": "Retained live plus distinct protocol fixtures",
+      "finding": "H031 workspace serialization/queued Stop before dispatch and H021 active Codex Stop/settled follow-up passed. Controlled healthy-peer FIFO/child cancellation/restart fixtures exist; not current live saturation/fault injection.",
+      "references": [
+        "reports/h031-flow01-20260929/STOP-RESULT.json",
+        "reports/h021-codex-final-cases.json",
+        "reports/h021-codex-adapter-20260928/TESTS.json",
+        "reports/h021-codex-adapter-20260928/server-regression-final.tap"
+      ],
+      "identity": {
+        "h031Source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+        "h031QueuedRun": "b576d945-b451-4bff-ab0d-868d237e3a2b",
+        "h021StopSource": "bbeec44d44c29d1b50ce8374c5d26170bc844f5a",
+        "h021StopRun": "6282e135-008a-40e8-a497-cb62a2d14e05",
+        "fixtureSource": "4c413c548a68a629c1187e7e97edd2a537d75955"
+      }
+    },
+    {
+      "requirement": "two_lanes_replay",
+      "result": "PASS",
+      "evidenceClass": "Retained live/API",
+      "finding": "Two 480K lanes used for small tasks, overlapping counting ownership; API cursor412 replay413-417 without request replay. Not simultaneous decode/capacity/browser reconnect.",
+      "references": [
+        "reports/h031-flow01-20260929/TWO-LANE-RESULT.json",
+        "reports/h031-flow01-20260929/SSE-RECONNECT.json"
+      ],
+      "identity": {
+        "source": "2b40610e937ad6256450e055ffd1d5647997f4c5"
+      }
+    },
+    {
+      "requirement": "mimo_workflows",
+      "result": "PASS",
+      "evidenceClass": "Retained live tool/child/parent/settlement",
+      "finding": "Both Codex and MiniMax full MiMo delegation passed. Original tested source/policy remain distinct from reviewed compatibility. All12 staged H033 receipt hashes match their supplied index.",
+      "references": [
+        "reports/h033-flow-source01-20260929/REPORT.md",
+        "reports/h033-codex-results.json",
+        "../input/H033-RETAINED/flow-source-01/CODEX-RESULT.json",
+        "../input/H033-RETAINED/flow-source-01/MINIMAX-RESULT.json",
+        "../output/retained-input-integrity.json"
+      ],
+      "identity": {
+        "source": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+        "toolPolicy": "aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956",
+        "codexSession": "2b4709f8-baf7-4b63-b2b4-965ad1cecc2c",
+        "codexRun": "5d20fb05-3cf3-4722-94eb-99840e2b9e82",
+        "minimaxSession": "3fd899cc-5e06-4772-9afb-ac044239b3be",
+        "minimaxRun": "fbd49990-b80a-4431-b261-81812a1353a8"
+      }
+    },
+    {
+      "requirement": "frontier_h034_gate",
+      "result": "PASS",
+      "evidenceClass": "W2-supplied deployed follow-on; original audited-source failure retained",
+      "finding": "ef3 single unit case failed as recorded. W2 APP-READY establishes354a8d6 at18:17:36 with frontier true/image false and actual old source/evidence retained; known mismatch corrected, no new MiMo run. VERIFY03 did not implement/deploy or independently test successor.",
+      "references": [
+        "ai-harness/server/src/codex-launcher.ts:24",
+        "ai-harness/server/src/codex-specialist-qualification.ts:60",
+        "ai-harness/server/test/codex-specialist-compatibility.test.ts:38",
+        "../output/focused-check-receipt.json",
+        "../input/W2-CURRENT/APP-READY.json",
+        "../input/W2-CURRENT/COMPATIBILITY-VALIDATION.json",
+        "../output/w2-current-summary.json"
+      ],
+      "identity": {
+        "auditedSource": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+        "w2ReportedFollowOn": "354a8d642e69e835d4f130fb2812a5f796d9e9d6",
+        "newLiveMiMoRun": false,
+        "w2CurrentDeployment": "supplied APP-READY receipt, completed18:17:36"
+      }
+    },
+    {
+      "requirement": "qwen_query_contract",
+      "result": "PASS",
+      "evidenceClass": "Retained provider probes and source tests",
+      "finding": "Three short explicit-query provider probes pass; strict:false also passed.39 focused source tests/build/typecheck retained. No tools or image jobs dispatched in probes; final MCP wording not relabelled live-tested.",
+      "references": [
+        "reports/h034-qwen-compat01-20260929/REPORT.md",
+        "reports/h034-qwen-compat01-20260929/RESULTS.json",
+        "ai-harness/server/src/codex-provider.ts:37",
+        "ai-harness/tools/image/image.mjs:203"
+      ],
+      "identity": {
+        "reviewedSource": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+        "providerCallsReplayedHere": 0
+      }
+    },
+    {
+      "requirement": "delivery_and_migration",
+      "result": "PASS",
+      "evidenceClass": "Retained source-only tests",
+      "finding": "Exact protected readonly image adapters and known-predecessor MiniMax skill migration:32 Node and25 fake-Podman Python cases. Not production mount/runtime acceptance.",
+      "references": [
+        "reports/h034-delivery02-source.md",
+        "reports/h034-delivery02-source.json"
+      ],
+      "identity": {
+        "source": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+        "originalBase": "d2333dcc7effe0de73bb1cbc48c31264de39da05"
+      }
+    },
+    {
+      "requirement": "guard_resume",
+      "result": "PARTIAL",
+      "evidenceClass": "Current source inspection/fixture coverage",
+      "finding": "Three identical matched schema errors stop and settle owned parent/child work. Cold parent sends current pinned baseInstructions; existing children remain original. Live current provider adoption/guard outcome not tested here; guard is not tool repair.",
+      "references": [
+        "ai-harness/server/src/codex-schema-errors.ts:112",
+        "ai-harness/server/src/codex-engine.ts:270",
+        "ai-harness/server/src/codex-engine.ts:420",
+        "ai-harness/server/src/codex-instructions.ts:19",
+        "ai-harness/server/test/codex-engine.test.ts:911"
+      ],
+      "identity": {
+        "source": "ef3d863a6eb78918019a512fe2c5da6f61384882"
+      }
+    },
+    {
+      "requirement": "image_workflow",
+      "result": "PARTIAL",
+      "evidenceClass": "Retained actual artifact plus failed regression",
+      "finding": "H033 one child generated1920x1080 PNG with final/artifact ownership; old baked catalog, recovered errors. Original corrected request and guarded edit failed. H034 unchanged original/edit/child and geometry approval NOT_TESTED by this audit. W2 first corrected query call completed18:19:05, no error/images; original workflow active at supplied cutoff, no fullPASS.",
+      "references": [
+        "reports/h033-codex-checkpoint.md",
+        "reports/h033-codex-results.json",
+        "../input/ORDINARY-FINAL-ASSOCIATION.json",
+        "../input/ROOT-VISUAL-REVIEW.json",
+        "../input/ORIGINAL-FIRST-RESULT.json"
+      ],
+      "identity": {
+        "source": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+        "sessionId": "392b6bcf-7842-4748-a856-95456634a4de",
+        "runId": "ec762194-446f-4938-b0ca-e94b50ab95fe",
+        "artifactId": "c386922f-d6eb-4dba-beb1-e056dddd4ff0",
+        "artifactSha256": "2b066cc3d4c03c1aebf8a7c4d2d66ede8f17a00301f904881561fb8b974b9bb7",
+        "currentW2Session": "c753dc9a-54c2-4a50-8789-a6b641119563",
+        "currentW2Run": "14e9615b-ea17-402f-913b-eb09f797c5bc"
+      }
+    },
+    {
+      "requirement": "pdf_honesty",
+      "result": "PARTIAL",
+      "evidenceClass": "Retained live failure with valid artifact",
+      "finding": "Numeric answer/page citation/readable PDF passed; explicit false no-tool-failures final remains full-workflow failure. Not rerun.",
+      "references": [
+        "reports/h032-deploy-flow02-20260929/PDF-RESULT.json",
+        "reports/h033-next-execution.md"
+      ],
+      "identity": {
+        "source": "e9e4f71c53b2caade69c345aadb231f788323a3d",
+        "sessionId": "f8e3a5e6-731e-4f34-812a-e0e7f55813fa",
+        "runId": "b950d17e-d3f2-45a0-bf06-adf8cab7e6f4"
+      }
+    },
+    {
+      "requirement": "recorded_browser",
+      "result": "PARTIAL",
+      "evidenceClass": "New local actual-browser rendering of saved real final/metadata",
+      "finding": "18:17 Chrome rendered exact H033 final and owned links with current unchanged built frontend; missing-preview fallback observed. PNG absent during that check, staged18:18:32 and hash-verified at final boundary; five-minute allowance ended before final boundary, no binary rerender/download. No deployed E2E/auth/progress/reconnect claim.",
+      "references": [
+        "../output/recorded-browser-receipt.json",
+        "../output/recorded-browser-review.json",
+        "reports/h033-artifact-ui04-20260929/REPORT.md",
+        "ai-harness/web/src/Markdown.tsx"
+      ],
+      "identity": {
+        "frontendBuildSource": "5f8f1790b1c61af799be47a3aef5c6b97508d7fd",
+        "frontendIdenticalAt": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+        "runtime": "Chrome153.0.8010.37/existing Playwright",
+        "nonGetRequests": 0
+      }
+    },
+    {
+      "requirement": "live_browser",
+      "result": "NOT_TESTED",
+      "evidenceClass": "W2 maintenance-policy restriction",
+      "finding": "W2 says public app remains maintenance; no approved deployed-browser route, no protected-reader bypass. H021 historical real browser/reload is separate; saved screenshot private.",
+      "references": [
+        "reports/h021-codex-preview.md",
+        "../output/recorded-browser-review.json"
+      ],
+      "identity": {}
+    },
+    {
+      "requirement": "release_runtime_edges",
+      "result": "NOT_TESTED",
+      "evidenceClass": "Current live scope gaps; retained representative fixtures exist",
+      "finding": "No current-source app restart, live browser reconnect, live healthy-lane failover/gateway saturation/child-cancellation combination or full offline-local acceptance. No universal failure inferred; no broad retest demanded.",
+      "references": [
+        "reports/h031-flow01-20260929/RESULT.json",
+        "reports/h033-next-execution.md"
+      ],
+      "identity": {}
+    },
+    {
+      "requirement": "availability_default",
+      "result": "PARTIAL",
+      "evidenceClass": "Source + W2 current fact; historical numeric HTTP receipt",
+      "finding": "W2 APP-READY354a8d6 at18:17:36 reports MiniMax default/available, Codex available preview, frontier true/image false, both Qwen lanes available. W2 current maintenance503 persists; no independent public query. MiniMax default is intended, never a blocker. Status200 remains H033 receipt unless separately supplied.",
+      "references": [
+        "ai-harness/server/src/app.ts:260",
+        "ai-harness/server/src/app.ts:281",
+        "ai-harness/server/src/main.ts:42",
+        "ai-harness/web/src/App.tsx:32",
+        "reports/h033-image-flow02-20260929/DEPLOYMENT.json",
+        "../input/W2-CURRENT/APP-READY.json",
+        "../output/w2-current-summary.json"
+      ],
+      "identity": {
+        "auditedSource": "ef3d863a6eb78918019a512fe2c5da6f61384882",
+        "w2CurrentDeploymentReceipt": "APP-READY354a8d6 at18:17:36"
+      }
+    },
+    {
+      "requirement": "optional_capabilities",
+      "result": "NOT_TESTED",
+      "evidenceClass": "Unsupported/unqualified scope, not ordinary text blocker",
+      "finding": "Native image/audio/video recognition unsupported; long-context/950K occupied use unqualified. Three Qwen configurations480K/480K/200K; Ada200K is not480K fallback. No model/runtime/hardware/capacity changes authorized.",
+      "references": [
+        "ai-harness/server/src/codex-capabilities.ts",
+        "reports/h033-codex-checkpoint.md"
+      ],
+      "identity": {}
+    }
+  ],
+  "referenceResolution": "reports/ and ai-harness/ relative to audited repo; ../input and ../output relative to audited repo parent task directory",
+  "latestW2Source": "354a8d642e69e835d4f130fb2812a5f796d9e9d6",
+  "latestW2ReceiptSha256": "96ba5a43409497eb97541f5c733cd8044d31238e3d06a1952402ce53ac7a0262"
+}
