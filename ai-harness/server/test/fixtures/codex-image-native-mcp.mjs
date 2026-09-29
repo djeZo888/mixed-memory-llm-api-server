@@ -21,7 +21,7 @@ process.stdin.on('data', chunk => {
 const server = createImageServer({
   async capabilities(input) {
     appendFileSync(capture, JSON.stringify({ kind: 'client_invocation', input }) + '\n');
-    return { fixture: 'image_capabilities accepted empty input', generationEnabled: false, editEnabled: false };
+    return { fixture: 'image_capabilities accepted explicit capabilities query', generationEnabled: false, editEnabled: false };
   },
   async invoke() { throw Error('Image generation/edit forbidden in fixture'); },
 });

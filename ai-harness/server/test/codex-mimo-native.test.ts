@@ -90,7 +90,7 @@ test('pinned native MiMo roundtrips reasoning and one tool through the adapter w
       const providerChunks = requests.length === 1 ? [
         { choices: [{ delta: { reasoning_content: reasoning }, finish_reason: null }] },
         { choices: [{ delta: { tool_calls: [{ index: 0, id: 'mimo_native_call_0', type: 'function',
-          function: { name: 'sova_ns_mcp__image_image_capabilities', arguments: '{}' } }] }, finish_reason: null }] },
+          function: { name: 'sova_ns_mcp__image_image_capabilities', arguments: '{"query":"capabilities"}' } }] }, finish_reason: null }] },
         { choices: [{ delta: {}, finish_reason: 'tool_calls' }] },
       ] : [
         { choices: [{ delta: { content: 'Native reasoning serialization fixture complete.' }, finish_reason: null }] },
@@ -177,13 +177,13 @@ tool_timeout_sec = 10
     const results = next.input.filter((item: any) => item.type === 'function_call_output');
     assert.deepEqual(calls.map((call: any) => call.call_id), ['mimo_native_call_0']);
     assert.deepEqual(results.map((result: any) => result.call_id).sort(), calls.map((call: any) => call.call_id).sort());
-    assert.ok(calls.every((call: any) => call.namespace === 'mcp__image' && call.name === 'image_capabilities' && call.arguments === '{}'));
-    assert.ok(results.every((result: any) => JSON.stringify(result.output).includes('image_capabilities accepted empty input')));
+    assert.ok(calls.every((call: any) => call.namespace === 'mcp__image' && call.name === 'image_capabilities' && call.arguments === '{"query":"capabilities"}'));
+    assert.ok(results.every((result: any) => JSON.stringify(result.output).includes('image_capabilities accepted explicit capabilities query')));
     const assistant = translations[1].body.messages.find((message: any) => message.tool_calls?.[0]?.id === 'mimo_native_call_0');
     assert.equal(assistant.reasoning_content, reasoning); assert.equal(assistant.tool_calls[0].function.arguments, '{}');
     assert.equal(assistant.tool_calls[0].function.name, 'sova_ns_mcp__image_image_capabilities');
     const toolResult = translations[1].body.messages.find((message: any) => message.tool_call_id === 'mimo_native_call_0');
-    assert.ok(toolResult); assert.match(toolResult.content, /image_capabilities accepted empty input/);
+    assert.ok(toolResult); assert.match(toolResult.content, /image_capabilities accepted explicit capabilities query/);
     assert.deepEqual(errors, []); passed = true;
   } finally {
     child.kill('SIGTERM'); const killer = setTimeout(() => child.kill('SIGKILL'), 3000); await exited; clearTimeout(killer); lines.close();

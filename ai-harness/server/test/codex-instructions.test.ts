@@ -25,7 +25,6 @@ test("trusted resume instructions exactly match the mounted reviewed Qwen catalo
   const loaded = await loadCodexResumeInstructions(launcher);
   const catalog = JSON.parse(await readFile(join(dirname(launcher), "codex/models.json"), "utf8"));
   assert.equal(loaded.text, catalog.models.find((model: any) => model.slug === "qwen3.8-27b").model_messages.instructions_template);
-  assert.equal(Buffer.byteLength(loaded.text), 22670);
   assert.equal(loaded.sha256, CODEX_RESUME_INSTRUCTIONS_SHA256);
   assert.equal(loaded.toolPolicySha256, CODEX_TOOL_POLICY_SHA256);
   assert.equal(Object.isFrozen(loaded), true);

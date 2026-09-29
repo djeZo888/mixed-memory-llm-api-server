@@ -32,7 +32,9 @@ Once requested deliverables are acceptable, stop repeated local file edits and
 reads for self-verification; continue only for a concrete unmet requirement or
 an explicitly requested variant, without imposing an arbitrary iteration cap.
 
-Read capabilities before choosing an operation, size or reference count.
+Call `image_capabilities` with exactly `{"query":"capabilities"}` to read service
+metadata before choosing an operation, size or reference count. Do not include
+prompt, size, reference or other fields in this capability query.
 Only advertised qualified profiles are available. Missing/disabled editing
 means unavailable: explain the returned reason, never substitute generation.
 Default generation is opaque PNG at 1920x1080. Do not promise transparency,

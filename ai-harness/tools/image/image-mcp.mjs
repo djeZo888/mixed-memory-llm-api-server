@@ -24,7 +24,7 @@ export function createImageServer(client, lifetime = new AbortController()) {
   });
   server.registerTool('image_capabilities', {
     title: 'Local image capabilities',
-    description: 'Read the resident Qwen-Image-2.1 service operation, size and reference-count capabilities. Only advertised qualified edit profiles are available; no creative fallback.',
+    description: 'Read only the resident Qwen-Image-2.1 service operation, size and reference-count metadata. Call with {"query":"capabilities"}. This does not generate or edit images. Only advertised qualified edit profiles are available; no creative fallback.',
     inputSchema: capabilitiesInput,
     annotations: { readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: false },
   }, (input, extra) => run(() => client.capabilities(input, { signal: AbortSignal.any([extra.signal, lifetime.signal]) })));

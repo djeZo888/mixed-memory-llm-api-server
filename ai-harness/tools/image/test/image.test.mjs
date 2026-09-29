@@ -274,7 +274,7 @@ test('capabilities retain exact upstream flat profiles and metadata without chan
     profiles: [{ operation: 'generation', size: '1920x1080', references: 0, transparent: false, evidence_sha256: 'a'.repeat(64), native_size: '1920x1088', crop_bottom: 8 }],
     limits: { n: 1, max_width: 1920, max_height: 1080 }, defaults: { size: '1024x1024', n: 1 }, masks: false, response_format: ['b64_json'], output_format: 'png' };
   const f = fixture([response({ ...caps, apiKey: token, backendUrl: 'http://private.invalid', base64: 'abc' }), response({ job: record('awaiting_approval') }, 202)]);
-  const result = await f.client.capabilities();
+  const result = await f.client.capabilities({ query: 'capabilities' });
   assert.equal(f.calls[0].method, 'GET'); assert.equal(f.calls[0].url, `${GATEWAY}/image-capabilities`);
   assert.deepEqual(result, caps); assert.equal(result.profiles.some(profile => profile.operation === 'edit'), false);
   assert.ok(!JSON.stringify(result).includes(token)); assert.equal(result.backendUrl, undefined);

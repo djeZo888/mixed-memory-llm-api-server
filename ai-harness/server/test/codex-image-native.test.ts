@@ -55,6 +55,7 @@ test('retained image __v and namespace argument shapes survive schema, stream an
   }
 });
 
+const currentCases = ['{"query":"capabilities"}', ...cases];
 // Opt-in: run with the retained, hash-pinned Mac binary and cached image MCP dependencies.
 // All model responses are local synthetic Chat chunks. No live model/gateway/image jobs.
 test('pinned native forwards actual image argument shapes to strict MCP and preserves rejection continuation', {
@@ -75,16 +76,16 @@ test('pinned native forwards actual image argument shapes to strict MCP and pres
       assert.equal(request.headers.authorization, 'Bearer fixture-local-only');
       const chunks: Buffer[] = []; for await (const chunk of request) chunks.push(Buffer.from(chunk));
       const body = JSON.parse(Buffer.concat(chunks).toString()); requests.push(body);
-      assert.ok(requests.length <= cases.length * 2, 'unexpected native retry');
+      assert.ok(requests.length <= currentCases.length * 2, 'unexpected native retry');
       const scenario = JSON.stringify(body.input).match(/IMAGE_CASE_(\d+)/)?.[1];
       assert.notEqual(scenario, undefined); const index = Number(scenario);
       const translated = translateResponses(body);
       const declaration = translated.body.tools.find((tool: any) => tool.function.name === alias).function;
-      assert.deepEqual(declaration.parameters, { type: 'object', properties: {}, additionalProperties: false });
+      assert.deepEqual(declaration.parameters, { type: 'object', properties: { query: { type: 'string', enum: ['capabilities'] } }, required: ['query'], additionalProperties: false });
       const continuation = body.input.some((item: any) => item.type === 'function_call_output' && item.call_id === `fixture_image_${index}`);
       response.writeHead(200, { 'Content-Type': 'text/event-stream' });
       if (!continuation) {
-        const frames = toolFrames(translated, cases[index]!, `fixture_image_${index}`);
+        const frames = toolFrames(translated, currentCases[index]!, `fixture_image_${index}`);
         emitted.push(...parsedFrames(frames)); for (const frame of frames) response.write(frame);
       } else {
         const stream = new ResponsesStream(translated, frame => { emitted.push(...parsedFrames([frame])); response.write(frame); });
@@ -159,7 +160,7 @@ tool_timeout_sec = 10
   try {
     await rpc('initialize', { clientInfo: { name: 'sova_image_fixture', version: '0.0.3' }, capabilities: { experimentalApi: false } });
     child.stdin.write(JSON.stringify({ method: 'initialized', params: {} }) + '\n');
-    for (const [index, arguments_] of cases.entries()) {
+    for (const [index, arguments_] of currentCases.entries()) {
       const thread = await rpc('thread/start', { model: 'qwen3.8-27b', modelProvider: 'sova', cwd: workspace, approvalPolicy: 'never', sandbox: 'danger-full-access' });
       const start = events.length; const threadId = thread.thread.id;
       await rpc('turn/start', { threadId, input: [{ type: 'text', text: `IMAGE_CASE_${index}`, text_elements: [] }] });
@@ -170,16 +171,16 @@ tool_timeout_sec = 10
       assert.equal(call.id, `fixture_image_${index}`); assert.equal(call.tool, 'image_capabilities'); assert.equal(call.server, 'image');
       assert.deepEqual(call.arguments, JSON.parse(arguments_));
       assert.equal(call.status, index === 0 ? 'completed' : 'failed');
-      if (index) assert.match(JSON.stringify(call), /Unrecognized key/);
+      if (index) assert.match(JSON.stringify(call), /Input validation error/);
       const followup = requests.find(body => body.input.some((item: any) => item.type === 'function_call_output' && item.call_id === call.id));
       assert.ok(followup); const functionCall = followup.input.find((item: any) => item.type === 'function_call' && item.call_id === call.id);
       assert.equal(functionCall.arguments, arguments_); assert.equal(functionCall.namespace, 'mcp__image'); assert.equal(functionCall.name, 'image_capabilities');
-      if (index) assert.match(JSON.stringify(followup.input.find((item: any) => item.type === 'function_call_output' && item.call_id === call.id)), /Unrecognized key/);
+      if (index) assert.match(JSON.stringify(followup.input.find((item: any) => item.type === 'function_call_output' && item.call_id === call.id)), /Input validation error/);
     }
     const calls = readFileSync(capture, 'utf8').trim().split('\n').map(line => JSON.parse(line));
-    assert.deepEqual(calls.filter(call => call.kind === 'mcp_input').map(call => call.message.params.arguments), cases.map(arguments_ => JSON.parse(arguments_)));
-    assert.deepEqual(calls.filter(call => call.kind === 'client_invocation').map(call => call.input), [{}], 'invalid args reached client');
-    assert.equal(requests.length, cases.length * 2); assert.deepEqual(errors, []); passed = true;
+    assert.deepEqual(calls.filter(call => call.kind === 'mcp_input').map(call => call.message.params.arguments), currentCases.map(arguments_ => JSON.parse(arguments_)));
+    assert.deepEqual(calls.filter(call => call.kind === 'client_invocation').map(call => call.input), [{query: 'capabilities'}], 'invalid args reached client');
+    assert.equal(requests.length, currentCases.length * 2); assert.deepEqual(errors, []); passed = true;
   } finally {
     const exit = once(child, 'exit'); child.kill('SIGTERM');
     const killer = setTimeout(() => child.kill('SIGKILL'), 3000); await exit; clearTimeout(killer); lines.close();
@@ -190,7 +191,7 @@ tool_timeout_sec = 10
       writeFileSync(join(output, 'native-image-capture.json'), clean({ requests, events, emitted, errors, stderr,
         mcp: existsSync(capture) ? readFileSync(capture, 'utf8').trim().split('\n').map(line => JSON.parse(line)) : [] }));
       writeFileSync(join(output, 'native-image-result.json'), clean({ status: passed ? 'PASS' : 'FAIL', binarySha256: pin,
-        cases, providerRequests: requests.length, fixtureProcessExited: child.exitCode !== null || child.signalCode !== null,
+        currentCases, providerRequests: requests.length, fixtureProcessExited: child.exitCode !== null || child.signalCode !== null,
         scope: 'Synthetic Chat through current Responses adapter, pinned native Mac binary and actual strict image MCP schema; no live model or image job.' }));
     }
     rmSync(base, { recursive: true, force: true });

@@ -24,7 +24,9 @@ const fields = {
   size: z.string().refine(sizeValue, 'Use a supported WIDTHxHEIGHT size').optional(),
   seed: z.number().int().min(0).max(Number.MAX_SAFE_INTEGER).optional(),
 };
-export const capabilitiesInput = z.object({}).strict();
+// Discovery is an explicit read-only request, not a creative prompt. Keep the
+// enum representation aligned with the reviewed provider function-tool contract.
+export const capabilitiesInput = z.object({ query: z.enum(['capabilities']) }).strict();
 export const generateInput = z.object({ ...fields, references: z.array(reference).max(LIMITS.references).optional() }).strict();
 export const editInput = z.object({ ...fields, references: z.array(reference).min(1).max(LIMITS.references) }).strict();
 
@@ -198,8 +200,8 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
       throw new ImageError('GATEWAY_UNAVAILABLE', 'Image gateway transport failed; no submission retry was made.');
     } finally { await response?.body?.cancel().catch(() => {}); }
   }
-  async function capabilities(input = {}, { signal } = {}) {
-    if (!capabilitiesInput.safeParse(input).success) throw new ImageError('INVALID_INPUT', 'image_capabilities accepts no arguments.');
+  async function capabilities(input, { signal } = {}) {
+    if (!capabilitiesInput.safeParse(input).success) throw new ImageError('INVALID_INPUT', 'image_capabilities requires exactly {"query":"capabilities"}; no other arguments are accepted. This reads service metadata only.');
     const data = await request('/image-capabilities', 'GET', undefined, signal, LIMITS.requestMs);
     return publicCapabilities(data, token);
   }
