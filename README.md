@@ -23,7 +23,8 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-**Codex is available as a new-chat preview alongside MiniMax.** MiniMax remains
+**Codex is implemented as a new-chat preview alongside MiniMax; public chat is
+currently in maintenance while integration is completed.** MiniMax remains
 the default, and each conversation keeps its selected engine. Codex uses the
 local Qwen service without hosted OpenAI inference. See the
 [implementation and acceptance report](reports/h021-codex-preview.md) for tested
@@ -33,11 +34,12 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
-The latest [H029 checkpoint](reports/h029-codex-checkpoint.md) records deployed
-control-lock and submission-retry fixes. Complete Codex workflow qualification
-remains blocked by an intermittent lifecycle-lock rejection during admission.
-Three Qwen services are resident (480K, 480K and 200K); MiMo is unavailable and
-the image service remains stopped. MiniMax remains the default.
+The latest [H032 checkpoint](reports/h032-codex-checkpoint.md) records recovery
+of MiMo and the image service, application deployment, partial PDF acceptance,
+and the remaining Codex tool, frontier and latency failures. Three Qwen services
+are retained (480K, 480K and 200K). Complete Codex workflow qualification remains
+unfinished; [remaining work](reports/h032-next-execution.md) is recorded without
+reopening the execution window. MiniMax remains the default.
 The [H025 fan-control and load-test report](reports/h025-overview.md) records the
 deployed GPU fan policies, improved sampled temperatures, measured power and the
 remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
@@ -131,19 +133,18 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 28, 18:22 UTC checkpoint:** MiMo V2.6 Pro-RL remains the selected
-frontier profile at 950,000 configured tokens, but its native process is absent.
-After recovery, it stopped again at 18:04 following a five-second hardware-guard
-lock timeout. A status request reproduced a nine-second control-lock hold; a
-focused control repair is required before another load. This does not establish
-a memory-capacity failure. See [H024 evidence](reports/h024-codex-checkpoint.md).
-The earlier near-950K test also failed without a completed answer and remains
+**September 29 H032 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
+profile at 950,000 configured tokens. Its native process was recovered and
+readiness confirmed, alongside the image service. Actual Codex and MiniMax
+delegations then exposed a token-count compatibility failure; service readiness
+does not establish complete harness qualification. See
+[H032 evidence](reports/h032-codex-checkpoint.md).
+The earlier near-950K test failed without a completed answer and remains
 unqualified; its [original evidence](reports/h022-950k-status.md) is preserved.
-Its old hold was reconciled through an audited exact inverse.
 
 Sova's updated application is deployed with MiniMax default and optional
-Codex preview. MiMo delegation remains unavailable; the demonstrated request
-effort mapping is repaired in source but not yet qualified with live MiMo.
+Codex preview. Public chat remains in maintenance and global Codex specialist
+gates remain closed pending actual workflow qualification.
 Histories and files are preserved. Earlier successful short
 native turns are recorded in the [H019 checkpoint](docs/h019-mimo-finalization-results.md).
 Current availability comes from the status API; the measurements below are dated evidence.

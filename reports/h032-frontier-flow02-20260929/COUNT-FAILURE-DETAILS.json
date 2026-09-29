@@ -1,0 +1,91 @@
+{
+  "reviewedAtUtc": "2026-09-29T12:48:15.496906+00:00",
+  "scope": "Existing local private capture and current source only; no endpoint probe, tokenization, generation, retry or source edit. Previous review unmodified.",
+  "cases": [
+    {
+      "engine": "codex",
+      "actualDiagnostic": {
+        "requestId": "46f9d95e-f8fa-433f-935a-8d6a2d5cb07a",
+        "sessionId": "8f3070a0-6a03-4010-b651-f98550a007a6",
+        "model": "mimo-v2.6-pro-rl",
+        "phase": "counting",
+        "code": "mimo_count_malformed"
+      },
+      "diagnosticsPath": "/Users/agent/CodexProjects/llm-orchestration/tasks/H032-FRONTIER-FLOW02-20260929/private/codex-capture-initial/7dc1632d-6fbb-4d51-8c6b-513f50eb4cd4/diagnostics.jsonl",
+      "diagnosticsSha256": "f2d1f81245c24c6b6e4bc43858546d423b4aeeb0e86db7e34c0c5d4a328248d9",
+      "nativeFacingHttpStatus": 503,
+      "countEndpointHttpStatus": {
+        "value": 200,
+        "evidenceType": "CURRENT_SOURCE_INFERENCE_ONLY",
+        "reason": "mimo.ts line295 routes non200 or absent body to mimo_count_unavailable before every malformed site; raw count status is not captured"
+      },
+      "rawCountResponseStatusBodyFieldsTypesCount": "NOT_CAPTURED",
+      "narrowerFailureBranch": "UNKNOWN"
+    },
+    {
+      "engine": "minimax",
+      "actualDiagnostic": {
+        "requestId": "f275f2c4-d041-4a12-bd76-cb5759df4ebe",
+        "sessionId": "76db5b44-722c-473e-9b81-c6c89e4bdd02",
+        "model": "mimo-v2.6-pro-rl",
+        "phase": "counting",
+        "code": "mimo_count_malformed"
+      },
+      "diagnosticsPath": "/Users/agent/CodexProjects/llm-orchestration/tasks/H032-FRONTIER-FLOW02-20260929/private/minimax-capture/f3349a43-3fe1-4d13-ba14-060a5947c0e3/diagnostics.jsonl",
+      "diagnosticsSha256": "7ab1853eb9a20803ea2b5eec885c490c9ebd4cdc9cbf5c13b7574f3b26f99006",
+      "nativeFacingHttpStatus": 503,
+      "countEndpointHttpStatus": {
+        "value": 200,
+        "evidenceType": "CURRENT_SOURCE_INFERENCE_ONLY",
+        "reason": "mimo.ts line295 routes non200 or absent body to mimo_count_unavailable before every malformed site; raw count status is not captured"
+      },
+      "rawCountResponseStatusBodyFieldsTypesCount": "NOT_CAPTURED",
+      "narrowerFailureBranch": "UNKNOWN"
+    }
+  ],
+  "sourceParser": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H032-FRONTIER-FLOW02-20260929/repo/ai-harness/server/src/mimo.ts",
+    "sha256": "d24e622b32816974b6bf348d59e6a9dddc1b2b6854dc45c70d958aefc1d00d92",
+    "endpoint": {
+      "line": 294,
+      "method": "POST",
+      "path": "/v1/chat/completions/input_tokens"
+    },
+    "malformedSites": [
+      {
+        "line": 301,
+        "condition": "Response body exceeds16384bytes"
+      },
+      {
+        "line": 306,
+        "condition": "JSON.parse rejects response text"
+      },
+      {
+        "line": 311,
+        "condition": "Strict grammar, exact single-field object, or nonnegative safe-integer validation rejects response"
+      }
+    ],
+    "requiredResponseShape": {
+      "onlyKey": "input_tokens",
+      "valueType": "nonnegative safe integer as bare decimal digits; zero allowed",
+      "extraKeys": false,
+      "duplicateKeys": false,
+      "fractionOrExponent": false,
+      "whitespace": "allowed around JSON tokens"
+    },
+    "uintDefinitionLine": 27,
+    "rawResponseFieldsTypesOrCount": "UNKNOWN; response not recorded in current capture phases"
+  },
+  "sourceGatewayMapping": {
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H032-FRONTIER-FLOW02-20260929/repo/ai-harness/server/src/gateway.ts",
+    "sha256": "58b44e2e1a627000b378203a7fbc22e6dea7c18246ffb3a131f55a58f48ba886",
+    "line": 597,
+    "mapping": "mimo_count_malformed maps to503 MiMo request or qualification rejected"
+  },
+  "limitations": [
+    "Source-based HTTP200 inference is distinct from observed native-facing503.",
+    "Diagnostics do not include raw counting response, status, content type, length, fields, types or count.",
+    "No evidence selects the size, JSON syntax, or exact-shape branch.",
+    "No additional inference or count request is authorized or performed."
+  ]
+}

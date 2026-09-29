@@ -9,15 +9,17 @@ refresh, with no fallback or retry. Root visual review is recorded in the
 
 See [chat examples](docs/chat-examples-v0.0.3.md) for usable image prompts.
 The [optional Codex harness](PLAN-CODEX-HARNESS.md) is deployed
-as a selectable preview beside MiniMax. The pinned Codex 0.158.0 integration
+as a selectable preview beside MiniMax. **Public chat is currently in maintenance
+while complete Codex integration is finished.** The pinned Codex 0.158.0 integration
 uses local Qwen through Sova's shared gateway, without OpenAI model login or
 paid inference. MiniMax remains the default. See the
 [execution record](../docs/h021-codex-execution.md) and
-[current acceptance report](../reports/h021-codex-preview.md) for completed
-checks, retained failures and remaining limits. The first two Codex PDF workflow
-attempts failed; use MiniMax for the tested PDF extraction/creation workflow.
-Codex image tools are disabled after two retained workflow failures; MiniMax
-image generation and guarded editing remain available. Real Stop, same-thread
+[historical preview acceptance report](../reports/h021-codex-preview.md) for
+earlier checks. The latest [H032 checkpoint](../reports/h032-codex-checkpoint.md)
+records recovered model services and a correct readable PDF, but false tool-failure
+reporting, invalid model-supplied image arguments, and a MiMo count-response
+failure still prevent full acceptance. Codex specialist gates remain closed.
+Real Stop, same-thread
 follow-up and reconnect passed on the final Codex repair.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
 remains historical evidence. [v0.0.2 acceptance](docs/acceptance-v0.0.2.md)
@@ -134,15 +136,13 @@ explore/verifier/custom restrictions remain unchanged.
 ## Capacity and context
 
 Qwen main and child sessions have a fixed **480,000-token context**. At the
-September 28, 03:39 UTC checkpoint, **MiMo V2.6 Pro-RL** is selected and resident
-with **950,000 configured tokens**. Current native text/tool continuation passed;
-an independent 948,975-input-token test was confirmed processing and its outcome
-is pending. GLM's retained **1,048,576-token** profile is dormant. Ordinary Qwen
-chat reopened for the H021 preview; frontier dispatch remains held while the
-independent long test runs. The earlier native frontier child hit an unresolved
-HTTP400 validation failure before MiMo admission. This Codex work does not
-repair or qualify that path. Histories and files are preserved.
-See the [current checkpoint](../docs/h019-mimo-finalization-results.md).
+September 29 H032 checkpoint, **MiMo V2.6 Pro-RL** is selected and ready with
+**950,000 configured tokens**. Its earlier near-950K occupied-context test failed
+and is not running. Native readiness does not qualify the current harness
+delegation path: both actual child attempts failed token-count validation before
+generation. GLM's retained **1,048,576-token** profile is dormant. Histories and
+files are preserved. See the [current checkpoint](../reports/h032-codex-checkpoint.md)
+and [retained long-test result](../reports/h022-950k-status.md).
 The maximum
 output is **65,536 tokens per inference request**, including reasoning where
 counted. Input and output share the context window; these are configured limits,

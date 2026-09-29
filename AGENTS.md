@@ -1,19 +1,38 @@
-# Sova — H032 active Codex completion window
+# Sova — H032 closed checkpoint
 
-Latest user explicitly renewed execution for September29,2026 11:17–13:17UTC.
-This authorization supersedes H031's closed-window statement below. Root plans,
-reviews and publishes; mac-worker1/mac-worker2 implement/test through fresh
-bounded native CLI sessions and isolated copies. Current task records are in
-orchestration/tasks/H032-20260929 outside this checkout. No new long jobs after
-12:52, short submissions13:02, all worker/native jobs settled13:07, publication
-13:17. No automatic extension or baseline restoration. Preserve histories/files.
+The September 29 H032 two-hour window was 11:17–13:17 UTC. Implementation and
+live work have ended; no automatic continuation is authorized. Root is publishing
+final reviewed results within that window. Read reports/h032-codex-checkpoint.md,
+reports/h032-codex-results.json and reports/h032-next-execution.md before older
+state below. The user permits maintenance until full Codex integration qualifies.
+Do not restore an old baseline, GLM, or reopen a completed model benchmark.
 
-W1 owns image recovery/source and sole ai-vm lifecycle/deploy writes. W2 prepares
-MiMo immutable successor-source amendment from exact current proof supplied by
-W1, then PDF/Codex completion. Independent source work is parallel; coordinate
-one shared VM activation schedule. Do not redo passed benchmarks/workflows.
-Initial source baseline5cc21ba. Read H031 reports for retained evidence; refresh
-mutable VM state before relying on it. The following H031 state is historical.
+MiMo and image were recovered and ready; three Qwen configurations preserved.
+Current app source c863d498 was activated13:05:32 with exactly one compiled MiMo
+count parser correction. Valid object=response.input_tokens metadata is accepted;
+31 focused tests passed. No post-fix delegated generation was submitted before
+cutoff. Original Codex/MiniMax child count failures remain failures. PDF numeric
+answer and readable artifact passed, but false denial of tool errors failed the
+full task. Image arguments originated invalid in Qwen; no image job dispatched.
+Repeated control checks dominate measured PDF task latency; final association is
+also incomplete. Public chat503/status200, MiniMax default, Codex specialist
+gates closed. All acceptance tickets removed and owned workflows settled.
+Historical two uncertain owners/three quarantines, chats and files preserved.
+
+Worker1 last native exited0 at13:01:07.989. Worker2 final turn completed13:08:05,
+processes absent and watchdog observed exit13:08:07. Its OS exit code was not
+recorded because a replaced-watchdog PID made the wrapper's final kill fail;
+do not claim exit0. No paid native CLI or test remains active.
+
+After renewed authorization, root plans/reviews/publishes, Mac workers implement
+and test through fresh bounded native CLI sessions with isolated copies. Reuse
+current source, deployed profiles, passed checks and private captures; do not
+repeat recovered lifecycle operations. Publish to feature/glm53-flash/draftPR10;
+credentials and bulky traces remain private. Main merge, model/runtime/hardware
+changes, long-context tests, accounts/scaling and installer remain out of scope.
+Local H032 task records: orchestration/tasks/H032-20260929 outside this checkout.
+
+The following H031 state is historical and superseded above.
 
 # Sova — H031 closed checkpoint
 
