@@ -1,3 +1,11 @@
+# Sova — H034 active, Qwen/Codex compatibility first
+
+The user renewed work for17:09:44–19:09:44 UTC onSeptember29 and made reliable
+Qwen/Codex tool use priority1. Read reports/h034-execution-plan.md. Bothworkers
+implement/test through fresh bounded remote CLI sessions; root coordinates,
+reviews and publishes. No old-baseline restoration; Sova may stay in maintenance.
+This authorization supersedes the closed H033 window below within H034 scope.
+
 # Sova — H033 closed checkpoint
 
 The September 29 H033 window was 14:22:49–16:22:49 UTC. Final deployment was
