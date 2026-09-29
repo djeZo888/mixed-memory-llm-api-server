@@ -164,9 +164,11 @@ class HardwareProducerWiring(unittest.TestCase):
 
     def test_lease_contention_blocks_producer_and_cached_get_has_no_writes(self):
         self.gpu(2)
-        with acquire_lease(system_root=self.root, trusted_uid=os.geteuid()):
+        started = self.tick
+        with acquire_lease(system_root=self.root, trusted_uid=os.geteuid()), patch.object(c.time, 'sleep', side_effect=self.advance):
             with self.assertRaises(LeaseBusy):
                 self.producer(2)
+        self.assertAlmostEqual(self.tick - started, 2)
         self.assertEqual(self.store.writes, 0)
         raw = dict(self.latch(), boot_id=self.boot_id, ready=None, admitting=None)
         app = NodeApplication(NodeStatus(Cached({'boot': sample({'boot_id': self.boot_id}),
@@ -178,3 +180,55 @@ class HardwareProducerWiring(unittest.TestCase):
             self.assertIsNone(body['services'][0]['hardware_latched'])
         self.assertEqual(self.store.writes, 0)
         self.assertEqual(self.commands, calls)
+
+    def test_transient_entry_contention_refreshes_before_old_proof_expires(self):
+        self.gpu(2)
+        self.producer(2)
+        self.advance(14.95)
+        self.gpu(2)  # A fresh exact proof is available before the scheduled write.
+        attempts = []
+        @contextlib.contextmanager
+        def entry(**kwargs):
+            attempts.append(kwargs)
+            if len(attempts) == 1:
+                raise LeaseBusy()
+            with acquire_lease(system_root=self.root, trusted_uid=os.geteuid(), **kwargs) as lease:
+                yield lease
+        with patch('common.lifecycle_lease.acquire_lease', side_effect=entry), patch.object(c.time, 'sleep', side_effect=self.advance):
+            try:
+                self.producer(2)
+            except LeaseBusy:
+                pass  # Original implementation skips this entire refresh slot.
+        self.advance(.1)
+        self.assertIs(self.public()['hardware_latched'], False)
+        self.assertEqual(attempts, [{'blocking': False}, {'blocking': False}])
+
+    def test_acquired_body_lease_busy_is_not_replayed(self):
+        self.gpu(2)
+        with patch.object(HardwarePolicy, 'validate_required', side_effect=LeaseBusy()) as validate:
+            with self.assertRaises(LeaseBusy):
+                self.producer(2)
+        self.assertEqual(validate.call_count, 1)
+        self.assertEqual(self.store.writes, 0)
+
+    def test_non_contention_entry_error_is_not_retried(self):
+        from common.lifecycle_lease import LeaseError
+        self.gpu(2)
+        with patch('common.lifecycle_lease.acquire_lease', side_effect=LeaseError('fixture-unsafe')) as entry, patch.object(c.time, 'sleep') as sleep:
+            with self.assertRaises(LeaseError):
+                self.producer(2)
+        self.assertEqual(entry.call_count, 1)
+        sleep.assert_not_called()
+        self.assertEqual(self.store.writes, 0)
+
+    def test_entry_after_deadline_cannot_persist(self):
+        self.gpu(2)
+        @contextlib.contextmanager
+        def entry(**kwargs):
+            with acquire_lease(system_root=self.root, trusted_uid=os.geteuid(), **kwargs) as lease:
+                self.advance(2)
+                yield lease
+        with patch('common.lifecycle_lease.acquire_lease', side_effect=entry):
+            with self.assertRaises(TimeoutError):
+                self.producer(2)
+        self.assertEqual(self.store.writes, 0)

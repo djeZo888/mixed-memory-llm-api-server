@@ -8,6 +8,7 @@ kernel wait occupies its observer slot, with no unbounded replacement workers.
 from __future__ import annotations
 
 import json
+from contextlib import ExitStack
 import os
 from pathlib import Path
 import re
@@ -293,17 +294,38 @@ class HardwareEvidenceCollector:
         self.inventory, self.gpus = inventory, gpus
 
     def __call__(self, seconds):
-        from common.lifecycle_lease import acquire_lease
+        from common.lifecycle_lease import acquire_lease, LeaseBusy
         from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore, GPU_UUIDS
         from .node_observation import production_binding
-        with acquire_lease(blocking=False) as lease:
-            binding = production_binding(seconds)
+        deadline = time.monotonic() + seconds
+        def remaining():
+            budget = deadline - time.monotonic()
+            if budget <= 0:
+                raise TimeoutError('hardware_evidence_deadline')
+            return budget
+        with ExitStack() as stack:
+            # Retry only refused entry, within this scheduled callback's budget.
+            # No lease is held while waiting and acquired work is never replayed.
+            while True:
+                if time.monotonic() >= deadline:
+                    raise LeaseBusy()
+                try:
+                    lease = stack.enter_context(acquire_lease(blocking=False))
+                except LeaseBusy:
+                    budget = deadline - time.monotonic()
+                    if budget <= 0:
+                        raise
+                    time.sleep(min(.025, budget))
+                else:
+                    break
+            binding = production_binding(remaining())
             policy = HardwarePolicy(RegisteredLatchStore(binding, lease=lease), lease=lease)
             proof = self.inventory.last_proof
             if proof is not None:
                 raw, captured = proof
                 age_ms = int(max(0, time.monotonic() - captured) * 1000)
                 inventory = dict(raw, state='ok', freshness='fresh' if age_ms <= 15000 else 'stale', age_ms=age_ms)
+                remaining()
                 policy.observe_inventory(inventory, boot_age_seconds=raw['boot_age_seconds'] + age_ms / 1000)
             for collector in self.gpus:
                 if collector.gpu_uuid not in GPU_UUIDS or collector.last_proof is None:
@@ -311,6 +333,7 @@ class HardwareEvidenceCollector:
                 raw, captured = collector.last_proof
                 if time.monotonic() - captured > 15:
                     continue
+                remaining()
                 policy.validate_required(collector.gpu_uuid, current_boot_id=raw['boot_id'],
                     observed_at=raw['observed_at'], observation_id=raw['observation_id'])
         return {'state': 'persisted'}
