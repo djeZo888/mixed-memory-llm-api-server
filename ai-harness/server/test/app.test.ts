@@ -169,6 +169,33 @@ function multipart(filename: string, mimeType: string, data: Buffer | string) {
   };
 }
 
+for (const state of ["enabled", "disabled", "missing-capability", "missing-policy", "disabled-engine", "unqualified-protocol", "missing-factory"] as const) {
+  test(`health frontier summary reflects effective capability: ${state}`, async (t) => {
+    const fixture = engines();
+    const h = await setup(t, fixture, {
+      codexEngineFactory: state === "missing-factory" ? undefined : fixture.factory,
+      enginePolicy: state === "missing-policy" ? undefined : { codex: {
+        enabled: state !== "disabled-engine", protocolQualified: state !== "unqualified-protocol",
+        engineVersion: "fixture-codex", modelPolicyVersion: "fixture-policy",
+        capabilities: state === "missing-capability" ? {} : { frontier: {
+          supported: state !== "disabled", qualification: "live",
+          reason: "Host-reviewed fixture capability",
+        } },
+      } },
+    });
+    const response = await inject(h.app, "/api/health");
+    assert.equal(response.statusCode, 200);
+    const health = response.json();
+    const codex = health.engines.codex;
+    assert.equal(codex.capabilities.frontier, state === "enabled");
+    assert.equal(codex.capabilities.frontier, codex.available && codex.capabilityDetails.frontier.supported);
+    assert.equal(health.engines.default, "minimax");
+    assert.equal(codex.imageToolEnabled, false);
+    assert.equal(codex.capabilityDetails.image.supported, false);
+    assert.equal(fixture.calls.length, 0);
+  });
+}
+
 test("JSON contract, durable messages/native identity/events and unknown context survive reopening", async (t) => {
   const h = await setup(t);
   const health = await inject(h.app, "/api/health");
