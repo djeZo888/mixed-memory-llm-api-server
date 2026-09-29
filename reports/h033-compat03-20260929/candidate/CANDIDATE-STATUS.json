@@ -1,0 +1,27 @@
+{
+  "status": "DRAFT_NOT_INSTALLED_FINAL_BYTES_PENDING_ROOT_REVIEW",
+  "createdAt": "2026-09-29T15:29:15.977Z",
+  "reviewTimeMeaning": "Root supplied actual completed workflow and exact compatibility review by Mac-Orchestrator at2026-09-29T15:28:54Z; concrete candidate bytes remain NOT_INSTALLED pending final packet review",
+  "scope": "offline pure-validator check only; not protected production loader or native-health qualification",
+  "files": [
+    {
+      "file": "h033-codex-specialists.json",
+      "sha256": "c702c20c9672d1c954a23497d8c4c09108eff767c8219b6c042c4c7a3e0e3e99"
+    },
+    {
+      "file": "h033-frontier-evidence.json",
+      "sha256": "44a6ed04da35be86f600b93e2d8e1e3e1fe5010b9d7986bc2da65d0c44c8f90f"
+    },
+    {
+      "file": "h033-frontier-review.json",
+      "sha256": "baa5fce297e843e79150d08d3749106f514438718f92d07e6cda07c35720f0eb"
+    }
+  ],
+  "offlineValidation": {
+    "frontierResponsesQualified": true,
+    "imageJobsQualified": false
+  },
+  "globalQualificationChanged": false,
+  "deployed": false,
+  "updatedAt": "2026-09-29T15:31:18.602Z"
+}
