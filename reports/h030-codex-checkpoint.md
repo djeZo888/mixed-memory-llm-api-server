@@ -1,6 +1,6 @@
 # H030 Codex completion — active checkpoint
 
-September 29, 2026. Authorized window **06:53–08:53 UTC**. Updated07:57 UTC;
+September 29, 2026. Authorized window **06:53–08:53 UTC**. Updated08:05 UTC;
 work is still in progress. Public Sova chat routes remain in maintenance (HTTP503),
 with status/admin available. The user requests the latest deployed state remain
 in place even if qualification is incomplete at the deadline.
@@ -47,8 +47,13 @@ both the unchanged baseline and the candidate and is retained separately.
 The model, weights, runtime image, GPU,950K configured capacity, eight decode
 threads, thermal/fan/power/ECC policies and selection generation are unchanged.
 The normal start completed: the07:50:34 readback confirms RUNNING, ready950K,
-proxy available and hardware guard healthy. No benchmark or occupied950K test
-was performed.
+proxy available and hardware guard healthy at that instant. A subsequent08:02:27
+check found HELD after a07:56:17 watchdog lease timeout and07:56:38 settlement
+lease deadline; the native process remained present. This coincided with image
+recovery. Source inspection shows the image ExecStart holds the global lease
+through load/warm-up, but the historical holder was not directly sampled.
+Supported owned settlement/recovery is pending; no guard is bypassed. No
+benchmark or occupied950K test was performed.
 
 ## Preserved interruption and remaining acceptance
 
@@ -68,8 +73,9 @@ strict. The captured failing request now translates correctly;35 affected checks
 and the build pass. Deployment and corrected live compaction remain pending.
 
 The image backend was warm but its API owner remained closed. The supported
-API restart began07:55:46 and necessarily reloads/warms the image backend. No
-new image job or capability qualification is implied.
+API restart began07:55:46 and necessarily reloads/warms the image backend. The
+07:57:50 readback confirms ready/admitting and no active image work. No image
+workflow qualification is implied.
 
 Remaining live checks include PDF completion, compaction/recall/cold continuation,
 image generation/edit/child workflows, MiMo delegation, cross-engine handoff and

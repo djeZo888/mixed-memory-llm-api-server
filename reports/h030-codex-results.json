@@ -2,7 +2,7 @@
   "schema": 1,
   "task": "H030-20260929",
   "status": "IN_PROGRESS",
-  "updatedUtc": "2026-09-29T07:57:00Z",
+  "updatedUtc": "2026-09-29T08:05:00Z",
   "deadlineUtc": "2026-09-29T08:53:00Z",
   "source": {
     "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
@@ -12,7 +12,9 @@
     "mimoOwnerWorker": "97b5daaf0b84654fd35f65bb03bdc14f1bc8a588",
     "mimoOwnerIntegrated": "9d3fefd",
     "compactionWorker": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
-    "compactionIntegrated": "b021a7d"
+    "compactionIntegrated": "b021a7d",
+    "specialistIntegrated": "2b40610",
+    "hardwareDiagnosticsIntegrated": "669c9e2"
   },
   "acceptance": {
     "ordinaryCoding": "PASS",
@@ -59,12 +61,13 @@
     "modelWeightsOrRuntimeChanges": false
   },
   "services": {
-    "mimo": "READY_950000_CURRENT_READBACK_075034",
-    "image": "API_RECOVERY_STARTED_075546",
+    "mimo": "HELD_080227_GUARD_LEASE_TIMEOUT_NATIVE_PRESENT",
+    "image": "API_READY_ADMITTING_075750",
     "qwen": "THREE_NATIVE_INSTANCES_RETAINED"
   },
   "findings": {
     "pdf": "Two native tool turns passed; third request blocked before generation at count/node_before. Exact failed node fields were not retained. Current passing readback is not historical cause evidence.",
-    "compaction": "Native tools:[] memento includes completed history; old adapter rejected historical tool names. Reviewed repair preserves matched history without authorizing new undeclared calls. Actual captured fixture passed; live corrected action pending."
+    "compaction": "Native tools:[] memento includes completed history; old adapter rejected historical tool names. Reviewed repair preserves matched history without authorizing new undeclared calls. Actual captured fixture passed; live corrected action pending.",
+    "mimo": "Ready075034 became HELD after mandatory_guard_timeout075617 and settlement_lease_deadline075638. Native still present at080227. Coincident image warmup held global canonical lease in its start path; actual historical holder was not sampled. Supported owned settlement/recovery is authorized, no bypass."
   }
 }
