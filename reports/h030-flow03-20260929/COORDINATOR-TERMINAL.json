@@ -1,0 +1,14 @@
+{
+  "sessionId": "01a0ec31-e7c5-7010-9173-78d1e6ea881e",
+  "startedUtc": "2026-09-29T08:04:48.021060+00:00",
+  "finishedUtc": "2026-09-29T08:29:01Z",
+  "exitCode": 0,
+  "sourceCommit": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "reportCommit": "09d42aa425ae290ac58007fbfb7024f832d8e7b6",
+  "bundleSha256": "1bfe1a9bf7d502c6d6fc3ec0498f5ab25039f00ed698d0fd109386c8a286b6a3",
+  "allOwnedWorkSettled": true,
+  "tunnelClosed": true,
+  "ordinaryMaintenancePreserved": true,
+  "candidateFlags": "false/false",
+  "source": "Actual native wrapper exit-code and finished-utc copied after process completion; OUTBOX confirms owned settlement/cleanup. No independent hypervisor or additional VM action."
+}

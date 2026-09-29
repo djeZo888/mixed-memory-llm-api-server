@@ -1,0 +1,18 @@
+{
+  "status": "PASS",
+  "oraclePass": true,
+  "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+  "runId": "f2f9ee4f-3916-42cb-9803-c6564b21b73c",
+  "submissionId": "5e74b712-8c37-4238-a9e0-ff4f0399586c",
+  "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+  "settled": true,
+  "runStatus": "completed",
+  "sameNativeThread": true,
+  "answer": "- Original misspelling in `demo.py`: `helo`\n- Corrected greeting: `hello`\n- Unchanged Python test filename: `test_demo.py`\n- Exact line in `followup.txt`: `H029 follow-up: hello` (with a trailing newline)",
+  "toolCalls": 0,
+  "artifactsUnchanged": true,
+  "newRequestIds": [
+    "e415905b-2ca8-4a7d-b2e8-0a01e6ad250d"
+  ],
+  "completedUtc": "2026-09-29T08:20:53.759Z"
+}
