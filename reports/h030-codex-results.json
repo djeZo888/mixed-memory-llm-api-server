@@ -1,0 +1,58 @@
+{
+  "schema": 1,
+  "task": "H030-20260929",
+  "status": "IN_PROGRESS",
+  "updatedUtc": "2026-09-29T07:39:00Z",
+  "deadlineUtc": "2026-09-29T08:53:00Z",
+  "source": {
+    "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
+    "controlIntegrated": "6d745e0",
+    "handoffWorker": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "handoffIntegrated": "64a0693",
+    "mimoOwnerWorker": "97b5daaf0b84654fd35f65bb03bdc14f1bc8a588",
+    "mimoOwnerIntegrated": "9d3fefd"
+  },
+  "acceptance": {
+    "ordinaryCoding": "PASS",
+    "sameNativeFollowup": "PASS",
+    "activeSubmissionReplay": "PASS",
+    "completedSubmissionReplay": "PASS",
+    "payloadConflicts": "PASS",
+    "crossEngineHandoffLive": "NOT_TESTED",
+    "pdf": "SCHEDULING_INTERRUPTED",
+    "compactionRecall": "NOT_TESTED",
+    "imageCodex": "NOT_TESTED",
+    "mimoCodex": "NOT_TESTED"
+  },
+  "ordinary": {
+    "firstCompletedUtc": "2026-09-29T07:14:48.540Z",
+    "firstInferenceRequests": 4,
+    "firstNativeCommands": 3,
+    "followupCompletedUtc": "2026-09-29T07:18:40.529Z",
+    "followupInferenceRequests": 3,
+    "inferenceRetries": 0,
+    "independentArtifacts": "PASS"
+  },
+  "focusedTests": {
+    "control": 21,
+    "handoffServer": 61,
+    "handoffWeb": 34,
+    "mimoOwner": 104,
+    "newMimoRecoverySubset": 25,
+    "countsOverlap": true,
+    "unrelatedBaselineProxyExpectation": "FAIL_REPRODUCED_ON_BASELINE"
+  },
+  "deployment": {
+    "appSource": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "appActivatedUtc": "2026-09-29T07:33:30.434Z",
+    "publicMaintenance": true,
+    "historiesPreserved": true,
+    "endWindowRestore": false
+  },
+  "boundaries": {
+    "benchmarks": false,
+    "hardwarePolicyChanges": false,
+    "occupied950kTest": false,
+    "modelWeightsOrRuntimeChanges": false
+  }
+}
