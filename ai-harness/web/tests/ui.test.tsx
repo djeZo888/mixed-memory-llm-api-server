@@ -54,7 +54,7 @@ describe('UI', () => {
     await screen.findByText('notes.txt');
     await user.type(screen.getByRole('textbox'), 'Read the file');
     await user.click(screen.getByRole('button', { name: 'Send message' }));
-    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read the file', ['file/1']);
+    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read the file', ['file/1'], [], expect.any(String));
     act(() => {
       streams[0].callbacks.event(event(1, 'state', { status: 'running' }));
       streams[0].callbacks.event(

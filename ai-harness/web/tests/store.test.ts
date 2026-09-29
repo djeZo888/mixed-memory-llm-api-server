@@ -96,7 +96,7 @@ describe('real store callback flows', () => {
     const sending = store.send('chat/a', 'Read');
     await store.send('chat/a', 'Read');
     expect(transport.send).toHaveBeenCalledTimes(1);
-    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read', ['file/1']);
+    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read', ['file/1'], [], expect.any(String));
     sent.resolve({ runId: 'run/1' });
     await sending;
     const created = deferred<Awaited<ReturnType<typeof transport.create>>>();

@@ -1,3 +1,4 @@
+import { readSubmission, saveSubmission, acknowledgeSubmission, forgetSubmission, submissionRejected, type PendingSubmission } from './submissions';
 import type { CodexHealth } from './types';
 import { api, ApiError, type Transport } from './api';
 import { healthAvailability, type HealthAvailability } from './availability';
@@ -32,6 +33,7 @@ export interface ViewState {
   attachments: Record<string, Attachment[]>;
   imageReferences: Record<string, Attachment[]>;
   submitted: Record<string, string[] | undefined>;
+  pendingSubmissions: Record<string, PendingSubmission | undefined>;
 }
 export interface UploadUpdate {
   file: File;
@@ -77,6 +79,7 @@ export class HarnessStore {
     attachments: {},
     imageReferences: {},
     submitted: {},
+    pendingSubmissions: {},
   };
   private listeners = new Set<() => void>();
   private generation = 0;
@@ -241,6 +244,10 @@ export class HarnessStore {
   }
   private showThread(thread: Thread) {
     const id = thread.session.id;
+    // Only recover pending data after a successful owned-chat snapshot.
+    try {
+      this.update({ pendingSubmissions: { ...this.state.pendingSubmissions, [id]: readSubmission(id) } });
+    } catch (error) { this.update({ error: messageOf(error) }); }
     const terminal = new Set(
       thread.runs.filter((run) => !runPending(run.status)).map((run) => run.id),
     );
@@ -466,7 +473,10 @@ export class HarnessStore {
     delete submitted[id];
     const imageReferences = { ...this.state.imageReferences };
     delete imageReferences[id];
-    this.update({ sessions, attachments, submitted, imageReferences });
+    const pendingSubmissions = { ...this.state.pendingSubmissions };
+    delete pendingSubmissions[id];
+    try { forgetSubmission(id); } catch { /* deleted guard still prevents submission */ }
+    this.update({ sessions, attachments, submitted, imageReferences, pendingSubmissions });
     if (this.state.selectedId === id) this.select(sessions[0]?.id ?? null);
   }
   remove = (id: string) =>
@@ -488,29 +498,63 @@ export class HarnessStore {
       this.state.busy[busyKey('delete', id)]
     )
       return Promise.resolve(false);
+    return this.sendSubmission(id, () => {
+      if (readSubmission(id))
+        throw new Error('A submitted message is awaiting acknowledgement. Retry the saved submission first.');
+      const pending: PendingSubmission = {
+        version: 1, sessionId: id, submissionId: crypto.randomUUID(), text,
+        attachmentIds: attachments.map((a) => a.id),
+        imageReferences: imageReferences.map((a) => a.id),
+      };
+      saveSubmission(pending);
+      return pending;
+    });
+  };
+  retrySubmission = (id: string) => this.sendSubmission(id, () => {
+    const pending = readSubmission(id);
+    if (!pending) throw new Error('There is no saved submission to retry.');
+    return pending;
+  });
+  private sendSubmission(id: string, prepare: () => PendingSubmission) {
+    // Read-only/deleted/other-chat state cannot send recovered browser data.
+    if (this.state.thread?.session.id !== id || this.state.loading ||
+      this.state.busy[busyKey('delete', id)] || this.state.thread.session.status === 'deleting')
+      return Promise.resolve(false);
+    let pending: PendingSubmission;
     return this.action(
-      'send',
-      id,
-      () =>
-        this.transport.send(
-          id,
-          text,
-          attachments.map((a) => a.id),
-          ...(imageReferences.length ? [imageReferences.map((a) => a.id)] : []),
-        ),
+      'send', id,
+      async () => {
+        pending = prepare();
+        this.update({ pendingSubmissions: { ...this.state.pendingSubmissions, [id]: pending } });
+        let result: { runId: string };
+        try {
+          result = await this.transport.send(id, pending.text, [...pending.attachmentIds],
+            [...pending.imageReferences], pending.submissionId);
+        } catch (error) {
+          if (submissionRejected(error) && !this.deleted.has(id)) {
+            acknowledgeSubmission(pending);
+            this.update({ pendingSubmissions: { ...this.state.pendingSubmissions, [id]: undefined } });
+          }
+          throw error;
+        }
+        if (!result || typeof result.runId !== 'string' || !result.runId)
+          throw new Error('Submission acknowledgement was unreadable. Retry the saved submission.');
+        // A late known ACK is still authoritative after navigation/dispose.
+        if (!this.deleted.has(id)) acknowledgeSubmission(pending);
+        return result;
+      },
       ({ runId }) => {
-        const used = new Set(attachments.map((a) => a.id));
-        const referenced = new Set(imageReferences.map((a) => a.id));
+        const used = new Set(pending.attachmentIds);
+        const referenced = new Set(pending.imageReferences);
         this.update({
+          pendingSubmissions: { ...this.state.pendingSubmissions, [id]: undefined },
           attachments: {
             ...this.state.attachments,
             [id]: (lookup(this.state.attachments, id) ?? []).filter((a) => !used.has(a.id)),
           },
           imageReferences: {
             ...this.state.imageReferences,
-            [id]: (lookup(this.state.imageReferences, id) ?? []).filter(
-              (a) => !referenced.has(a.id),
-            ),
+            [id]: (lookup(this.state.imageReferences, id) ?? []).filter((a) => !referenced.has(a.id)),
           },
           submitted: {
             ...this.state.submitted,
@@ -524,7 +568,7 @@ export class HarnessStore {
         if (this.state.selectedId === id) void this.resync();
       },
     );
-  };
+  }
   private imageAction(id: string, jobId: string, decision?: 'approve' | 'reject') {
     const job =
       this.state.thread?.session.id === id

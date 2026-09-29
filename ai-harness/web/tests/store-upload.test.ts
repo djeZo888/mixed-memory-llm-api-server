@@ -42,7 +42,7 @@ describe('upload batch lifecycle', () => {
       'ready',
     ]);
     await store.send('chat/a', 'Read both');
-    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read both', ['one', 'two']);
+    expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read both', ['one', 'two'], [], expect.any(String));
     store.dispose();
   });
 

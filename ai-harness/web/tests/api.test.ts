@@ -94,7 +94,7 @@ describe('contract transport', () => {
         { status: 409 },
       ),
     );
-    await expect(api.send('a/b', 'Hello', [])).rejects.toEqual(
+    await expect(api.send('a/b', 'Hello', [], [], 'submission-1')).rejects.toEqual(
       new ApiError(409, 'busy', 'Please wait for cancellation.'),
     );
   });

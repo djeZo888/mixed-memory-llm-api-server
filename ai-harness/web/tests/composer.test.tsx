@@ -41,11 +41,11 @@ describe('composer keyboard and file interactions', () => {
     expect(transport.send).not.toHaveBeenCalled();
     expect(screen.getByText('Enter for a new line · Ctrl / Cmd + Enter to send')).toBeVisible();
     await user.keyboard('{Control>}{Enter}{/Control}');
-    expect(transport.send).toHaveBeenCalledWith('chat/a', 'First line\nSecond line', []);
+    expect(transport.send).toHaveBeenCalledWith('chat/a', 'First line\nSecond line', [], [], expect.any(String));
     await waitFor(() => expect(input).toHaveValue(''));
     await user.type(input, 'Follow up');
     await user.keyboard('{Meta>}{Enter}{/Meta}');
-    expect(transport.send).toHaveBeenLastCalledWith('chat/a', 'Follow up', []);
+    expect(transport.send).toHaveBeenLastCalledWith('chat/a', 'Follow up', [], [], expect.any(String));
     store.dispose();
   });
 
@@ -103,7 +103,7 @@ describe('composer keyboard and file interactions', () => {
     expect(transport.upload).toHaveBeenCalledTimes(2);
     fireEvent.submit(screen.getByRole('form', { name: 'Message composer' }));
     await waitFor(() =>
-      expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read both', ['file/one', 'file/two']),
+      expect(transport.send).toHaveBeenCalledWith('chat/a', 'Read both', ['file/one', 'file/two'], [], expect.any(String)),
     );
     store.dispose();
   });
@@ -174,7 +174,11 @@ describe('composer keyboard and file interactions', () => {
       pending.reject(new Error('Queue full'));
     });
     expect(screen.getByRole('textbox')).toHaveValue('Next turn');
-    expect(screen.getByRole('button', { name: 'Queue message for next turn' })).toBeEnabled();
+    expect(screen.getByRole('button', { name: 'Queue message for next turn' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Retry saved submission' })).toBeEnabled();
+    await userEvent.click(screen.getByRole('button', { name: 'Retry saved submission' }));
+    expect(transport.send.mock.calls[1]).toEqual(transport.send.mock.calls[0]);
+    expect(screen.getByRole('textbox')).toHaveValue('');
     store.dispose();
   });
 });

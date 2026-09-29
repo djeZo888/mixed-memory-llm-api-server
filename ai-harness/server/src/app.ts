@@ -365,7 +365,8 @@ export async function createApp(options: AppOptions): Promise<{
     });
     app.post("/api/sessions/:id/messages", async (req, reply) => {
       const body = object(req.body);
-      only(body, ["text", "attachmentIds", "imageReferences"]);
+      only(body, ["text", "attachmentIds", "imageReferences", "submissionId"]);
+      const submissionId = body.submissionId === undefined ? undefined : requireId(body.submissionId);
       if (typeof body.text !== "string" || body.text.length > 250000)
         throw new ApiError(
           400,
@@ -405,14 +406,37 @@ export async function createApp(options: AppOptions): Promise<{
           "unsupported_slash_command",
           "Native CLI slash commands are not supported in ai-harness v0.0.3. Please phrase a normal task instead.",
         );
-      if (store.getSession(id(req)).engineKind === "codex" && imageReferences.length)
-        await assertCodexImageReferences(id(req), imageReferences.length, { beforeEnqueue: true });
+      // Durable retrieval precedes mutable readiness/staging. The broker repeats
+      // this lookup inside its creation transaction to close concurrent-request races.
+      if (submissionId) {
+        const existing = store.submissionRun(id(req), submissionId, {
+          text: body.text, attachmentIds, imageReferences,
+        });
+        if (existing) return reply.code(202).send({ runId: existing });
+      }
+      if (store.getSession(id(req)).engineKind === "codex" && imageReferences.length) {
+        try {
+          await assertCodexImageReferences(id(req), imageReferences.length, { beforeEnqueue: true });
+        } catch (error) {
+          // Another matching request may have committed while this asynchronous
+          // observation waited (and consumed its one-shot acceptance ticket).
+          if (submissionId) {
+            const existing = store.submissionRun(id(req), submissionId, {
+              text: body.text, attachmentIds, imageReferences,
+            });
+            if (existing) return reply.code(202).send({ runId: existing });
+          }
+          throw error;
+        }
+      }
       const runId = broker.enqueue(
         id(req),
         "message",
         body.text,
         attachmentIds,
         imageReferences,
+        undefined,
+        submissionId,
       );
       return reply.code(202).send({ runId });
     });

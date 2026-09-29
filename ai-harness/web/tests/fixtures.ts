@@ -49,7 +49,7 @@ export function fixtureTransport() {
     cancelImage: vi.fn<Transport['cancelImage']>(),
     create: vi.fn(async () => ({ session: session('new') })),
     remove: vi.fn(async () => ({ status: 'deleting' as const })),
-    send: vi.fn(async () => ({ runId: 'run/1' })),
+    send: vi.fn<Transport['send']>(async () => ({ runId: 'run/1' })),
     cancel: vi.fn(async () => ({ status: 'cancelling' as const })),
     handoff: vi.fn(async () => ({ runId: 'handoff/1' })),
     compact: vi.fn<Transport['compact']>(async () => ({ runId: 'compact/1' })),

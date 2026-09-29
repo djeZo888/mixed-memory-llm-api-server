@@ -88,7 +88,8 @@ export interface Transport {
     id: string,
     text: string,
     attachmentIds: string[],
-    imageReferences?: string[],
+    imageReferences: string[],
+    submissionId: string,
   ): Promise<{ runId: string }>;
   imageJobs(id: string, signal?: AbortSignal): Promise<{ jobs: ImageJob[] }>;
   approveImage(
@@ -140,8 +141,9 @@ export const api: Transport = {
   snapshot: (id, signal) => request(sessionPath(id), { signal }),
   create: (engineKind) => post('/api/sessions', engineKind ? { engineKind } : {}),
   remove: (id) => request(sessionPath(id), { method: 'DELETE' }),
-  send: (id, text, attachmentIds, imageReferences) =>
+  send: (id, text, attachmentIds, imageReferences, submissionId) =>
     post(`${sessionPath(id)}/messages`, {
+      submissionId,
       text,
       attachmentIds,
       ...(imageReferences?.length ? { imageReferences } : {}),

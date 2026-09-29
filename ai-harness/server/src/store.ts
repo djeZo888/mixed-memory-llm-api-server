@@ -1,5 +1,5 @@
 import { DatabaseSync } from "node:sqlite";
-import { randomUUID } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { EventEmitter } from "node:events";
 import type {
@@ -39,6 +39,23 @@ export interface Run {
   text: string;
   attachmentIds: string[];
   status: string;
+}
+/** The entire accepted ordinary-message payload. No per-turn options are supported.
+ * Named object fields have a fixed canonical order; text and array order are exact.
+ * Omitted attachment/reference arrays are normalized to empty at the API boundary.
+ */
+export interface MessageSubmission {
+  text: string;
+  attachmentIds: string[];
+  imageReferences: string[];
+}
+function submissionFingerprint(payload: MessageSubmission): string {
+  return createHash("sha256").update(JSON.stringify({
+    version: 1,
+    text: payload.text,
+    attachmentIds: payload.attachmentIds,
+    imageReferences: payload.imageReferences,
+  })).digest("hex");
 }
 export interface FileRecord {
   image?: import("./image-contracts.js").ImageMetadata;
@@ -86,6 +103,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h002_file_names(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,display_name TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h002_activities(session_id TEXT NOT NULL,run_id TEXT NOT NULL,id TEXT NOT NULL,data TEXT NOT NULL,PRIMARY KEY(run_id,id));
       CREATE TABLE IF NOT EXISTS h002_subagents(run_id TEXT PRIMARY KEY,data TEXT NOT NULL);
+      CREATE TABLE IF NOT EXISTS h029_message_submissions(session_id TEXT NOT NULL REFERENCES sessions(id),submission_id TEXT NOT NULL,fingerprint TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,submission_id));
       CREATE TABLE IF NOT EXISTS h024_compaction_actions(session_id TEXT NOT NULL REFERENCES sessions(id),action_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,action_id));
     `);
     // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
@@ -777,6 +795,82 @@ export class Store {
       if (next.length < 1000) return out;
       after = next.at(-1)!.id;
     }
+  }
+  submissionRun(sessionId: string, submissionId: string, payload: MessageSubmission): string | undefined {
+    // Lookup is scoped to an accessible chat, never a global client-provided run ID.
+    const session = this.getSession(sessionId);
+    if (session.deleteRequested)
+      throw new ApiError(409, "deleting", "Session is deleting");
+    requireId(submissionId);
+    const row = this.db.prepare(
+      "SELECT fingerprint,run_id FROM h029_message_submissions WHERE session_id=? AND submission_id=?",
+    ).get(sessionId, submissionId);
+    if (!row) return undefined;
+    if (row.fingerprint !== submissionFingerprint(payload))
+      throw new ApiError(409, "submission_conflict", "This submission ID was already used with a different message");
+    return String(row.run_id);
+  }
+  /** Synchronous transaction serializes lookup/admission/creation across requests.
+   * Events become observable only after COMMIT. A failed creation consumes no ID.
+   * admit returns whether this chat needs the queued state (another run may be active).
+   */
+  createMessageSubmission(
+    sessionId: string,
+    submissionId: string,
+    payload: MessageSubmission,
+    admit: (session: StoredSession) => boolean,
+  ): { created: false; runId: string } | { created: true; runId: string; run: Run } {
+    const events: Event[] = [];
+    let run!: Run;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const existing = this.submissionRun(sessionId, submissionId, payload);
+      if (existing) {
+        this.db.exec("COMMIT");
+        return { created: false, runId: existing };
+      }
+      const session = this.getSession(sessionId);
+      const queued = admit(session);
+      const id = randomUUID(), time = now();
+      run = { id, sessionId, workspaceId: session.workspaceId, kind: "message",
+        text: payload.text, attachmentIds: [...payload.attachmentIds], status: "queued" };
+      this.db.prepare("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?)").run(
+        id, sessionId, session.workspaceId, "message", payload.text,
+        JSON.stringify(payload.attachmentIds), "queued", time, time,
+      );
+      this.db.prepare("INSERT INTO h029_message_submissions VALUES(?,?,?,?)").run(
+        sessionId, submissionId, submissionFingerprint(payload), id,
+      );
+      if (payload.imageReferences.length)
+        this.db.prepare("INSERT INTO h003_run_image_refs VALUES(?,?)")
+          .run(id, JSON.stringify(payload.imageReferences));
+      const context = session.context!;
+      if (context.source === "empty") {
+        const updated = { ...context, used: null, stale: true, source: "unmeasured", updatedAt: time };
+        this.db.prepare("UPDATE sessions SET context=?,updated_at=? WHERE id=?")
+          .run(JSON.stringify(updated), time, sessionId);
+        events.push(this.writeEvent(sessionId, "context", { context: updated }, id));
+      }
+      events.push(this.writeEvent(sessionId, "run", { run: this.runSnapshot(id) }, id));
+      const message = this.addMessage(sessionId, "user", payload.text, id, payload.attachmentIds);
+      events.push(this.writeEvent(sessionId, "message", { message }, id));
+      if (session.title === "New chat") this.setTitle(sessionId, payload.text.trim() || "Attachment");
+      if (queued) {
+        this.db.prepare("UPDATE sessions SET status='queued',updated_at=? WHERE id=?").run(time, sessionId);
+        events.push(this.writeEvent(sessionId, "state", { status: "queued" }, id));
+      }
+      events.push(this.writeEvent(sessionId, "progress", { kind: "queue", label: "Waiting for workspace" }, id));
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+    for (const event of events) {
+      // An observer failure cannot turn a committed run into a failed enqueue.
+      // Reconnect replays the durable events even when a subscriber has gone away.
+      try { this.events.emit(sessionId, event); } catch { /* durable replay */ }
+    }
+    return { created: true, runId: run.id, run };
   }
   compactionRun(sessionId: string, actionId: string): string | undefined {
     const row = this.db

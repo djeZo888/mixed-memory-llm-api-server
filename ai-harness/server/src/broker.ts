@@ -1,5 +1,5 @@
 import { nativeMedia } from "./codex-input.js";
-import { createHash } from "node:crypto";
+import { createHash, randomUUID } from "node:crypto";
 import type { Store, Run, StoredSession } from "./store.js";
 import { Files } from "./files.js";
 import type {
@@ -114,6 +114,7 @@ export class Broker {
     attachmentIds: string[] = [],
     imageReferences: string[] = [],
     compactionActionId?: string,
+    submissionId?: string,
   ): string {
     const s = this.store.getSession(sessionId);
     if (kind === "compact") {
@@ -126,96 +127,93 @@ export class Broker {
       const existing = this.store.compactionRun(s.id, compactionActionId);
       if (existing) return existing;
     }
-    assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
-    if (kind === "compact") {
-      if (s.engineKind !== "codex")
+    const admit = (s: StoredSession) => {
+      assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+      if (kind === "compact") {
+        if (s.engineKind !== "codex")
+          throw new ApiError(
+            409, "compaction_unavailable",
+            "Manual context compaction is available for Codex chats only",
+          );
+        if (!s.nativeSessionId)
+          throw new ApiError(
+            409, "compaction_empty",
+            "Start a Codex conversation before compacting its context",
+          );
+        const pending = [
+          ...(this.queues.get(s.workspaceId) ?? []),
+          ...[...this.active.values()].map((active) => active.run),
+        ];
+        if (pending.some((run) => run.sessionId === s.id && run.kind === "compact"))
+          throw new ApiError(
+            409, "compaction_pending",
+            "This chat already has a pending context compaction",
+          );
+      }
+      if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(sessionId) !== true && this.options.imageReferenceAcceptance?.(sessionId) !== true)
+        throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
+      if (this.options.dispatchHeld?.())
         throw new ApiError(
-          409, "compaction_unavailable",
-          "Manual context compaction is available for Codex chats only",
+          503,
+          "dispatch_frozen",
+          "New work is paused for a confirmed administrative operation",
         );
-      if (!s.nativeSessionId)
+      if (this.closing)
+        throw new ApiError(503, "shutting_down", "Server is shutting down");
+      if (s.deleteRequested)
+        throw new ApiError(409, "deleting", "Session is deleting");
+      if (this.store.isQuarantined(s.workspaceId))
         throw new ApiError(
-          409, "compaction_empty",
-          "Start a Codex conversation before compacting its context",
+          409,
+          "workspace_quarantined",
+          "Workspace requires operator settlement review after an interrupted engine",
         );
-      const pending = [
-        ...(this.queues.get(s.workspaceId) ?? []),
-        ...[...this.active.values()].map((active) => active.run),
-      ];
-      if (pending.some((run) => run.sessionId === s.id && run.kind === "compact"))
-        throw new ApiError(
-          409, "compaction_pending",
-          "This chat already has a pending context compaction",
-        );
-    }
-    if (s.engineKind === "codex" && imageReferences.length && !this.options.enginePolicy?.codex?.imageToolEnabled && this.options.imageAcceptance?.(sessionId) !== true && this.options.imageReferenceAcceptance?.(sessionId) !== true)
-      throw new ApiError(400,"codex_image_tool_unavailable","Codex image specialist is not qualified");
-    if (this.options.dispatchHeld?.())
-      throw new ApiError(
-        503,
-        "dispatch_frozen",
-        "New work is paused for a confirmed administrative operation",
-      );
-    if (this.closing)
-      throw new ApiError(503, "shutting_down", "Server is shutting down");
-    if (s.deleteRequested)
-      throw new ApiError(409, "deleting", "Session is deleting");
-    if (this.store.isQuarantined(s.workspaceId))
-      throw new ApiError(
-        409,
-        "workspace_quarantined",
-        "Workspace requires operator settlement review after an interrupted engine",
-      );
-    if (
-      [...this.queues.values()].reduce((n, q) => n + q.length, 0) >=
-      (this.options.maxQueued ?? 100)
-    )
-      throw new ApiError(429, "queue_full", "Run queue is full");
-    for (const id of attachmentIds) {
-      const f = this.store.file(id);
-      if (s.engineKind === "codex" && nativeMedia(f.mimeType))
-        throw new ApiError(400,"codex_media_unsupported","Codex native media is not qualified; use an available image specialist");
-      if (f.kind !== "attachment" || f.sessionId !== sessionId)
-        throw new ApiError(
-          400,
-          "invalid_attachment",
-          "Attachment does not belong to this chat",
-        );
-    }
-    for (const id of imageReferences) {
-      const f = this.store.file(id);
       if (
-        (f.kind !== "artifact" && !(s.engineKind === "codex" && f.kind === "attachment")) ||
-        f.sessionId !== sessionId ||
-        !["image/png", "image/jpeg"].includes(f.mimeType)
+        [...this.queues.values()].reduce((n, q) => n + q.length, 0) >=
+        (this.options.maxQueued ?? 100)
       )
-        throw new ApiError(
-          400,
-          "invalid_image_reference",
-          "Image artifact does not belong to this chat",
-        );
+        throw new ApiError(429, "queue_full", "Run queue is full");
+      for (const id of attachmentIds) {
+        const f = this.store.file(id);
+        if (s.engineKind === "codex" && nativeMedia(f.mimeType))
+          throw new ApiError(400,"codex_media_unsupported","Codex native media is not qualified; use an available image specialist");
+        if (f.kind !== "attachment" || f.sessionId !== sessionId)
+          throw new ApiError(
+            400,
+            "invalid_attachment",
+            "Attachment does not belong to this chat",
+          );
+      }
+      for (const id of imageReferences) {
+        const f = this.store.file(id);
+        if (
+          (f.kind !== "artifact" && !(s.engineKind === "codex" && f.kind === "attachment")) ||
+          f.sessionId !== sessionId ||
+          !["image/png", "image/jpeg"].includes(f.mimeType)
+        )
+          throw new ApiError(
+            400,
+            "invalid_image_reference",
+            "Image artifact does not belong to this chat",
+          );
+      }
+      return ![...this.active.values()].some((a) => a.run.sessionId === s.id);
+    };
+    if (kind === "message") {
+      // Legacy callers without IDs explicitly create a fresh submission each time.
+      const result = this.store.createMessageSubmission(s.id, submissionId ?? randomUUID(),
+        { text, attachmentIds, imageReferences }, admit);
+      if (!result.created) return result.runId;
+      this.queueRun(s, result.run);
+      return result.runId;
     }
+    admit(s);
     const run = this.store.createRun(s, kind, text, attachmentIds, compactionActionId);
     if (imageReferences.length)
       this.store.db
         .prepare("INSERT INTO h003_run_image_refs VALUES(?,?)")
         .run(run.id, JSON.stringify(imageReferences));
     this.store.touchContext(s.id, run.id);
-    if (kind === "message") {
-      const message = this.store.addMessage(
-        s.id,
-        "user",
-        text,
-        run.id,
-        attachmentIds,
-      );
-      this.store.emit(s.id, "message", { message }, run.id);
-      if (s.title === "New chat")
-        this.store.setTitle(s.id, text.trim() || "Attachment");
-    }
-    const queue = this.queues.get(s.workspaceId) ?? [];
-    queue.push(run);
-    this.queues.set(s.workspaceId, queue);
     if (![...this.active.values()].some((a) => a.run.sessionId === s.id))
       this.store.setStatus(s.id, "queued", run.id);
     this.store.emit(
@@ -224,9 +222,15 @@ export class Broker {
       { kind: "queue", label: "Waiting for workspace" },
       run.id,
     );
+    this.queueRun(s, run);
+    return run.id;
+  }
+  private queueRun(s: StoredSession, run: Run) {
+    const queue = this.queues.get(s.workspaceId) ?? [];
+    queue.push(run);
+    this.queues.set(s.workspaceId, queue);
     try { this.options.onRunAccepted?.(s.id, run.id); } catch { /* Optional acceptance must fail closed without cancelling ordinary work. */ }
     queueMicrotask(() => this.pump(s.workspaceId));
-    return run.id;
   }
   private pump(workspaceId: string) {
     if (

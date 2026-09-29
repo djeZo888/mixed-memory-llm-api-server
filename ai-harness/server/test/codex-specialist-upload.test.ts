@@ -82,3 +82,44 @@ test('reference staging alone never qualifies dispatch',async t=>{
  for(let i=0;i<100&&!finished.length;i++)await new Promise(r=>setTimeout(r,5));
  assert.equal(finished.length,1);assert.equal(f.prompts.length,0);assert.equal(f.store.getSession(f.session.id).status,'failed');
 });
+
+test('accepted ordinary image ID retrieves original run after gates close without staging or consuming another acceptance',async t=>{
+ const f=await setup(t),uploaded=await f.upload(await png());assert.equal(uploaded.statusCode,201);
+ const payload={submissionId:'durable-image',text:'Edit this owned image',imageReferences:[uploaded.json().attachment.id]};
+ const endpoint=`/api/sessions/${f.session.id}/messages`;
+ const first=await f.request(endpoint,payload);assert.equal(first.statusCode,202,first.body);
+ for(let i=0;i<100&&f.store.getSession(f.session.id).status!=='idle';i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(f.prompts.length,1);assert.equal(f.store.getSession(f.session.id).status,'idle');
+ const before=f.store.allEvents(f.session.id),original=f.store.file(payload.imageReferences[0]);
+ // Make restaging impossible as well as disabling all mutable admission gates.
+ await rename(join(f.files.root,'uploads',original.path),join(f.files.root,'uploads',original.path)+'.retained');
+ f.policy.codex.enabled=false;f.policy.codex.imageToolEnabled=false;
+ f.broker.options.dispatchHeld=()=>true;f.broker.options.maxQueued=0;
+ const replay=await f.request(endpoint,payload);assert.equal(replay.statusCode,202,replay.body);assert.deepEqual(replay.json(),first.json());
+ assert.deepEqual(f.store.allEvents(f.session.id),before);assert.equal(f.prompts.length,1);
+ const conflict=await f.request(endpoint,{...payload,imageReferences:[]});assert.equal(conflict.statusCode,409);assert.equal(conflict.json().error.code,'submission_conflict');
+});
+
+test('concurrent same-ID image admission rechecks committed mapping when the slower async gate closes',async t=>{
+ const observers:(()=>void)[]=[];let capabilitiesCalls=0,accepted=0;
+ const backend={async capabilities(){capabilitiesCalls++;await new Promise<void>(resolve=>observers.push(resolve));return {};},profiles(){return [{operation:'edit' as const,referenceCount:1,size:'64x64',model:'fixture'}];},async readiness(){return {ready:true,idle:true};},async execute(){throw Error('No image job permitted');}};
+ let f:Awaited<ReturnType<typeof setup>>;
+ f=await setup(t,true,true,{imageBackend:backend,onRunAccepted:()=>{accepted++;f.policy.codex.imageToolEnabled=false;}});
+ // Local upload primitive retains normal bytes/ownership checks, avoiding an
+ // unrelated route capability observation during fixture preparation.
+ const {Readable}=await import('node:stream');
+ const owned=await f.files.upload(f.session.id,'input.png','image/png',Readable.from([await png()]));
+ const payload={submissionId:'concurrent-image',text:'Edit this image',imageReferences:[owned.id]};
+ const endpoint=`/api/sessions/${f.session.id}/messages`;
+ const first=f.request(endpoint,payload),second=f.request(endpoint,payload);
+ // Fastify injection starts on consumption, so consume both concurrently.
+ const results=Promise.all([first,second]);
+ for(let i=0;i<100&&observers.length<2;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(observers.length,2);observers[0]();
+ for(let i=0;i<100&&!accepted;i++)await new Promise(r=>setTimeout(r,5));
+ assert.equal(accepted,1);observers[1]();
+ const [a,b]=await results;assert.equal(a.statusCode,202,a.body);assert.equal(b.statusCode,202,b.body);assert.deepEqual(a.json(),b.json());
+ assert.equal(accepted,1);assert.equal(capabilitiesCalls,2);assert.equal(f.store.snapshot(f.session.id).runs.length,1);
+ assert.equal(f.store.snapshot(f.session.id).messages.filter(m=>m.role==='user').length,1);
+ assert.equal(f.store.allEvents(f.session.id).filter(e=>e.type==='message'&&(e.data.message as any)?.role==='user').length,1);
+});

@@ -59,7 +59,7 @@ it('qualified Codex image upload stages a specialist reference and sends no nati
  await userEvent.upload(screen.getByLabelText('Upload file'),new File(['png'],'input.png',{type:'image/png'}));
  expect(await screen.findByRole('button',{name:'Remove image reference input.png'})).toBeEnabled();
  expect(screen.getByText(/Specialist image reference/)).toBeInTheDocument();expect(screen.queryByRole('button',{name:'Remove attachment input.png'})).not.toBeInTheDocument();
- await store.send('chat/a','Edit with specialist');expect(transport.send).toHaveBeenCalledWith('chat/a','Edit with specialist',[],['uploaded-image']);
+ await store.send('chat/a','Edit with specialist');expect(transport.send).toHaveBeenCalledWith('chat/a','Edit with specialist',[],['uploaded-image'], expect.any(String));
  expect(screen.getByText(/Native image, audio and video recognition is unavailable/)).toBeInTheDocument();
 });
 it('descriptive image capability cannot enable Codex specialist uploads without operational flag',async()=>{

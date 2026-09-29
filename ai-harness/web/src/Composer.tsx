@@ -52,9 +52,11 @@ export function Composer({
     ...(state.thread?.attachments ?? []),
     ...(state.thread?.artifacts ?? []),
   ].filter((file) => !/^(image|audio|video)\//i.test(file.mimeType));
+  const pendingSubmission = lookup(state.pendingSubmissions, id);
   const busy = (action: string) => state.busy[busyKey(action, id)];
   const locked =
     codexUnavailable ||
+    !!pendingSubmission ||
     uploading ||
     busy('send') ||
     busy('upload') ||
@@ -365,6 +367,24 @@ export function Composer({
           </div>
         </div>
       </form>
+      {pendingSubmission && (
+        <div className="composer-queue-note" role="status">
+          <p>A submitted message is awaiting acknowledgement. Retry checks or submits the saved message without creating a second run. It does not send the current draft.</p>
+          <details>
+            <summary>Saved message</summary>
+            <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{pendingSubmission.text || '(Files only)'}</p>
+            <p>{pendingSubmission.attachmentIds.length} attachments; {pendingSubmission.imageReferences.length} image references.</p>
+          </details>
+          <button type="button" className="text-button"
+            disabled={!!busy('send') || !!busy('delete') || state.loading || !state.thread}
+            onClick={async () => {
+              if (await store.retrySubmission(id))
+                setText((value) => value === pendingSubmission.text ? '' : value);
+            }}>
+            Retry saved submission
+          </button>
+        </div>
+      )}
       {codexUnavailable && (
         <p className="composer-queue-note" role="status">
           Codex preview is disabled. This chat’s history and files remain available.
