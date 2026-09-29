@@ -84,10 +84,11 @@ test("qualification cannot create or mark an unavailable frontier backend ready"
     protocolQualified: true, rootlessQualified: true, verifyLane: async () => { throw Error("not observed"); },
     frontierResponsesQualified: q.frontierResponsesQualified ? true : undefined, capabilities: q.capabilities,
   });
-  const g = createGateway({ upstreamKey: "fixture-only", selectedFrontierModel: "mimo-v2.6-pro-rl", responses: host.responses });
+  const g = createGateway({ upstreamKey: "fixture-only", selectedFrontierModel: "mimo-v2.6-pro-rl", ownership: { recoveryReady: true, onRequestState: () => {} }, responses: host.responses });
   const token = g.issueToken("fixture-session", "codex");
-  const response = await g.app.inject({ method: "POST", url: "/frontier/v1/responses", headers: { authorization: `Bearer ${token}` }, payload: { model: "mimo-v2.6-pro-rl", input: "fixture only" } });
-  assert.notEqual(response.statusCode, 200);
+  const response = await g.app.inject({ method: "POST", url: "/v1/responses", headers: { authorization: `Bearer ${token}` }, payload: { model: "mimo-v2.6-pro-rl", input: "fixture only" } });
+  assert.equal(response.statusCode, 503);
+  assert.equal(response.json().error.code, "codex_frontier_unqualified");
   assert.notEqual(g.frontierSnapshot().state, "active");
   await g.close();
 });
