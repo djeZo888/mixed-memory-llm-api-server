@@ -83,6 +83,20 @@ def negative_hardware_current(raw, required, boot_id, extra_age_ms=0):
             and raw.get('hardware_validated_gpu_uuids') == list(required))
 
 
+def hardware_proof_metadata(raw, extra_age_ms):
+    """Bounded diagnostic projection only; expiry and latch criteria stay separate."""
+    age, extra = number(raw.get('hardware_validation_age_ms')), number(extra_age_ms)
+    total = age + extra if age is not None and extra is not None else None
+    boot = raw.get('hardware_validated_boot_id')
+    uuids = raw.get('hardware_validated_gpu_uuids')
+    return {
+        'hardware_validation_age_ms': total if total is not None and total <= 2**53 - 1 else None,
+        'hardware_validated_boot_id': boot if type(boot) is str and BOOT.fullmatch(boot) else None,
+        'hardware_validated_gpu_uuids': list(uuids) if type(uuids) is list and len(uuids) <= 8
+            and all(type(value) is str and UUID.fullmatch(value) for value in uuids) else None,
+    }
+
+
 class NodeStatus:
     def __init__(self, observers):
         self.observers = observers
@@ -209,6 +223,7 @@ class NodeStatus:
                         deployment_id=identifier(raw.get('deployment_id')), model_alias=identifier(raw.get('model_alias')),
                         configured_context_tokens=integer(raw.get('configured_context_tokens')),
                         max_output_tokens=integer(raw.get('max_output_tokens')), operation_profiles=[])
+            item.update(hardware_proof_metadata(raw, sample.get('age_ms')))
             item['reason'] = why
             profiles = raw.get('operation_profiles', [])
             if type(profiles) is list:

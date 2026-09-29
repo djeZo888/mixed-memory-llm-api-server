@@ -85,6 +85,43 @@ class NodeProjectionTests(unittest.TestCase):
             self.assertTrue(all(row['freshness'] == 'unknown' for row in snapshot['gpus']))
             self.assertEqual(snapshot['node_id'], 'ai-vm')
 
+    def test_hardware_proof_metadata_missing_or_malformed_remains_unknown(self):
+        keys = ('hardware_validation_age_ms', 'hardware_validated_boot_id', 'hardware_validated_gpu_uuids')
+        for proof in ({}, dict(zip(keys, [SECRET, SECRET, [SECRET]])),
+                      dict(zip(keys, [float('nan'), 42, [GPU] * 9]))):
+            raw = dict(boot_id=BOOT, hardware_latched=None, ready=True, **proof)
+            row = service(status(**{'qwen-gpu0': sample(raw, age_ms=20)}).snapshot())
+            self.assertEqual({key: row[key] for key in keys}, dict.fromkeys(keys))
+            self.assertIsNone(row['hardware_latched'])
+            self.assertNotIn(SECRET, json.dumps(row))
+        raw = dict(boot_id=BOOT, hardware_latched=False, ready=True,
+                   hardware_validation_age_ms=10, hardware_validated_boot_id=BOOT,
+                   hardware_validated_gpu_uuids=[GPU])
+        row = service(status(**{'qwen-gpu0': sample(raw, age_ms=None)}).snapshot())
+        self.assertIsNone(row['hardware_validation_age_ms'])
+        self.assertIsNone(row['hardware_latched'])
+
+    def test_hardware_proof_metadata_retains_expiry_and_positive_latch(self):
+        raw = dict(boot_id=BOOT, hardware_latched=False, ready=True,
+                   hardware_validation_age_ms=14000, hardware_validated_boot_id=BOOT,
+                   hardware_validated_gpu_uuids=[GPU])
+        for latched in (False, True):
+            raw['hardware_latched'] = latched
+            row = service(status(**{'qwen-gpu0': sample(raw, age_ms=2000)}).snapshot())
+            self.assertEqual(row['hardware_validation_age_ms'], 16000)
+            self.assertEqual(row['hardware_validated_boot_id'], BOOT)
+            self.assertEqual(row['hardware_validated_gpu_uuids'], [GPU])
+            self.assertIs(row['hardware_latched'], True if latched else None)
+            self.assertEqual(row['availability'], 'unavailable' if latched else 'unknown')
+        self.assertEqual(raw['hardware_validation_age_ms'], 14000)
+        raw.update(hardware_latched=False, hardware_validation_age_ms=10,
+                   hardware_validated_boot_id=NEXT_BOOT, hardware_validated_gpu_uuids=[OTHER_GPU])
+        row = service(status(**{'qwen-gpu0': sample(raw, age_ms=20)}).snapshot())
+        self.assertEqual(row['hardware_validation_age_ms'], 30)
+        self.assertEqual(row['hardware_validated_boot_id'], NEXT_BOOT)
+        self.assertEqual(row['hardware_validated_gpu_uuids'], [OTHER_GPU])
+        self.assertIsNone(row['hardware_latched'])
+
     def test_independent_gpu_timeout_does_not_erase_healthy_peer(self):
         data = {'gpu:' + GPU: sample({'boot_id': BOOT, 'gpus': [{'uuid': GPU, 'temperature_c': 32}]}),
                 'gpu:' + OTHER_GPU: sample(None, state='timeout', reason='collector_timeout')}
