@@ -3,7 +3,7 @@ import {
   openSync, readSync, writeSync,
 } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { QWEN_ADMISSION_REASONS, projectQwenTransport, type QwenAdmissionObserver } from "./codex-admission.js";
+import { QWEN_ADMISSION_REASONS, projectQwenTransport, projectQwenHardware, type QwenAdmissionObserver } from "./codex-admission.js";
 import type { GatewayOptions } from "./gateway.js";
 
 type ResponsesErrorHandler = NonNullable<NonNullable<GatewayOptions["responses"]>["onError"]>;
@@ -129,6 +129,7 @@ export function createQwenAdmissionDiagnostics(path: string): QwenAdmissionObser
         requestId: event.requestId, lane: event.lane, phase: event.phase, step: event.step,
         outcome: event.outcome, reason: event.reason,
         ...(event.reason === "transport" ? { transport: projectQwenTransport(event.transport) } : {}),
+        ...(event.reason === "hardware_state" ? { hardware: projectQwenHardware(event.hardware) } : {}),
         elapsedMs: Math.min(3600000, Math.round(event.elapsedMs)) }) + "\n");
       writeProtectedDiagnostic(destination, line);
     } catch { /* Logging never affects admission or discloses the caught error. */ }

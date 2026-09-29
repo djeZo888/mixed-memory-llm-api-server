@@ -2,7 +2,7 @@
 import { request } from "node:http";
 import { readFile, lstat } from "node:fs/promises";
 import { QWEN_CODEX_PIN, type QwenCountQualification } from "./codex-qwen.js";
-import { QwenAdmissionError, admissionContext, admissionReason, admissionTransport, emitAdmission, projectQwenTransport, type QwenAdmissionContext, type QwenAdmissionDiagnostic, type QwenAdmissionObserver, type QwenAdmissionReason, type QwenTransportDiagnostic } from "./codex-admission.js";
+import { QwenAdmissionError, admissionContext, admissionReason, admissionTransport, admissionHardware, projectQwenHardware, emitAdmission, projectQwenTransport, type QwenAdmissionContext, type QwenAdmissionDiagnostic, type QwenAdmissionObserver, type QwenAdmissionReason, type QwenTransportDiagnostic } from "./codex-admission.js";
 
 export const QWEN_SOURCE_PIN = Object.freeze({
   image: "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
@@ -114,7 +114,7 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
         emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "pass", reason: "ok", elapsedMs: performance.now() - start });
         return result;
       } catch (error) {
-        emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "reject", reason: admissionReason(error), transport: admissionTransport(error), elapsedMs: performance.now() - start });
+        emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "reject", reason: admissionReason(error), transport: admissionTransport(error), hardware: admissionHardware(error), elapsedMs: performance.now() - start });
         throw error;
       }
     };
@@ -155,10 +155,22 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
         if (!fresh(s)) fail("freshness");
         if (!Number.isSafeInteger(s.generation)) fail("generation");
         if (s.ready !== true) fail("owner_ready");
-        if (s.hardware_latched !== false) fail("hardware_state");
+        const gpuUuidMatch = JSON.stringify(s.required_gpu_uuids) === JSON.stringify([pin.gpuUuid]);
+        const hardwareFailure = (): never => {
+          throw new QwenAdmissionError("hardware_state", undefined, projectQwenHardware({
+            hardwareLatched: Object.hasOwn(s, "hardware_latched") ? s.hardware_latched : "missing",
+            gpuUuidMatch, expectedGpuUuid: pin.gpuUuid ?? null, requiredGpuUuids: s.required_gpu_uuids,
+            nodeSchema: node.schema_version, nodeAgeMs: node.age_ms, serviceAgeMs: s.age_ms,
+            serviceGeneration: s.generation, bootId: node.boot_id,
+            hardwareValidationAgeMs: s.hardware_validation_age_ms,
+            hardwareValidatedBootId: s.hardware_validated_boot_id,
+            hardwareValidatedGpuUuids: s.hardware_validated_gpu_uuids,
+          }));
+        };
+        if (s.hardware_latched !== false) hardwareFailure();
         if (s.deployment_id !== pin.deploymentId || s.model_alias !== alias) fail("selected_profile");
         if (s.configured_context_tokens !== 480000) fail("token_capacity");
-        if (JSON.stringify(s.required_gpu_uuids) !== JSON.stringify([pin.gpuUuid])) fail("hardware_state");
+        if (!gpuUuidMatch) hardwareFailure();
         return `${node.boot_id}:${v.active_identity}:${v.generation}:${s.generation}`;
       });
     };

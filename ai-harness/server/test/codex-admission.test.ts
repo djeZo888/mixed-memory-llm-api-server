@@ -69,3 +69,34 @@ test('current log projects only static fields and enforces protected bounded rot
   const target=join(dir,'target');writeFileSync(target,'untouched');symlinkSync(target,join(dir,'symlink'));
   createQwenAdmissionDiagnostics(join(dir,'symlink'))(event);assert.equal(readFileSync(target,'utf8'),'untouched');
 });
+
+test('hardware predicate evidence preserves null, false, true, missing and exact UUID mismatch without relaxing rejection',async()=>{
+ for(const latch of [null,true,false,undefined,'PRIVATE_ERROR']){
+  const f=fixture();
+  if(latch===undefined)delete f.service.hardware_latched;else f.service.hardware_latched=latch;
+  if(latch===false) f.service.required_gpu_uuids=['GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237'];
+  await assert.rejects(f.verify(alias,{requestId,phase:'count'}),(e:any)=>e.reason==='hardware_state');
+  const event=f.events.at(-1)!;
+  assert.equal(event.step,'node_before');assert.equal(event.reason,'hardware_state');
+  assert.equal(event.hardware?.hardwareLatched,latch===undefined?'missing':latch==='PRIVATE_ERROR'?'invalid':latch);
+  assert.equal(event.hardware?.gpuUuidMatch,latch!==false);
+  assert.deepEqual(event.hardware?.requiredGpuUuids,f.service.required_gpu_uuids);
+  assert.equal(event.hardware?.hardwareValidationAgeMs,null); // Current node schema does not expose this proof age.
+  assert.equal(event.hardware?.serviceGeneration,15);
+  assert.doesNotMatch(JSON.stringify(event),/PRIVATE_ERROR|PRIVATE_CONTROL|PRIVATE_INFERENCE/);
+ }
+});
+test('hardware diagnostics project only bounded trusted fields to protected retained logs',async t=>{
+ const f=fixture();f.service.hardware_latched=null;
+ f.service.hardware_validation_age_ms=15500; f.service.hardware_validated_boot_id=f.node.boot_id;
+ f.service.hardware_validated_gpu_uuids=f.service.required_gpu_uuids;
+ await assert.rejects(f.verify(alias,{requestId,phase:'count'}));
+ const dir=mkdtempSync(join(realpathSync(tmpdir()),'h030-hardware-'));t.after(()=>rmSync(dir,{recursive:true,force:true}));
+ const path=join(dir,'hardware.jsonl'),log=createQwenAdmissionDiagnostics(path),event=f.events.at(-1)!;
+ log({...event,hardware:{...event.hardware,prompt:'PRIVATE_PROMPT',reason:'PRIVATE_REMOTE_REASON',requiredGpuUuids:['PRIVATE_UUID'],bootId:'PRIVATE_BOOT',nodeAgeMs:Infinity}} as any);
+ const text=readFileSync(path,'utf8'),stored=JSON.parse(text);
+ assert.equal(stored.reason,'hardware_state');assert.equal(stored.hardware.hardwareLatched,null);
+ assert.equal(stored.hardware.hardwareValidationAgeMs,15500);assert.equal(stored.hardware.requiredGpuUuids,null);
+ assert.equal(stored.hardware.nodeAgeMs,null);assert.equal(stored.hardware.bootId,null);
+ assert.doesNotMatch(text,/PRIVATE_/);assert.equal(statSync(path).mode&0o777,0o600);
+});
