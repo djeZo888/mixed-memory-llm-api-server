@@ -2,7 +2,7 @@
   "schema": 1,
   "task": "H030-20260929",
   "status": "IN_PROGRESS",
-  "updatedUtc": "2026-09-29T08:05:00Z",
+  "updatedUtc": "2026-09-29T08:31:00Z",
   "deadlineUtc": "2026-09-29T08:53:00Z",
   "source": {
     "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
@@ -24,9 +24,13 @@
     "payloadConflicts": "PASS",
     "crossEngineHandoffLive": "NOT_TESTED",
     "pdf": "FAIL_COUNT_HARDWARE_STATE",
-    "compactionRecall": "FAIL_HISTORICAL_TOOL_TRANSLATION_REPAIR_NOT_YET_LIVE",
+    "compactionRecall": "PASS_SMALL_MANUAL_WITH_FILE_SIZE_CAVEAT",
     "imageCodex": "NOT_TESTED",
-    "mimoCodex": "NOT_TESTED"
+    "mimoCodex": "NOT_TESTED",
+    "compaction": "PASS_SMALL_MANUAL",
+    "postCompactionRecall": "PASS",
+    "coldNativeResume": "FAIL_COUNT_NODE_AFTER_HARDWARE_PROOF_UNKNOWN",
+    "mimoMiniMax": "NOT_TESTED"
   },
   "ordinary": {
     "firstCompletedUtc": "2026-09-29T07:14:48.540Z",
@@ -48,11 +52,19 @@
     "compactionResponses": 35
   },
   "deployment": {
-    "appSource": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
-    "appActivatedUtc": "2026-09-29T07:33:30.434Z",
+    "appSource": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+    "appActivatedUtc": "2026-09-29T08:15:31.958889Z",
     "publicMaintenance": true,
     "historiesPreserved": true,
-    "endWindowRestore": false
+    "endWindowRestore": false,
+    "appPid": 118087,
+    "statusPid": 14480,
+    "defaultEngine": "minimax",
+    "ordinaryCodexSpecialistGates": "CLOSED",
+    "candidateFlags": {
+      "enabled": false,
+      "qualified": false
+    }
   },
   "boundaries": {
     "benchmarks": false,
@@ -61,13 +73,29 @@
     "modelWeightsOrRuntimeChanges": false
   },
   "services": {
-    "mimo": "HELD_080227_GUARD_LEASE_TIMEOUT_NATIVE_PRESENT",
+    "mimo": "RUNNING_READY_950000_CURRENT_PROOF_082828_NO_INFERENCE",
     "image": "API_READY_ADMITTING_075750",
     "qwen": "THREE_NATIVE_INSTANCES_RETAINED"
   },
   "findings": {
     "pdf": "Two native tool turns passed; third request blocked before generation at count/node_before. Exact failed node fields were not retained. Current passing readback is not historical cause evidence.",
-    "compaction": "Native tools:[] memento includes completed history; old adapter rejected historical tool names. Reviewed repair preserves matched history without authorizing new undeclared calls. Actual captured fixture passed; live corrected action pending.",
-    "mimo": "Ready075034 became HELD after mandatory_guard_timeout075617 and settlement_lease_deadline075638. Native still present at080227. Coincident image warmup held global canonical lease in its start path; actual historical holder was not sampled. Supported owned settlement/recovery is authorized, no bypass."
+    "compaction": "Historical completed calls no longer require currently declared tools. Corrected actual small native compaction and four-fact recall passed on same thread; active/completed action dedupe and artifacts preserved. Summary misstated incidental file byte count18 rather than22; file bytes unchanged.",
+    "mimo": "Guard/settlement failure during image recovery preserved; exact one-stop client timeout followed later physical stop. Reviewed changed-state reconciliation used unchanged owner and no second stop. SETTLED08:14:17; normal new load started08:14:19. Exact owner/native/canonical readiness passed08:28:28. Image long canonical lease remains unresolved.",
+    "coldResume": "Actual failed request3a82ac8f at08:22:36.622 count/node_after: hardwareLatched=null, UUID exact match, nodeAge4315ms/serviceAge3955ms. Proof metadata omitted upstream. No provider generation/native tool ran. Source producer cause investigation active; no guard relaxation or unchanged retry."
+  },
+  "remaining": [
+    "Resolve intermittent Qwen hardware-proof admission failure; qualify affected cold/PDF workflows",
+    "Split image startup/warmup from global lifecycle lease while retaining per-service ownership and watchdog deadlines",
+    "Qualify Codex image generation/edit/child and MiMo child/tool continuation; qualify MiniMax MiMo delegation",
+    "Run live cross-engine handoff and remaining shared queue/lifecycle/reconnect cases",
+    "Complete reviewed provider profile configuration and release acceptance; Ada200K routing remains separate"
+  ],
+  "evidence": {
+    "flow03": "reports/h030-flow03-20260929/",
+    "frontier01": "reports/h030-frontier-20260929/",
+    "ordinary": "reports/h030-flow02-20260929/",
+    "lastWorker2ExitUtc": "2026-09-29T08:29:01Z",
+    "allWorker2WorkSettled": true,
+    "worker1FinalTask": "01a0ec44-d831-79f0-8887-06e77d54d8f0"
   }
 }
