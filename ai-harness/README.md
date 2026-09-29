@@ -90,9 +90,11 @@ This is a shared workspace service with no per-person privacy boundary.
   session, preserving history, context and workspace. Cancelled tasks stay stopped.
   Unknown/interrupted work must not silently replay; unresolved cleanup needs
   operator review before the workspace can be used again.
-- **Continue in new chat** creates a handoff summary and a new conversation using
-  the same project workspace. The old chat and history remain. Runs in linked
-  chats serialize because they share project files.
+- **Continue in new chat** lets you choose an available engine, then creates a
+  handoff summary and a fresh native conversation in the same project workspace.
+  The source engine is selected initially. The old chat and history remain;
+  native history is never resumed by another engine. Runs in linked chats
+  serialize because they share project files.
 - **Delete chat** cancels active work before hiding metadata and retains project
   files. Earlier Delete acceptance and its cancellation-message limit remain in
   the v0.0.1 report.

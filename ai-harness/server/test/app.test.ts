@@ -551,6 +551,92 @@ test("handoff asks engine for summary, retains old chat, shares workspace and se
   );
 });
 
+for (const [source, target] of [["minimax", "codex"], ["codex", "minimax"]] as const) {
+  test(`handoff ${source} to ${target} starts fresh native history, keeps files and delivers summary once`, async (t) => {
+    const fixture = engines();
+    const h = await setup(t, fixture, {
+      codexEngineFactory: fixture.factory,
+      enginePolicy: { codex: { enabled: true, protocolQualified: true,
+        engineVersion: "fixture-codex", modelPolicyVersion: "fixture-policy" } },
+    });
+    const original = await h.broker.createSession(undefined, source);
+    const workspace = h.files.workspace(h.store.getSession(original.id).workspaceId);
+    await writeFile(path.join(workspace, "retained.txt"), "original workspace bytes");
+    h.broker.enqueue(original.id, "message", "Keep the original history.");
+    await h.broker.idle();
+    const priorMessages = h.store.messages(original.id);
+    const priorNative = h.store.getSession(original.id).nativeSessionId;
+    const response = await inject(h.app, { method: "POST", url: `/api/sessions/${original.id}/handoff`, payload: { engineKind: target } });
+    assert.equal(response.statusCode, 202, response.body);
+    await h.broker.idle();
+    const event = h.store.allEvents(original.id).find(e => e.type === "handoff")!;
+    assert.ok(event, JSON.stringify(h.store.allEvents(original.id)));
+    const next = h.store.getSession(event.data.newSessionId as string);
+    assert.equal(next.engineKind, target);
+    assert.equal(next.nativeSessionId, undefined);
+    assert.deepEqual(next.nativeState, { ownership: "idle", activeTurnId: null, eventCursor: 0 });
+    assert.equal(next.workspaceId, h.store.getSession(original.id).workspaceId);
+    assert.equal(next.engineVersion, target === "codex" ? "fixture-codex" : undefined);
+    assert.equal(next.modelPolicyVersion, target === "codex" ? "fixture-policy" : undefined);
+    assert.equal(h.store.getSession(original.id).nativeSessionId, priorNative);
+    assert.deepEqual(h.store.messages(original.id).slice(0, priorMessages.length), priorMessages);
+    assert.equal(await readFile(path.join(workspace, "retained.txt"), "utf8"), "original workspace bytes");
+    assert.equal(h.store.db.prepare("SELECT engine_kind FROM h030_handoff_targets WHERE run_id=?").get(response.json().runId)!.engine_kind, target);
+    h.broker.enqueue(next.id, "message", "Continue the retained task.");
+    await h.broker.idle();
+    const targetLaunch = fixture.options.find(o => o.sessionId === next.id)!;
+    assert.equal(targetLaunch.engineKind, target);
+    assert.equal(targetLaunch.nativeSessionId, undefined);
+    assert.notEqual(targetLaunch.profileDir, fixture.options[0]!.profileDir);
+    assert.equal(targetLaunch.workspace, fixture.options[0]!.workspace);
+    assert.match(fixture.calls.find(c => c.sessionId === next.id)!.text, /Context from the prior chat.*same workspace/s);
+    assert.match(fixture.calls.find(c => c.sessionId === next.id)!.text, /Fixture engine summary/);
+    h.broker.enqueue(next.id, "message", "Another step.");
+    await h.broker.idle();
+    assert.equal(fixture.calls.filter(c => c.sessionId === next.id).at(-1)!.text, "Another step.");
+  });
+}
+
+test("handoff validates explicit target before any summary dispatch or durable run", async (t) => {
+  const h = await setup(t), original = await h.session();
+  const before = h.store.snapshot(original.id);
+  for (const [engineKind, status, code] of [["codex", 409, "codex_preview_unavailable"], ["foreign", 400, "unknown_engine"], [null, 400, "unknown_engine"]] as const) {
+    const response = await inject(h.app, { method: "POST", url: `/api/sessions/${original.id}/handoff`, payload: { engineKind } });
+    assert.equal(response.statusCode, status);
+    assert.equal(response.json().error.code, code);
+  }
+  assert.equal(h.fixture.calls.length, 0);
+  assert.deepEqual(h.store.snapshot(original.id).runs, before.runs);
+  assert.deepEqual(h.store.messages(original.id), before.messages);
+  assert.equal(h.store.listSessions().length, 1);
+  assert.equal(h.store.db.prepare("SELECT count(*) AS n FROM h030_handoff_targets").get()!.n, 0);
+});
+
+test("cross-engine handoff preserves workspace serialization with the original chat", async (t) => {
+  const fixture = engines(true);
+  const h = await setup(t, fixture, { codexEngineFactory: fixture.factory,
+    enginePolicy: { codex: { enabled: true, protocolQualified: true, engineVersion: "fixture", modelPolicyVersion: "fixture" } } });
+  const original = await h.session();
+  const response = await inject(h.app, { method: "POST", url: `/api/sessions/${original.id}/handoff`, payload: { engineKind: "codex" } });
+  assert.equal(response.statusCode, 202);
+  await until(() => fixture.calls.length === 1);
+  h.broker.enqueue(original.id, "message", "Original queued work.");
+  fixture.calls[0]!.update({ type: "text", text: "Retained summary and file references." });
+  fixture.calls[0]!.resolve();
+  await until(() => fixture.calls.length === 2);
+  const next = h.store.listSessions().find(s => s.id !== original.id)!;
+  h.broker.enqueue(next.id, "message", "Target queued work.");
+  await delay(25);
+  assert.equal(fixture.calls.length, 2);
+  assert.equal(h.store.getSession(next.id).status, "queued");
+  fixture.calls[1]!.resolve();
+  await until(() => fixture.calls.length === 3);
+  assert.equal(fixture.calls[2]!.sessionId, next.id);
+  assert.equal(fixture.calls[1]!.done, true);
+  fixture.calls[2]!.resolve();
+  await h.broker.idle();
+});
+
 test("a fresh handoff chat can hand off again without losing its inherited engine summary", async (t) => {
   const h = await setup(t);
   const original = await h.session();

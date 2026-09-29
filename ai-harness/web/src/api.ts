@@ -1,4 +1,4 @@
-import type { CodexHealth } from './types';
+import type { CodexHealth, EngineKind } from './types';
 import {
   eventTypes,
   type Attachment,
@@ -99,7 +99,7 @@ export interface Transport {
   ): Promise<{ job: ImageJob }>;
   cancelImage(id: string, jobId: string): Promise<{ job: ImageJob }>;
   cancel(id: string): Promise<{ status: 'cancelling' }>;
-  handoff(id: string): Promise<{ runId: string }>;
+  handoff(id: string, engineKind?: EngineKind): Promise<{ runId: string }>;
   compact(id: string, actionId: string): Promise<{ runId: string }>;
   upload(id: string, file: File): Promise<{ attachment: Attachment }>;
   reference?(id: string, fileId: string): Promise<{ attachment: Attachment }>;
@@ -165,7 +165,7 @@ export const api: Transport = {
   cancelImage: (id, jobId) =>
     imageJobPost(`${sessionPath(id)}/image-jobs/${encodeURIComponent(jobId)}/cancel`, {}),
   cancel: (id) => post(`${sessionPath(id)}/cancel`, {}),
-  handoff: (id) => post(`${sessionPath(id)}/handoff`, {}),
+  handoff: (id, engineKind) => post(`${sessionPath(id)}/handoff`, engineKind ? { engineKind } : {}),
   compact: (id, actionId) => post(`${sessionPath(id)}/compact`, { actionId }),
   upload: (id, file) => {
     const body = new FormData();

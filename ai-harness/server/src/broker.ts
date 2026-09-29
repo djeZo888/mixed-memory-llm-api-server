@@ -115,6 +115,7 @@ export class Broker {
     imageReferences: string[] = [],
     compactionActionId?: string,
     submissionId?: string,
+    handoffEngineKind?: EngineKind,
   ): string {
     const s = this.store.getSession(sessionId);
     if (kind === "compact") {
@@ -129,6 +130,8 @@ export class Broker {
     }
     const admit = (s: StoredSession) => {
       assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
+      if (kind === "handoff")
+        assertEngineAvailable(handoffEngineKind ?? s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
       if (kind === "compact") {
         if (s.engineKind !== "codex")
           throw new ApiError(
@@ -208,7 +211,8 @@ export class Broker {
       return result.runId;
     }
     admit(s);
-    const run = this.store.createRun(s, kind, text, attachmentIds, compactionActionId);
+    const run = this.store.createRun(s, kind, text, attachmentIds, compactionActionId,
+      kind === "handoff" ? handoffEngineKind ?? s.engineKind : undefined);
     if (imageReferences.length)
       this.store.db
         .prepare("INSERT INTO h003_run_image_refs VALUES(?,?)")
@@ -613,7 +617,9 @@ export class Broker {
       if (run.kind === "handoff" && !active.cancelled) {
         if (!summary.trim())
           throw new Error("Engine produced no handoff summary");
-        const next = await this.createSession(s.workspaceId, s.engineKind);
+        // Only the factual summary and existing workspace cross this boundary.
+        // createSession supplies fresh engine policy/profile/native state.
+        const next = await this.createSession(s.workspaceId, run.handoffEngineKind ?? s.engineKind);
         this.store.setTitle(next.id, `Continue: ${s.title}`);
         this.store.touchContext(next.id);
         const m = this.store.addMessage(

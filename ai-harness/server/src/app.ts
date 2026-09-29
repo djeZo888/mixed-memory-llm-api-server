@@ -454,10 +454,13 @@ export async function createApp(options: AppOptions): Promise<{
       });
     });
     app.post("/api/sessions/:id/handoff", async (req, reply) => {
-      only(object(req.body), []);
+      const body = object(req.body);
+      only(body, ["engineKind"]);
+      if (body.engineKind !== undefined)
+        assertEngineAvailable(body.engineKind, options.enginePolicy, options.codexEngineFactory);
       return reply
         .code(202)
-        .send({ runId: broker.enqueue(id(req), "handoff", "") });
+        .send({ runId: broker.enqueue(id(req), "handoff", "", [], [], undefined, undefined, body.engineKind) });
     });
     app.post("/api/sessions/:id/uploads", async (req, reply) => {
       const sessionId = id(req);

@@ -65,7 +65,11 @@ cumulative inference usage. Fixed configuration does not prove measured capacity
 
 Runs in one chat serialize. Separate workspaces can run concurrently; handoff
 chats share project files and therefore serialize. Continue in new chat asks the
-engine for a summary, seeds the new conversation and retains old history/files.
+source engine for a summary, seeds a fresh conversation in the selected available
+engine and retains old history/files. The optional `engineKind` in the handoff
+request defaults to the source engine. Its target is persisted atomically with
+the run; each target gets its own profile and native identity. No foreign native
+thread or engine policy is copied.
 
 The original ACP prompt remains attached through child-triggered root
 continuations and their text delivery. Children appear as progress; final

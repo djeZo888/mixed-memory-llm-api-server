@@ -339,6 +339,28 @@ h1 {
 .handoff {
   color: #727b74;
 }
+.handoff-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+.handoff-target {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.handoff-target select {
+  max-width: 132px;
+  padding: 3px;
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  background: #fbfbf9;
+  color: inherit;
+  font: inherit;
+}
 .connection {
   display: flex;
   align-items: center;
@@ -1022,6 +1044,7 @@ h1 {
     min-height: 75px;
     padding: 12px 16px;
     gap: 8px;
+    flex-wrap: wrap;
   }
   .topbar h1 {
     font-size: 14px;
@@ -1032,9 +1055,21 @@ h1 {
   }
   .header-actions {
     gap: 8px;
+    flex: 0 0 100%;
+    justify-content: flex-end;
+  }
+  .handoff-controls {
+    flex-direction: row;
+    align-items: center;
   }
   .handoff {
     padding: 6px;
+  }
+  .handoff-target > span {
+    display: none;
+  }
+  .handoff-target select {
+    max-width: 100px;
   }
   .handoff span {
     font-size: 0;

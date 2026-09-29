@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
 import { App } from '../src/App';
@@ -10,7 +10,7 @@ it('defaults new chat to MiniMax and disables unqualified Codex preview', async 
   render(<App store={store} />);
   const selector = await screen.findByRole('combobox', { name: 'Harness for new chat' });
   expect(selector).toHaveValue('minimax');
-  expect(screen.getByRole('option', { name: /Codex/ })).toBeDisabled();
+  expect(within(selector).getByRole('option', { name: /Codex/ })).toBeDisabled();
   await store.create('codex');
   expect(transport.create).not.toHaveBeenCalled();
   await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
@@ -24,8 +24,9 @@ it('qualified deployment enables new-chat choice and sends immutable engine choi
   });
   const store = new HarnessStore(transport);
   render(<App store={store} />);
-  await waitFor(() => expect(screen.getByRole('option', { name: /Codex/ })).toBeEnabled());
-  await userEvent.selectOptions(screen.getByRole('combobox'), 'codex');
+  const selector = screen.getByRole('combobox', { name: 'Harness for new chat' });
+  await waitFor(() => expect(within(selector).getByRole('option', { name: /Codex/ })).toBeEnabled());
+  await userEvent.selectOptions(selector, 'codex');
   await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
   await waitFor(() => expect(transport.create).toHaveBeenCalledWith('codex'));
   expect(transport.send).not.toHaveBeenCalled();
@@ -59,7 +60,7 @@ it('shows qualification separately from configuration without enabling preview',
   const store = new HarnessStore(transport);
   render(<App store={store} />);
   await screen.findByText(/Configured · 0.158.0 · disabled/);
-  expect(screen.getByRole('option', { name: /Codex/ })).toBeDisabled();
+  expect(within(screen.getByRole('combobox', { name: 'Harness for new chat' })).getByRole('option', { name: /Codex/ })).toBeDisabled();
   expect(screen.getByText(/Gateway qualification pending/)).toBeInTheDocument();
   expect(screen.getByText(/Live acceptance is separate/)).toBeInTheDocument();
 });

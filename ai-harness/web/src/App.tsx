@@ -11,7 +11,7 @@ import {
   X,
 } from 'lucide-react';
 import { codexSpecialistAvailable, HarnessStore, busyKey, pendingRunIds } from './store';
-import { isActive, type Status } from './types';
+import { isActive, type EngineKind, type Status } from './types';
 import { resolveStatus } from './status';
 import { FrontierActivity } from './FrontierActivity';
 import { Composer } from './Composer';
@@ -30,6 +30,7 @@ function Badge({ status }: { status: Status }) {
 export function App({ store }: { store: HarnessStore }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
   const [newEngine, setNewEngine] = useState<'minimax' | 'codex'>('minimax');
+  const [handoffChoice, setHandoffChoice] = useState<{ sessionId: string; engineKind: EngineKind } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [narrow, setNarrow] = useState(window.innerWidth <= 700);
   const sidebar = useRef<HTMLElement>(null);
@@ -40,6 +41,12 @@ export function App({ store }: { store: HarnessStore }) {
   const sidebarButton = useRef<HTMLButtonElement>(null);
   const thread = state.thread;
   const selected = state.selectedId;
+  const handoffEngine = handoffChoice && handoffChoice.sessionId === thread?.session.id
+    ? handoffChoice.engineKind : thread?.session.engineKind ?? 'minimax';
+  const handoffBusy = !!thread && (
+    !!state.busy[busyKey('handoff', thread.session.id)] ||
+    isActive(thread.session.status) || pendingRunIds(state, thread.session.id).length > 0
+  );
   useEffect(() => {
     if (!state.codexAvailable) setNewEngine('minimax');
   }, [state.codexAvailable]);
@@ -273,18 +280,32 @@ export function App({ store }: { store: HarnessStore }) {
                   Compact context
                 </button>
               )}
-              <button
-                className="text-button handoff"
-                disabled={
-                  !!state.busy[busyKey('handoff', selected!)] ||
-                  isActive(thread.session.status) ||
-                  pendingRunIds(state, selected!).length > 0
-                }
-                onClick={() => void store.handoff(selected!)}
-              >
-                <span>Continue in new chat</span>
-                <ArrowUpRight size={17} />
-              </button>
+              <div className="handoff-controls">
+                <label className="handoff-target">
+                  <span>Continue with</span>
+                  <select
+                    aria-label="Harness for continued chat"
+                    value={handoffEngine}
+                    disabled={handoffBusy}
+                    onChange={(event) => setHandoffChoice({
+                      sessionId: thread.session.id, engineKind: event.target.value as EngineKind,
+                    })}
+                  >
+                    <option value="minimax">MiniMax</option>
+                    <option value="codex" disabled={!state.codexAvailable}>
+                      Codex (preview){state.codexAvailable ? '' : ' — pending'}
+                    </option>
+                  </select>
+                </label>
+                <button
+                  className="text-button handoff"
+                  disabled={handoffBusy || (handoffEngine === 'codex' && !state.codexAvailable)}
+                  onClick={() => void store.handoff(thread.session.id, handoffEngine)}
+                >
+                  <span>Continue in new chat</span>
+                  <ArrowUpRight size={17} />
+                </button>
+              </div>
             </div>
           )}
         </header>

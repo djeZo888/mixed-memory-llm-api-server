@@ -1,5 +1,5 @@
 import { readSubmission, saveSubmission, acknowledgeSubmission, forgetSubmission, submissionRejected, type PendingSubmission } from './submissions';
-import type { CodexHealth } from './types';
+import type { CodexHealth, EngineKind } from './types';
 import { api, ApiError, type Transport } from './api';
 import { healthAvailability, type HealthAvailability } from './availability';
 import { applyEvent, reconcileSnapshot } from './state';
@@ -722,13 +722,20 @@ export class HarnessStore {
       },
     );
   };
-  handoff = (id: string) => {
+  handoff = (id: string, engineKind?: EngineKind) => {
     const before = this.handoffs.get(id) ?? 0;
     if (pendingRunIds(this.state, id).length) return Promise.resolve(false);
+    const source = this.state.thread?.session.id === id
+      ? this.state.thread.session : this.state.sessions.find(session => session.id === id);
+    const target = engineKind ?? source?.engineKind ?? 'minimax';
+    if (target === 'codex' && !this.state.codexAvailable) {
+      this.update({ error: 'Codex preview is not available yet.' });
+      return Promise.resolve(false);
+    }
     return this.action(
       'handoff',
       id,
-      () => this.transport.handoff(id),
+      () => this.transport.handoff(id, engineKind),
       ({ runId }) => {
         const settled =
           this.completedRuns.get(id)?.has(runId) || (this.handoffs.get(id) ?? 0) !== before;

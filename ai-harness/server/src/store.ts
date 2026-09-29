@@ -39,6 +39,7 @@ export interface Run {
   text: string;
   attachmentIds: string[];
   status: string;
+  handoffEngineKind?: EngineKind;
 }
 /** The entire accepted ordinary-message payload. No per-turn options are supported.
  * Named object fields have a fixed canonical order; text and array order are exact.
@@ -105,6 +106,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h002_subagents(run_id TEXT PRIMARY KEY,data TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h029_message_submissions(session_id TEXT NOT NULL REFERENCES sessions(id),submission_id TEXT NOT NULL,fingerprint TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,submission_id));
       CREATE TABLE IF NOT EXISTS h024_compaction_actions(session_id TEXT NOT NULL REFERENCES sessions(id),action_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,action_id));
+      CREATE TABLE IF NOT EXISTS h030_handoff_targets(run_id TEXT PRIMARY KEY REFERENCES runs(id),engine_kind TEXT NOT NULL CHECK(engine_kind IN ('minimax','codex')));
     `);
     // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
     this.db.exec(`
@@ -884,12 +886,14 @@ export class Store {
     text: string,
     attachmentIds: string[],
     compactionActionId?: string,
+    handoffEngineKind?: EngineKind,
   ): Run {
     const id = randomUUID(),
       time = now();
     // Persist the action and run together before publishing or scheduling work.
     // Restart recovery retains the binding and never requeues this run.
-    if (compactionActionId) this.db.exec("BEGIN IMMEDIATE");
+    const atomic = !!compactionActionId || handoffEngineKind !== undefined;
+    if (atomic) this.db.exec("BEGIN IMMEDIATE");
     try {
       this.db
         .prepare("INSERT INTO runs VALUES(?,?,?,?,?,?,?,?,?)")
@@ -908,10 +912,12 @@ export class Store {
         this.db
           .prepare("INSERT INTO h024_compaction_actions VALUES(?,?,?)")
           .run(s.id, compactionActionId, id);
-        this.db.exec("COMMIT");
       }
+      if (handoffEngineKind !== undefined)
+        this.db.prepare("INSERT INTO h030_handoff_targets VALUES(?,?)").run(id, handoffEngineKind);
+      if (atomic) this.db.exec("COMMIT");
     } catch (error) {
-      if (compactionActionId) this.db.exec("ROLLBACK");
+      if (atomic) this.db.exec("ROLLBACK");
       throw error;
     }
     this.touchContext(s.id, id);
@@ -924,6 +930,7 @@ export class Store {
       text,
       attachmentIds,
       status: "queued",
+      ...(handoffEngineKind !== undefined ? { handoffEngineKind } : {}),
     };
   }
   updateRun(id: string, status: string) {
