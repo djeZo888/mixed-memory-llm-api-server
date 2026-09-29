@@ -1,0 +1,69 @@
+{
+  "schema": 1,
+  "auditUtc": "2026-09-29T16:04:24.090963+00:00",
+  "captureUtc": "2026-09-29T16:01:48.511176+00:00",
+  "manifestIntegrity": "PASS",
+  "captureIndexIntegrity": "PASS",
+  "requestCount": 19,
+  "manifestSha256": "3dd27df4c45bed724cd259aecdd5c7f84557d23f7cdaa016bcf86317d4af0cdb",
+  "sessionId": "392b6bcf-7842-4748-a856-95456634a4de",
+  "runId": "0c387d48-2ec4-4f49-9590-d96a72aa39cc",
+  "outcome": "EDIT_ACCEPTANCE_FAILED_NO_EDIT_JOB_MODEL_SPAWNED_SECOND_CHILD",
+  "termination": "OPERATOR_STOP_NOT_NATURAL_PARENT_FAILURE",
+  "operatorStopUtc": "2026-09-29T16:01:34.172Z",
+  "stopHttpStatus": 202,
+  "parentCapabilityCallCount": 8,
+  "parentArgumentGroups": [
+    {
+      "rawArguments": "{\"prompt\": \"Check resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "count": 1
+    },
+    {
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "count": 7
+    }
+  ],
+  "parentEightIdenticalThresholdReached": false,
+  "actualScopeViolation": "Two native child spawns during current edit turn despite exactly-one instruction",
+  "currentTurnChildSpawns": [
+    {
+      "callId": "call_33bdeafe22da41058cfd862d",
+      "childNativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "argumentsSha256": "447e041a1713b728c7f515531ffe23273d888316edd950db71607eef7d7bbab8",
+      "outputSha256": "ee4e9aad5fc0cbd66c54fc6c5d81f683fc0906dd06745037a7bb0ec94f00f8ed"
+    },
+    {
+      "callId": "call_5583e69879524cbcb2be1eee",
+      "childNativeThreadId": "01a0ede6-0fad-7191-9e87-bcad69beb761",
+      "argumentsSha256": "cf4d1e89ac5180ef64333750904e286cf2315b7d478efb5f17b5ee4fa5007332",
+      "outputSha256": "b089f9a4873a66744c564f37d394f553e40b33dbc7cc3b02c231bf4b4d89d771"
+    }
+  ],
+  "childTerminals": {
+    "01a0eddb-eec5-78b3-907f-d36d081a3048": [
+      {
+        "type": "task_complete",
+        "turnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+        "timestamp": "2026-09-29T15:54:00.831Z",
+        "reason": null,
+        "finalText": "The `image_capabilities` tool takes no arguments. Calling it with empty object."
+      }
+    ],
+    "01a0ede6-0fad-7191-9e87-bcad69beb761": [
+      {
+        "type": "turn_aborted",
+        "turnId": "01a0ede6-0fc5-7602-aaca-c94b841c0db7",
+        "timestamp": "2026-09-29T16:01:34.391Z",
+        "reason": "interrupted",
+        "finalText": null
+      }
+    ]
+  },
+  "privateAuditSha256": "c84958c4494606df5b39a8404672a91206c6817b08c2374d7d478c77a1850259",
+  "nativeWorkSettledUtc": "2026-09-29T16:01:47.715Z",
+  "ticketRemovedUtc": "2026-09-29T16:01:48.246Z",
+  "currentRunEditJobs": 0,
+  "currentRunResizeCards": 0,
+  "parentAndChildOldInstructions": true,
+  "priorGenerationArtifactIsNotAnEditResult": true
+}

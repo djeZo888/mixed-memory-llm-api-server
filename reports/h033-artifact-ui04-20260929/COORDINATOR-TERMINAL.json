@@ -1,0 +1,15 @@
+{
+  "sessionId": "01a0edd4-5a04-7652-b42a-4a0033e521f9",
+  "startedUtc": "2026-09-29T15:41:51.563985Z",
+  "hardDeadlineUtc": "2026-09-29T15:57:00Z",
+  "nativePid": 35286,
+  "actualExitCode": 0,
+  "finishedUtc": "2026-09-29T15:47:36.013298+00:00",
+  "method": "Popen.wait; persisted before cleanup",
+  "coordinatorSshWrapperExitCode": 0,
+  "sourceCommit": "5f8f1790b1c61af799be47a3aef5c6b97508d7fd",
+  "verifiedArtifactHashes": 12,
+  "sourceBundleSha256": "b6d61bb5b2b130ae3d6454e258568c038ee01c93031aa8a18597b873c40a522f",
+  "staticWebSha256": "19048855b712006c1dd70021fc47109f5259fb590e1b4411304c2fd569406036",
+  "liveActions": "none; source/build/test only"
+}

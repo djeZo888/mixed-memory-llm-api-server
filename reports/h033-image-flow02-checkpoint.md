@@ -54,3 +54,10 @@ Final inert staging caught a nonexistent package-file assumption; matching absen
 Final edit audit verifies 19 current-run requests (33 including prior session history), both actual child spawns, and matching next normalized feedback for all ten invalid capability calls. The historical sailboat job/artifact is not an edit output. All provider/native/image ownership settled before ticket removal and activation. No further live request or workflow was submitted.
 
 Compact receipts are in `h033-image-flow02-evidence/`; raw provider/native/MCP archives remain private. The source-bound acceptance receipts retain their tested eb8/aa5 pins; this final d55 health/UI activation is not a new image or MiMo workflow qualification.
+
+## Coordinator closure supplement
+
+The native wrapper subsequently recorded exit 0 at 16:07:28.549820 UTC, before
+the hard deadline, using `Popen.wait` before cleanup. See
+[h033-image-flow02-evidence/COORDINATOR-TERMINAL.json](h033-image-flow02-evidence/COORDINATOR-TERMINAL.json).
+No further live work was submitted.

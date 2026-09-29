@@ -1,0 +1,119 @@
+{
+  "schema": 1,
+  "task": "H033-20260929",
+  "state": "CLOSED_PARTIAL_CODEX_INTEGRATION_INCOMPLETE",
+  "updatedUtc": "2026-09-29T16:10:09.473885+00:00",
+  "windowStartUtc": "2026-09-29T14:22:49Z",
+  "deadlineUtc": "2026-09-29T16:22:49Z",
+  "workerCutoffUtc": "2026-09-29T16:12:00Z",
+  "scope": "Codex integration; no new model or capacity benchmark",
+  "actualWorkflowResults": {
+    "codexMimoToolChildParentSettlement": "PASS",
+    "minimaxMimoToolChildParentSettlement": "PASS",
+    "imageOriginalFirstAttempt": "OPERATOR_CANCELLED_AFTER_FIRST_INVALID_TOOL_CALL_BEFORE_POSSIBLE_CORRECTION",
+    "imageIndependentChildGeneration": "PASS_ONE_NATIVE_JOB_WITH_RECOVERED_TOOL_ERRORS",
+    "imageIndependentFinalAssociation": "PASS_NON_NULL_FINAL_MESSAGE_AND_ARTIFACT_ASSOCIATION",
+    "imageIndependentVisualArtifact": "PASS_ROOT_AND_WORKER_VIEW",
+    "imageIndependentDownloadPresentation": "INLINE_CODE_INSTEAD_OF_CLICKABLE_MARKDOWN",
+    "imageEdit": "BOUNDED_ACCEPTANCE_FAILED_SCHEMA_ERRORS_INTENT_ONLY_CHILD_SECOND_CHILD_SCOPE_VIOLATION_OPERATOR_CANCELLED_SETTLED",
+    "newCatalogProviderInstructions": "PASS_ACTUAL_NATIVE_AND_NORMALIZED_REQUEST_MATCH_CORRECTED_CATALOG",
+    "imageOriginalCorrectedCatalog": "BOUNDED_ACCEPTANCE_FAILED_REPEATED_SCHEMA_ERRORS_OPERATOR_CANCELLED_SETTLED",
+    "imageOriginalCorrectedCatalogFailedCalls": 11,
+    "imageOriginalCorrectedCatalogProviderRequests": 12,
+    "imageOriginalCorrectedCatalogImageJobs": 0,
+    "imageOriginalFeedbackDelivery": "PASS_FIRST_TEN_ERRORS_IN_NEXT_NORMALIZED_REQUEST_ELEVENTH_NOT_PROVEN_BEFORE_STOP",
+    "imageEditJobs": 0,
+    "imageEditResizeCards": 0,
+    "imageEditInstructionProvenance": "RESUMED_PARENT_AND_CHILD_USED_OLD_BASE_INSTRUCTIONS",
+    "imageEditProviderRequests": 19,
+    "imageEditParentSchemaErrors": 8,
+    "imageEditChildSchemaErrors": 2,
+    "imageEditNativeChildren": 2
+  },
+  "provenanceLimits": [
+    "MiMo full workflow passes used c863 source and aee tool policy; reviewed compatibility preserves actual pins separately from b71 instruction basis.",
+    "Independent child image ran before catalog mount correction; actual provider instructions matched old baked catalog.",
+    "Image schema errors were recoverable in the independent workflow; no error-free claim.",
+    "Configured MiMo 950000 capacity is not proof of a successful occupied950K test."
+  ],
+  "performance": {
+    "qwenCountControlReadsBefore": 4,
+    "qwenCountControlReadsAfter": 2,
+    "liveBeforeAfterTiming": "NOT_TESTED_BASELINE_SKIPPED",
+    "measuredSpeedup": null,
+    "mimoFirstCodexRequest": {
+      "inputTokens": 13133,
+      "prefillSeconds": 358.591,
+      "outputTokens": 138,
+      "decodeSeconds": 15.192
+    },
+    "mimoFirstMinimaxRequest": {
+      "inputTokens": 11620,
+      "prefillSeconds": 305.915,
+      "outputTokens": 42,
+      "decodeSeconds": 4.889
+    }
+  },
+  "preservation": {
+    "historiesAndFiles": true,
+    "historicalUncertainOwners": 2,
+    "historicalQuarantines": 3,
+    "originalFailuresRetained": true,
+    "modelOrGpuChanges": false
+  },
+  "publication": {
+    "branch": "feature/glm53-flash",
+    "pullRequest": 10,
+    "draft": true,
+    "mainMerge": false,
+    "reviewedCodeRemoteHead": "2af8707b75a75337d54ea97f4745b56a99a5ea2d"
+  },
+  "deployment": {
+    "appSource": "d55eb2b2eafd4e0d7df8ca2311277b797f3bad23",
+    "readyUtc": "2026-09-29T16:04:53.016081+00:00",
+    "frontierProtectedQualification": true,
+    "imageProtectedQualification": false,
+    "publicChatHttp": 503,
+    "statusHttp": 200,
+    "defaultEngine": "minimax",
+    "actualCatalogInstructionsSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+    "legacyFrontierSummaryCorrection": "DEPLOYED_READBACK_PASS_TRUE_MATCHES_DETAIL",
+    "artifactDownloadUi": "DEPLOYED_SERVED_ASSET_HASHES_MATCH_REVIEWED_BUILD_BROWSER_INTERACTION_NOT_TESTED",
+    "acceptanceTickets": 0
+  },
+  "sourceChecks": {
+    "countGuardTests": 40,
+    "frontierAffectedTests": 79,
+    "uiFocusedTests": 41,
+    "countsAreSeparateSuitesNotUniqueTotal": true,
+    "healthSummaryTests": 8
+  },
+  "settlement": {
+    "allCurrentWindowOwnedNativeAndProviderWorkSettled": true,
+    "lastSettledUtc": "2026-09-29T16:01:47.715Z",
+    "acceptanceTickets": 0,
+    "paidWorkerTerminals": "ALL_NATIVE_CLI_SESSIONS_EXITED_0"
+  },
+  "liveWorkEndedUtc": "2026-09-29T16:04:53.016081Z",
+  "lastWorkerNativeExitUtc": "2026-09-29T16:07:28.549820Z",
+  "workerClosure": {
+    "worker1LastNative": {
+      "id": "01a0edd4-5a04-7652-b42a-4a0033e521f9",
+      "exitCode": 0,
+      "exitedUtc": "2026-09-29T15:47:36.013298Z"
+    },
+    "worker2LastNative": {
+      "id": "01a0edbc-b4c2-7f62-a08b-264477996733",
+      "exitCode": 0,
+      "exitedUtc": "2026-09-29T16:07:28.549820Z"
+    },
+    "allWindowSessionReceiptsRetained": true
+  },
+  "remaining": [
+    "Image tool compatibility and bounded repeated-error handling",
+    "Retained session instruction update or supported handoff behavior",
+    "PDF final-answer honesty regression",
+    "Healthy-lane fallback, shared queue and child cancellation",
+    "Bounded restart, real browser reconnect and offline-local release acceptance"
+  ]
+}

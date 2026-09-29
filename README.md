@@ -34,12 +34,18 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
-The latest [H032 checkpoint](reports/h032-codex-checkpoint.md) records recovery
-of MiMo and the image service, application deployment, partial PDF acceptance,
-and the remaining Codex tool, frontier and latency failures. Three Qwen services
-are retained (480K, 480K and 200K). Complete Codex workflow qualification remains
-unfinished; [remaining work](reports/h032-next-execution.md) is recorded without
-reopening the execution window. MiniMax remains the default.
+The [H033 checkpoint](reports/h033-codex-checkpoint.md) records successful MiMo
+shell/tool continuation and child/parent completion through both engines. Codex
+frontier access is enabled. The catalog mount, final-answer association,
+download rendering and frontier status summary have reviewed corrections.
+Codex image qualification remains closed: one child produced a valid Full HD
+image, but the original regression and follow-up edit failed bounded acceptance.
+The [remaining work](reports/h033-next-execution.md) targets those tool failures
+and the outstanding reliability checks. Three Qwen configurations remain
+480K, 480K and 200K; native image recognition is unsupported in Codex.
+The [H032 checkpoint](reports/h032-codex-checkpoint.md) preserves earlier recovery
+and failed cases. Complete Codex integration remains unfinished; MiniMax remains
+the default and public maintenance stays enabled.
 The [H025 fan-control and load-test report](reports/h025-overview.md) records the
 deployed GPU fan policies, improved sampled temperatures, measured power and the
 remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
@@ -58,7 +64,7 @@ flowchart TB
         Engines["Per-chat engine selection / MiniMax default"]
         Agent["MiniMax main and child agents"]
         Codex["Codex preview / private App Server"]
-        Responses["Local Responses adapter / Qwen0 qualified"]
+        Responses["Local Responses adapter / two 480K Qwen instances"]
         Tools["Search, browser, PDF and coding tools"]
         Gateway["Inference gateway: two Qwen slots + one frontier slot"]
         ImageJobs["Image tools and job broker"]

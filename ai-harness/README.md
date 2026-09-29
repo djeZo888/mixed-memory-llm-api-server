@@ -15,10 +15,16 @@ uses local Qwen through Sova's shared gateway, without OpenAI model login or
 paid inference. MiniMax remains the default. See the
 [execution record](../docs/h021-codex-execution.md) and
 [historical preview acceptance report](../reports/h021-codex-preview.md) for
-earlier checks. The latest [H032 checkpoint](../reports/h032-codex-checkpoint.md)
-records recovered model services and a correct readable PDF, but false tool-failure
-reporting, invalid model-supplied image arguments, and a MiMo count-response
-failure still prevent full acceptance. Codex specialist gates remain closed.
+earlier checks. The [H033 checkpoint](../reports/h033-codex-checkpoint.md)
+records successful MiMo tool execution and complete child/parent replies through
+both engines; ordinary Codex frontier access is now enabled. Reviewed fixes
+cover final-answer association, catalog mounting, artifact download rendering,
+frontier status and repeated token-count verification. Codex's general image
+gate remains closed: one child generation passed, but the original regression
+and guarded edit failed bounded acceptance. Native visual recognition is
+unsupported. See [remaining work](../reports/h033-next-execution.md). The
+[H032 checkpoint](../reports/h032-codex-checkpoint.md) preserves earlier failures
+and partial PDF acceptance.
 Real Stop, same-thread
 follow-up and reconnect passed on the final Codex repair.
 The [earlier worker-path failure](docs/acceptance-v0.0.3-historical-worker-failure.md)
