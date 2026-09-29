@@ -752,8 +752,64 @@ class Manager:
                         require(deployment['id'] != pair.GLM_PROFILE, 'historical_glm_disabled_flash_reserved')
                         validate_container(c, self.binding.read_json('services', BASE + '/config.json'),
                                            self.binding.read_json('services', BASE + '/state.json'))
+                    elif c.get('Name') == '/llm-qwen-ada200k-h028':
+                        self.validate_dedicated_ada_peer(c, deployment)
                     else:
                         self.validate_dedicated_image_peer(c, deployment)
+
+    def validate_dedicated_ada_peer(self, c, deployment):
+        """Read-only coexistence proof for the exact resident H028 owner.
+
+        This grants no Ada routing, start/stop, readiness or capacity policy.
+        Unknown peers still fail the existing conflict gate.
+        """
+        code = 'untrusted_concurrent_peer'
+        try:
+            from . import concurrent_profiles as pair
+            from .hardware_policy import boot_identity
+            from control.installation import protected_file
+            from control.node_observation import (ADA_BASE, ADA_GPU, ADA_SOURCES,
+                                                  ADA_AUTH_PATH, ADA_AUTH_SHA256)
+            require(deployment is not None and pair.is_pair(deployment)
+                    and ADA_GPU not in deployment['launch']['gpus']
+                    and c.get('Name') == '/llm-qwen-ada200k-h028', code)
+            boot = boot_identity()['boot_id']
+            def read(path):
+                self.binding.validate_path('data', path)
+                return protected_file(Path(path), modes={0o644}, maximum=65536)
+            config = self.binding.read_json('data', ADA_BASE + '/config.json')
+            state = self.binding.read_json('data', ADA_BASE + '/state.json')
+            require(state.get('desired') == 'running' and state.get('pending_create') is None, code)
+            sources = {name: read(ADA_BASE + '/source/' + name) for name in ADA_SOURCES}
+            require(all(config.get('source_sha256', {}).get(name) == pin
+                        and hashlib.sha256(sources[name]).hexdigest() == pin
+                        for name, pin in ADA_SOURCES.items()), code)
+            auth = read(ADA_AUTH_PATH)
+            require(hashlib.sha256(auth).hexdigest() == ADA_AUTH_SHA256, code)
+            # Exact H028 source is pinned and import-inert, as in passive node.
+            # Only its pure container validator is called, never operate/storage.
+            owner = {'__name__': '_coexistence_ada_owner'}
+            exec(compile(sources['ada_owner.py'], 'pinned_ada_owner.py', 'exec'), owner)
+            owner['validate_container'](c, config, state)
+            fresh = self.docker.inspect(state['container']['id'])
+            owner['validate_container'](fresh, config, state)
+            before, after = c['State'], fresh['State']
+            require(before.get('Running') is True and after.get('Running') is True
+                    and type(before.get('Pid')) is int and before['Pid'] > 0
+                    and after.get('Pid') == before['Pid']
+                    and type(before.get('StartedAt')) is str and bool(before['StartedAt'])
+                    and after.get('StartedAt') == before['StartedAt']
+                    and not any(before.get(k) or after.get(k) for k in ('Paused', 'Restarting', 'Dead'))
+                    and all(c.get(k) == fresh.get(k) for k in ('Id', 'Image', 'Config', 'HostConfig', 'NetworkSettings'))
+                    and sorted(c['Mounts'], key=lambda item: json.dumps(item, sort_keys=True))
+                        == sorted(fresh['Mounts'], key=lambda item: json.dumps(item, sort_keys=True))
+                    and self.binding.read_json('data', ADA_BASE + '/config.json') == config
+                    and self.binding.read_json('data', ADA_BASE + '/state.json') == state
+                    and boot_identity()['boot_id'] == boot
+                    and read(ADA_AUTH_PATH) == auth
+                    and all(read(ADA_BASE + '/source/' + name) == raw for name, raw in sources.items()), code)
+        except Exception:
+            raise LifecycleError(code) from None
 
     def validate_dedicated_image_peer(self, c, deployment):
         """Prove the approved dedicated owner, never adopt an unknown GPU user.
