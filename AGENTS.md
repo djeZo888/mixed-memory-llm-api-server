@@ -1,233 +1,68 @@
-# Active H030 — Codex continuation, 06:53–08:53 UTC September 29
+# Sova — active H030 Codex completion window
 
-The user explicitly authorized this new two-hour continuation with both workers.
-Root coordinates/reviews/publishes; mac-worker1 and mac-worker2 implement, build,
-test and operate VMs in fresh bounded native CLI sessions and isolated copies.
-First fix the captured lifecycle_busy publication contention, then unchanged
-ordinary Codex tool/follow-up, PDF, compaction and remaining specialist/lifecycle
-acceptance in the accepted completion plan. Preserve data and hardware guards.
+The user authorized both workers for September 29, 2026, **06:53–08:53 UTC**.
+Root plans, coordinates, reviews, integrates and publishes. mac-worker1 and
+mac-worker2 implement, build, test and operate the VMs through fresh bounded
+native Codex CLI sessions, isolated checkouts and retained session IDs.
+Do not start another execution window or extend this one automatically.
 
-The latest user instruction supersedes older end-window restoration requirements:
-leave the newest deployed state in place and Sova unavailable for ordinary use
-until Codex fully qualifies. Do not restore an old service baseline just to end
-this window. Keep necessary acceptance services available internally; preserve
-history/files and settle accepted work. No new model/runtime/driver or hardware
-tuning, GPU stress or950K test. No blanket retries or relaxed identity checks.
+## Deadline and preservation
 
-Stop new long jobs08:28, new short live requests08:38, settle workers08:43, publish
-by08:53. No automatic extension. See root task H030-20260929/STATUS.md and the
-accepted PLAN-CODEX-COMPLETION-20260929.md. Publish to feature/glm53-flash / PR10;
-do not merge the incomplete branch into main.
+- No new long jobs after08:28; no new short live submissions after08:38.
+- Settle worker/native work by08:43; root publication/report by08:53.
+- The latest user explicitly says to keep the newest deployed state and leave
+  ordinary Sova unavailable until full Codex integration qualifies. Do not
+  restore an older baseline merely to end the window.
+- Preserve chats, files, historical uncertain owners, quarantines, failed
+  evidence and hardware/ownership guards. Never replay uncertain inference.
+- No model/runtime/driver update, hardware tuning, GPU stress or950K benchmark.
+  No GLM restoration, Ada200K routing expansion, accounts, scaling or installer.
+- Publish reviewed source/results to `feature/glm53-flash` / draft PR10; do not
+  merge the incomplete branch into main.
 
-# Previous checkpoint — H029 closed within its two-hour window
+## Current checkpoint —08:17 UTC
 
-September 29, 2026. Both final native workers exited cleanly by 03:05:51 UTC;
-all assigned implementation/test/VM work is settled. Read
-`reports/h029-codex-checkpoint.md` and `reports/h029-codex-results.json`.
-The authorized 01:25–03:25 UTC window is closed after root publication. Do not
-resume it, open another paid worker task or retry inference automatically.
+Read `reports/h030-codex-checkpoint.md`, `reports/h030-codex-results.json` and
+root `orchestration/tasks/H030-20260929/STATUS.md` for the latest durable evidence.
+The accepted scope is `ai-harness/PLAN-CODEX-COMPLETION-20260929.md`.
 
-Deployed: control slow collection outside the canonical lease with identity
-revalidation before publication; unordered full Docker Mounts comparison;
-exact dedicated Ada peer coexistence; safe admission diagnostics; original safe
-targeted control errors; durable ordinary submission IDs and explicit UI retry.
-The app is source2662bd08, final control core5a2fef84, receiptf5f727f7. Native
-Codex image/policy and H028 status deployment remain pinned. Historical records,
-files, uncertain owners and quarantines are preserved. MiniMax stays default.
+- Control publication entry now has bounded cancellation-aware contention
+  handling. Ordinary Codex coding, same-native follow-up and submission
+  deduplication/conflicts passed live. Retain those results without replay.
+- App source2b40610 deployed08:15:31, appPID118087, statusPID14480 unchanged.
+  It includes cross-engine handoff, the reviewed compaction-history correction,
+  bounded hardware rejection diagnostics and protected specialist qualification.
+  Public chat/approval routes remain503; status/admin stay available. MiniMax
+  remains default. Ordinary Codex image/frontier gates remain closed.
+- Corrected compaction run925ccb74 was accepted08:16:31 on the original coding
+  chat using a new actionID. Await its actual outcome, then recall/cold resume.
+  Previous compaction failure and PDF failure remain retained. Do not repeat
+  unchanged PDF: its third request failed hardware_state and exact historical
+  node fields were not retained. A later55-sample check did not reproduce it.
+- MiMo's08:02 read found HELD after a watchdog lease timeout during image
+  recovery. Source shows image startup holds the global lifecycle lease across
+  load/warm-up; historical holder was not directly sampled. Image error recovery
+  can also enter this path. This is an unresolved production reliability issue.
+- Old MiMo physically stopped and was reconciled SETTLED08:14:17 with both
+  failures preserved. One new normal start is ownedLOADING: launchfbfd4635,
+  container87d2b6f1, PID3442849, supervisor3442364, manifest5c364e58, owner1cc1ee45.
+  No more image lifecycle writes; no retry/recovery loop. One fresh readiness
+  check around08:25–26 may precede scoped specialist acceptance.
+- Image API recovered ready/admitting07:57:50. Three Qwen native identities
+  remain unchanged:480K/480K/200K. New Ada200K is not in480K harness routing.
+- MiMo remains950000/65536/880000 with eight decode threads. Candidate flags
+  stayfalse/false until actual current owned readiness and reviewed two-leaf
+  activation. Capacity allocation is not an occupied950K success.
 
-Both new ordinary Codex tool attempts failed before generation. The first old
-transport subtype is unknown; the second captured count/control_after409
-target_unavailable. Final error-preserving control deployment then exposed a
-separate current admission409 lifecycle_busy; peer Qwen1 passed. The competing
-lock holder was not captured. Read-only diagnostics are not tool acceptance.
+## Coordination
 
-Three Qwens are resident/ready at480K/480K/200K. New Ada is not in harness routing.
-MiMo remains selected but unavailable; image remains stopped. No new pending
-inference or model job. No fan/power/ECC/runtime changes, GPU stress or950K test.
+Worker2 is the sole app/config/deployment writer. Worker1 owns ai-vm recovery,
+provider evidence and specialist acceptance planning. Shared app restart and
+inference scheduling are explicit; native workers must read/acknowledge their
+INBOX separately and match that hash immediately before live submission.
+Use one combined reviewed release; source-only fixtures are not live acceptance.
+Scoped tickets do not authorize unrelated sessions or create global PASS gates.
 
-Next bounded work: identify competing lease users and repair publication
-scheduling to tolerate brief contention while retaining identity checks and
-hardware guard latency. Then qualify the unchanged ordinary tool/follow-up
-case before PDF, compaction, frontier/image and wider lifecycle acceptance.
-No stale readiness acceptance or blanket timeout increase. Source and tests
-are published on feature/glm53-flash / draft PR10; incomplete branch is not
-merge-ready. Root coordinates/reviews/publishes; workers implement/test/operate.
-
-# Previous authorization — H029 first two-hour window
-
-The user authorized `ai-harness/PLAN-CODEX-COMPLETION-20260929.md` with both
-workers; root orchestrates/reviews/publishes only. Window September 29,
-01:25–03:25 UTC; stop new live submissions 03:10 and settle/report by 03:25.
-Fresh bounded native CLI tasks on mac-worker1/mac-worker2 with isolated copies.
-Worker1 owns control-lock/provider/admission repairs and ai-vm; Worker2 owns
-Responses/MCP, submission IDs, app/store/UI and ai-harness deployments. Root
-coordinates shared edits and one reviewed combined release. MiniMax stays default.
-Package 1 is the priority; later packages proceed only after their prerequisites
-pass and within this window. Actual Qwen recovery/short qualification is now
-authorized. MiMo recovery only after its control-lock defect is repaired and
-reviewed. Preserve Ada200K, history/files, fan/power/ECC/runtime policies. No
-new models, capacity/stress benchmarks, full950K test, engine/driver updates,
-guard bypass, blanket retries or automatic extension. Keep first failure evidence.
-Publish to feature/glm53-flash / draft PR10; incomplete branch is not merge-ready.
-
-# Previous checkpoint — H028 complete; dedicated Ada Qwen resident
-
-September 29, 2026, Europe/Ljubljana. Read `reports/h028-overview.md` and its
-deployment/acceptance receipts. Five GPUs now have fresh status metrics with
-current PCI addresses. The added Ada runs `qwen3.8-27b-ada200k` with 200,000
-configured/allocated tokens at authenticated `http://10.156.100.60:30014/v1`.
-Measured 15,625 input / 446 output: 24.202 s total, 4.557 s TTFT, 22.70 output
-tokens/s, at least 9.87% free VRAM, peak 61 C; loaded Gen4 x16 verified.
-Restart/tool continuation and independent LAN auth/readiness checks passed.
-Full 200K occupied input, natural Ada fan threshold and whole-VM boot are untested.
-
-NIC recovery restored private status feeds and CHA_FAN3's healthy idle 40%.
-New Ada joins the existing NVIDIA 70/65 C fan hysteresis. CHA_FAN1 is exclusively
-user/BMC-controlled. Bounded recurring transport recovery includes all seven
-private listeners. Disabled/masked units remain respected; no automatic model
-repair. New Ada starts after the existing potentially long boot job.
-
-Only the new Ada model is resident. Previous Qwens/image were stopped after the
-hardware reboot and remain stopped; selected MiMo is unavailable. Status shows
-actual state. Shared 480K harness routing and all upper integration are explicitly
-deferred. Do not restart old models, repair frontier, replay benchmarks or revive
-expired H028 windows automatically. Both final native worker sessions exited 0
-at 23:54 UTC September 28, with no pending inference. Root reviewed/published;
-workers implemented, tested and operated VMs. Continue on feature/glm53-flash /
-draft PR10; do not merge incomplete Codex/frontier work into main.
-
-# Previous checkpoint — H026 complete; both guests shut down
-
-H026 measured both warm Qwen GPUs at 600/550/500/600 W, plus one discarded
-warm-up per card. All ten requests settled at 21:18:54 UTC on September 28,
-2026. Actual input was about 64K tokens with 512 output; configured capacity
-stayed 480K. At 500 W, complete requests took 6.5%/3.8% longer. Output speed
-changes were within baseline drift. Peak temperatures were 74 C/73 C, with
-no guard fault. See `reports/h026-overview.md` and the linked compact evidence.
-
-Original configured/enforced 600 W limits were restored and read back. No
-persistent 500/550 W policy was installed. The user requested both VMs shut
-down to add another Ada. Worker1's ai-vm poweroff succeeded at 21:20:08 UTC;
-SSH closed at 21:20:11. Worker2's ai-harness poweroff succeeded at 21:24:20;
-SSH/web became unavailable and the journal connection closed at 21:24:29.
-Hypervisor power state was not independently queried. The user should confirm
-VM120/130 show Stopped before powering down the host. Histories/files/configs
-were preserved; no more live work is scheduled.
-
-Worker sessions all exited 0:
-- W1 execution: 01a0e9d7-255c-7153-907a-b9136e22c032, 21:22:59 UTC.
-- W2 review: 01a0e9d7-f14b-74e0-89db-66798f81319b, 21:13:37 UTC.
-- W2 shutdown: 01a0e9e5-5156-7632-bdb5-03eb4fcd0566, 21:25:37 UTC.
-
-W1 commit 046f1e2 was integrated as 972f739: compact benchmark evidence,
-narrow client dispatch/timestamp corrections and three boundary tests. W1
-reported 17 focused tests passed; root reviewed source/results without rerunning
-tests. The pre-dispatch raw-directory mode failure was preserved. No accepted
-request replay or runtime stop was needed. Raw traces remain private on Mac.
-
-The user's next hardware/restart instructions determine subsequent work. Do not
-start GPUs/models, run stress tests, repair services, persist caps, start VMs or
-operate Proxmox automatically. Do not revive older expired task windows. Fan
-policies remain unchanged. MiMo remains selected but absent; GLM was the retained
-test fallback before poweroff. Root plans/reviews/publishes; workers implement,
-test and operate VMs. Publish to feature/glm53-flash / draft PR10; do not merge
-incomplete qualification.
-
-# Previous checkpoint — H025 closed
-
-Execution closed on September 28, 2026, at 20:59:33 UTC. Final worker2 native
-session exited 0; its wrapper and watchdog are absent. Worker1's final source
-session also exited 0. Do not restart the expired campaign or open a new paid
-session simply to wait. Root reviewed and integrated the supplied evidence.
-
-Fan control is deployed: CHA_FAN1 is exclusively BMC/user-controlled from
-PCIe2/PCIe5 temperatures. Existing NVIDIA integrated fans boost to 100% at 70 C
-and return to firmware control at <=65 C for 30 seconds. Sova's CHA_FAN3 service
-uses only the server Blackwell temperature: 80% at >=70 C, 40% after <=65 C for
-30 seconds, holding the prior setting between thresholds. CPU source stays off.
-The natural external hot/cool transitions and idle/lifecycle checks passed.
-
-The corrected five-minute campaign is a SOFTWARE FAIL, not a full four-model
-functional pass. Qwen0/Qwen1 completed 162/124 requests and image completed six.
-An unsent Qwen0 request at the cutoff unnecessarily stopped its runtime; GLM's
-16,268-token request timed out after 900 seconds with no response bytes. All
-accepted work was physically settled; separate owner reconciliation retained
-original failed/UNKNOWN history. No automatic repair or workload retry.
-
-All four native model services were restored and reported ready at 20:58:11 UTC;
-app/status HTTP 200, search retained, external fan healthy at 40%. Readiness does
-not retroactively qualify GLM inference. Retained GLM was test-only: permanent
-frontier selection remains MiMo generation12, and MiMo was not started or repaired.
-Both Qwens remain 480K, retained GLM 1,048,576, image Full HD. Histories/files and
-three old quarantines were preserved. No new benchmark client or bridge remains.
-
-See `reports/h025-overview.md`, `reports/h025-exec05-20260928/SUMMARY.md`, and
-`reports/h025-power-20260928/README.md`. The full300s sampled three-Blackwell sum
-averaged843.74W and peaked1172.43W; peak GPU temperature75C. These are board
-readings, not whole-PSU or worst-case qualification. CPU400W or200-250W figures
-are user planning allowances, not measured CPU power.
-
-The user asked about 500W caps. Read-only limits confirm both workstation cards
-support150-600W and server card300-600W. Current/default/enforced remain600W.
-NO power caps were changed. A proposed500/500/200W Qwen/Qwen/frontier profile
-and adding anotherAda are discussion only; no hardware/cap-performance task ran.
-
-Root coordinates/reviews/publishes; mac-worker1/mac-worker2 perform actual coding,
-builds, tests and VM operations in bounded native CLI sessions with isolated
-copies. Publish to feature/glm53-flash / draft PR10; do not merge incomplete
-Codex/frontier qualification. Next work requires a newly assigned scope/window.
-
-## Previous H024 checkpoint
-
-**Bounded execution closed.** Both final worker sessions exited cleanly by
-18:38:41 UTC. The reviewed app is deployed, but Codex's full live qualification
-is incomplete and MiMo is absent. Read `reports/h024-codex-checkpoint.md` and
-`reports/h024-codex-results.json`. Do not restart the expired window or repeat
-tests automatically; the next work needs a newly assigned bounded task.
-
-The user authorizes a separate two-hour Codex implementation window after H023:
-**September 28, 2026, 16:52–18:52 UTC (18:52–20:52 Ljubljana).** Root plans,
-reviews, integrates and publishes. mac-worker1 and mac-worker2 perform coding,
-builds, tests and VM work through fresh bounded native Codex CLI sessions and
-isolated copies. Retain task/session IDs and compact durable results.
-
-Use `ai-harness/PLAN-CODEX-COMPLETION.md`. Worker1 owns readiness after reboot,
-both Qwen qualifications, provider/gateway/MiMo integration and needed ai-vm
-supervision changes. Worker2 owns Responses/tool/PDF compatibility, context/UI
-and the single combined ai-harness deployment. Agree shared provider interfaces
-before edits. Root reviews combined source before deployment; ordinary assigned
-edits and focused checks are already authorized.
-
-H023 work has settled. At H024's start all four models were resident; MiMo
-later stopped at 18:04:30 UTC after a canonical-lease guard timeout. Do not
-treat its static qualification receipt as current readiness or blindly restart
-it. See `reports/h024-acceptance02-20260928/CONTROL-REFRESH-FUTURE-FIX.md`.
-Keep MiMo Pro-RL configured at
-950,000 configured tokens, both Qwens at 480,000 and the existing Full HD image
-profile, with the same weights, runtimes and GPU assignments. No 950K test,
-thermal retest, new model, hosted fallback, driver/runtime upgrade, GLM
-restoration or Proxmox change. The first MiMo 16K request completed; 950K remains
-configured capacity, not qualified occupied context. Preserve histories, files,
-native IDs, old failures and uncertain-request evidence. Reconcile holds through
-their owners; do not delete historical quarantines or replay work.
-
-App/status were intentionally paused for H023. Worker2 restores them during the
-coordinated release and health checks. MiniMax remains available and default;
-qualify Codex capability by capability. Do not accept arbitrary changed runtime
-identity, hide tool failures, strip unexplained arguments or silently rescue a
-failed acceptance prompt. Record PASS, FAIL and NOT_TESTED honestly.
-
-The user removed CHA_FAN3's CPU-temperature source and physically confirmed that
-cycling stopped. Preserve this working setting. H024 Worker1 made no BMC writes;
-the requested GPU-driven 40% below 70°C / 80% at or above 70°C policy remains
-unimplemented. Existing integrated GPU fan boost and the 85°C guard remain.
-No fan sweep or permanent BMC controller belongs here.
-
-Initial implementation sessions last at most 50 minutes, followed by fresh
-integration/acceptance sessions. Reserve the final 15 minutes for settlement,
-health, reports and publication. Do not extend silently or force a success claim
-at the deadline. Keep healthy models resident. Publish source and results on
-`feature/glm53-flash` / draft PR10; do not merge incomplete qualification.
-
-H023 records are in the orchestration task files outside this checkout and
-`reports/h023-*`. Earlier instructions are archived under `docs/orchestration`.
+Older execution windows are closed. Their full instructions and records remain
+in Git history and reports/h029*, h028*, h026*, h025*, h024*, h021*. Read only
+specific evidence needed for current work; do not revive old campaigns.
