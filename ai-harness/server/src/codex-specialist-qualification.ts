@@ -57,22 +57,57 @@ const digest = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{
 const uuid = (v: unknown): v is string => typeof v === "string" && /^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(v);
 const fileName = (v: unknown): v is string => typeof v === "string" && /^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}\.json$/.test(v);
 const sha = (text: string) => createHash("sha256").update(text).digest("hex");
+/** Explicit H033 review only, not a policy migration mechanism. */
+const reviewedToolPolicy = {
+  tested: "aee39eea7f559a2f1c1b34c2d99818be1bc4e79ea6dba2ca7ec4075c8e34a956",
+  target: "b71c0ab62310df062f9df2eba464ef1c0fffe1a108d07778b50d7f3ebb4653c5",
+  testedSource: "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+  targetSource: "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+} as const;
+type EvidenceReader = (name: string) => { text: string; value: any };
+function referencedEvidence(ref: any, readEvidence: EvidenceReader) {
+  fields(ref, ["file", "sha256"]);
+  if (!fileName(ref.file) || !digest(ref.sha256)) fail();
+  const evidence = readEvidence(ref.file);
+  if (sha(evidence.text) !== ref.sha256) fail();
+  return evidence.value;
+}
+function reviewedFrontierCompatibility(value: any, readEvidence: EvidenceReader, now: number): string {
+  fields(value, ["schema", "kind", "capability", "pins", "sourceRevision", "reviewedAt", "workflows", "review"]);
+  if (value.schema !== 2 || value.kind !== "retained-live-frontier-reviewed-compatibility" || value.capability !== "frontier" ||
+      value.sourceRevision !== reviewedToolPolicy.testedSource || value.pins?.toolPolicySha256 !== reviewedToolPolicy.tested ||
+      CODEX_SPECIALIST_PINS.toolPolicySha256 !== reviewedToolPolicy.target ||
+      !isDeepStrictEqual(value.pins, { ...CODEX_SPECIALIST_PINS, toolPolicySha256: reviewedToolPolicy.tested })) fail();
+  const review = referencedEvidence(value.review, readEvidence);
+  fields(review, ["schema", "kind", "testedSourceRevision", "testedPins", "targetSourceRevision", "targetPins", "workflowsSha256", "reviewedAt", "reviewedBy"]);
+  if (review.schema !== 1 || review.kind !== "reviewed-frontier-tool-policy-compatibility" ||
+      review.testedSourceRevision !== value.sourceRevision || !isDeepStrictEqual(review.testedPins, value.pins) ||
+      review.targetSourceRevision !== reviewedToolPolicy.targetSource ||
+      !isDeepStrictEqual(review.targetPins, CODEX_SPECIALIST_PINS) ||
+      !digest(review.workflowsSha256) || review.workflowsSha256 !== sha(JSON.stringify(value.workflows)) ||
+      typeof review.reviewedBy !== "string" || !review.reviewedBy.trim() || review.reviewedBy.length > 200 ||
+      typeof review.reviewedAt !== "string" || !Number.isFinite(Date.parse(review.reviewedAt)) ||
+      Date.parse(review.reviewedAt) < Date.parse(value.reviewedAt) || Date.parse(review.reviewedAt) > now) fail();
+  return `Reused live MiMo tool continuation and Codex/MiniMax delegation evidence tested on source ${value.sourceRevision} / tool policy ${value.pins.toolPolicySha256}; compatibility reviewed for target tool policy ${review.targetPins.toolPolicySha256}, reviewed implementation basis ${review.targetSourceRevision}, by ${review.reviewedBy} (${value.review.sha256}); no new target live execution; current backend readiness is checked separately; 950000 is configured capacity`;
+}
 /** Pure validation seam. Production supplies only the protected fixed-directory reader. */
-export function validateCodexSpecialists(record: any, readEvidence: (name: string) => { text: string; value: any }, now = Date.now()): CodexSpecialistQualification {
+export function validateCodexSpecialists(record: any, readEvidence: EvidenceReader, now = Date.now()): CodexSpecialistQualification {
   fields(record, ["schema", "kind", "pins", "image", "frontier"]);
   if (record.schema !== 1 || record.kind !== "reviewed-codex-specialists" || !isDeepStrictEqual(record.pins, CODEX_SPECIALIST_PINS)) fail();
   const result = closed();
   for (const capability of ["image", "frontier"] as Specialist[]) {
     const ref = record[capability];
     if (ref === null) continue;
-    fields(ref, ["file", "sha256"]);
-    if (!fileName(ref.file) || !digest(ref.sha256)) fail();
-    const evidence = readEvidence(ref.file), value = evidence.value;
-    if (sha(evidence.text) !== ref.sha256) fail();
-    fields(value, ["schema", "kind", "capability", "pins", "reviewedAt", "workflows"]);
-    if (value.schema !== 1 || value.kind !== "retained-live-specialist-acceptance" || value.capability !== capability ||
-        !isDeepStrictEqual(value.pins, CODEX_SPECIALIST_PINS) || typeof value.reviewedAt !== "string" ||
-        !Number.isFinite(Date.parse(value.reviewedAt)) || Date.parse(value.reviewedAt) > now) fail();
+    const value = referencedEvidence(ref, readEvidence);
+    let compatibilityReason: string | undefined;
+    if (value?.schema === 2 && capability === "frontier") {
+      compatibilityReason = reviewedFrontierCompatibility(value, readEvidence, now);
+    } else {
+      fields(value, ["schema", "kind", "capability", "pins", "reviewedAt", "workflows"]);
+      if (value.schema !== 1 || value.kind !== "retained-live-specialist-acceptance" || value.capability !== capability ||
+          !isDeepStrictEqual(value.pins, CODEX_SPECIALIST_PINS)) fail();
+    }
+    if (typeof value.reviewedAt !== "string" || !Number.isFinite(Date.parse(value.reviewedAt)) || Date.parse(value.reviewedAt) > now) fail();
     fields(value.workflows, workflows[capability]);
     for (const workflow of workflows[capability]) {
       const run = value.workflows[workflow];
@@ -81,8 +116,8 @@ export function validateCodexSpecialists(record: any, readEvidence: (name: strin
           !digest(run.transcriptSha256) || !digest(run.settlementSha256)) fail();
     }
     result[capability === "image" ? "imageJobsQualified" : "frontierResponsesQualified"] = true;
-    result.capabilities[capability] = { supported: true, qualification: "live", reason:
-      capability === "image"
+    result.capabilities[capability] = { supported: true, qualification: "live", reason: compatibilityReason
+      ? `${compatibilityReason}; retained evidence ${ref.sha256}` : capability === "image"
         ? `Reviewed retained live generation, follow-up edit and child evidence ${ref.sha256}; current image readiness is checked separately`
         : `Reviewed retained live MiMo tool continuation and Codex/MiniMax delegation evidence ${ref.sha256}; current backend readiness is checked separately; 950000 is configured capacity` };
   }
