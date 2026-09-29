@@ -1,0 +1,16 @@
+{
+  "base": "5cc21bafa7ecda85bb20e50e45bee86a826ded76",
+  "functionAstUnchanged": {
+    "startup_lease": true,
+    "supervise": true,
+    "latch": true,
+    "setup": true,
+    "timeout_physical": true,
+    "settled_source_absence": true,
+    "assert_launch_admission": true,
+    "recovery_for_start": true,
+    "reconcile_new_boot": true
+  },
+  "startupLeaseSeconds": 2,
+  "activeGuardBudgetSeconds": 5
+}
