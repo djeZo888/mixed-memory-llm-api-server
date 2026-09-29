@@ -1,3 +1,10 @@
+# H035 active — renewed two-hour user instruction
+
+The user renewed implementation for September29 19:45:31–21:45:31 UTC.
+Read reports/h035-execution-plan.md. This supersedes the closed-window boundary
+below within the new scope. Root coordinates/reviews/publishes; both workers do
+implementation and tests via fresh bounded native sessions. No automatic extension.
+
 # Sova — H034 closed checkpoint
 
 Read reports/h034-codex-checkpoint.md, reports/h034-codex-results.json and
