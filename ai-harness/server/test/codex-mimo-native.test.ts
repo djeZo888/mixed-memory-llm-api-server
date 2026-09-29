@@ -180,7 +180,7 @@ tool_timeout_sec = 10
     assert.ok(calls.every((call: any) => call.namespace === 'mcp__image' && call.name === 'image_capabilities' && call.arguments === '{"query":"capabilities"}'));
     assert.ok(results.every((result: any) => JSON.stringify(result.output).includes('image_capabilities accepted explicit capabilities query')));
     const assistant = translations[1].body.messages.find((message: any) => message.tool_calls?.[0]?.id === 'mimo_native_call_0');
-    assert.equal(assistant.reasoning_content, reasoning); assert.equal(assistant.tool_calls[0].function.arguments, '{}');
+    assert.equal(assistant.reasoning_content, reasoning); assert.equal(assistant.tool_calls[0].function.arguments, '{"query":"capabilities"}');
     assert.equal(assistant.tool_calls[0].function.name, 'sova_ns_mcp__image_image_capabilities');
     const toolResult = translations[1].body.messages.find((message: any) => message.tool_call_id === 'mimo_native_call_0');
     assert.ok(toolResult); assert.match(toolResult.content, /image_capabilities accepted explicit capabilities query/);
