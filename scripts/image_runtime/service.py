@@ -94,6 +94,7 @@ SAFE_FAILURE_CODES = frozenset({
     'image_recovery_changed', 'image_systemd_owner_required', 'image_native_generation_changed',
     'image_native_action_uncertain', 'image_boot_changed', 'image_config_changed',
     'image_native_absence_unproven',
+    'image_reconciliation_refused', 'image_reconciliation_consumed',
     'ada_compute_process_already_present',
     'ada_current_margin_below_5_percent',
     'ada_identity_missing',
@@ -1040,6 +1041,189 @@ class Runtime:
             raise
 
 
+H032_CASE = 'h032-image-recover01'
+H032_ROOT = 'h032-image-reconcile/'
+H032_OLD_SERVICE = '26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556'
+H032_ACTIVATION_DEADLINE = 1790685900  # H032 start cutoff: 2026-09-29 12:45 UTC.
+
+
+def _reconciliation_raw(runtime, name, *, limit=4 * 1024 * 1024):
+    """Bounded protected bytes, not a user-selected filesystem boundary."""
+    with runtime.anchor() as anchored, anchored.open(name) as stream:
+        require(stream.stat().st_size <= limit, 'image_reconciliation_refused')
+        chunks, size = [], 0
+        while True:
+            chunk = stream.read(min(storage_io.MAX_CHUNK, limit + 1 - size))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            size += len(chunk)
+            require(size <= limit, 'image_reconciliation_refused')
+        return b''.join(chunks)
+
+
+def _reconciliation_digest(raw):
+    return hashlib.sha256(raw).hexdigest()
+
+
+def _h032_handoff(runtime, prior):
+    """Only this archived abandoned pair may enter the ordinary API recovery.
+
+    Called with both image descriptors held, outside the common lease. The
+    cleanup owner leaves an active reservation; the API's normal no-argument
+    helper consumes the exact handoff without completing or releasing it first.
+    """
+    if not prior or prior.get('status') == 'complete' or 'reconciliation' not in prior:
+        return None
+    def exact(condition):
+        require(condition, 'image_reconciliation_refused')
+    with runtime.anchor() as anchored:
+        require(anchored.stat('h032-image-handoff-consumed.json', missing_ok=True) is None,
+                'image_reconciliation_consumed')
+    raw = _reconciliation_raw(runtime, 'h032-image-handoff.json')
+    handoff = json.loads(raw)
+    exact(set(handoff) == {'schema_version', 'case', 'boot', 'gpu_uuid', 'raw_sha256',
+                          'archive_sha256', 'plan_sha256', 'settlement_sha256',
+                          'cleanup_consumption_sha256', 'native'})
+    exact(handoff['schema_version'] == 1 and handoff['case'] == H032_CASE
+          and handoff['boot'] == runtime.boot and handoff['gpu_uuid'] == GPU_UUID)
+    pins = handoff['raw_sha256']
+    exact(isinstance(pins, dict) and set(pins) ==
+          {'state.json', 'operation.json', 'recovery.json', 'config.json', 'source/service.py'})
+    exact(all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) for v in pins.values()))
+    exact(prior.get('status') == 'active' and prior.get('phase') == 'settled_awaiting_reviewed_activation'
+          and prior.get('boot') == runtime.boot and prior.get('gpu_uuid') == GPU_UUID
+          and prior.get('config_sha256') == runtime.config_digest()
+          and prior.get('reconciliation') == {'case': H032_CASE,
+              'archive_sha256': handoff['archive_sha256'], 'plan_sha256': handoff['plan_sha256']})
+    for name, digest in pins.items():
+        exact(_reconciliation_digest(_reconciliation_raw(runtime, name)) == digest)
+    evidence = {}
+    for name, field in (('plan.json', 'plan_sha256'), ('archive-manifest.json', 'archive_sha256'),
+                        ('settlement.json', 'settlement_sha256'),
+                        ('consumed.json', 'cleanup_consumption_sha256')):
+        evidence_raw = _reconciliation_raw(runtime, H032_ROOT + name)
+        exact(_reconciliation_digest(evidence_raw) == handoff[field])
+        evidence[name] = json.loads(evidence_raw)
+    plan, archive = evidence['plan.json'], evidence['archive-manifest.json']
+    native = handoff['native']
+    exact(isinstance(native, dict) and set(native) == {'id', 'pid', 'cgroup'})
+    exact(isinstance(native['id'], str) and re.fullmatch('[0-9a-f]{64}', native['id'])
+          and type(native['pid']) is int and native['pid'] > 0
+          and native['cgroup'] == '/system.slice/docker-' + native['id'] + '.scope')
+    exact(plan.get('case') == H032_CASE and plan.get('boot') == runtime.boot
+          and plan.get('gpu_uuid') == GPU_UUID and plan.get('native') == native
+          and plan.get('activation_deadline_unix') == H032_ACTIVATION_DEADLINE
+          and time.time() < H032_ACTIVATION_DEADLINE
+          and plan.get('old_service_sha256') == H032_OLD_SERVICE
+          and plan.get('new_service_sha256') == pins['source/service.py']
+          and plan.get('new_config_sha256') == pins['config.json'])
+    files = archive.get('files')
+    original_names = {'config.json', 'service.py', 'state.json', 'operation.json', 'recovery.json'}
+    exact(archive.get('schema_version') == 1 and archive.get('case') == H032_CASE
+          and archive.get('boot') == runtime.boot and isinstance(files, dict)
+          and original_names <= set(files) and len(files) <= 128
+          and plan.get('old_raw_sha256') == {name: files[name] for name in original_names})
+    for name, digest in files.items():
+        exact(isinstance(name, str) and name and not name.startswith('/')
+              and all(part not in ('', '.', '..') for part in name.split('/'))
+              and isinstance(digest, str) and re.fullmatch('[0-9a-f]{64}', digest))
+        exact(_reconciliation_digest(_reconciliation_raw(runtime, H032_ROOT + 'archive/' + name)) == digest)
+    exact(files['service.py'] == H032_OLD_SERVICE
+          and files['config.json'] == plan.get('old_config_sha256'))
+    old_config = json.loads(_reconciliation_raw(runtime, H032_ROOT + 'archive/config.json'))
+    expected_config = copy.deepcopy(old_config)
+    exact(expected_config['source_sha256']['service.py'] == H032_OLD_SERVICE)
+    expected_config['source_sha256']['service.py'] = pins['source/service.py']
+    exact(runtime.config == expected_config
+          and runtime.config['source_sha256']['service.py'] == pins['source/service.py'])
+    old_state, old_operation, old_recovery = (
+        json.loads(_reconciliation_raw(runtime, H032_ROOT + 'archive/' + name))
+        for name in ('state.json', 'operation.json', 'recovery.json'))
+    old_digest = _reconciliation_digest(json.dumps(old_config, sort_keys=True, separators=(',', ':')).encode())
+    old_run = '6e8aa276397a451cb5a480b2c0aa90ea'
+    exact(old_operation.get('token') == '868d9b48784b44f4b702b52c05655a65'
+          and old_recovery.get('token') == old_operation.get('recovery') == '83be8882e6374f3fbc3918de6bc5107c'
+          and old_operation.get('pid') == 1656742 and old_recovery.get('pid') == 1655508
+          and old_operation.get('status') == old_recovery.get('status') == 'active'
+          and old_operation.get('action') == 'start' and old_recovery.get('phase') == 'settle'
+          and old_operation.get('boot') == old_recovery.get('boot') == runtime.boot
+          and old_operation.get('gpu_uuid') == old_recovery.get('gpu_uuid') == GPU_UUID
+          and old_operation.get('config_sha256') == old_recovery.get('config_sha256') == old_digest
+          and old_operation.get('invocation_id') == old_recovery.get('child_start') == old_state.get('run_id') == old_run
+          and old_state.get('container', {}).get('id') == native['id']
+          and old_state.get('native_actions') == {'create': 'received', 'start': 'received', 'warm': 'dispatched'})
+    for name in ('settlement.json', 'consumed.json'):
+        receipt = evidence[name]
+        exact(receipt.get('schema_version') == 1 and receipt.get('case') == H032_CASE
+              and receipt.get('boot') == runtime.boot
+              and receipt.get('archive_sha256') == handoff['archive_sha256']
+              and receipt.get('plan_sha256') == handoff['plan_sha256'])
+    settlement = evidence['settlement.json']
+    exact(settlement.get('physically_absent') is True and settlement.get('native') == native
+          and settlement.get('gpu_uuid') == GPU_UUID)
+    state, operation = runtime.state(), runtime.record('operation.json')
+    exact(state.get('phase') == 'stopped' and state.get('container') is None
+          and state.get('warm') is False and not state.get('native_actions')
+          and not state.get('native_generation') and operation
+          and state.get('run_id') == old_run and operation.get('action') == 'stop'
+          and operation.get('recovery') == prior.get('token')
+          and operation.get('status') in ('complete', 'failed')
+          and type(prior.get('pid')) is int and prior['pid'] > 0)
+    # Successful Docker inventory is mandatory. Missing PID/cgroup is proved by
+    # ENOENT only; unreadable/reused identities never count as physical absence.
+    runtime.prove_absent(native['id'])
+    for path in (Path('/proc', str(native['pid'])), Path('/sys/fs/cgroup' + native['cgroup']),
+                 *(Path('/proc', str(pid)) for pid in (prior['pid'], 1656742, 1655508))):
+        try:
+            path.stat()
+        except FileNotFoundError:
+            pass
+        else:
+            exact(False)
+    runtime.require_ada_idle()
+    runtime.check_ports()
+    unit = dict(line.split('=', 1) for line in run(
+        ['systemctl', 'show', UNIT, '-p',
+         'MainPID,ControlPID,ActiveState,ControlGroup,InvocationID,Job'], timeout=2).stdout.splitlines())
+    exact(unit.get('MainPID') == unit.get('ControlPID') == '0'
+          and unit.get('ActiveState') in ('inactive', 'failed')
+          and unit.get('ControlGroup') == unit.get('Job') == ''
+          and unit.get('InvocationID') == old_run)
+    return {'raw': raw, 'handoff': handoff, 'prior': copy.deepcopy(prior), 'unit': unit}
+
+
+def _consume_h032_handoff(runtime, proof, record, recovery_file, operation_file):
+    """Short publication interval; all slow native proof ran with both locks."""
+    recovery_file.check()
+    operation_file.check()
+    require(time.time() < H032_ACTIVATION_DEADLINE, 'image_reconciliation_refused')
+    require(runtime.record('recovery.json') == proof['prior'], 'image_reconciliation_refused')
+    require(_reconciliation_raw(runtime, 'h032-image-handoff.json') == proof['raw'],
+            'image_reconciliation_refused')
+    handoff = proof['handoff']
+    for name, digest in handoff['raw_sha256'].items():
+        require(_reconciliation_digest(_reconciliation_raw(runtime, name)) == digest,
+                'image_reconciliation_refused')
+    for name, field in (('plan.json', 'plan_sha256'), ('archive-manifest.json', 'archive_sha256'),
+                        ('settlement.json', 'settlement_sha256'),
+                        ('consumed.json', 'cleanup_consumption_sha256')):
+        require(_reconciliation_digest(_reconciliation_raw(runtime, H032_ROOT + name)) == handoff[field],
+                'image_reconciliation_refused')
+    receipt = {'schema_version': 1, 'case': H032_CASE, 'boot': runtime.boot,
+               'handoff_sha256': _reconciliation_digest(proof['raw']),
+               'archive_sha256': handoff['archive_sha256'], 'plan_sha256': handoff['plan_sha256'],
+               'recovery_token': record['token'], 'consumed_utc': now()}
+    encoded = (json.dumps(receipt, sort_keys=True, indent=2, allow_nan=False) + '\n').encode()
+    with runtime.anchor() as anchored:
+        with anchored.open('h032-image-handoff-consumed.json', os.O_WRONLY | os.O_CREAT | os.O_EXCL) as stream:
+            stream.write(encoded)
+            stream.fsync()
+            os.fsync(stream.parent)
+        require(_reconciliation_raw(runtime, 'h032-image-handoff-consumed.json') == encoded,
+                'image_reconciliation_refused')
+
+
 def recover():
     global OPERATION_DEADLINE
     started = time.monotonic()
@@ -1055,18 +1239,29 @@ def recover():
             attempt_phase('recover_admission')
             unit = dict(line.split('=', 1) for line in run(
                 ['systemctl', 'show', UNIT, '-p', 'InvocationID'], timeout=2).stdout.splitlines())
-            with runtime.singleton('operation.lock'), runtime.critical(hardware=True):
+            with runtime.singleton('operation.lock') as operation_file:
                 previous = runtime.record('operation.json')
-                require(not previous or previous.get('status') in ('complete', 'failed'),
-                        'image_operation_unresolved')
                 prior = runtime.record('recovery.json')
-                require(not prior or prior.get('status') == 'complete', 'image_operation_unresolved')
-                record = {'token': uuid.uuid4().hex, 'boot': runtime.boot, 'pid': os.getpid(),
-                          'status': 'active', 'phase': 'reset', 'process': runtime.process_stamp(os.getpid()),
-                          'config_sha256': runtime.config_digest(), 'gpu_uuid': GPU_UUID,
-                          'prior_invocation': unit.get('InvocationID'), 'child_start': None}
-                runtime.write_record('recovery.json', record)
-                runtime.recovery_record = record
+                handoff = _h032_handoff(runtime, prior)
+                if handoff is not None:
+                    unit = handoff['unit']
+                with runtime.critical(hardware=True):
+                    recovery_file.check()
+                    operation_file.check()
+                    require(runtime.record('operation.json') == previous
+                            and runtime.record('recovery.json') == prior, 'image_recovery_changed')
+                    require(not previous or previous.get('status') in ('complete', 'failed'),
+                            'image_operation_unresolved')
+                    require(handoff is not None or not prior or prior.get('status') == 'complete',
+                            'image_operation_unresolved')
+                    record = {'token': uuid.uuid4().hex, 'boot': runtime.boot, 'pid': os.getpid(),
+                              'status': 'active', 'phase': 'reset', 'process': runtime.process_stamp(os.getpid()),
+                              'config_sha256': runtime.config_digest(), 'gpu_uuid': GPU_UUID,
+                              'prior_invocation': unit.get('InvocationID'), 'child_start': None}
+                    if handoff is not None:
+                        _consume_h032_handoff(runtime, handoff, record, recovery_file, operation_file)
+                    runtime.write_record('recovery.json', record)
+                    runtime.recovery_record = record
             def refresh():
                 recovery_file.check()
                 current = runtime.record('recovery.json')
