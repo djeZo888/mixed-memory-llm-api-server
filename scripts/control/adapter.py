@@ -202,8 +202,11 @@ class ManagerSession:
                 # Fixtures supply their own native inventory; production uses
                 # Docker.run capped by the same one-second publication deadline.
                 native = [{key: item.get(key) for key in
-                           ('Id', 'Name', 'Image', 'Config', 'HostConfig', 'Mounts', 'NetworkSettings')}
-                          | {'runtime': {key: item.get('State', {}).get(key) for key in
+                           ('Id', 'Name', 'Image', 'Config', 'HostConfig', 'NetworkSettings')}
+                          # Docker emits Mounts in map iteration order; compare
+                          # the complete unordered entries, not their wire order.
+                          | {'mounts': sorted(item.get('Mounts', []), key=digest),
+                             'runtime': {key: item.get('State', {}).get(key) for key in
                               ('Running', 'Restarting', 'Paused', 'StartedAt', 'FinishedAt', 'Pid')}}
                           for item in manager.docker.inventory()]
                 system = manager.lease_system_root

@@ -155,6 +155,17 @@ class ProductionAnchorTests(unittest.TestCase):
         profile.write_bytes(content)
         self.assertNotEqual(self.anchor(), before)
 
+    def test_native_mount_order_is_irrelevant_but_mount_contents_are_not(self):
+        mounts = [{'Source': '/one', 'Destination': '/a', 'RW': False},
+                  {'Source': '/two', 'Destination': '/b', 'RW': False}]
+        item = {'Id': 'stable', 'Mounts': mounts, 'State': {'Running': True, 'StartedAt': 'same'}}
+        with patch.object(self.session.manager.docker, 'inventory', return_value=[item]):
+            before = self.anchor()
+            mounts.reverse()
+            self.assertEqual(self.anchor(), before)
+            mounts[0]['RW'] = True
+            self.assertNotEqual(self.anchor(), before)
+
     def test_native_runtime_changes_and_unknown_inventory_are_rejected(self):
         before = self.anchor()
         with patch.object(self.session.manager.docker, 'inventory', return_value=[{'Id': 'new', 'State': {'Running': True, 'StartedAt': 'new'}}]):
