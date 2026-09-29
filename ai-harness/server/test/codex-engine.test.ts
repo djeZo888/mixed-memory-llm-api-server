@@ -628,6 +628,80 @@ test("finished spawn tool with pending child cannot turn native cleanup into par
   );
 });
 
+// H034 retained failed/not_found outcome, with the inProgress start reconstructed
+// from pinned close_agent.rs. Parent identity is remapped to this stdio fixture.
+const historicalClose = {
+  tool: "closeAgent", status: "inProgress", senderThreadId: "thread-1",
+  receiverThreadIds: ["01a0ede6-0fad-7191-9e87-bcad69beb761"],
+  prompt: null, model: null, reasoningEffort: null, agentsStates: {},
+};
+const historicalCloseId = "call_c6b86a86548d4b99953770e9";
+const historicalCloseFailed = {
+  ...historicalClose, status: "failed",
+  agentsStates: { [historicalClose.receiverThreadIds[0]]: { status: "notFound", message: null } },
+};
+
+test("historical close failure allows new owned work after cold resume without inventing a child", async () => {
+  const f = fixture({ nativeId: "thread-1", delegation: true });
+  const pending = f.engine.prompt("historical close fixture");
+  await tick();
+  f.item(historicalCloseId, "collabAgentToolCall", historicalClose, "started");
+  f.item(historicalCloseId, "collabAgentToolCall", historicalCloseFailed);
+  const spawn = { tool: "spawnAgent", status: "inProgress", senderThreadId: "thread-1",
+    receiverThreadIds: [], agentsStates: {}, model: null };
+  f.item("fresh-spawn", "collabAgentToolCall", spawn, "started");
+  f.item("fresh-spawn", "collabAgentToolCall", { ...spawn, status: "completed", model: "qwen3.8-27b",
+    receiverThreadIds: ["fresh-child"], agentsStates: { "fresh-child": { status: "completed", message: null } } });
+  f.complete();
+  assert.equal(await pending, "completed");
+  assert.ok(f.requests.some(r => r.method === "thread/resume"));
+  const children = f.updates.filter(u => u.type === "progress" && u.kind === "subagent");
+  assert.ok(children.length > 0);
+  assert.ok(children.every(u => u.subagentId === "fresh-child"));
+  assert.equal(children.at(-1)?.subagents?.completed, 1);
+  assert.equal(children.at(-1)?.subagents?.cancelled, 0);
+});
+
+for (const outcome of ["missing", "success", "changed-tool", "changed-receiver", "changed-call"])
+test(`historical close ${outcome} cannot become parent success`, async () => {
+  const f = fixture({ delegation: true });
+  const pending = f.engine.prompt("invalid historical close fixture");
+  const rejected = assert.rejects(pending, /incomplete|unowned native close|before start/);
+  await tick();
+  f.item(historicalCloseId, "collabAgentToolCall", historicalClose, "started");
+  if (outcome !== "missing") {
+    const completion = { ...historicalCloseFailed,
+      ...(outcome === "success" ? { status: "completed" } : {}),
+      ...(outcome === "changed-tool" ? { tool: "spawnAgent", model: "qwen3.8-27b" } : {}),
+      ...(outcome === "changed-receiver" ? { receiverThreadIds: ["different"] } : {}),
+    };
+    f.item(outcome === "changed-call" ? "other-call" : historicalCloseId, "collabAgentToolCall", completion);
+  }
+  f.complete();
+  await rejected;
+  await f.engine.close();
+  assert.equal(f.updates.some(u => u.type === "progress" && u.kind === "subagent"), false);
+  assert.ok(f.calls.indexOf("terminate") < f.calls.indexOf("gateway-proof"));
+});
+
+test("pending historical close cancellation still waits for gateway drain after native cleanup", async () => {
+  const drain = deferred<boolean>();
+  const f = fixture({ delegation: true, gateway: () => drain.promise });
+  const pending = f.engine.prompt("pending historical close cancellation fixture");
+  await tick();
+  f.item(historicalCloseId, "collabAgentToolCall", historicalClose, "started");
+  const cancelled = f.engine.cancel();
+  f.complete("interrupted");
+  await tick();
+  assert.equal(f.states.at(-1)!.ownership, "uncertain");
+  assert.ok(f.calls.indexOf("terminate") < f.calls.indexOf("gateway-proof"));
+  assert.equal(f.updates.some(u => u.type === "progress" && u.kind === "subagent"), false);
+  drain.resolve(true);
+  await cancelled;
+  assert.equal(await pending, "cancelled");
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+});
+
 test("MiMo child lifecycle requires the explicit trusted runtime model policy", async () => {
   for (const qualified of [false, true]) {
     const f = fixture({ delegation: true,

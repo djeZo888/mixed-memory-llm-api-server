@@ -28,6 +28,8 @@ const id = (v: unknown): v is string =>
 export class CodexChildren {
   private children = new Map<string, string>();
   private models = new Map<string, string>();
+  // Call bookkeeping only: an unowned close target never becomes a child.
+  private unownedCloses = new Map<string, { sender: string; receiver: string }>();
   private turns = new Map<
     string,
     {
@@ -134,6 +136,39 @@ export class CodexChildren {
       !this.qualifiedModels.includes(String(value.model))
     )
       throw new CodexProtocolError("Spawned child model is unqualified");
+    const pendingClose = typeof value.id === "string" ? this.unownedCloses.get(value.id) : undefined;
+    if (pendingClose || (value.tool === "closeAgent" && value.receiverThreadIds.some(thread => !this.owns(thread)))) {
+      const receiver = value.receiverThreadIds[0];
+      // Pinned native close items have no prompt/model/error payload. The item
+      // ID is the call ID; only its exact failed/notFound completion is benign.
+      if (value.type !== "collabAgentToolCall" || !id(value.id) ||
+          value.tool !== "closeAgent" || value.receiverThreadIds.length !== 1 ||
+          !id(receiver) || receiver === this.parent() || this.owns(receiver) ||
+          value.prompt !== null || value.model !== null || value.reasoningEffort !== null ||
+          Object.keys(value).some(key => ![
+            "type", "id", "tool", "status", "senderThreadId", "receiverThreadIds",
+            "prompt", "model", "reasoningEffort", "agentsStates",
+          ].includes(key)) ||
+          (pendingClose && (pendingClose.receiver !== receiver || pendingClose.sender !== value.senderThreadId)))
+        throw new CodexProtocolError("Invalid unowned native close binding");
+      const states = Object.entries(value.agentsStates);
+      if (!complete) {
+        if (value.status !== "inProgress" || states.length !== 0)
+          throw new CodexProtocolError("Invalid unowned native close start");
+        if (!pendingClose && this.unownedCloses.size >= this.max)
+          throw new CodexProtocolError("Unowned native close bound exceeded");
+        this.unownedCloses.set(value.id, { sender: String(value.senderThreadId), receiver });
+      } else {
+        const state = states[0]?.[1];
+        if (!pendingClose || value.status !== "failed" || states.length !== 1 ||
+            states[0][0] !== receiver || !isRecord(state) ||
+            state.status !== "notFound" || state.message !== null ||
+            Object.keys(state).some(key => key !== "status" && key !== "message"))
+          throw new CodexProtocolError("Unconfirmed unowned native close outcome");
+        this.unownedCloses.delete(value.id);
+      }
+      return;
+    }
     for (const thread of value.receiverThreadIds) {
       if (!id(thread)) throw new CodexProtocolError("Invalid child identity");
       if (value.tool === "spawnAgent" && typeof value.model === "string" && value.model)
@@ -280,11 +315,12 @@ export class CodexChildren {
     return !terminal.has(status) || this.turns.get(thread)?.terminal === false;
   }
   get unfinished() {
-    return [...this.children].some(([thread, status]) =>
+    return this.unownedCloses.size > 0 || [...this.children].some(([thread, status]) =>
       this.isActive(thread, status),
     );
   }
   interruptedAfterCleanup() {
+    this.unownedCloses.clear();
     for (const [thread, status] of this.children)
       if (this.isActive(thread, status)) {
         const turn = this.turns.get(thread);
