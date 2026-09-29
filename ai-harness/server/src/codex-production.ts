@@ -2,7 +2,7 @@
 import { request } from "node:http";
 import { readFile, lstat } from "node:fs/promises";
 import { QWEN_CODEX_PIN, type QwenCountQualification } from "./codex-qwen.js";
-import { QwenAdmissionError, admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionDiagnostic, type QwenAdmissionObserver, type QwenAdmissionReason } from "./codex-admission.js";
+import { QwenAdmissionError, admissionContext, admissionReason, admissionTransport, emitAdmission, projectQwenTransport, type QwenAdmissionContext, type QwenAdmissionDiagnostic, type QwenAdmissionObserver, type QwenAdmissionReason, type QwenTransportDiagnostic } from "./codex-admission.js";
 
 export const QWEN_SOURCE_PIN = Object.freeze({
   image: "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
@@ -80,16 +80,24 @@ export async function boundedControlGet(url: string, key: string, signal?: Abort
   // Control rejects browser Sec-Fetch headers. Use the existing host HTTP style,
   // no browser fetch metadata, redirects, pooled connection or ambient proxy.
   return new Promise((resolve, reject) => {
-    const req = request(url, { method: "GET", agent: false, headers: { authorization: `Bearer ${key}`, accept: "application/json" }, signal: signal ? AbortSignal.any([signal, AbortSignal.timeout(30000)]) : AbortSignal.timeout(30000) }, response => {
+    const timeout = AbortSignal.timeout(30000);
+    const unavailable = (kind: QwenTransportDiagnostic["kind"], httpStatus?: number, controlCode?: string) =>
+      new QwenAdmissionError("transport", projectQwenTransport({ kind, httpStatus, controlCode }));
+    const interrupted = (fallback: "connection" | "response_stream") => signal?.aborted ? "cancelled" : timeout.aborted ? "timeout" : fallback;
+    const req = request(url, { method: "GET", agent: false, headers: { authorization: `Bearer ${key}`, accept: "application/json" }, signal: signal ? AbortSignal.any([signal, timeout]) : timeout }, response => {
       const chunks: Buffer[] = []; let size = 0;
-      response.on("data", (chunk: Buffer) => { size += chunk.length; if (size > 512 * 1024) { response.destroy(); reject(Error("Bounded Qwen identity response exceeded")); } else chunks.push(chunk); });
-      response.on("error", () => reject(Error("Qwen identity transport unavailable")));
+      response.on("data", (chunk: Buffer) => { size += chunk.length; if (size > 512 * 1024) { reject(unavailable("response_limit", response.statusCode)); response.destroy(); } else chunks.push(chunk); });
+      response.on("error", () => reject(unavailable(interrupted("response_stream"), response.statusCode)));
       response.on("end", () => {
-        if (response.statusCode !== 200) { reject(Error("Qwen identity HTTP unavailable")); return; }
-        try { resolve(JSON.parse(Buffer.concat(chunks).toString("utf8"))); } catch { reject(Error("Invalid Qwen identity response")); }
+        let value: any;
+        try { value = JSON.parse(Buffer.concat(chunks).toString("utf8")); } catch {
+          reject(unavailable(response.statusCode === 200 ? "invalid_json" : "http_status", response.statusCode)); return;
+        }
+        if (response.statusCode !== 200) { reject(unavailable("http_status", response.statusCode, value?.error?.code)); return; }
+        resolve(value);
       });
     });
-    req.on("error", () => reject(Error("Qwen identity transport unavailable"))); req.end();
+    req.on("error", () => reject(unavailable(interrupted("connection")))); req.end();
   });
 }
 export function createProductionQwenVerifier(receiptValue: unknown, credentials: { controlKey: string; inferenceKey: string },
@@ -106,7 +114,7 @@ export function createProductionQwenVerifier(receiptValue: unknown, credentials:
         emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "pass", reason: "ok", elapsedMs: performance.now() - start });
         return result;
       } catch (error) {
-        emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "reject", reason: admissionReason(error), elapsedMs: performance.now() - start });
+        emitAdmission(observer, { schema: 1, ...context, lane: alias, step, outcome: "reject", reason: admissionReason(error), transport: admissionTransport(error), elapsedMs: performance.now() - start });
         throw error;
       }
     };

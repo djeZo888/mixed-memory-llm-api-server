@@ -1,0 +1,31 @@
+{
+  "fixture": "PASS",
+  "scope": "local_synthetic_only",
+  "historicalCauseProven": false,
+  "cases": [
+    {
+      "injectedRefreshCode": "stale_state",
+      "injectedRefreshStatus": 409,
+      "wholeStatus": 200,
+      "wholeFailureCode": "stale_state",
+      "laneStatus": 409,
+      "laneErrorCode": "target_unavailable"
+    },
+    {
+      "injectedRefreshCode": "lifecycle_busy",
+      "injectedRefreshStatus": 409,
+      "wholeStatus": 200,
+      "wholeFailureCode": "lifecycle_busy",
+      "laneStatus": 409,
+      "laneErrorCode": "target_unavailable"
+    },
+    {
+      "injectedRefreshCode": "deadline_exceeded",
+      "injectedRefreshStatus": 503,
+      "wholeStatus": 200,
+      "wholeFailureCode": "deadline_exceeded",
+      "laneStatus": 409,
+      "laneErrorCode": "target_unavailable"
+    }
+  ]
+}
