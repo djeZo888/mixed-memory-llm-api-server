@@ -1,5 +1,8 @@
 # H029 ADMISSION02 — diagnostics, historical cause unresolved
 
+This report records TypeScript commit `7f433726b12987cea96ee290d07b6f11040d1fe2`.
+The later separate source-only control correction is in `CONTROL-MASKING-FIX.md`.
+
 Exact base `6d11dc255e003337586306a0ef6a7da5e91853ec`. Native implementation
 worker on mac-worker1; coordinator owns review/publication, Worker2 owns the
 combined harness deployment. No GitHub push or deployment performed here.

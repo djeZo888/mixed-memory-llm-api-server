@@ -469,6 +469,12 @@ class Application:
                     raise exc
                 snapshot, fingerprint = self._recovery_observation(Deadline.after(self.read_seconds))
             except Exception:
+                if target is not None:
+                    # A failed observation cannot establish slot availability.
+                    # Preserve its safe cause instead of scoping a fabricated
+                    # single-owner fallback into target_unavailable.
+                    status = exc.status if isinstance(exc, ControlError) else 503
+                    raise ControlError(safe_error(exc, "observation_unavailable"), status) from None
                 snapshot, fingerprint = observation({"storage_available": False if isinstance(exc, StorageUnavailable) else None})
             snapshot["failure_code"] = safe_error(exc, "observation_unavailable")
             records = [] if catalog else None
