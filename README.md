@@ -34,18 +34,17 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
-The [H033 checkpoint](reports/h033-codex-checkpoint.md) records successful MiMo
-shell/tool continuation and child/parent completion through both engines. Codex
-frontier access is enabled. The catalog mount, final-answer association,
-download rendering and frontier status summary have reviewed corrections.
-Codex image qualification remains closed: one child produced a valid Full HD
-image, but the original regression and follow-up edit failed bounded acceptance.
-The [remaining work](reports/h033-next-execution.md) targets those tool failures
-and the outstanding reliability checks. Three Qwen configurations remain
-480K, 480K and 200K; native image recognition is unsupported in Codex.
-The [H032 checkpoint](reports/h032-codex-checkpoint.md) preserves earlier recovery
-and failed cases. Complete Codex integration remains unfinished; MiniMax remains
-the default and public maintenance stays enabled.
+The [H034 checkpoint](reports/h034-codex-checkpoint.md) records repaired Qwen
+image-tool arguments, current instructions for resumed sessions and fresh
+children, and successful original/child image generation. An approved edit
+produced the correct image, but its final reply retained stale approval status;
+full Codex image qualification remains closed. Codex frontier access is enabled
+through reviewed reuse of the actual H033 MiMo delegation evidence.
+The [remaining work](reports/h034-next-execution.md) targets that approval/result
+handoff, operation-specific edit dimensions, PDF reporting and release checks.
+Three Qwen configurations remain 480K, 480K and 200K; native image recognition
+is unsupported in Codex. Complete integration remains unfinished, MiniMax stays
+the default, and public chat remains in maintenance.
 The [H025 fan-control and load-test report](reports/h025-overview.md) records the
 deployed GPU fan policies, improved sampled temperatures, measured power and the
 remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
@@ -139,28 +138,26 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-**September 29 H032 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
-profile at 950,000 configured tokens. Its native process was recovered and
-readiness confirmed, alongside the image service. Actual Codex and MiniMax
-delegations then exposed a token-count compatibility failure; service readiness
-does not establish complete harness qualification. See
-[H032 evidence](reports/h032-codex-checkpoint.md).
+**September 29 H034 checkpoint:** MiMo V2.6 Pro-RL is the selected frontier
+profile at 950,000 configured tokens. Actual tool continuation and parent/child
+delegation through Codex and MiniMax passed in H033; the current application
+retains that qualification through an explicit compatibility review.
 The earlier near-950K test failed without a completed answer and remains
 unqualified; its [original evidence](reports/h022-950k-status.md) is preserved.
 
-Sova's updated application is deployed with MiniMax default and optional
-Codex preview. Public chat remains in maintenance and global Codex specialist
-gates remain closed pending actual workflow qualification.
-Histories and files are preserved. Earlier successful short
-native turns are recorded in the [H019 checkpoint](docs/h019-mimo-finalization-results.md).
-Current availability comes from the status API; the measurements below are dated evidence.
+Sova's updated application is deployed with MiniMax default and optional Codex
+preview. Public chat remains in maintenance. Codex frontier access is enabled;
+full image-workflow qualification remains closed pending the
+[remaining fixes](reports/h034-next-execution.md). Histories and files are
+preserved. Current backend availability comes from the status API; the
+measurements below are dated evidence.
 
 | Model / instance | Configured context | Private API base | Role |
 |---|---:|---|---|
 | Qwen0 | 480,000 | `http://10.156.100.60:30002/v1` | Coordination, coding and tools |
 | Qwen1 | 480,000 | `http://10.156.100.60:30004/v1` | Second concurrent Qwen lane |
 | Qwen Ada | 200,000 allocated | `http://10.156.100.60:30014/v1` | Separate API, tested through 15,625 input tokens; harness routing deferred |
-| MiMo V2.6 Pro-RL | 950,000 configured target | `http://10.156.100.60:30012/v1` | Selected but not resident; recovery and delegation repair pending |
+| MiMo V2.6 Pro-RL | 950,000 configured target | `http://10.156.100.60:30012/v1` | Selected frontier; short tool/delegation workflows qualified, occupied 950K unqualified |
 | GLM-5.3-Flash | 1,048,576 retained profile | `http://10.156.100.60:30010/v1` | Dormant alternative, not the running frontier |
 
 MiMo retains native MXFP4 experts and BF16/F32 nonexpert tensors. At a

@@ -1,53 +1,44 @@
-# Sova — H034 active, Qwen/Codex compatibility first
+# Sova — H034 closed checkpoint
 
-The user renewed work for17:09:44–19:09:44 UTC onSeptember29 and made reliable
-Qwen/Codex tool use priority1. Read reports/h034-execution-plan.md. Bothworkers
-implement/test through fresh bounded remote CLI sessions; root coordinates,
-reviews and publishes. No old-baseline restoration; Sova may stay in maintenance.
-This authorization supersedes the closed H033 window below within H034 scope.
-
-# Sova — H033 closed checkpoint
-
-The September 29 H033 window was 14:22:49–16:22:49 UTC. Final deployment was
-ready at 16:04:53; last native worker CLI exited with code 0 at16:07:28. All current-window
-owned work settled and tickets are zero. No automatic continuation is authorized.
-Read reports/h033-codex-checkpoint.md, reports/h033-codex-results.json and
-reports/h033-next-execution.md before older plans. Historical reports remain
-unchanged evidence; they do not override this current checkpoint.
+Read reports/h034-codex-checkpoint.md, reports/h034-codex-results.json and
+reports/h034-next-execution.md before older plans. H034 was authorized for
+September 29, 17:09:44–19:09:44 UTC. All worker sessions and current test jobs are
+closed. Another implementation window requires a new user instruction.
 
 ## Current state
 
-- App source d55eb2b2 is deployed. Public chat HTTP 503 / status HTTP 200; MiniMax remains default.
-  The user permits maintenance until Codex integration is finished. Do not
-  restore GLM, an old application release, or repeat the 950K benchmark.
-- MiMo tool/child/parent workflows passed through Codex and MiniMax. Protected
-  Codex frontier qualification and both health projections are true. Original
-  tested c863/aee pins and reviewed b71 compatibility remain distinct.
-- One native child generated a valid Full HD image with final/artifact association.
-  Corrected original failed repeated invalid capability arguments; feedback
-  reached the model. Guarded edit failed without a job and spawned an extra
-  child. Both stopped normally and settled. Codex image qualification is closed;
-  native image/audio/video recognition remains unsupported.
-- Fresh native chats now receive the mounted current catalog. A retained old
-  parent and its child inherited old instructions; that migration is not fixed.
-- Final-answer association, catalog mount, exact artifact download rendering,
-  frontier health summary and reduced token-count verification are deployed.
-  No measured before/after count speedup or real browser interaction is claimed.
-- Histories/files, two historical uncertain owners and three quarantines remain
-  preserved. Three Qwen configurations remain 480K / 480K / 200K; Ada 200K is not a
-  480K fallback. No weights/runtime/GPU/fan/ECC/power changes occurred.
+- Deployed source 7b83be2d1f7bc6abcac82dd5b2ef203ded9b9aed. MiniMax default;
+  public chat503/status200, maintenance authorized until Codex is finished.
+- Qwen/Codex original and native-child image generation passed after explicit
+  capability contract, current-instruction delivery and bounded error fixes.
+- Guarded edit produced a visually correct image after normal resize approval;
+  final handoff remains partial (stale approval, no inline final artifact).
+  Two edit tool attempts created one actual job; strict one-call fixture failed.
+- Historical-child-close fix passed targeted checks; direct live replay of that
+  exact close was not emitted. Normal retained continuation reached a new child.
+- Frontier qualification remains true through reviewed reuse of actual c863/aee
+  evidence. Full image qualification stays false; native media input unsupported.
+- Latest readback18:51:05UTC: active runs/task containers/tickets/pending provider
+  requests/image jobs zero. Histories/files and two historical uncertain owners/
+  three quarantines preserved. Last native exited0 at18:53:43.929202UTC.
+- Qwen capacities remain480K/480K/200K. Ada200K is not a480K fallback. MiMo950K
+  configured capacity does not establish occupied-context qualification.
+  No weights/runtime/GPU/fan/ECC/power changes in H034.
 
-## Continue after renewed user authorization
+## Continuation rules
 
-Root coordinates/reviews/publishes; mac-worker1 and mac-worker2 implement,
-build and test via fresh bounded native CLI sessions in isolated copies. Retain
-actual session IDs/exit receipts. One worker owns deployment and acceptance
-admission; coordinate shared operations. Reuse passed checks and exact current
-records. Keep bounded repeated-error tests; never replay uncertain actions,
-silently repair model arguments, or relabel partial evidence as full support.
+Root coordinates, reviews and publishes. mac-worker1/mac-worker2 implement,
+build and test through fresh bounded native CLI sessions in isolated copies;
+retain session IDs and actual exit receipts. One owner handles deployment and
+live admission. Reuse passed evidence and do not repeat bootstrap, benchmarks,
+or uncertain actions. Preserve real tool arguments/errors and original failures.
+
+Next priorities: approval/result handoff without new image submissions,
+operation-specific edit sizes, PDF final-answer honesty and bounded remaining
+release checks. Do not restore GLM or an old application baseline.
 
 Publish reviewed work to feature/glm53-flash / existing draft PR10 (base
-feature/system-topology). Main merge, new models/runtimes, long-context tests,
-hardware changes, accounts/scaling and installer work remain outside this
-integration scope. Credentials and raw/bulky captures remain private.
-Local durable task data: orchestration/tasks/H033-20260929 outside this checkout.
+feature/system-topology). No main merge, model/runtime/hardware changes, accounts,
+scaling or installer work in this integration scope. Keep credentials and bulky
+raw captures private. Durable local data: orchestration/tasks/H034-20260929
+outside this checkout. No automatic continuation is authorized.
