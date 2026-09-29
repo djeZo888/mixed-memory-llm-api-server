@@ -1,0 +1,227 @@
+{
+  "observedAtUtc": "2026-09-29T21:53:15.976686+00:00",
+  "endUtc": "2026-09-29T21:53:16.140458+00:00",
+  "boot": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+  "bootStable": true,
+  "unit": {
+    "exitCode": 0,
+    "stdout": "MainPID=531588\nControlPID=0\nResult=success\nControlGroup=/system.slice/llm-frontier-mimo.service\nId=llm-frontier-mimo.service\nActiveState=active\nSubState=running\nJob=\nInvocationID=57777f7b609144678201b2171020b513\n",
+    "stderr": ""
+  },
+  "ownerSha256": "2406d9a0c0c00aa7d4a7212648ee22fe63a45fcff9d0a9d707b6346f13d42134",
+  "manifestRawSha256": "059d289ee04526e793f5d75b04d5615c1f63f45b2c1e0bb4b8197c9fcc06e514",
+  "manifestCanonicalSha256": "fef303948bb4ef5b9d4ffc404483ac0ad87cd8646901530fbb811a5f1af3e88d",
+  "selection": {
+    "sha256": "f9095bf3dc6e82022f7343df0ef183274080887668cbcfa55b389f0344b75f99",
+    "bytes": 178,
+    "value": {
+      "generation": 12,
+      "manifest_sha256": "fef303948bb4ef5b9d4ffc404483ac0ad87cd8646901530fbb811a5f1af3e88d",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    }
+  },
+  "stateSha256": "aea37c201242aed15b6ca0b2c60dd9dcdc2ea59f89ecc79bede2bf348b837206",
+  "state": {
+    "status": "RUNNING",
+    "launch_id": "e5984f1e7e08434c89a7367a07b048fa",
+    "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "manifest_sha256": "fef303948bb4ef5b9d4ffc404483ac0ad87cd8646901530fbb811a5f1af3e88d",
+    "supervisor": {
+      "invocation_id": "57777f7b609144678201b2171020b513",
+      "pid": 531588,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "native": {
+      "container_id": "c1254995061955ceb7bf0474602c1854a3645f42a67f22a912094f6fa6fbe162",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 533410,
+      "pid_start_ticks": "4680537",
+      "started_at": "2026-09-29T11:50:19.046377739Z"
+    },
+    "request_hold": false,
+    "proxy": {
+      "parent_pid": 531588,
+      "pid": 774838,
+      "pid_start_ticks": "4751641"
+    }
+  },
+  "guard": {
+    "status": "ok",
+    "hardware_latched": false,
+    "observed_at": "2026-09-29T21:53:15.292016+00:00",
+    "observed_monotonic_s": 82981.596044876,
+    "manifest_sha256": "fef303948bb4ef5b9d4ffc404483ac0ad87cd8646901530fbb811a5f1af3e88d",
+    "hardware_proof": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "hardware_validation_age_ms": 1990.0050163269043,
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "validated"
+        ]
+      ],
+      "reason": null
+    }
+  },
+  "proxy": {
+    "active_requests": 0,
+    "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "launch_id": "e5984f1e7e08434c89a7367a07b048fa",
+    "native": {
+      "container_id": "c1254995061955ceb7bf0474602c1854a3645f42a67f22a912094f6fa6fbe162",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 533410,
+      "pid_start_ticks": "4680537",
+      "started_at": "2026-09-29T11:50:19.046377739Z"
+    },
+    "observed_monotonic_s": 58212.355756752,
+    "parent_pid": 531588,
+    "pid": 774838,
+    "pid_start_ticks": "4751641",
+    "quarantined": false,
+    "schema_version": 2
+  },
+  "context": 950000,
+  "output": 65536,
+  "parallel": 1,
+  "nativeIdentity": {
+    "Id": "c1254995061955ceb7bf0474602c1854a3645f42a67f22a912094f6fa6fbe162",
+    "Name": "/llm-frontier-mimo-production",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 533410,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-29T11:50:19.046377739Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "props": {
+    "model_alias": "mimo-v2.6-pro-rl",
+    "build_info": "b1-7ac59a6",
+    "model_path": "/models/MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+    "total_slots": 1,
+    "is_sleeping": false,
+    "default_generation_settings": {
+      "n_ctx": 950000,
+      "n_predict": null
+    }
+  },
+  "slots": {
+    "http": 200,
+    "value": [
+      {
+        "id": 0,
+        "n_ctx": 950000,
+        "is_processing": false,
+        "speculative": false
+      }
+    ]
+  },
+  "sourceDiscrepancies": {},
+  "prep": {
+    "sha256": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c",
+    "bytes": 12614
+  },
+  "preservation": {
+    "llm-qwen-ada200k-h028": {
+      "Id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+      "Name": "/llm-qwen-ada200k-h028",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 833565,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-28T23:44:52.546510973Z",
+        "FinishedAt": "2026-09-28T23:40:42.038153812Z"
+      }
+    },
+    "llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv": {
+      "Id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "Name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 3745649,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-29T02:10:08.065244144Z",
+        "FinishedAt": "2026-09-28T21:20:38.712067455Z"
+      }
+    },
+    "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": {
+      "Id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "Name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 3647349,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-29T02:07:52.812113852Z",
+        "FinishedAt": "2026-09-28T21:20:29.264336177Z"
+      }
+    },
+    "llm-image-backend": {
+      "Id": "8813318a121ec3cf5150eb5f49d381b464f679f7b10cfa2b3bdcb2b92fd4b761",
+      "Name": "/llm-image-backend",
+      "Image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 999603,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-29T12:11:49.675756709Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      }
+    }
+  },
+  "targetGpu": {
+    "exitCode": 0,
+    "stdout": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc, 30, 87272, 97887\n",
+    "stderr": ""
+  },
+  "targetCompute": {
+    "exitCode": 0,
+    "stdout": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc, 533410\n",
+    "stderr": ""
+  },
+  "pureRead": true,
+  "activationPerformed": false
+}

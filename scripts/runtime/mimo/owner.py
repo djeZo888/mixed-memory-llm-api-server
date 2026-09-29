@@ -995,6 +995,53 @@ def reviewed_source_amendment(old, new, delta, *, installed_owner_sha=None):
                  and path == str(BASE / 'source/owner.py') else pins['new']), 'source_successor_invalid')
 
 
+CONTEXT_TRANSITION = 'MIMO_CONTEXT_950000_TO_480000'
+CONTEXT_STATUS = 'SETTLED_CONTEXT_REDUCTION_RECONCILED'
+CONTEXT_DELTA = 'context-reduction-delta.json'
+CONTEXT_MANIFEST = 'context-reduction-manifest.json'
+
+
+def context_reduction_names(boot, manifest_sha):
+    return tuple(n.replace('settled-source-', 'settled-context-reduction-', 1)
+                 for n in settled_source_names(boot, manifest_sha))
+
+
+def reviewed_context_reduction(old, new, delta, *, preparing=False):
+    """One reviewed 950000 -> 480000 pair, plus this owner's explicit source pin.
+
+    Qualification files remain historical source-admission evidence. This
+    transition does not create a current allocation or occupied-context proof.
+    """
+    path = str(BASE / 'source/owner.py')
+    require(type(old.get('context')) is int and old['context'] == 950000
+            and old.get('max_output_tokens') == 65536 and old.get('parallel') == 1,
+            'source_successor_invalid')
+    expected = json.loads(json.dumps(old))
+    expected['context'] = 480000
+    argv = expected['native_argv']
+    for flag in ('--ctx-size', '--kv-unified-per-slot'):
+        require(argv.count(flag) == 1 and argv.index(flag) + 1 < len(argv)
+                and argv[argv.index(flag) + 1] == '950000', 'source_successor_invalid')
+        argv[argv.index(flag) + 1] = '480000'
+    before, after = old['source_sha256'][path], new['source_sha256'][path]
+    require(all(isinstance(v, str) and HEX.fullmatch(v) for v in (before, after))
+            and before != after, 'source_successor_invalid')
+    expected['source_sha256'][path] = after
+    require(digest(expected) == digest(new) and delta == {
+        'schema_version': 1, 'transition': CONTEXT_TRANSITION,
+        'prior_manifest_sha256': digest(old), 'manifest_sha256': digest(new),
+        'source_sha256': {path: {'old': before, 'new': after}}}, 'source_successor_invalid')
+    require(hashlib.sha256(protected(path)).hexdigest() == (before if preparing else after),
+            'source_successor_invalid')
+    launch_args(old)
+    launch_args(new)
+
+
+def transition_stop_name(state, context_reduction=False):
+    name = source_stop_name(state)
+    return name.replace('source-stop-', 'context-reduction-stop-', 1) if context_reduction else name
+
+
 def source_stop_name(state):
     recovery_names(state.get('boot_id'))
     require(isinstance(state.get('launch_id'), str)
@@ -1034,7 +1081,7 @@ def source_hardware(h, boot, lease):
 
 
 def prepare_source_stop(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
-                        expected_delta_sha256):
+                        expected_delta_sha256, *, context_reduction=False):
     """Record reviewed intent before the unchanged old owner's normal stop.
 
     This command neither signals the owner nor changes its state/admission.
@@ -1051,24 +1098,31 @@ def prepare_source_stop(expected_state_sha256, expected_boot_id, expected_manife
         storage_paths(h, guard)
         h.s.root_payload_guard()
         names = ('state.json', 'manifest.json', 'selection.json', 'proxy-state.json',
-                 'guard.json', 'source-successor-delta.json')
+                 'guard.json', CONTEXT_DELTA if context_reduction else 'source-successor-delta.json')
+        if context_reduction:
+            names += (CONTEXT_MANIFEST, 'source/owner.py')
         files = {name: protected(BASE / name).decode() for name in names}
         state = json.loads(files['state.json'])
+        delta_name = CONTEXT_DELTA if context_reduction else 'source-successor-delta.json'
         require(hashlib.sha256(files['state.json'].encode()).hexdigest() == expected_state_sha256
                 and digest(json.loads(files['manifest.json'])) == digest(old)
-                and hashlib.sha256(files['source-successor-delta.json'].encode()).hexdigest() == expected_delta_sha256
+                and hashlib.sha256(files[delta_name].encode()).hexdigest() == expected_delta_sha256
                 and state.get('schema_version') == 2 and state.get('status') == 'RUNNING'
                 and state.get('boot_id') == expected_boot_id == BOOT.read_text().strip()
                 and state.get('manifest_sha256') == digest(old) and state.get('request_hold') is False
                 and not any(k.endswith('_failure') for k in state), 'source_successor_invalid')
-        delta = json.loads(files['source-successor-delta.json'])
-        require(isinstance(delta, dict) and delta and set(delta) <= source_amendment_paths(),
-                'source_successor_invalid')
-        for path, pins in delta.items():
-            require(isinstance(pins, dict) and set(pins) == {'old', 'new'}
-                    and pins['old'] == old['source_sha256'].get(path) and pins['old'] != pins['new']
-                    and all(isinstance(v, str) and HEX.fullmatch(v) for v in pins.values()),
+        if context_reduction:
+            reviewed_context_reduction(old, json.loads(files[CONTEXT_MANIFEST]),
+                                       json.loads(files[delta_name]), preparing=True)
+        else:
+            delta = json.loads(files[delta_name])
+            require(isinstance(delta, dict) and delta and set(delta) <= source_amendment_paths(),
                     'source_successor_invalid')
+            for path, pins in delta.items():
+                require(isinstance(pins, dict) and set(pins) == {'old', 'new'}
+                        and pins['old'] == old['source_sha256'].get(path) and pins['old'] != pins['new']
+                        and all(isinstance(v, str) and HEX.fullmatch(v) for v in pins.values()),
+                        'source_successor_invalid')
         require_selected(old, state['selection'])
         source_idle_proxy(state, json.loads(files['proxy-state.json']))
         prior_guard = json.loads(files['guard.json'])
@@ -1098,25 +1152,26 @@ def prepare_source_stop(expected_state_sha256, expected_boot_id, expected_manife
         require(all(protected(BASE / name).decode() == raw for name, raw in files.items())
                 and BOOT.read_text().strip() == expected_boot_id, 'source_successor_invalid')
         lease.validate()
-        intent = {'schema_version': 1, 'status': 'SOURCE_STOP_PREPARED', 'files': files,
+        intent = {'schema_version': 1, 'status': ('CONTEXT_REDUCTION_PREPARED' if context_reduction else 'SOURCE_STOP_PREPARED'), 'files': files,
                   'prior_state_digest': digest(state), 'prior_manifest_sha256': digest(old),
                   'current_boot_id': expected_boot_id, 'launch_id': state['launch_id'],
                   'reviewed_delta_sha256': expected_delta_sha256, 'hardware_proof': hardware}
-        exclusive_recovery_write(h, guard, source_stop_name(state), intent)
+        exclusive_recovery_write(h, guard, transition_stop_name(state, context_reduction), intent)
         h.s.root_payload_guard()
         lease.validate()
     return intent
 
 
-def intentional_source_stop(old, state, boot, files, delta_sha, *, stop_timeout=False):
+def intentional_source_stop(old, state, boot, files, delta_sha, *, stop_timeout=False, context_reduction=False):
     """Validate a real old-owner SIGTERM settlement against pre-stop intent.
 
     owner_interrupted remains archived as emitted by the old owner. It is not
     converted to a successful request outcome; only idle stop disposition is new.
     """
-    intent = json.loads(files[source_stop_name(state)])
+    intent = json.loads(files[transition_stop_name(state, context_reduction)])
+    delta_name = CONTEXT_DELTA if context_reduction else 'source-successor-delta.json'
     before = json.loads(intent['files']['state.json'])
-    require(intent.get('schema_version') == 1 and intent.get('status') == 'SOURCE_STOP_PREPARED'
+    require(intent.get('schema_version') == 1 and intent.get('status') == ('CONTEXT_REDUCTION_PREPARED' if context_reduction else 'SOURCE_STOP_PREPARED')
             and intent.get('current_boot_id') == boot == state.get('boot_id')
             and intent.get('launch_id') == state['launch_id']
             and intent.get('prior_state_digest') == digest(before)
@@ -1124,7 +1179,7 @@ def intentional_source_stop(old, state, boot, files, delta_sha, *, stop_timeout=
             and json.loads(intent['files']['manifest.json']) == old
             and json.loads(intent['files']['selection.json']) == state['selection']
             and intent.get('reviewed_delta_sha256') == delta_sha
-            and hashlib.sha256(intent['files']['source-successor-delta.json'].encode()).hexdigest() == delta_sha
+            and hashlib.sha256(intent['files'][delta_name].encode()).hexdigest() == delta_sha
             and before.get('status') == 'RUNNING' and before.get('request_hold') is False
             and not any(k.endswith('_failure') for k in before), 'source_successor_invalid')
     failure_fields = {k for k in state if k.endswith('_failure')}
@@ -1377,11 +1432,12 @@ def settled_source_absence(old, state, boot, *, successor=None, same_boot=False)
 
 
 def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
-                             expected_delta_sha256, *, same_boot=False, stop_timeout=False, expected_supplement_sha256=None):
+                             expected_delta_sha256, *, same_boot=False, stop_timeout=False, expected_supplement_sha256=None, context_reduction=False):
     require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
                 (expected_state_sha256, expected_manifest_sha256, expected_delta_sha256)), 'source_successor_invalid')
     require(not stop_timeout or same_boot, 'source_successor_invalid')
-    archive_name, receipt_name, consumed_name = settled_source_names(expected_boot_id, expected_manifest_sha256)
+    require(not context_reduction or (same_boot and not stop_timeout), 'source_successor_invalid')
+    archive_name, receipt_name, consumed_name = (context_reduction_names if context_reduction else settled_source_names)(expected_boot_id, expected_manifest_sha256)
     h, m = setup(), read(BASE / 'manifest.json')
     require(digest(m) == expected_manifest_sha256, 'source_successor_invalid')
     source_preflight(h, m)
@@ -1389,20 +1445,37 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
         storage_paths(h, guard)
         h.s.root_payload_guard()
         lease.validate()
-        names = ('state.json', 'proxy-state.json', 'guard.json', 'selection.json',
-                 'source-successor-prior-manifest.json', 'source-successor-delta.json', 'source-successor-prior-owner.py')
+        names = ('state.json', 'proxy-state.json', 'guard.json', 'selection.json')
+        if context_reduction:
+            names += ('manifest.json', CONTEXT_DELTA, CONTEXT_MANIFEST, 'source/owner.py')
+        else:
+            names += ('source-successor-prior-manifest.json', 'source-successor-delta.json',
+                      'source-successor-prior-owner.py')
         if stop_timeout:
             names += (CORRECTED_DELTA, CORRECTED_MANIFEST)
         files = {name: protected(BASE / name).decode() for name in names}
-        delta_name = CORRECTED_DELTA if stop_timeout else 'source-successor-delta.json'
+        delta_name = CONTEXT_DELTA if context_reduction else (CORRECTED_DELTA if stop_timeout else 'source-successor-delta.json')
         require(hashlib.sha256(files['state.json'].encode()).hexdigest() == expected_state_sha256
                 and hashlib.sha256(files[delta_name].encode()).hexdigest() == expected_delta_sha256
                 and digest(read(BASE / 'manifest.json')) == digest(m), 'source_successor_invalid')
-        state, old = json.loads(files['state.json']), json.loads(files['source-successor-prior-manifest.json'])
-        delta = json.loads(files[delta_name])
-        require(hashlib.sha256(files['source-successor-prior-owner.py'].encode()).hexdigest()
-                == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
-        reviewed_source_amendment(old, m, delta)
+        state = json.loads(files['state.json'])
+        if context_reduction:
+            intent_name = transition_stop_name(state, True)
+            files[intent_name] = protected(BASE / intent_name).decode()
+            prepared = json.loads(files[intent_name])['files']
+            old = json.loads(prepared['manifest.json'])
+            require(prepared[CONTEXT_DELTA] == files[CONTEXT_DELTA]
+                    and prepared[CONTEXT_MANIFEST] == files[CONTEXT_MANIFEST]
+                    and json.loads(prepared[CONTEXT_MANIFEST]) == m
+                    and hashlib.sha256(prepared['source/owner.py'].encode()).hexdigest()
+                        == old['source_sha256'][str(BASE / 'source/owner.py')], 'source_successor_invalid')
+            reviewed_context_reduction(old, m, json.loads(files[delta_name]))
+            assert_launch_admission(old, state['selection'], state)
+        else:
+            old = json.loads(files['source-successor-prior-manifest.json'])
+            require(hashlib.sha256(files['source-successor-prior-owner.py'].encode()).hexdigest()
+                    == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
+            reviewed_source_amendment(old, m, json.loads(files[delta_name]))
         proxy, prior_guard = json.loads(files['proxy-state.json']), json.loads(files['guard.json'])
         require(proxy.get('active_requests') == 0 and proxy.get('quarantined') is False, 'source_successor_invalid')
         require(all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
@@ -1410,18 +1483,19 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
                 and prior_guard.get('manifest_sha256') == digest(old), 'source_successor_invalid')
         selected = require_selected(old, state['selection'])
         if same_boot:
-            intent_name = source_stop_name(state)
+            intent_name = transition_stop_name(state, context_reduction)
             files[intent_name] = protected(BASE / intent_name).decode()
             if stop_timeout:
                 name = source_supplement_name(state)
                 files[name] = protected(BASE / name).decode()
                 timeout_supplement(old, state, expected_boot_id, files, m, expected_supplement_sha256)
             else:
-                intentional_source_stop(old, state, expected_boot_id, files, expected_delta_sha256)
+                intentional_source_stop(old, state, expected_boot_id, files, expected_delta_sha256,
+                                        context_reduction=context_reduction)
         physical = (timeout_physical(old, state, expected_boot_id) if stop_timeout else
                     settled_source_absence(old, state, expected_boot_id, same_boot=same_boot))
         outcome = 'IDLE_INTENTIONAL_STOP' if same_boot else 'FAILED_OR_UNKNOWN'
-        transition = 'SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT'
+        transition = CONTEXT_TRANSITION if context_reduction else ('SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT')
         if stop_timeout:
             outcome, transition = STOP_TIMEOUT_OUTCOME, STOP_TIMEOUT_TRANSITION
             physical = {**physical, 'physical_release': 'LATE_SETTLEMENT_AFTER_STOP_TIMEOUT',
@@ -1435,7 +1509,9 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
                    'physical_absence': physical, 'prior_request_outcome': outcome, 'transition': transition}
         exclusive_recovery_write(h, guard, archive_name, archive)
         amended = {**selected, 'manifest_sha256': digest(m)}
-        receipt = {'schema_version': 1, 'status': 'SETTLED_SOURCE_RECONCILED',
+        if context_reduction:
+            amended['generation'] += 1
+        receipt = {'schema_version': 1, 'status': CONTEXT_STATUS if context_reduction else 'SETTLED_SOURCE_RECONCILED',
                    'current_boot_id': expected_boot_id, 'prior_state_digest': digest(state),
                    'prior_manifest_sha256': digest(old), 'manifest_sha256': digest(m),
                    'selection': amended, 'archive_name': archive_name,
@@ -1456,18 +1532,20 @@ def reconcile_settled_source(expected_state_sha256, expected_boot_id, expected_m
     return receipt
 
 
-def original_settled_source_for_start(m, selected, previous, *, installed_owner_sha=None):
+def original_settled_source_for_start(m, selected, previous, *, installed_owner_sha=None, context_reduction=False):
     boot = BOOT.read_text().strip()
-    archive_name, receipt_name, consumed_name = settled_source_names(boot, digest(m))
+    archive_name, receipt_name, consumed_name = (context_reduction_names if context_reduction else settled_source_names)(boot, digest(m))
     receipt = read(BASE / receipt_name)
     same_boot = previous.get('boot_id') == boot
-    transition = 'SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT'
+    require(not context_reduction or same_boot, 'source_successor_invalid')
+    transition = CONTEXT_TRANSITION if context_reduction else ('SAME_BOOT_INTENTIONAL_STOP' if same_boot else 'NEW_BOOT')
     outcome = 'IDLE_INTENTIONAL_STOP' if same_boot else 'FAILED_OR_UNKNOWN'
     stop_timeout = same_boot and receipt.get('transition') == STOP_TIMEOUT_TRANSITION
+    require(not context_reduction or not stop_timeout, 'source_successor_invalid')
     if stop_timeout:
         transition, outcome = STOP_TIMEOUT_TRANSITION, STOP_TIMEOUT_OUTCOME
     require(not (BASE / consumed_name).exists(), 'new_boot_recovery_consumed')
-    require(receipt.get('schema_version') == 1 and receipt.get('status') == 'SETTLED_SOURCE_RECONCILED'
+    require(receipt.get('schema_version') == 1 and receipt.get('status') == (CONTEXT_STATUS if context_reduction else 'SETTLED_SOURCE_RECONCILED')
             and receipt.get('current_boot_id') == boot and receipt.get('archive_name') == archive_name
             and receipt.get('consumed_name') == consumed_name and receipt.get('manifest_sha256') == digest(m)
             and receipt.get('selection') == selected and receipt.get('prior_state_digest') == digest(previous)
@@ -1478,16 +1556,29 @@ def original_settled_source_for_start(m, selected, previous, *, installed_owner_
     archive = json.loads(raw)
     require(all(hashlib.sha256(v.encode()).hexdigest() == archive['sha256'][k]
                 for k, v in archive['files'].items()), 'new_boot_archive_changed')
-    old = json.loads(archive['files']['source-successor-prior-manifest.json'])
-    delta_raw = archive['files'][CORRECTED_DELTA if stop_timeout else 'source-successor-delta.json']
+    if context_reduction:
+        prepared = json.loads(archive['files'][transition_stop_name(previous, True)])['files']
+        old = json.loads(prepared['manifest.json'])
+        delta_raw = archive['files'][CONTEXT_DELTA]
+        require(prepared[CONTEXT_DELTA] == delta_raw
+                and prepared[CONTEXT_MANIFEST] == archive['files'][CONTEXT_MANIFEST]
+                and json.loads(prepared[CONTEXT_MANIFEST]) == m
+                and hashlib.sha256(prepared['source/owner.py'].encode()).hexdigest()
+                    == old['source_sha256'][str(BASE / 'source/owner.py')]
+                and selected == {**previous['selection'], 'manifest_sha256': digest(m),
+                                 'generation': previous['selection']['generation'] + 1}, 'source_successor_invalid')
+        reviewed_context_reduction(old, m, json.loads(delta_raw))
+    else:
+        old = json.loads(archive['files']['source-successor-prior-manifest.json'])
+        delta_raw = archive['files'][CORRECTED_DELTA if stop_timeout else 'source-successor-delta.json']
+        require(hashlib.sha256(archive['files']['source-successor-prior-owner.py'].encode()).hexdigest()
+                == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
+        reviewed_source_amendment(old, m, json.loads(delta_raw), installed_owner_sha=installed_owner_sha)
     require(json.loads(archive['files']['state.json']) == previous
             and digest(old) == receipt['prior_manifest_sha256']
             and hashlib.sha256(delta_raw.encode()).hexdigest() == receipt['reviewed_delta_sha256']
             and receipt['preserved_container_name'] == old['container_name'] + '-prior-' + previous['launch_id'],
             'source_successor_invalid')
-    require(hashlib.sha256(archive['files']['source-successor-prior-owner.py'].encode()).hexdigest()
-            == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
-    reviewed_source_amendment(old, m, json.loads(delta_raw), installed_owner_sha=installed_owner_sha)
     require(previous.get('manifest_sha256') == digest(old), 'source_successor_invalid')
     if same_boot:
         require(archive.get('transition') == transition and archive.get('prior_request_outcome') == outcome
@@ -1504,10 +1595,11 @@ def original_settled_source_for_start(m, selected, previous, *, installed_owner_
                         ('state.json', source_supplement_name(previous), 'source-successor-delta.json',
                          CORRECTED_DELTA, CORRECTED_MANIFEST)), 'source_successor_invalid')
         else:
-            intentional_source_stop(old, previous, boot, archive['files'], receipt['reviewed_delta_sha256'])
+            intentional_source_stop(old, previous, boot, archive['files'], receipt['reviewed_delta_sha256'],
+                                    context_reduction=context_reduction)
         # A receipt cannot hide new request/fault evidence or a replaced intent.
         require(all(protected(BASE / name).decode() == archive['files'][name]
-                    for name in ('proxy-state.json', 'guard.json', source_stop_name(previous))),
+                    for name in ('proxy-state.json', 'guard.json', transition_stop_name(previous, context_reduction))),
                 'source_successor_invalid')
     assert_launch_admission(old, previous['selection'], previous)
     return receipt, old
@@ -1668,6 +1760,8 @@ def activate_source_owner_amendment(expected_state_sha256, expected_boot_id,
 
 
 def settled_source_for_start(m, selected, previous):
+    if (BASE / transition_stop_name(previous, True)).exists():
+        return original_settled_source_for_start(m, selected, previous, context_reduction=True)
     if (BASE / source_owner_amendment_name(previous)).exists():
         receipt, old = source_owner_amendment_for_start(m, previous)
         require(selected == receipt['selection'], 'source_successor_invalid')
@@ -1774,12 +1868,12 @@ def assert_launch_admission(m, selected, previous, recovery=None):
     require(selected['selected_frontier'] == MODEL and selected.get('manifest_sha256') == digest(m), 'not_selected')
     if previous is not None:
         if recovery is not None:
-            if recovery.get('status') == 'SETTLED_SOURCE_RECONCILED':
+            if recovery.get('status') in ('SETTLED_SOURCE_RECONCILED', CONTEXT_STATUS):
                 require(previous.get('schema_version') == 2 and previous.get('status') == 'SETTLED'
                         and previous.get('request_hold') is False
                         and previous.get('settlement') == {'pid_released': True, 'cgroup_empty': True, 'gpu_compute_empty': True},
                         'prior_owner_or_request_unsettled')
-            require(recovery.get('status') in ('NEW_BOOT_RECONCILED', 'SETTLED_SOURCE_RECONCILED')
+            require(recovery.get('status') in ('NEW_BOOT_RECONCILED', 'SETTLED_SOURCE_RECONCILED', CONTEXT_STATUS)
                     and recovery.get('prior_state_digest') == digest(previous)
                     and recovery.get('manifest_sha256') == digest(m)
                     and recovery.get('selection') == selected, 'new_boot_recovery_invalid')
@@ -1876,13 +1970,13 @@ def supervise(dry_run=False):
             if recovery is not None:
                 require(read(BASE / 'state.json') == previous
                         and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
-                if recovery['status'] == 'SETTLED_SOURCE_RECONCILED':
+                if recovery['status'] in ('SETTLED_SOURCE_RECONCILED', CONTEXT_STATUS):
                     recovery, prior_manifest = settled_source_for_start(m, selected, previous)
                     if recovery.get('transition') == STOP_TIMEOUT_TRANSITION:
                         timeout_physical(prior_manifest, previous, boot, successor=supervisor)
                     else:
                         settled_source_absence(prior_manifest, previous, boot, successor=supervisor,
-                                               same_boot=recovery.get('transition') == 'SAME_BOOT_INTENTIONAL_STOP')
+                                               same_boot=recovery.get('transition') in ('SAME_BOOT_INTENTIONAL_STOP', CONTEXT_TRANSITION))
                 else:
                     recovery, prior_manifest = recovery_for_start(m, selected, previous)
                     old_boot_absence(prior_manifest, previous, boot, successor=supervisor)
@@ -1900,7 +1994,7 @@ def supervise(dry_run=False):
                 sample = sample_guard(m, baseline, limit, proof_boot=boot)
                 memory_policy(m)
                 latch(h, boot, evidence=(None if recovery is not None and
-                      recovery.get('transition') in ('SAME_BOOT_INTENTIONAL_STOP', STOP_TIMEOUT_TRANSITION)
+                      recovery.get('transition') in ('SAME_BOOT_INTENTIONAL_STOP', STOP_TIMEOUT_TRANSITION, CONTEXT_TRANSITION)
                       else sample.get('hardware_validation')),
                       deadline=launch_guard_started + 5, lease=lease)
             found = run(['docker', 'ps', '-aq', '--no-trunc', '--filter', 'name=^/' + m['container_name'] + '$'], 2).strip()
@@ -2043,7 +2137,7 @@ def rollback_glm(h, m, expected, *, dry_run=False):
 
 def main():
     p = argparse.ArgumentParser(description=__doc__)
-    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source', 'prepare-source-stop', 'prepare-source-stop-timeout', 'prepare-source-owner-amendment', 'activate-source-owner-amendment'])
+    p.add_argument('action', choices=['supervise', 'settle', 'check-selected', 'rollback-glm', 'reconcile-new-boot', 'reconcile-settled-source', 'prepare-source-stop', 'prepare-source-stop-timeout', 'prepare-source-owner-amendment', 'activate-source-owner-amendment', 'prepare-context-reduction', 'reconcile-context-reduction'])
     p.add_argument('--service', choices=[MODEL, GLM])
     p.add_argument('--dry-run', action='store_true')
     p.add_argument('--expected-delta-sha256')
@@ -2065,6 +2159,17 @@ def main():
             'source_successor_invalid')
     require(not args.idle_stop_timeout_settled or (args.action == 'reconcile-settled-source'
             and args.same_boot_intentional_stop), 'source_successor_invalid')
+    if args.action in ('prepare-context-reduction', 'reconcile-context-reduction'):
+        require(not args.dry_run, 'source_successor_invalid')
+        if args.action == 'prepare-context-reduction':
+            result = prepare_source_stop(args.expected_state_sha256, args.expected_boot_id,
+                args.expected_manifest_sha256, args.expected_delta_sha256, context_reduction=True)
+        else:
+            result = reconcile_settled_source(args.expected_state_sha256, args.expected_boot_id,
+                args.expected_manifest_sha256, args.expected_delta_sha256,
+                same_boot=True, context_reduction=True)
+        print(json.dumps({'status': result['status'], 'prior_state_digest': result['prior_state_digest']}))
+        return 0
     if args.action == 'prepare-source-owner-amendment':
         require(not args.dry_run, 'source_successor_invalid')
         result = prepare_source_owner_amendment(args.expected_state_sha256, args.expected_boot_id,
