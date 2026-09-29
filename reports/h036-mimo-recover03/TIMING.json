@@ -1,0 +1,62 @@
+{
+  "cause": "Host-memory unmapping is only a hypothesis. No cause established.",
+  "dockerState": {
+    "Dead": false,
+    "Error": "",
+    "ExitCode": 137,
+    "FinishedAt": "2026-09-29T22:17:33.941785249Z",
+    "OOMKilled": false,
+    "Paused": false,
+    "Pid": 0,
+    "Restarting": false,
+    "Running": false,
+    "StartedAt": "2026-09-29T11:50:19.046377739Z",
+    "Status": "exited"
+  },
+  "evidenceSha256": {
+    "07-stop-old-owner.receipt.json": "e12e79e74e6b4084856b8e8f772faeb092f5c1bfc4a6c83dbdd50ebbcab1cf2e",
+    "08-settled-read.stdout": "9f96e3008fdafbe8bd2bf54cf9242b1525d26654632927724c02186db41ca18d",
+    "09-final-read.stdout": "a2518ffa834ac10945d01fa7301a5317958a4fe3e463da1483fabed6d5dbc16f"
+  },
+  "exactDockerClientStartEnd": "Not separately instrumented in retained captures. Systemctl wrapper times and journal failure observations are exact; do not relabel them Docker client times.",
+  "finishedAfterFirstTimeoutSeconds": 4.580068,
+  "firstCommandTimeoutUtc": "2026-09-29T22:17:29.361717+00:00",
+  "leaseContentionBudgetSeconds": 10,
+  "proposedClientTimeoutSeconds": 20,
+  "proposedStopExactBudgetSeconds": 30,
+  "provenance": "H036-MIMO-ACTIVATE02 retained actual captures; no new VM observation",
+  "retainedFailureFields": {
+    "primary_failure": {
+      "code": "owner_interrupted",
+      "cycle_elapsed_s": 1.669002,
+      "observed_at": "2026-09-29T22:17:21.884074+00:00",
+      "operation": "cycle_sleep",
+      "phase": "RUNNING"
+    },
+    "settlement_failure": {
+      "code": "command_timeout",
+      "observed_at": "2026-09-29T22:17:29.657866+00:00",
+      "operation": "settlement",
+      "phase": "SETTLING"
+    }
+  },
+  "sourceClientTimeoutSeconds": 7,
+  "sourceCommand": [
+    "docker",
+    "stop",
+    "--time",
+    "3",
+    "c1254995061955ceb7bf0474602c1854a3645f42a67f22a912094f6fa6fbe162"
+  ],
+  "stopCommand": {
+    "command": "sudo -n systemctl stop llm-frontier-mimo.service",
+    "endedUtc": "2026-09-29T22:17:34.449859+00:00",
+    "exitCode": 0,
+    "name": "07-stop-old-owner",
+    "startedUtc": "2026-09-29T22:17:21.574195+00:00",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "uncertain": false
+  },
+  "unitTimeoutStopSeconds": 45
+}

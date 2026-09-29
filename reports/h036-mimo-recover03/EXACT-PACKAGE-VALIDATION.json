@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "offlineOnly": true,
+  "validatedPins": [
+    "ownerNewSha256",
+    "installHelperSha256",
+    "manifestNewRawSha256",
+    "deltaRawSha256",
+    "stoppedStateSha256",
+    "intentRawSha256"
+  ],
+  "oldManifestCanonical": "fef303948bb4ef5b9d4ffc404483ac0ad87cd8646901530fbb811a5f1af3e88d",
+  "newManifestCanonical": "da9b2c00422bd7a65c8cec7f9faa5a6c6804a5a71bdb141a986f824858ce09b7",
+  "sameOriginalIntent": "287e044d6ff2baad3aaf19e9b3f8e2cd14f655210f3805cb2a6b29f8e4aadc53",
+  "ownerSha256": "6e59b5ae7d4cc88a8f67bdc4fb6eebb34ae97b206255a5424f144327f7de1c53",
+  "noVmOperations": true
+}
