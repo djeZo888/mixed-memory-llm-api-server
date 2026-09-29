@@ -154,6 +154,58 @@ test('native count POST uses byte-identical full canonical generation body and s
   assert.equal(sent.length, before);
 });
 
+test('native count accepts exact captured response and optional object tag in either field order', async () => {
+  const raw = readFileSync(new URL('./fixtures/mimo-native-count-response.json', import.meta.url));
+  assert.equal(createHash('sha256').update(raw).digest('hex'), '3c9985a47794bc3743f760ace2a4ce7c3fc74bae2e03eae9ea4c99dfb978a77e');
+  const q = proof(); q.identity.actualSlotContext = 20000;
+  const p = prepareMimo(request());
+  for (const [body, expected] of [
+    [raw.toString('utf8'), 11684],
+    [' { "object" : "response.input_tokens", "input_tokens" : 11684 }\n', 11684],
+    ['{"input_tokens":0}', 0],
+    ['{"input_tokens":0,"object":"response.input_tokens"}', 0],
+    ['{"object":"response.input_tokens","input_tokens":0}', 0],
+  ] as const) {
+    let observations = 0, posts = 0;
+    const admitted = await countMimo(p, q, {
+      observe: async () => { observations++; return q.identity; },
+      post: async r => {
+        posts++; assert.equal(r.path, '/v1/chat/completions/input_tokens'); assert.equal(r.body, p.json);
+        return new Response(body);
+      },
+    }, new AbortController().signal);
+    assert.equal(admitted.promptTokens, expected); assert.equal(observations, 2); assert.equal(posts, 1);
+  }
+});
+
+test('native count tagged responses reject ambiguous keys, wrong tags and unsafe integer spellings', async () => {
+  const p = prepareMimo(request()), q = proof();
+  const invalidCounts = ['"79"', 'null', '-1', '-0', '1.5', '7.9e1', '1e999', '9007199254740992'];
+  const bodies = invalidCounts.flatMap(n => [
+    `{"input_tokens":${n},"object":"response.input_tokens"}`,
+    `{"object":"response.input_tokens","input_tokens":${n}}`,
+  ]);
+  for (const tag of ['"response.other"', '""', 'null', '79', '{}']) bodies.push(
+    `{"input_tokens":79,"object":${tag}}`, `{"object":${tag},"input_tokens":79}`);
+  bodies.push(
+    '{"input_tokens":79,"object":"response.input_tokens","input_tokens":78}',
+    '{"object":"response.input_tokens","input_tokens":79,"input_tokens":78}',
+    '{"input_tokens":79,"object":"response.input_tokens","object":"response.input_tokens"}',
+    '{"object":"response.input_tokens","object":"response.input_tokens","input_tokens":79}',
+    '{"input_tokens":79,"object":"response.input_tokens","model":"fake"}',
+    '{"model":"fake","object":"response.input_tokens","input_tokens":79}',
+    '{"object":"response.input_tokens"}',
+  );
+  for (const body of bodies) {
+    let observations = 0, posts = 0;
+    await assert.rejects(countMimo(p, q, {
+      observe: async () => { observations++; return q.identity; },
+      post: async () => { posts++; return new Response(body); },
+    }, new AbortController().signal), { code: 'mimo_count_malformed' }, body);
+    assert.equal(observations, 1, body); assert.equal(posts, 1, body);
+  }
+});
+
 test('complete stream handles arbitrary byte splits, empty fragments, usage-only frame and HTTP drain', () => {
   const s = new MimoStreamValidator(admission(), sseResponse), bytes = Buffer.from(plain().map(frame).join('').replaceAll('\n', '\r\n'));
   for (const b of bytes) s.push(Uint8Array.of(b));
