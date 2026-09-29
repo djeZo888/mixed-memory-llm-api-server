@@ -1,0 +1,487 @@
+{
+  "concurrency_performance_review": "ACCEPTED",
+  "evidence": [
+    "incoming-latest.md: root measured-result/resource review GO; candidate/publication GO still pending",
+    "run2-evidence-summary.json",
+    "prerequisites-readonly.json",
+    "historical-equivalence.json",
+    "source-evidence-hashes.json",
+    "/data/services/llm-manager/evidence/IMAGE21-RUNTIME-20260923/amendment.json",
+    "H005 proposed source/runtime transition bd5cc553c250e3a4d98181069278bb675ed5ee47; binding_sha256=66c83c3487d6a9cae7b7c9c9dd5415a0a272c2fa1732f9e64b8eedbea3c40079; build_receipt_sha256=5d896fdb52aa3a5d55ed42ba6dc7f402de1da9f98b3cee22bdf4f62f076fe9dc; historical capacity inherited; fresh loaded-model acceptance SEPARATE_RECEIPT_REQUIRED",
+    "/data/backups/H005-QWEN0-RECOVERY-20260925-01a0da40-a5a3-74a0-9539-728afc574cd1/TRANSITION.json: root-reviewed native-image coexistence host-source correction; no new runtime/capacity/auth tests; prior evidence preserved",
+    "/data/backups/H005-QWEN0-RECOVERY-20260925-01a0da40-a5a3-74a0-9539-728afc574cd1-mount-order/TRANSITION.json: root-reviewed complete-mount-record order comparison correction; no new runtime/capacity/auth tests; prior evidence preserved",
+    "/data/backups/H005-CONTROL-READINESS-20260925-01a0da6a-2156-7721-9585-8acff9c18a67/TRANSITION.json: root-reviewed passive authenticated control readiness; source identity only, no runtime/capacity/auth proof change",
+    "/data/backups/H005-BOOT-RESTORE-20260925-cb0fca527827/TRANSITION.json: root-reviewed bounded boot hardware readiness; source identity only, no runtime/capacity/auth proof change",
+    "/data/services/h006-terminal-metadata-20260926/TRANSITION.json: root-reviewed terminal metadata source only; existing capacity/runtime/auth proofs inherited unchanged",
+    "/data/logs/h008-flash-phase1-20260926/QWEN1-COMMISSION.json"
+  ],
+  "gpu_inventory": [
+    [
+      0,
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+    ],
+    [
+      1,
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    ],
+    [
+      2,
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    ],
+    [
+      3,
+      "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+    ]
+  ],
+  "guest_total_vcpus": 72,
+  "h005_transition": {
+    "capacity_observed_at": "2026-09-21",
+    "kind": "inherited-capacity-new-runtime-auth",
+    "live_acceptance": "SEPARATE_RECEIPT_REQUIRED",
+    "predecessor_receipt_sha256": "1a21fc033e593ed1b6115b815f08f64bd1b2bcafbff058e2e7407a4fd38b4681",
+    "runtime_binding_sha256": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+    "runtime_source_commit": "f9d9b5191534581d854067507922af2b56790710"
+  },
+  "h008_flash_source_transition": {
+    "kind": "source-only-flash-integration",
+    "predecessor_sha256": "8ff1584dc2fd20b5fbe96da8876b7ef811b836acbef6becec2521660bfc22dcd"
+  },
+  "h008_transition": {
+    "kind": "qwen1-server-migration-fresh-proof",
+    "predecessor_sha256": "00ff7e57679a7277ec68f4f5fbc4b19adbe36ceceea730c778772fa6bb6b818d",
+    "proof_sha256": "eb892a5c126c0c7c34a8d9d4660bd09952a446c476c43c9799dae0a349111a33"
+  },
+  "host_headroom_policy": {
+    "basis": "sampled_required_working_set_estimate_bytes",
+    "denominator": 20,
+    "numerator": 23,
+    "version": "sampled-required-working-set-15pct-v1"
+  },
+  "host_usable_bytes": 929641271296,
+  "instance_id": "ai-vm-d0b",
+  "kind": "root-reviewed-dualq-480k",
+  "modes": {
+    "dual-qwen": {
+      "concurrency_performance_review": "ACCEPTED",
+      "evidence": [
+        "run2-evidence-summary.json",
+        "prerequisites-readonly.json",
+        "H005 CPU native auth gpu0: /data/services/llm-manager/evidence/h005-gpu0.auth.json; canonical_sha256=d3ae95eef5c5482a5a3ef7aef82ebb9a58da3df511697ecfa698f44c1c49e297",
+        "H005 CPU native auth gpu1: /data/services/llm-manager/evidence/h005-gpu1.auth.json; canonical_sha256=1ad3822ac74a0b735607984979d385dd455fc6a294dd73bb9a5fb313c91e1e01",
+        "/data/logs/h008-flash-phase1-20260926/QWEN1-COMMISSION.json"
+      ],
+      "slots": {
+        "glm": {
+          "_evidence": {
+            "allocation_path": "/data/logs/benchrun-dualq72c1-20260921/loads/e6044ab6032c3cb156bc2463857825ff23c6343b723ea9cc995c6c859ddb7965-allocation.json",
+            "allocation_sha256": "34aae85ded3a833e04e0b27c9d4e4287163a718e39871943796dff6900ce73ab",
+            "container_id": "e6044ab6032c3cb156bc2463857825ff23c6343b723ea9cc995c6c859ddb7965",
+            "correctness_basis": "SEMANTIC_EXACT_OBJECT_PASS_ROOT_ACCEPTED",
+            "cpu_limits": {
+              "cgroup_cpu_max": "max 100000",
+              "cgroup_cpuset_cpus_effective": "0-7",
+              "cgroup_cpuset_mems_effective": "0-7",
+              "docker_cpu_period": 0,
+              "docker_cpu_quota": 0,
+              "docker_cpuset_cpus": "0-7",
+              "docker_cpuset_mems": "",
+              "docker_nano_cpus": 0
+            },
+            "cpu_online": "0-71",
+            "cuda_uuid_order": [
+              "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+            ],
+            "image_identity_provenance": "Pinned manifest/config IDs from actual-image auth and existing benchmark identity/allocation gates; digest domains retained in auth",
+            "input_tokens": 479408,
+            "memory_limits": {
+              "cgroup_memory_max": "34359738368",
+              "cgroup_memory_swap_max": "0",
+              "docker_memory_bytes": 34359738368,
+              "docker_memory_swap_bytes": 34359738368
+            },
+            "native_capacity": {
+              "basis": "actual_scheduler_top_level_or_single_internal_state",
+              "configured_context": 480000,
+              "native_input_limit": 479994,
+              "native_pool_tokens": 480000,
+              "native_request_limit": null
+            },
+            "output_tokens": 82,
+            "profile_mapping": {
+              "--port": {
+                "benchmark": "31002",
+                "production": "30002"
+              },
+              "--served-model-name": {
+                "benchmark": "bench-qwen3.8-27b-gpu0",
+                "production": "qwen3.8-27b-gpu0"
+              }
+            },
+            "runtime_image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+            "sample_scope": "saved load/readiness and pair request resource aggregates; sampled estimate distinct from lifetime raw peak",
+            "semantic": {
+              "expected_sha256": "16f5d3c73542054114a7bbee0c729b26c8189d12cb699bed3f46c894fc8d9a43",
+              "outer_json_fence_removed": false,
+              "reason": "exact_match",
+              "score_policy": "semantic_exact_object_optional_one_json_fence",
+              "status": "PASS"
+            },
+            "source_manifests": "execution-arm and saved protected per-container load manifest",
+            "strict": {
+              "expected_sha256": "16f5d3c73542054114a7bbee0c729b26c8189d12cb699bed3f46c894fc8d9a43",
+              "reason": "exact_match",
+              "status": "PASS"
+            }
+          },
+          "allocation": "PASS",
+          "configured_context": 480000,
+          "correctness": "PASS",
+          "deployment": "qwen38-27b-q0-480000-yarn4-bf16kv",
+          "gpu_total_bytes": 102641958912,
+          "guest_cpu_count": 8,
+          "guest_cpu_sharing": "shared",
+          "guest_cpuset": "0-7",
+          "host_peak_bytes": 13299601408,
+          "largest_occupied_context": 479490,
+          "memory_bytes": 34359738368,
+          "memory_swap_bytes": 34359738368,
+          "minimum_free_gpu_bytes": 37534826496,
+          "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+          "native_auth_checks": {
+            "actual_cache_resolvers": "PASS",
+            "health_starting_503_up_200": "PASS",
+            "injection_failure_child_cleanup": "PASS",
+            "native_false_warmup_not_ready": "PASS",
+            "native_freeze_gc_has_no_key": "PASS",
+            "native_parser_template_synthetic": "PASS",
+            "native_prepare_and_normalization": "PASS",
+            "native_routes_and_final_chain": "PASS",
+            "native_sse_disconnect": "PASS",
+            "native_strict_model_validation": "PASS",
+            "no_gpu_driver_libraries": "PASS",
+            "ordinary_http_auth": "PASS",
+            "raw_resolved_workerargs_sentinel_absence": "PASS",
+            "sentinel_absence": "PASS",
+            "server_info_sentinel_absence": "PASS",
+            "spawn_import": "PASS",
+            "unsupported_modes": "PASS",
+            "warmup_failure_and_timeout_cleanup": "PASS",
+            "websocket_denial": "PASS"
+          },
+          "pair_launcher_sha256": "7e5ca90a8ede7be7ab1aa0a5cad669869d2c86385d6529680a32f585f850b77c",
+          "profile_sha256": "7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4",
+          "runtime_image_id": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
+          "sampled_required_working_set_estimate_bytes": 14888603648,
+          "short_inference": "PASS",
+          "visible_cuda_devices": {
+            "CUDA0": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+          }
+        },
+        "qwen": {
+          "_evidence": {
+            "auth_lineage": "Unchanged H005 actual-image CPU auth fixture; fresh native HTTP auth PASS",
+            "capacity_scope": "Fresh480000 allocation and65536 input; NOT near-full occupied context",
+            "commission_report": "/data/logs/h008-flash-phase1-20260926/QWEN1-COMMISSION.json",
+            "observed_at": "2026-09-26T16:45:34.946262+00:00",
+            "telemetry": "/data/logs/h008-flash-phase1-20260926/QWEN1-TELEMETRY.jsonl"
+          },
+          "allocation": "PASS",
+          "configured_context": 480000,
+          "correctness": "PASS",
+          "deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+          "gpu_total_bytes": 102641958912,
+          "guest_cpu_count": 8,
+          "guest_cpu_sharing": "shared",
+          "guest_cpuset": "0-7",
+          "host_peak_bytes": 10424647680,
+          "largest_occupied_context": 65792,
+          "memory_bytes": 34359738368,
+          "memory_swap_bytes": 34359738368,
+          "minimum_free_gpu_bytes": 37345034240,
+          "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+          "native_auth_checks": {
+            "actual_cache_resolvers": "PASS",
+            "health_starting_503_up_200": "PASS",
+            "injection_failure_child_cleanup": "PASS",
+            "native_false_warmup_not_ready": "PASS",
+            "native_freeze_gc_has_no_key": "PASS",
+            "native_parser_template_synthetic": "PASS",
+            "native_prepare_and_normalization": "PASS",
+            "native_routes_and_final_chain": "PASS",
+            "native_sse_disconnect": "PASS",
+            "native_strict_model_validation": "PASS",
+            "no_gpu_driver_libraries": "PASS",
+            "ordinary_http_auth": "PASS",
+            "raw_resolved_workerargs_sentinel_absence": "PASS",
+            "sentinel_absence": "PASS",
+            "server_info_sentinel_absence": "PASS",
+            "spawn_import": "PASS",
+            "unsupported_modes": "PASS",
+            "warmup_failure_and_timeout_cleanup": "PASS",
+            "websocket_denial": "PASS"
+          },
+          "pair_launcher_sha256": "7e5ca90a8ede7be7ab1aa0a5cad669869d2c86385d6529680a32f585f850b77c",
+          "profile_sha256": "8c717c154e8e2c84feb3ef9de83939ed9f597f5fbce0c0f325f5858ce1a8f0b3",
+          "runtime_image_id": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
+          "sampled_required_working_set_estimate_bytes": 9753104384,
+          "short_inference": "PASS",
+          "visible_cuda_devices": {
+            "CUDA0": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+          }
+        }
+      }
+    },
+    "glm-qwen": {
+      "concurrency_performance_review": "ACCEPTED",
+      "evidence": [
+        "historical-equivalence.json",
+        "user explicit historical B3 reuse authority",
+        "H005 CPU native auth gpu1: /data/services/llm-manager/evidence/h005-gpu1.auth.json; canonical_sha256=1ad3822ac74a0b735607984979d385dd455fc6a294dd73bb9a5fb313c91e1e01",
+        "/data/logs/h008-flash-phase1-20260926/QWEN1-COMMISSION.json"
+      ],
+      "slots": {
+        "glm": {
+          "_evidence": {
+            "completed_retrieval": {
+              "input_tokens": 65008,
+              "largest_occupied_context": 65076,
+              "outcome": "COMPLETE",
+              "output_tokens": 68,
+              "requested_output_cap": 256,
+              "semantic": "PASS",
+              "status": "PASS",
+              "strict": "PASS"
+            },
+            "decode_overlap_seconds": 0,
+            "effective_configuration_mapping": [
+              {
+                "flag": "--port",
+                "historical": "31002",
+                "production": "30002"
+              },
+              {
+                "flag": "--alias",
+                "historical": "bench-glm-5.3",
+                "production": "glm-5.3"
+              },
+              {
+                "effective_request_equivalence": "B3-G65008.request.json explicitly sends reasoning_effort=low; production additionally makes low the server default",
+                "flag": "--chat-template-kwargs",
+                "historical": {
+                  "clear_thinking": true
+                },
+                "production": {
+                  "clear_thinking": true,
+                  "reasoning_effort": "low"
+                }
+              },
+              {
+                "flag": "--log-verbosity",
+                "historical": "4",
+                "production": "absent",
+                "scope": "diagnostic logging only; no inference setting change"
+              }
+            ],
+            "glm480k_occupied": "NOT_TESTED",
+            "hash_identity_claim": "HISTORICAL_AND_PRODUCTION_PROFILE_HASHES_DIFFER; effective equivalence explicitly documented",
+            "historical_equivalence": "historical-equivalence.json",
+            "native_capacity": {
+              "allocation_gate": "historical successful load/readiness plus native props480000; raw allocation log retained remotely at bound hash",
+              "basis": "native_props",
+              "configured_context": 480000,
+              "raw_log_sha256": "8fe4a997ff202adef6d68d91e3acc0e5af323b715d52b682ac4fe354919154d8"
+            },
+            "resource_scope": "full B3 G request window"
+          },
+          "allocation": "PASS",
+          "configured_context": 480000,
+          "correctness": "PASS",
+          "deployment": "glm-5.3-ud-q4-k-xl-g1-480000",
+          "gpu_total_bytes": 102641958912,
+          "guest_cpu_count": 72,
+          "guest_cpu_sharing": "shared",
+          "guest_cpuset": "0-71",
+          "host_peak_bytes": 442228494336,
+          "largest_occupied_context": 65076,
+          "memory_bytes": 687194767360,
+          "memory_swap_bytes": 687194767360,
+          "minimum_free_gpu_bytes": 18254659584,
+          "model_revision": "346b3591c7f28d1a23716f97a065ecf12ec14771",
+          "profile_sha256": "1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899",
+          "runtime_image_id": "sha256:86feba4c82a8ec083d8da31fb8d1648f7b221b724a48eca571f5dd277a0caab9",
+          "sampled_required_working_set_estimate_bytes": 432916705280,
+          "short_inference": "PASS",
+          "visible_cuda_devices": {
+            "CUDA0": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+          }
+        },
+        "qwen": {
+          "_evidence": {
+            "auth_lineage": "Unchanged H005 actual-image CPU auth fixture; fresh native HTTP auth PASS",
+            "capacity_scope": "Fresh480000 allocation and65536 input; NOT near-full occupied context",
+            "commission_report": "/data/logs/h008-flash-phase1-20260926/QWEN1-COMMISSION.json",
+            "observed_at": "2026-09-26T16:45:34.946262+00:00",
+            "telemetry": "/data/logs/h008-flash-phase1-20260926/QWEN1-TELEMETRY.jsonl"
+          },
+          "allocation": "PASS",
+          "configured_context": 480000,
+          "correctness": "PASS",
+          "deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+          "gpu_total_bytes": 102641958912,
+          "guest_cpu_count": 8,
+          "guest_cpu_sharing": "shared",
+          "guest_cpuset": "0-7",
+          "host_peak_bytes": 10424647680,
+          "largest_occupied_context": 65792,
+          "memory_bytes": 34359738368,
+          "memory_swap_bytes": 34359738368,
+          "minimum_free_gpu_bytes": 37345034240,
+          "model_revision": "017b9c7af6b5689d5dd426a76e0bc077eb5ca20a",
+          "native_auth_checks": {
+            "actual_cache_resolvers": "PASS",
+            "health_starting_503_up_200": "PASS",
+            "injection_failure_child_cleanup": "PASS",
+            "native_false_warmup_not_ready": "PASS",
+            "native_freeze_gc_has_no_key": "PASS",
+            "native_parser_template_synthetic": "PASS",
+            "native_prepare_and_normalization": "PASS",
+            "native_routes_and_final_chain": "PASS",
+            "native_sse_disconnect": "PASS",
+            "native_strict_model_validation": "PASS",
+            "no_gpu_driver_libraries": "PASS",
+            "ordinary_http_auth": "PASS",
+            "raw_resolved_workerargs_sentinel_absence": "PASS",
+            "sentinel_absence": "PASS",
+            "server_info_sentinel_absence": "PASS",
+            "spawn_import": "PASS",
+            "unsupported_modes": "PASS",
+            "warmup_failure_and_timeout_cleanup": "PASS",
+            "websocket_denial": "PASS"
+          },
+          "pair_launcher_sha256": "7e5ca90a8ede7be7ab1aa0a5cad669869d2c86385d6529680a32f585f850b77c",
+          "profile_sha256": "8c717c154e8e2c84feb3ef9de83939ed9f597f5fbce0c0f325f5858ce1a8f0b3",
+          "runtime_image_id": "sha256:8f9a45a8a4de689280c054867103fc072f064703427212aeb6d603551a86f4b2",
+          "sampled_required_working_set_estimate_bytes": 9753104384,
+          "short_inference": "PASS",
+          "visible_cuda_devices": {
+            "CUDA0": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+          }
+        }
+      }
+    }
+  },
+  "reviewed_source_commit": "d111edb987cd06f24a806f5bd10007e83c1a455f",
+  "schema_version": 2,
+  "source_sha256": {
+    "configs/deployments/glm-5.3-ud-q4-k-xl-g1-480000.json": "1baa9913542a088a7dd40d1a902ef53605ff4a1c5eafc409814116df25d49899",
+    "configs/deployments/qwen38-27b-q0-480000-yarn4-bf16kv.json": "7c2587d74e8f4654574c74d8b6e955dac1db9a185fc1c0201bacee92b3ecffe4",
+    "configs/deployments/qwen38-27b-q1-server-480000-yarn4-bf16kv.json": "8c717c154e8e2c84feb3ef9de83939ed9f597f5fbce0c0f325f5858ce1a8f0b3",
+    "configs/models/glm-5.3-ud-q4-k-xl.json": "857924551fa83c546bb99f7b524b35c8d79d0cb9ba0a666e0c139bbace0e7e0d",
+    "configs/models/qwen38-27b-fp8.json": "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
+    "configs/runtimes/h005-runtime-binding.json": "9da2236e927c44e2af618e0862ee84f54d4645ec0bcb1e93c25c0d98b45ee6ae",
+    "configs/runtimes/llama-cpp-v0.4.1-d3br.json": "d073105a70540df73cef325df7fdcfa32651f5a6aa8387b584708fb51b802d50",
+    "configs/runtimes/sglang-qwen38-0.5.19.json": "17bb735a7e13affc11d90b1f7174243c81a5f848d87c8780f1f8d0d0cf67eb11",
+    "reports/f1s-contract-evidence/f1a-qwen-manifest.json": "022674d4daf63fa57c2798a30fea80c6dde7b1b2e73630ae3c3aa94e45debb9e",
+    "reports/q38r-source-weight-manifest.json": "3df6f2a0a46a33b2b48f62609235ff209e50403d679bd8ee120b941445a87ed0",
+    "reports/q38s-acquisition-manifest.json": "726012378a40f648a104230d3f5ed5d6bc505cbd09b32918fc29aa81c0f075f2",
+    "scripts/common/lifecycle_lease.py": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0",
+    "scripts/common/registered-storage.py": "21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d",
+    "scripts/common/require-data-mounted.sh": "189f2213ed2531e3fafba173d1419c9c424dcbbfa9187e4f5c8fea824974facb",
+    "scripts/control/__init__.py": "09994eed14b3742e621b51ba4ec25972f2ad05a33ffc924973893b4c40be4287",
+    "scripts/control/adapter.py": "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+    "scripts/control/catalog.py": "d4ca906eff525332ca65961a226cf4728129860b6a9c9ddbca7426d052641e49",
+    "scripts/control/core.py": "5a2fef84e4dd77c9c6101a183ef1904b2a47dca244d24a7794938e334ca4150c",
+    "scripts/control/discovery.py": "bb7c7deadefc87e71373110f162b7a9b4690c50045a399a358412196074f0e73",
+    "scripts/control/hardware_latch.py": "a23e3e55453fefd3bbd5dbb6bce7d8e16da08db2f6debfcdfe01110815353685",
+    "scripts/control/http.py": "66b677db320e4e217d43f7996e573f9217b01e22e4ecc3a921f3b92d729c8d60",
+    "scripts/control/installation.py": "e9cc40da7e56b0fa4011459f78c0b13ea73fc2e57fceb33abe2a02b1cdb1ec39",
+    "scripts/control/journal.py": "0525e4299ce0a178e8aef41dc34c8f5e93f584322307020d31870608da29cced",
+    "scripts/control/llm-node.service.in": "ee3bd3069ad404690d72b0b7a939086a9be49ac955fa626bc421ca63a7690b4f",
+    "scripts/control/node-source-closure.json": "ccfa2a60ef2dbc5eedc5888f7789de6f7a0e9b1a6a884933fd28a1fb9d941d0d",
+    "scripts/control/node.py": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+    "scripts/control/node_action_owner.py": "f24e187b28c678170202fde4e98ade9915f270f0b9965882c4df1960b01b9137",
+    "scripts/control/node_actions.py": "c8c56b6d4bc5e56edfe4c8c2ae047064a02e11e0ed0850b1789fa1ffad4bcc7c",
+    "scripts/control/node_collectors.py": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+    "scripts/control/node_installation.py": "795c864c6633cc74eb32a6877e857b4b39083951fdc45d81b01c4b915d99b9a7",
+    "scripts/control/node_observation.py": "0f9fd71419b81c6bd2d3dc33ae4e4beb12e17e551cfade680661b7ef8806e6e1",
+    "scripts/control/node_resources.py": "02873c08bdaa8600579749b2eff8974cddc0d78f345730935845d7ff7de697da",
+    "scripts/control/node_serve.py": "40050f7d90f2ed3ab069408b9cbe6df17a7584ceed1be1365b5de91467f26d73",
+    "scripts/control/passive.py": "aa016a7659923381097fe056f580ad3c7fb564291556861798a2e545557cd348",
+    "scripts/control/private_network.py": "ca5c52e774a33458633118cb1399421de8ca15eb464da412f1993c9af0e764e0",
+    "scripts/control/protocol.py": "c12ba52e4407d9a3fb60429f73fab92c1f2ab30816995d522ea7fee326cb1098",
+    "scripts/control/serve.py": "c3247c339d41c4c6361fdc7b753746b451c0e9591f55b072a9f0badb5364a547",
+    "scripts/control/source-closure.json": "b35d136dfe78deb3df061f13baf369206d840c29a881c0d0841b6d0304afa0e2",
+    "scripts/install/__init__.py": "9b4509b1ab13bca6990ca4c4411897218d876d14a1fb7f4fe9e96ba8c8d86d71",
+    "scripts/install/prerequisites.py": "e2ed5fec6e0175cd19af5d301b13bac98bca16d7ff4ac96c5f7200333168ca0b",
+    "scripts/install/storage.py": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+    "scripts/install/storage_io.py": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+    "scripts/lifecycle/__init__.py": "065e332d86c27b0ed3e071825e93265fa57e043d1cd97b7d8ca92af6ecdddfeb",
+    "scripts/lifecycle/boot_unit.py": "5c25697d82f030a9c19348c4368d56d2c1b40c23cfaf89b8d6e0d72bdc339d0a",
+    "scripts/lifecycle/concurrent_profiles.py": "4b597865ea5fabfdb27ca91c331c60de01a4a68b89590ebdb96f462ce52cbc8d",
+    "scripts/lifecycle/hardware_policy.py": "05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18",
+    "scripts/lifecycle/manager.py": "a6c391406638a24da264ab381177ddcf88319ea702a205dd67a982db4b75f5be",
+    "scripts/lifecycle/qwen38.py": "5534ce96c3abdaa1633a2ad685e340f0f2bd35612e0760747409674a1ea39430",
+    "scripts/lifecycle/qwen_next.py": "d4686a29a771b2a7f9926e35ef37b26919a68e69f4383cd958b851d69f7f524c",
+    "scripts/lifecycle/runtime_io.py": "a85f7126cde008c0c5a03fba64b6ba051df508f058efd6871c7c868ed9b42b52",
+    "scripts/lifecycle/sglang_file_auth.py": "93ddd96d6a3d346b3e62b0eec08d6666c70c1ebc7b2cc727d02c191c9d50a5b2",
+    "scripts/lifecycle/slot_state.py": "fd88954ee77521dc0e3f87454315e89a25508383ffa19b84115d76930fff8c79",
+    "scripts/lifecycle/storage_binding.py": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf",
+    "scripts/runtime/adaptive_diffusion.py": "a48498c4b253ba3852d7d8523db32c8f4a6b1cfa3d03b24333c4041c09ba0660",
+    "scripts/runtime/adaptive_diffusion_drain.py": "446409490e8a5987d90b2f21eca08dd8d06d417a76b90d3767abc79c3763a3b4",
+    "scripts/runtime/adaptive_idle.py": "06db78adc7d93cb195188557d62b98909231b6824810eaf11c7324132747bcfa",
+    "scripts/runtime/adaptive_idle_source_gate.py": "4536fe3f4868cf6f42ab94098b31bdf28fe60a68aadd469e06b8bb31cb977cad",
+    "scripts/runtime/adaptive_idle_sources.json": "de7dbf34f68ac8b29e54f2126edcb6bc2d54ecc97a527804ec0454cc581d50c6",
+    "scripts/runtime/adaptive_text.py": "99c75d2d48dfded150156e8f6218258e464e017a74678b8bef768741eadbb4ae",
+    "scripts/runtime/adaptive_text_drain.py": "517357bd0aa6fb17ea23f8041884c7d7557fa1a95410174aea5a6d5fed313a36",
+    "scripts/runtime/build_adaptive_idle_overlay.py": "1de6ea354c7cfe6152fb03fde4ad9823c174623dabfbc00274d5b41f5ce756f8",
+    "scripts/runtime/flash/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+    "scripts/runtime/h005_runtime_binding.py": "30b223cc246c3c8e7338079ce21c2fbb0427a1d34510f8d6a88ca9c6c564716e",
+    "scripts/runtime/patches/diffusion-adaptive-drain.patch": "9e376a2bc40f16bef9cf61bffdac28fd36b5c1d42cb44d97efdae4e764abadff",
+    "scripts/runtime/patches/diffusion-adaptive-idle.patch": "503d0820630ffca3a5a28f06313b3c7e8200121849b3c03d3ef93471c5bb7900",
+    "scripts/runtime/patches/text-adaptive-drain.patch": "07d92dfc2ed9181972cd35f9e9d72447161733755b49bc27195b351b0198643b",
+    "scripts/runtime/patches/text-adaptive-grammar.patch": "b85fa2f2b9cffedb0bf5d8ca8709a883794e4a26e26c3a1b1ce939c08d33b976",
+    "scripts/runtime/patches/text-adaptive-idle.patch": "2cc049225ad81d84dae6f9fb943764499193e9eec33e7a9d85a31aa225050f5a",
+    "scripts/runtime/qwen38_oci.py": "f2059445f3a06b15e710bc7d65866bc8d821ca3a78ef900f3d94ce4866accc2f",
+    "scripts/runtime/sglang38_file_auth.py": "e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4",
+    "scripts/runtime/sglang38_pair_file_auth.py": "7e5ca90a8ede7be7ab1aa0a5cad669869d2c86385d6529680a32f585f850b77c",
+    "scripts/runtime/verify_adaptive_idle_overlay.py": "554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d",
+    "tests/lifecycle/sglang38_fixture/auth_native.py": "016734a0263cbc2bd6657481ab11535f1cac073efb7eed4bcdbf66f81dfd3ef7",
+    "tests/lifecycle/sglang38_fixture/cache_probe.py": "b99853c1509c894359fdab894d974abcef02e0572adb510923eb9e62759b8fd0",
+    "tests/lifecycle/sglang38_fixture/chat_template.jinja": "c3cf9e34abf4f9e36c2d72165aa9c132d3e2a725b6c2586aaa3a8af9d7a81041",
+    "tests/lifecycle/sglang38_fixture/pair_launcher.py": "00e1547951dc25baf9f8165a7e8fdec0ec351b830b923aaa8fcd1e83b96b4229",
+    "tests/lifecycle/sglang38_fixture/provenance.json": "c5875cbc40a062829c6001885ca7f5e2edcaed86e4d7f1797324e41f2f71afd9",
+    "tests/lifecycle/sglang38_fixture/qwen38_config.json": "74227dd615bf1ea975aa676bdf355a0379858c12f394b5365cd9dfa5fc2c70bc",
+    "tests/lifecycle/sglang38_fixture/run_fixture.py": "132e4bee10c165c5d812d38a6198333ff1e62d649d76449170cbbb2e598d457f",
+    "tests/lifecycle/sglang38_fixture/run_pair_fixture.py": "bb5eb9dbc437c1137277a1d44c884cb7736b4fba8defd7cbe431c7528b268141",
+    "tests/lifecycle/sglang38_fixture/run_pair_pinned_image.py": "5c8e089ea8f5002263cad0f040513a4ed6424631aebe2f622155d9b00e9984f3",
+    "tests/lifecycle/sglang38_fixture/run_pinned_image.py": "16da95ec58d37dfe96bdae10c2eba35bceba507a9a2c1a7b302b71eea056d162"
+  },
+  "status": "ACCEPTED_FOR_ACTIVATION",
+  "storage_identity": {
+    "data": {
+      "fstype": "ext4",
+      "mount": "/data",
+      "path": "/data",
+      "uuid": "8daf56f1-5649-4163-9d87-919c2d271875"
+    },
+    "models": {
+      "fstype": "ext4",
+      "mount": "/data/models-large",
+      "path": "/data/models-large",
+      "uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a"
+    },
+    "roots": {
+      "backups": "/data/backups",
+      "build": "/data/build",
+      "containerd": "/data/containerd",
+      "docker": "/data/docker",
+      "hf_cache": "/data/hf-cache",
+      "logs": "/data/logs",
+      "models": "/data/models-large",
+      "secrets": "/data/services/secrets",
+      "services": "/data/services",
+      "state": "/data/services/installer"
+    },
+    "schema_version": 1
+  }
+}

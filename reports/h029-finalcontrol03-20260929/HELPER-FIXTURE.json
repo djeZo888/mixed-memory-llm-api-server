@@ -1,0 +1,86 @@
+{
+  "status": "PASS",
+  "tests": 16,
+  "checks": [
+    {
+      "check": "mount_reorder_equality",
+      "pass": true
+    },
+    {
+      "check": "duplicate_multiplicity",
+      "pass": true,
+      "code": "native_component_changed_Mounts"
+    },
+    {
+      "check": "Config_mutation",
+      "pass": true,
+      "code": "native_component_changed_Config"
+    },
+    {
+      "check": "HostConfig_mutation",
+      "pass": true,
+      "code": "native_component_changed_HostConfig"
+    },
+    {
+      "check": "Path_mutation",
+      "pass": true,
+      "code": "native_component_changed_Path"
+    },
+    {
+      "check": "Args_mutation",
+      "pass": true,
+      "code": "native_component_changed_Args"
+    },
+    {
+      "check": "mount_Source_mutation",
+      "pass": true,
+      "code": "native_component_changed_Mounts"
+    },
+    {
+      "check": "mount_Destination_mutation",
+      "pass": true,
+      "code": "native_component_changed_Mounts"
+    },
+    {
+      "check": "mount_RW_mutation",
+      "pass": true,
+      "code": "native_component_changed_Mounts"
+    },
+    {
+      "check": "mount_extra_mutation",
+      "pass": true,
+      "code": "native_component_changed_Mounts"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    },
+    {
+      "check": "invalid_mount_shape",
+      "pass": true,
+      "code": "native_mounts_invalid_shape"
+    }
+  ],
+  "helperSha256": "f70730e2854ebc3352139e8d06163ea9d3c7431379cd192fba80ff50db0bd28e"
+}
