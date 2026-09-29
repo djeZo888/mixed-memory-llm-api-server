@@ -1,3 +1,11 @@
+# H036 active — latest user authorization
+
+Read reports/h036-execution-plan.md first. The user authorized image workflow
+repair, MiMo480K, normal chat/follow-up/document/visual/automatic-compaction checks
+and conditional merge to the repository default branch. These supersede the
+closed H035 restrictions below only for this scope. Root orchestrates; workers
+implement/test in fresh bounded native sessions. Preserve evidence and data.
+
 # Sova — H035 closed checkpoint
 
 Read reports/h035-codex-checkpoint.md, reports/h035-codex-results.json and
