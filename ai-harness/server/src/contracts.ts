@@ -146,6 +146,7 @@ export interface Environment {
   now: string;
 }
 export type EngineUpdate =
+  | ({ type: "image_status_result" } & import("./image-status-consumption.js").ImageStatusConsumption)
   | {
       type: "text";
       text: string;

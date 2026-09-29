@@ -1100,3 +1100,18 @@ test('owned child schema loop stops the parent and settles every unfinished chil
   assert.ok(f.updates.some(u => u.type === 'progress' && u.kind === 'subagent' && u.subagentId === 'child-1' && u.status === 'cancelled'));
   assert.equal(f.states.at(-1)!.ownership, 'idle');
 });
+
+test('successful native image_status completion emits a typed consumption signal, never prose or failed output', async () => {
+  const f=fixture();const pending=f.engine.prompt('existing image status');await tick();
+  const value={server:'image',tool:'image_status',arguments:{jobId:'job-one'},status:'completed',result:{content:[{type:'text',text:JSON.stringify({job:{id:'job-one',state:'completed',artifactId:'artifact-one',cancelRequested:false}})}]}};
+  f.item('call_a166a1a2f52e487780836616','mcpToolCall',{...value,status:'inProgress'},'started');
+  assert.equal(f.updates.filter(u=>u.type==='image_status_result').length,0);
+  f.item('call_a166a1a2f52e487780836616','mcpToolCall',value);
+  f.item('failed-call','mcpToolCall',{...value,status:'inProgress'},'started');
+  f.item('failed-call','mcpToolCall',{...value,result:{...value.result,isError:true}});
+  f.item('prose','agentMessage',{text:'',phase:'final_answer'},'started');
+  f.item('prose','agentMessage',{text:value.result.content[0].text,phase:'final_answer'});
+  f.complete();await pending;
+  assert.deepEqual(f.updates.filter(u=>u.type==='image_status_result'),[{type:'image_status_result',toolCallId:'call_a166a1a2f52e487780836616',jobId:'job-one',artifactId:'artifact-one'}]);
+  await f.engine.close();
+});

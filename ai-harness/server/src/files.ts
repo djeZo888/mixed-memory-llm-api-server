@@ -509,9 +509,7 @@ export class Files {
       .prepare("SELECT attachment_ids FROM runs WHERE id=? AND session_id=?")
       .get(runId, sessionId);
     if (!run) throw new ApiError(404, "not_found", "Run not found");
-    const files = this.store
-      .files(sessionId, "artifact")
-      .filter((f) => f.runId === runId);
+    const files = this.store.artifactsForRun(sessionId, runId);
     for (const file of files) {
       if (
         file.messageId &&
@@ -519,7 +517,7 @@ export class Files {
           .prepare(
             "SELECT id FROM messages WHERE id=? AND session_id=? AND run_id=? AND role='assistant'",
           )
-          .get(file.messageId, sessionId, runId)
+          .get(file.messageId, sessionId, file.runId ?? null)
       )
         throw new ApiError(
           404,

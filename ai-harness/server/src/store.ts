@@ -108,6 +108,7 @@ export class Store {
       CREATE TABLE IF NOT EXISTS h029_message_submissions(session_id TEXT NOT NULL REFERENCES sessions(id),submission_id TEXT NOT NULL,fingerprint TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,submission_id));
       CREATE TABLE IF NOT EXISTS h024_compaction_actions(session_id TEXT NOT NULL REFERENCES sessions(id),action_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE REFERENCES runs(id),PRIMARY KEY(session_id,action_id));
       CREATE TABLE IF NOT EXISTS h030_handoff_targets(run_id TEXT PRIMARY KEY REFERENCES runs(id),engine_kind TEXT NOT NULL CHECK(engine_kind IN ('minimax','codex')));
+      CREATE TABLE IF NOT EXISTS h036_image_status_refs(session_id TEXT NOT NULL REFERENCES sessions(id),run_id TEXT NOT NULL REFERENCES runs(id),file_id TEXT NOT NULL REFERENCES files(id),job_id TEXT NOT NULL,origin_run_id TEXT NOT NULL REFERENCES runs(id),tool_call_id TEXT NOT NULL,PRIMARY KEY(run_id,file_id));
       CREATE TABLE IF NOT EXISTS h035_image_results(job_id TEXT PRIMARY KEY,message_id TEXT NOT NULL UNIQUE REFERENCES messages(id));
     `);
     // Companion metadata keeps legacy rows/history/files byte-for-byte intact.
@@ -670,9 +671,7 @@ export class Store {
   }
   runSnapshot(id: string): RunSnapshot {
     const r = this.db.prepare("SELECT * FROM runs WHERE id=?").get(id)!;
-    const artifactIds = this.files(String(r.session_id), "artifact")
-      .filter((f) => f.runId === id)
-      .map((f) => f.id);
+    const artifactIds = this.artifactsForRun(String(r.session_id), id).map((f) => f.id);
     const requestedAttachments = decode<string[]>(r.attachment_ids);
     const attachmentIds = this.ownedAttachments(
       String(r.session_id),
@@ -1169,6 +1168,58 @@ export class Store {
         )
         .all(sessionId, kind) as { id: string }[]
     ).map((r) => this.file(r.id));
+  }
+  /** Original ownership plus separately attested successful native status consumption. */
+  artifactsForRun(sessionId: string, runId: string): FileRecord[] {
+    const run = this.db.prepare("SELECT session_id FROM runs WHERE id=?").get(runId);
+    if (run?.session_id !== sessionId) throw new ApiError(404, "not_found", "Run not found");
+    const refs = new Map(this.db.prepare("SELECT file_id,job_id,origin_run_id FROM h036_image_status_refs WHERE session_id=? AND run_id=?")
+      .all(sessionId, runId).map(row => [String(row.file_id), row]));
+    return this.files(sessionId, "artifact").filter(file => {
+      if (file.runId === runId) return true;
+      const ref = refs.get(file.id);
+      if (!ref || file.runId !== ref.origin_run_id) return false;
+      try { return this.completedImageArtifact(sessionId, String(ref.job_id), file.id).id === file.id; }
+      catch { return false; }
+    });
+  }
+  private completedImageArtifact(sessionId: string, jobId: string, artifactId: string): FileRecord {
+    const row = this.db.prepare("SELECT data FROM h003_image_jobs WHERE id=? AND session_id=?").get(jobId, sessionId);
+    const job = row ? decode<{ job: import("./image-contracts.js").ImageJob }>(row.data).job : undefined;
+    if (!job || job.id !== jobId || job.sessionId !== sessionId || job.state !== "completed" ||
+        !job.finishedAt || job.cancelRequested !== false || job.error || job.artifactId !== artifactId)
+      throw new ApiError(409, "image_status_result_mismatch", "Image status does not match a completed owned job");
+    const file = this.file(artifactId);
+    const origin = this.db.prepare("SELECT session_id FROM runs WHERE id=?").get(job.runId);
+    if (origin?.session_id !== sessionId || file.sessionId !== sessionId || file.kind !== "artifact" ||
+        file.runId !== job.runId || file.image?.jobId !== job.id || file.image.model !== job.model ||
+        file.image.seed !== job.seed || file.image.actualSize !== job.actualSize)
+      throw new ApiError(409, "image_status_result_mismatch", "Image artifact does not match its original job owner");
+    return file;
+  }
+  /** Called only for a successful native tool event bound to the Broker's active run. */
+  recordImageStatusConsumption(sessionId: string, runId: string,
+    proof: import("./image-status-consumption.js").ImageStatusConsumption): void {
+    const events: Event[] = [];
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      const session = this.getSession(sessionId);
+      const run = this.db.prepare("SELECT session_id,workspace_id,status FROM runs WHERE id=?").get(runId);
+      if (session.deleteRequested || run?.session_id !== sessionId || run.workspace_id !== session.workspaceId || run.status !== "running")
+        throw new ApiError(409, "image_status_scope_mismatch", "Image status consumer is not the current running owner");
+      requireId(proof.toolCallId); requireId(proof.jobId); requireId(proof.artifactId);
+      const file = this.completedImageArtifact(sessionId, proof.jobId, proof.artifactId);
+      if (file.runId !== runId) {
+        const inserted = this.db.prepare("INSERT OR IGNORE INTO h036_image_status_refs VALUES(?,?,?,?,?,?)")
+          .run(sessionId, runId, file.id, proof.jobId, file.runId ?? null, proof.toolCallId);
+        if (inserted.changes) {
+          events.push(this.writeEvent(sessionId, "artifact", { artifact: this.publicFile(file) }, runId));
+          events.push(this.writeEvent(sessionId, "run", { run: this.runSnapshot(runId) }, runId));
+        }
+      }
+      this.db.exec("COMMIT");
+    } catch (error) { this.db.exec("ROLLBACK"); throw error; }
+    for (const event of events) this.events.emit(sessionId, event);
   }
   /** Upload membership is many-to-many through requests/messages, never reassigned to a file row. */
   ownedAttachments(

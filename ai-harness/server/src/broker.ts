@@ -523,6 +523,9 @@ export class Broker {
             };
             this.store.setContext(s.id, context, run.id);
           }
+        } else if (u.type === "image_status_result") {
+          if (s.engineKind === "codex" && !active.cancelled && !this.closing)
+            this.store.recordImageStatusConsumption(s.id, run.id, u);
         } else if (u.type === "artifact") {
           artifactJobs.push(
             this.register(s.id, u.path, run.id, u.name, u.mimeType),

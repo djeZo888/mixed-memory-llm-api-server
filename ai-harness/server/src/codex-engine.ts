@@ -1,3 +1,4 @@
+import { completedImageStatus } from "./image-status-consumption.js";
 import type { CodexCapabilities } from "./codex-capabilities.js";
 import { CodexChildren } from "./codex-children.js";
 import { CodexSchemaErrorGuard, type CodexSchemaErrorFailure } from "./codex-schema-errors.js";
@@ -818,6 +819,8 @@ export class CodexEngine implements Engine {
         !["completed", "failed", "declined"].includes(String(value.status))
       )
         fault("Native tool completion is not terminal");
+      const consumed = complete ? completedImageStatus(value) : undefined;
+      if (consumed) this.options.onUpdate({ type: "image_status_result", ...consumed });
       const command =
         value.type === "commandExecution" && typeof value.command === "string"
           ? value.command.slice(0, 8192)

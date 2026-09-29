@@ -37,6 +37,92 @@ const twoTurns = () => [
 ];
 
 describe('authoritative run artifact memberships', () => {
+  it.each([true, false])(
+    'renders an existing image in the active, final and reloaded followup only with membership: %s',
+    (followupMember) => {
+      const shared = replyArtifact('image/original', 'sailboat.png', {
+        runId: 'run/one',
+        messageId: 'answer-one',
+        mimeType: 'image/png',
+        previewUrl: '/api/files/image%2Foriginal/preview',
+        image: { jobId: 'original-job', operation: 'edit', width: 1536, height: 864 },
+      });
+      const content = `![Generated image](${shared.previewUrl})\n\n[Download image](${shared.downloadUrl})\n\nDownload route: \`${shared.downloadUrl}\``;
+      const active = replyThread({
+        messages: [
+          ...twoTurns().slice(0, 3),
+          replyMessage('answer-two', 'assistant', content, {
+            runId: 'run/two',
+            phase: 'unclassified',
+            streamState: 'streaming',
+          }),
+        ],
+        artifacts: [shared],
+        runs: [
+          replyRun('run/one', { status: 'completed', artifactIds: [shared.id] }),
+          replyRun('run/two', { artifactIds: followupMember ? [shared.id] : [] }),
+        ],
+      });
+      const original = JSON.stringify(active);
+      Object.freeze(active.artifacts[0].image);
+      Object.freeze(active.artifacts[0]);
+      active.messages.forEach(Object.freeze);
+      const assertFollowup = (thread: Thread) => {
+        expect(thread.artifacts).toEqual([shared]);
+        expect(replyFor(thread, 'run/one').artifacts[0]).toBe(thread.artifacts[0]);
+        expect(replyFor(thread, 'run/two').artifacts).toEqual(followupMember ? [shared] : []);
+        const articles = screen.getAllByRole('article', { name: 'Assistant reply' });
+        const followup = articles.find((article) => article.dataset.runId === 'run/two')!;
+        const reply = within(followup);
+        if (followupMember) {
+          expect(replyFor(thread, 'run/two').artifacts[0]).toBe(thread.artifacts[0]);
+          expect(reply.getAllByRole('img')).toHaveLength(1);
+          expect(reply.getByRole('img', { name: 'Generated image' })).toHaveAttribute(
+            'src',
+            shared.previewUrl,
+          );
+          for (const name of ['Download image', `Download ${shared.name}`]) {
+            expect(reply.getByRole('link', { name })).toHaveAttribute('href', shared.downloadUrl);
+            expect(reply.getByRole('link', { name })).toHaveAttribute('download', '');
+          }
+          expect(reply.queryByText('[Image: Generated image]')).not.toBeInTheDocument();
+        } else {
+          expect(reply.queryByRole('img')).not.toBeInTheDocument();
+          expect(reply.queryByRole('link')).not.toBeInTheDocument();
+          expect(reply.getByText('[Image: Generated image]')).toBeInTheDocument();
+          expect(reply.getByText('Download image')).toBeInTheDocument();
+          expect(reply.getByText(shared.downloadUrl, { selector: 'code' })).toBeInTheDocument();
+        }
+        expect(thread.messages.find((message) => message.id === 'answer-two')?.content).toBe(content);
+        expect(groupReplies(thread).unassociated.artifacts).toHaveLength(0);
+      };
+      const view = render(<ConversationReplies thread={active} />);
+      assertFollowup(active);
+      const final: Thread = {
+        ...active,
+        messages: active.messages.map((message) =>
+          message.id === 'answer-two'
+            ? { ...message, phase: 'final', streamState: 'completed' }
+            : message,
+        ),
+        runs: active.runs.map((run) =>
+          run.id === 'run/two' ? { ...run, status: 'completed', finalMessageId: 'answer-two' } : run,
+        ),
+      };
+      view.rerender(<ConversationReplies thread={final} />);
+      assertFollowup(final);
+      expect(screen.getAllByLabelText('Final answer')).toHaveLength(2);
+      const saved = JSON.stringify(final);
+      view.unmount();
+      const reloaded = replyThread(JSON.parse(saved));
+      render(<ConversationReplies thread={reloaded} />);
+      assertFollowup(reloaded);
+      expect(JSON.stringify(reloaded.artifacts)).toBe(JSON.stringify(active.artifacts));
+      expect(JSON.stringify(final)).toBe(saved);
+      expect(JSON.stringify(active)).toBe(original);
+    },
+  );
+
   it('shows one immutable artifact once in every proven run and keeps each run ZIP separate', () => {
     const shared = replyArtifact('shared/blob', 'shared-report.txt', {
       runId: 'run/one',
