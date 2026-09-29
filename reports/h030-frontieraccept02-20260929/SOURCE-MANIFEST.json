@@ -1,0 +1,28 @@
+{
+  "base": "4faeb803d3fcad19d7b3f13bed9c34504c85f7e4",
+  "entryCommit": "813f1248319073182a174b18fcfa940554493402",
+  "sourceHead": "bad9bc1ec35cdf92461238e626f8cd2d5b534ee8",
+  "sourceBundleSha256": "48aa73eb50935351b6ec8690583b6ed8f22197731538d1a7d971558469b3fda1",
+  "sourcePatchSha256": "458f1264b11735b2aa3ba089c5f36cb4ddcaa5c44eb368ee30058097e435fbe3",
+  "entryPatchSha256": "823dd3ccc727cd8ecb95f257340b2c4255463e1015e4bb4359dbc97075e1d888",
+  "projectionPatchSha256": "eccb0fa81aa5818bdd4c6f372143f6d42baf1a26f227a0a24319f88c25381587",
+  "files": {
+    "scripts/control/node_collectors.py": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77",
+    "tests/test_node_hardware_wiring.py": "9ee874b25077f3d56f7a60f5a14c915458140165d58a17ac63904631d1cfbbb5",
+    "scripts/control/node.py": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59",
+    "tests/test_node_projection.py": "f397929688427b2bdeb0073bcd8baffbac64934ddc55e427cd3facb8f09e0457"
+  },
+  "tests": {
+    "count": 29,
+    "result": "PASS",
+    "command": "PYTHONPATH=scripts python3 -m unittest tests.test_node_hardware_wiring tests.test_node_projection",
+    "output": "HARDWARE-FINAL-COMBINED.txt",
+    "sha256": "4d6b42747e7517ca1943f274453e42be55dfd9c236b74bf4a439d7d71bdc0e5c",
+    "earlierCountsOverlap": [
+      27,
+      19
+    ],
+    "additionalScope": false
+  },
+  "deployed": false
+}

@@ -1,0 +1,14 @@
+F
+======================================================================
+FAIL: test_transient_entry_contention_refreshes_before_old_proof_expires (tests.test_node_hardware_wiring.HardwareProducerWiring.test_transient_entry_contention_refreshes_before_old_proof_expires)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/Users/agent/CodexProjects/llm-orchestration/tasks/H030-FRONTIERACCEPT02-20260929/repo/tests/test_node_hardware_wiring.py", line 201, in test_transient_entry_contention_refreshes_before_old_proof_expires
+    self.assertIs(self.public()['hardware_latched'], False)
+    ~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: None is not False
+
+----------------------------------------------------------------------
+Ran 1 test in 0.002s
+
+FAILED (failures=1)

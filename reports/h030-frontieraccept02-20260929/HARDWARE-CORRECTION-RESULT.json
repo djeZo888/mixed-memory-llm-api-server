@@ -1,0 +1,56 @@
+{
+  "schema": 1,
+  "status": "SOURCE_ONLY_FIXTURE_PASS_NOT_DEPLOYED",
+  "baseCommit": "4faeb803d3fcad19d7b3f13bed9c34504c85f7e4",
+  "frozenAt": "2026-09-29T08:33:00Z",
+  "demonstratedDefect": "A transient refused canonical lease entry skips the scheduled hardware proof refresh; an available fresh exact receipt remains unpersisted and the prior proof can expire before the next five-second slot.",
+  "historicalColdFailureCause": "NOT_PROVEN",
+  "historicalColdFailureTime": "2026-09-29T08:22:36.622Z",
+  "correction": "Bounded 25ms entry-only contention waits inside the existing callback deadline; no acquired-body replay; remaining budget passed to binding and checked before persistence.",
+  "before": {
+    "command": "PYTHONPATH=scripts python3 -m unittest tests.test_node_hardware_wiring.HardwareProducerWiring.test_transient_entry_contention_refreshes_before_old_proof_expires",
+    "tests": 1,
+    "failures": 1,
+    "assertion": "AssertionError: None is not False",
+    "seconds": 0.002,
+    "artifact": "HARDWARE-BEFORE.txt",
+    "sha256": "8c9106505b5810517f01212783f27beaf8024dd99a159ccd14885ae677e0cacd"
+  },
+  "after": {
+    "command": "PYTHONPATH=scripts python3 -m unittest tests.test_node_hardware_wiring tests.test_node_projection",
+    "tests": 27,
+    "failures": 0,
+    "result": "OK",
+    "seconds": 0.024,
+    "artifact": "HARDWARE-AFTER.txt",
+    "sha256": "bd002a2395bf6758bdeb798d15a7140d7773682fe78b7df203c270437eee06bc"
+  },
+  "diffCheck": {"command": "git diff --check", "result": "PASS"},
+  "checks": {
+    "transientRefusalThenRefresh": "FIXTURE_PASS",
+    "persistentContentionTwoSecondBudget": "FIXTURE_PASS",
+    "noAcquireAfterDeadline": "SOURCE_REVIEW_node_collectors.py_310_precedes_313",
+    "lateAcquiredEntryCannotPersist": "FIXTURE_PASS",
+    "acquiredBodyLeaseBusyNotReplayed": "FIXTURE_PASS",
+    "nonContentionEntryErrorNotRetried": "FIXTURE_PASS",
+    "positiveUnknownAndStaleProjection": "EXISTING_FOCUSED_FIXTURES_PASS",
+    "ttlMilliseconds": 15000,
+    "ttlChanged": false
+  },
+  "files": {
+    "scripts/control/node_collectors.py": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77",
+    "tests/test_node_hardware_wiring.py": "9ee874b25077f3d56f7a60f5a14c915458140165d58a17ac63904631d1cfbbb5"
+  },
+  "patch": {
+    "artifact": "HARDWARE-CORRECTION.patch",
+    "sha256": "823dd3ccc727cd8ecb95f257340b2c4255463e1015e4bb4359dbc97075e1d888",
+    "files": 2,
+    "insertions": 81,
+    "deletions": 4
+  },
+  "deployment": "DEFERRED_REVIEWED_MIMO_SOURCE_CLOSURE_TRANSITION_REQUIRED",
+  "liveInference": false,
+  "vmActions": false,
+  "sourceCommitCreated": false,
+  "pendingOwnedWork": []
+}
