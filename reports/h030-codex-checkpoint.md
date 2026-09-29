@@ -1,6 +1,6 @@
 # H030 Codex completion — second bounded window
 
-September 29, 2026. Authorized **06:53–08:53 UTC**; updated08:33 UTC.
+September 29, 2026. Authorized **06:53–08:53 UTC**; worker execution closed08:39; checkpoint08:41 UTC.
 Integration is **incomplete**. Public Sova chat routes remain in maintenance
 (HTTP503); the status page remains available. The newest deployed changes stay
 in place, as requested. Chats, files and historical uncertain owners are preserved.
@@ -39,8 +39,14 @@ on unchanged files do not qualify this native workflow.
 
 Public node output omits underlying proof-age/validated-boot fields, so those
 new diagnostic fields are null. The exact producer-side cause is not established
-by that omission or by a later healthy snapshot. Worker1 is examining a finite
-contention/refresh path; the15-second proof requirement remains unchanged.
+by that omission or by a later healthy snapshot. A finite regression reproduces one scheduling defect: refused lock entry skips
+a whole hardware-proof refresh. The reviewed correction retries only entry
+within the existing two-second callback budget; acquired persistence is not
+replayed. The final source also exposes bounded proof metadata, preserving the
+15-second requirement and positive/unknown behavior.29 combined focused checks
+pass. Commits5176ca4/831ace6 are integrated but not deployed. This mechanism is not proof
+of the historical cold failure's cause. Updating the running MiMo source closure
+is a separate activation requirement.
 
 ### Image startup holds the common lifecycle lock too long
 
@@ -78,8 +84,9 @@ ordinary specialist gates remain closed pending actual workflow qualification.
 Much of this window addressed infrastructure admission, source-pinned lifecycle
 recovery and exact state settlement rather than model generation. No model
 benchmark,950K request, hardware/fan/power/ECC tuning or driver/runtime upgrade
-was performed. Worker2 closed08:29 after settling all owned work; the remaining
-worker has a hard08:43 deadline, leaving publication time inside the two-hour limit.
+was performed. Worker2 closed08:29 and Worker1 closed08:39 after settling all owned work.
+Neither worker remains active or waits on inference. Publication remains inside
+the two-hour limit. No older baseline was restored; Sova chat stays unavailable.
 
 ## Evidence
 
@@ -88,5 +95,6 @@ worker has a hard08:43 deadline, leaving publication time inside the two-hour li
   [correlated cold failure](h030-flow03-20260929/COLD-HARDWARE-FAILURE.json).
 - [Frontier lifecycle handoff](h030-frontier-20260929/REPORT.md) and
   [unresolved image critical section](h030-frontier-20260929/IMAGE-MIMO-LIFECYCLE-BLOCKER.md).
+- [Final source correction and readiness evidence](h030-frontieraccept02-20260929/REPORT.md).
 - Earlier failed attempts and source receipts remain in the H030/H029 reports.
   Bulky raw traces, credentials and private workflow captures remain outside Git.

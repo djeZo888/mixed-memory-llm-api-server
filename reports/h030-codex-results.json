@@ -1,8 +1,8 @@
 {
   "schema": 1,
   "task": "H030-20260929",
-  "status": "IN_PROGRESS",
-  "updatedUtc": "2026-09-29T08:31:00Z",
+  "status": "WINDOW_STOPPED_INCOMPLETE",
+  "updatedUtc": "2026-09-29T08:41:00Z",
   "deadlineUtc": "2026-09-29T08:53:00Z",
   "source": {
     "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
@@ -14,7 +14,11 @@
     "compactionWorker": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
     "compactionIntegrated": "b021a7d",
     "specialistIntegrated": "2b40610",
-    "hardwareDiagnosticsIntegrated": "669c9e2"
+    "hardwareDiagnosticsIntegrated": "669c9e2",
+    "hardwareRefreshWorker": "813f1248319073182a174b18fcfa940554493402",
+    "hardwareRefreshIntegrated": "5176ca4",
+    "hardwareProofMetadataWorker": "bad9bc1ec35cdf92461238e626f8cd2d5b534ee8",
+    "hardwareProofMetadataIntegrated": "831ace6"
   },
   "acceptance": {
     "ordinaryCoding": "PASS",
@@ -49,7 +53,9 @@
     "newMimoRecoverySubset": 25,
     "countsOverlap": true,
     "unrelatedBaselineProxyExpectation": "FAIL_REPRODUCED_ON_BASELINE",
-    "compactionResponses": 35
+    "compactionResponses": 35,
+    "hardwareRefreshAndProjectionBeforeMetadata": 27,
+    "finalHardwareRefreshAndMetadata": 29
   },
   "deployment": {
     "appSource": "2b40610e937ad6256450e055ffd1d5647997f4c5",
@@ -96,6 +102,27 @@
     "ordinary": "reports/h030-flow02-20260929/",
     "lastWorker2ExitUtc": "2026-09-29T08:29:01Z",
     "allWorker2WorkSettled": true,
-    "worker1FinalTask": "01a0ec44-d831-79f0-8887-06e77d54d8f0"
-  }
+    "worker1FinalTask": "01a0ec44-d831-79f0-8887-06e77d54d8f0",
+    "finalHardwareSource": "reports/h030-frontieraccept02-20260929/",
+    "lastWorker1ExitUtc": "2026-09-29T08:39:18.609Z",
+    "allWorker1WorkSettled": true
+  },
+  "preparedUndeployed": {
+    "hardwareRefresh": {
+      "status": "SOURCE_REVIEWED_FIXTURE_PASS_NOT_DEPLOYED",
+      "commit": "5176ca4",
+      "baselineRegression": "FAIL_NONE_IS_NOT_FALSE",
+      "historicalColdCauseEstablished": false,
+      "guardTtlMs": 15000,
+      "existingCallbackBudgetSeconds": 2,
+      "newBodyRetries": 0
+    },
+    "projection": {
+      "status": "SOURCE_REVIEWED_FIXTURE_PASS_NOT_DEPLOYED",
+      "commit": "831ace6",
+      "behavior": "Expose bounded validated boot, UUIDs and effective proof age; current safety criteria unchanged"
+    }
+  },
+  "workerImplementationEndedUtc": "2026-09-29T08:39:18.609Z",
+  "allWorkerSessionsClosed": true
 }

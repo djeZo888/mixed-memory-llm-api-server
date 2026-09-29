@@ -1,68 +1,60 @@
-# Sova — active H030 Codex completion window
+# Sova — H030 closed checkpoint
 
-The user authorized both workers for September 29, 2026, **06:53–08:53 UTC**.
-Root plans, coordinates, reviews, integrates and publishes. mac-worker1 and
-mac-worker2 implement, build, test and operate the VMs through fresh bounded
-native Codex CLI sessions, isolated checkouts and retained session IDs.
-Do not start another execution window or extend this one automatically.
+H030 used the user-authorized September29,2026 **06:53–08:53 UTC** window.
+Worker implementation ended08:39UTC. Both paid native sessions exited0 with
+owned work settled. Do not reopen or extend that window without new user
+instructions. Root coordinates/reviews/publishes; mac-worker1 and mac-worker2
+implement, build, test and operate VMs through bounded fresh native CLI sessions.
 
-## Deadline and preservation
-
-- No new long jobs after08:28; no new short live submissions after08:38.
-- Settle worker/native work by08:43; root publication/report by08:53.
-- The latest user explicitly says to keep the newest deployed state and leave
-  ordinary Sova unavailable until full Codex integration qualifies. Do not
-  restore an older baseline merely to end the window.
-- Preserve chats, files, historical uncertain owners, quarantines, failed
-  evidence and hardware/ownership guards. Never replay uncertain inference.
-- No model/runtime/driver update, hardware tuning, GPU stress or950K benchmark.
-  No GLM restoration, Ada200K routing expansion, accounts, scaling or installer.
-- Publish reviewed source/results to `feature/glm53-flash` / draft PR10; do not
-  merge the incomplete branch into main.
-
-## Current checkpoint —08:17 UTC
+## Current durable state
 
 Read `reports/h030-codex-checkpoint.md`, `reports/h030-codex-results.json` and
-root `orchestration/tasks/H030-20260929/STATUS.md` for the latest durable evidence.
-The accepted scope is `ai-harness/PLAN-CODEX-COMPLETION-20260929.md`.
+`reports/h030-next-execution.md`. Private root records are under
+`orchestration/tasks/H030-20260929/` outside this checkout. Accepted scope remains
+`ai-harness/PLAN-CODEX-COMPLETION-20260929.md`.
 
-- Control publication entry now has bounded cancellation-aware contention
-  handling. Ordinary Codex coding, same-native follow-up and submission
-  deduplication/conflicts passed live. Retain those results without replay.
-- App source2b40610 deployed08:15:31, appPID118087, statusPID14480 unchanged.
-  It includes cross-engine handoff, the reviewed compaction-history correction,
-  bounded hardware rejection diagnostics and protected specialist qualification.
-  Public chat/approval routes remain503; status/admin stay available. MiniMax
-  remains default. Ordinary Codex image/frontier gates remain closed.
-- Corrected compaction run925ccb74 was accepted08:16:31 on the original coding
-  chat using a new actionID. Await its actual outcome, then recall/cold resume.
-  Previous compaction failure and PDF failure remain retained. Do not repeat
-  unchanged PDF: its third request failed hardware_state and exact historical
-  node fields were not retained. A later55-sample check did not reproduce it.
-- MiMo's08:02 read found HELD after a watchdog lease timeout during image
-  recovery. Source shows image startup holds the global lifecycle lease across
-  load/warm-up; historical holder was not directly sampled. Image error recovery
-  can also enter this path. This is an unresolved production reliability issue.
-- Old MiMo physically stopped and was reconciled SETTLED08:14:17 with both
-  failures preserved. One new normal start is ownedLOADING: launchfbfd4635,
-  container87d2b6f1, PID3442849, supervisor3442364, manifest5c364e58, owner1cc1ee45.
-  No more image lifecycle writes; no retry/recovery loop. One fresh readiness
-  check around08:25–26 may precede scoped specialist acceptance.
-- Image API recovered ready/admitting07:57:50. Three Qwen native identities
-  remain unchanged:480K/480K/200K. New Ada200K is not in480K harness routing.
-- MiMo remains950000/65536/880000 with eight decode threads. Candidate flags
-  stayfalse/false until actual current owned readiness and reviewed two-leaf
-  activation. Capacity allocation is not an occupied950K success.
+- Full Codex integration is incomplete. Public Sova chat remains503; status is
+  available. The latest user requires keeping the newest deployed state and
+  leaving Sova unavailable until complete. Do not restore an older baseline.
+- Deployed app2b40610 activated08:15:31. AppPID118087/statusPID14480 were observed
+  unchanged; use timestamps, not assumed future health. MiniMax stays default.
+- Ordinary coding, same-native follow-up, durable submission dedupe/conflicts,
+  corrected small native compaction and four-fact recall passed. Reuse these
+  results when contracts are unchanged. Cross-engine handoff has source/UI
+  coverage but no live acceptance.
+- Actual cold resume failed08:22:36 count/node_after with hardwareLatched=null
+  and exact GPU UUID. No generation ran. Earlier PDF also failed admission.
+  Historical producer cause remains unproved; do not claim a later fixture or
+  good snapshot proves that historical event.
+- Source-only5176ca4/831ace6 correct hardware-refresh entry scheduling and add
+  bounded proof metadata.29 combined focused tests pass. NOT DEPLOYED: these
+  node files are in MiMo's protected source closure. Review the complete source
+  transition before any write; preserve15s validity and hardware guards.
+- Image startup holds the common lifecycle lease through load/warm-up. It can
+  starve MiMo's mandatory guard, including on image error recovery. This remains
+  a production defect. Fix ownership/publication phases, not guard timeouts.
+- MiMo recovered to exact owned RUNNING950000/65536 with current guard and idle
+  native slot at08:28:28. No inference or occupied950K test was run. Candidate
+  enabled/qualified flags remainfalse/false; ordinary Codex specialist gates
+  remain closed until actual workflow qualification.
+- Three Qwens retain480K/480K/200K. The Ada200K instance is not a fallback for a
+  480K chat. Image remains guarded FullHD. No hardware policies were changed.
 
-## Coordination
+## Next bounded work
 
-Worker2 is the sole app/config/deployment writer. Worker1 owns ai-vm recovery,
-provider evidence and specialist acceptance planning. Shared app restart and
-inference scheduling are explicit; native workers must read/acknowledge their
-INBOX separately and match that hash immediately before live submission.
-Use one combined reviewed release; source-only fixtures are not live acceptance.
-Scoped tickets do not authorize unrelated sessions or create global PASS gates.
+Use the ordered handoff in `reports/h030-next-execution.md`: complete shared
+lifecycle fixes in one source batch, activate once with valid source/owner
+transitions, then run retained cold/PDF and specialist workflows and remaining
+queue/lifecycle/handoff cases. Do not repeat passed benchmarks or old bootstrap.
 
-Older execution windows are closed. Their full instructions and records remain
-in Git history and reports/h029*, h028*, h026*, h025*, h024*, h021*. Read only
-specific evidence needed for current work; do not revive old campaigns.
+Preserve chats/files, original failures, two historical uncertain owners and
+three quarantines. Never replay uncertain inference or release a slot before
+settlement. Keep credentials and bulky traces outside Git. No new weights,
+driver/runtime update, GPU stress,950K test, fan/power/ECC tuning, GLM restoration,
+accounts/scaling/installer work or automatic extension in this Codex workstream.
+
+Worker2 owns app/config deployment; Worker1 owns ai-vm/control/model lifecycle.
+One deployment writer at a time. Check acknowledged current instructions before
+inference; do not keep paid worker sessions alive only to wait for model loads.
+Publish reviewed changes on `feature/glm53-flash` / draftPR10. Keep the incomplete
+branch out of main until release-qualified. Older windows remain closed.
