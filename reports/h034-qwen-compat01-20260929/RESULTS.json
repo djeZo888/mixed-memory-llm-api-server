@@ -1,0 +1,262 @@
+{
+  "schema": 1,
+  "updatedUtc": "2026-09-29T17:44:56.441166+00:00",
+  "base": "efde32a0bb2057d014d5168b3a613fc3dbccd801",
+  "nativeThreadId": "01a0ee2c-ef8f-75c3-a8ad-3b38de7fa52d",
+  "initialCallGrant": 6,
+  "additionalCallGrant": "Root inbox17:35 exactly two, fixed cases07/08",
+  "callsAdmitted": 8,
+  "callsSettled": 8,
+  "callsRemaining": 0,
+  "toolsExecuted": 0,
+  "imageJobs": 0,
+  "totalInputTokens": 73682,
+  "totalOutputTokens": 511,
+  "latencyDefinition": "guardedWallSeconds includes before/after production checks and app ownership reads; not pure inference latency or throughput benchmark",
+  "results": [
+    {
+      "case": "01-minimal",
+      "description": "Minimal original empty schema",
+      "outcome": "PASS {}",
+      "startedUtc": "2026-09-29T17:25:14.371Z",
+      "settledUtc": "2026-09-29T17:25:33.238Z",
+      "guardedWallSeconds": 18.867,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 332,
+      "outputTokens": 22,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "argumentKeys": [],
+          "emptyObject": true
+        }
+      ],
+      "wireRequestSha256": "431304e6319b80a3f40d7ae85973658f9892bfa5f863551ea1158509f5c1eddf",
+      "responseSha256": "ad11dcef1ab10ebb6eb3d18f165b5cd7d1dc60bfa471803d98cdf815235d99d0",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "02-retained",
+      "description": "Retained full original empty schema",
+      "outcome": "FAIL extra prompt/references/seed/size",
+      "startedUtc": "2026-09-29T17:25:50.452Z",
+      "settledUtc": "2026-09-29T17:26:11.998Z",
+      "guardedWallSeconds": 21.546,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 12128,
+      "outputTokens": 65,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "cbe258cedebfa3e7bdd5c2e06aa5fdf225ef7781e9ea904a45ef5459a38de847",
+          "argumentKeys": [
+            "prompt",
+            "references",
+            "seed",
+            "size"
+          ],
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "9cd4bde0a20f94845033b8214d8aa04eac67928168920b537e55d1c31a098145",
+      "responseSha256": "fdd7f6f23c5bb86b8557eee0182101543c97301f843abfbb00c42e547f707c77",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "03-strict-auto",
+      "description": "Retained full empty schema, strict true",
+      "outcome": "FAIL length256, missing arguments",
+      "startedUtc": "2026-09-29T17:27:27.932Z",
+      "settledUtc": "2026-09-29T17:27:55.003Z",
+      "guardedWallSeconds": 27.071,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "length",
+      "inputTokens": 12128,
+      "outputTokens": 256,
+      "parseError": "Tool finish mismatch",
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "argumentKeys": null,
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "ff62305964aa956906c56e6f43fc04bdd8f3f29a9499f5a61d83532e48df06f1",
+      "responseSha256": "00992920e7577bdc04540fc76625055020cd9b726dedaeb67ec344971da520cc",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "04-empty-guidance",
+      "description": "Retained full empty schema, no-arg description",
+      "outcome": "FAIL extra references/size",
+      "startedUtc": "2026-09-29T17:29:59.682Z",
+      "settledUtc": "2026-09-29T17:30:20.786Z",
+      "guardedWallSeconds": 21.104,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 12165,
+      "outputTokens": 43,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "4f43b57a9894374565282105c7bc04774ee1d975149141946c4a88d6a8150ba5",
+          "argumentKeys": [
+            "references",
+            "size"
+          ],
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "62e2c66e24a82a4f5978f16cd2c9d11f903aca2668ec6016bd815ec11d7c7498",
+      "responseSha256": "05d3816006ff3f6da73507762c74a73968bd7173296652f855431dddcb82163a",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "05-minimal-strict",
+      "description": "Minimal empty schema, strict true",
+      "outcome": "PASS {}",
+      "startedUtc": "2026-09-29T17:31:11.585Z",
+      "settledUtc": "2026-09-29T17:31:30.966Z",
+      "guardedWallSeconds": 19.381,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 332,
+      "outputTokens": 26,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "44136fa355b3678a1146ad16f7e8649e94fb4fc21fe77e8310c060f61caaff8a",
+          "argumentKeys": [],
+          "emptyObject": true
+        }
+      ],
+      "wireRequestSha256": "7bf4b3c6f9228410d29b80e1e30a042b239cc4aa6075e19da3473da6e3a80459",
+      "responseSha256": "2e47fccb4f0644ce2e9df727621200dca60ff5ef133535751ee9246104904cb0",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "06-parameterized-query",
+      "description": "Retained full new query contract, strict true",
+      "outcome": "PASS query=capabilities",
+      "startedUtc": "2026-09-29T17:32:25.125Z",
+      "settledUtc": "2026-09-29T17:32:45.798Z",
+      "guardedWallSeconds": 20.673,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 12166,
+      "outputTokens": 33,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "64d681360b1093d9b697c0d32e267427ab94f3687ecde44585506aebeb84a2b5",
+          "argumentKeys": [
+            "query"
+          ],
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "77a5b45412215295c022be330f69e0d71371485051f51e04071f7ae902cd10a0",
+      "responseSha256": "5fdeaf0197146469a77e2da6983d2124df08bb6118a0534acd69ad7286f35581",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "07-feedback-query",
+      "description": "Retained error feedback, new query, strict true",
+      "outcome": "PASS query=capabilities",
+      "startedUtc": "2026-09-29T17:35:28.992Z",
+      "settledUtc": "2026-09-29T17:35:49.243Z",
+      "guardedWallSeconds": 20.251,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 12265,
+      "outputTokens": 33,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "64d681360b1093d9b697c0d32e267427ab94f3687ecde44585506aebeb84a2b5",
+          "argumentKeys": [
+            "query"
+          ],
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "9439163088841fa98cefcb87b2936e4f02b2a55a884d839acc5f0b90a276f008",
+      "responseSha256": "7e99c8117f115f8d4d5e326ada6ccb375ed35463c719fbad1f04e81ea5d20f2f",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    },
+    {
+      "case": "08-query-nonstrict",
+      "description": "Retained full new query contract, strict false",
+      "outcome": "PASS query=capabilities",
+      "startedUtc": "2026-09-29T17:39:46.059Z",
+      "settledUtc": "2026-09-29T17:40:06.990Z",
+      "guardedWallSeconds": 20.931,
+      "http": 200,
+      "eof": true,
+      "done": true,
+      "finishReason": "tool_calls",
+      "inputTokens": 12166,
+      "outputTokens": 33,
+      "parseError": null,
+      "tools": [
+        {
+          "name": "sova_ns_mcp__image_image_capabilities",
+          "argumentsSha256": "64d681360b1093d9b697c0d32e267427ab94f3687ecde44585506aebeb84a2b5",
+          "argumentKeys": [
+            "query"
+          ],
+          "emptyObject": false
+        }
+      ],
+      "wireRequestSha256": "1557352b352e675a012debc6f9d9c240f6ccaaad1eef6e2c827a2d3732a321fd",
+      "responseSha256": "7c957b4299b7d2a3b9d0c2e36210c9e6e55e95764616ae4bb9f1cf61ef457ab2",
+      "sameInstanceSha256": "390cc05f1fe66a5aba4af2a8ba87aa901b9417eec11be263abc3f6d3f17bc5f1",
+      "state": "settled"
+    }
+  ],
+  "qualification": "No tools dispatched; not image workflow or global compatibility qualification",
+  "originalContract": "FAIL_RETAINED_CONTEXT",
+  "newQueryContract": "PASS_THREE_SHORT_PROVIDER_PROBES_INCLUDING_FEEDBACK; STRICT_FALSE_ALSO_PASS",
+  "sourceChange": "Qwen exact capability-query schema strict enforcement; paired W2 MCP contract required",
+  "tests": {
+    "focused": {
+      "passed": 39,
+      "failed": 0
+    },
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "deployment": "NOT_PERFORMED",
+  "status": "W1 source/tests ready for coordinator/W2 review"
+}

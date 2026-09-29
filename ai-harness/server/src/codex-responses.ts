@@ -5,7 +5,7 @@
 import { randomUUID, createHash } from "node:crypto";
 import { StringDecoder } from "node:string_decoder";
 import { ApiError } from "./errors.js";
-import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
+import { codexProvider, codexFunctionStrict, type CodexProviderContract } from "./codex-provider.js";
 export const CODEX_VERSION = "0.158.0";
 export const CODEX_CONTEXT = { "qwen3.8-27b": 480000, "mimo-v2.6-pro-rl": 950000 } as const;
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
@@ -205,7 +205,8 @@ export function translateResponses(value: unknown, outputLimit = 65536, selected
             if (!object(t.parameters) || typeof t.strict !== "boolean")
                 reject("Invalid function schema");
             tools.set(name, { custom: false, grammar: false, ...namespaced.get(name) });
-            return { type: "function", function: { name, description: string(t.description), parameters: t.parameters, strict: t.strict } };
+            return { type: "function", function: { name, description: string(t.description), parameters: t.parameters,
+                strict: codexFunctionStrict(provider, namespaced.get(name) ?? {}, t.parameters, t.strict) } };
         }
         if (t.type !== "custom")
             reject("Unsupported tool type");
