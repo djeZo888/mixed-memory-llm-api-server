@@ -175,6 +175,7 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --volume "$profile_dir:$profile_dir:rw,rprivate" \
   --volume "$workspace:$workspace:rw,rprivate" \
   --volume "$launcher_dir/codex/$image_config:$container_data/config.toml:ro,rprivate" \
+  --volume "$launcher_dir/codex/models.json:/opt/sova/codex/models.json:ro,rprivate" \
   --volume "$launcher_dir/codex/skills/sova-local-tools:$container_data/skills/sova-local-tools:ro,rprivate" \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "CODEX_HOME=$container_data" \
