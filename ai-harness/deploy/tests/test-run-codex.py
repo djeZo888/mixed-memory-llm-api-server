@@ -11,7 +11,8 @@ spec.loader.exec_module(base)
 base.LAUNCHER = Path(__file__).resolve().parents[1] / 'run-codex.sh'
 base.REVISION = '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'
 base.IMAGE_ID = 'sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad'
-base.PATCHSET = hashlib.sha256(b''.join((base.LAUNCHER.parent/'codex'/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest()
+# Cached native image label is distinct from the updated host-mounted policy.
+base.PATCHSET = 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 
 class CodexLauncherContract(base.LauncherContract):
     def test_acp_transport_mounts_and_environment_allowlist(self):

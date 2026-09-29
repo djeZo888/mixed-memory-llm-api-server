@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
+import { readFileSync } from "node:fs";
 import { CODEX_SPECIALIST_PINS, loadCodexSpecialists, validateCodexSpecialists } from "../src/codex-specialist-qualification.js";
 import { codexCapabilities } from "../src/codex-capabilities.js";
 import { composeCodexHost } from "../src/codex-host.js";
@@ -57,6 +58,15 @@ test("partial qualification is independent; exact scoped acceptance remains sepa
   assert.equal(host.runtime.imageToolEnabled, false); assert.equal(host.responses?.frontierQualified, undefined);
   assert.equal(host.responses?.frontierAcceptance?.("unrelated"), false);
 });
+test("image qualification binds the installed OCI manifest/config, separately from its parent", () => {
+  const binding = JSON.parse(readFileSync(new URL("../../../configs/runtimes/h005-runtime-binding.json", import.meta.url), "utf8")).image;
+  assert.equal(CODEX_SPECIALIST_PINS.image.runtimeImage, binding.image_id);
+  assert.equal(CODEX_SPECIALIST_PINS.image.runtimeImageIdDomain, binding.image_id_domain);
+  assert.equal(CODEX_SPECIALIST_PINS.image.runtimeConfigDigest, binding.image_config_digest);
+  assert.equal(CODEX_SPECIALIST_PINS.image.parentImageReference, binding.parent_image_reference);
+  assert.equal(CODEX_SPECIALIST_PINS.image.runtimeRevision, binding.upstream_revision);
+  assert.notEqual(CODEX_SPECIALIST_PINS.image.runtimeImage, binding.parent_image_reference);
+});
 for (const [name, mutate] of Object.entries<Record<string, (f: ReturnType<typeof fixture>) => void>[string]>({
   "foreign engine": f => f.record.pins.engine.sourceRevision = "0".repeat(40),
   "foreign policy": f => f.record.pins.policy = "foreign",
@@ -64,6 +74,13 @@ for (const [name, mutate] of Object.entries<Record<string, (f: ReturnType<typeof
   "wrong MiMo model": f => f.record.pins.frontier.profile.model = "glm-5.3-flash",
   "wrong MiMo template": f => f.record.pins.frontier.templateSha256 = "0".repeat(64),
   "wrong image revision": f => f.record.pins.image.modelRevision = "0".repeat(40),
+  "parent image is not tested runtime": f => f.record.pins.image.runtimeImage = f.record.pins.image.parentImageReference,
+  "wrong image identity domain": f => f.record.pins.image.runtimeImageIdDomain = "config_digest",
+  "wrong image config": f => f.record.pins.image.runtimeConfigDigest = "sha256:" + "0".repeat(64),
+  "wrong image parent": f => f.record.pins.image.parentImageReference = "sha256:" + "0".repeat(64),
+  "stale tool policy": f => f.record.pins.toolPolicySha256 = "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec",
+  "missing tool policy": f => delete f.record.pins.toolPolicySha256,
+  "parent-only retained evidence": f => { f.evidence["fixture-image.json"].value.pins.image.runtimeImage = f.evidence["fixture-image.json"].value.pins.image.parentImageReference; f.refresh("image"); },
   "changed output budget": f => f.record.pins.frontier.profile.maxOutputTokens = 512,
   "changed compaction": f => f.record.pins.frontier.profile.autoCompactTokenLimit = 400000,
   "changed thinking": f => f.record.pins.frontier.profile.reasoning = "none",
