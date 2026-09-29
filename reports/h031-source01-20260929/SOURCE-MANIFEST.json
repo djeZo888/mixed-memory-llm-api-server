@@ -1,0 +1,39 @@
+{
+  "base_commit": "70e3e7c1e59eb846eab65f16c11215c000f79351",
+  "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+  "delta_raw_sha256": "cd9b4a0fbb22e9d97f6ab826492282f6560402685c73b7e1023d94a6a7914e59",
+  "focused_test_changed": [
+    "tests/test_mimo_same_boot_source.py"
+  ],
+  "inventory_sha256": "e486de71e282c0531ed2e2e585e1907664c5ba17320b7f9b10d58b7b97fff050",
+  "prior_manifest_canonical_sha256": "5c364e58cba01a569f13f6a239c6383dec1d5b92a94f3ab8d608962c0a178a39",
+  "prior_manifest_raw_sha256": "ad6b438f17154d7434426b3b9a4b0238558a86ba5ab764ccb5c3c2b0f0099c8b",
+  "prior_running_state_raw_sha256": "1d450706ba33ee250aec9e1728504c63657e79df12f76be487cf40938bd6378d",
+  "production_changed": [
+    "scripts/runtime/mimo/owner.py"
+  ],
+  "schema_version": 1,
+  "source_commit": "9cd941cdbd9170fb56ccacbc87f3238e3bd40f0e",
+  "sources": {
+    "scripts/control/node.py": {
+      "installed_path": "/usr/local/lib/llm-server/node-api/scripts/control/node.py",
+      "predecessor_sha256": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+      "sha256": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59"
+    },
+    "scripts/control/node_collectors.py": {
+      "installed_path": "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py",
+      "predecessor_sha256": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+      "sha256": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77"
+    },
+    "scripts/runtime/mimo/owner.py": {
+      "installed_path": "/data/services/mimo-h016-20260927/source/owner.py",
+      "predecessor_sha256": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098",
+      "sha256": "206ccfe397d3b855836f28a05170ac1d5af56c7d93cb85e1bd1cb4ff6c84f5bc"
+    }
+  },
+  "status": "SOURCE_PROPOSAL_NOT_DEPLOYED",
+  "successor_manifest_canonical_sha256": "d713d660b691a2573b2493ae82e8afd79e11d905aaa8f5a3795a28a3f63371b5",
+  "successor_manifest_raw_sha256": "d0dfb09b126cff0ba132eb59cdcdc11b8538a53f1ef58e91c4ab990059e1492e",
+  "test_file_sha256": "afaa893a701d5f74bf1b45196185a13e2cd75b3e045a99e82cdd2faca9c369fd",
+  "test_log_sha256": "01ec03ac769b7787a3346f997184dd03d00137d425f1f2b846b3d54eb8c0af08"
+}
