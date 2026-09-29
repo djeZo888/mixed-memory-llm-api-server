@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import contextlib
 import datetime
+import copy
+import fcntl
 import hashlib
 import json
 import os
@@ -72,7 +74,7 @@ from install.storage import StorageError
 from lifecycle.manager import StorageRunner
 from lifecycle.runtime_io import validate_image_container
 from lifecycle.storage_binding import RegisteredStorageBinding
-from lifecycle.hardware_policy import HardwarePolicy, RegisteredLatchStore
+from lifecycle.hardware_policy import HardwarePolicy, STATE_SUFFIX
 from runtime.h005_runtime_binding import load as load_runtime_binding
 
 
@@ -88,6 +90,10 @@ def now():
 # Exact codes only: exception text, subprocess output and arbitrary code-shaped
 # strings are never diagnostics. Unknown exceptions collapse to a fixed code.
 SAFE_FAILURE_CODES = frozenset({
+    'image_operation_busy', 'image_operation_changed', 'image_operation_unresolved',
+    'image_recovery_changed', 'image_systemd_owner_required', 'image_native_generation_changed',
+    'image_native_action_uncertain', 'image_boot_changed', 'image_config_changed',
+    'image_native_absence_unproven',
     'ada_compute_process_already_present',
     'ada_current_margin_below_5_percent',
     'ada_identity_missing',
@@ -312,7 +318,8 @@ def lease_admission(deadline):
 
 def start_admission():
     """Preserve the start owner's two-second entry contention allowance."""
-    return lease_admission(time.monotonic() + START_ADMISSION_SECONDS)
+    deadline = time.monotonic() + START_ADMISSION_SECONDS
+    return lease_admission(min(deadline, OPERATION_DEADLINE) if OPERATION_DEADLINE is not None else deadline)
 
 
 def verify_source_closure(config):
@@ -386,11 +393,34 @@ class Runtime:
                 == self.config['checkpoint_receipt_sha256'], 'checkpoint_receipt_changed')
         verify_source_closure(self.config)
 
+    def probe_hardware(self):
+        # Preserve the normal exact-target two-second probe, outside the common
+        # lease. Unknown never becomes a proof or a global/ordinal fallback.
+        before = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        observed = run(['/usr/bin/nvidia-smi', '--id=' + GPU_UUID, '--query-gpu=uuid',
+                        '--format=csv,noheader,nounits'], timeout=2).stdout
+        require(isinstance(observed, str) and len(observed) <= 4096
+                and observed.strip() == GPU_UUID, 'hardware_target_unknown')
+        after = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        require(before == after == self.boot, 'image_boot_changed')
+        return {'boot': before, 'observed_at': now(), 'observation_id': uuid.uuid4().hex}
+
     def require_hardware(self):
-        lease = getattr(self, 'lease', None)
-        store = RegisteredLatchStore(self.binding, lease=lease, storage_io=storage_io)
-        HardwarePolicy(store, lease=lease,
-                       run=lambda argv, timeout: run(argv, timeout=timeout).stdout).require_start([GPU_UUID])
+        # The existing producer validates freshness again after reading the
+        # protected latch; same-boot positives remain sticky. Its store uses our
+        # held mounted descriptors, so no full storage command runs under lease.
+        runtime = self
+        class AnchoredLatchStore:
+            def read(self):
+                return runtime.services_anchor.read_json(STATE_SUFFIX, max_bytes=65536)
+            def write(self, value):
+                runtime.lease.validate()
+                runtime.services_anchor.atomic_json(STATE_SUFFIX, value)
+        proof = self.hardware_observation
+        result = HardwarePolicy(AnchoredLatchStore(), lease=self.lease).validate_required(
+            GPU_UUID, current_boot_id=proof['boot'], observed_at=proof['observed_at'],
+            observation_id=proof['observation_id'])
+        require(result['hardware_latched'] is False, result.get('reason') or 'hardware_fault')
 
     def guards(self):
         for extra in ([], ['--root-guard']):
@@ -402,14 +432,27 @@ class Runtime:
 
     @contextlib.contextmanager
     def anchor(self):
+        existing = getattr(self, 'storage_anchor', None)
+        if existing is not None:
+            existing.check()
+            yield existing
+            existing.check()
+            return
+        # Full topology/capacity/root guards occur before common admission and
+        # after its release; held mounted descriptors supply fast live checks.
         with self.binding.mounted_guard(storage_io) as guard:
             with storage_io.AnchoredRoot(str(BASE), guard) as anchored:
-                yield anchored
+                with storage_io.AnchoredRoot(self.binding.path('services'), guard) as services:
+                    self.storage_anchor, self.services_anchor = anchored, services
+                    try:
+                        yield anchored
+                    finally:
+                        self.storage_anchor = self.services_anchor = None
 
     def state(self):
-        if not (BASE / 'state.json').exists():
+        value = self.record('state.json')
+        if value is None:
             return {'schema_version': 1, 'owner': OWNER, 'phase': 'absent', 'container': None}
-        value = self.binding.read_json('services', str(BASE / 'state.json'))
         require(value['schema_version'] == 1 and value['owner'] == OWNER, 'state_identity_mismatch')
         return value
 
@@ -423,37 +466,249 @@ class Runtime:
         if not identity:
             result = run(['docker', 'inspect', NAME], check=False)
             require(result.returncode != 0, 'unrecorded_backend_container')
+            self.prove_absent()
             return None
         require(re.fullmatch('[0-9a-f]{64}', identity['id']), 'invalid_owned_container_id')
         result = run(['docker', 'inspect', identity['id']], check=False)
         if result.returncode:
             require(missing_ok, 'owned_backend_missing')
-            require(run(['docker', 'inspect', NAME], check=False).returncode != 0,
-                    'conflicting_backend_name')
+            self.prove_absent(identity['id'])
             return None
         value = json.loads(result.stdout)[0]
         return validate_image_container(value, state, self.config)
 
+    def prove_absent(self, cid=None):
+        # Client/daemon errors are not absence. A successful complete inventory
+        # must exclude both exact CID and fixed name before releasing ownership.
+        output = run(['docker', 'container', 'ls', '--all', '--no-trunc',
+                      '--format', '{{json .}}'], timeout=5).stdout
+        require(len(output) <= 1024 * 1024, 'image_native_absence_unproven')
+        rows = [json.loads(line) for line in output.splitlines()]
+        require(len(rows) <= 1024 and all(isinstance(row, dict)
+                and re.fullmatch('[0-9a-f]{64}', str(row.get('ID', '')))
+                and isinstance(row.get('Names'), str) for row in rows), 'image_native_absence_unproven')
+        require(all(row['ID'] != cid and NAME not in row['Names'].split(',') for row in rows),
+                'image_native_absence_unproven')
+
+    @contextlib.contextmanager
+    def critical(self, *, hardware=False):
+        # Full slow storage commands never occupy the common lease. Anchored
+        # checks below still revalidate actual mounted storage inside it.
+        self.guards()
+        if hardware:
+            self.hardware_observation = self.probe_hardware()
+        with self.anchor() as anchored, start_admission() as lease:
+            self.lease = lease
+            common_deadline = time.monotonic() + START_ADMISSION_SECONDS
+            if OPERATION_DEADLINE is not None:
+                common_deadline = min(common_deadline, OPERATION_DEADLINE)
+            try:
+                with self.anchor() as anchored:
+                    anchored.check()
+                    require(Path('/proc/sys/kernel/random/boot_id').read_text().strip() == self.boot,
+                            'image_boot_changed')
+                    require(anchored.read_json('config.json') == self.config,
+                            'image_config_changed')
+                    verify_source_closure(self.config)
+                    if getattr(self, 'operation_file', None) is not None:
+                        self.operation_file.check()
+                        require(self.record('operation.json') == self.operation_record,
+                                'image_operation_changed')
+                        require(self.state() == self.expected_state, 'image_operation_changed')
+                        recovery = self.record('recovery.json')
+                        token = self.operation_record['recovery']
+                        require((token is None and (not recovery or recovery.get('status') == 'complete'))
+                                or (token is not None and recovery and recovery.get('status') == 'active'
+                                    and recovery.get('token') == token and recovery.get('boot') == self.boot
+                                    and recovery.get('config_sha256') == self.config_digest()),
+                                'image_recovery_changed')
+                    if hardware:
+                        if getattr(self, 'operation_file', None) is not None:
+                            generation = self.expected_state.get('native_generation')
+                            if generation:
+                                require(self.process_stamp(generation['Pid']) ==
+                                        {key: generation[key] for key in ('pid', 'start_ticks')},
+                                        'image_native_generation_changed')
+                            if recovery and recovery.get('status') == 'active':
+                                require(self.process_stamp(recovery['pid']) == recovery.get('process'),
+                                        'image_recovery_changed')
+                        self.require_hardware()
+                    require(time.monotonic() < common_deadline, 'owned_operation_deadline')
+                    yield
+                    anchored.check()
+            finally:
+                self.lease = None
+
+    def record(self, name):
+        with self.anchor() as anchored:
+            if anchored.stat(name, missing_ok=True) is None:
+                return None
+            return anchored.read_json(name)
+
+    def write_record(self, name, value):
+        with self.anchor() as anchored:
+            anchored.atomic_json(name, value)
+
+    @contextlib.contextmanager
+    def singleton(self, name):
+        # Registered anchored descriptors provide no-follow/replacement checks;
+        # CLOEXEC prevents Docker/systemctl children prolonging this ownership.
+        with self.anchor() as anchored:
+            with anchored.open(name, os.O_RDWR | os.O_CREAT, 0o600) as stream:
+                try:
+                    fcntl.flock(stream.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+                except BlockingIOError:
+                    raise RuntimeError('image_operation_busy') from None
+                stream.check()
+                yield stream
+
+    def systemd_identity(self):
+        invocation = os.environ.get('INVOCATION_ID', '')
+        require(re.fullmatch('[0-9a-f]{32}', invocation), 'image_systemd_owner_required')
+        # systemd supplies INVOCATION_ID; bind it to this actual fixed unit's
+        # kernel cgroup, then its current manager PID/invocation read outside lock.
+        cgroup = Path('/proc/self/cgroup').read_text().splitlines()
+        require(any(line == '0::/system.slice/' + UNIT for line in cgroup),
+                'image_systemd_owner_required')
+        unit = dict(line.split('=', 1) for line in run(
+            ['systemctl', 'show', UNIT, '-p', 'MainPID,ControlPID,InvocationID'], timeout=2).stdout.splitlines())
+        require(unit.get('InvocationID') == invocation
+                and str(os.getpid()) in (unit.get('MainPID'), unit.get('ControlPID')),
+                'image_systemd_owner_required')
+        return invocation
+
+    def config_digest(self):
+        return hashlib.sha256(json.dumps(self.config, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+    def recovery_admission(self, action):
+        recovery = self.record('recovery.json')
+        if not recovery or recovery.get('status') == 'complete':
+            return None
+        require(recovery.get('boot') == self.boot and recovery.get('status') == 'active'
+                and recovery.get('config_sha256') == self.config_digest(),
+                'image_recovery_changed')
+        if getattr(self, 'recovery_record', None) == recovery:
+            return recovery['token']
+        require(recovery.get('phase') in ('restart', 'settle')
+                and self.process_stamp(recovery['pid']) == recovery.get('process'), 'image_recovery_changed')
+        invocation = self.unit_invocation
+        require(invocation is not None, 'image_systemd_owner_required')
+        if action == 'start':
+            require(recovery['phase'] == 'restart' and recovery.get('child_start') is None,
+                    'image_recovery_changed')
+            recovery['child_start'] = invocation
+            self.write_record('recovery.json', recovery)
+        else:
+            require(invocation in (recovery.get('prior_invocation'), recovery.get('child_start')),
+                    'image_recovery_changed')
+        return recovery['token']
+
+    @contextlib.contextmanager
+    def operation(self, action):
+        self.boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        self.unit_invocation = (self.systemd_identity() if os.environ.get('INVOCATION_ID')
+                                and not getattr(self, 'recovery_record', None) else None)
+        with self.singleton('operation.lock') as stream:
+            with self.critical(hardware=action == 'start'):
+                previous = self.record('operation.json')
+                require(not previous or previous.get('status') in ('complete', 'failed'),
+                        'image_operation_unresolved')
+                recovery = self.recovery_admission(action)
+                self.expected_state = copy.deepcopy(self.state())
+                record = {'token': uuid.uuid4().hex, 'boot': self.boot, 'pid': os.getpid(),
+                          'action': action, 'status': 'active', 'recovery': recovery,
+                          'config_sha256': self.config_digest(), 'gpu_uuid': GPU_UUID,
+                          'invocation_id': self.unit_invocation,
+                          'prior_state_sha256': hashlib.sha256(json.dumps(self.expected_state,
+                              sort_keys=True, separators=(',', ':')).encode()).hexdigest()}
+                self.write_record('operation.json', record)
+            self.operation_record, self.operation_file = record, stream
+            success = False
+            try:
+                yield
+                success = True
+            finally:
+                try:
+                    with self.critical():
+                        record = dict(record, status='complete' if success else 'failed')
+                        self.write_record('operation.json', record)
+                        self.operation_record = record
+                finally:
+                    self.operation_file = None
+
+    def publish(self, state, *, hardware=False):
+        with self.critical(hardware=hardware):
+            self.save(state)
+            self.expected_state = copy.deepcopy(state)
+
+    def dispatch(self, state, action, argv, *, timeout=60, hardware=False):
+        # This durable marker survives a killed client or lost Docker response.
+        # A later owner must observe physical completion; it cannot repeat it.
+        if action != 'create':
+            self.exact_native(state)
+        actions = state.setdefault('native_actions', {})
+        require(action not in actions, 'image_native_action_uncertain')
+        actions[action] = 'dispatched'
+        self.publish(state, hardware=hardware)
+        return run(argv, timeout=timeout)
+
+    def process_stamp(self, pid):
+        require(type(pid) is int and pid > 0, 'image_native_generation_changed')
+        try:
+            fields = Path('/proc', str(pid), 'stat').read_text().rsplit(')', 1)[1].split()
+            require(fields[0] not in ('Z', 'X'), 'image_native_generation_changed')
+            return {'pid': pid, 'start_ticks': int(fields[19])}
+        except (OSError, ValueError, IndexError):
+            raise RuntimeError('image_native_generation_changed') from None
+
+    def native_generation(self, value):
+        return {**{key: value['State'][key] for key in ('StartedAt', 'Pid')},
+                **self.process_stamp(value['State']['Pid'])}
+
+    def exact_native(self, state, *, missing_ok=False):
+        value = self.inspect_owned(state, missing_ok=missing_ok)
+        generation = state.get('native_generation')
+        if value and generation:
+            require(value['State']['StartedAt'] == generation['StartedAt']
+                    and (not value['State']['Running'] or value['State']['Pid'] == generation['Pid']),
+                    'image_native_generation_changed')
+        return value
+
+    def settle_native(self, state, *, remove=False):
+        value = self.exact_native(state, missing_ok=True)
+        require(state.get('container') or not state.get('native_actions', {}).get('create'),
+                'image_native_action_uncertain')
+        if value:
+            if value['State']['Running']:
+                # Capture an exact generation even for legacy/pre-start-error state.
+                if not state.get('native_generation'):
+                    state['native_generation'] = self.native_generation(value)
+                self.dispatch(state, 'stop', ['docker', 'stop', '--time', '30', value['Id']], timeout=45)
+                value = self.exact_native(state)
+            require(not value['State']['Running'] and value['State']['Pid'] == 0,
+                    'owned_backend_not_settled')
+            state.setdefault('native_actions', {})['stop'] = 'observed_stopped'
+            self.publish(state)
+            if remove:
+                self.dispatch(state, 'remove', ['docker', 'rm', value['Id']])
+                require(self.exact_native(state, missing_ok=True) is None, 'owned_backend_removal_failed')
+        if remove:
+            if state.get('run_id'):
+                state['last_tmp_cleanup'] = self.cleanup_tmp(state['run_id'])
+            state.update(phase='stopped', container=None, warm=False)
+            # Archive actions; only physical removal permits a new native action set.
+            state['last_native_actions'] = state.pop('native_actions', {})
+            state.pop('native_generation', None)
+            self.publish(state)
+
     def reset_owned(self):
         attempt_phase('reset_preflight')
-        self.guards()
-        state = self.state()
-        value = self.inspect_owned(state, missing_ok=True)
-        if value:
+        with self.operation('stop'):
+            state = copy.deepcopy(self.expected_state)
+            state.update(phase='stopping', warm=False)
+            self.publish(state)
             attempt_phase('reset_container')
-            if value['State']['Running']:
-                run(['docker', 'stop', '--time', '30', value['Id']], timeout=45)
-            value = self.inspect_owned(state)
-            require(not value['State']['Running'], 'owned_backend_not_settled')
-            run(['docker', 'rm', value['Id']])
-            require(run(['docker', 'inspect', value['Id']], check=False).returncode != 0,
-                    'owned_backend_removal_failed')
-        attempt_phase('reset_state')
-        if state.get('run_id'):
-            state['last_tmp_cleanup'] = self.cleanup_tmp(state['run_id'])
-        state.update(phase='stopped', container=None, warm=False)
-        self.save(state)
-        self.guards()
+            self.settle_native(state, remove=True)
 
     def tmp_snapshot(self, run_id):
         require(re.fullmatch('[0-9a-f]{32}', run_id), 'invalid_tmp_owner')
@@ -665,9 +920,12 @@ class Runtime:
         require(deadline is not None, 'owned_start_deadline_required')
         self.guards()
         attempt_phase('hardware_preflight')
-        self.require_hardware()
+        with self.critical(hardware=True):
+            pass
         attempt_phase('backend_preflight')
-        state = self.state()
+        state = copy.deepcopy(self.expected_state)
+        require(state.get('phase') in ('absent', 'stopped') and not state.get('container')
+                and not state.get('native_actions'), 'reset_owned_backend_before_start')
         require(self.inspect_owned(state, missing_ok=True) is None, 'reset_owned_backend_before_start')
         self.check_network(state)
         self.check_ports()
@@ -679,17 +937,18 @@ class Runtime:
         self.make_work(run_id)
         archive_failure_fields(state)
         state.update(run_id=run_id, phase='creating', warm=False, container=None, start_utc=now())
-        self.save(state)
-        attempt_phase('container_create')
-        cid = run(self.create_argv(run_id), timeout=60).stdout.strip()
-        require(re.fullmatch('[0-9a-f]{64}', cid), 'invalid_created_container_id')
-        state.update(phase='loading', container={'id': cid, 'image_id': self.config['image_id']})
-        self.save(state)
-        self.inspect_owned(state)
-        attempt_phase('telemetry_start')
+        self.publish(state)
         telemetry_rel = 'receipts/' + run_id + '-telemetry.jsonl'
         sampler = None
         try:
+            attempt_phase('container_create')
+            cid = self.dispatch(state, 'create', self.create_argv(run_id), hardware=True).stdout.strip()
+            require(re.fullmatch('[0-9a-f]{64}', cid), 'invalid_created_container_id')
+            state.update(phase='loading', container={'id': cid, 'image_id': self.config['image_id']})
+            state['native_actions']['create'] = 'received'
+            self.publish(state)
+            self.inspect_owned(state)
+            attempt_phase('telemetry_start')
             with self.anchor() as anchored:
                 with anchored.open(telemetry_rel, os.O_WRONLY | os.O_CREAT | os.O_EXCL) as output:
                     sampler = subprocess.Popen(['/usr/bin/python3', '-I', '-B', str(BASE / 'source/telemetry.py'),
@@ -701,28 +960,30 @@ class Runtime:
                         time.sleep(0.4)
                         require(sampler.poll() is None, 'telemetry_start_failed')
                         self.guards()
-                        self.require_hardware()
                         self.require_ada_idle()
                         require(self.current_device()['free_bytes'] >= 33131614782 + device['total_bytes'] // 20,
                                 'ada_preload_weight_and_margin_unavailable')
                         load_start = time.monotonic()
                         attempt_phase('container_start')
-                        run(['docker', 'start', cid])
+                        self.dispatch(state, 'start', ['docker', 'start', cid], hardware=True)
+                        state['native_generation'] = self.native_generation(self.inspect_owned(state))
+                        state['native_actions']['start'] = 'received'
+                        self.publish(state)
                         attempt_phase('native_readiness')
                         while not self.native_health():
                             require(time.monotonic() < deadline - 5, 'native_readiness_timeout')
-                            require(self.inspect_owned(state)['State']['Running'], 'native_exited_during_load')
+                            require(self.exact_native(state)['State']['Running'], 'native_exited_during_load')
                             require(sampler.poll() is None, 'telemetry_died_during_load')
                             self.host_headroom()
                             time.sleep(2)
                         state.update(phase='warming', native_ready_seconds=time.monotonic() - load_start)
                         state['tmp_before_generation'] = self.tmp_snapshot(run_id)
-                        self.save(state)
+                        self.publish(state, hardware=True)
                         self.guards()
                         attempt_phase('warm_generation')
-                        result = run(['docker', 'exec', cid, '/opt/image-venv/bin/python', '-I', '-B',
+                        result = self.dispatch(state, 'warm', ['docker', 'exec', cid, '/opt/image-venv/bin/python', '-I', '-B',
                                       '/runtime/native_request.py', '--mode', 'generation', '--run-id', run_id],
-                                     timeout=max(1, deadline - time.monotonic()))
+                                     timeout=max(1, deadline - time.monotonic()), hardware=True)
                         summary = json.loads(result.stdout)
                         require(summary['status'] == 'pass', 'deterministic_warm_failed')
                         attempt_phase('residency_verify')
@@ -757,32 +1018,23 @@ class Runtime:
                          telemetry_path=str(BASE / telemetry_rel), telemetry_summary=end, completed_utc=now())
             state['sampled_min_host_available_bytes'] = min(value['MemAvailable'] for value in hosts)
             state['sampled_max_cgroup_swap_bytes'] = max(swaps)
-            self.save(state)
-            self.guards()
+            self.exact_native(state)
+            self.publish(state, hardware=True)
             print(json.dumps({'status': 'warm', 'run_id': run_id, 'container_id': cid}), flush=True)
         except BaseException as error:
             attempt_failure(error)
             OPERATION_DEADLINE = SETTLEMENT_DEADLINE
             cleanup = {'sampler': settle_sampler(sampler)}
+            state.update(phase='failed', warm=False, failure_type=type(error).__name__,
+                         failure_code=failure_code(error), telemetry_path=str(BASE / telemetry_rel), cleanup=cleanup)
+            # Changed ownership/source/boot refuses BOTH publication and cleanup.
+            self.publish(state)
             try:
-                value = self.inspect_owned(state, missing_ok=True)
-                if value and value['State']['Running']:
-                    run(['docker', 'stop', '--time', '30', cid], timeout=45)
+                self.settle_native(state)
                 cleanup['backend_stopped'] = True
             except Exception as cleanup_error:
-                cleanup['backend_stop_error'] = type(cleanup_error).__name__
-                try:
-                    value = self.inspect_owned(state, missing_ok=True)
-                    if value and value['State']['Running']:
-                        run(['docker', 'kill', cid], timeout=5)
-                    cleanup['backend_forced_settle'] = True
-                except Exception as final_error:
-                    cleanup['backend_forced_settle_error'] = type(final_error).__name__
-            state.update(phase='failed', warm=False, failure_type=type(error).__name__,
-                         failure_code=failure_code(error),
-                         telemetry_path=str(BASE / telemetry_rel), cleanup=cleanup)
-            self.save(state)
-            self.guards()
+                cleanup['backend_stop_error'] = failure_code(cleanup_error)
+            self.publish(state)
             raise
 
 
@@ -792,66 +1044,90 @@ def recover():
     OPERATION_DEADLINE = started + 840
     attempt_phase('construct')
     runtime = Runtime()
-    attempt_phase('recover_admission')
-    # Do not hold a lease while a separately invoked systemd ExecStart borrows it.
-    # Every subprocess lifecycle owner independently takes the SAME canonical lease.
-    # A latched recovery attempt must not stop a healthy peer or existing work.
-    # Gate outside cleanup: failure before mutation must cause no stop/reset.
-    # All active admissions share 840s; only failure settlement may use 900s.
     try:
-        with lease_admission(OPERATION_DEADLINE) as lease:
-            runtime.lease = lease
-            runtime.guards()
-            runtime.require_hardware()
-    except BaseException:
-        OPERATION_DEADLINE = None
-        raise
-    mutation_started = False
-    attempt_phase('recover_mutation_admission')
-    try:
-        with lease_admission(OPERATION_DEADLINE) as lease:
-            runtime.lease = lease
-            runtime.guards()
-            runtime.require_hardware()
-            mutation_started = True
-            runtime.reset_owned()
-        attempt_phase('systemd_restart')
-        result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
-        require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
-        attempt_phase('recover_verify')
-        with lease_admission(OPERATION_DEADLINE) as lease:
-            runtime.lease = lease
-            runtime.guards()
-            state = runtime.state()
-            require(state['phase'] == 'warm' and state['warm'] is True, 'owned_warm_receipt_missing')
-            runtime.verify_resident(state)
-            runtime.guards()
-        print(json.dumps({'status': 'warm', 'run_id': state['run_id']}), flush=True)
-    except BaseException as error:
-        attempt_failure(error)
-        # A second-lease contention or changed guard/latch can refuse after the
-        # initial preflight. No reset/restart was dispatched, so cleanup must
-        # not stop work belonging to the intervening owner.
-        if not mutation_started:
-            raise
-        # Stop/cancel the exact systemd job as well as its Docker workload.
-        # Killing only the systemctl or docker-exec client is not cancellation.
-        OPERATION_DEADLINE = started + 900
-        try:
-            run(['systemctl', 'stop', UNIT], timeout=40, check=False)
-        except (subprocess.TimeoutExpired, RuntimeError):
-            run(['systemctl', 'kill', '--kill-whom=all', '--signal=KILL', UNIT], timeout=5, check=False)
-        with lease_admission(OPERATION_DEADLINE) as lease:
-            runtime.lease = lease
-            runtime.guards()
-            failed = runtime.state()
-            value = runtime.inspect_owned(failed, missing_ok=True)
-            if value and value['State']['Running']:
-                run(['docker', 'kill', value['Id']], timeout=5)
-            failed.update(phase='failed', warm=False, recovery_failure='reset_warm_failed_no_retry')
-            runtime.save(failed)
-            runtime.guards()
-        raise
+        runtime.boot = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+        # The parent holds only its recovery descriptor through systemctl. Leaf
+        # ExecStop/ExecStart take operation.lock separately, with a one-time
+        # protected handoff restricted to the actual systemd process identity.
+        with runtime.singleton('recovery.lock') as recovery_file:
+            attempt_phase('recover_admission')
+            unit = dict(line.split('=', 1) for line in run(
+                ['systemctl', 'show', UNIT, '-p', 'InvocationID'], timeout=2).stdout.splitlines())
+            with runtime.singleton('operation.lock'), runtime.critical(hardware=True):
+                previous = runtime.record('operation.json')
+                require(not previous or previous.get('status') in ('complete', 'failed'),
+                        'image_operation_unresolved')
+                prior = runtime.record('recovery.json')
+                require(not prior or prior.get('status') == 'complete', 'image_operation_unresolved')
+                record = {'token': uuid.uuid4().hex, 'boot': runtime.boot, 'pid': os.getpid(),
+                          'status': 'active', 'phase': 'reset', 'process': runtime.process_stamp(os.getpid()),
+                          'config_sha256': runtime.config_digest(), 'gpu_uuid': GPU_UUID,
+                          'prior_invocation': unit.get('InvocationID'), 'child_start': None}
+                runtime.write_record('recovery.json', record)
+                runtime.recovery_record = record
+            def refresh():
+                recovery_file.check()
+                current = runtime.record('recovery.json')
+                require(current and all(current.get(k) == record[k] for k in ('token', 'boot', 'pid'))
+                        and current.get('status') == 'active', 'image_recovery_changed')
+                runtime.recovery_record = current
+                return current
+            restart_dispatched = False
+            try:
+                runtime.reset_owned()
+                with runtime.critical(hardware=True):
+                    record = refresh()
+                    record['phase'] = 'restart'
+                    runtime.write_record('recovery.json', record)
+                attempt_phase('systemd_restart')
+                restart_dispatched = True
+                result = run(['systemctl', 'restart', UNIT], timeout=840, check=False)
+                require(result.returncode == 0, 'owned_systemd_restart_warm_failed')
+                refresh()
+                with runtime.operation('verify'):
+                    state = copy.deepcopy(runtime.expected_state)
+                    require(state.get('phase') == 'warm' and state.get('warm') is True
+                            and state.get('run_id') == runtime.recovery_record.get('child_start'),
+                            'owned_warm_receipt_missing')
+                    runtime.exact_native(state)
+                    runtime.verify_resident(state)
+                    with runtime.critical(hardware=True):
+                        pass
+                with runtime.critical():
+                    record = refresh()
+                    record.update(status='complete', phase='complete')
+                    runtime.write_record('recovery.json', record)
+                print(json.dumps({'status': 'warm', 'run_id': state['run_id']}), flush=True)
+            except BaseException as error:
+                attempt_failure(error)
+                OPERATION_DEADLINE = started + 900
+                record = refresh()
+                if not restart_dispatched:
+                    # Native refusal/uncertainty is retained. Do not repeat reset.
+                    raise
+                child = record.get('child_start')
+                # A timed-out/failed restart with no acknowledged child may
+                # still be queued in systemd. Keep the one-shot reservation.
+                require(child is not None, 'image_native_action_uncertain')
+                if child:
+                    # Refuse cleanup of an intervening unit generation. There
+                    # is no broad systemctl kill fallback or native-action retry.
+                    unit = dict(line.split('=', 1) for line in run(
+                        ['systemctl', 'show', UNIT, '-p', 'InvocationID'], timeout=2).stdout.splitlines())
+                    with runtime.critical():
+                        require(unit.get('InvocationID') == child, 'image_recovery_changed')
+                        record['phase'] = 'settle'
+                        runtime.write_record('recovery.json', record)
+                    run(['systemctl', 'stop', UNIT], timeout=40)
+                    refresh()
+                # Only the parent's exact reservation can settle remaining
+                # stopped native state. An uncertain action marker blocks replay.
+                runtime.reset_owned()
+                with runtime.critical():
+                    record = refresh()
+                    record.update(status='complete', phase='failed_settled')
+                    runtime.write_record('recovery.json', record)
+                raise
     finally:
         OPERATION_DEADLINE = None
 
@@ -867,14 +1143,11 @@ def main():
     SETTLEMENT_DEADLINE = started + (835 if sys.argv[1] == 'start' else 115)
     runtime = Runtime()
     attempt_phase('start_admission' if sys.argv[1] == 'start' else 'stop_admission')
-    with (start_admission() if sys.argv[1] == 'start' else acquire_lease(blocking=False)) as lease:
-        runtime.lease = lease
-        if sys.argv[1] == 'start':
-            attempt_phase('admitted_guards')
-            runtime.guards()
+    if sys.argv[1] == 'start':
+        with runtime.operation('start'):
             runtime.start()
-        else:
-            runtime.reset_owned()
+    else:
+        runtime.reset_owned()
 
 
 def entrypoint():

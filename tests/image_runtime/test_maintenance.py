@@ -29,6 +29,7 @@ class Attempts(unittest.TestCase):
 
     def invoke(self, action, runtime=None, construction_error=None, lease_factory=None):
         runtime = runtime or Mock()
+        runtime.operation.side_effect = lambda action: contextlib.nullcontext()
         persisted, journal = [], []
         stderr = io.StringIO()
         with patch.object(service.sys, 'argv', ['service.py', action]), \
@@ -64,6 +65,7 @@ class Attempts(unittest.TestCase):
         runtime.state.return_value = {'phase': 'warm', 'native_failure': 'native_exited_during_load',
                                       'recovery_failure': 'reset_warm_failed_no_retry'}
         records = []
+        runtime.operation.side_effect = LeaseBusy()
         with patch.object(service.sys, 'argv', ['service.py', 'start']), \
                 patch.object(service, 'Runtime', return_value=runtime), \
                 patch.object(service, 'start_admission', side_effect=LeaseBusy()), \
@@ -188,7 +190,12 @@ class Attempts(unittest.TestCase):
             for method in ('guards', 'require_hardware', 'check_network', 'check_ports',
                            'require_ada_idle', 'host_headroom', 'make_work', 'save'):
                 setattr(runtime, method, Mock())
-            runtime.state = Mock(return_value={'phase': 'warm', 'native_failure': 'native_exited_during_load'})
+            runtime.expected_state = {'phase': 'absent', 'container': None, 'native_failure': 'native_exited_during_load'}
+            @contextlib.contextmanager
+            def critical(**kwargs):
+                runtime.require_hardware()
+                yield
+            runtime.critical = critical
             runtime.inspect_owned = Mock(return_value=None)
             getattr(runtime, gate).side_effect = RuntimeError(expected_code)
             attempt = service.Attempt('start')
@@ -210,39 +217,23 @@ class Attempts(unittest.TestCase):
             runtime.save.assert_not_called()
             runtime.make_work.assert_not_called()
 
-    def test_refreshed_guards_precede_start_under_admitted_lease(self):
+    def test_main_delegates_to_exclusive_operation_without_common_lease(self):
         runtime = Mock()
-        events, held = [], [False]
+        events = []
         @contextlib.contextmanager
-        def lease_factory(**kwargs):
-            self.assertFalse(kwargs['blocking'])
-            events.append('admitted')
-            held[0] = True
-            try:
-                yield 'lease'
-            finally:
-                held[0] = False
-                events.append('released')
-        def guarded(event):
-            self.assertTrue(held[0])
-            events.append(event)
-        runtime.guards.side_effect = lambda: guarded('guards')
-        runtime.start.side_effect = lambda: guarded('start')
-        self.invoke('start', runtime, lease_factory=lease_factory)
-        self.assertEqual(events, ['admitted', 'guards', 'start', 'released'])
-        self.assertEqual(runtime.lease, 'lease')
+        def operation(action):
+            self.assertEqual(action, 'start')
+            events.append('reserved')
+            yield
+            events.append('settled')
+        runtime.operation.side_effect = operation
+        runtime.start.side_effect = lambda: events.append('start')
+        with patch.object(service.sys, 'argv', ['service.py', 'start']), \
+                patch.object(service, 'Runtime', return_value=runtime), \
+                patch.object(service, 'acquire_lease', side_effect=AssertionError('outer common lease')):
+            service.main()
+        self.assertEqual(events, ['reserved', 'start', 'settled'])
         runtime.reset_owned.assert_not_called()
-        events.clear()
-        runtime.start.reset_mock()
-        def failed_guard():
-            guarded('guards')
-            raise RuntimeError('root_disk_guard_failed')
-        runtime.guards.side_effect = failed_guard
-        code, records, _, _ = self.invoke('start', runtime, lease_factory=lease_factory)
-        self.assertEqual(code, 1)
-        self.assertEqual(records[0]['phase'], 'admitted_guards')
-        self.assertEqual(events, ['admitted', 'guards', 'released'])
-        runtime.start.assert_not_called()
 
 
 class ProtectedWriting(unittest.TestCase):

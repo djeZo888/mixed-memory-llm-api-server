@@ -153,6 +153,7 @@ class ServiceReview(unittest.TestCase):
             self.assertEqual(service.OPERATION_DEADLINE, 795)
             self.assertEqual(service.SETTLEMENT_DEADLINE, 855)
         runtime.start.side_effect = start
+        runtime.operation.side_effect = lambda action: contextlib.nullcontext()
         with patch.object(service.sys, "argv", ["service.py", "start"]), \
                 patch.object(service.time, "monotonic", return_value=20), \
                 patch.object(service, "Runtime", return_value=runtime), \
@@ -200,7 +201,7 @@ class ServiceReview(unittest.TestCase):
                 mutate(value)
                 with patch.object(service, "run", return_value=completed([], json.dumps([value]))) as run:
                     with self.assertRaisesRegex(RuntimeError, "owned_backend_(identity|policy)_mismatch"):
-                        runtime.reset_owned()
+                        runtime.settle_native(owned_state(), remove=True)
                 self.assertEqual([call.args[0] for call in run.call_args_list], [["docker", "inspect", CID]])
                 runtime.save.assert_not_called()
 
@@ -251,109 +252,26 @@ class ServiceReview(unittest.TestCase):
                                     subprocess.TimeoutExpired("sampler", 2)]
         self.assertEqual(service.settle_sampler(sampler), "sampler_unsettled")
 
-    def exercise_recover_timeout(self, *, stop_timeout=False, foreign=False):
-        runtime = Mock()
-        runtime.state.return_value = owned_state()
-        if foreign:
-            runtime.inspect_owned.side_effect = RuntimeError("owned_backend_identity_mismatch")
-        else:
-            runtime.inspect_owned.return_value = owned_container()
-        held = [False]
-        @contextlib.contextmanager
-        def lease(**_kwargs):
-            self.assertFalse(held[0])
-            held[0] = True
-            try:
-                yield
-            finally:
-                held[0] = False
-        calls = []
-        def run(argv, **kwargs):
-            calls.append(argv)
-            if argv[:2] == ["systemctl", "restart"]:
-                self.assertFalse(held[0])
-                self.assertEqual(service.OPERATION_DEADLINE, 840)
-                raise subprocess.TimeoutExpired(argv, 840)
-            if argv[:2] == ["systemctl", "stop"]:
-                self.assertFalse(held[0])
-                self.assertEqual(service.OPERATION_DEADLINE, 900)
-                if stop_timeout:
-                    raise subprocess.TimeoutExpired(argv, 40)
-            if argv[:2] == ["docker", "kill"]:
-                self.assertTrue(held[0])
-            return completed(argv)
-        with patch.object(service, "Runtime", return_value=runtime), \
-                patch.object(service, "acquire_lease", side_effect=lease), \
-                patch.object(service.time, "monotonic", return_value=0), \
-                patch.object(service, "run", side_effect=run):
-            expected = RuntimeError if foreign else subprocess.TimeoutExpired
-            with self.assertRaises(expected):
-                service.recover()
-        self.assertIsNone(service.OPERATION_DEADLINE)
-        self.assertFalse(held[0])
-        return calls, runtime
-
-    def test_recovery_second_gate_or_lease_refusal_never_stops_unmutated_work(self):
-        from common.lifecycle_lease import LeaseBusy
-        from lifecycle.runtime_io import LifecycleError
-        for failure in ('latch', 'lease', 'storage'):
-            runtime = Mock()
-            clock = [0.0]
-            contexts = [contextlib.nullcontext('first'), contextlib.nullcontext('second')]
-            expected = RuntimeError
-            if failure == 'latch':
-                runtime.require_hardware.side_effect = [None, LifecycleError('hardware_missing')]
-                expected = LifecycleError
-            elif failure == 'lease':
-                contexts[1] = LeaseBusy()
-                expected = LeaseBusy
-            else:
-                runtime.guards.side_effect = [None, RuntimeError('guard_failed')]
-            def acquire(**_kwargs):
-                if len(contexts) > 1:
-                    return contexts.pop(0)
-                if isinstance(contexts[0], BaseException):
-                    raise contexts[0]
-                return contexts[0]
-            with self.subTest(failure=failure), \
-                    patch.object(service, 'Runtime', return_value=runtime), \
-                    patch.object(service, 'acquire_lease', side_effect=acquire), \
-                    patch.object(service.time, 'monotonic', side_effect=lambda: clock[0]), \
-                    patch.object(service.time, 'sleep', side_effect=lambda seconds: clock.__setitem__(0, clock[0] + seconds)), \
-                    patch.object(service, 'run') as run:
-                with self.assertRaises(expected):
-                    service.recover()
-            runtime.reset_owned.assert_not_called()
-            runtime.state.assert_not_called()
-            runtime.save.assert_not_called()
-            run.assert_not_called()
-            self.assertIsNone(service.OPERATION_DEADLINE)
-
-    def test_recovery_timeout_stops_exact_unit_and_owned_docker_under_lease(self):
-        calls, runtime = self.exercise_recover_timeout()
-        self.assertEqual(calls, [["systemctl", "restart", service.UNIT],
-                                ["systemctl", "stop", service.UNIT], ["docker", "kill", CID]])
-        state = runtime.save.call_args.args[0]
-        self.assertFalse(state["warm"])
-        self.assertEqual(state["phase"], "failed")
-
-    def test_recovery_stop_timeout_uses_fixed_unit_kill_fallback(self):
-        calls, _runtime = self.exercise_recover_timeout(stop_timeout=True)
-        self.assertEqual(calls[2], ["systemctl", "kill", "--kill-whom=all", "--signal=KILL", service.UNIT])
-        self.assertEqual(calls[3], ["docker", "kill", CID])
-
-    def test_recovery_never_kills_container_failing_identity_check(self):
-        calls, runtime = self.exercise_recover_timeout(foreign=True)
-        self.assertFalse(any(argv[:2] == ["docker", "kill"] for argv in calls))
-        runtime.save.assert_not_called()
+    # Parent/child recovery, foreign-generation refusal and admission failure
+    # are exercised through the operation protocol in test_recovery_admission.
 
     def test_warm_failure_stops_backend_even_when_sampler_is_unsettled(self):
         runtime = self.runtime()
-        state = {"container": None}
+        state = {"container": None, "phase": "absent"}
+        runtime.expected_state = state
+        runtime.critical = lambda **kwargs: contextlib.nullcontext()
+        runtime.native_generation = lambda value: {"StartedAt": "fixture", "Pid": 42}
         for method in ("guards", "require_hardware", "check_ports", "check_network", "require_ada_idle", "host_headroom", "make_work"):
             setattr(runtime, method, Mock())
         runtime.state = Mock(return_value=state)
-        runtime.inspect_owned = Mock(side_effect=[None, owned_container(), owned_container()])
+        stopped = [False]
+        def inspect(state, **kwargs):
+            if not state.get("container"):
+                return None
+            value = owned_container()
+            value["State"].update(StartedAt="fixture", Pid=0 if stopped[0] else 42, Running=not stopped[0])
+            return value
+        runtime.inspect_owned = Mock(side_effect=inspect)
         runtime.current_device = Mock(return_value={"total_bytes": 50 * 1024**3, "free_bytes": 49 * 1024**3})
         runtime.save = Mock()
         runtime.create_argv = Mock(return_value=["docker", "create", "fixed-owned-fixture"])
@@ -371,6 +289,8 @@ class ServiceReview(unittest.TestCase):
             calls.append(argv)
             if argv[:2] == ["docker", "create"]:
                 return completed(argv, CID)
+            if argv[:2] == ["docker", "stop"]:
+                stopped[0] = True
             if argv[:2] == ["docker", "exec"]:
                 raise subprocess.TimeoutExpired(argv, 1)
             return completed(argv)
@@ -384,6 +304,7 @@ class ServiceReview(unittest.TestCase):
             with self.assertRaises(subprocess.TimeoutExpired):
                 runtime.start()
         self.assertIn(["docker", "stop", "--time", "30", CID], calls)
+        state = runtime.expected_state
         self.assertEqual(state["phase"], "failed")
         self.assertFalse(state["warm"])
         self.assertEqual(state["cleanup"]["sampler"], "sampler_unsettled")
