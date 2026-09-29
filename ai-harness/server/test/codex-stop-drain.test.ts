@@ -3,6 +3,7 @@ import test, { type TestContext } from "node:test";
 import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { PassThrough } from "node:stream";
 import { DatabaseSync } from "node:sqlite";
 import { createApp } from "../src/app.js";
@@ -33,7 +34,8 @@ async function fixture(t: TestContext, interrupt: "interrupted" | "failed" = "in
   let owned!: RequestOwnership;
   let turns = 0, cleanupCalls = 0, observations = 0;
   let finish!: (status: string) => void;
-  const host = composeCodexHost("/never-executed", () => ({
+  // Read actual trusted resume policy; launchRootless below still replaces all native execution.
+  const host = composeCodexHost(fileURLToPath(new URL("../../deploy/run-codex.sh", import.meta.url)), () => ({
     revokeSession() {},
     observeSettlement(query, signal) {
       observations++;
@@ -138,7 +140,9 @@ test("shutdown abort before broker.close ends pending and future observation fal
   f.owners.transition(f.owned, "settled");
   assert.equal(await f.host.runtime.confirmGatewaySettlement({ sessionId: f.session.id, gatewayToken: "fixture", activeTurnId: null }), false);
   const main = await readFile(new URL("../src/main.ts", import.meta.url), "utf8");
-  assert.match(main, /catch \(error\) \{\s+codexHost\.stopSettlementObservation\(\);/);
+  const startupFailure = main.slice(main.indexOf("  } catch (error) {"), main.indexOf("  let stopping = false;"));
+  assert.ok(startupFailure.includes("codexHost.stopSettlementObservation();"));
+  assert.ok(startupFailure.indexOf("codexHost.stopSettlementObservation();") < startupFailure.indexOf("await application.app.close();"));
   const shutdown = main.slice(main.indexOf("const close = async"));
   assert.ok(shutdown.indexOf("codexHost.stopSettlementObservation();") < shutdown.indexOf("application.broker.close(),"));
 });

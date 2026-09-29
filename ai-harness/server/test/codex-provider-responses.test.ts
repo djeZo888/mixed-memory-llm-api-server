@@ -12,12 +12,12 @@ const call = (id: string) => ({ type: "function_call", call_id: id, name: "get_g
 const result = (id: string) => ({ type: "function_call_output", call_id: id, output: `result-${id}` });
 const parse = (wire: string) => wire.split("\n").filter(line => line.startsWith("data: ")).map(line => JSON.parse(line.slice(6)));
 
-test("reviewed providers keep distinct budgets, selected-model identity and serial-tool semantics", () => {
+test("reviewed providers keep explicit budgets, selected-model identity and serial-tool semantics", () => {
   const b = request();
   const selected = codexProvider(b.model);
   const translated = translateResponses(b, 65536, selected);
-  assert.equal(translated.provider.contextWindow, 950000);
-  assert.equal(translated.provider.autoCompactTokenLimit, 880000);
+  assert.equal(translated.provider.contextWindow, 480000);
+  assert.equal(translated.provider.autoCompactTokenLimit, 400000);
   assert.equal(translated.body.max_tokens, 65536);
   assert.equal(translated.body.reasoning_effort, undefined);
   assert.equal(translated.body.parallel_tool_calls, false);
@@ -26,7 +26,7 @@ test("reviewed providers keep distinct budgets, selected-model identity and seri
   assert.equal(qwen.provider.autoCompactTokenLimit, 400000);
   assert.equal(qwen.body.reasoning_effort, "none");
   assert.throws(() => translateResponses(b, 65536, codexProvider("qwen3.8-27b")), /mismatched provider/);
-  assert.throws(() => translateResponses(b, 65536, { ...selected, contextWindow: 480000 }), /mismatched provider/);
+  assert.throws(() => translateResponses(b, 65536, { ...selected, contextWindow: 950000 }), /mismatched provider/);
   assert.throws(() => translateResponses(b, 65536, { ...selected, parallelToolCalls: true }), /mismatched provider/);
   const serial = translateResponses({ ...b, parallel_tool_calls: true }, 65536, selected);
   assert.equal(serial.body.parallel_tool_calls, false);

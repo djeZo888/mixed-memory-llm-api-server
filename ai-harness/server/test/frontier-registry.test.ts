@@ -124,7 +124,9 @@ test('Qwen instances keep distinct configured aliases, observed deployments and 
   const actual = project(registry, [observed('qwen-gpu0', 'qwen3.8-27b-gpu0'),
     { ...observed('qwen-gpu1', 'qwen3.8-27b'), deployment_id: 'second-instance', required_gpu_uuids: [secondGpu] }],
     { gpus: [gpu, secondGpu].map(uuid => ({ ...meta, uuid })) });
-  const qwen = actual.services.filter(s => s.service_id.startsWith('qwen-'));
+  const qwen = actual.services.filter(s => ['qwen-gpu0', 'qwen-gpu1'].includes(s.service_id));
+  const unobservedQwen = actual.services.filter(s => s.service_id.startsWith('qwen-') && !qwen.includes(s));
+  assert.deepEqual(unobservedQwen.map(s => [s.service_id, s.health]), [['qwen-ada200k', 'unknown']]);
   assert.deepEqual(qwen.map(s => s.health), ['ready', 'ready']);
   assert.deepEqual(qwen.map(s => s.observed_model.deployment_id), ['observed-instance', 'second-instance']);
   assert.deepEqual(actual.gpus.map(g => g.observed_ready_dependents.map(s => s.service_id)), [['qwen-gpu0'], ['qwen-gpu1']]);

@@ -186,6 +186,11 @@ test("trusted host HOME ignores ambient spoofing while reviewed launcher confine
   assert.deepEqual([...invocation.matchAll(/--volume\s+"([^"]+)"/g)].map((match) => match[1]), [
     "$profile_dir:$profile_dir:rw,rprivate",
     "$workspace:$workspace:rw,rprivate",
+    "$overlay_root/tools/image/image-mcp.mjs:/opt/ai-harness/tools/image/image-mcp.mjs:ro,rprivate",
+    "$overlay_root/tools/image/image.mjs:/opt/ai-harness/tools/image/image.mjs:ro,rprivate",
+    "$overlay_root/skills/image/SKILL.md:/opt/ai-harness/skills/image/SKILL.md:ro,rprivate",
+    "$overlay_root/skills/pdf/SKILL.md:/opt/ai-harness/skills/pdf/SKILL.md:ro,rprivate",
+    "$launcher_dir/engine/configure-profile.mjs:/opt/ai-harness/engine/configure-profile.mjs:ro,rprivate",
   ]);
   assert.ok(invocation.includes('--env "HOME=$container_home" --env "MINIMAX_DATA_DIR=$container_data"'));
   assert.equal(/--(?:mount|env-file)\b/.test(invocation), false);
@@ -228,6 +233,13 @@ else process.exit(91);
   assert.deepEqual(values("--volume"), [
     `${canonicalProfile}:${canonicalProfile}:rw,rprivate`,
     `${canonicalWorkspace}:${canonicalWorkspace}:rw,rprivate`,
+    ...[
+      ["tools/image/image-mcp.mjs", "/opt/ai-harness/tools/image/image-mcp.mjs"],
+      ["tools/image/image.mjs", "/opt/ai-harness/tools/image/image.mjs"],
+      ["skills/image/SKILL.md", "/opt/ai-harness/skills/image/SKILL.md"],
+      ["skills/pdf/SKILL.md", "/opt/ai-harness/skills/pdf/SKILL.md"],
+      ["deploy/engine/configure-profile.mjs", "/opt/ai-harness/engine/configure-profile.mjs"],
+    ].map(([relative, target]) => `${fileURLToPath(new URL(`../../${relative}`, import.meta.url))}:${target}:ro,rprivate`),
   ]);
   assert.ok(values("--env").includes(`HOME=${canonicalProfile}/state/home`));
   assert.ok(values("--env").includes(`MINIMAX_DATA_DIR=${canonicalProfile}/state`));
