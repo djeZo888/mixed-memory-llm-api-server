@@ -269,7 +269,7 @@ export async function createApp(options: AppOptions): Promise<{
         versionSource: "deployment-policy",
         readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
         protocolQualified: options.enginePolicy?.codex?.protocolQualified === true,
-        capabilities: { text: true, media: false, steering: false, delegation: options.enginePolicy?.codex?.delegationEnabled === true, frontier: false, reasoning: false },
+        capabilities: { text: true, media: false, steering: false, delegation: options.enginePolicy?.codex?.delegationEnabled === true, frontier: codexAvailable(options.enginePolicy, options.codexEngineFactory) && codexCapabilities(options.enginePolicy?.codex?.capabilities, options.enginePolicy?.codex).frontier.supported === true, reasoning: false },
         capabilityDetails: codexCapabilities(options.enginePolicy?.codex?.capabilities, options.enginePolicy?.codex),
       } },
       ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
