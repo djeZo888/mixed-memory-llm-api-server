@@ -40,4 +40,3 @@ class Journal:
             fd=os.open(self.path/(name+'.jsonl'),os.O_WRONLY|os.O_CREAT|os.O_APPEND|os.O_NOFOLLOW,0o600)
             with os.fdopen(fd,'wb') as f:
                 f.write(canonical(value)+b'\n');f.flush();os.fsync(f.fileno())
-
