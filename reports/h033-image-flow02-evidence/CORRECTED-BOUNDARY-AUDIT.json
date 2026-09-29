@@ -1,0 +1,1024 @@
+{
+  "schema": 1,
+  "auditUtc": "2026-09-29T15:55:54.242156+00:00",
+  "helperSha256": "ff65ad0c2c8b446195ee41b7b631e5ff55af2b821a11fe88318983fff49aa9a3",
+  "captureManifestSha256": "6c72c8d8aa28184ecc2d77e95aa2eca1690129af737ff20429bd5cd74336a62c",
+  "captureUtc": "2026-09-29T15:53:39.308011+00:00",
+  "sessionId": "109a548b-6686-4b48-b0ab-ac62f00b2c18",
+  "runId": "f35d9b27-e545-4788-8347-3026288f0b73",
+  "ticketId": "92b00163-5220-41dd-aae6-cfd3bee508f9",
+  "bindingSha256": "a52f20a1d3d4318295473abf5a1989188fe9f5ff145b40c083b7622e724f6fdf",
+  "manifestIntegrity": "PASS",
+  "manifestFileCount": 194,
+  "captureIndexIntegrity": "PASS",
+  "captureRecordCount": 188,
+  "requestCount": 12,
+  "providerToolCallCount": 11,
+  "baselineSource": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+  "baselineCatalogSha256": "75f39aa38c42d99265101686c15e0f3154aacecc325a3fb6c598e0a185a51823",
+  "currentCatalogSha256": "cfb03e7b20dc847c5b9f9b8c98e07b6b62a288e3f374f8d1d1970a9c720f9cd6",
+  "requests": [
+    {
+      "requestId": "fe8808cc-3dbc-4390-af8a-c7502162fccd",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "62d718fbfb2dd02d8b2c2351d6789d130a7d63fd5045f7cd6901cb1a13798c0c",
+        "normalized_request": "af6438790b579fb612ed329b13e115880dceb7fc6e573436c52805590184569b",
+        "provider_sse": "08ef4691af45b83f5556d53bdd55846323d402cb7f7bd9ab2351233741c9bcf8",
+        "responses_sse": "970a9818d599a63f76102bb47fcc9610b1913411fa9ce6616e046942def057fe"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "5e34485d-df98-4913-9f97-9f58de469801",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "b2b8bc0e3d2f38208efddb83f75a661a27472f6935b5439d8129c5eeefbd74cc",
+        "normalized_request": "5d0234f6bbcb0c3a77fc2d4ed03e75a2702b5e7e9ac9786910ddf61a1e4f3fef",
+        "provider_sse": "6f1c52905f803bc017516f49a81e669660b08d59ef4c3cd65138daf1bd9bf7b7",
+        "responses_sse": "2fa91647c52602c1a4c2bd2fa7f7d422e7ef9068cb703bfc182c1334b4d29772"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "43dc103d-cdd0-4c98-b242-e2241a6e5ce7",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "4aef556c15ba4294ce6224fcbbaa5d7f49f124ccf6b2b965b0788c382c2a4df5",
+        "normalized_request": "a8c4cf937886e176e8c80d4de390513d1d1f2480241feb36537c3a36a7593bd6",
+        "provider_sse": "cdbe5cf1c72d926b211c69cb41e8f2bbab452fc643dcb310aa180d73fc262c79",
+        "responses_sse": "78fc17c07b74c6c8f6da702526ba0042c62dd1bc686b84cfaaae382efcbb4328"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "544baba3-fb4a-49d7-84fb-2fa38a873bf2",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "0ba921a5b0f902c5dac5ad5ab104cc3e9dfb79d4a25e712f04995e4bd53c8c47",
+        "normalized_request": "d6ac7bb908b72e21c16296fb6c4779a8f7697391ea25a8e33e31b100cb0bf6d5",
+        "provider_sse": "0030b15b40c8bd9300ee7c21b1059a4e5218e4ed3dad474fcf42f6ca40018cd2",
+        "responses_sse": "1368778e2b56641078a4f9e07b606d631c14e7fd38f6fac2f28358096a9eba92"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "14f1da18-eb31-419c-8470-9c3db2078378",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "410a5b49344d45e981d7b30992c4c0a87bd2e90eeff7e6f8b26db7518f1217d5",
+        "normalized_request": "0e577028361c5dbfe28a682bd8228ca92b00501fb5854e9e30265c817d35b3fc",
+        "provider_sse": "00dee53e69e005712f564f1a2db23da9b6c2c8cf5cd7652e19f3ea2df4f01f67",
+        "responses_sse": "411028ccb46ec1ac9ac65110959b1c6662d4e41281a1d9a64f6d579ff6ed6852"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "a95fe306-a3f1-44a5-b49d-7962bc71b5e0",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "ee5126e3eca1ae7a60fcacc8d486e68442492e12f8af38f9c837b7db0ba640d0",
+        "normalized_request": "d60c693eee0a8a090fa1a6304d4d947e9e80b5ff85644c5162492230410c8aec",
+        "provider_sse": "92ac67df353551416ffdac8c2deace39b4df92a79867afad6a6c01cd7834b0ab",
+        "responses_sse": "aec6d489e6d8869677584d7eef811b3ef2ed5d028141a1454157904c0420b540"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "cc965132-3e1e-4330-8d32-ce92d1699fbb",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "9adbdf22c94cc7c0d526b495ea5f68937b28eb6edde948e954bd8adde8f11850",
+        "normalized_request": "2da1d8e06945e8987611fa5fe574ccebb9029dbd19ff119650ab726c20dbf309",
+        "provider_sse": "b205ca01d0fee2c4d8de94b5911bf1da86bccad9b655a592622907929a0ed8bc",
+        "responses_sse": "b98f8697b89f154b2ee92c853e6f72cd36332b4c8267e4cc125541aafdad2aa0"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "bd33d258-8a37-425c-b05c-f6268bd1ea49",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "27e3662abf3422542b84016fac5099820ab0a61c4bc0e3d1c77b8d6ed63360d3",
+        "normalized_request": "986472a570f076f969b9ac9e5891447a82fdb26bbe01220b6bab4851db768bcf",
+        "provider_sse": "0aed09b79e0d973f1bdc0a0fb76b2c6da7a268c2eebfdbb00800e20fa14b15b4",
+        "responses_sse": "0807ce0b545181e821ce547e9448b44aeffdf656fba70fb9afb7d9fe5404d805"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "9fa36929-b599-4ba0-ba64-f05aeff479fe",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "3da150be51850bf4d5f2fc079c26755945321f3bfe0c49478be471e99052fa57",
+        "normalized_request": "80bcd01bdcffeaf828e4959bf65a004057776df28a25953df14e520c712a06c9",
+        "provider_sse": "53c4601205e40d596cdb1b23d391fb5a809a1c1b326ad3c476b7d78bc0b8f3ae",
+        "responses_sse": "ddfb2493627e42b520ab7cf8762c9afa1d674634327c7171085a34f555c78255"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "ec77f20b-32d4-48f6-8e49-3ffb18742cc6",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "092f1cca96ce2b5b7ec135146691717fc8214601a47bbf7ccef85fd0fb005fbe",
+        "normalized_request": "5710637e957575b6578dc41476b9763f78d2a62c907aef65136626a95d31d295",
+        "provider_sse": "66ee135f72d928c74a82103927da406b96a7704c079609cc7316d970b93ed01f",
+        "responses_sse": "233b781f2bba0ab95c0de347943d79768cf4c672944dbf2ff24e844d9514be4f"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "e0cd7b87-d902-4594-bfaf-8c59c1a14668",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "440cd34efbfb4dda6a23fe045fd98b7f89d0588efe51566290bddb95e98e35e4",
+        "normalized_request": "f7658c3c7549a438d439211b18e29665d3834a99fd4a6fe8d404d9d3fdd3a715",
+        "provider_sse": "b0ba735f9d155b45c645553cee61035129cf9a2ad5234106931778b3ff95b2ee",
+        "responses_sse": "3f2d33de5f01eb40f045e9e9ad277acb6e7c56c7429046fad4d2824405498a91"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "413e1629-9aa6-4880-9ccb-c7d14deef800",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "rootNativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "9920a269445bd9b5f8ea06312cc103bbe9c30238c4b8ef6ebe9f0006304dc25b"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": false,
+        "matchesCurrent": true,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": true
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": false
+    }
+  ],
+  "imageToolCalls": [
+    {
+      "requestId": "fe8808cc-3dbc-4390-af8a-c7502162fccd",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_2e7a7080aeb742609801873d",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "5e34485d-df98-4913-9f97-9f58de469801",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_062e691437b24784be6584e5",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "43dc103d-cdd0-4c98-b242-e2241a6e5ce7",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_c7acb0809c214dadb84b1865",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "544baba3-fb4a-49d7-84fb-2fa38a873bf2",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_f10ca0efb3324679ba5642ca",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "14f1da18-eb31-419c-8470-9c3db2078378",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_14d0220e2e9c4cfaaaa54e41",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "a95fe306-a3f1-44a5-b49d-7962bc71b5e0",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_79933aa025734123a5cc1773",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "cc965132-3e1e-4330-8d32-ce92d1699fbb",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_072ab769506f49e3b0be828e",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "bd33d258-8a37-425c-b05c-f6268bd1ea49",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_00532f65af8440a7a3693b77",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "9fa36929-b599-4ba0-ba64-f05aeff479fe",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_3df41737b98540bea11dec16",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "ec77f20b-32d4-48f6-8e49-3ffb18742cc6",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_5ccd4a5e22404608bba485cd",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    },
+    {
+      "requestId": "e0cd7b87-d902-4594-bfaf-8c59c1a14668",
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "callId": "call_04d195dd3bc14dd9bde038df",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "argumentBytes": 22,
+      "argumentKeys": [
+        "prompt"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "d354b7c2f28be0ca8c485372caf1115bbaf7a7d7e81ab372ccaef54f45bca35e",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    }
+  ],
+  "nativeMcpSequence": [
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_2e7a7080aeb742609801873d",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696680125
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_062e691437b24784be6584e5",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696720889
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_c7acb0809c214dadb84b1865",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696762277
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_f10ca0efb3324679ba5642ca",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696802992
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_14d0220e2e9c4cfaaaa54e41",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696843797
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_79933aa025734123a5cc1773",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696885625
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_072ab769506f49e3b0be828e",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696926527
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_00532f65af8440a7a3693b77",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790696968608
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_3df41737b98540bea11dec16",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790697011562
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_5ccd4a5e22404608bba485cd",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790697088896
+    },
+    {
+      "nativeSessionId": "01a0edd6-49d0-7ce0-8172-e5adbee96bc9",
+      "nativeTurnId": "01a0edd6-49e8-7042-8fcc-a63735515d48",
+      "callId": "call_04d195dd3bc14dd9bde038df",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790697133062
+    }
+  ],
+  "messageSubmissionCount": 1,
+  "observedContinuation": {
+    "sameNativeTurnsWithFailedCapabilityThenCompletedGeneration": [],
+    "scope": "Observed native in-turn continuation only; does not imply a later successful capabilities call or final-answer quality."
+  },
+  "imageJobCount": 0,
+  "artifactRowCount": 0,
+  "archivedRunStatus": "cancelled",
+  "archivedGatewayStates": {
+    "fe8808cc-3dbc-4390-af8a-c7502162fccd": "settled",
+    "5e34485d-df98-4913-9f97-9f58de469801": "settled",
+    "43dc103d-cdd0-4c98-b242-e2241a6e5ce7": "settled",
+    "544baba3-fb4a-49d7-84fb-2fa38a873bf2": "settled",
+    "14f1da18-eb31-419c-8470-9c3db2078378": "settled",
+    "a95fe306-a3f1-44a5-b49d-7962bc71b5e0": "settled",
+    "cc965132-3e1e-4330-8d32-ce92d1699fbb": "settled",
+    "bd33d258-8a37-425c-b05c-f6268bd1ea49": "settled",
+    "9fa36929-b599-4ba0-ba64-f05aeff479fe": "settled",
+    "ec77f20b-32d4-48f6-8e49-3ffb18742cc6": "settled",
+    "e0cd7b87-d902-4594-bfaf-8c59c1a14668": "settled",
+    "413e1629-9aa6-4880-9ccb-c7d14deef800": "settled"
+  },
+  "scope": "Offline captured-byte audit. No argument values, prompt, response prose or credentials. Archived states are not independent source-bound settlement proof."
+}

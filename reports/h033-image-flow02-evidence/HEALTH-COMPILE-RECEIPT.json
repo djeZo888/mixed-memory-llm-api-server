@@ -1,0 +1,39 @@
+{
+  "utc": "2026-09-29T15:54:54.935Z",
+  "compiler": "5.9.3",
+  "method": "TypeScript package-aware NodeNext Program.emit exact app.ts SourceFile only",
+  "module": "NodeNext",
+  "moduleResolution": "NodeNext",
+  "packageType": "module",
+  "sourceGitBase": "d55eb2b2eafd4e0d7df8ca2311277b797f3bad23",
+  "uncommittedReviewedHealthDelta": false,
+  "sourceSha256": "a6bb107814afbde8ba8d92996c12bbb2d38cffe4aa92f132cb95f880df581979",
+  "sourcePath": "ai-harness/server/src/app.ts",
+  "diagnostics": {
+    "options": 0,
+    "targetSyntactic": 0,
+    "targetSemantic": 0,
+    "emit": 0
+  },
+  "fullProjectTypecheck": false,
+  "fullAppRebuild": false,
+  "dependencyInstall": false,
+  "dependencyReuse": "Existing predecessor node_modules via compiler-host bare-module resolution and typeRoots",
+  "writes": [
+    "app.js",
+    "app.d.ts"
+  ],
+  "esmVerified": true,
+  "compiledSha256": "9f9693b44d4e31786681e0e624f7e50387db053c024c1210c8bc75e15c9bb7c5",
+  "declarationSha256": "782b811df51fb249c077f17e1e570c02e7e41f71a50c6af241e3a2930b205454",
+  "deployed": false,
+  "predecessorComparison": {
+    "archive": "private/deploy/app-release.ESM.tar.gz",
+    "archiveSha256": "f07d4c254f0b4583f9312d4b267990828d05391458d7e592fd9ac57ecd0ec4c5",
+    "buildSource": "aa5bdb826b422122d3497492f8f749948640d175",
+    "appJsSha256": "fee96deae003a5df3ef45dda84c9d5ffd71e1dabb54af1467274fafffccef7d7",
+    "appDeclarationSha256": "782b811df51fb249c077f17e1e570c02e7e41f71a50c6af241e3a2930b205454",
+    "declarationByteIdentical": true,
+    "onlyReviewedFrontierExpressionChangedInCompiledJs": true
+  }
+}

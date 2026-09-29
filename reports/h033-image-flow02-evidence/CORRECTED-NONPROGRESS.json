@@ -1,0 +1,270 @@
+{
+  "schema": 1,
+  "auditUtc": "2026-09-29T15:59:58.818232+00:00",
+  "sessionId": "109a548b-6686-4b48-b0ab-ac62f00b2c18",
+  "runId": "f35d9b27-e545-4788-8347-3026288f0b73",
+  "source": "aa5bdb826b422122d3497492f8f749948640d175",
+  "captureManifestSha256": "6c72c8d8aa28184ecc2d77e95aa2eca1690129af737ff20429bd5cd74336a62c",
+  "boundaryAuditSha256": "cd1f38e34b1d05e27563bb754cabfa836968fbb5218886155559ae43920f66bb",
+  "toolCallCount": 11,
+  "distinctToolCallIds": 11,
+  "gatewayRequestCount": 12,
+  "identicalArgumentsCount": 11,
+  "uniqueRawArguments": [
+    "{\"prompt\": \"1024x576\"}"
+  ],
+  "exactCapabilitySchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "forwardedCapabilitySchema": {
+    "type": "object",
+    "properties": {},
+    "additionalProperties": false
+  },
+  "exactMcpFeedback": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+  "feedbackLinks": [
+    {
+      "callId": "call_2e7a7080aeb742609801873d",
+      "requestId": "fe8808cc-3dbc-4390-af8a-c7502162fccd",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "5e34485d-df98-4913-9f97-9f58de469801",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0035 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0035 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "da7281a5415c2ffb942327090049c040bb069e5c8884027607560148dff54848",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_062e691437b24784be6584e5",
+      "requestId": "5e34485d-df98-4913-9f97-9f58de469801",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "43dc103d-cdd0-4c98-b242-e2241a6e5ce7",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0021 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0021 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "359b51b9be38155f7cd9631b0e2a33c01a18c257fa8816097a2af840141d5fed",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_c7acb0809c214dadb84b1865",
+      "requestId": "43dc103d-cdd0-4c98-b242-e2241a6e5ce7",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "544baba3-fb4a-49d7-84fb-2fa38a873bf2",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0026 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0026 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "efe990fb08269ffe578944c0b5f373bfc3de43426f0dfb3d0e7cb8517b552b48",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_f10ca0efb3324679ba5642ca",
+      "requestId": "544baba3-fb4a-49d7-84fb-2fa38a873bf2",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "14f1da18-eb31-419c-8470-9c3db2078378",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_14d0220e2e9c4cfaaaa54e41",
+      "requestId": "14f1da18-eb31-419c-8470-9c3db2078378",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "a95fe306-a3f1-44a5-b49d-7962bc71b5e0",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_79933aa025734123a5cc1773",
+      "requestId": "a95fe306-a3f1-44a5-b49d-7962bc71b5e0",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "cc965132-3e1e-4330-8d32-ce92d1699fbb",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0023 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0023 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "05ff45e6ff8259bbae96170edf40272ee1fed2e0337097bc17f6c8ed2aeb0959",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_072ab769506f49e3b0be828e",
+      "requestId": "cc965132-3e1e-4330-8d32-ce92d1699fbb",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "bd33d258-8a37-425c-b05c-f6268bd1ea49",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_00532f65af8440a7a3693b77",
+      "requestId": "bd33d258-8a37-425c-b05c-f6268bd1ea49",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "9fa36929-b599-4ba0-ba64-f05aeff479fe",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_3df41737b98540bea11dec16",
+      "requestId": "9fa36929-b599-4ba0-ba64-f05aeff479fe",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "ec77f20b-32d4-48f6-8e49-3ffb18742cc6",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_5ccd4a5e22404608bba485cd",
+      "requestId": "ec77f20b-32d4-48f6-8e49-3ffb18742cc6",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "e0cd7b87-d902-4594-bfaf-8c59c1a14668",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "nextNormalizedToolResultSha256": "b1cfd03ecb1f5de2232b2356dc319ae50358873aa4b8b75c2533d4d577df9513",
+      "nextProviderFeedbackStatus": "EXACT_ERROR_PRESENT_WITH_MATCHING_CALL_ID"
+    },
+    {
+      "callId": "call_04d195dd3bc14dd9bde038df",
+      "requestId": "e0cd7b87-d902-4594-bfaf-8c59c1a14668",
+      "providerArgumentsRaw": "{\"prompt\": \"1024x576\"}",
+      "providerArgumentsSha256": "466436535415f7a8ff5cb4481ea8f5743a7b3c7e472069988152da26103e8d8d",
+      "nextRequestId": "413e1629-9aa6-4880-9ccb-c7d14deef800",
+      "nextPreNormalizationContainsMatchingError": true,
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": null,
+      "nextNormalizedToolResultSha256": null,
+      "nextProviderFeedbackStatus": "NOT_OBSERVED_REQUEST_CANCELLED_BEFORE_NORMALIZED_CAPTURE"
+    }
+  ],
+  "normalizedProviderFeedbackLinkCount": 10,
+  "preNormalizationFeedbackLinkCount": 11,
+  "imageJobCount": 0,
+  "outcome": "BOUNDED_ACCEPTANCE_FAILED_REPEATED_SCHEMA_ERRORS",
+  "termination": "OPERATOR_STOP_NOT_NATURAL_TERMINAL_FAILURE",
+  "operatorStopUtc": "2026-09-29T15:52:51.827Z",
+  "stopHttpStatus": 202,
+  "archivedRunStatus": "cancelled",
+  "instructionsSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+  "scope": "Last feedback appears in next native request only; not proven delivered to provider. No new inference or retry mechanism."
+}

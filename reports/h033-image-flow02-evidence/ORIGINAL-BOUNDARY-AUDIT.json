@@ -1,0 +1,167 @@
+{
+  "schema": 1,
+  "auditUtc": "2026-09-29T15:55:54.207744+00:00",
+  "helperSha256": "ff65ad0c2c8b446195ee41b7b631e5ff55af2b821a11fe88318983fff49aa9a3",
+  "captureManifestSha256": "fb48f8ae1082679bad1c7e0861c487f0989c409081824d1a6cbdcf1ac7568c39",
+  "captureUtc": "2026-09-29T15:21:41.318421+00:00",
+  "sessionId": "f6f5928a-3ee5-471d-82c5-60a1b58c63f6",
+  "runId": "802bb914-9177-4822-955d-3ab60f36a4f7",
+  "ticketId": "47e001d2-2eaf-43c0-a396-53a56bf74604",
+  "bindingSha256": "fd3580876b7d483c1266efc8dd01de2034a34838a9624b87e3cea49cc5609855",
+  "manifestIntegrity": "PASS",
+  "manifestFileCount": 26,
+  "captureIndexIntegrity": "PASS",
+  "captureRecordCount": 20,
+  "requestCount": 2,
+  "providerToolCallCount": 1,
+  "baselineSource": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+  "baselineCatalogSha256": "75f39aa38c42d99265101686c15e0f3154aacecc325a3fb6c598e0a185a51823",
+  "currentCatalogSha256": "cfb03e7b20dc847c5b9f9b8c98e07b6b62a288e3f374f8d1d1970a9c720f9cd6",
+  "requests": [
+    {
+      "requestId": "ce0ec81d-8b37-4a43-829f-bc0db8bc4eaa",
+      "nativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "rootNativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "ac9038bd27db668a0e24052eb7ac677dc29a542950973b34a9d64c5fe860e22a",
+        "normalized_request": "aa8f7126c8934cb261411f91e38ff32b22ba5c9d1ea9b7ed6b558b5af80b8128",
+        "provider_sse": "73d98bcc4f3f8e778802d47ae61b69bbfac33c9d9f06d9b4807bceacb2b347c4",
+        "responses_sse": "b291b94977f381847519f2db163b91f35fd69976b1d12246be1c0c098772a82a"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": true,
+        "matchesCurrent": false,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": false,
+        "providerReceivesExactNativeBase": true,
+        "providerCorrectedGuidancePresent": false
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": true,
+      "imageSchemas": {
+        "image_capabilities": {
+          "schemaSha256": "99334726611ccf58a148b0814696bfa6fe08c1b2d027e946beccf5a74331c9aa",
+          "preserved": true
+        },
+        "image_edit": {
+          "schemaSha256": "00df54bce205cda009893c5416c5d6fd6f33dfa10a62d72e230af95aeeef2392",
+          "preserved": true
+        },
+        "image_generate": {
+          "schemaSha256": "4a5065c71f3c85ef064f01a08f3922a63d6f62a2950b487ae2aeea54fdfce718",
+          "preserved": true
+        }
+      },
+      "capabilitySchemaPreserved": true,
+      "providerToolCallCount": 1
+    },
+    {
+      "requestId": "21f0c8fa-0039-433a-8e0d-9c44c761b4fe",
+      "nativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "rootNativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "model": "qwen3.8-27b",
+      "phases": [
+        "pre_normalization"
+      ],
+      "phaseSha256": {
+        "pre_normalization": "94d342143babd938748dbce2bafd5cddfca1bc19078df1bb5c400e67b22aa409"
+      },
+      "capabilityDeclarationPresent": true,
+      "capabilitySchema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "instructions": {
+        "sha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "baselineTemplateSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+        "currentTemplateSha256": "efeb90ed449f8273c133758e5bca350d8d5e905e6853066f506db2355f634f90",
+        "matchesBaseline": true,
+        "matchesCurrent": false,
+        "nativeMetadataEqualsRequest": true,
+        "correctedGuidancePresent": false
+      },
+      "archivedGatewayState": "settled",
+      "normalizedCapturePresent": false
+    }
+  ],
+  "imageToolCalls": [
+    {
+      "requestId": "ce0ec81d-8b37-4a43-829f-bc0db8bc4eaa",
+      "nativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "callId": "call_c14ede3bbf8846e2a9bba8dd",
+      "tool": "image_capabilities",
+      "providerArgumentsSha256": "60f9dd045d13e6c979ee25f525b1f1a31a63f0b98e1cccd1d36751f41d314296",
+      "argumentBytes": 104,
+      "argumentKeys": [
+        "profile",
+        "purpose",
+        "reference_count"
+      ],
+      "providerResponsesBytesEqual": true,
+      "providerNativeBytesEqual": true,
+      "nativeMcpArgumentsEqual": true,
+      "appMcpActivityCount": 2,
+      "appMcpArgumentsEqual": true,
+      "appMcpComparison": "PASS",
+      "capabilityInputValid": false,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "mcpResultSha256": "6909d1417703a7362c66e9ba756b515cd9e34aaccc231c2da0ca1ad4b806c357",
+      "mcpSchemaRejection": true,
+      "returnedJobsMatchedToArchive": []
+    }
+  ],
+  "nativeMcpSequence": [
+    {
+      "nativeSessionId": "01a0edbf-95e3-7e52-8c6a-b5804c582345",
+      "nativeTurnId": "01a0edbf-95fb-7fe1-8142-eed46e4f6a8c",
+      "callId": "call_c14ede3bbf8846e2a9bba8dd",
+      "server": "image",
+      "tool": "image_capabilities",
+      "status": "failed",
+      "completedAtMs": 1790695193246
+    }
+  ],
+  "messageSubmissionCount": 1,
+  "observedContinuation": {
+    "sameNativeTurnsWithFailedCapabilityThenCompletedGeneration": [],
+    "scope": "Observed native in-turn continuation only; does not imply a later successful capabilities call or final-answer quality."
+  },
+  "imageJobCount": 0,
+  "artifactRowCount": 0,
+  "archivedRunStatus": "cancelled",
+  "archivedGatewayStates": {
+    "ce0ec81d-8b37-4a43-829f-bc0db8bc4eaa": "settled",
+    "21f0c8fa-0039-433a-8e0d-9c44c761b4fe": "settled"
+  },
+  "scope": "Offline captured-byte audit. No argument values, prompt, response prose or credentials. Archived states are not independent source-bound settlement proof.",
+  "originalOutcome": {
+    "toolCallSchema": "FAIL",
+    "acceptanceTask": "CANCELLED_BY_TEST_OPERATOR",
+    "pendingRequestHadOnlyPreNormalizationCapture": true,
+    "mcpErrorPresentInPendingContinuation": true,
+    "normalRecoveryOutcome": "NOT_OBSERVED_OPERATOR_CANCELLED_BEFORE_PENDING_REQUEST_COMPLETED",
+    "unrecoverableTaskFailureProven": false,
+    "stopIntentSha256": "46c43a528964142f31bcb356eb85db8c342237e8a08ee3e91d41bc3e61c396fe",
+    "stopAckSha256": "39df15b9bf3b97915fc46804c7ce59157b9812f20c859c8e353cfe84d598425e",
+    "operatorStopUtc": "2026-09-29T15:20:31.981Z"
+  }
+}
