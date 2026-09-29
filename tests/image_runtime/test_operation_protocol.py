@@ -203,6 +203,64 @@ class OperationProtocol(unittest.TestCase):
                 finally:
                     fixture.doCleanups()
 
+    def retained_residency(self):
+        # The retained 09:57:40 capture contains this GPU process row. Restore
+        # verify_resident()'s tuple type before exercising real save/finally;
+        # this finite source fixture is not a historical or live recovery claim.
+        return {'container_id': CID, 'started_at': '2026-09-29T09:55:35.757660444Z',
+                'gpu_processes': [(service.GPU_UUID, '1664791', '32224')],
+                'device_current': {'free_bytes': 17064525824, 'total_bytes': 51527024640,
+                                   'uuid': service.GPU_UUID},
+                'host_current': {'MemAvailable': 916447969280, 'MemTotal': 946820820992,
+                                 'SwapFree': 922480640, 'SwapTotal': 3157258240}}
+
+    def test_warm_tuple_residency_publishes_and_operation_finally_completes(self):
+        self.anchor.atomic_json('state.json', self.owned_state())
+        with self.runtime.operation('start'):
+            state = copy.deepcopy(self.runtime.expected_state)
+            state.update(phase='warm', warm=True, residency=self.retained_residency())
+            self.assertIsInstance(state['residency']['gpu_processes'][0], tuple)
+            self.runtime.publish(state, hardware=True)
+            durable = self.runtime.state()
+            self.assertIsInstance(durable['residency']['gpu_processes'][0], list)
+            self.assertEqual(self.runtime.expected_state, durable)
+        self.assertEqual(self.runtime.record('operation.json')['status'], 'complete')
+        self.assertTrue(self.runtime.state()['warm'])
+
+    def test_tuple_normalization_does_not_accept_changed_persisted_fields(self):
+        for case in ('residency', 'container', 'native_generation', 'run_id', 'warm', 'new_field'):
+            with self.subTest(case=case):
+                fixture = OperationProtocol()
+                fixture.setUp()
+                try:
+                    runtime = fixture.runtime
+                    fixture.anchor.atomic_json('state.json', fixture.owned_state())
+                    with self.assertRaisesRegex(RuntimeError, 'image_operation_changed'):
+                        with runtime.operation('start'):
+                            state = copy.deepcopy(runtime.expected_state)
+                            state.update(phase='warm', warm=True, residency=fixture.retained_residency())
+                            runtime.publish(state, hardware=True)
+                            # This assertion prevents the original tuple mismatch
+                            # from masquerading as a successful negative control.
+                            self.assertEqual(runtime.expected_state, runtime.state())
+                            changed = runtime.state()
+                            if case == 'residency':
+                                changed['residency']['gpu_processes'][0][2] = '32225'
+                            elif case == 'container':
+                                changed['container']['id'] = 'd' * 64
+                            elif case == 'native_generation':
+                                changed['native_generation']['start_ticks'] += 1
+                            elif case == 'run_id':
+                                changed['run_id'] = 'd' * 32
+                            elif case == 'warm':
+                                changed['warm'] = False
+                            else:
+                                changed['unexpected'] = True
+                            fixture.anchor.atomic_json('state.json', changed)
+                    self.assertEqual(runtime.record('operation.json')['status'], 'active')
+                finally:
+                    fixture.doCleanups()
+
     def test_unknown_hardware_and_lost_storage_cannot_publish_ready(self):
         for case in ('hardware', 'storage'):
             with self.subTest(case=case):
@@ -448,7 +506,7 @@ class OperationProtocol(unittest.TestCase):
         runtime.make_work = Mock()
         runtime.create_argv = Mock(return_value=['docker', 'create', 'fixture'])
         runtime.tmp_snapshot = Mock(return_value={'entries': []})
-        runtime.verify_resident = Mock(return_value={'status': 'fixture-resident'})
+        runtime.verify_resident = Mock(return_value=self.retained_residency())
         self.anchor.mkdir('receipts', mode=0o700)
         physical = {'created': False, 'running': False, 'pid': 42,
                     'started': '2026-09-29T08:00:00Z'}

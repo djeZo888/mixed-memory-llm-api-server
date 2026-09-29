@@ -1,0 +1,26 @@
+{
+  "task": "H031-SOURCE03",
+  "baseCommit": "910319da51bbc3d253946477206cafa8405c411f",
+  "utc": "2026-09-29T10:12:21.664833+00:00",
+  "deployed": false,
+  "sourceFiles": {
+    "scripts/image_runtime/service.py": "4ebe25cf6d2c3399052e2d65c4b343b93ed00668b353e6fdb985f4528ea13496",
+    "tests/image_runtime/test_operation_protocol.py": "90ea474810ec4c4cc3df24ce32c0330cb7aae9c750f3e2ec0c019e70deb90fb1"
+  },
+  "deployedImageServiceSha256": "26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556",
+  "deployedImageConfigSha256": "874794b83ed0182b6651b607517af44ac94f6125abc3b6c1509886aa82b359c9",
+  "beforeFixture": "FAIL_image_operation_changed",
+  "afterAffectedImageTests": 85,
+  "liveAcceptance": "NOT_TESTED",
+  "miMoRetry": "ONE_START_REFUSED_lifecycle_busy",
+  "vmWriteOwnershipReleasedUtc": "2026-09-29T10:09:58.389780+00:00",
+  "imageChangeSourceOnly": true,
+  "reviewedArtifactsSha256": {
+    "EARLY.patch": "1d4bb0ec0d0b64533ca2db4ee731b397b4595f44f702c12b2abf71575d64a784",
+    "TESTS.log": "9e50a84ff7e8b5df39224baa6d44ee491324b14ac00f60f15af2a5cd8240ff6e",
+    "PROPOSAL.md": "142efba06aed11e61f9c1fef686873e9df84df842c8fcee1f3727f3151ba4741",
+    "REVIEW.md": "51a62fba60635ceb23253beee4dcc6a6965c3008025187db8f520a55a5d8436d",
+    "MIMO-RETRY-RECEIPT.json": "1bc1bde17be89b3843a3ed38b50bf41c0407637d20da69f6b80bd04a195a8981",
+    "PREFLIGHT-CORRECTION.patch": "d5a2a91e46e104f2fae421970bdca77a10f89aeea13e913155f19f062228b539"
+  }
+}

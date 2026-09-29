@@ -1,0 +1,81 @@
+{
+  "task": "H031-SOURCE03",
+  "baseCommit": "910319da51bbc3d253946477206cafa8405c411f",
+  "status": "SOURCE_FIXED_REVIEW_PENDING_LIVE_INCOMPLETE",
+  "miMo": {
+    "utc": "2026-09-29T10:09:58.389780+00:00",
+    "event": "NO_MORE_WRITES_RELEASE",
+    "startAttempts": 1,
+    "unit": {
+      "MainPID": "0",
+      "Result": "exit-code",
+      "ExecMainStatus": "255",
+      "ControlGroup": "",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "Job": "",
+      "InvocationID": "223dccb354624451ba5be9692567b780"
+    },
+    "ownerStatus": "SETTLED",
+    "supervisor": {
+      "invocation_id": "a1aed8cfbc0046c8a247922dfbe11e70",
+      "pid": 3442364,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "fbfd46357f0d4e3482aa1c7da14f5147",
+    "stateRawSha256": "b1ba8b36d09aef570a0d90f769268a61d05a6dbb11899720a163a5bab8fa7420",
+    "consumed": false,
+    "futureVmWrites": false,
+    "imageActions": 0,
+    "inferenceRequests": 0,
+    "task": "H031-SOURCE03",
+    "status": "ONE_START_REFUSED_UNIT_FAILED_NO_LOADING",
+    "retryUtc": "2026-09-29T10:09:56.341536+00:00",
+    "preflightUtc": "2026-09-29T10:09:56.341487+00:00",
+    "preflightHardware": {
+      "hardware_latched": false,
+      "hardware_latched_boot_id": null,
+      "reason": null,
+      "hardware_validation_age_ms": 5650.309324264526,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "identity": [
+        [
+          "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "validated"
+        ]
+      ]
+    },
+    "vmWriteOwnershipReleased": true,
+    "noFurtherStart": true,
+    "priorPreflightRefusalRetained": "MIMO-PREFLIGHT-REFUSAL.json",
+    "authorization": "ROOT 10:09UTC mechanical preflight correction in acknowledged INBOX",
+    "errorCode": "lifecycle_busy",
+    "stateUnchanged": true,
+    "failureObservedUtc": "2026-09-29T10:09:56.776569+00:00",
+    "execStopPost": {
+      "code": "recovery_invocation_changed",
+      "observedUtc": "2026-09-29T10:09:56.844076+00:00"
+    }
+  },
+  "image": {
+    "beforeFixture": "FAIL_image_operation_changed",
+    "affectedTests": 85,
+    "affectedTestsOutcome": "PASS",
+    "realChangedFieldNegativeControls": 6,
+    "deployed": false,
+    "liveAcceptance": "NOT_TESTED",
+    "recoveryProposalOnly": true
+  },
+  "boundaries": {
+    "vmWritesAfterRelease": false,
+    "miMoStarts": 1,
+    "imageActions": 0,
+    "inference": 0,
+    "githubPush": false,
+    "noBaselineRestore": true
+  }
+}

@@ -1,0 +1,17 @@
+--- private/retry.py
++++ private/retry-corrected.py
+@@ -44,13 +44,8 @@
+   with h.acquire_lease(blocking=False) as lease:
+    exact();physical=o.timeout_physical(old,previous,BOOT)
+    hardware=o.source_hardware(h,BOOT,lease)
+-   from lifecycle.storage_binding import RegisteredStorageBinding
+-   from lifecycle.manager import StorageRunner
+-   from lifecycle.hardware_policy import read_latch_status
+-   common=read_latch_status(RegisteredStorageBinding.read_registered(StorageRunner()),GPUS,current_boot_id=BOOT)
+-   need(common.get('hardware_latched') is False,'common_hardware_not_negative')
+    units=idle_owners();exact();lease.validate()
+- emit({'event':'PREFLIGHT_PASS','hashes':EXPECTED,'physical':physical,'hardware':hardware,'commonHardware':common,'units':units,'transitionConsumed':False,'imageOwnersAbsent':True,'canonicalLeaseAcquiredAndReleased':True})
++ emit({'event':'PREFLIGHT_PASS','hashes':EXPECTED,'physical':physical,'hardware':hardware,'units':units,'transitionConsumed':False,'imageOwnersAbsent':True,'canonicalLeaseAcquiredAndReleased':True})
+  # The ordinary supervisor independently repeats launch admission. No lease is
+  # retained across systemd start and no source/receipt/state is written here.
+  retry_time=datetime.datetime.now(datetime.timezone.utc).isoformat();started=True

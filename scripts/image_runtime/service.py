@@ -639,7 +639,9 @@ class Runtime:
     def publish(self, state, *, hardware=False):
         with self.critical(hardware=hardware):
             self.save(state)
-            self.expected_state = copy.deepcopy(state)
+            # Match atomic_json's representation (notably residency tuples)
+            # without rereading and accepting an unexpected persisted change.
+            self.expected_state = json.loads(json.dumps(state, allow_nan=False))
 
     def dispatch(self, state, action, argv, *, timeout=60, hardware=False):
         # This durable marker survives a killed client or lost Docker response.
