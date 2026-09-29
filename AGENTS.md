@@ -1,4 +1,38 @@
-# Active H029 — Codex completion, first two-hour window
+# Latest checkpoint — H029 closed within its two-hour window
+
+September 29, 2026. Both final native workers exited cleanly by 03:05:51 UTC;
+all assigned implementation/test/VM work is settled. Read
+`reports/h029-codex-checkpoint.md` and `reports/h029-codex-results.json`.
+The authorized 01:25–03:25 UTC window is closed after root publication. Do not
+resume it, open another paid worker task or retry inference automatically.
+
+Deployed: control slow collection outside the canonical lease with identity
+revalidation before publication; unordered full Docker Mounts comparison;
+exact dedicated Ada peer coexistence; safe admission diagnostics; original safe
+targeted control errors; durable ordinary submission IDs and explicit UI retry.
+The app is source2662bd08, final control core5a2fef84, receiptf5f727f7. Native
+Codex image/policy and H028 status deployment remain pinned. Historical records,
+files, uncertain owners and quarantines are preserved. MiniMax stays default.
+
+Both new ordinary Codex tool attempts failed before generation. The first old
+transport subtype is unknown; the second captured count/control_after409
+target_unavailable. Final error-preserving control deployment then exposed a
+separate current admission409 lifecycle_busy; peer Qwen1 passed. The competing
+lock holder was not captured. Read-only diagnostics are not tool acceptance.
+
+Three Qwens are resident/ready at480K/480K/200K. New Ada is not in harness routing.
+MiMo remains selected but unavailable; image remains stopped. No new pending
+inference or model job. No fan/power/ECC/runtime changes, GPU stress or950K test.
+
+Next bounded work: identify competing lease users and repair publication
+scheduling to tolerate brief contention while retaining identity checks and
+hardware guard latency. Then qualify the unchanged ordinary tool/follow-up
+case before PDF, compaction, frontier/image and wider lifecycle acceptance.
+No stale readiness acceptance or blanket timeout increase. Source and tests
+are published on feature/glm53-flash / draft PR10; incomplete branch is not
+merge-ready. Root coordinates/reviews/publishes; workers implement/test/operate.
+
+# Previous authorization — H029 first two-hour window
 
 The user authorized `ai-harness/PLAN-CODEX-COMPLETION-20260929.md` with both
 workers; root orchestrates/reviews/publishes only. Window September 29,

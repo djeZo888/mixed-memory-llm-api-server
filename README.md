@@ -33,6 +33,11 @@ The [completion plan](ai-harness/PLAN-CODEX-COMPLETION.md) prioritizes the
 remaining tool, model-routing, compression and reliability qualification.
 The [H024 implementation checkpoint](reports/h024-codex-checkpoint.md) records
 the deployed follow-up changes and remaining live qualification failures.
+The latest [H029 checkpoint](reports/h029-codex-checkpoint.md) records deployed
+control-lock and submission-retry fixes. Complete Codex workflow qualification
+remains blocked by an intermittent lifecycle-lock rejection during admission.
+Three Qwen services are resident (480K, 480K and 200K); MiMo is unavailable and
+the image service remains stopped. MiniMax remains the default.
 The [H025 fan-control and load-test report](reports/h025-overview.md) records the
 deployed GPU fan policies, improved sampled temperatures, measured power and the
 remaining benchmark/GLM failures. CHA_FAN1 remains exclusively BMC-controlled.
