@@ -27,7 +27,7 @@ export interface QwenDeploymentReceipt {
 export const QWEN_OWNER_POLICY = Object.freeze({
   concurrentProfilesSha256: "4b597865ea5fabfdb27ca91c331c60de01a4a68b89590ebdb96f462ce52cbc8d",
   modelManifestSha256: "fb62b2689a4c57aa1265b1262830c8d0e3983061c9674640ec9704ce603a44be",
-  controlAdapterSha256: "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+  controlAdapterSha256: "549ca8d6c8323682e13e26e8c0b4966af1b3f207c88bc682d5a56ce6b8dcc398",
 });
 export const QWEN_REVIEWED_LANES = Object.freeze({
   "qwen3.8-27b-gpu0": Object.freeze({ controlSlot: "glm", serviceId: "qwen-gpu0",
