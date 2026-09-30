@@ -24,12 +24,20 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-**September 30 H037 deployment:** Codex 0.158.0 is the new-chat default;
+**September 30 H038 checkpoint:** Codex 0.158.0 is the new-chat default;
 MiniMax remains selectable and existing conversations retain their engine.
-The image service is moving to the internal Gen4 x16 Ada, replacing its separate
-200K Qwen instance. Source/config delivery passed and normal model starts were dispatched.
-Fresh image/frontier workflow qualification remains incomplete at the time limit. Optional tools stay closed until their actual placement and workflow
-pass. See the [H037 plan](reports/h037-execution-plan.md).
+A fresh Codex attachment, Python calculation, generated file and follow-up passed.
+Both Codex and MiniMax delegated to the current MiMo, continued from real tool
+results and returned correct answers with all work settled. Frontier delegation
+is enabled. Status collection is running and reports observed native readiness
+separately from unknown capacity fields.
+
+The separate Ada 200K Qwen service is retired. Image selection now targets the
+internal Gen4 x16 Ada, and the status registry matches its installed configuration.
+Image startup still fails before model loading; image tools remain unavailable
+pending repair and fresh workflow qualification. See the
+[H038 checkpoint](reports/h038-checkpoint.md) and
+[H038 plan](reports/h038-execution-plan.md).
 
 The [earlier recovery report](reports/h036-resumed-recovery.md) and
 [compact results](reports/h036-resumed-recovery-results.json) preserve the
@@ -136,10 +144,9 @@ the selected qualified frontier model. This fixed routing policy does not implem
 arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
 [H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
 
-See the [H037 partial checkpoint](reports/h037-checkpoint.md) for current gaps and next steps.
-
-**Checkpoint limitation:** the status collector remains paused; its page is
-temporarily unavailable. Image/frontier tools remain closed pending qualification.
+See the [H038 checkpoint](reports/h038-checkpoint.md) for current results and
+remaining work. The [H037 checkpoint](reports/h037-checkpoint.md) remains a
+historical record of the preceding window.
 
 ## Current models and dated acceptance
 
@@ -153,12 +160,12 @@ delegation both passed with actual tool calls and complete settlement. Historica
 earlier 950K workflow results are not relabeled as 480K tests.
 
 Qwen0 and Qwen1 retain 480,000-token configurations and the two shared harness
-lanes. The separate 200K Qwen Ada API is being retired, retaining its weights and history;
+lanes. The separate 200K Qwen Ada API is stopped and disabled, retaining its weights and history;
 it is not a 480K fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
 GLM are alternate owners of frontier hardware, not simultaneously resident.
 Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing.
-H037 changes its selection to the internal Ada; optional tools remain closed
-until fresh qualification. See [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
+The internal Ada is selected, but image tools remain closed until startup is repaired
+and fresh image qualification passes. See [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
 No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the
 [failed near-950K result](reports/h022-950k-status.md),

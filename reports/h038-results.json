@@ -1,0 +1,104 @@
+{
+  "task": "H038",
+  "outcome": "ACTIVE_INCOMPLETE",
+  "window": {
+    "startUtc": "2026-09-30T13:45:26Z",
+    "deadlineUtc": "2026-09-30T16:45:26Z"
+  },
+  "policy": {
+    "contextTokens": 480000,
+    "compactAtTokens": 400000,
+    "maxOutputTokens": 65536
+  },
+  "defaultCodex": {
+    "result": "PASS native default chat, attachment, Python, preserved file follow-up",
+    "sessionId": "5cf37386-1016-4755-a9f8-bd1c5f9fe6e3",
+    "physicalSettlementSha256": "cb542eb5e81235884ed7e2952f2ac25b2c9f0b7a4e483bfc79406063221797d8"
+  },
+  "codexMiMo": {
+    "utc": "2026-09-30T15:01:14.285890+00:00",
+    "result": "PASS_ACTUAL_NATIVE_TOOL_CONTINUATION_CHILD_PARENT_FINAL_PHYSICAL_SETTLEMENT",
+    "sessionId": "ec3f9531-2feb-4635-b705-ef5a6103fda2",
+    "runId": "9b86c27d-7e0b-449b-8874-39e3e2489e2d",
+    "parentNativeId": "01a0f2c8-dcbf-74c0-b721-fc051638b03a",
+    "childNativeId": "01a0f2c9-0323-7022-bee8-f415d2dbaaf2",
+    "toolResult": 437,
+    "providerToolResultContinuation": true,
+    "nativeWaitHandoff": true,
+    "nativeTranscriptSha256": "d800af7def81126bafd7c7221cbb296bb921958e5e9c553d84d3462797ae540e",
+    "settlementSha256": "e5ea6eeb7f400ea257fc088240d04b9e2ff25c5d48e49dfcb052f11de98a0b2a",
+    "physicalSettlement": true,
+    "largestMimoInput": 14558,
+    "occupied480KQualified": false
+  },
+  "miniMaxMiMo": {
+    "utc": "2026-09-30T15:13:34.640037+00:00",
+    "result": "PASS_ACTUAL_NATIVE_TOOL_CONTINUATION_CHILD_PARENT_FINAL_PHYSICAL_SETTLEMENT",
+    "sessionId": "7d7776fc-ba59-484c-8a17-a084ba2d8bb3",
+    "runId": "a3827605-322c-4b62-ba53-cb68a6850170",
+    "parentNativeId": "mvs_1739956d3bca40a3826d03c84160cf1e",
+    "childNativeId": "mvs_47610a2fb0c94548b9e409a4f6f4f6c3",
+    "toolResult": 667,
+    "shellExitBasis": "Native tool records completed status and result; numeric process exit is not separately exposed",
+    "providerToolResultContinuation": true,
+    "nativeTaskHandoff": true,
+    "nativeTranscriptSha256": "bda2102b638bada2c2a667f406ad0dd6bc3d54b2297cae5a54f9a27aee45cd00",
+    "settlementSha256": "15ffa6b6db2f9b85982668eaa750a712cf038fc303289b1304ee35fc52e70934",
+    "physicalSettlement": true,
+    "largestMimoInput": 11977,
+    "occupied480KQualified": false
+  },
+  "image": {
+    "result": "UNAVAILABLE; startup failure cause unproven",
+    "attemptId": "b2efd616394c4b8995c5caa13358e739",
+    "failure": "native_exited_during_load before backend.log",
+    "permissions": "PASS",
+    "noGpuOverlayGuard": "PASS15files",
+    "repair": "NOT_ESTABLISHED; one GPU-injected import-only diagnostic authorized; no new model inference",
+    "diagnosticSource": "455f60e4b1eef5b1fe9c280bd130a8e91fcd2dee",
+    "diagnosticTests": "10startup+1sourcebindingPASS",
+    "diagnosticInstalledUtc": "2026-09-30T15:44:25.854670Z",
+    "reportedFailure": "visibility/unexpected_gpu_visibility; underlying subcondition unproven, raw evidence copy pending"
+  },
+  "status": {
+    "collector": "RESTORED normal14:04:51UTC",
+    "displayPatch": "DEPLOYED15:16:33UTC21focusedtestsPASS/build0",
+    "reviewedSource": "cdc39b0c4834589cbc9cc5d1c403fa29c0caf519"
+  },
+  "qualification": {
+    "globalFrontier": true,
+    "globalImage": false,
+    "activatedUtc": "2026-09-30T15:22:00.250196Z",
+    "pinsSha256": "24533878858219deb535cc4fb29c93a670152df01796f9e60f7fd47f86c9ceae",
+    "oldHistoryAndOwnersPreserved": true,
+    "modelRestarts": 0,
+    "activeRuns": 0
+  },
+  "limits": {
+    "occupied480KRepeated": false,
+    "longCompactionRepeated": false,
+    "nativeCodexVision": "UNSUPPORTED",
+    "upstreamUpgrade": "HELD substantial delta"
+  },
+  "publication": {
+    "pr": "https://github.com/djeZo888/mixed-memory-llm-api-server/pull/11",
+    "draft": true,
+    "merged": false
+  },
+  "imageBinding": {
+    "status": "PASS",
+    "installedUtc": "2026-09-30T15:57:20.285Z",
+    "registrySha256": "d39bcb22051580de5e0fa0078148e978fc446200aabe52c50a4e8c104cfcb494",
+    "selectionConfigSha256": "6fe3abb902c5f7e6a682c5f95c0ec01c694fcadc4040e9fb5a4eed323602f960",
+    "globalFrontier": true,
+    "globalImage": false,
+    "imageWorkflows": "NOT_TESTED"
+  },
+  "imageFailureCurrent": {
+    "stage": "visibility",
+    "code": "unexpected_gpu_visibility",
+    "beforeModelLoad": true,
+    "subcondition": "UNKNOWN",
+    "failedNativeSettled": true
+  }
+}
