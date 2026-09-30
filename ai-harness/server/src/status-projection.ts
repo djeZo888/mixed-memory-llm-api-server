@@ -19,6 +19,8 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
       : s.id === "mimo-v2.6-pro-rl" ? codexProvider(s.id) : null;
     const capacity = !profile ? "not_applicable" : native.configured_context_tokens === null || native.max_output_tokens === null ? "unknown"
       : native.configured_context_tokens === profile.contextWindow && native.max_output_tokens === profile.maxOutputTokens ? "matched" : "mismatch";
+    const capacityReason = capacity !== "unknown" ? null
+      : native.configured_context_tokens === null ? "native_context_not_observed" : "native_output_ceiling_not_observed";
     const qwenLane = Object.values(QWEN_REVIEWED_LANES).find(l => l.serviceId === s.id);
     const configuredGpuUuids = s.placement ? [s.placement.gpu_uuid] : qwenLane ? [qwenLane.gpuUuid]
       : s.id === "mimo-v2.6-pro-rl" ? [MIMO_GPU_UUID] : null;
@@ -56,7 +58,7 @@ export function projectNode(node: NodeSnapshot, config: RegistryNode, registry: 
       ...native, service_id: s.id, node_id: s.node_id, display_name: s.display_name,
       configured_model: s.model ?? null, selection, identity_status: identity,
       configured_placement: s.placement ?? null, placement_status: placement,
-      configured_profile: profile, capacity_status: capacity,
+      configured_profile: profile, capacity_status: capacity, capacity_reason: capacityReason,
       configured_gpu_uuids: configuredGpuUuids, gpu_identity_status: gpuIdentity,
       observed_placement: s.placement ? node.imageGPU : null,
       observed_image_capabilities: s.placement ? node.image.capabilities : null,

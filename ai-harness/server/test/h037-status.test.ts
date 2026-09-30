@@ -69,3 +69,21 @@ test("SOURCE_FIXTURE unknown configured image digest and mismatched text profile
   assert.equal(mismatched.observed_model.availability, "available");
   assert.equal(result.services.find(s => s.service_id === "qwen-gpu1")!.ready, true);
 });
+
+
+test("SOURCE_FIXTURE native Qwen readiness remains visible with unknown output capacity and closed effective availability", () => {
+  const f = fixture();
+  for (const id of ["qwen-gpu0", "qwen-gpu1"]) f.raw.services.find((s: any) => s.service_id === id).max_output_tokens = null;
+  for (const row of f.project().services.filter(s => s.service_id.startsWith("qwen-gpu"))) {
+    assert.equal(row.observed_model.ready, true); assert.equal(row.observed_model.freshness, "fresh");
+    assert.equal(row.capacity_status, "unknown"); assert.equal(row.capacity_reason, "native_output_ceiling_not_observed");
+    assert.equal(row.max_output_tokens, null); assert.equal(row.configured_profile!.maxOutputTokens, 65536);
+    assert.equal(row.ready, null); assert.equal(row.admitting, null); assert.equal(row.availability, "unknown");
+  }
+  const qwen = f.raw.services.find((s: any) => s.service_id === "qwen-gpu0");
+  qwen.configured_context_tokens = null;
+  assert.equal(f.project().services.find(s => s.service_id === "qwen-gpu0")!.capacity_reason, "native_context_not_observed");
+  qwen.max_output_tokens = 65536; qwen.configured_context_tokens = 200000;
+  const mismatch = f.project().services.find(s => s.service_id === "qwen-gpu0")!;
+  assert.equal(mismatch.capacity_reason, null); assert.equal(mismatch.availability, "unavailable"); assert.equal(mismatch.ready, false);
+});
