@@ -22,6 +22,7 @@ import { environment } from "./locale.js";
 import { imageMime, safeStorageName, displayName } from "./file-metadata.js";
 import { ApiError, requireId } from "./errors.js";
 import type { ImageJob } from "./image-contracts.js";
+import { recoverySnapshot, hasRecoveryTable, PHYSICAL_RELEASE_CLEANUP_LABEL, type RecoveryTarget } from "./recovery-snapshot.js";
 
 export interface StoredSession extends Session {
   workspaceId: string;
@@ -80,9 +81,14 @@ export class Store {
   constructor(
     databasePath: string,
     private readonly workspaceRoot?: string,
+    private readonly options?: { mode: "offline-recovery" },
   ) {
     this.events.setMaxListeners(0);
     this.db = new DatabaseSync(databasePath);
+    // The protected operator already performed read-only preflight. This mode
+    // performs no PRAGMA, schema migration or generic restart recovery. In
+    // particular, opening it cannot add errors/quarantines for unrelated owners.
+    if (options?.mode === "offline-recovery") return;
     this.db
       .exec(`PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;
    CREATE TABLE IF NOT EXISTS handoffs(session_id TEXT PRIMARY KEY,summary TEXT NOT NULL,delivered INTEGER NOT NULL DEFAULT 0);
@@ -169,6 +175,66 @@ export class Store {
     }
     // A restarted server cannot prove that an external launcher/container settled.
     // Keep pending deletions visible until a fresh explicit cancel confirms settlement.
+  }
+  /** Protected offline CLI only. Proof validation and app-user/exclusivity checks
+   * precede this call; no cleanup, upstream call or request replay occurs here.
+   */
+  applyPhysicalRelease(input: {
+    target: RecoveryTarget;
+    snapshotSha256: string;
+    proofSha256: string;
+    recoveryId: string;
+    evidence: unknown;
+  }) {
+    if (this.options?.mode !== "offline-recovery") throw Error("Physical release requires offline recovery mode");
+    if (!/^[a-f0-9]{64}$/.test(input.snapshotSha256) || !/^[a-f0-9]{64}$/.test(input.proofSha256) ||
+        !/^[A-Za-z0-9][A-Za-z0-9-]{0,127}$/.test(input.recoveryId) || !input.evidence || typeof input.evidence !== "object")
+      throw Error("Invalid recovery disposition binding");
+    const events: Event[] = [];
+    let record;
+    this.db.exec("BEGIN IMMEDIATE");
+    try {
+      if (hasRecoveryTable(this.db, "h036_physical_releases") && this.db.prepare("SELECT recovery_id FROM h036_physical_releases WHERE recovery_id=? OR run_id=?").get(input.recoveryId, input.target.runId))
+        throw Error("Recovery already recorded; refusing duplicate events");
+      const snapshot = recoverySnapshot(this.db, input.target);
+      if (snapshot.sha256 !== input.snapshotSha256) throw Error("Recovery database snapshot changed");
+      record = {
+        recoveryId: input.recoveryId, createdAt: now(), target: input.target,
+        physicalRelease: true, outcome: "interrupted_unknown",
+        snapshotSha256: input.snapshotSha256, proofSha256: input.proofSha256,
+        evidence: input.evidence, priorOwnership: snapshot.owner,
+        priorSession: snapshot.session, priorRun: snapshot.run, priorQuarantine: snapshot.quarantine,
+      };
+      this.db.exec(`CREATE TABLE IF NOT EXISTS h036_physical_releases(
+        recovery_id TEXT PRIMARY KEY,session_id TEXT NOT NULL,run_id TEXT NOT NULL UNIQUE,
+        snapshot_sha256 TEXT NOT NULL,proof_sha256 TEXT NOT NULL,record TEXT NOT NULL);
+        CREATE TABLE IF NOT EXISTS h036_released_requests(
+        request_id TEXT PRIMARY KEY,recovery_id TEXT NOT NULL REFERENCES h036_physical_releases(recovery_id),original_record TEXT NOT NULL);`);
+      this.db.prepare("INSERT INTO h036_physical_releases VALUES(?,?,?,?,?,?)").run(
+        input.recoveryId, input.target.sessionId, input.target.runId, input.snapshotSha256, input.proofSha256, JSON.stringify(record),
+      );
+      for (const request of snapshot.requests) this.db.prepare("INSERT INTO h036_released_requests VALUES(?,?,?)")
+        .run(String(request.id), input.recoveryId, String(request.record));
+      const updated = this.db.prepare(`UPDATE h021_session_engines SET ownership='idle',active_turn_id=NULL
+        WHERE session_id=? AND workspace_id=? AND engine_kind='codex' AND ownership='uncertain' AND active_turn_id=?`)
+        .run(input.target.sessionId, input.target.workspaceId, input.target.turnId);
+      const removed = this.db.prepare("DELETE FROM quarantined_workspaces WHERE id=? AND reason=?")
+        .run(input.target.workspaceId, String(snapshot.quarantine.reason));
+      if (Number(updated.changes) !== 1 || Number(removed.changes) !== 1) throw Error("Recovery owner CAS failed");
+      const disposition = { recoveryId: input.recoveryId, physicalRelease: true, outcome: "interrupted_unknown", proofSha256: input.proofSha256 };
+      events.push(this.writeEvent(input.target.sessionId, "progress", {
+        ...disposition, kind: "cleanup", label: PHYSICAL_RELEASE_CLEANUP_LABEL,
+      }, input.target.runId));
+      events.push(this.writeEvent(input.target.sessionId, "done", { ...disposition, runId: input.target.runId }, input.target.runId));
+      this.db.exec("COMMIT");
+    } catch (error) {
+      this.db.exec("ROLLBACK");
+      throw error;
+    }
+    for (const event of events) {
+      try { this.events.emit(input.target.sessionId, event); } catch { /* durable replay */ }
+    }
+    return record;
   }
   quarantine(workspaceId: string, reason: string) {
     this.db

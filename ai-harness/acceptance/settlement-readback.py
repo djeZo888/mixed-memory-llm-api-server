@@ -21,6 +21,57 @@ BUILD = {'broker': 'c34a45577f807e9b9aa4ff94da0ea4a60fab6ad50b01a5d608f98febd25b
          'engine': 'c71b49cbe042c933fc79c2ecef6e52b65696040bc4a14e5065a26f7064d8a3b4',
          'gateway-ownership': 'a8ecea7cc2858cc74da0bb8c25da65582da7c0a12485256dbfa29dea20394966'}
 
+CLEANUP_LABEL = 'Owned engine container cleanup confirmed; interrupted work was not replayed'
+
+def physical_releases(db, session):
+    """Read additive offline dispositions, never turn accepted work into success.
+
+    Authority remains the source-bound protected operator transaction. A caller's
+    idle flag or cleanup label alone cannot substitute for its complete audit.
+    Historical deployment pins above deliberately remain unchanged; deployment
+    must independently bind these semantics to its actual candidate/build.
+    """
+    tables = {r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name IN ('h036_physical_releases','h036_released_requests')")}
+    if not tables:
+        return {}, set()
+    assert len(tables) == 2, 'incomplete physical release schema'
+    released, runs = {}, set()
+    for row in db.execute('SELECT * FROM h036_physical_releases WHERE session_id=?', (session,)):
+        record = json.loads(row['record'])
+        target = record.get('target') or {}
+        assert record.get('recoveryId') == row['recovery_id'], 'release ID mismatch'
+        assert record.get('physicalRelease') is True and record.get('outcome') == 'interrupted_unknown', 'release outcome mismatch'
+        for field, column in (('proofSha256', 'proof_sha256'), ('snapshotSha256', 'snapshot_sha256')):
+            assert isinstance(record.get(field), str) and re.fullmatch('[0-9a-f]{64}', record[field]) and record[field] == row[column], 'release digest mismatch'
+        assert target.get('sessionId') == session and target.get('runId') == row['run_id'], 'release target mismatch'
+        for key in ('workspaceId', 'threadId', 'turnId'):
+            assert isinstance(target.get(key), str) and target[key], 'release native identity missing'
+        request_ids = target.get('requestIds')
+        assert isinstance(request_ids, list) and request_ids and all(isinstance(v, str) and v for v in request_ids) and len(set(request_ids)) == len(request_ids), 'release requests invalid'
+        prior_engine, prior_run, prior_session = (record.get(k) or {} for k in ('priorOwnership', 'priorRun', 'priorSession'))
+        assert (prior_engine.get('session_id'), prior_engine.get('workspace_id'), prior_engine.get('engine_kind'), prior_engine.get('ownership'), prior_engine.get('active_turn_id')) == (session, target['workspaceId'], 'codex', 'uncertain', target['turnId']), 'release prior native ownership mismatch'
+        assert (prior_run.get('id'), prior_run.get('session_id'), prior_run.get('workspace_id'), prior_run.get('status')) == (target['runId'], session, target['workspaceId'], 'interrupted'), 'release prior run mismatch'
+        assert (prior_session.get('id'), prior_session.get('workspace_id'), prior_session.get('native_session_id')) == (session, target['workspaceId'], target['threadId']), 'release prior session mismatch'
+        current = db.execute('SELECT r.status,r.workspace_id,s.native_session_id,e.engine_kind,e.workspace_id AS engine_workspace FROM runs r JOIN sessions s ON s.id=r.session_id JOIN h021_session_engines e ON e.session_id=s.id WHERE r.id=? AND r.session_id=?', (target['runId'], session)).fetchone()
+        assert current and (current['status'], current['workspace_id'], current['native_session_id'], current['engine_kind'], current['engine_workspace']) == ('interrupted', target['workspaceId'], target['threadId'], 'codex', target['workspaceId']), 'release current lineage mismatch'
+        events = [(v['type'], json.loads(v['data'])) for v in db.execute("SELECT type,data FROM events WHERE session_id=? AND run_id=? AND type IN ('done','progress')", (session, target['runId']))]
+        audit = [(t, d) for t, d in events if d.get('recoveryId') == row['recovery_id'] and d.get('outcome') == 'interrupted_unknown' and d.get('physicalRelease') is True and d.get('proofSha256') == row['proof_sha256']]
+        assert any(t == 'done' and d.get('runId') == target['runId'] for t, d in audit), 'release done audit missing'
+        assert any(t == 'progress' and d.get('kind') == 'cleanup' and d.get('label') == CLEANUP_LABEL for t, d in audit), 'release cleanup audit missing'
+        mappings = list(db.execute('SELECT request_id,original_record FROM h036_released_requests WHERE recovery_id=?', (row['recovery_id'],)))
+        assert {v['request_id'] for v in mappings} == set(request_ids), 'release exact request set mismatch'
+        for mapping in mappings:
+            request = db.execute('SELECT session_id,state,record FROM h021_gateway_requests WHERE id=?', (mapping['request_id'],)).fetchone()
+            assert request and request['session_id'] == session and request['record'] == mapping['original_record'], 'release original request changed'
+            original = json.loads(request['record'])
+            assert original.get('id') == mapping['request_id'] and original.get('sessionId') == session and original.get('state') == request['state'] and request['state'] in ('accepted', 'draining', 'uncertain'), 'release request lineage mismatch'
+            released[mapping['request_id']] = {'recoveryId': row['recovery_id'], 'disposition': 'physically_released_interrupted_unknown', 'proofSha256': row['proof_sha256']}
+        runs.add(target['runId'])
+    # An orphan disposition must not hide a pending request or bypass its audit.
+    mapped = {v[0] for v in db.execute('SELECT m.request_id FROM h036_released_requests m JOIN h021_gateway_requests q ON q.id=m.request_id WHERE q.session_id=?', (session,))}
+    assert mapped == set(released), 'orphan physical release mapping'
+    return released, runs
+
 def validate(q):
     assert q.get('exactSource') == SOURCE and q.get('pilotId') == PILOT, 'source/pilot mismatch'
     for key in ('sessionId', 'runId'):
@@ -53,12 +104,16 @@ def readback(db, q, binding):
         assert e and e['engine_kind'] in ('codex', 'minimax'), 'engine unknown'
         active = [dict(v) for v in db.execute("select id,status from runs where session_id=? and status not in ('completed','cancelled','failed','interrupted')", (session,))]
         quarantine = db.execute('select reason from quarantined_workspaces where id=?', (r['workspace_id'],)).fetchone()
+        released, released_runs = physical_releases(db, session)
         requests = []
         for row in db.execute('select id,state,record from h021_gateway_requests where session_id=?', (session,)):
             v = json.loads(row['record'])
             assert v['id'] == row['id'] and v['sessionId'] == session and v['state'] == row['state'], 'request ownership mismatch'
-            requests.append({k: v[k] for k in ('id', 'sessionId', 'state', 'lane', 'updatedAt', 'accounting') if k in v})
-        pending = [v['id'] for v in requests if v['state'] != 'settled']
+            receipt = {k: v[k] for k in ('id', 'sessionId', 'state', 'lane', 'updatedAt', 'accounting') if k in v}
+            if row['id'] in released:
+                receipt['physicalRelease'] = released[row['id']]
+            requests.append(receipt)
+        pending = [v['id'] for v in requests if v['state'] != 'settled' and v['id'] not in released]
         images = []
         for row in db.execute('select id,data from h003_image_jobs where session_id=?', (session,)):
             j = json.loads(row['data'])['job']
@@ -70,14 +125,16 @@ def readback(db, q, binding):
         # these owned jobs and their durable ambiguity codes affect this result.
         events = [(v['type'], json.loads(v['data'])) for v in db.execute("select type,data from events where session_id=? and run_id=? and type in ('done','progress')", (session, run))]
         done = any(t == 'done' and d.get('runId') == run for t, d in events)
-        cleanup = any(t == 'progress' and d.get('kind') == 'cleanup' and d.get('label') == 'Owned engine container cleanup confirmed; interrupted work was not replayed' for t, d in events)
+        cleanup = any(t == 'progress' and d.get('kind') == 'cleanup' and d.get('label') == CLEANUP_LABEL for t, d in events)
         # Source-bound broker completion already waits native delegation settlement;
         # failed/interrupted outcomes require the explicit exact-container cleanup event. Codex idle is
         # persisted only after exact supervisor cleanup + children + gateway drain.
         native = e['ownership'] == 'idle' and e['active_turn_id'] is None and (r['status'] not in ('failed', 'interrupted') or cleanup)
         settled = r['status'] in ('completed', 'cancelled', 'failed', 'interrupted') and done and native and not active and not quarantine and not pending and not image_pending
-        return {'sessionId': session, 'runId': run, 'settled': bool(settled), 'evidence': {
-            'binding': binding, 'authority': 'source-bound broker/native supervisor/child cleanup and durable per-session gateway/image records; no PID-only proof',
+        return {'sessionId': session, 'runId': run, 'settled': bool(settled),
+            'physicallySettledInterruptedUnknown': bool(settled and run in released_runs),
+            'completedSuccess': bool(settled and r['status'] == 'completed'), 'evidence': {
+            'binding': binding, 'authority': 'source-bound broker/native supervisor/child cleanup, protected offline physical-release audit and durable per-session gateway/image records; no PID-only proof',
             'engine': dict(e), 'runStatus': r['status'], 'doneEvent': done, 'cleanupEvent': cleanup,
             'activeRuns': active, 'quarantined': bool(quarantine), 'unsettledRequests': pending,
             'imagePending': image_pending, 'imageReceipts': images, 'requestReceipts': requests}}

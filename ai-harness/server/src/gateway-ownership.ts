@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
+import { verifiedPhysicalReleaseRequests } from "./recovery-snapshot.js";
 export type RequestOwnershipState = "queued" | "counting" | "accepted" | "draining" | "uncertain" | "settled";
 export interface RequestOwnership {
     id: string;
@@ -18,6 +19,8 @@ export interface OwnershipOptions {
     /** True only after a durable ledger has been opened and all prior records loaded. */
     recoveryReady: boolean;
     initialRequests?: readonly RequestOwnership[];
+    /** Sessions with a committed physical-release disposition, retaining unknown outcome. */
+    physicallyReleasedSessions?: readonly string[];
     /** Synchronous durable commit. No token or credentials are recorded. */
     onRequestState: (record: RequestOwnership) => void;
 }
@@ -27,7 +30,7 @@ export class GatewayOwnership {
     private knownSessions = new Set<string>();
     private failed = false;
     private settlementObservers = new Set<() => void>();
-    constructor(private options?: OwnershipOptions) { for (const r of options?.initialRequests ?? []) {
+    constructor(private options?: OwnershipOptions) { for (const id of options?.physicallyReleasedSessions ?? []) this.knownSessions.add(id); for (const r of options?.initialRequests ?? []) {
         if (!r.id || !r.sessionId || !["queued", "counting", "accepted", "draining", "uncertain", "settled"].includes(r.state))
             throw Error("Invalid ownership ledger");
         this.knownSessions.add(r.sessionId);
@@ -93,5 +96,27 @@ export class GatewayOwnership {
 /** Additive table; old releases and existing lane/frontier ledgers remain intact. */
 export class GatewayOwnershipLedger {
     constructor(private db: DatabaseSync) { db.exec("CREATE TABLE IF NOT EXISTS h021_gateway_requests(id TEXT PRIMARY KEY, session_id TEXT NOT NULL, state TEXT NOT NULL, record TEXT NOT NULL)"); }
-    options(): OwnershipOptions { return { recoveryReady: true, initialRequests: this.db.prepare("SELECT record FROM h021_gateway_requests WHERE state != 'settled'").all().map(r => JSON.parse(String(r.record))), onRequestState: (record) => { this.db.prepare("INSERT OR REPLACE INTO h021_gateway_requests VALUES(?,?,?,?)").run(record.id, record.sessionId, record.state, JSON.stringify(record)); } }; }
+    options(): OwnershipOptions {
+        const released = verifiedPhysicalReleaseRequests(this.db);
+        // Preserve historical settled rows as opaque retained evidence, exactly
+        // as before recovery support. Only unresolved owners enter this ledger.
+        const requests = this.db.prepare("SELECT * FROM h021_gateway_requests WHERE state!='settled'").all().map(row => {
+            const record = JSON.parse(String(row.record)) as RequestOwnership;
+            if (record.id !== row.id || record.sessionId !== row.session_id || record.state !== row.state ||
+                !["queued", "counting", "accepted", "draining", "uncertain", "settled"].includes(record.state))
+                throw Error("Invalid ownership ledger row binding");
+            return record;
+        });
+        return {
+            recoveryReady: true,
+            physicallyReleasedSessions: [...new Set(released.values())],
+            initialRequests: requests.filter(record => !released.has(record.id)),
+            onRequestState: (record) => {
+                // A released request is immutable historical evidence. A new
+                // explicit turn receives a new request ID through begin().
+                if (released.has(record.id)) throw Error("Released provider request cannot be rewritten");
+                this.db.prepare("INSERT OR REPLACE INTO h021_gateway_requests VALUES(?,?,?,?)").run(record.id, record.sessionId, record.state, JSON.stringify(record));
+            },
+        };
+    }
 }
