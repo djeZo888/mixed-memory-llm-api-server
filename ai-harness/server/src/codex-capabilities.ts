@@ -32,7 +32,7 @@ export function codexCapabilities(
       supported: true,
       qualification: "live",
       reason:
-        "H030 small manual compaction and recall passed; H031 retained cold continuation passed. Long-context compaction and recall remain unqualified",
+        "H030 small manual compaction and recall passed; H031 retained cold continuation passed. H036 retained native compaction used 402104 input tokens and a 237-token summary; a distinct resumed follow-up read the retained file and returned four correct facts and 0.825 W. The file also contains the facts, so summary-only recall is not isolated. Automatic triggering is inferred; raw AUTO metadata is absent. The original interrupted run remains unsuccessful",
     },
     attachments: {
       supported: true,
@@ -41,7 +41,7 @@ export function codexCapabilities(
         "Owned workspace file paths supplied as text references; original files preserved",
     },
     nativeMedia: unavailable(
-      "Native image/audio/video recognition is not qualified; specialist image tools are separate",
+      "Codex native pixel input is unsupported; audio/video recognition is not tested. OCR, procedural pixel inspection and specialist image tools are separate",
     ),
     search: {
       supported: true, qualification: "native_fixture",
