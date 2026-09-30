@@ -1,6 +1,6 @@
 # H036 reboot recovery — hardware maintenance checkpoint
 
-Updated 2026-09-30. This supplements the [earlier completion checkpoint](h036-completion-checkpoint.md); it does not change historical test outcomes. Ordinary release and the default-branch merge remain pending.
+Historical checkpoint at 02:48 UTC, September 30, 2026. The later [resumed recovery report](h036-resumed-recovery.md) supersedes the current-state and pending-work statements below. This record supplements the [earlier completion checkpoint](h036-completion-checkpoint.md) and retains its original test outcomes.
 
 ## Current hardware and service state
 

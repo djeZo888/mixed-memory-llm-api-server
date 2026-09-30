@@ -1,74 +1,62 @@
 # Sova — H036 current coordination
 
-Current override: read the [September 30 reboot recovery checkpoint](reports/h036-reboot-recovery.md)
-first. ai-vm's requested cable-trial shutdown was accepted at 02:05:46 UTC;
-SSH became unreachable. Wait for the user to confirm hardware work is complete
-before VM probes, deployment or model work. ai-harness was left in maintenance.
-Recovery source is reviewed/tested but not deployed. Older state below is
-historical and must not override fresh evidence or the cable-trial hold.
+Read the [September 30 resumed recovery](reports/h036-resumed-recovery.md) and
+[compact results](reports/h036-resumed-recovery-results.json) first. They
+supersede current-availability statements in the [earlier hardware checkpoint](reports/h036-reboot-recovery.md)
+and [September 29 completion checkpoint](reports/h036-completion-checkpoint.md).
+Historical failures retain their original outcomes.
 
-Read the [H036 execution plan](reports/h036-execution-plan.md),
-[current completion checkpoint](reports/h036-completion-checkpoint.md) and
-[results](reports/h036-completion-results.json) first. H036 remains authorized
-for the specified image repair, MiMo 480K transition, normal workflow and
-compaction acceptance, with default-branch merge conditional on final gates and
-required CI. H036 has no new hard user deadline; individual native assignments
-remain bounded. Historical [H035](reports/h035-codex-checkpoint.md),
-[results](reports/h035-codex-results.json) and
-[next plan](reports/h035-next-execution.md) retain their original scope.
+## Current state
+
+The user removed the external Core X image GPU from ai-vm passthrough, restarted
+ai-vm and authorized software recovery. MiMo 480K and all three Qwen instances
+are ready. Application, search and protected MiMo 480K/65,536 profile delivery
+are recovered. Image hardware is intentionally absent: its unavailable state
+must not block text services. No host, cable, GPU, BMC, fan or driver work is
+authorized by this software recovery assignment.
+
+The selected interrupted Codex chat is physically released for a distinct new
+follow-up. Its original accepted request remains interrupted/unknown, not
+successful. Preserve original messages, requests, runs, native history and
+files. Two older uncertain owners and three older quarantines remain separate.
+Never replay the interrupted prompt or clear unrelated ownership.
+
+Public maintenance and main merge remain held for final acceptance. MiniMax is
+the default; Codex remains a per-chat preview. Worker1's backend task closed
+successfully at 04:33:08 UTC. Worker2's application activation closed at
+04:48:36 UTC and a fresh bounded task owns the remaining workflow acceptance.
+The first new Codex requests rejected before generation due to control readiness
+disagreeing with healthy node/native observations. A fresh Worker1 task owns that
+backend diagnosis; Worker2 retains inference and application ownership. Normal
+Chrome ZIP completion/CRC/reload passed. Do not duplicate either live owner.
+
+## Working rules
 
 Root coordinates, reviews and publishes. mac-worker1/mac-worker2 implement and
-test through fresh bounded native CLI sessions in isolated copies. One assigned
-owner controls deployment/live admission. Preserve session IDs and actual
-outer-wrapper exits. Coordinate recovery centrally; do not duplicate another
-owner's live work or wait in a paid native session for missing external evidence.
+test in fresh bounded native Codex CLI sessions with isolated working copies.
+Record native IDs, actual exits, compact results and private trace locations.
+Do not keep paid sessions open waiting for hardware or another owner.
 
-## Current evidence and remaining gates
+Reuse passed tests. Backend tests passed 323 cases with five existing skips;
+the full server suite passed 973 with four existing skips; adjacent application
+tests passed 115 with one existing skip. Exact source `75b384f` passed all eight
+GitHub push/PR checks. Later source changes need appropriate validation; these
+receipts do not automatically qualify a different candidate.
 
-- MiniMax remains default; Codex is a per-chat preview. Ordinary release and main
-  merge are held for reachability and settlement. Root/W2 report both VM endpoints
-  unreachable; W2 reports BMC healthy. One authorized Mac1 check independently
-  timed out on all three assigned TCP endpoints. The user reports Proxmox
-  reachable and no changes; the VM outage cause remains unknown. W2 CLI exit
-  at 23:40:42 UTC is not evidence that guest jobs settled.
-- Child image edit, saved-result follow-up with inline/download/reload, fresh
-  generation, coding/follow-up and PDF/OCR passed their stated cases. Actual image
-  download passed. ZIP HTTP/CRC passed; browser ZIP completion is NOT_CONFIRMED
-  (1,038-byte partial). Preserve the original H035/H036 failures.
-- Qwen native compaction completed at 23:28:57 UTC: 402,104 input / 237 output,
-  four facts retained; next request 92,320 and UI estimate 92,544. Automatic
-  triggering is inferred from the ordinary UI and native source path; RAW_AUTO
-  metadata is absent. Initial paste run `d17d4942` completed. Compaction/follow-up
-  owner `346c89f0-a3f6-4668-b3ed-e6230111cf8f` has unknown final/tool result and
-  settlement after the outage; session `f006fc27` remains the recovery reference.
-- MiMo native 480K readiness passed at 23:07:48 UTC, not occupied-context
-  qualification. A tiny first-turn read passed; the second tool-result turn sent
-  at 23:28:20 UTC has unknown completion/settlement. Fresh both-engine delegation
-  remains pending. Profile fix `47d386` / root `4d927fee` is reviewed and
-  source-tested but UNDEPLOYED; the effective MiniMax profile still reports 950K.
-- MiniMax native image transport works, recognition PARTIAL; Codex native vision
-  UNSUPPORTED. Document extraction/OCR is separate from native vision.
-- Prior local checks passed 888 lifecycle tests with 2 existing skips, 5 shell
-  suites and whitespace checks. Root verified all eight GitHub checks at
-  `92325eff` SUCCESS and now reports all eight push/PR checks at root candidate
-  `4d927fee` SUCCESS. The profile fix remains UNDEPLOYED. Neither receipt
-  establishes checks for later commits; global capability gates remain closed.
+Remaining live checks are a distinct recovered-chat follow-up, browser ZIP and
+reload, and short MiMo delegation through both engines. Use the existing scoped
+acceptance mechanism. Keep global capability claims tied to actual evidence.
+Image generation/editing has retained historical qualification but current
+availability is false. MiniMax native recognition is partial; Codex native
+vision is unsupported. Do not claim OCR establishes native vision.
 
-## Recovery and publication
+Do not repeat the large compaction paste, near-950K benchmark or full occupied
+480K test. MiMo's new allocation and tiny tool continuation are not a long-context
+performance qualification. Preserve old 950K receipts without relabeling them.
+No GLM restoration, model download, runtime upgrade or new benchmark is part of
+this closeout. Keep credentials, private prompts and bulky traces outside Git.
 
-On restored connectivity, the assigned owner first verifies maintenance and
-actual owned jobs. The last browser acceptance window was OPEN; do not assume
-the scheduled 23:59:10 UTC watcher ran through a possible reboot. Preserve
-uncertain ownership and inspect existing operations before any distinct action.
-Collect the current compaction/follow-up final, tool continuation, reload and
-settlement receipts; then finish protected profile delivery and fresh MiMo 480K
-qualification within root's coordinated assignments. Reuse passed evidence.
-
-Root reviews final capability descriptors, public readiness and required checks
-for the exact integrated candidate before lifting maintenance or merging to the
-actual repository default branch. Keep MiniMax default unless the user changes
-that preference. Preserve chats/files, original errors, historical uncertain
-owners/quarantines and benchmark failures. Do not replay uncertain work, force
-calls, restore GLM or relabel old 950K evidence as 480K. Keep credentials, private
-prompts and bulky captures outside Git. This checkpoint does not expand H036's
-already-authorized scope into new models, hardware, accounts or installer work.
+Root reviews final capability descriptions, readiness and exact-candidate checks
+before lifting maintenance or merging into the actual default branch, `main`.
+The [H036 execution plan](reports/h036-execution-plan.md) and historical
+[H035 checkpoint](reports/h035-codex-checkpoint.md) retain their scope.

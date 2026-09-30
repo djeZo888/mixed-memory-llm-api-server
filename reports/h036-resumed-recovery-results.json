@@ -1,0 +1,151 @@
+{
+  "schema": 1,
+  "checkpoint": "H036_RESUMED_RECOVERY",
+  "updatedAtUtc": "2026-09-30T05:05:00Z",
+  "status": "RECOVERED_CODEX_QWEN_ADMISSION_DIAGNOSIS",
+  "publicMaintenance": true,
+  "mainMerged": false,
+  "source": {
+    "integrated": "75b384f34d2621763d222a4dd613c0888534ca4a",
+    "applicationClosure": "edd4d1072e55cc6240b566d02c7566f376614452",
+    "runtimeImagesRebuilt": false
+  },
+  "models": {
+    "mimo": {
+      "model": "mimo-v2.6-pro-rl",
+      "configuredContext": 480000,
+      "maxOutputTokens": 65536,
+      "readiness": "PASS",
+      "nativeToolContinuation": "PASS",
+      "largestFreshNativeInputTokens": 123,
+      "occupied480KQualified": false,
+      "bothEngineDelegation": "PENDING"
+    },
+    "qwen0": {
+      "configuredContext": 480000,
+      "readiness": "PASS",
+      "identityPreserved": true
+    },
+    "qwen1": {
+      "configuredContext": 480000,
+      "readiness": "PASS",
+      "identityPreserved": true
+    },
+    "qwenAda": {
+      "configuredContext": 200000,
+      "readiness": "PASS",
+      "harnessRouted": false
+    },
+    "image": {
+      "availability": "UNAVAILABLE",
+      "reason": "USER_REMOVED_EXTERNAL_GPU_FROM_PASSTHROUGH",
+      "historicalQualificationPreserved": true,
+      "newJobs": 0
+    }
+  },
+  "recovery": {
+    "mimo": "OLD_BOOT_ARCHIVED_ONE_NORMAL_START",
+    "ada": "ATOMIC_STATUS_RECOVERED",
+    "search": "OWNED_CONTAINER_COLD_START_PASS",
+    "selectedChat": {
+      "physicallySettled": true,
+      "originalOutcome": "INTERRUPTED_UNKNOWN",
+      "originalRequestsRunsMessagesPreserved": true,
+      "newFollowup": "FIRST_NEW_REQUEST_REJECTED_NO_QUALIFIED_QWEN_LANE"
+    },
+    "remainingOlderUncertain": 2,
+    "remainingOlderQuarantines": 3,
+    "originalReleaseFilesPreserved": 288,
+    "newReleaseFilesChecked": 303,
+    "staticAndEngineImagesPreserved": true,
+    "persistentCapabilitiesAdded": false
+  },
+  "validation": {
+    "backend": {
+      "pass": 323,
+      "existingSkips": 5
+    },
+    "fullServer": {
+      "pass": 973,
+      "existingSkips": 4,
+      "fail": 0
+    },
+    "adjacentApplication": {
+      "pass": 115,
+      "existingSkips": 1
+    },
+    "github": {
+      "source": "75b384f34d2621763d222a4dd613c0888534ca4a",
+      "pass": 8
+    },
+    "zipBrowser": {
+      "result": "PASS_NORMAL_HEADLESS_CHROME",
+      "bytes": 1038,
+      "sha256": "50dcfb0bbb393e42f417ce5403a6552c52f996e46c02bc648c9f479c5ede244a",
+      "crcError": null,
+      "entries": 4,
+      "reloadSavedLink": "PASS",
+      "rootIabEventWait": "TIMEOUT_NOT_CONFIRMED"
+    },
+    "retainedCompaction": {
+      "inputTokens": 402104,
+      "summaryTokens": 237,
+      "factsRetained": 4,
+      "rawAutomaticTriggerMetadata": false,
+      "largePasteRepeated": false
+    },
+    "codexNativeVision": "UNSUPPORTED",
+    "minimaxNativeImageRecognition": "PARTIAL"
+  },
+  "workerSessions": [
+    {
+      "worker": "mac-worker1",
+      "task": "RECOVERY-ACTIVATE05",
+      "nativeId": "01a0f078-e01f-7353-a6df-4e6b64270cf8",
+      "nativeExit": 0,
+      "outerExit": 0,
+      "finishedAtUtc": "2026-09-30T04:33:08.366691Z"
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "HARNESS-ACTIVATE05",
+      "nativeId": "01a0f07c-b763-7a90-ba24-851616293cd2",
+      "nativeExit": 0,
+      "outerExit": "NOT_SEPARATELY_RECORDED",
+      "finishedAtUtc": "2026-09-30T04:48:36.877114+00:00"
+    }
+  ],
+  "evidence": {
+    "recovery-activate-05/output/RESULT.json": "843df4b86b46b9e3bae15ba521fe5fc847ccfef957cb8d7f81f25ba355efa608",
+    "recovery-activate-05/output/QUALIFICATION.json": "23e09071ab62218553685a5fff7ce516331140f22304f543ca36b6c6b9bf7744",
+    "recovery-activate-05/output/READINESS.json": "6316b65635fdb12821791c542e92e1274afa5fb9e982ed7a92d1cdaafb575418",
+    "harness-activate-05/output/RESULT.json": "47446610b93c4a46eec5ae53fee0f1f2514d1141c69243dbb70ee11093a92d27",
+    "harness-activate-05/private/FINAL-READBACK-02.stdout": "cccff8d120bf539d9129a41c0db057b52387a228f2178fc3e2699ed96e0bc128",
+    "harness-activate-05/private/FINAL-RELEASE-PRESERVATION.stdout": "cb967db674d27d44e79755b6468fb6a239bbb1b27671282fe29a9e4c01b8f448",
+    "harness-activate-05/COORDINATOR-CLOSURE.json": "263a91124919c465d241c8c2a566a8c79a6912b4888eeedb0819e967a3bd883a",
+    "harness-acceptance-06/output/BROWSER-ZIP.json": "a5db599dc0a91b43084233a5fd32a324858a6856fd734677982e9db2eae534e1",
+    "harness-acceptance-06/output/BROWSER-ZIP-CRC.json": "5f98121e1338277bdcf0fb18a29cf154b2cee5c80ed04c57801b11aa167eea1d",
+    "harness-acceptance-06/output/CODEX-GATE-DIAGNOSTICS.json": "8cb4b5ea14c265ec8be4ec96dd170002345402acb37623294fc2ac1991311ecf"
+  },
+  "remaining": [
+    "distinct recovered-chat followup and browser ZIP/reconnect",
+    "MiMo delegation through Codex and MiniMax",
+    "final capability and public admission review",
+    "exact final checks and main merge"
+  ],
+  "bandwidth": {
+    "newTestPerformed": false,
+    "earlierReportedGbpsPerLane": 20,
+    "earlierReportedLanes": 2,
+    "earlierAggregateGbpsEachDirection": 40,
+    "actual20GbpsInferencePenalty": "NOT_MEASURED"
+  },
+  "privateData": "Credentials, prompts and bulky raw captures remain outside Git.",
+  "liveAdmissionFailure": {
+    "timeUtc": "2026-09-30T04:56:39Z",
+    "requestsSettled": true,
+    "generationStarted": false,
+    "originalOutcomesPreserved": true,
+    "cause": "CONTROL_READINESS_DISAGREES_WITH_NODE_NATIVE_READINESS;DIAGNOSIS_IN_PROGRESS"
+  }
+}

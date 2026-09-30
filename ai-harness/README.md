@@ -2,27 +2,26 @@
 
 Sova's chat/task harness runs MiniMax by default, with a per-chat Codex preview
 using pinned Codex 0.158.0 and local Qwen inference. Each conversation retains
-its engine. **H036 is a completion checkpoint, not a completed public release.**
-Root reported HTTP/SSH connectivity loss around September 29, 23:32 UTC;
-follow-up/reconnect/settlement and release approval remain unresolved. See the
-[current checkpoint](../reports/h036-completion-checkpoint.md) and
-[results](../reports/h036-completion-results.json).
+its engine. The [September 30 recovery](../reports/h036-resumed-recovery.md)
+restored the application, search, MiMo at 480K and all three Qwen instances.
+Public maintenance remains the default, with a bounded window for final workflow
+acceptance. A controller/native Qwen readiness mismatch currently blocks Codex
+requests before generation and is under diagnosis.
+The external image GPU is intentionally absent; its unavailable status does not
+block text services. See [compact results](../reports/h036-resumed-recovery-results.json).
 
-H036 passed a guarded child image edit, normal completed-image follow-up with
-inline preview/download/reload, fresh generation, coding plus follow-up, and PDF
-text extraction/OCR. Image browser download passed. ZIP HTTP/CRC verified both
-uploads and both outputs, but a 1,038-byte partial browser download does not
-confirm browser ZIP completion. The plain-HTTP secure UUID fallback passed 23
-focused unit and two actual Chromium tests; normal browser Send then accepted
-the large compaction paste. These are supplied receipts, not new tests by this
-documentation task.
+Historical H036 image generation, guarded child editing, saved-image follow-up,
+coding and PDF/OCR cases remain valid within their recorded scope. Image browser
+download passed. Normal Chrome ZIP completion, exact contents, archive CRC and
+saved-link reload now pass; a separate in-app-browser event timeout is retained. No new image job is attempted with its GPU absent.
 
-Qwen compaction completed at 23:28:57 UTC with four facts retained. Automatic
-triggering is inferred from the ordinary UI/native path; RAW_AUTO metadata is
-absent. Its later follow-up and settlement are unknown after connectivity loss. MiniMax
-native image transport works, but recognition is **PARTIAL** (the scene answer
-incorrectly called the lower half empty). Codex native vision is **UNSUPPORTED**.
-PDF extraction, Tesseract OCR and pixel-sampling tools do not qualify native vision.
+Qwen compaction processed 402,104 input tokens into a 237-token summary retaining
+four facts. Automatic triggering is inferred from the ordinary UI/native path;
+raw automatic-trigger metadata was absent. The later interrupted turn remains
+interrupted, with its history and files preserved; recovery allows a distinct
+new follow-up. MiniMax native image recognition is **PARTIAL**; Codex native
+vision is **UNSUPPORTED**. Extraction, OCR and image generation do not establish
+native visual recognition.
 
 The [H035 checkpoint](../reports/h035-codex-checkpoint.md) preserves the passed
 PDF output/recovery case and both failed promise-only image requests. H036's
@@ -72,8 +71,8 @@ repaired the existing temporary-path handling and CI fixtures; see the
 
 ## Access and everyday use
 
-The configured HTTP port 80 address is `http://10.156.100.61/`. Root reported
-it unreachable around September 29, 23:32 UTC; this guide does not assert recovery.
+The configured HTTP port 80 address is `http://10.156.100.61/`. The application
+is recovered; public maintenance remains active until final acceptance.
 There are no accounts, login, settings or model selector. Everyone with access
 shares conversations and task access. The operator controls LAN access;
 HTTP provides no transport encryption.
@@ -144,13 +143,11 @@ explore/verifier/custom restrictions remain unchanged.
 
 Qwen main and child sessions have a fixed **480,000-token context**.
 **MiMo V2.6 Pro-RL** is the selected frontier at **480,000 native context tokens**.
-The single September 29, 23:07:48 UTC receipt confirms readiness and one idle
-480K slot with unchanged peers. Allocation (about 33,503 MiB GPU memory) does
-not qualify occupied context. A tiny native first-turn read passed; a tool-result
-second turn was sent at 23:28:20 UTC, with final continuation/settlement unknown.
-Fresh both-engine delegation at 480K remains **PENDING**. The protected read-only
-MiniMax profile correction (`47d386`, root import `4d927fee`) is reviewed and
-source-tested but **UNDEPLOYED**; the effective profile still reports 950K.
+Recovery confirmed a ready 480K native slot and a fresh tool call with its actual
+result continuation. The protected profile now delivers **480,000 context and
+65,536 maximum output tokens** to both launch paths. Fresh delegation through
+both engines remains pending. The tiny native requests used at most 123 input
+tokens; allocation and configured ceilings do not qualify occupied context.
 
 H033's successful short MiMo workflows at 950K remain historical evidence;
 they are not relabeled 480K. The [near-950K test failed](../reports/h022-950k-status.md).
@@ -168,7 +165,8 @@ coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
 then reviews the returned result. The configured MiMo request policy permits
 eight hours of active inference plus a separate 30-minute queue. Current readiness
-is distinct from retained workflow acceptance; H036 release gates remain pending.
+is distinct from retained workflow acceptance; final H036 delegation acceptance
+remains pending.
 Qwen retains its existing limits;
 historical GLM acceptance is recorded separately below.
 
@@ -192,7 +190,7 @@ input tokens to reserve output space; tool results may be archived earlier.
 Codex uses its open-source native compaction with the local inference provider.
 The H036 Codex provider contract sets **400,000 tokens** within a
 **480,000-token window** for both Qwen and MiMo. This source configuration does
-not establish current MiniMax profile delivery or MiMo compaction quality. A small
+not establish MiMo compaction quality. The MiniMax 480K profile is now delivered. A small
 actual compaction followed by four-fact recall and continued work passed in
 [H030](../reports/h030-flow03-20260929/COMPACTION-RESULT.json) and
 [H031](../reports/h031-flow01-20260929/COLD-RESULT.json). Original visible history
@@ -205,8 +203,9 @@ supported. Root reports native Qwen compaction completed at 23:28:57 UTC:
 reason is inferred from the ordinary UI/native source path; RAW_AUTO metadata
 is absent. The next complete request contained 92,320 input tokens.
 The browser showed Compaction → Running and context 92,544 before reload failed.
-Follow-up final delivery, reconnect and settlement remain unknown; MiMo-specific
-compaction quality remains untested. This does not claim identical summary
+The original interrupted turn is now physically settled with its incomplete
+outcome preserved. A distinct recovered follow-up and browser reconnect remain
+pending; MiMo-specific compaction quality remains untested. This does not claim identical summary
 quality to hosted OpenAI models.
 
 ## Work supported by the approved scope

@@ -24,23 +24,24 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-**H036 checkpoint, September 29, 2026:** MiniMax remains the default; Codex is a
-per-chat preview using local Qwen without hosted OpenAI inference. Ordinary
-release and the default-branch merge remain conditional on final acceptance and
-CI. Root reported ai-harness HTTP/SSH unreachable around 23:32 UTC; current
-follow-up completion, reconnect and settlement are unknown. Maintenance has not
-been declared lifted. See the [completion checkpoint](reports/h036-completion-checkpoint.md)
-and [compact results](reports/h036-completion-results.json).
+**September 30 recovery:** MiMo at 480K and all three Qwen instances are ready.
+The application and search cold-start repairs are deployed. Public maintenance
+remains the default while a bounded acceptance window checks chats and delegation; see the
+[current recovery report](reports/h036-resumed-recovery.md) and
+[compact results](reports/h036-resumed-recovery-results.json).
+MiniMax remains the default, with Codex as a per-chat preview using local Qwen.
+The external image GPU was deliberately removed from passthrough and its service
+reports unavailable without blocking text inference.
 
-Current evidence supports guarded child image editing, saved-image follow-up
-with inline preview/download/reload, fresh generation, coding and follow-up,
-and PDF text extraction/OCR. Actual image browser download passed; ZIP HTTP/CRC
-passed, but browser ZIP completion is **NOT_CONFIRMED**. Qwen compaction completed at 23:28:57 UTC and retained
-four facts; automatic triggering is inferred from the UI/native path because
-RAW_AUTO metadata is absent. Its follow-up and settlement
-remain unresolved after connectivity loss. Earlier H035/H036 failures remain
-failures. MiniMax native image transport works, but recognition is **PARTIAL**;
-Codex native vision is **UNSUPPORTED**. Document/OCR support is separate.
+Retained evidence covers image generation/guarded editing, coding and follow-up,
+PDF extraction/OCR, and Qwen compaction of 402,104 input tokens into a 237-token
+summary preserving four facts. The interrupted conversation was physically
+recovered without changing its original outcome, messages or files. A distinct
+follow-up remains pending because the first fresh Codex requests hit a controller
+readiness mismatch. Normal Chrome ZIP completion, integrity and saved-link reload
+now pass. MiniMax native image
+recognition is **PARTIAL**; Codex native vision is **UNSUPPORTED**. Document/OCR
+and specialist image generation are separate capabilities.
 
 The [harness guide](ai-harness/README.md#capacity-and-context) explains context and
 compaction. The [H036 plan](reports/h036-execution-plan.md) defines the authorized
@@ -132,21 +133,21 @@ arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-
 
 ## Current models and dated acceptance
 
-MiMo V2.6 Pro-RL is active at **480,000 native context tokens**. The single
-September 29, 23:07:48 UTC readiness receipt confirms native properties, one idle
-480K slot, current owner/target guard and unchanged peers. About **33,503 MiB**
-of GPU allocation is readiness/allocation evidence, not occupied-480K
-qualification. A tiny native first-turn read passed and a second tool-result
-turn was sent at 23:28:20 UTC; complete continuation and settlement are unknown.
-Fresh delegation through both engines remains **PENDING**. MiniMax's stale baked
-950K profile correction is source-ready (`47d386`, root import `4d927fee`) with
-focused tests passed, but **UNDEPLOYED** during the outage. Earlier H033 950K workflow evidence is historical, not a new 480K pass.
+MiMo V2.6 Pro-RL is active at **480,000 configured context tokens**, with its
+protected profile delivered to both harness launch paths. Fresh native tool
+calling and actual-result continuation passed after recovery, with full HTTP
+completion and physical idle confirmed. These tiny requests establish workflow
+and allocation, **not occupied-480K performance**. Fresh delegation through both
+engines is the remaining acceptance step. Historical full-roster/schema and
+65,536-output-ceiling support is carried forward only for the unchanged runtime;
+earlier 950K workflow results are not relabeled as 480K tests.
 
 Qwen0 and Qwen1 retain 480,000-token configurations and the two shared harness
 lanes. The separate Qwen Ada API has 200,000 allocated tokens and is not a 480K
 fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
 GLM are alternate owners of frontier hardware, not simultaneously resident.
-Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing;
+Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing.
+That external GPU is currently absent and the service reports unavailable;
 see [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
 No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the

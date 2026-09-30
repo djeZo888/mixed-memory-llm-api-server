@@ -1,9 +1,13 @@
 # H036 protected interruption recovery
 
-SOURCE/FIXTURES ONLY. Execution remains **BLOCKED** until current root-authorized
-readback, separately reviewed physical cleanup/evidence, and an explicit GO.
-The retained container is still only known as created/PID0; that is not absence.
-This command performs no cleanup, networking, inference, replay or service action.
+The selected H036 recovery completed on September 30, 2026 at 04:38 UTC,
+after reviewed cleanup, a fresh protected proof and a successful preflight.
+The original interrupted request remains interrupted/unknown; the recovery did
+not replay it or invent a final answer. This dated result does not authorize
+reusing its expired proof or recovering other sessions.
+
+The CLI performs no cleanup, networking, inference, replay or service action.
+Every future execution needs its own current evidence and explicit assignment.
 
 The one supported disposition is physical release of one named interrupted
 Codex owner and its exact accepted GPU0 request set. Original release `74507f64`,
@@ -79,3 +83,21 @@ The atomic audit retains the prior owner/turn/session/run/quarantine, original
 request bytes, proof/snapshot digests and cleanup/done disposition events. The
 only old admission changes are this native owner becoming idle/turn-null and its
 exact quarantine removal. History, artifacts and unrelated records are preserved.
+
+## Linux execution details established during H036
+
+The complete descriptor scan can encounter `EACCES` for non-dumpable processes
+owned by the app user, including `sd-pam`. The live recovery used a reviewed,
+one-shot `setpriv` execution context with **only `CAP_SYS_PTRACE` and
+`CAP_DAC_READ_SEARCH`** (`0x80004`). Real/effective user and group IDs remained
+1000, existing supplementary groups were retained, and `no-new-privs` was set.
+A protected import guard checked this context and the Node executable before
+running the unchanged CLI. SQLite files and sidecars remained app-owned, mode
+0600. No file capabilities, sysctls or persistent service privileges changed.
+`CAP_SYS_PTRACE` alone did not permit traversal of a root-owned 0500 descriptor
+directory; that failed diagnostic and the original refused preflight are retained.
+
+Use a separately reviewed operator context if the same restriction occurs;
+never skip unreadable processes or run the database recovery as root. The new
+candidate's `server/` and `server/dist/` directories also needed 0755 permissions
+instead of inherited 0775. Original release metadata was preserved.
