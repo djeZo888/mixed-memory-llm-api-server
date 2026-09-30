@@ -18,6 +18,15 @@ Start with the [harness user guide](ai-harness/README.md),
 and [H006 closeout](docs/h006-closeout-20260926.md) describe the reviewed
 observation and placement foundation. H006's naming and update-policy statements
 remain evidence of that dated checkpoint; Sova is now the selected system name.
+
+**1 October priorities:** context compaction reliability comes first; creative
+image-generation qualification is deferred. Technical drawing/diagram
+understanding is planned as a specialist-to-text tool. The
+[future vision](docs/Vision%20for%20future%20regarding%20this%20project.md) records
+Project mode, organization-owned work, headless Linux workers and AI-authored
+first-party development. These plans do not change the deployed model roster or
+qualify untested capabilities.
+
 The manual-update policy now supersedes H006's package-installation-enabled
 policy. Automatic APT updates and the discovered refresh/update timers are
 disabled on both current VMs; Snap has a global indefinite hold. Current Sova
