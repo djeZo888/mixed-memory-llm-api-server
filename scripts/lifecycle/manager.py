@@ -826,15 +826,15 @@ class Manager:
             IMAGE_RUNTIME = '0cd8be351d0825488f4b81c8931167bbab618eca'
             IMAGE_REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
             from runtime.h005_runtime_binding import load as runtime_binding
-            from .runtime_io import validate_image_container
-            gpu = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+            from .runtime_io import image_gpu_uuid, validate_image_container
             network = 'llm-image-backend-private'
             require(deployment is not None and pair.is_pair(deployment)
-                    and gpu not in deployment['launch']['gpus']
                     and c.get('Name') == '/llm-image-backend', code)
             base = self.binding.path('services', 'image21-runtime-20260923')
             state = self.binding.read_json('services', base + '/state.json')
             config = self.binding.read_json('services', base + '/config.json')
+            gpu = image_gpu_uuid(config)
+            require(gpu not in deployment['launch']['gpus'], code)
             require(state.get('schema_version') == 1 and state.get('owner') == IMAGE_OWNER
                     and config.get('schema_version') == 1 and config.get('owner') == IMAGE_OWNER
                     and config.get('source_commit') == IMAGE_RUNTIME
@@ -866,7 +866,7 @@ class Manager:
                             and (m.get('Source'), m.get('RW')) == expected_mounts[m['Destination']]
                             for m in mounts)
                     and native.get('Entrypoint') == ['/opt/image-venv/bin/python']
-                    and native.get('Cmd') == ['-I', '-B', '/runtime/native_server.py', state['run_id']], code)
+                    and native.get('Cmd') == ['-I', '-B', '/runtime/native_server.py', state['run_id'], gpu], code)
             # Reuse the image owner's pure containment proof. Its availability,
             # readiness, warm phase, health probes and telemetry are unrelated to
             # whether this exact disjoint backend can coexist with text.

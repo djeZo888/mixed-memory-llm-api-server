@@ -31,10 +31,10 @@ def completed(argv, stdout="", returncode=0):
 def owned_container():
     return {
         "Id": CID, "Name": "/" + service.NAME, "Image": IMAGE,
-        "Config": {"User": "1000:1001", "Env": ["CUDA_VISIBLE_DEVICES=" + service.GPU_UUID, "NVIDIA_VISIBLE_DEVICES=" + service.GPU_UUID], "Labels": {
+        "Config": {"User": "1000:1001", "Env": ["CUDA_VISIBLE_DEVICES=" + service.H032_GPU_UUID, "NVIDIA_VISIBLE_DEVICES=" + service.H032_GPU_UUID], "Labels": {
             "io.llm-image.owner": service.OWNER, "io.llm-image.invocation": RUN_ID,
-            "io.llm-image.gpu": service.GPU_UUID}},
-        "HostConfig": {"DeviceRequests": [{"DeviceIDs": [service.GPU_UUID], "Count": 0,
+            "io.llm-image.gpu": service.H032_GPU_UUID}},
+        "HostConfig": {"DeviceRequests": [{"DeviceIDs": [service.H032_GPU_UUID], "Count": 0,
             "Capabilities": [["gpu"]], "Driver": "", "Options": {}}],
             "Privileged": False, "Devices": [], "DeviceCgroupRules": [], "CapDrop": ["ALL"],
             "SecurityOpt": ["no-new-privileges"], "PidMode": "",
@@ -59,11 +59,11 @@ class ServiceReview(unittest.TestCase):
 
     def runtime(self):
         runtime = object.__new__(service.Runtime)
-        runtime.config = {"image_id": IMAGE}
+        runtime.config = {"image_id": IMAGE, "gpu_uuid": service.H032_GPU_UUID}
         return runtime
 
     def test_current_device_queries_only_exact_ada_when_global_inventory_fails(self):
-        expected = ['nvidia-smi', '--id=' + service.GPU_UUID,
+        expected = ['nvidia-smi', '--id=' + service.H032_GPU_UUID,
                     '--query-gpu=uuid,memory.total,memory.free', '--format=csv,noheader,nounits']
         # These peer inventories are intentionally inaccessible; the code must
         # never inspect them or select a physical index to find dedicated Ada.
@@ -72,18 +72,18 @@ class ServiceReview(unittest.TestCase):
                 if argv != expected:
                     raise subprocess.TimeoutExpired('synthetic-global-inventory-' + str(len(peers)), timeout)
                 self.assertEqual(timeout, 5)
-                return completed(argv, f' {service.GPU_UUID}, 49140, 48000\n')
+                return completed(argv, f' {service.H032_GPU_UUID}, 49140, 48000\n')
             with self.subTest(peers=peers), patch.object(service, 'run', side_effect=target_only) as run:
                 self.assertEqual(self.runtime().current_device(), {
-                    'uuid': service.GPU_UUID, 'total_bytes': 49140 * 1024**2, 'free_bytes': 48000 * 1024**2})
+                    'uuid': service.H032_GPU_UUID, 'total_bytes': 49140 * 1024**2, 'free_bytes': 48000 * 1024**2})
                 run.assert_called_once_with(expected, timeout=5)
 
     def test_current_device_missing_ambiguous_foreign_or_malformed_identity_refused(self):
-        valid = f'{service.GPU_UUID}, 49140, 48000\n'
+        valid = f'{service.H032_GPU_UUID}, 49140, 48000\n'
         rows = ['', '\n', 'GPU-foreign, 49140, 48000\n', valid + valid,
                 valid + 'GPU-foreign, 49140, 48000\n',
-                service.GPU_UUID, service.GPU_UUID + ', 49140',
-                service.GPU_UUID + ', 49140, 48000, extra']
+                service.H032_GPU_UUID, service.H032_GPU_UUID + ', 49140',
+                service.H032_GPU_UUID + ', 49140, 48000, extra']
         for output in rows:
             with self.subTest(output=output), patch.object(service, 'run', return_value=completed([], output)):
                 with self.assertRaisesRegex(RuntimeError, 'ada_identity_missing'):
@@ -93,7 +93,7 @@ class ServiceReview(unittest.TestCase):
         for total, free in [('N/A', 'N/A'), ('0', '0'), ('49140', '49141'),
                             ('49140', '-1'), ('-1', '0'), ('49140', '1.0'),
                             ('49140', ''), ('٤٩١٤٠', '0'), ('49140', 'True')]:
-            output = f'{service.GPU_UUID}, {total}, {free}\n'
+            output = f'{service.H032_GPU_UUID}, {total}, {free}\n'
             with self.subTest(total=total, free=free), patch.object(service, 'run', return_value=completed([], output)):
                 with self.assertRaisesRegex(RuntimeError, 'ada_memory_unavailable'):
                     self.runtime().current_device()
@@ -107,7 +107,7 @@ class ServiceReview(unittest.TestCase):
                 with self.assertRaises(type(failure)):
                     self.runtime().current_device()
                 self.assertEqual(run.call_count, 1)
-                self.assertEqual(run.call_args.args[0][1], '--id=' + service.GPU_UUID)
+                self.assertEqual(run.call_args.args[0][1], '--id=' + service.H032_GPU_UUID)
 
     def test_host_node_listener_is_not_an_image_internal_port_conflict(self):
         runtime = self.runtime()
@@ -128,7 +128,7 @@ class ServiceReview(unittest.TestCase):
         self.assertEqual([argv[index + 1] for index, flag in enumerate(argv) if flag == '--publish'],
                          ['127.0.0.1:30007:30007/tcp'])
         self.assertEqual(argv[argv.index('--network') + 1], service.NETWORK)
-        self.assertEqual(argv[argv.index('--gpus') + 1], 'device=' + service.GPU_UUID)
+        self.assertEqual(argv[argv.index('--gpus') + 1], 'device=' + service.H032_GPU_UUID)
         self.assertNotIn('--network=host', argv)
 
     def test_cli_rejects_extra_or_user_controlled_actions_before_runtime(self):
@@ -207,9 +207,9 @@ class ServiceReview(unittest.TestCase):
 
     def test_ada_idle_gate_queries_only_ada_and_rejects_existing_process(self):
         runtime = self.runtime()
-        expected = ['nvidia-smi', '--id=' + service.GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+        expected = ['nvidia-smi', '--id=' + service.H032_GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
                     '--format=csv,noheader,nounits']
-        for rows, allowed in (("\n", True), (service.GPU_UUID + ", 8\n", False)):
+        for rows, allowed in (("\n", True), (service.H032_GPU_UUID + ", 8\n", False)):
             def target_only(argv, *, timeout):
                 if argv != expected:
                     raise subprocess.TimeoutExpired('synthetic-unassigned-gpu-failed', timeout)
@@ -225,7 +225,7 @@ class ServiceReview(unittest.TestCase):
 
     def test_ada_idle_gate_rejects_malformed_or_ambiguous_target_process_proof(self):
         runtime = self.runtime()
-        uuid = service.GPU_UUID
+        uuid = service.H032_GPU_UUID
         for output in ('GPU-text, 7\n', uuid, uuid + ', N/A', uuid + ', -1', uuid + ', 0',
                        uuid + ', 7, extra', uuid + ', ٧', (uuid + ', 7\n') * 2, 'x' * 65537):
             with self.subTest(output=output[:100]), patch.object(service, 'run', return_value=completed([], output)):

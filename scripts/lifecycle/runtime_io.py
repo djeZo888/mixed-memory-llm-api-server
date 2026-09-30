@@ -28,6 +28,24 @@ class LifecycleError(Exception):
         super().__init__(self.code)
 
 
+IMAGE_GPU_UUIDS = frozenset((
+    'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',
+    'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf',
+))
+
+
+def image_gpu_uuid(config):
+    """Selection comes only from the protected image config, never an index.
+
+    Registration permits the two reviewed image placements; it does not select
+    one, prove hardware present, or retire another owner of the selected GPU.
+    """
+    gpu = config.get('gpu_uuid') if type(config) is dict else None
+    if type(gpu) is not str or gpu not in IMAGE_GPU_UUIDS:
+        raise RuntimeError('image_gpu_selection_invalid')
+    return gpu
+
+
 def validate_image_container(value, state, config):
     """Pure shared proof of the fixed image owner's container containment.
 
@@ -37,7 +55,7 @@ def validate_image_container(value, state, config):
     """
     NAME = 'llm-image-backend'
     OWNER = 'IMAGE21-RUNTIME-20260923'
-    GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+    GPU_UUID = image_gpu_uuid(config)
     NETWORK = 'llm-image-backend-private'
     CAP_BYTES = 96 * 1024**3
 

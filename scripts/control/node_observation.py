@@ -16,8 +16,8 @@ import socket
 import threading
 import time
 
-from .installation import protected_file, _key
-from .node import BOOT, SERVICES, LEGACY_TARGETS, negative_hardware_current
+from .installation import protected_file, _key, InstallationError
+from .node import BOOT, SERVICES, LEGACY_TARGETS, negative_hardware_current, required_gpus
 from .node_collectors import boot_identity, command
 
 HEX = re.compile(r'[0-9a-f]{64}\Z')
@@ -343,7 +343,7 @@ class CanonicalIdentityReader:
         result = {}
         try:
             return self._service(service_id, seconds, result)
-        except Exception:
+        except Exception as error:
             if not result:
                 result = {'boot_id': None, 'hardware_latched': None,
                           'hardware_latched_boot_id': None}
@@ -358,6 +358,8 @@ class CanonicalIdentityReader:
                 activity='unknown', queue_depth=None, active_requests=None)
             if result.get('hardware_latched') is not True:
                 result['reason'] = 'observation_unavailable'
+            if service_id == 'image' and error.args and error.args[0] == 'image_selection_changed':
+                result.pop('imageGPU', None)
             return result
 
     def _absent(self, name, seconds):
@@ -440,7 +442,7 @@ class CanonicalIdentityReader:
         boot = self.boot()
         deadline = self.clock() + seconds
         remaining = lambda: max(.001, deadline - self.clock())
-        result.update({'boot_id': boot['boot_id'], 'ready': None, 'admitting': None,
+        result.update({'service_id': service_id, 'boot_id': boot['boot_id'], 'ready': None, 'admitting': None,
             'activity': 'unknown', 'queue_depth': None, 'active_requests': None,
             'hardware_latched': None, 'hardware_latched_boot_id': None,
             'reason': 'observation_unavailable', 'generation': None,
@@ -456,7 +458,21 @@ class CanonicalIdentityReader:
                 result.update(ready=False, admitting=False, reason='service_failed' if unit['ActiveState'] == 'failed' else 'service_stopped')
             return result
         binding = self.binding(remaining())
-        result.update(self.latch(binding, SERVICES[service_id]))
+        required = SERVICES[service_id]
+        if service_id == 'image':
+            from lifecycle.runtime_io import image_gpu_uuid
+            config_path = binding.path('services', 'image21-runtime-20260923/config.json')
+            binding.validate_path('services', config_path)
+            config_raw = self.read(Path(config_path), modes={0o600}, maximum=131072)
+            runtime_config = strict_json(config_raw)
+            if (type(runtime_config.get('schema_version')) is not int
+                    or runtime_config['schema_version'] != 1 or runtime_config.get('owner') != IMAGE_OWNER
+                    or binding.read_json('services', config_path) != runtime_config):
+                raise ValueError('image_selection_unknown')
+            required = (image_gpu_uuid(runtime_config),)
+            result['imageGPU'] = dict(uuid=required[0],
+                selectionConfigSha256=hashlib.sha256(config_raw).hexdigest(), bootId=boot['boot_id'])
+        result.update(self.latch(binding, required))
         if service_id in (MIMO, 'glm-5.3-flash'):
             selection = binding.read_json('services', MIMO_BASE + '/selection.json')
             if (type(selection.get('schema_version')) is not int or selection['schema_version'] != 1
@@ -538,7 +554,6 @@ class CanonicalIdentityReader:
             state = binding.read_json('services', binding.path('services', 'image21-runtime-20260923/state.json'))
             if state.get('schema_version') != 1 or state.get('owner') != IMAGE_OWNER:
                 raise ValueError('image_owner_unknown')
-            runtime_config = binding.read_json('services', binding.path('services', 'image21-runtime-20260923/config.json'))
             unit = self._unit('image', remaining())
             identity = state.get('container')
             owner = None
@@ -549,7 +564,12 @@ class CanonicalIdentityReader:
                     raise ValueError('image_config_ownership_unknown')
                 owner = self._container({**identity, 'name': 'llm-image-backend'}, remaining(), {
                     'io.llm-image.owner': IMAGE_OWNER, 'io.llm-image.invocation': state.get('run_id'),
-                    'io.llm-image.gpu': SERVICES['image'][0]})
+                    'io.llm-image.gpu': required[0]})
+                from lifecycle.runtime_io import validate_image_container
+                native = strict_json(self.run(['/usr/bin/docker', 'inspect', identity['id']], remaining()))
+                if type(native) is not list or len(native) != 1:
+                    raise ValueError('image_container_unknown')
+                validate_image_container(native[0], state, runtime_config)
             else:
                 self._absent('llm-image-backend', remaining())
             config = strict_json(self.read(Path('/etc/llm-server/image-api.json'), modes={0o644}, maximum=131072))
@@ -563,7 +583,10 @@ class CanonicalIdentityReader:
                 owner_identity={**owner, 'run_id':state['run_id']} if owner else None,
                 backend_running=owner['running'] if owner else False,
                 running=bool(owner and owner['running'] and unit['ActiveState'] == 'active'), ownership_valid=True)
-            semantics = [state.get('run_id'), identity, owner, unit]
+            if (self.read(Path(config_path), modes={0o600}, maximum=131072) != config_raw
+                    or binding.read_json('services', config_path) != runtime_config):
+                raise ValueError('image_selection_changed')
+            semantics = [state.get('run_id'), identity, owner, unit, result['imageGPU']]
         if self.boot()['boot_id'] != boot['boot_id'] or self.clock() >= deadline:
             raise ValueError('observation_changed_or_expired')
         if service_id in (MIMO, 'glm-5.3-flash'):
@@ -571,7 +594,7 @@ class CanonicalIdentityReader:
         result['generation'] = generation([boot['boot_id'], semantics, result['identity']]) if result.get('identity') is not None else None
         if result.get('hardware_latched') is False:
             result['hardware_validation_age_ms'] = result.get('hardware_validation_age_ms', 15001) + max(0, seconds - remaining()) * 1000
-            if not negative_hardware_current(result, SERVICES[service_id], boot['boot_id']):
+            if not negative_hardware_current(result, required, boot['boot_id']):
                 result['hardware_latched'] = None
         if not result['running'] and result.get('hardware_latched') is not True:
             result.update(ready=False, admitting=False, reason='service_stopped')
@@ -644,8 +667,18 @@ class CanonicalIdentityReader:
         if request.service_id is not None:
             row = self.service(request.service_id, seconds)
             return {**row, 'affected_services': [request.service_id]}
-        affected = [s for s, ids in SERVICES.items() if request.gpu_uuid in ids] if request.gpu_uuid else list(SERVICES)
-        rows = [self.service(s, max(.001, deadline - self.clock())) for s in affected]
+        affected = list(SERVICES) if not request.gpu_uuid else [
+            s for s, ids in SERVICES.items() if request.gpu_uuid in ids]
+        captured = {}
+        if request.gpu_uuid:
+            image = self.service('image', max(.001, deadline - self.clock()))
+            selected = required_gpus('image', image)
+            # Unknown selection cannot prove a reset disjoint from image.
+            if not selected or request.gpu_uuid in selected:
+                affected.append('image')
+                captured['image'] = image
+        rows = [captured[s] if s in captured else
+                self.service(s, max(.001, deadline - self.clock())) for s in affected]
         if self.boot()['boot_id'] != boot:
             raise ValueError('boot_changed')
         return {'boot_id': boot, 'generation': aggregate_generation(boot, rows, request.gpu_uuid),
@@ -664,6 +697,7 @@ ADA_SERVICE = 'qwen-ada200k'
 ADA_ALIAS = 'qwen3.8-27b-ada200k'
 ADA_BASE = '/data/services/qwen-ada200k-h028-20260929'
 ADA_GPU = 'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'
+ADA_RETIRED_NATIVE = '5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb'
 ADA_AUTH_PATH = '/data/services/llm-manager/adapters/sglang38_file_auth.py'
 ADA_AUTH_SHA256 = 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7da4'
 ADA_SOURCES = {
@@ -684,6 +718,36 @@ def ada_native_capacity(code, value):
         values = [row[field] for row in [value, *states] if field in row]
         if not values or any(type(v) is not int or v != expected for v in values):
             raise ValueError('ada_capacity_mismatch')
+
+
+def ada_retirement(receipt, container, unit, listeners, boot):
+    """Protected, dated retirement proof plus current retained-owner absence.
+
+    The recorded GPU memory sample precedes image placement. Current image GPU
+    use cannot invalidate that dated proof; the retired native must stay stopped.
+    """
+    expected = {'schema_version': 1, 'kind': 'h037-ada200k-retirement',
+        'service_id': ADA_SERVICE, 'unit': 'qwen-ada200k.service',
+        'gpu_uuid': ADA_GPU, 'native_id': ADA_RETIRED_NATIVE, 'boot_id': boot,
+        'container_retained': True, 'history_retained': True,
+        'listener_absent': True, 'gpu_processes': []}
+    if (type(receipt) is not dict or set(receipt) != set(expected) | {'observed_at_utc', 'gpu_used_memory_mib'}
+            or any(type(receipt[k]) is not type(v) or receipt[k] != v for k, v in expected.items())
+            or type(receipt['observed_at_utc']) is not str
+            or type(receipt['gpu_used_memory_mib']) is not int or not 0 <= receipt['gpu_used_memory_mib'] <= 2**53
+            or not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)', receipt['observed_at_utc'])
+            or container.get('Id') != ADA_RETIRED_NATIVE
+            or container.get('State', {}).get('Running') is not False
+            or type(container['State'].get('Pid')) is not int or container['State']['Pid'] != 0
+            or unit != {'Id': 'qwen-ada200k.service', 'ActiveState': 'inactive',
+                        'UnitFileState': 'disabled', 'MainPID': '0', 'ControlPID': '0', 'Job': ''}
+            or type(listeners) is not str or len(listeners) > 65536):
+        raise ValueError('ada_retirement_unproven')
+    for line in listeners.splitlines():
+        fields = line.split()
+        if len(fields) < 4 or fields[0] != 'LISTEN' or fields[3].rsplit(':', 1)[-1] == '30014':
+            raise ValueError('ada_retirement_listener_unproven')
+    return True
 
 
 class AdaPassiveCollector:
@@ -736,12 +800,27 @@ class AdaPassiveCollector:
         result = {'boot_id': boot, 'model_alias': ADA_ALIAS,
             'deployment_id': 'qwen-ada200k-h028-20260929', 'ready': False if not running else None,
             'reason': 'service_stopped' if not running else 'readiness_unknown',
-            'configured_context_tokens': None, 'functional_qualified': None}
+            'configured_context_tokens': None, 'functional_qualified': None,
+            'present': True, 'retired': False}
         if running:
             key = _key(read('/data/services/secrets/llm-api-key'))
             status = text_readiness(*self.get(30014, '/v1/readiness', key, remaining()), ADA_ALIAS)
             ada_native_capacity(*self.get(30014, '/get_server_info', key, remaining()))
             result.update(status, configured_context_tokens=200000)
+        else:
+            try:
+                retirement_raw = read(ADA_BASE + '/retirement.json')
+            except (FileNotFoundError, InstallationError):
+                # An absent/unreadable optional marker never proves retirement.
+                retirement_raw = None
+            if retirement_raw is not None:
+                unit = dict(line.split('=', 1) for line in self.reader.run(
+                    ['/usr/bin/systemctl', 'show', 'qwen-ada200k.service',
+                     '--property=Id,ActiveState,UnitFileState,MainPID,ControlPID,Job'], remaining()).splitlines())
+                listeners = self.reader.run(['/usr/bin/ss', '-H', '-ltn'], remaining())
+                result['retired'] = ada_retirement(strict_json(retirement_raw), first, unit, listeners, boot)
+                if read(ADA_BASE + '/retirement.json') != retirement_raw:
+                    raise ValueError('ada_retirement_changed')
         final = inspect()
         if (first.get('State') != final.get('State') or self.reader.boot()['boot_id'] != boot
                 or read(ADA_BASE + '/config.json') != config_raw or read(ADA_BASE + '/state.json') != state_raw):
@@ -762,7 +841,8 @@ class PassiveServiceCollector:
     def __call__(self, seconds):
         started = self.clock()
         result = self.reader.service(self.service_id, seconds)
-        if result.get('hardware_latched') is False and SERVICES.get(self.service_id) and not negative_hardware_current(result, SERVICES[self.service_id], result.get('boot_id')):
+        required = required_gpus(self.service_id, result) if self.service_id in SERVICES else ()
+        if result.get('hardware_latched') is False and required and not negative_hardware_current(result, required, result.get('boot_id')):
             result['hardware_latched'] = None
         if result.get('hardware_latched') is True:
             self._positive = {key: result.get(key) for key in
@@ -840,6 +920,13 @@ class PassiveServiceCollector:
             elif self.service_id == 'image':
                 response = self.get(30006, '/v1/image-capabilities', key, max(.001, seconds - (self.clock() - started)))
                 status = image_readiness(*response)
+                current = self.reader.service('image', max(.001, seconds - (self.clock() - started)))
+                if (type(result.get('generation')) is not int
+                        or current.get('generation') != result['generation']
+                        or current.get('imageGPU') != result.get('imageGPU')
+                        or not current.get('ownership_valid') or not current.get('running')
+                        or self.clock() - started >= seconds):
+                    raise ValueError('image_readback_identity_changed')
             elif result.get('selected') in DEPLOYMENTS and result['selected'].startswith('qwen38-'):
                 _, alias, port = DEPLOYMENTS[result['selected']]
                 response = self.get(port, '/v1/readiness', key, max(.001, seconds - (self.clock() - started)))
@@ -854,8 +941,8 @@ class PassiveServiceCollector:
         except Exception:
             if result.get('hardware_latched') is not True:
                 result.update(ready=None, admitting=None, reason='readiness_unknown')
-        if result.get('hardware_latched') is False and self.service_id in SERVICES and SERVICES[self.service_id]:
+        if result.get('hardware_latched') is False and required:
             result['hardware_validation_age_ms'] += max(0, self.clock() - identity_completed) * 1000
-            if not negative_hardware_current(result, SERVICES[self.service_id], result.get('boot_id')):
+            if not negative_hardware_current(result, required, result.get('boot_id')):
                 result['hardware_latched'] = None
         return result

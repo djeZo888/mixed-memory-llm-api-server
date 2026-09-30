@@ -7,7 +7,6 @@ from pathlib import Path
 import re
 import sys
 
-GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 ADAPTIVE_OVERLAY_SHA256 = 'dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b'
 ADAPTIVE_VERIFIER_SHA256 = '554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d'
 
@@ -44,11 +43,20 @@ def launch_argv():
             '--batching-max-size', '1', '--batching-delay-ms', '0',
             '--output-path', '', '--input-save-path', '']
 
+def selected_gpu(argv, environ):
+    # The protected owner forwards its selected full UUID in fixed launch argv.
+    # Container containment separately binds DeviceRequests and the GPU label.
+    if (len(argv) != 3 or not re.fullmatch(r'GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', argv[2])
+            or environ.get('CUDA_VISIBLE_DEVICES') != argv[2]
+            or environ.get('NVIDIA_VISIBLE_DEVICES') != argv[2]):
+        raise RuntimeError('unexpected_gpu_visibility')
+    return argv[2]
+
+
 def main():
-    if len(sys.argv) != 2 or not re.fullmatch('[0-9a-f]{32}', sys.argv[1]):
+    if len(sys.argv) != 3 or not re.fullmatch('[0-9a-f]{32}', sys.argv[1]):
         raise SystemExit('invalid_owned_invocation')
-    if os.environ.get('CUDA_VISIBLE_DEVICES') != GPU_UUID:
-        raise SystemExit('unexpected_cuda_visibility')
+    selected_gpu(sys.argv, os.environ)
     verify_adaptive_overlay()
     path = Path('/work/evidence') / sys.argv[1] / 'backend.log'
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)

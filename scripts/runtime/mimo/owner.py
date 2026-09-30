@@ -1019,10 +1019,11 @@ def settled_source_names(boot, manifest_sha):
 def source_amendment_paths():
     allowed = {str(BASE / 'source/owner.py')}
     allowed |= {'/usr/local/lib/llm-server/' + root + '/scripts/lifecycle/' + leaf
-                for root in ('control-api', 'node-api') for leaf in ('hardware_policy.py', 'manager.py')}
+                for root in ('control-api', 'node-api')
+                for leaf in ('hardware_policy.py', 'manager.py', 'runtime_io.py')}
     allowed |= {'/usr/local/lib/llm-server/node-api/scripts/control/' + leaf for leaf in
                 ('adapter.py', 'core.py', 'node.py', 'node_collectors.py', 'node_observation.py',
-                 'passive.py', 'private_network.py', 'protocol.py')}
+                 'passive.py', 'private_network.py', 'protocol.py', 'node_actions.py')}
     return allowed
 
 

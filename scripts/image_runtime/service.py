@@ -25,13 +25,14 @@ import urllib.request
 # Fixed candidate directory; the reviewed external manifest binds its commit and
 # raw bytes. Do not derive this path from this file's hash (a circular binding),
 # replace an existing nonidentical release, or fall back to an older release.
-RELEASE = Path('/data/services/releases/h005-qwen0-mount-order-fix-20260925')
+RELEASE = Path('/data/services/releases/h037-image-placement-20260930')
 BASE = Path('/data/services/image21-runtime-20260923')
 UNIT = 'llm-image-backend.service'
 NAME = 'llm-image-backend'
 NETWORK = 'llm-image-backend-private'
 OWNER = 'IMAGE21-RUNTIME-20260923'
-GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+# Historical H032 reconciliation remains bound to its original placement.
+H032_GPU_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 CHECKPOINT_REV = '790c92633540aa0cb11d9abf19eb46d861714758'
 SOURCE_SHA = '0cd8be351d0825488f4b81c8931167bbab618eca'
 CAP_BYTES = 96 * 1024**3
@@ -72,7 +73,7 @@ from control.installation import protected_file
 from install import storage_io
 from install.storage import StorageError
 from lifecycle.manager import StorageRunner
-from lifecycle.runtime_io import validate_image_container
+from lifecycle.runtime_io import image_gpu_uuid, validate_image_container
 from lifecycle.storage_binding import RegisteredStorageBinding
 from lifecycle.hardware_policy import HardwarePolicy, STATE_SUFFIX
 from runtime.h005_runtime_binding import load as load_runtime_binding
@@ -93,6 +94,7 @@ SAFE_FAILURE_CODES = frozenset({
     'image_operation_busy', 'image_operation_changed', 'image_operation_unresolved',
     'image_recovery_changed', 'image_systemd_owner_required', 'image_native_generation_changed',
     'image_native_action_uncertain', 'image_boot_changed', 'image_config_changed',
+    'image_gpu_selection_invalid',
     'image_native_absence_unproven',
     'image_reconciliation_refused', 'image_reconciliation_consumed',
     'ada_compute_process_already_present',
@@ -376,6 +378,7 @@ class Runtime:
         self.binding.validate_path('services', str(BASE))
         self.binding.validate_path('services', str(RELEASE))
         self.config = self.binding.read_json('services', str(BASE / 'config.json'))
+        image_gpu_uuid(self.config)
         require(self.config['schema_version'] == 1 and self.config['owner'] == OWNER,
                 'config_identity_mismatch')
         require(re.fullmatch('sha256:[0-9a-f]{64}', self.config['image_id']), 'image_digest_required')
@@ -394,14 +397,18 @@ class Runtime:
                 == self.config['checkpoint_receipt_sha256'], 'checkpoint_receipt_changed')
         verify_source_closure(self.config)
 
+    @property
+    def gpu_uuid(self):
+        return image_gpu_uuid(self.config)
+
     def probe_hardware(self):
         # Preserve the normal exact-target two-second probe, outside the common
         # lease. Unknown never becomes a proof or a global/ordinal fallback.
         before = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
-        observed = run(['/usr/bin/nvidia-smi', '--id=' + GPU_UUID, '--query-gpu=uuid',
+        observed = run(['/usr/bin/nvidia-smi', '--id=' + self.gpu_uuid, '--query-gpu=uuid',
                         '--format=csv,noheader,nounits'], timeout=2).stdout
         require(isinstance(observed, str) and len(observed) <= 4096
-                and observed.strip() == GPU_UUID, 'hardware_target_unknown')
+                and observed.strip() == self.gpu_uuid, 'hardware_target_unknown')
         after = Path('/proc/sys/kernel/random/boot_id').read_text().strip()
         require(before == after == self.boot, 'image_boot_changed')
         return {'boot': before, 'observed_at': now(), 'observation_id': uuid.uuid4().hex}
@@ -419,7 +426,7 @@ class Runtime:
                 runtime.services_anchor.atomic_json(STATE_SUFFIX, value)
         proof = self.hardware_observation
         result = HardwarePolicy(AnchoredLatchStore(), lease=self.lease).validate_required(
-            GPU_UUID, current_boot_id=proof['boot'], observed_at=proof['observed_at'],
+            self.gpu_uuid, current_boot_id=proof['boot'], observed_at=proof['observed_at'],
             observation_id=proof['observation_id'])
         require(result['hardware_latched'] is False, result.get('reason') or 'hardware_fault')
 
@@ -508,6 +515,7 @@ class Runtime:
                     anchored.check()
                     require(Path('/proc/sys/kernel/random/boot_id').read_text().strip() == self.boot,
                             'image_boot_changed')
+                    image_gpu_uuid(self.config)
                     require(anchored.read_json('config.json') == self.config,
                             'image_config_changed')
                     verify_source_closure(self.config)
@@ -618,7 +626,7 @@ class Runtime:
                 self.expected_state = copy.deepcopy(self.state())
                 record = {'token': uuid.uuid4().hex, 'boot': self.boot, 'pid': os.getpid(),
                           'action': action, 'status': 'active', 'recovery': recovery,
-                          'config_sha256': self.config_digest(), 'gpu_uuid': GPU_UUID,
+                          'config_sha256': self.config_digest(), 'gpu_uuid': self.gpu_uuid,
                           'invocation_id': self.unit_invocation,
                           'prior_state_sha256': hashlib.sha256(json.dumps(self.expected_state,
                               sort_keys=True, separators=(',', ':')).encode()).hexdigest()}
@@ -761,19 +769,19 @@ class Runtime:
         # Select the dedicated UUID before querying: unrelated missing/faulted
         # cards must not become an image admission prerequisite. A shared driver
         # failure can still fail this read; no GPU/driver isolation is claimed.
-        data = run(['nvidia-smi', '--id=' + GPU_UUID,
+        data = run(['nvidia-smi', '--id=' + self.gpu_uuid,
                     '--query-gpu=uuid,memory.total,memory.free',
                     '--format=csv,noheader,nounits'], timeout=5).stdout
         require(isinstance(data, str) and len(data) <= 4096, 'ada_memory_unavailable')
         rows = [tuple(part.strip() for part in line.split(','))
                 for line in data.splitlines() if line.strip()]
-        require(len(rows) == 1 and len(rows[0]) == 3 and rows[0][0] == GPU_UUID,
+        require(len(rows) == 1 and len(rows[0]) == 3 and rows[0][0] == self.gpu_uuid,
                 'ada_identity_missing')
         require(all(value.isascii() and value.isdigit() for value in rows[0][1:]),
                 'ada_memory_unavailable')
         total, free = (int(value) * 1024**2 for value in rows[0][1:])
         require(total > 0 and 0 <= free <= total, 'ada_memory_unavailable')
-        return {'uuid': GPU_UUID, 'total_bytes': total, 'free_bytes': free}
+        return {'uuid': self.gpu_uuid, 'total_bytes': total, 'free_bytes': free}
 
     def host_headroom(self):
         values = {}
@@ -797,12 +805,12 @@ class Runtime:
                         'native_port_already_owned')
 
     def require_ada_idle(self):
-        output = run(['nvidia-smi', '--id=' + GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+        output = run(['nvidia-smi', '--id=' + self.gpu_uuid, '--query-compute-apps=gpu_uuid,pid',
                       '--format=csv,noheader,nounits'], timeout=5).stdout
         require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
         rows = [tuple(value.strip() for value in line.split(','))
                 for line in output.splitlines() if line.strip()]
-        require(all(len(row) == 2 and row[0] == GPU_UUID and row[1].isascii()
+        require(all(len(row) == 2 and row[0] == self.gpu_uuid and row[1].isascii()
                     and row[1].isdigit() and int(row[1]) > 0 for row in rows),
                 'ada_process_inventory_invalid')
         require(len({row[1] for row in rows}) == len(rows), 'ada_process_inventory_invalid')
@@ -849,7 +857,7 @@ class Runtime:
 
     def create_argv(self, run_id):
         env = {
-            'CUDA_VISIBLE_DEVICES': GPU_UUID, 'NVIDIA_VISIBLE_DEVICES': GPU_UUID,
+            'CUDA_VISIBLE_DEVICES': self.gpu_uuid, 'NVIDIA_VISIBLE_DEVICES': self.gpu_uuid,
             'CUDA_DEVICE_ORDER': 'PCI_BUS_ID', 'SGLANG_CACHE_DIT_ENABLED': 'false',
             'HF_HUB_OFFLINE': '1', 'TRANSFORMERS_OFFLINE': '1',
             'HF_HOME': '/work/cache/hf', 'HF_HUB_CACHE': '/work/cache/hf/hub',
@@ -863,8 +871,8 @@ class Runtime:
             'PYTHONDONTWRITEBYTECODE': '1', 'PYTHONUNBUFFERED': '1',
         }
         argv = ['docker', 'create', '--name', NAME, '--label', 'io.llm-image.owner=' + OWNER,
-                '--label', 'io.llm-image.invocation=' + run_id, '--label', 'io.llm-image.gpu=' + GPU_UUID,
-                '--gpus', 'device=' + GPU_UUID, '--network', NETWORK,
+                '--label', 'io.llm-image.invocation=' + run_id, '--label', 'io.llm-image.gpu=' + self.gpu_uuid,
+                '--gpus', 'device=' + self.gpu_uuid, '--network', NETWORK,
                 '--publish', '127.0.0.1:30007:30007/tcp', '--user', '1000:1001',
                 '--cpuset-cpus', '8-15', '--cpuset-mems', '0', '--memory', '96g',
                 '--memory-swap', '96g', '--pids-limit', '1024', '--shm-size', '1g',
@@ -877,7 +885,7 @@ class Runtime:
         for key, value in env.items():
             argv.extend(['--env', key + '=' + value])
         return [*argv, '--entrypoint', '/opt/image-venv/bin/python', self.config['image_id'],
-                '-I', '-B', '/runtime/native_server.py', run_id]
+                '-I', '-B', '/runtime/native_server.py', run_id, self.gpu_uuid]
 
     def native_health(self):
         try:
@@ -895,13 +903,13 @@ class Runtime:
                 'native_network_attachment_mismatch')
         require(self.native_health(), 'native_backend_unready')
         pids = {int(line.split()[0]) for line in run(['docker', 'top', value['Id'], '-eo', 'pid']).stdout.splitlines()[1:]}
-        output = run(['nvidia-smi', '--id=' + GPU_UUID,
+        output = run(['nvidia-smi', '--id=' + self.gpu_uuid,
                       '--query-compute-apps=gpu_uuid,pid,used_memory',
                       '--format=csv,noheader,nounits'], timeout=5).stdout
         require(isinstance(output, str) and len(output) <= 65536, 'ada_process_inventory_invalid')
         ada = [tuple(part.strip() for part in line.split(','))
                for line in output.splitlines() if line.strip()]
-        require(ada and all(len(row) == 3 and row[0] == GPU_UUID and row[1].isascii()
+        require(ada and all(len(row) == 3 and row[0] == self.gpu_uuid and row[1].isascii()
                             and row[1].isdigit() and int(row[1]) > 0
                             and row[2].isascii() and row[2].isdigit() for row in ada)
                 and len({row[1] for row in ada}) == len(ada), 'ada_process_inventory_invalid')
@@ -955,7 +963,7 @@ class Runtime:
             with self.anchor() as anchored:
                 with anchored.open(telemetry_rel, os.O_WRONLY | os.O_CREAT | os.O_EXCL) as output:
                     sampler = subprocess.Popen(['/usr/bin/python3', '-I', '-B', str(BASE / 'source/telemetry.py'),
-                                                '--output-fd', str(output.fileno()), '--output-path', str(BASE / telemetry_rel),
+                                                '--gpu-uuid', self.gpu_uuid, '--output-fd', str(output.fileno()), '--output-path', str(BASE / telemetry_rel),
                                                 '--cgroup', '/sys/fs/cgroup/system.slice/docker-' + cid + '.scope'],
                                                pass_fds=(output.fileno(),), stdout=subprocess.DEVNULL,
                                                stderr=subprocess.DEVNULL)
@@ -1075,6 +1083,7 @@ def _h032_handoff(runtime, prior):
     """
     if not prior or prior.get('status') == 'complete' or 'reconciliation' not in prior:
         return None
+    require(runtime.gpu_uuid == H032_GPU_UUID, 'image_reconciliation_refused')
     def exact(condition):
         require(condition, 'image_reconciliation_refused')
     with runtime.anchor() as anchored:
@@ -1086,13 +1095,13 @@ def _h032_handoff(runtime, prior):
                           'archive_sha256', 'plan_sha256', 'settlement_sha256',
                           'cleanup_consumption_sha256', 'native'})
     exact(handoff['schema_version'] == 1 and handoff['case'] == H032_CASE
-          and handoff['boot'] == runtime.boot and handoff['gpu_uuid'] == GPU_UUID)
+          and handoff['boot'] == runtime.boot and handoff['gpu_uuid'] == H032_GPU_UUID)
     pins = handoff['raw_sha256']
     exact(isinstance(pins, dict) and set(pins) ==
           {'state.json', 'operation.json', 'recovery.json', 'config.json', 'source/service.py'})
     exact(all(isinstance(v, str) and re.fullmatch('[0-9a-f]{64}', v) for v in pins.values()))
     exact(prior.get('status') == 'active' and prior.get('phase') == 'settled_awaiting_reviewed_activation'
-          and prior.get('boot') == runtime.boot and prior.get('gpu_uuid') == GPU_UUID
+          and prior.get('boot') == runtime.boot and prior.get('gpu_uuid') == H032_GPU_UUID
           and prior.get('config_sha256') == runtime.config_digest()
           and prior.get('reconciliation') == {'case': H032_CASE,
               'archive_sha256': handoff['archive_sha256'], 'plan_sha256': handoff['plan_sha256']})
@@ -1112,7 +1121,7 @@ def _h032_handoff(runtime, prior):
           and type(native['pid']) is int and native['pid'] > 0
           and native['cgroup'] == '/system.slice/docker-' + native['id'] + '.scope')
     exact(plan.get('case') == H032_CASE and plan.get('boot') == runtime.boot
-          and plan.get('gpu_uuid') == GPU_UUID and plan.get('native') == native
+          and plan.get('gpu_uuid') == H032_GPU_UUID and plan.get('native') == native
           and plan.get('activation_deadline_unix') == H032_ACTIVATION_DEADLINE
           and time.time() < H032_ACTIVATION_DEADLINE
           and plan.get('old_service_sha256') == H032_OLD_SERVICE
@@ -1148,7 +1157,7 @@ def _h032_handoff(runtime, prior):
           and old_operation.get('status') == old_recovery.get('status') == 'active'
           and old_operation.get('action') == 'start' and old_recovery.get('phase') == 'settle'
           and old_operation.get('boot') == old_recovery.get('boot') == runtime.boot
-          and old_operation.get('gpu_uuid') == old_recovery.get('gpu_uuid') == GPU_UUID
+          and old_operation.get('gpu_uuid') == old_recovery.get('gpu_uuid') == H032_GPU_UUID
           and old_operation.get('config_sha256') == old_recovery.get('config_sha256') == old_digest
           and old_operation.get('invocation_id') == old_recovery.get('child_start') == old_state.get('run_id') == old_run
           and old_state.get('container', {}).get('id') == native['id']
@@ -1161,7 +1170,7 @@ def _h032_handoff(runtime, prior):
               and receipt.get('plan_sha256') == handoff['plan_sha256'])
     settlement = evidence['settlement.json']
     exact(settlement.get('physically_absent') is True and settlement.get('native') == native
-          and settlement.get('gpu_uuid') == GPU_UUID)
+          and settlement.get('gpu_uuid') == H032_GPU_UUID)
     state, operation = runtime.state(), runtime.record('operation.json')
     exact(state.get('phase') == 'stopped' and state.get('container') is None
           and state.get('warm') is False and not state.get('native_actions')
@@ -1256,7 +1265,7 @@ def recover():
                             'image_operation_unresolved')
                     record = {'token': uuid.uuid4().hex, 'boot': runtime.boot, 'pid': os.getpid(),
                               'status': 'active', 'phase': 'reset', 'process': runtime.process_stamp(os.getpid()),
-                              'config_sha256': runtime.config_digest(), 'gpu_uuid': GPU_UUID,
+                              'config_sha256': runtime.config_digest(), 'gpu_uuid': runtime.gpu_uuid,
                               'prior_invocation': unit.get('InvocationID'), 'child_start': None}
                     if handoff is not None:
                         _consume_h032_handoff(runtime, handoff, record, recovery_file, operation_file)

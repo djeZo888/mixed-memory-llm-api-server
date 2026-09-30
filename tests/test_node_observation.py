@@ -95,8 +95,9 @@ class PassiveProductionTests(unittest.TestCase):
     def test_busy_image_is_available_backpressure_without_idle_inference(self):
         value={'model':n.IMAGE_ALIAS,'ready':True,'admitting':False,'busy':True,'state':'ready'}
         row=n.image_readiness(200,value)
-        row.update(boot_id=BOOT, hardware_latched=False, hardware_validation_age_ms=0,
-            hardware_validated_boot_id=BOOT,hardware_validated_gpu_uuids=list(SERVICES['image']))
+        row.update(boot_id=BOOT, imageGPU=dict(uuid=n.ADA_GPU,selectionConfigSha256='a'*64,bootId=BOOT),
+            hardware_latched=False, hardware_validation_age_ms=0,
+            hardware_validated_boot_id=BOOT,hardware_validated_gpu_uuids=[n.ADA_GPU])
         snapshot=NodeStatus(Cached({'boot':sample({'boot_id':BOOT}),'image':sample(row)})).snapshot()
         service=next(s for s in snapshot['services'] if s['service_id']=='image')
         self.assertEqual(service['availability'],'available');self.assertFalse(service['admitting'])
@@ -152,7 +153,8 @@ class PassiveProductionTests(unittest.TestCase):
 
     def test_image_startup_is_temporary_unknown_not_permanent_unavailable(self):
         row=n.image_readiness(200,dict(model=n.IMAGE_ALIAS,ready=False,admitting=False,busy=False,state='startup'))
-        row.update(boot_id=BOOT,hardware_latched=False)
+        row.update(boot_id=BOOT,hardware_latched=False,
+            imageGPU=dict(uuid=n.ADA_GPU,selectionConfigSha256='a'*64,bootId=BOOT))
         snapshot=NodeStatus(Cached({'boot':sample({'boot_id':BOOT}),'image':sample(row)})).snapshot()
         image=next(row for row in snapshot['services'] if row['service_id']=='image')
         self.assertEqual(image['availability'],'unknown')

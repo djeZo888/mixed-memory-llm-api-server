@@ -16,7 +16,7 @@ IDENTIFIER = re.compile(r'[a-zA-Z0-9][a-zA-Z0-9_.-]{0,95}\Z')
 SERVICES = {
     'qwen-gpu0': ('GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',),
     'qwen-gpu1': ('GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',),
-    'image': ('GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',),
+    'image': (),  # Selected only by the protected runtime config observation.
     'glm-5.3-flash': ('GPU-69acfa26-8b60-61b5-702d-aee252c163cc',),
     'mimo-v2.6-pro-rl': ('GPU-69acfa26-8b60-61b5-702d-aee252c163cc',),
     'control': (),
@@ -40,6 +40,27 @@ REASONS = {'not_observed', 'collector_failed', 'collector_timeout', 'stale_obser
            'service_stopped', 'service_failed', 'service_busy', 'service_starting',
            'software_quarantine', 'unqualified', 'boot_changed', 'inventory_unknown',
            'unsupported', 'observation_unavailable'}
+
+
+def image_selection(raw, boot_id):
+    from lifecycle.runtime_io import image_gpu_uuid
+    value = raw.get('imageGPU')
+    try:
+        gpu = image_gpu_uuid({'gpu_uuid': value['uuid']})
+        if (type(value['selectionConfigSha256']) is not str
+                or not re.fullmatch('[0-9a-f]{64}', value['selectionConfigSha256'])
+                or value['bootId'] != boot_id or boot_id is None):
+            raise ValueError('image_selection_unknown')
+        return dict(uuid=gpu, selectionConfigSha256=value['selectionConfigSha256'], bootId=boot_id)
+    except (RuntimeError, TypeError, KeyError, ValueError):
+        return dict(uuid=None, selectionConfigSha256=None, bootId=None)
+
+
+def required_gpus(service_id, raw):
+    if service_id != 'image':
+        return SERVICES[service_id]
+    selection = image_selection(raw, raw.get('boot_id'))
+    return (selection['uuid'],) if selection['uuid'] else ()
 
 
 def number(value):
@@ -179,6 +200,9 @@ class NodeStatus:
             sample = self._read(service_id)
             raw = sample['value'] or {}
             current = valid(sample) and valid(boot) and boot_id is not None and raw.get('boot_id') == boot_id
+            if service_id == 'image':
+                result['imageGPU'] = image_selection(raw, boot_id) if current else image_selection({}, None)
+                required = required_gpus(service_id, raw) if current else ()
             # Persisted positive latch survives stale/unknown telemetry. A
             # negative or unreadable latch never becomes proven-safe by default.
             latched = boolean(raw.get('hardware_latched'))
@@ -194,6 +218,10 @@ class NodeStatus:
                 if (raw.get('guard_boot_id') != boot_id or guard_age is None or outer_age is None
                         or guard_age + outer_age > 15000):
                     ready = admitting = None
+            if service_id == 'image' and not required:
+                ready = admitting = False if current else None
+                if latched is not True:
+                    latched = None
             available = 'unknown'
             why = reason(raw.get('reason')) if current else 'observation_unavailable'
             if latched:
@@ -205,6 +233,8 @@ class NodeStatus:
                 available = 'available'
             elif current and ready is False and why in ('service_stopped', 'service_failed', 'unqualified', 'software_quarantine'):
                 available = 'unavailable'
+            elif service_id == 'image' and current and not required:
+                available, why = 'unavailable', 'unqualified'
             elif latched is None:
                 why = 'hardware_latch_unknown' if required else why
             capabilities = raw.get('installed_capabilities', [])
@@ -237,6 +267,9 @@ class NodeStatus:
                             entry['transparent'] = profile['transparent']
                         item['operation_profiles'].append(entry)
             result['services'].append(item)
+            if service_id == 'image':
+                result['image'] = dict(ready=ready, admitting=admitting,
+                                       capabilities=item['installed_capabilities'])
         from .node_observation import aggregate_generation
         result['generation'] = aggregate_generation(boot_id, result['services'])
         # Observation-only instance: excluded from SERVICES, action impact and CAS.
@@ -245,7 +278,10 @@ class NodeStatus:
         raw = ada['value'] or {}
         current = valid(ada) and valid(boot) and raw.get('boot_id') == boot_id and boot_id is not None
         ready = boolean(raw.get('ready')) if current else None
-        result['services'].append(dict(envelope(ada), service_id=ADA_SERVICE,
+        retired = boolean(raw.get('retired')) if current else None
+        result['retired200K'] = dict(present=boolean(raw.get('present')) if current else None,
+                                   ready=ready, retired=retired)
+        ada_item = dict(envelope(ada), service_id=ADA_SERVICE,
             generation=None, affected_services=[], required_gpu_uuids=[ADA_GPU],
             model_alias=ADA_ALIAS if current else None,
             deployment_id=identifier(raw.get('deployment_id')) if current else None,
@@ -255,7 +291,9 @@ class NodeStatus:
             installed_capabilities=['chat.completions'] if current else [],
             activity='unknown', active_requests=None, queue_depth=None,
             availability='available' if ready is True else 'unavailable' if ready is False else 'unknown',
-            observation_only=True))
+            observation_only=True)
+        if retired is not True:
+            result['services'].append(ada_item)
         node_sample = self._read('node')
         node_raw = node_sample['value'] or {}
         result['node_manager'] = dict(envelope(node_sample), service_id='node',
@@ -287,11 +325,17 @@ class NodeStatus:
             samples[row['uuid']] = sample
         # Fixed required GPUs plus inventory-discovered IDs use independent
         # capacity. Unknown/unassigned card failure cannot stall a healthy one.
-        known = {u for required in SERVICES.values() for u in required}
+        known = {u for item in result['services'] if not item.get('observation_only')
+                 for u in item['required_gpu_uuids']}
         known.update(result['inventory']['gpu_uuids'])
         known.add('GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528')
+        image_sample = self._read('image_gpu')
+        image_rows = (image_sample['value'] or {}).get('gpus')
         for gpu_uuid in sorted(known):
             sample = self._read('gpu:' + gpu_uuid)
+            if (sample['value'] is None and type(image_rows) is list and len(image_rows) == 1
+                    and type(image_rows[0]) is dict and image_rows[0].get('uuid') == gpu_uuid):
+                sample = image_sample
             if sample['value'] is None and sample['reason'] == 'not_observed':
                 if gpu_uuid in samples and sum(type(row) is dict and row.get('uuid') == gpu_uuid for row in rows) == 1:
                     continue
@@ -318,7 +362,8 @@ class NodeStatus:
             if not current and metric_envelope['state'] == 'ok':
                 metric_envelope.update(state='unknown', reason='boot_changed')
             target = dict(metric_envelope, uuid=uuid, generation=integer(row.get('generation')) if current else None,
-                          affected_services=[s for s, requirements in SERVICES.items() if uuid in requirements],
+                          affected_services=[item['service_id'] for item in result['services']
+                                             if not item.get('observation_only') and uuid in item['required_gpu_uuids']],
                           **{k: number(row.get(k)) for k in GPU_NUMBERS})
             target['name'] = row.get('name') if type(row.get('name')) is str and re.fullmatch(r'[A-Za-z0-9 .()-]{1,96}', row['name']) else None
             target['pci_bus_id'] = row.get('pci_bus_id') if type(row.get('pci_bus_id')) is str and re.fullmatch(r'[0-9a-fA-F]{4,8}:[0-9a-fA-F]{2}:[0-9a-fA-F]{2}\.[0-7]', row['pci_bus_id']) else None
