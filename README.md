@@ -34,8 +34,8 @@ separately from unknown capacity fields.
 
 The separate Ada 200K Qwen service is retired. Image selection now targets the
 internal Gen4 x16 Ada, and the status registry matches its installed configuration.
-Image startup still fails before model loading; image tools remain unavailable
-pending repair and fresh workflow qualification. See the
+The image startup guard is repaired and the backend reports ready. Image tools
+remain unavailable pending fresh generation/editing workflow qualification. See the
 [H038 checkpoint](reports/h038-checkpoint.md) and
 [H038 plan](reports/h038-execution-plan.md).
 
@@ -164,8 +164,8 @@ lanes. The separate 200K Qwen Ada API is stopped and disabled, retaining its wei
 it is not a 480K fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
 GLM are alternate owners of frontier hardware, not simultaneously resident.
 Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing.
-The internal Ada is selected, but image tools remain closed until startup is repaired
-and fresh image qualification passes. See [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
+The internal Ada is selected and its backend reports ready; image tools remain
+closed until fresh image qualification passes. See [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
 No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the
 [failed near-950K result](reports/h022-950k-status.md),

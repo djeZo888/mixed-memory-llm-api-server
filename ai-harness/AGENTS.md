@@ -20,11 +20,12 @@ missing image/frontier evidence closes that capability without inventing readine
 Source tests and old external-Ada evidence do not qualify the new image placement.
 Public activation requires root's review of the concrete final tuple and live results.
 
-H038 ends at 16:45:26 UTC on 30 September 2026. Reuse installed source, successful
-promotion/reconciliation and unchanged tests. Do not duplicate normal starts
-dispatched at 13:25:26 UTC. Restore status, reload the installed registry pin,
-qualify fresh short chats and specialist tool continuation, then review promotion.
-Close paid sessions during dependency waits. Export receipts well before cutoff.
+H038 closes at16:45:26UTC on30September2026 with text/frontier acceptance passed.
+Image startup and registry binding are repaired; image chat workflows still require
+fresh generation, guarded follow-up edit, native child handoff and settled evidence.
+Read reports/h038-checkpoint.md. Reuse all accepted work and resident models. Do not
+open another paid execution window without user authorization. Keep image gate closed
+until actual workflow and artifact review pass.
 
 Codex remains native 0.158.0. The major upstream main upgrade is a separate task.
 Native Codex vision is unsupported; MiniMax recognition is partial; PDF/OCR and

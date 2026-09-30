@@ -1,6 +1,6 @@
 {
   "task": "H038",
-  "outcome": "ACTIVE_INCOMPLETE",
+  "outcome": "PARTIAL_TEXT_QUALIFIED_IMAGE_STARTUP_REPAIRED_IMAGE_WORKFLOWS_UNQUALIFIED",
   "window": {
     "startUtc": "2026-09-30T13:45:26Z",
     "deadlineUtc": "2026-09-30T16:45:26Z"
@@ -48,18 +48,6 @@
     "largestMimoInput": 11977,
     "occupied480KQualified": false
   },
-  "image": {
-    "result": "UNAVAILABLE; startup failure cause unproven",
-    "attemptId": "b2efd616394c4b8995c5caa13358e739",
-    "failure": "native_exited_during_load before backend.log",
-    "permissions": "PASS",
-    "noGpuOverlayGuard": "PASS15files",
-    "repair": "NOT_ESTABLISHED; one GPU-injected import-only diagnostic authorized; no new model inference",
-    "diagnosticSource": "455f60e4b1eef5b1fe9c280bd130a8e91fcd2dee",
-    "diagnosticTests": "10startup+1sourcebindingPASS",
-    "diagnosticInstalledUtc": "2026-09-30T15:44:25.854670Z",
-    "reportedFailure": "visibility/unexpected_gpu_visibility; underlying subcondition unproven, raw evidence copy pending"
-  },
   "status": {
     "collector": "RESTORED normal14:04:51UTC",
     "displayPatch": "DEPLOYED15:16:33UTC21focusedtestsPASS/build0",
@@ -72,7 +60,8 @@
     "pinsSha256": "24533878858219deb535cc4fb29c93a670152df01796f9e60f7fd47f86c9ceae",
     "oldHistoryAndOwnersPreserved": true,
     "modelRestarts": 0,
-    "activeRuns": 0
+    "activeRuns": 0,
+    "modelRestartsScope": "frontier activation only; one separate image recovery is recorded in imageRepair"
   },
   "limits": {
     "occupied480KRepeated": false,
@@ -81,24 +70,55 @@
     "upstreamUpgrade": "HELD substantial delta"
   },
   "publication": {
-    "pr": "https://github.com/djeZo888/mixed-memory-llm-api-server/pull/11",
-    "draft": true,
-    "merged": false
+    "pullRequest": 11,
+    "state": "DRAFT_UNMERGED",
+    "sourceHeadBeforeCloseout": "bd7dbb9",
+    "mainMerge": "NOT_PERFORMED"
   },
   "imageBinding": {
     "status": "PASS",
-    "installedUtc": "2026-09-30T15:57:20.285Z",
-    "registrySha256": "d39bcb22051580de5e0fa0078148e978fc446200aabe52c50a4e8c104cfcb494",
-    "selectionConfigSha256": "6fe3abb902c5f7e6a682c5f95c0ec01c694fcadc4040e9fb5a4eed323602f960",
+    "installedUtc": "2026-09-30T16:34:33Z",
+    "registrySha256": "e14ab9f4559290214c30247afd0fee24a2f6e04fb3875521b304ad8cadc93e9d",
+    "selectionConfigSha256": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
     "globalFrontier": true,
     "globalImage": false,
-    "imageWorkflows": "NOT_TESTED"
+    "nativeReady": true,
+    "nativeAdmitting": true,
+    "placement": "matched",
+    "observedUtc": "2026-09-30T16:34:34.151306Z"
   },
   "imageFailureCurrent": {
-    "stage": "visibility",
-    "code": "unexpected_gpu_visibility",
-    "beforeModelLoad": true,
-    "subcondition": "UNKNOWN",
-    "failedNativeSettled": true
+    "historicalStage": "visibility",
+    "historicalCode": "unexpected_gpu_visibility",
+    "currentStartup": "passed visibility overlay log_open exec",
+    "currentNativeReady": true,
+    "imageWorkflowQualification": "NOT_TESTED",
+    "globalImage": false
+  },
+  "imageRepair": {
+    "status": "STARTUP_REPAIRED_BACKEND_READY",
+    "sourceCommit": "de5be613da6ede3c070ba87052fc7a5cea442764",
+    "rootCommit": "bd7dbb9",
+    "sourceSha256": "69f8430939fd49f3f8b4538da7dd44dfdc107621c88385f22a7244debd85f607",
+    "installedUtc": "2026-09-30T16:27:56.924546Z",
+    "normalRecoveryAttempts": 1,
+    "causeEvidence": "current process NVIDIA_VISIBLE_DEVICES void with exact CUDA/fullUUID binding",
+    "originalFailedProcessEnvironmentRecovered": false,
+    "regression": "PASS_1_focused_positive_negative_test",
+    "independentSourceReview": "NO_BLOCKER",
+    "sharedMiMoRestarted": false
+  },
+  "imageHistoricalFailures": {
+    "result": "UNAVAILABLE; startup failure cause unproven",
+    "attemptId": "b2efd616394c4b8995c5caa13358e739",
+    "failure": "native_exited_during_load before backend.log",
+    "permissions": "PASS",
+    "noGpuOverlayGuard": "PASS15files",
+    "repair": "Historical NOT_ESTABLISHED at that checkpoint",
+    "diagnosticSource": "455f60e4b1eef5b1fe9c280bd130a8e91fcd2dee",
+    "diagnosticTests": "10startup+1sourcebindingPASS",
+    "diagnosticInstalledUtc": "2026-09-30T15:44:25.854670Z",
+    "reportedFailure": "visibility/unexpected_gpu_visibility; copied startup evidence; current import probe later reproduced NVIDIA void mismatch",
+    "scope": "Historical failures before reviewed fix; superseded by imageRepair/imageBinding"
   }
 }

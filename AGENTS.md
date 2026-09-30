@@ -10,11 +10,12 @@ not the current deployment state. H036 recovery and failed outcomes remain in
 
 The user authorized H038 on 30 September 2026, 13:45:26–16:45:26 UTC
 (15:45:26–18:45:26 Ljubljana). Read reports/h038-execution-plan.md.
-H037 source/config delivery and MiMo/image start dispatch passed; qualify the
-existing starts without replaying the migration. Read reports/h037-checkpoint.md
-and reports/h037-results.json. Optional tools stay closed until reviewed live
-qualification passes. Restore the paused collector and adopt the installed pin
-through ordinary service operations. Reserve the final 30 minutes for publication.
+H038 passed default Codex and fresh Codex/MiniMax MiMo delegation. Frontier is enabled.
+Status collection/display are restored. Image startup is repaired and the current
+registry matches; image workflow qualification remains incomplete and its gate is
+closed. Read reports/h038-checkpoint.md and reports/h038-results.json. Reuse repaired
+source and loaded models. A new execution window requires user authorization; do
+not replay migration, text acceptance, source audits or long-context tests.
 
 The user retained 480,000 context, the existing 400,000 Codex compaction threshold
 and 65,536 output ceiling. No adaptive output budget is part of H037.
