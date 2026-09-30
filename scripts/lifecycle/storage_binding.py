@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import copy
 from contextlib import contextmanager
-from contextvars import ContextVar
 from functools import wraps
 import inspect
 import json
@@ -21,9 +20,6 @@ import stat
 import sys
 
 from install.storage import Storage, StorageError
-
-
-_OBSERVATION = ContextVar('registered_storage_observation', default=None)
 
 
 class BindingError(StorageError):
@@ -185,9 +181,6 @@ class RegisteredStorageBinding:
         """
         if isinstance(roles, str) or not roles or not set(roles) <= {"data", "models"}:
             raise BindingError("invalid_storage_roles")
-        guard = self._observation_guard()
-        if guard is not None:
-            return guard()  # Fresh registry bytes and mount identity on every call.
         registry = self.storage.read_registration()
         if registry is None or stable_identity(registry) != self._identity:
             raise BindingError("storage_registration_changed_or_missing")
@@ -195,28 +188,6 @@ class RegisteredStorageBinding:
         if "roles" in inspect.signature(verifier).parameters:
             return verifier(registration=self._registry, roles=tuple(sorted(set(roles))))
         return verifier(registration=self._registry)
-
-    def _observation_guard(self):
-        current = _OBSERVATION.get()
-        return current[1] if current is not None and current[0] is self else None
-
-    @contextmanager
-    def read_observation(self, storage_io):
-        """One read-only observation, never a cached readiness or write guard.
-
-        Keep full topology/capacity verification at both boundaries. Within
-        them the existing descriptor-backed guard checks registry bytes and
-        mountinfo on every call, including each actual path. Context-local
-        binding keeps concurrent requests and lifecycle writers independent.
-        """
-        if self._observation_guard() is not None:
-            raise BindingError('nested_storage_observation')
-        with self.mounted_guard(storage_io) as guard:
-            token = _OBSERVATION.set((self, guard))
-            try:
-                yield
-            finally:
-                _OBSERVATION.reset(token)
 
     @contextmanager
     def mounted_guard(self, storage_io, roles=("data", "models")):
@@ -300,22 +271,6 @@ class RegisteredStorageBinding:
         if self.path(role, suffix) != path:
             raise BindingError("invalid_storage_path")
         mount_role = self.role_mount(role)
-        guard = self._observation_guard()
-        if guard is not None:
-            snapshot = guard.check_path(path)
-            # The shared full-role guard permits either registered mount.
-            # This API must additionally retain the requested role's exact
-            # mount, including when models is a distinct nested filesystem.
-            mounted = max((snapshot[name] for name in ('data', 'models')
-                           if path == snapshot[name]['mount']
-                           or path.startswith(snapshot[name]['mount'] + '/')),
-                          key=lambda entry: len(entry['mount']))
-            expected = self._registry[mount_role]
-            if any(mounted[key] != expected[key] for key in ('mount', 'uuid', 'fstype')):
-                raise BindingError('path_crosses_unregistered_mount')
-            local = self.storage._no_symlink(path, protected=True)
-            guard.check_path(path)
-            return local
         self.verify(roles=(mount_role,))
         local = self.storage._no_symlink(path, protected=True)
         ancestor = local
