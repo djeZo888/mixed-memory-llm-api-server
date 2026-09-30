@@ -1,21 +1,28 @@
 # ai-harness
 
-Sova's chat/task harness runs MiniMax by default, with a per-chat Codex preview
-using pinned Codex 0.158.0 and local Qwen inference. Each conversation retains
-its engine. The [September 30 recovery](../reports/h036-resumed-recovery.md)
-restored the application, search, MiMo at 480K and all three Qwen instances.
-Public access was restored at 07:45 UTC after final workflow acceptance.
-The stale Qwen readiness record is corrected. A later slow controller
-observation interrupted Codex MiMo delegation; the optimization is now deployed
-and a fresh complete Codex MiMo child/tool/final workflow passed. The recovered-chat
-follow-up and MiniMax MiMo delegation also passed.
-The external image GPU is intentionally absent; its unavailable status does not
-block text services. See [compact results](../reports/h036-resumed-recovery-results.json).
+Sova uses **Codex 0.158.0 as the default for new chats**, with MiniMax still
+selectable. Each existing conversation retains its engine and files.
+H037 keeps the provider policy unchanged: **480,000 context tokens, compression
+at 400,000 tokens and up to 65,536 output tokens**. This leaves 14,464 tokens of
+nominal headroom. No adaptive output-budget logic was added.
+
+H037 source/config activation is complete; backend image relocation and fresh
+optional-tool qualification are still in progress. Image/frontier capabilities
+stay closed until their current owners and workflows pass. See the
+[execution plan](../reports/h037-execution-plan.md) and
+[upstream Codex audit](../reports/h037-upstream-codex-audit.md). The substantial
+upstream main upgrade is held for a separate task.
+
+The [September 30 recovery](../reports/h036-resumed-recovery.md) and its
+[compact results](../reports/h036-resumed-recovery-results.json) preserve the
+previous checkpoint with three Qwens, MiniMax default and the external image GPU
+absent. H037 reuses the internal Ada for images and retires its separate 200K Qwen
+without deleting weights or history. The external GPU remains excluded.
 
 Historical H036 image generation, guarded child editing, saved-image follow-up,
 coding and PDF/OCR cases remain valid within their recorded scope. Image browser
 download passed. Normal Chrome ZIP completion, exact contents, archive CRC and
-saved-link reload now pass; a separate in-app-browser event timeout is retained. No new image job is attempted with its GPU absent.
+saved-link reload now pass; a separate in-app-browser event timeout is retained. These historical checks do not qualify the new internal-Ada placement.
 
 Qwen compaction processed 402,104 input tokens into a 237-token summary retaining
 four facts. Automatic triggering is inferred from the ordinary UI/native path;
@@ -83,10 +90,9 @@ This is a shared workspace service with no per-person privacy boundary.
 
 - Choose **New chat**, or select an existing chat from the list, then send a task.
   Follow-ups in one chat run sequentially; separate chats can run concurrently.
-- When the Codex preview is enabled, choose **Harness: MiniMax / Codex** for a
-  new chat. Existing chats retain their engine for follow-ups. An engine's
+- Choose **Harness: MiniMax / Codex** for a new chat; Codex is the default. Existing chats retain their engine for follow-ups. An engine's
   capability panel distinguishes qualified features from pending or unsupported
-  ones; a Codex preview does not imply that every MiniMax feature is qualified.
+  ones; the default engine does not imply that unsupported features are qualified.
 - Attach PDFs, source/text files or images; download files from artifact links.
   Earlier PDF and image coverage is recorded in the
   [v0.0.1 report](docs/acceptance-v0.0.1.md).
@@ -156,7 +162,7 @@ used up to 15,322. These checks do not qualify fully occupied context.
 H033's successful short MiMo workflows at 950K remain historical evidence;
 they are not relabeled 480K. The [near-950K test failed](../reports/h022-950k-status.md).
 No 1M/950K/full occupied-480K benchmark was repeated. GLM's retained
-1,048,576-token profile is dormant; the separate Ada Qwen 200K service is outside
+1,048,576-token profile is dormant; the retired Ada Qwen 200K service is outside
 harness routing. The maximum output is **65,536 tokens per inference request**,
 including reasoning where counted. Input and output share the context window;
 configured limits do not establish full-window or full-output acceptance.

@@ -1,7 +1,7 @@
 # Sova
 
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax and optional Codex agent runtimes, three configured Qwen text instances, a selectable
+chat/task harness, Codex and MiniMax agent runtimes, two Qwen text instances, a selectable
 frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
@@ -24,14 +24,18 @@ service launch paths remain pinned. Manual update commands are available.
 See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
 
-**September 30 recovery:** MiMo at 480K and all three Qwen instances are ready.
-The application and search cold-start repairs are deployed. Public access was
-restored at 07:45 UTC after the final Codex/MiMo workflow passed; see the
-[current recovery report](reports/h036-resumed-recovery.md) and
-[compact results](reports/h036-resumed-recovery-results.json).
-MiniMax remains the default, with Codex as a per-chat preview using local Qwen.
-The external image GPU was deliberately removed from passthrough and its service
-reports unavailable without blocking text inference.
+**September 30 H037 deployment:** Codex 0.158.0 is the new-chat default;
+MiniMax remains selectable and existing conversations retain their engine.
+The image service is moving to the internal Gen4 x16 Ada, replacing its separate
+200K Qwen instance. Backend delivery and fresh image/frontier qualification are
+in progress. Optional tools stay closed until their actual placement and workflow
+pass. See the [H037 plan](reports/h037-execution-plan.md).
+
+The [earlier recovery report](reports/h036-resumed-recovery.md) and
+[compact results](reports/h036-resumed-recovery-results.json) preserve the
+07:45 UTC checkpoint, when MiniMax was the default, three Qwens were ready and
+the external image GPU was intentionally absent. These are historical results.
+The external Core X Ada remains intentionally excluded from passthrough.
 
 Retained evidence covers image generation/guarded editing, coding and follow-up,
 PDF extraction/OCR, and Qwen compaction of 402,104 input tokens into a 237-token
@@ -51,16 +55,16 @@ compaction. The [H036 plan](reports/h036-execution-plan.md) defines the authoriz
 work; [H035](reports/h035-codex-checkpoint.md) remains the unchanged earlier
 checkpoint. Status and hardware history remain in
 [H020](docs/h020-results.md), [H025](reports/h025-overview.md) and
-[H028](reports/h028-overview.md). The separate Ada 200K API is not in harness routing.
+[H028](reports/h028-overview.md). The retired Ada 200K API is not in harness routing.
 
 ```mermaid
 flowchart TB
     User["LAN browser"]
     subgraph H["current placement: ai-harness VM"]
         Web["Web chat and task API"]
-        Engines["Per-chat engine selection / MiniMax default"]
+        Engines["Per-chat engine selection / Codex default"]
         Agent["MiniMax main and child agents"]
-        Codex["Codex preview / private App Server"]
+        Codex["Codex / private App Server"]
         Responses["Local Responses adapter / two 480K Qwen instances"]
         Tools["Search, browser, PDF and coding tools"]
         Gateway["Inference gateway: two Qwen slots + one frontier slot"]
@@ -74,9 +78,8 @@ flowchart TB
         Control["Deterministic text lifecycle control"]
         Q0["Qwen text instance 0 / fast Blackwell"]
         Q1["Qwen text instance 1 / Server Blackwell"]
-        Q2["Qwen text instance 2 / new Ada / separate 200K API"]
         Frontier["Selected frontier: MiMo / CPU experts + fast Blackwell"]
-        Image["Separate image API and Qwen-Image service / Ada"]
+        Image["Separate image API and Qwen-Image service / internal Ada"]
     end
     subgraph Future["FUTURE / OPTIONAL — not deployed"]
         LB["Load-balancer layer"]
@@ -105,7 +108,6 @@ flowchart TB
     Node --> Control
     Node --> Image
     Node --> Frontier
-    Node -. observes .-> Q2
     Control --> Q0
     Control --> Q1
     User -.-> LB
@@ -128,8 +130,8 @@ deployment work. Registry edits alone do not relocate workloads or select models
 The ai-vm role remains API-only, with separate direct inference endpoints and
 **no common ai-vm inference router**. The harness gateway provides two Qwen slots
 and one independent frontier slot; image jobs use their own service. Qwen coordinates
-tasks and normally handles coding and agentic work. MiniMax can delegate difficult
-research, document analysis and reasoning to its native `frontier` child running
+tasks and normally handles coding and agentic work. Both engines can delegate difficult
+research, document analysis and reasoning to a native frontier child running
 the selected qualified frontier model. This fixed routing policy does not implement
 arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
 [H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
@@ -146,12 +148,12 @@ delegation both passed with actual tool calls and complete settlement. Historica
 earlier 950K workflow results are not relabeled as 480K tests.
 
 Qwen0 and Qwen1 retain 480,000-token configurations and the two shared harness
-lanes. The separate Qwen Ada API has 200,000 allocated tokens and is not a 480K
-fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
+lanes. The separate 200K Qwen Ada API is being retired, retaining its weights and history;
+it is not a 480K fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
 GLM are alternate owners of frontier hardware, not simultaneously resident.
 Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing.
-That external GPU is currently absent and the service reports unavailable;
-see [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
+H037 changes its selection to the internal Ada; optional tools remain closed
+until fresh qualification. See [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
 No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the
 [failed near-950K result](reports/h022-950k-status.md),
@@ -169,7 +171,7 @@ retain their original scope.
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
 explicitly address separate inference bases: Qwen0 on 30002, Qwen1 on 30004,
-MiMo on 30012, separate Ada Qwen on 30014, and dormant GLM on 30010, each with
+MiMo on 30012 and dormant GLM on 30010, each with
 `/v1`. Discover current identity and readiness before use. These direct ai-vm
 APIs have no common inference router or automatic fallback; the harness's
 Qwen/frontier gateway is a separate client-side component. Native listeners stay
