@@ -17,6 +17,7 @@ from types import SimpleNamespace
 from common.lifecycle_lease import _validate_borrowed_lease
 from lifecycle.manager import load_manager, recovery_manager
 from lifecycle.runtime_io import Docker, LifecycleError, _read_key
+from lifecycle.storage_binding import BindingError, RegisteredStorageBinding
 from .discovery import discover_records
 from .core import Application, digest, safe_error
 from .journal import Journal, JournalUnavailable, MAX_BYTES
@@ -250,10 +251,24 @@ class ManagerSession:
         except Exception:
             raise ControlError('credential_separation_unverified') from None
 
+    @contextmanager
+    def _observation_storage(self):
+        manager = self.manager
+        if manager.recovery_only or not isinstance(manager.binding, RegisteredStorageBinding):
+            # Recovery has no registered storage; constructor-owned fixture
+            # bindings retain their existing explicit verification behavior.
+            yield
+            return
+        try:
+            with manager.binding.read_observation(manager.persistent_writer()):
+                yield
+        except BindingError:
+            raise StorageUnavailable() from None
+
     def observe(self, deadline):
         manager = self.manager
         recovery = manager.recovery_only
-        with self._bounded(deadline):
+        with self._bounded(deadline), self._observation_storage():
             try:
                 if not recovery:
                     manager.check_mounts()  # BOTH roles; data-only is not Ready.
