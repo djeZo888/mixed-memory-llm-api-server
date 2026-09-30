@@ -7,7 +7,7 @@ import { nativeJson, observeMimoNative, MIMO_URL, type MimoFrontierOptions, type
 import { boundedControlGet } from "./codex-production.js";
 import { ApiError } from "./errors.js";
 const NODE = "http://10.156.100.60:30008/control/v1/node/status";
-const GPU = "GPU-69acfa26-8b60-61b5-702d-aee252c163cc";
+export const MIMO_GPU_UUID = "GPU-69acfa26-8b60-61b5-702d-aee252c163cc";
 const refuse = (): never => { throw new ApiError(503, "mimo_current_owner_unqualified", "Current MiMo owner is not qualified"); };
 export function mimoOwnerStamp(value: any, context: number, now = Date.now()): string {
   const fresh = (v: any) => v?.state === "ok" && v.freshness === "fresh" && Number.isFinite(v.age_ms) && v.age_ms >= 0 && v.age_ms <= 15000 &&
@@ -19,7 +19,7 @@ export function mimoOwnerStamp(value: any, context: number, now = Date.now()): s
   if (!fresh(s) || !Number.isSafeInteger(s.generation) || s.generation < 0 || s.ready !== true || s.hardware_latched !== false ||
       s.availability !== "available" || s.reason !== null || s.model_alias !== MIMO_MODEL ||
       s.deployment_id !== `mimo-v2.6-pro-rl-${context}-mxfp4` || s.configured_context_tokens !== context || s.max_output_tokens !== 65536 ||
-      JSON.stringify(s.required_gpu_uuids) !== JSON.stringify([GPU])) return refuse();
+      JSON.stringify(s.required_gpu_uuids) !== JSON.stringify([MIMO_GPU_UUID])) return refuse();
   return `${value.boot_id}:${s.generation}`;
 }
 

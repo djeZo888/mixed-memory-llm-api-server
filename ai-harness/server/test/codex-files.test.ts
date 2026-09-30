@@ -123,7 +123,7 @@ test("Codex attachment workflow persists two turns and replay/history without re
   );
   let prompts = 0;
   const seen: any[] = [];
-  const instance = await createApp({
+  const instance = await createApp({ newChatEngine: "minimax",
     dataDir,
     allowedOrigins: ["http://localhost"],
     engineFactory: () => ({

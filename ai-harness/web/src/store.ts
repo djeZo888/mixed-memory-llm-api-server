@@ -15,6 +15,7 @@ import { secureUUID } from './uuid';
 import type { Attachment, ServerEvent, Session, Snapshot, Thread } from './types';
 
 export interface ViewState {
+  newChatEngine?: EngineKind;
   sessions: Session[];
   selectedId: string | null;
   thread: Thread | null;
@@ -145,6 +146,7 @@ export class HarnessStore {
         this.update({
           healthLoaded: true,
           codexAvailable: false,
+          newChatEngine: undefined,
           serviceAvailability: healthAvailability(undefined),
         });
     };
@@ -158,6 +160,7 @@ export class HarnessStore {
       this.update({
         visionAvailable: health.visionAvailable === true,
         codexAvailable: health.engines?.codex?.available === true,
+        newChatEngine: health.engines?.default === 'codex' || health.engines?.default === 'minimax' ? health.engines.default : undefined,
         codexHealth: health.engines?.codex,
         healthLoaded: true,
         serviceAvailability: healthAvailability(health.availability),
@@ -445,7 +448,11 @@ export class HarnessStore {
       this.update({ busy: { ...this.state.busy, [key]: false } });
     }
   }
-  create = (engineKind: 'minimax' | 'codex' = 'minimax') => {
+  create = (engineKind: EngineKind | undefined = this.state.newChatEngine) => {
+    if (!engineKind) {
+      this.update({ error: 'The new-chat default is unavailable. Refresh service status.' });
+      return Promise.resolve();
+    }
     if (engineKind === 'codex' && !this.state.codexAvailable) {
       this.update({ error: 'Codex preview is not available yet.' });
       return Promise.resolve();
@@ -454,7 +461,7 @@ export class HarnessStore {
     return this.action(
       'create',
       '',
-      () => this.transport.create(engineKind === 'minimax' ? undefined : engineKind),
+      () => this.transport.create(engineKind),
       ({ session }) => {
         this.listGeneration++;
         this.update({

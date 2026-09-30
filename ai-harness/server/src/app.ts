@@ -17,6 +17,7 @@ import { contentDisposition, imageMime } from "./file-metadata.js";
 import { environment } from "./locale.js";
 import { REVIEWED_SKILLS } from "./policy.js";
 import { codexAvailable, assertEngineAvailable } from "./engine-router.js";
+import { loadNewChatEngine } from "./system-registry.js";
 import type { Event } from "./contracts.js";
 import type { AvailabilityProvider } from "./service-availability.js";
 // MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
@@ -35,6 +36,8 @@ const unsupportedSlashCommands = new Set<string>([
   ...REVIEWED_SKILLS,
 ]);
 export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
+  /** Trusted host/fixture configuration only; existing session identity is separate. */
+  newChatEngine?: "codex" | "minimax";
   dataDir: string;
   allowedOrigins?: string[];
   webDist?: string;
@@ -66,6 +69,7 @@ export async function createApp(options: AppOptions): Promise<{
   broker: Broker;
   images?: ImageBroker;
 }> {
+  const newChatEngine = options.newChatEngine ?? loadNewChatEngine();
   const origins = new Set(
     (
       options.allowedOrigins ?? [
@@ -259,7 +263,7 @@ export async function createApp(options: AppOptions): Promise<{
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
-      engines: { default: "minimax",
+      engines: { default: newChatEngine,
         minimax: { configured: true, available: true, preview: false,
           version: null, versionSource: "not-observed", readiness: "not-probed",
           protocolQualified: null, capabilities: { text: true }, capabilityDetails: {},
@@ -280,7 +284,7 @@ export async function createApp(options: AppOptions): Promise<{
     app.post("/api/sessions", async (req) => {
       const body = object(req.body);
       only(body, ["engineKind"]);
-      const engineKind = body.engineKind ?? "minimax";
+      const engineKind = body.engineKind ?? newChatEngine;
       assertEngineAvailable(engineKind, options.enginePolicy, options.codexEngineFactory);
       return { session: await broker.createSession(undefined, engineKind) };
     });

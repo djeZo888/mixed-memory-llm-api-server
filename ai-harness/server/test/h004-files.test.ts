@@ -20,7 +20,7 @@ async function fixture(t: TestContext) {
   const root = await realpath(
     await mkdtemp(path.join(tmpdir(), "h004-files-")),
   );
-  const h = await createApp({
+  const h = await createApp({ newChatEngine: "minimax",
     dataDir: root,
     allowedOrigins: ["http://localhost"],
     launcher: "/not-executed",

@@ -135,7 +135,7 @@ async function setup(
     heartbeatMs: 20,
     ...overrides,
   };
-  const built = await createApp(options);
+  const built = await createApp({ newChatEngine: "minimax", ...options });
   t.after(async () => {
     fixture.releaseAll();
     await built.app.close();
@@ -2084,11 +2084,11 @@ test("optional frontend serves ordinary assets but never symlink assets or priva
   }
   const dataDir = path.join(root, "private-data");
   await assert.rejects(
-    createApp({ ...h.options, dataDir, webDist: root }),
+    createApp({ newChatEngine: "minimax", ...h.options, dataDir, webDist: root }),
     /Static assets must be separate/,
   );
   await assert.rejects(
-    createApp({ ...h.options, dataDir, webDist: dataDir }),
+    createApp({ newChatEngine: "minimax", ...h.options, dataDir, webDist: dataDir }),
     /Static assets must be separate/,
   );
 });

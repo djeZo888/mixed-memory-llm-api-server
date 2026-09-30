@@ -77,7 +77,7 @@ export interface Transport {
   ): Promise<{
     visionAvailable: boolean;
     availability?: HealthAvailability;
-    engines?: { codex?: CodexHealth };
+    engines?: { default?: 'minimax' | 'codex'; codex?: CodexHealth };
   }>;
   imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;

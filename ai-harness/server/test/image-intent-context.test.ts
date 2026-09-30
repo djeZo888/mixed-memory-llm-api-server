@@ -34,7 +34,7 @@ async function fixture(t: TestContext) {
       }));
     },
   };
-  const f = await createApp({
+  const f = await createApp({ newChatEngine: "minimax",
     dataDir: dir,
     launcher: "/offline/not-launched",
     gatewayUrl: "http://127.0.0.1:1/v1",

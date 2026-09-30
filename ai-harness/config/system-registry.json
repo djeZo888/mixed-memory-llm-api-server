@@ -1,5 +1,6 @@
 {
   "schema_version": 1,
+  "new_chat_engine": "codex",
   "credentials": [
     {
       "id": "control-api-key",
@@ -46,7 +47,7 @@
     {
       "id": "qwen-gpu0",
       "node_id": "ai-vm",
-      "display_name": "Text inference GPU0",
+      "display_name": "Qwen text instance 1",
       "observation_key": "qwen-gpu0",
       "owner": "llmctl",
       "capabilities": [
@@ -55,7 +56,7 @@
       "endpoint_ref": "qwen-gpu0-private",
       "model": {
         "display_name": "Qwen3.8 27B",
-        "instance_name": "Qwen GPU0",
+        "instance_name": "Qwen instance 1",
         "expected_alias": "qwen3.8-27b-gpu0",
         "selection_group": null
       }
@@ -63,7 +64,7 @@
     {
       "id": "qwen-gpu1",
       "node_id": "ai-vm",
-      "display_name": "Text inference GPU1",
+      "display_name": "Qwen text instance 2",
       "observation_key": "qwen-gpu1",
       "owner": "llmctl",
       "capabilities": [
@@ -72,7 +73,7 @@
       "endpoint_ref": "qwen-gpu1-private",
       "model": {
         "display_name": "Qwen3.8 27B",
-        "instance_name": "Qwen GPU1",
+        "instance_name": "Qwen instance 2",
         "expected_alias": "qwen3.8-27b",
         "selection_group": null
       }
@@ -93,6 +94,11 @@
         "instance_name": "Image backend",
         "expected_alias": "qwen-image-2.1",
         "selection_group": null
+      },
+      "placement": {
+        "gpu_uuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+        "selection_authority": "/data/services/image21-runtime-20260923/config.json.gpu_uuid",
+        "selection_config_sha256": null
       }
     },
     {
@@ -135,7 +141,7 @@
         {
           "id": "codex",
           "display_name": "Codex",
-          "expected_version": "0.158.0",
+          "expected_version": null,
           "preview": true,
           "capabilities": [
             "text",
@@ -231,7 +237,8 @@
         "instance_name": "Qwen Ada 200K",
         "expected_alias": "qwen3.8-27b-ada200k",
         "selection_group": null
-      }
+      },
+      "retirement_key": "retired200K"
     }
   ],
   "components": [

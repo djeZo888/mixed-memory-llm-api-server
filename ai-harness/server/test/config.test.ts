@@ -50,19 +50,19 @@ test("a second app cannot reinterpret the live owner runs as a crash", async (t)
       async close() {},
     }),
   };
-  const first = await createApp(options);
+  const first = await createApp({ newChatEngine: "minimax", ...options });
   try {
     const session = await first.broker.createSession();
     const s = first.store.getSession(session.id);
     const run = first.store.createRun(s, "message", "owned work", []);
     first.store.updateRun(run.id, "running");
-    await assert.rejects(createApp(options), /Another server owns/);
+    await assert.rejects(createApp({ newChatEngine: "minimax", ...options }), /Another server owns/);
     assert.equal(first.store.isQuarantined(s.workspaceId), false);
     first.store.updateRun(run.id, "completed");
   } finally {
     await first.app.close();
   }
-  const second = await createApp(options);
+  const second = await createApp({ newChatEngine: "minimax", ...options });
   await second.app.close();
 });
 
@@ -86,8 +86,8 @@ test("failed app initialization releases ownership for a corrected retry", async
     }),
   };
   await symlink(root, join(root, "uploads"));
-  await assert.rejects(createApp(options), /Symbolic links/);
+  await assert.rejects(createApp({ newChatEngine: "minimax", ...options }), /Symbolic links/);
   await rm(join(root, "uploads"));
-  const app = await createApp(options);
+  const app = await createApp({ newChatEngine: "minimax", ...options });
   await app.app.close();
 });

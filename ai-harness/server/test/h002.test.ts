@@ -23,7 +23,7 @@ async function setup(t: TestContext, engineFactory?: EngineFactory) {
   const root = await realpath(
     await mkdtemp(path.join(tmpdir(), "h002-fixture-")),
   );
-  const h = await createApp({
+  const h = await createApp({ newChatEngine: "minimax",
     dataDir: root,
     allowedOrigins: ["http://localhost"],
     launcher: "/not-executed",

@@ -160,7 +160,7 @@ for (const retainedV2 of [false, true]) test(`${retainedV2 ? 'persisted old v2 s
     },
     ...codexDeployment({ enablePreview: true, runtime }),
   };
-  const app = await createApp(options);
+  const app = await createApp({ newChatEngine: "minimax", ...options });
   t.after(async () => {
     await app.app.close();
     await new Promise<void>((resolve) => server.close(() => resolve()));

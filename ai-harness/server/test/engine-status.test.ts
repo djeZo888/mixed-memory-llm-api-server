@@ -56,7 +56,7 @@ test("missing, malformed, disabled and mismatching observations retain catalog w
   const sample = () => ({ state: "fresh" as const, value, ageMs: 0, observedAt: 0, inflight: false, error: null });
   let rows = projectEngines(harness(), sample());
   assert.equal(rows[0]!.state, "missing"); assert.equal(rows[0]!.selection_enabled, null);
-  assert.equal(rows[1]!.state, "mismatch"); assert.equal(rows[1]!.selection_enabled, null);
+  assert.equal(rows[1]!.state, "mismatch"); assert.equal(rows[1]!.selection_enabled, false);
   assert.equal(rows[1]!.observed!.enabled, true); // retained evidence is explicitly separate
   raw.engines.codex.version = "0.158.0"; raw.engines.codex.available = false; raw.engines.codex.readiness = "disabled";
   value = sanitizeEngineHealth(raw); rows = projectEngines(harness(), sample());
@@ -130,7 +130,7 @@ test("actual app health additive descriptors expose selection policy without sta
   const { createApp } = await import("../src/app.js");
   const dataDir = await mkdtemp(`${tmpdir()}/h021-health-`);
   let starts = 0;
-  const service = await createApp({ dataDir, engineFactory: () => { starts++; throw Error("No native startup allowed"); } });
+  const service = await createApp({ newChatEngine: "minimax", dataDir, engineFactory: () => { starts++; throw Error("No native startup allowed"); } });
   try {
     const response = await service.app.inject({ url: "/api/health", headers: { host: "127.0.0.1:8080" } });
     assert.equal(response.statusCode, 200);
