@@ -1,5 +1,11 @@
 # H036 completion checkpoint — release pending
 
+**September 30 update:** the host reboot and subsequent VM recovery have now
+been inspected. ai-vm was then shut down at the user's request for a cable trial.
+See the [reboot recovery checkpoint](h036-reboot-recovery.md) for current state,
+source repairs and remaining gates. The evidence below retains its original
+September 29 timing and limitations.
+
 This documentation checkpoint uses exact source base
 `92325effe103b638f64a944e751e31f28edf9ad0`, supplied acceptance snapshots and root's
 September 29 root final-review INBOX updates. **MiniMax remains default; Codex

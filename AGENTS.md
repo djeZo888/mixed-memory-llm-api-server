@@ -1,5 +1,12 @@
 # Sova — H036 current coordination
 
+Current override: read the [September 30 reboot recovery checkpoint](reports/h036-reboot-recovery.md)
+first. ai-vm's requested cable-trial shutdown was accepted at 02:05:46 UTC;
+SSH became unreachable. Wait for the user to confirm hardware work is complete
+before VM probes, deployment or model work. ai-harness was left in maintenance.
+Recovery source is reviewed/tested but not deployed. Older state below is
+historical and must not override fresh evidence or the cable-trial hold.
+
 Read the [H036 execution plan](reports/h036-execution-plan.md),
 [current completion checkpoint](reports/h036-completion-checkpoint.md) and
 [results](reports/h036-completion-results.json) first. H036 remains authorized

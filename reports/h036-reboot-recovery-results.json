@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "checkpoint": "H036_REBOOT_RECOVERY_SOURCE_ONLY",
+  "date": "2026-09-30",
+  "base": "ad942c85f9d964d453e7476bde2099560d07436a",
+  "deployment": "NOT_DEPLOYED",
+  "release": "HELD_FOR_HARDWARE_AND_LIVE_ACCEPTANCE",
+  "defaultBranch": "main",
+  "defaultBranchUpdated": false,
+  "shutdown": {
+    "target": "ai-vm",
+    "issuedAtUtc": "2026-09-30T02:05:46.260819Z",
+    "commandExit": 0,
+    "subsequentSshChecks": "TWO_TIMEOUTS",
+    "classification": "REQUEST_ACCEPTED_SSH_UNREACHABLE",
+    "hypervisorStopped": "USER_CONFIRMATION_PENDING",
+    "harnessShutdown": false,
+    "receiptSha256": "65dd1cf40dc271dacf9d4fcae753061700b3dc9c75a97dbc61373e01a6d3c1ca"
+  },
+  "hardware": {
+    "hostRestart": "UNCLEAN_RESTART_REPORTED_IN_SUPPLIED_LOGS",
+    "restartCause": "UNPROVEN",
+    "coreXNegotiatedGbpsEachDirection": 40,
+    "bridge": "0000:48:01.0",
+    "sampledPcieGTs": 2.5,
+    "sampledPcieWidth": 4,
+    "cumulativeBadDllp": 3911,
+    "cumulativeBadTlp": 4,
+    "fiveMinuteKernelQuery": "NO_MATCHES_IN_SUPPLIED_OUTPUT",
+    "transferThroughput": "NOT_TESTED",
+    "cableTrial": "USER_IN_PROGRESS_NO_VM_CONTACTS"
+  },
+  "sources": [
+    {
+      "component": "searxng_owned_cold_start",
+      "workerCommit": "45f9efee21b8cf573ea3165f65309c23b7697f6d",
+      "rootImport": "54f35f756f0b08f2ffae3d68f03e695249bd46b6",
+      "passed": 9,
+      "kind": "SYNTHETIC_PODMAN_FIXTURES",
+      "live": "NOT_TESTED"
+    },
+    {
+      "component": "mimo_interrupted_boot_and_ada_atomic_status",
+      "workerCommit": "2aeb870cf373c89e36d3acabfd8fbe83f00a7499",
+      "rootImport": "7822ebf48f35f185fb66dd538cc8879de00a01ad",
+      "nativeSessionId": "01a0f013-4460-71d1-b15a-cdee21890ba4",
+      "nativeExit": 0,
+      "outerSshExit": 0,
+      "finishedAtUtc": "2026-09-30T02:30:52.544661Z",
+      "deadlineTermination": false,
+      "passed": 303,
+      "existingSkips": 5,
+      "live": "NOT_TESTED",
+      "sourceBundleSha256": "42de4dd21c144e705943dfd03f2fac84f8e29ae667e2b0313344ccdcad8cf2cd",
+      "wrapperReceiptSha256": "dedecd05b32f4a3d49fa90a0ae8fe8ecf07a16c5ccdd5769533771a9de6eb4e2",
+      "deliveryConstraint": "Review dependent observer pin delivery while native is cold; avoid unnecessary model reload cycle"
+    },
+    {
+      "component": "protected_interrupted_chat_recovery",
+      "workerCommit": "391001241a7df16e5d7a485db72453a497cc6073",
+      "rootImport": "f1f3a985f2fa55c6dec47b12783b7621990dd4bd",
+      "nativeSessionId": "01a0f01f-b2b0-7f52-be26-60a05f11e647",
+      "nativeExit": 0,
+      "finishedAtUtc": "2026-09-30T02:43:13.420792Z",
+      "deadlineTermination": false,
+      "typescriptPassed": 148,
+      "pythonSettlementPassed": 29,
+      "build": "PASS",
+      "fullServerSuite": "NOT_RUN",
+      "live": "NOT_TESTED",
+      "sourceBundleSha256": "7dd96217ae3a9f44ac0832b80515bdeac7bacd3a0b0e819eab47e2614f8329b6"
+    }
+  ],
+  "preservation": {
+    "originalMimoTurn2": "FAILED_OR_UNKNOWN",
+    "originalCompactionFollowup": "INTERRUPTED_NO_FINAL",
+    "retainedPowerArtifactSha256": "4ab33d8f0b84d81ab152e8fe50172f66e9c3602595e2fe6b16b3d8beda754a11",
+    "liveRecoveryApplied": false,
+    "uncertainRequestsReplayed": false,
+    "largePrefillRepeated": false,
+    "credentialsAndRawTraces": "PRIVATE_OUTSIDE_GIT"
+  },
+  "pending": [
+    "User completes cable trial and restarts ai-vm",
+    "Fresh maintenance and physical ownership checks",
+    "Coherent reviewed cold-state source deployment",
+    "Live recovery of MiMo, Ada supervisor and SearXNG",
+    "Fresh small MiMo 480K qualification and protected profile delivery",
+    "Physically proven selected-chat recovery followed by a distinct follow-up",
+    "Full server regression suite, browser ZIP and reconnect acceptance",
+    "Exact-candidate CI and final main merge"
+  ]
+}
