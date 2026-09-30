@@ -28,7 +28,7 @@ IMAGE_GPU = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 class PolicyTests(unittest.TestCase):
     def setUp(self):
         self.assertEqual(len({GPU, PEER, IMAGE_GPU}), 3)
-        self.assertEqual(IMAGE_GPU, service.GPU_UUID)
+        self.assertEqual(IMAGE_GPU, service.H032_GPU_UUID)
         for gpu in (GPU, PEER, IMAGE_GPU):
             self.assertIn(gpu, GPU_UUIDS)
         self.temp = tempfile.TemporaryDirectory()
@@ -298,7 +298,7 @@ class ImageOwnerIntegration(unittest.TestCase):
         value = owned_container()
         value['State'].update(OOMKilled=False, StartedAt='fixture')
         value['NetworkSettings']['Networks'] = {service.NETWORK: {'NetworkID': 'network'}}
-        runtime.config = {'network_id': 'network'}
+        runtime.config = {'network_id': 'network', 'gpu_uuid': service.H032_GPU_UUID}
         runtime.inspect_owned = Mock(return_value=value)
         runtime.check_network = Mock()
         runtime.native_health = Mock(return_value=True)

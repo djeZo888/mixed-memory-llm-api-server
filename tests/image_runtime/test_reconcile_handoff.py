@@ -48,7 +48,7 @@ class ReconciliationHandoff(unittest.TestCase):
         self.anchor.mkdir(service.H032_ROOT + 'archive')
         self.old_source, self.new_source = b'# pinned old owner fixture\n', b'# corrected owner fixture\n'
         self.stack.enter_context(patch.object(service, 'H032_OLD_SERVICE', digest(self.old_source)))
-        self.config = {'owner': service.OWNER,
+        self.config = {'owner': service.OWNER, 'gpu_uuid': service.H032_GPU_UUID,
                        'source_sha256': {'service.py': digest(self.new_source)}, 'unchanged': ['policy']}
         self.old_config = copy.deepcopy(self.config)
         self.old_config['source_sha256']['service.py'] = digest(self.old_source)
@@ -123,12 +123,12 @@ class ReconciliationHandoff(unittest.TestCase):
                      'failure_code': 'image_operation_changed'}
         old_operation = {'token': '868d9b48784b44f4b702b52c05655a65', 'pid': 1656742,
                          'boot': fixture_module.BOOT, 'action': 'start', 'status': 'active',
-                         'gpu_uuid': service.GPU_UUID,
+                         'gpu_uuid': service.H032_GPU_UUID,
                          'config_sha256': digest(json.dumps(self.old_config, sort_keys=True, separators=(',', ':')).encode()),
                          'invocation_id': OLD_INVOCATION, 'recovery': '83be8882e6374f3fbc3918de6bc5107c'}
         old_recovery = {'token': '83be8882e6374f3fbc3918de6bc5107c', 'pid': 1655508,
                         'boot': fixture_module.BOOT, 'status': 'active', 'phase': 'settle',
-                        'gpu_uuid': service.GPU_UUID, 'config_sha256': old_operation['config_sha256'],
+                        'gpu_uuid': service.H032_GPU_UUID, 'config_sha256': old_operation['config_sha256'],
                         'process': {'pid': 1655508, 'start_ticks': 3990457},
                         'prior_invocation': '', 'child_start': OLD_INVOCATION}
         originals = {'config.json': encoded(self.old_config), 'service.py': self.old_source,
@@ -143,7 +143,7 @@ class ReconciliationHandoff(unittest.TestCase):
         self.put('config.json', self.config)
         self.put_raw('source/service.py', self.new_source)
         plan = {'schema_version': 1, 'case': service.H032_CASE, 'boot': fixture_module.BOOT,
-                'gpu_uuid': service.GPU_UUID, 'native': self.native,
+                'gpu_uuid': service.H032_GPU_UUID, 'native': self.native,
                 'old_config_sha256': digest(originals['config.json']),
                 'new_config_sha256': digest(self.raw('config.json')),
                 'old_service_sha256': digest(self.old_source), 'new_service_sha256': digest(self.new_source),
@@ -156,7 +156,7 @@ class ReconciliationHandoff(unittest.TestCase):
                      'plan_sha256': digest(self.raw(service.H032_ROOT + 'plan.json'))}
         self.put(service.H032_ROOT + 'consumed.json', reference)
         self.put(service.H032_ROOT + 'settlement.json', dict(reference,
-                 gpu_uuid=service.GPU_UUID, native=self.native, physically_absent=True))
+                 gpu_uuid=service.H032_GPU_UUID, native=self.native, physically_absent=True))
         self.put('state.json', {'schema_version': 1, 'owner': service.OWNER, 'phase': 'stopped',
                  'warm': False, 'run_id': OLD_INVOCATION, 'container': None,
                  'last_native_actions': old_state['native_actions'],
@@ -165,11 +165,11 @@ class ReconciliationHandoff(unittest.TestCase):
                                    'recovery': 'cleanup-parent'})
         self.put('recovery.json', {'token': 'cleanup-parent', 'boot': fixture_module.BOOT,
                  'pid': 9999999, 'process': {'pid': 9999999, 'start_ticks': 100},
-                 'gpu_uuid': service.GPU_UUID, 'config_sha256': self.make_runtime().config_digest(),
+                 'gpu_uuid': service.H032_GPU_UUID, 'config_sha256': self.make_runtime().config_digest(),
                  'status': 'active', 'phase': 'settled_awaiting_reviewed_activation',
                  'prior_invocation': '', 'child_start': OLD_INVOCATION,
                  'reconciliation': {k: reference[k] for k in ('case', 'archive_sha256', 'plan_sha256')}})
-        handoff = dict(reference, gpu_uuid=service.GPU_UUID, native=self.native,
+        handoff = dict(reference, gpu_uuid=service.H032_GPU_UUID, native=self.native,
                        settlement_sha256=digest(self.raw(service.H032_ROOT + 'settlement.json')),
                        cleanup_consumption_sha256=digest(self.raw(service.H032_ROOT + 'consumed.json')),
                        raw_sha256={name: digest(self.raw(name)) for name in
@@ -191,7 +191,7 @@ class ReconciliationHandoff(unittest.TestCase):
         self.assertEqual(receipt['recovery_token'], self.get('recovery.json')['token'])
         gpu_commands = [c for c in self.fixture.commands if c[0] == 'nvidia-smi']
         self.assertEqual(len(gpu_commands), 1)
-        self.assertIn('--id=' + service.GPU_UUID, gpu_commands[0])
+        self.assertIn('--id=' + service.H032_GPU_UUID, gpu_commands[0])
 
     def test_wrong_raw_identity_source_or_successor_refuses_before_consumption(self):
         for name in ('state.json', 'operation.json', 'recovery.json', 'config.json', 'source/service.py'):

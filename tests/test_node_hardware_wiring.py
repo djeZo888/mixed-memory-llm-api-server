@@ -211,6 +211,37 @@ class HardwareProducerWiring(unittest.TestCase):
         self.assertEqual(validate.call_count, 1)
         self.assertEqual(self.store.writes, 0)
 
+    def test_selection_switch_after_proof_capture_validates_captured_uuid_only(self):
+        external, internal = GPU_UUIDS[3], GPU_UUIDS[4]
+        raw = dict(gpu_uuid=external, boot_id=BOOT, observed_at='2026-09-25T12:00:00Z', observation_id='switch-proof')
+        class SwitchingCollector:
+            gpu_uuid = external
+            reads = 0
+            @property
+            def last_proof(collector):
+                collector.reads += 1
+                collector.gpu_uuid = internal
+                return raw, self.tick
+        collector = SwitchingCollector()
+        producer = c.HardwareEvidenceCollector(self.inventory, [collector])
+        with patch.object(HardwarePolicy, 'validate_required') as validate:
+            producer(2)
+        validate.assert_called_once_with(external, current_boot_id=BOOT,
+            observed_at=raw['observed_at'], observation_id='switch-proof')
+        self.assertEqual(collector.gpu_uuid, internal)
+        self.assertEqual(collector.reads, 1)
+
+    def test_malformed_or_unregistered_captured_uuid_is_refused(self):
+        self.gpu(2)
+        original, captured = self.gpu.last_proof
+        for raw in (None, {}, {**original, 'gpu_uuid': None}, {**original, 'gpu_uuid': '0'},
+                    {**original, 'gpu_uuid': 'GPU-aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'}):
+            self.gpu.last_proof = raw, captured
+            with self.subTest(raw=raw), patch.object(HardwarePolicy, 'validate_required') as validate:
+                with self.assertRaisesRegex(ValueError, 'hardware_proof_identity_unknown'):
+                    self.producer(2)
+                validate.assert_not_called()
+
     def test_non_contention_entry_error_is_not_retried(self):
         from common.lifecycle_lease import LeaseError
         self.gpu(2)

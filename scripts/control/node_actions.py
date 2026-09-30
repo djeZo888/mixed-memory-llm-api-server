@@ -25,6 +25,7 @@ REGISTERED_GPUS = frozenset((
     'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
     'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',
     'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',
+    'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf',
 ))
 KEY = re.compile(r'[A-Za-z0-9][A-Za-z0-9_.:-]{0,127}')
 OPID = re.compile(r'[0-9a-f]{32}')
