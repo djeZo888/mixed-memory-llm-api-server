@@ -91,7 +91,7 @@ async function setup(t: TestContext, maxQueued?: number) {
     enginePolicy: { codex: policy },
     maxQueued,
   };
-  let app = await createApp(options);
+  let app = await createApp({ newChatEngine: "minimax", ...options });
   t.after(async () => {
     failCleanup = false;
     calls.forEach((call) => call.gate.resolve());
@@ -145,7 +145,7 @@ async function setup(t: TestContext, maxQueued?: number) {
     },
     async restart() {
       await app.app.close();
-      app = await createApp(options);
+      app = await createApp({ newChatEngine: "minimax", ...options });
     },
   };
 }

@@ -30,7 +30,7 @@ test('retained frontier identities retain both visible rows without relabeling i
 test('MiMo readiness requires exact fresh canonical node observation; GLM ready cannot supply it', () => {
   const selected = selectRegistryFrontier(validateSystemRegistry(raw()), frontier[1]!);
   const config = selected.nodes.find(n => n.id === 'ai-vm')!;
-  const meta = { state: 'ok', freshness: 'fresh', age_ms: 0, observed_at: '2026-09-27T15:00:00Z' };
+  const meta = { configured_context_tokens:480000,max_output_tokens:65536,required_gpu_uuids:['GPU-69acfa26-8b60-61b5-702d-aee252c163cc'], state: 'ok', freshness: 'fresh', age_ms: 0, observed_at: '2026-09-27T15:00:00Z' };
   const projection = (services: any[]) => projectNode(sanitizeNode({ schema_version: 1, node_id: 'ai-vm', ...meta, services }, 'ai-vm', frontier), config, selected).services.find(s => s.service_id === frontier[1])!;
   assert.equal(projection([{ ...meta, service_id: frontier[0], ready: true, availability: 'available' }]).health, 'unknown');
   assert.equal(projection([{ ...meta, service_id: frontier[1], model_alias: frontier[1], ready: true, availability: 'available' }]).health, 'ready');
@@ -46,8 +46,8 @@ test('MiMo readiness requires exact fresh canonical node observation; GLM ready 
 
 });
 
-const meta = { state: 'ok', freshness: 'fresh', age_ms: 0, observed_at: '2026-09-28T04:00:00Z' };
-const gpu = 'GPU-00000000-0000-0000-0000-000000000001';
+const meta = { configured_context_tokens:480000,max_output_tokens:65536,required_gpu_uuids:['GPU-69acfa26-8b60-61b5-702d-aee252c163cc'], state: 'ok', freshness: 'fresh', age_ms: 0, observed_at: '2026-09-28T04:00:00Z' };
+const gpu = 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc';
 function project(registry: ReturnType<typeof validateSystemRegistry>, services: any[], options: any = {}) {
   const config = registry.nodes[0]!;
   return projectNode(sanitizeNode({ schema_version: 1, node_id: config.id, ...meta,
@@ -56,7 +56,7 @@ function project(registry: ReturnType<typeof validateSystemRegistry>, services: 
 }
 const observed = (service_id: string, model_alias: string | null = service_id) => ({ ...meta,
   service_id, model_alias, deployment_id: 'observed-instance', ready: true, admitting: true,
-  availability: 'available', required_gpu_uuids: [gpu],
+  availability: 'available', required_gpu_uuids: [service_id === 'qwen-gpu0' ? 'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237' : service_id === 'qwen-gpu1' ? 'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528' : gpu],
 });
 test('custom configured labels and both frontier selections stay separate from observed identities and impact scope', () => {
   for (const model of frontier) {
@@ -97,7 +97,9 @@ test('missing, stale, mismatched, unavailable and unselected evidence cannot cer
     const service = actual.services.find(s => s.service_id === model)!;
     assert.equal(service.identity_status, expected);
     if (!row) { assert.equal(service.observed_model.node_id, null); assert.equal(service.observed_model.service_id, null); }
-    assert.equal(service.health, 'unknown'); assert.equal(service.ready, null); assert.equal(service.admitting, null);
+    assert.equal(service.health, expected === 'mismatch' ? 'not_ready' : 'unknown');
+    assert.equal(service.ready, expected === 'mismatch' ? false : null);
+    assert.equal(service.admitting, expected === 'mismatch' ? false : null);
     assert.deepEqual(actual.gpus[0]!.observed_ready_dependents, []);
   }
   const staleNode = project(registry, [observed(model)], { freshness: 'stale' });
@@ -120,10 +122,11 @@ test('missing, stale, mismatched, unavailable and unselected evidence cannot cer
 });
 test('Qwen instances keep distinct configured aliases, observed deployments and UUIDs; unsupported nodes remain visible', () => {
   const registry = validateSystemRegistry(raw());
-  const secondGpu = gpu.replace(/1$/, '2');
+  const firstGpu = 'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237';
+  const secondGpu = 'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528';
   const actual = project(registry, [observed('qwen-gpu0', 'qwen3.8-27b-gpu0'),
     { ...observed('qwen-gpu1', 'qwen3.8-27b'), deployment_id: 'second-instance', required_gpu_uuids: [secondGpu] }],
-    { gpus: [gpu, secondGpu].map(uuid => ({ ...meta, uuid })) });
+    { gpus: [firstGpu, secondGpu].map(uuid => ({ ...meta, uuid })) });
   const qwen = actual.services.filter(s => ['qwen-gpu0', 'qwen-gpu1'].includes(s.service_id));
   const unobservedQwen = actual.services.filter(s => s.service_id.startsWith('qwen-') && !qwen.includes(s));
   assert.deepEqual(unobservedQwen.map(s => [s.service_id, s.health]), [['qwen-ada200k', 'unknown']]);

@@ -60,7 +60,7 @@ export function projectEngines(service: RegistryService, cached?: Observation<En
       version_status: versionStatus,
       observed,
       default_engine: fresh ? cached?.value?.default_engine ?? null : null,
-      selection_enabled: usable ? observed!.enabled : null,
+      selection_enabled: state === "mismatch" ? false : usable ? observed!.enabled : null,
       protocol_qualified: usable ? observed!.protocol_qualified : null,
       // No native startup probe is performed by this passive endpoint.
       ready: null,

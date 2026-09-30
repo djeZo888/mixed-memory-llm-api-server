@@ -173,7 +173,7 @@ test("router rejects cross-engine policy/uncertain resume and does not silently 
 
 test("HTTP policy gate defaults to MiniMax; preview choice is new-chat-only; RPC/config/media rejected", async (t) => {
   const dataDir = await mkdtemp(join(tmpdir(), "h021-routes-"));
-  const { app, store } = await createApp({
+  const { app, store } = await createApp({ newChatEngine: "minimax",
     dataDir,
     allowedOrigins: ["http://localhost"],
     engineFactory: inert,

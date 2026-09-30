@@ -26,6 +26,7 @@ import { nodeClient } from "./node-client.js";
 import { openDispatchFreeze, serveDispatchFreeze } from "./dispatch-freeze.js";
 import { serviceAvailability } from "./service-availability.js";
 import { createBackendReadiness } from "./backend-readiness.js";
+import { loadNewChatEngine } from "./system-registry.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -40,7 +41,7 @@ function port(name: string, fallback: number) {
     throw new Error(`${name} must be a TCP port`);
   return +value;
 }
-/** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
+/** Explicit reviewed release entrypoint. The trusted new-chat default must qualify.
  * The receipt is a protected host file outside task mounts and binds current instances. */
 export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string) {
   let qualification: CodexHostQualification | undefined;
@@ -63,10 +64,11 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
       capabilities: specialists.capabilities,
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
-  if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
+  if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified\n");
   return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath });
 }
 export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string } = {}) {
+  const newChatEngine = loadNewChatEngine();
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -108,6 +110,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
       : observed;
   };
   const application = await createApp({
+    newChatEngine,
     dataDir,
     launcher,
     engineFactory: createEngine,

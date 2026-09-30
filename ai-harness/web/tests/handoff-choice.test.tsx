@@ -10,7 +10,7 @@ import { deferred, event, fixtureTransport, snapshot } from './fixtures';
 function handoffFixture(engineKind: EngineKind, available = true) {
   const fixture = fixtureTransport();
   fixture.transport.health.mockResolvedValue({
-    visionAvailable: false, engines: { codex: { available } },
+    visionAvailable: false, engines: { default: "minimax", codex: { available } },
   });
   fixture.transport.snapshot.mockImplementation(async id => ({
     ...snapshot(id), session: { ...snapshot(id).session, engineKind: id === 'chat/a' ? engineKind : 'minimax' },
@@ -61,7 +61,7 @@ it('disables a selected target when refreshed health withdraws it without silent
     await act(async () => { render(<App store={store} />); });
     const selector = screen.getByRole('combobox', { name: 'Harness for continued chat' });
     fireEvent.change(selector, { target: { value: 'codex' } });
-    transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: false } } });
+    transport.health.mockResolvedValue({ visionAvailable: false, engines: { default: "minimax", codex: { available: false } } });
     await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
     expect(selector).toHaveValue('codex');
     expect(screen.getByRole('button', { name: 'Continue in new chat' })).toBeDisabled();

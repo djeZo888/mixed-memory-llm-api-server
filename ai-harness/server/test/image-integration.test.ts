@@ -100,7 +100,7 @@ async function fixture(t: TestContext, codexImages = false, imageAcceptance?: (s
     finish(): void;
   }[] = [];
   let gateway: ReturnType<typeof createGateway>;
-  const application = await createApp({
+  const application = await createApp({ newChatEngine: "minimax",
     dataDir: dir,
     launcher: "/offline/fake",
     gatewayUrl: "http://127.0.0.1:1/v1",

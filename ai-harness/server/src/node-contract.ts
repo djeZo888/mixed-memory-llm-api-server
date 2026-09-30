@@ -191,6 +191,7 @@ export function sanitizeNode(raw: unknown, nodeId: string, serviceIds: readonly 
   if (v.schema_version !== 1 || v.node_id !== nodeId)
     throw Error("Invalid node snapshot");
   const inventory = record(v.inventory);
+  const imageGPU = record(v.imageGPU), image = record(v.image), retired200K = record(v.retired200K);
   const gpuId = (id: unknown): id is string =>
     typeof id === "string" && /^GPU-[0-9a-f-]{36}$/i.test(id);
   const rawUuids = inventory.gpu_uuids;
@@ -335,6 +336,17 @@ export function sanitizeNode(raw: unknown, nodeId: string, serviceIds: readonly 
     schema_version: 1 as const,
     node_id: nodeId,
     boot_id: identifier(v.boot_id),
+    imageGPU: {
+      uuid: gpuId(imageGPU.uuid) ? imageGPU.uuid : null,
+      selectionConfigSha256: typeof imageGPU.selectionConfigSha256 === "string" && /^[a-f0-9]{64}$/.test(imageGPU.selectionConfigSha256) ? imageGPU.selectionConfigSha256 : null,
+      bootId: identifier(imageGPU.bootId),
+    },
+    image: {
+      ready: bool(image.ready), admitting: bool(image.admitting),
+      capabilities: (Array.isArray(image.capabilities) ? image.capabilities : [])
+        .filter((c): c is string => c === "images.generations" || c === "images.edits"),
+    },
+    retired200K: { present: bool(retired200K.present), ready: bool(retired200K.ready), retired: bool(retired200K.retired) },
     generation: integer(v.generation),
     affected_services: (Array.isArray(v.affected_services)
       ? v.affected_services

@@ -74,7 +74,7 @@ async function fixture(t: TestContext, interrupt: "interrupted" | "failed" = "in
     });
     return { stdin, stdout, exited: new Promise<void>(() => {}), async terminateAndConfirm() { cleanupCalls++; if (nativeProof === "reject") throw Error("private launcher detail must not escape"); return nativeProof; } };
   };
-  const app = await createApp({
+  const app = await createApp({ newChatEngine: "minimax",
     dataDir: dir, launcher: "/never", gatewayUrl: "http://127.0.0.1:1/v1",
     allowedOrigins: ["http://localhost"],
     engineFactory: () => { throw Error("Wrong engine"); },

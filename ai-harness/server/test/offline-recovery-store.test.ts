@@ -213,7 +213,7 @@ test("ordinary new explicit turn is blocked before valid release and resumes exa
     },
     revokeGatewaySession() {}, async confirmGatewaySettlement() { return true; },
   };
-  const app = await createApp({ dataDir: f.dir, allowedOrigins: ["http://localhost"], launcher: "/never",
+  const app = await createApp({ newChatEngine: "minimax", dataDir: f.dir, allowedOrigins: ["http://localhost"], launcher: "/never",
     gatewayUrl: "http://fixture.invalid/v1", engineFactory: () => { throw Error("Wrong engine"); },
     issueToken: () => "fixture-token", revokeToken() {}, ...codexDeployment({ enablePreview: true, runtime }) });
   t.after(() => app.app.close());

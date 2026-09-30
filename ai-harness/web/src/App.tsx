@@ -29,7 +29,8 @@ function Badge({ status }: { status: Status }) {
 
 export function App({ store }: { store: HarnessStore }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  const [newEngine, setNewEngine] = useState<'minimax' | 'codex'>('minimax');
+  const [newEngine, setNewEngine] = useState<EngineKind | undefined>();
+  const selectedNewEngine = newEngine ?? state.newChatEngine;
   const [handoffChoice, setHandoffChoice] = useState<{ sessionId: string; engineKind: EngineKind } | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [narrow, setNarrow] = useState(window.innerWidth <= 700);
@@ -47,9 +48,6 @@ export function App({ store }: { store: HarnessStore }) {
     !!state.busy[busyKey('handoff', thread.session.id)] ||
     isActive(thread.session.status) || pendingRunIds(state, thread.session.id).length > 0
   );
-  useEffect(() => {
-    if (!state.codexAvailable) setNewEngine('minimax');
-  }, [state.codexAvailable]);
   const title =
     thread?.session.title ||
     state.sessions.find((s) => s.id === selected)?.title ||
@@ -139,9 +137,10 @@ export function App({ store }: { store: HarnessStore }) {
           Harness for new chat
           <select
             aria-label="Harness for new chat"
-            value={newEngine}
+            value={selectedNewEngine ?? ''}
             onChange={(event) => setNewEngine(event.target.value as 'minimax' | 'codex')}
           >
+            {!selectedNewEngine && <option value="" disabled>Waiting for service default</option>}
             <option value="minimax">MiniMax</option>
             <option value="codex" disabled={!state.codexAvailable}>
               Codex (preview){state.codexAvailable ? '' : ' — pending'}
@@ -186,9 +185,9 @@ export function App({ store }: { store: HarnessStore }) {
         )}
         <button
           className="new-chat"
-          disabled={!!state.busy[busyKey('create')]}
+          disabled={!!state.busy[busyKey('create')] || !selectedNewEngine || (selectedNewEngine === 'codex' && !state.codexAvailable)}
           onClick={() => {
-            void store.create(newEngine);
+            void store.create(selectedNewEngine);
             setSidebarOpen(false);
           }}
         >

@@ -35,13 +35,13 @@ async function setup(t: TestContext) {
     enginePolicy: { codex: { ...policy } }, dispatchHeld: () => frozen,
     onRunAccepted: (_sessionId, runId) => accepted.push(runId),
   };
-  let h = await createApp(options);
+  let h = await createApp({ newChatEngine: "minimax", ...options });
   t.after(async () => { calls.forEach(call => call.resolve()); await h.app.close(); await rm(dataDir, { recursive: true, force: true }); });
   return {
     get h() { return h; }, calls, accepted,
     post: (id: string, payload: unknown) => h.app.inject({ method: "POST", url: `/api/sessions/${id}/messages`, headers: { host: "localhost" }, payload }),
     unavailable() { frozen = true; options.enginePolicy!.codex!.enabled = false; },
-    async restart() { await h.app.close(); h = await createApp(options); },
+    async restart() { await h.app.close(); h = await createApp({ newChatEngine: "minimax", ...options }); },
   };
 }
 for (const engine of ["minimax", "codex"] as EngineKind[]) {
