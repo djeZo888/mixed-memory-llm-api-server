@@ -80,6 +80,30 @@ class NativeStartup(unittest.TestCase):
             self.assertEqual(set(row), {'stage', 'code', 'exceptionClass', 'causeClass'})
         return records
 
+    def test_observed_void_visibility_keeps_full_uuid_and_cuda_binding(self):
+        for nvidia in (GPU, 'void'):
+            env = dict(ENV, NVIDIA_VISIBLE_DEVICES=nvidia)
+            before = env.copy()
+            self.assertEqual(native.selected_gpu(ARGS, env), GPU)
+            self.assertEqual(env, before)
+        cases = [(ARGS[:2], ENV), (ARGS + ['extra'], ENV),
+                 (ARGS[:-1] + ['0'], ENV), (ARGS[:-1] + [GPU[:-1]], ENV)]
+        for key in ('CUDA_VISIBLE_DEVICES', 'NVIDIA_VISIBLE_DEVICES'):
+            for value in (None, '', '0', 'all', 'none', GPU[:-1],
+                          'GPU-87654321-1234-1234-1234-123456789abc'):
+                env = dict(ENV, NVIDIA_VISIBLE_DEVICES='void')
+                if value is None:
+                    env.pop(key, None)
+                else:
+                    env[key] = value
+                cases.append((ARGS, env))
+        cases.append((ARGS, dict(ENV, CUDA_VISIBLE_DEVICES='void',
+                                NVIDIA_VISIBLE_DEVICES='void')))
+        for args, env in cases:
+            with self.subTest(argc=len(args)):
+                with self.assertRaisesRegex(RuntimeError, '^unexpected_gpu_visibility$'):
+                    native.selected_gpu(args, env)
+
     def test_visibility_refusal_retained_before_overlay_or_log(self):
         for args, env in [(ARGS[:-1] + ['0'], ENV),
                           (ARGS[:-1] + [GPU[:-1]], ENV),
@@ -144,7 +168,7 @@ class NativeStartup(unittest.TestCase):
     def test_success_reaches_same_fixed_launch_and_only_entry_receipts(self):
         expected_functions = {
             'launch_argv': '8f30f822e625bf2e9e180f24f9e84974dca150cd1407cb316c4bf15cec78f331',
-            'selected_gpu': '71ca8666f6b1258991b19fac3466a2ae55f6ed0c25278f82af8758e5198b0752',
+            'selected_gpu': 'b82544198aa8887212885fe983b2dfb3a72b511549e12da336638c0d3932a884',
             'verify_adaptive_overlay': '6b8427b0b67017357f3730edf74a7eefbb014ef49a0a5db39c79ab61e38a92ae',
         }
         for node in ast.parse(Path(native.__file__).read_text()).body:

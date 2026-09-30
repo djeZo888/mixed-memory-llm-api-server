@@ -48,9 +48,11 @@ def launch_argv():
 def selected_gpu(argv, environ):
     # The protected owner forwards its selected full UUID in fixed launch argv.
     # Container containment separately binds DeviceRequests and the GPU label.
+    # The exact-image import diagnostic observes NVIDIA visibility reset to void;
+    # the selected full UUID and CUDA visibility must still match exactly.
     if (len(argv) != 3 or not re.fullmatch(r'GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}', argv[2])
             or environ.get('CUDA_VISIBLE_DEVICES') != argv[2]
-            or environ.get('NVIDIA_VISIBLE_DEVICES') != argv[2]):
+            or environ.get('NVIDIA_VISIBLE_DEVICES') not in (argv[2], 'void')):
         raise RuntimeError('unexpected_gpu_visibility')
     return argv[2]
 
