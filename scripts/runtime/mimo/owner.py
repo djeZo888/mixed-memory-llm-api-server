@@ -934,6 +934,8 @@ def source_only_amendment(old, new):
 
 
 INTERRUPTED_BOOT_TRANSITION = 'OLD_BOOT_INTERRUPTED_RUNNING'
+INTERRUPTED_BOOT_DELTA = 'new-boot-source-delta.json'
+INTERRUPTED_BOOT_NODE = '/usr/local/lib/llm-server/node-api/scripts/control/node_observation.py'
 
 
 def interrupted_running_owner(old, state, proxy, guard):
@@ -1038,6 +1040,30 @@ def reviewed_source_amendment(old, new, delta, *, installed_owner_sha=None):
                 and hashlib.sha256(protected(path)).hexdigest() ==
                 (installed_owner_sha if installed_owner_sha is not None
                  and path == str(BASE / 'source/owner.py') else pins['new']), 'source_successor_invalid')
+
+
+def interrupted_source_amendment(old, new, files, expected_delta_sha256):
+    """Explicit cold owner + Ada observer delivery, using the existing delta gate."""
+    raw = files[INTERRUPTED_BOOT_DELTA]
+    require(isinstance(expected_delta_sha256, str) and HEX.fullmatch(expected_delta_sha256)
+            and hashlib.sha256(raw.encode()).hexdigest() == expected_delta_sha256,
+            'source_successor_invalid')
+    delta = json.loads(raw)
+    require(isinstance(delta, dict)
+            and set(delta) == {str(BASE / 'source/owner.py'), INTERRUPTED_BOOT_NODE},
+            'source_successor_invalid')
+    reviewed_source_amendment(old, new, delta)
+    for name, path in (('new-boot-prior-owner.py', str(BASE / 'source/owner.py')),
+                       ('new-boot-prior-node-observation.py', INTERRUPTED_BOOT_NODE)):
+        require(hashlib.sha256(files[name].encode()).hexdigest() == old['source_sha256'][path],
+                'new_boot_archive_changed')
+
+
+def new_boot_input_name(name, boot):
+    if name.startswith('new-boot-prior-') or name == INTERRUPTED_BOOT_DELTA:
+        stem, suffix = name.rsplit('.', 1)
+        return stem + '-' + boot + '.' + suffix
+    return name
 
 
 CONTEXT_TRANSITION = 'MIMO_CONTEXT_950000_TO_480000'
@@ -1881,11 +1907,14 @@ def exclusive_recovery_write(h, guard, name, value):
 
 
 def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
-                       *, interrupted_running=False):
+                       *, interrupted_running=False, expected_delta_sha256=None):
     """Explicit source-bound action; archives history, never edits the old owner."""
     require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
                 (expected_state_sha256, expected_manifest_sha256)), 'new_boot_recovery_invalid')
     recovery_names(expected_boot_id)
+    require(expected_delta_sha256 is None or (interrupted_running
+            and isinstance(expected_delta_sha256, str) and HEX.fullmatch(expected_delta_sha256)),
+            'new_boot_recovery_invalid')
     h = setup()
     m = read(BASE / 'manifest.json')
     require(digest(m) == expected_manifest_sha256, 'new_boot_recovery_invalid')
@@ -1896,11 +1925,10 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
         lease.validate()
         names = ['state.json', 'proxy-state.json', 'guard.json', 'selection.json',
                  'new-boot-prior-manifest.json', 'new-boot-prior-owner.py']
+        if expected_delta_sha256 is not None:
+            names += [INTERRUPTED_BOOT_DELTA, 'new-boot-prior-node-observation.py']
         def input_name(name):
-            if name.startswith('new-boot-prior-'):
-                stem, suffix = name.rsplit('.', 1)
-                return stem + '-' + expected_boot_id + '.' + suffix
-            return name
+            return new_boot_input_name(name, expected_boot_id)
         files = {name: protected(BASE / input_name(name)).decode() for name in names}
         require(hashlib.sha256(files['state.json'].encode()).hexdigest() == expected_state_sha256
                 and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
@@ -1912,7 +1940,11 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
                 and prior_guard.get('manifest_sha256') == digest(old), 'new_boot_recovery_invalid')
         if interrupted_running:
             interrupted_running_owner(old, state, proxy, prior_guard)
-        source_only_amendment(old, m)
+        if expected_delta_sha256 is None:
+            source_only_amendment(old, m)
+        else:
+            interrupted_source_amendment(old, m, files, expected_delta_sha256)
+            source_preflight(h, m)  # Recheck the complete installed closure under the lease.
         require(hashlib.sha256(files['new-boot-prior-owner.py'].encode()).hexdigest()
                 == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
         selected = require_selected(old, state['selection'])
@@ -1937,6 +1969,8 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
                    'preserved_container_name': old['container_name'] + '-prior-' + state['launch_id']}
         if interrupted_running:
             receipt['transition'] = INTERRUPTED_BOOT_TRANSITION
+        if expected_delta_sha256 is not None:
+            receipt['reviewed_delta_sha256'] = expected_delta_sha256
         exclusive_recovery_write(h, guard, receipt_name, receipt)
         require(all(protected(BASE / input_name(name)).decode() == raw for name, raw in files.items())
                 and selection() == selected
@@ -1968,7 +2002,16 @@ def recovery_for_start(m, selected, previous):
             and digest(old) == receipt['prior_manifest_sha256']
             and receipt['preserved_container_name'] == old['container_name'] + '-prior-' + previous['launch_id'],
             'new_boot_archive_changed')
-    source_only_amendment(old, m)
+    if 'reviewed_delta_sha256' in receipt or INTERRUPTED_BOOT_DELTA in archive['files']:
+        require(receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION
+                and previous.get('status') == 'RUNNING', 'new_boot_recovery_invalid')
+        interrupted_source_amendment(old, m, archive['files'], receipt.get('reviewed_delta_sha256'))
+        require(all(protected(BASE / new_boot_input_name(name, boot)).decode() == archive['files'][name]
+                    for name in (INTERRUPTED_BOOT_DELTA, 'new-boot-prior-manifest.json',
+                                 'new-boot-prior-owner.py', 'new-boot-prior-node-observation.py')),
+                'new_boot_archive_changed')
+    else:
+        source_only_amendment(old, m)
     if previous.get('status') == 'RUNNING' or receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION:
         require(receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION
                 and previous.get('boot_id') != boot
@@ -2350,7 +2393,8 @@ def main():
     if args.action == 'reconcile-new-boot':
         require(not args.dry_run, 'new_boot_recovery_invalid')
         result = reconcile_new_boot(args.expected_state_sha256, args.expected_boot_id, args.expected_manifest_sha256,
-                                    interrupted_running=args.interrupted_running_owner)
+                                    interrupted_running=args.interrupted_running_owner,
+                                    expected_delta_sha256=args.expected_delta_sha256)
         print(json.dumps({'status': result['status'], 'archive_sha256': result['archive_sha256']}))
         return 0
     if args.action == 'check-selected':
