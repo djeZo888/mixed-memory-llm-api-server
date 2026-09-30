@@ -22,10 +22,10 @@ copies, retained session IDs and actual exit receipts.
   Upgrade only if the delta is manageable; report a substantial merge rather
   than expanding this task into an unbounded upgrade.
 
-The requested compaction threshold is 420K or later within the fixed 480K
-window. Resolve admission against the shared input/output capacity explicitly:
-420,000 input tokens plus the 65,536 output ceiling does not fit. Preserve the
-output ceiling where space permits and document any capacity-driven adjustment.
+The latest user decision keeps the existing 400,000-token compaction threshold,
+480,000-token context and 65,536-token output allowance. This leaves 14,464
+additional tokens of headroom. Retain the existing admission rules and policy
+hashes; no adaptive output-budget feature is needed.
 
 ## Bounded allocation
 
