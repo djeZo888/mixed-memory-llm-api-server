@@ -17,6 +17,7 @@ from types import SimpleNamespace
 from common.lifecycle_lease import _validate_borrowed_lease
 from lifecycle.manager import load_manager, recovery_manager
 from lifecycle.runtime_io import Docker, LifecycleError, _read_key
+from lifecycle.storage_binding import BindingError, RegisteredStorageBinding, _binding_errors
 from .discovery import discover_records
 from .core import Application, digest, safe_error
 from .journal import Journal, JournalUnavailable, MAX_BYTES
@@ -28,6 +29,68 @@ JOURNAL_SUFFIX = 'services/llm-control/operations.json'
 def _lease(manager, lease):
     _validate_borrowed_lease(lease, system_root=manager.lease_system_root,
                            trusted_uid=manager.trusted_uid)
+
+
+class _ObservationStorageBinding(RegisteredStorageBinding):
+    """Private read scope; the supplied binding and its runner stay untouched."""
+    def __init__(self, binding):
+        storage = copy.copy(binding.storage)
+        storage.runner = copy.copy(storage.runner)
+        super().__init__(storage, binding.registry)
+        self._guard = None
+        self._thread = None
+
+    def _active_guard(self):
+        return self._guard if self._thread == threading.get_ident() else None
+
+    @contextmanager
+    def observation(self, storage_io):
+        if self._guard is not None:
+            raise BindingError('nested_storage_observation')
+        # The existing descriptor guard owns full topology checks at both
+        # boundaries and fresh registry bytes/mountinfo checks on every call.
+        with self.mounted_guard(storage_io) as guard:
+            self._guard, self._thread = guard, threading.get_ident()
+            try:
+                yield self
+            finally:
+                self._guard, self._thread = None, None
+
+    @_binding_errors
+    def verify(self, roles=('data', 'models')):
+        if isinstance(roles, str) or not roles or not set(roles) <= {'data', 'models'}:
+            raise BindingError('invalid_storage_roles')
+        guard = self._active_guard()
+        return guard() if guard is not None else super().verify(roles=roles)
+
+    @_binding_errors
+    def validate_path(self, role, path):
+        guard = self._active_guard()
+        if guard is None:
+            return super().validate_path(role, path)
+        path = str(path)
+        root = self.path(role)
+        if path == root:
+            suffix = ''
+        elif path.startswith(root + '/'):
+            suffix = path[len(root) + 1:]
+        else:
+            raise BindingError('path_outside_storage_role')
+        if self.path(role, suffix) != path:
+            raise BindingError('invalid_storage_path')
+        snapshot = guard.check_path(path)
+        # The full-role guard permits either mount. Retain this API's exact
+        # requested-role mount/UUID/filesystem, including nested models mounts.
+        mounted = max((snapshot[name] for name in ('data', 'models')
+                       if path == snapshot[name]['mount']
+                       or path.startswith(snapshot[name]['mount'] + '/')),
+                      key=lambda entry: len(entry['mount']))
+        expected = self._registry[self.role_mount(role)]
+        if any(mounted[key] != expected[key] for key in ('mount', 'uuid', 'fstype')):
+            raise BindingError('path_crosses_unregistered_mount')
+        local = self.storage._no_symlink(path, protected=True)
+        guard.check_path(path)
+        return local
 
 
 class ManagerJournalStore:
@@ -97,14 +160,14 @@ class ManagerSession:
         self._generations = {}
 
     @contextmanager
-    def _bounded(self, deadline):
+    def _bounded(self, deadline, *, manager=None):
         """Cap existing L1 external call budgets, without abandoning its lease.
 
         A filesystem/kernel call cannot be forcibly cancelled by a Python
         deadline. HTTP slots remain occupied until such a call actually returns.
         No second transition is admitted while an owner call is outstanding.
         """
-        manager = self.manager
+        manager = self.manager if manager is None else manager
         originals = {}
         def timed(function):
             def call(*args, **kwargs):
@@ -250,10 +313,29 @@ class ManagerSession:
         except Exception:
             raise ControlError('credential_separation_unverified') from None
 
-    def observe(self, deadline):
+    @contextmanager
+    def _observation_storage(self, deadline):
         manager = self.manager
-        recovery = manager.recovery_only
-        with self._bounded(deadline):
+        if manager.recovery_only or not isinstance(manager.binding, RegisteredStorageBinding):
+            with self._bounded(deadline):
+                yield manager
+            return
+        # Do not replace a shared manager's binding, even temporarily. L1's
+        # methods resolve self.binding on this private observation copy.
+        observed = copy.copy(manager)
+        observed.binding = _ObservationStorageBinding(manager.binding)
+        if type(manager.docker) is Docker:
+            observed.docker = copy.copy(manager.docker)
+        try:
+            with self._bounded(deadline, manager=observed), \
+                    observed.binding.observation(observed.persistent_writer()):
+                yield observed
+        except BindingError:
+            raise StorageUnavailable() from None
+
+    def observe(self, deadline):
+        recovery = self.manager.recovery_only
+        with self._observation_storage(deadline) as manager:
             try:
                 if not recovery:
                     manager.check_mounts()  # BOTH roles; data-only is not Ready.
@@ -270,7 +352,7 @@ class ManagerSession:
                 for slot in ('glm', 'qwen'):
                     item = dict(slots[slot], state_persisted=state.get('state_persisted', True))
                     try:
-                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery, slot=slot)
+                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery, slot=slot, manager=manager)
                     except StorageUnavailable:
                         raise
                     except ControlError:
@@ -282,10 +364,10 @@ class ManagerSession:
                 return raw
             if recovery and state.get('container') is None:
                 raise ControlError('recovery_identity_unavailable')
-            return self._observe_slot(state, deadline, recovery)
+            return self._observe_slot(state, deadline, recovery, manager=manager)
 
-    def _observe_slot(self, state, deadline, recovery, *, slot=None):
-        manager = self.manager
+    def _observe_slot(self, state, deadline, recovery, *, slot=None, manager=None):
+        manager = self.manager if manager is None else manager
         raw = copy.deepcopy(state)
         identity = state.get('container')
         if state.get('pending_create') is not None:
