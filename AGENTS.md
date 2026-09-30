@@ -9,8 +9,11 @@ not the current deployment state. H036 recovery and failed outcomes remain in
 ## Current assignment
 
 H037 began 30 September 2026 at 10:37:52 UTC; its hard deadline is 13:37:52 UTC.
-Both source candidates are reviewed; deployment and short live acceptance are
-underway. Do not infer live readiness from source tests or descriptive config.
+H037 is paused at its execution-window checkpoint. Reviewed source/config
+delivery and normal MiMo/image start dispatch passed; live qualification remains
+incomplete. Read reports/h037-checkpoint.md and reports/h037-results.json.
+Do not duplicate existing starts or infer readiness from dispatch. New execution
+requires a new user-authorized bounded window. Optional tools remain closed.
 
 The user retained 480,000 context, the existing 400,000 Codex compaction threshold
 and 65,536 output ceiling. No adaptive output budget is part of H037.

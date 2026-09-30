@@ -6,8 +6,9 @@ H037 keeps the provider policy unchanged: **480,000 context tokens, compression
 at 400,000 tokens and up to 65,536 output tokens**. This leaves 14,464 tokens of
 nominal headroom. No adaptive output-budget logic was added.
 
-H037 source/config activation is complete; backend image relocation and fresh
-optional-tool qualification are still in progress. Image/frontier capabilities
+H037 source/config activation and backend placement delivery are complete.
+Normal MiMo/image starts were dispatched; fresh optional-tool workflows remain
+unqualified at the execution-window checkpoint. Image/frontier capabilities
 stay closed until their current owners and workflows pass. See the
 [execution plan](../reports/h037-execution-plan.md) and
 [upstream Codex audit](../reports/h037-upstream-codex-audit.md). The substantial
@@ -40,6 +41,11 @@ The [original Codex plan](PLAN-CODEX-HARNESS.md),
 [preview acceptance](../reports/h021-codex-preview.md),
 [v0.0.3 image acceptance](docs/acceptance-v0.0.3.md) and
 [chat examples](docs/chat-examples-v0.0.3.md) retain their dated scope.
+
+See the [H037 partial checkpoint](../reports/h037-checkpoint.md) for current gaps and next steps.
+
+**Checkpoint limitation:** the status collector remains paused; its page is
+temporarily unavailable. Image/frontier tools remain closed pending qualification.
 
 ## Current UI behavior
 

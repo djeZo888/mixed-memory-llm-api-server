@@ -27,8 +27,8 @@ report stays unchanged. Maintenance-window automation is future work.
 **September 30 H037 deployment:** Codex 0.158.0 is the new-chat default;
 MiniMax remains selectable and existing conversations retain their engine.
 The image service is moving to the internal Gen4 x16 Ada, replacing its separate
-200K Qwen instance. Backend delivery and fresh image/frontier qualification are
-in progress. Optional tools stay closed until their actual placement and workflow
+200K Qwen instance. Source/config delivery passed and normal model starts were dispatched.
+Fresh image/frontier workflow qualification remains incomplete at the time limit. Optional tools stay closed until their actual placement and workflow
 pass. See the [H037 plan](reports/h037-execution-plan.md).
 
 The [earlier recovery report](reports/h036-resumed-recovery.md) and
@@ -135,6 +135,11 @@ research, document analysis and reasoning to a native frontier child running
 the selected qualified frontier model. This fixed routing policy does not implement
 arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
 [H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
+
+See the [H037 partial checkpoint](reports/h037-checkpoint.md) for current gaps and next steps.
+
+**Checkpoint limitation:** the status collector remains paused; its page is
+temporarily unavailable. Image/frontier tools remain closed pending qualification.
 
 ## Current models and dated acceptance
 
