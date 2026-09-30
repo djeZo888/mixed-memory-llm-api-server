@@ -1,0 +1,141 @@
+[
+  {
+    "name": "cffi",
+    "version": "2.1.1",
+    "license_expression": "MIT-0",
+    "license": null,
+    "source": {
+      "Changelog": "https://cffi.readthedocs.io/en/latest/whatsnew.html",
+      "Contact": "https://groups.google.com/forum/#!forum/python-cffi",
+      "Documentation": "https://cffi.readthedocs.io/",
+      "Download": "https://github.com/python-cffi/cffi/releases",
+      "Issue Tracker": "https://github.com/python-cffi/cffi/issues",
+      "Source Code": "https://github.com/python-cffi/cffi"
+    },
+    "metadata_url": "https://pypi.org/pypi/cffi/2.1.1/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "charset-normalizer",
+    "version": "3.5.1",
+    "license_expression": null,
+    "license": "MIT",
+    "source": {
+      "Changelog": "https://github.com/jawah/charset_normalizer/blob/master/CHANGELOG.md",
+      "Code": "https://github.com/jawah/charset_normalizer",
+      "Documentation": "https://charset-normalizer.readthedocs.io/",
+      "Issue tracker": "https://github.com/jawah/charset_normalizer/issues"
+    },
+    "metadata_url": "https://pypi.org/pypi/charset-normalizer/3.5.1/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "cryptography",
+    "version": "50.0.1",
+    "license_expression": "Apache-2.0 OR BSD-3-Clause",
+    "license": null,
+    "source": {
+      "changelog": "https://cryptography.io/en/latest/changelog/",
+      "documentation": "https://cryptography.io/",
+      "homepage": "https://github.com/pyca/cryptography",
+      "issues": "https://github.com/pyca/cryptography/issues",
+      "source": "https://github.com/pyca/cryptography/"
+    },
+    "metadata_url": "https://pypi.org/pypi/cryptography/50.0.1/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "Markdown",
+    "version": "3.10.3",
+    "license_expression": "BSD-3-Clause",
+    "license": null,
+    "source": {
+      "Changelog": "https://python-markdown.github.io/changelog/",
+      "Documentation": "https://Python-Markdown.github.io/",
+      "Homepage": "https://Python-Markdown.github.io/",
+      "Issue Tracker": "https://github.com/Python-Markdown/markdown/issues",
+      "Repository": "https://github.com/Python-Markdown/markdown"
+    },
+    "metadata_url": "https://pypi.org/pypi/Markdown/3.10.3/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pdfminer.six",
+    "version": "20260107",
+    "license_expression": "MIT",
+    "license": null,
+    "source": {
+      "Homepage": "https://github.com/pdfminer/pdfminer.six"
+    },
+    "metadata_url": "https://pypi.org/pypi/pdfminer.six/20260107/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pdfplumber",
+    "version": "0.11.10",
+    "license_expression": null,
+    "license": null,
+    "source": {
+      "Homepage": "https://github.com/jsvine/pdfplumber"
+    },
+    "metadata_url": "https://pypi.org/pypi/pdfplumber/0.11.10/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pillow",
+    "version": "12.3.0",
+    "license_expression": "MIT-CMU",
+    "license": null,
+    "source": {
+      "Changelog": "https://github.com/python-pillow/Pillow/releases",
+      "Documentation": "https://pillow.readthedocs.io",
+      "Funding": "https://tidelift.com/subscription/pkg/pypi-pillow?utm_source=pypi-pillow&utm_medium=pypi",
+      "Homepage": "https://python-pillow.github.io",
+      "Mastodon": "https://fosstodon.org/@pillow",
+      "Release notes": "https://pillow.readthedocs.io/en/stable/releasenotes/index.html",
+      "Source": "https://github.com/python-pillow/Pillow"
+    },
+    "metadata_url": "https://pypi.org/pypi/pillow/12.3.0/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pycparser",
+    "version": "3.0",
+    "license_expression": "BSD-3-Clause",
+    "license": null,
+    "source": {
+      "Homepage": "https://github.com/eliben/pycparser"
+    },
+    "metadata_url": "https://pypi.org/pypi/pycparser/3.0/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pypdf",
+    "version": "6.19.0",
+    "license_expression": "BSD-3-Clause",
+    "license": null,
+    "source": {
+      "Bug Reports": "https://github.com/py-pdf/pypdf/issues",
+      "Changelog": "https://pypdf.readthedocs.io/en/latest/meta/CHANGELOG.html",
+      "Documentation": "https://pypdf.readthedocs.io/en/latest/",
+      "Source": "https://github.com/py-pdf/pypdf"
+    },
+    "metadata_url": "https://pypi.org/pypi/pypdf/6.19.0/json",
+    "vulnerabilities": []
+  },
+  {
+    "name": "pypdfium2",
+    "version": "5.13.0",
+    "license_expression": null,
+    "license": "BSD-3-Clause, Apache-2.0, dependency licenses",
+    "source": {
+      "Changelog": "https://pypdfium2.readthedocs.io/en/stable/changelog.html",
+      "Documentation": "https://pypdfium2.readthedocs.io",
+      "Homepage": "https://github.com/pypdfium2-team/pypdfium2",
+      "Source": "https://github.com/pypdfium2-team/pypdfium2",
+      "Tracker": "https://github.com/pypdfium2-team/pypdfium2/issues"
+    },
+    "metadata_url": "https://pypi.org/pypi/pypdfium2/5.13.0/json",
+    "vulnerabilities": []
+  }
+]

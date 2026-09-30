@@ -1,0 +1,34 @@
+{
+  "upstream": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "retainedPatchedRevision": "51d06736d5dd56d0e7b7e34dbb107fa015864817",
+  "patchedRevision": "b948889814648ad761f40a18260ddbe6351c6bbf",
+  "exactChangedFiles": [
+    "packages/agent-core/src/pi-turn-runner/llm-retry.ts",
+    "packages/agent-core/src/pi-turn-runner/llm.ts",
+    "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts"
+  ],
+  "sourceFileCount": 4229,
+  "patchSha256": "e85a87cd59e0e2a298d001293fd30280f4b5d3f1b95a426edf7d2df23472688b",
+  "estimatorSha256": "649b21e84263c278c1a43d8cc17ab19fdbf08a5a4b95c666d9a914dd81abea68",
+  "lockedDependenciesSha256": "f6cc035d8b217f3ebacb416c8c212d4c01073e68a8c80de77d3a5ba1887d6102",
+  "upstreamBuildRecipeSha256": "ce87f5fa80ac2507e5c60d3fdb18a19608b837f743fef57c1e06f2cb04a56fd5",
+  "derivedBundleOnlyRecipeSha256": "7c47794a9a84f9c9996274646d72789bec53a0a7081f8a5246874c0b7d9d6f8d",
+  "baseImage": "sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "files": [
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/llm.ts",
+      "originalSha256": "80f43b4e02d1084739ad23d963e50ac0e303d89ef041b65f2d313d122c668e16",
+      "patchedSha256": "44dc9f2ae31622919cc5237600788e1b040a45a2d9d92cdb8af295b7e537436a"
+    },
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/llm-retry.ts",
+      "originalSha256": "91550d853a2050e588c8ea084e5abd8ee4775236df97ac0683a02b5aa5225396",
+      "patchedSha256": "f202e1c1400533ce70796c1d505416ad7eddd727107f84b98bb43621f00c9e25"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+      "originalSha256": "ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a",
+      "patchedSha256": "8e461b8fb7381d1898b9dfb5b683b06ff3a26505bfe1a9790f408f23c327d9b8"
+    }
+  ]
+}

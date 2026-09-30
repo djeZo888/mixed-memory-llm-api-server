@@ -1,0 +1,25 @@
+{
+  "utc": "2026-09-28T00:39:12.426879+00:00",
+  "source_exactness": "PASS",
+  "scope": "three strict kwargs removed; shared policy exact d9e7a77; only candidate owner manifest pin changed",
+  "candidate_manifest_canonical_digest": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+  "secret_scan": {
+    "status": "PASS",
+    "scope": [
+      "scripts/runtime/mimo/owner.py",
+      "scripts/lifecycle/hardware_policy.py",
+      "scripts/h018/manifest.candidate.json",
+      "reports/h018-live04-20260928/OWNER-ONLY.json",
+      "reports/h018-live04-20260928/focused-tests.txt"
+    ],
+    "patterns": "private-key headers, GitHub token forms, sk-token forms, AWS access-key identifiers",
+    "findings": []
+  },
+  "diff_check": "PASS",
+  "native_session_id": "01a0e571-1623-7291-93fe-59b1e42d8b87",
+  "deployment": "HELD_FOR_EXACT_W2_ROOT_PASS",
+  "shared_policy_deployment": false,
+  "vm_access_this_turn": false,
+  "prior_failed_receipts": "UNCHANGED",
+  "native_hard_end_utc": "2026-09-28T01:00:00Z"
+}

@@ -1,0 +1,39 @@
+{
+  "status": "SOURCE_REVIEW_BLOCKED_HTTP_VERSION",
+  "source_closure_entries": 24,
+  "source_closure_verified": 24,
+  "frozen_originals_verified": 3,
+  "reused_W1_tests": {
+    "LAST": 29,
+    "proxy": 8,
+    "rerun": false
+  },
+  "new_missing_negatives": {
+    "pass": 6,
+    "fail": 1,
+    "failure": "HTTP/0.9 accepted as exact HTTP/1.0"
+  },
+  "python": "3.14.7 (main, Aug  5 2026, 10:29:49) [Clang 21.0.0 (clang-2100.1.1.101)]",
+  "input_sha256": {
+    "SOURCE.patch": "a75ea5695d7dfd41187437468f7b95cf6096eaa28e43a730077e17f5a9ad381e",
+    "SOURCE-SHA256.json": "fc906fc5ed73d68d48cc5e32bb577d0247d41b99d2c96c5be4da9f00c629944d",
+    "ORIGINAL-SHA256.json": "1894b0286869fe79f8486fad7d15ec4a6433daa5d7de11493f8e7dd70b6ed755",
+    "READER-VS-FROZEN-R9.patch": "32cfba87777f9b11370c7fdc2a08fe472f0dff80b2eb25dba09c35dceac16755",
+    "last-tests.txt": "e6635b1b7bda5e9c77c2266604156ce849d93e00acc8a930fbbed2f92570bdf0",
+    "proxy-tests.txt": "c6758016505caffa2e5d771cd5a9ac233bbad9551a95264a2f2d713994f4580d",
+    "H016-LAST-BUSY-FIX.bundle": "aa309b53ad08b25b28efb93f6381b77c2f91417567b735bf42d55c1c836e48a4",
+    "CHECKS.json": "e3625d43120fac7f22bb405125daded6041c8f553c62bb45f8a45d72e1728424",
+    "RESULT.json": "9efaac78bbe2f51628764e16ba27d52449720cc0c06dd01ff7fa1ce6213a29c5"
+  },
+  "review_evidence_sha256": {
+    "targeted_missing.py": "27acbe75c42715fd3b33689bec81314bafa87122043609b0ffcbfb3abeee2d40",
+    "targeted-missing.json": "2ebf039753407e908b35c4e88d61b0cce37845c10bd961dfe4d5333e25a5dc4d",
+    "HASH-CLOSURE.json": "474dd9db43dd6730e2d3d569a6f80b76b34fb4cdc34e97a792b2be45e1319b3a"
+  },
+  "W1_bundle_imported": false,
+  "W1_bundle_missing_prerequisite": "1a5469b0aac42badab041b069c57c96cc30a4876",
+  "live_deployment": "NOT_TESTED",
+  "actual_LAST": "NOT_TESTED",
+  "remote_contact": false,
+  "source_edits": false
+}

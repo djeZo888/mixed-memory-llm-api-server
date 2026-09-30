@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: MIT
+# Build context: ai-harness/. No network/package installation in this layer.
+FROM ghcr.io/searxng/searxng@sha256:1ef964f6dcc811a60e01049717b6e526b25a1c52935350143f04e0ae291b3dbd
+COPY --chown=977:977 tools/searxng/settings.yml /etc/searxng/settings.yml
+COPY tools/searxng/LICENSE-AGPL-3.0.txt tools/searxng/NOTICE.md tools/searxng/image-pin.json /usr/local/share/doc/searxng/
+ENV GRANIAN_HOST=0.0.0.0 PYTHONDONTWRITEBYTECODE=1
+USER 977:977
+LABEL io.ai-harness.service="searxng"

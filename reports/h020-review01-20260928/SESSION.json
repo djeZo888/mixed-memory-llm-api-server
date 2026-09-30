@@ -1,0 +1,24 @@
+{
+  "task": "H020-REVIEW01",
+  "nativeSessionId": "01a0e62a-8126-7132-9fc6-dfd21740464d",
+  "cli": "/Applications/ChatGPT.app/Contents/Resources/codex-cli/bin/codex",
+  "cliVersion": "0.158.0-alpha.2.1",
+  "inheritedSettings": true,
+  "modelOverride": false,
+  "deadline": {
+    "startedUtc": "2026-09-28T03:58:59.979628+00:00",
+    "hardDeadlineUtc": "2026-09-28T04:18:59.979628+00:00",
+    "maximumSeconds": 1200
+  },
+  "reportPreparedUtc": "2026-09-28T04:07:38.814412+00:00",
+  "actualExitCode": "wrapper-owned after return",
+  "actualFinishedUtc": "wrapper-owned after return",
+  "toolchain": {
+    "node": "v24.21.0",
+    "tsx": "4.20.6",
+    "typescript": "5.9.3",
+    "fastify": "5.12.5",
+    "dependencySource": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-BROKER-20260923/repo/ai-harness/server/node_modules",
+    "installed": false
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "COMMANDS.md": "721317cbdc72e0368d7e33e0de59e3099afdc416eb5f4a9f2191681134381b78",
+  "LIVE-AUTH-HANDOFF.md": "dd695001f769d2a2378d1a71abc43cd29c5cd66d0bbd5834a5222c4f6e7952ae",
+  "LIVE-FOLLOWUP.md": "633f2e9c705920ef6169a6a3e1b5803429d2fbc4c3ecb4571cee6d03d17c8769",
+  "LIVE-PRECHECKS.json": "4f76035c5e6ca638ad9c811484d8cfaf4218b5c7881556f14a151186a24d38a7",
+  "LIVE-WINDOW-RELEASE.json": "1d7d79b581c1f1b6d51f07af65c6acddade466f7402e4cea23e037f401307beb",
+  "LIVE-WINDOW-RESULT.md": "0113ec95a372639c4e0140cdb3b8ffa8db6b4bee02ec1acd80f338410a1731c2",
+  "LIVE-generate.json": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5",
+  "LIVE-generation-command-bounds.json": "16127b226dfd207478ec0095b06457e6da8779752189c17b64788116bd1b7920",
+  "LIVE-invalid.json": "f615008e9af8fb217a8f324a472b2ce7a5fa1c95f4fcdb6c86e15d5ae407f331",
+  "LIVE-read.json": "9a866e9044aa78f38b6d1de476d43fff95e90803cd1210814824c842db219953",
+  "LIVE-reject-edit-command-bounds.json": "86034a0270dba33235a6fbf9812ebbc214088c1addcbccb88771d19b7c356a30",
+  "LIVE-reject-edit.json": "3bba71be62c0df0765b7c08bc9535802a09edd7e4c5a9f1dbcbc9c66c6d2a91a",
+  "client.py": "11c24a2c835db2553eb901ba6e622b734e7d7b58aac877d31347d46b738643a4",
+  "evidence/20260923T040753.849851Z-read.json": "9a866e9044aa78f38b6d1de476d43fff95e90803cd1210814824c842db219953",
+  "evidence/20260923T040807.539477Z-invalid.json": "f615008e9af8fb217a8f324a472b2ce7a5fa1c95f4fcdb6c86e15d5ae407f331",
+  "evidence/20260923T040959.845382Z-generate.json": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5",
+  "evidence/20260923T041055.493560Z-reject-edit.json": "3bba71be62c0df0765b7c08bc9535802a09edd7e4c5a9f1dbcbc9c66c6d2a91a",
+  "evidence/baseline-generation.attempt.json": "f309ac6de13411505deda6afb7d2abcbf3e565704d5c552a8c389bfee2ddc4bb",
+  "evidence/baseline-generation.png": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+  "test-results.json": "46095a807d57f3ea58b5655ad4f6c7f15f561088684c13efa9527afb4c6ae049"
+}

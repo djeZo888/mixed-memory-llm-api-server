@@ -1,0 +1,25 @@
+{
+  "schema_version": 1,
+  "utc": "2026-09-23T03:51:05.714881+00:00",
+  "source_commit": "43ed79f3905c769f449f48300c7087d7a432f989",
+  "root_review": "ROOT-GO.md and ROOT-API-REVIEW.md",
+  "old_hashes": {
+    "/usr/local/lib/llm-server/private-network/private_network.py": "9ca8ca4b86dbf04988bfe2f8f0a7b3748bbe5d1922c0543f081616f37ec1a6af",
+    "/usr/local/lib/llm-server/control-api/scripts/control/private_network.py": "9ca8ca4b86dbf04988bfe2f8f0a7b3748bbe5d1922c0543f081616f37ec1a6af",
+    "/etc/llm-server/network.json": "095bbf0ea64c792efa49ddf16a78383ec74528abe605c86b54ba8ac01563cb60",
+    "/etc/llm-server/private-network-state.json": "f17b33637bbc88c3fcb65d2016a73aa1c071fd383571e1452c01cef677c01eeb",
+    "/etc/systemd/system/llm-private-control.socket": "9fc827cdb6b0819dd5c1d01e860bf44f230e174f5a27af02cdf3645a727e19fc",
+    "/etc/systemd/system/llm-private-control.service": "8a2c5350d8fdffdf0a1fc154538d5210f40b09c0eb88cddf6368fa77d748ba24",
+    "/etc/systemd/system/llm-private-glm.socket": "884d669f6cb05aab8460fe01c634370025eea366b151a70a888fb746a4967fee",
+    "/etc/systemd/system/llm-private-glm.service": "329b70c762a866acc8f1547f8374d18d97c19f8e8caface17f77507517d108a8",
+    "/etc/systemd/system/llm-private-qwen38.socket": "0c964858717fbf9b838fe2b0e606f19128ee9ef7dfba0ed6fb660d7dc1282ad7",
+    "/etc/systemd/system/llm-private-qwen38.service": "a7cfd0d1a333a9a830d1ef63449dbdc5607978712ea0f616fa4bd9d67fffbff5",
+    "/data/services/llm-manager/evidence/dualq-480k.accepted.json": "050398050ae08b8f873cd7e021d146058e3f251b9e26d00ca48ac2b1965c9234",
+    "/data/services/llm-manager/deployment-instance.json": "4b2dd3bca6556d0cd5d6884a5d0de1ed817df630c42cda69dde0cdebee067049"
+  },
+  "new_helper_sha256": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+  "new_policy_sha256": "eb04d179cd6c9af896dfc1809e7804ef533c9e52fd356da9ecc0d4907bd3c064",
+  "text_capacity_receipt_unchanged": true,
+  "deployment_instance_unchanged": true,
+  "unrelated_filter_unchanged": true
+}

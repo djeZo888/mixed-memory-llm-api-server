@@ -1,0 +1,40 @@
+{
+  "task": "H003-IMAGE-API-ACTIVATE-20260923",
+  "status": "SOURCE_VERIFIED_OFFLINE_MANIFEST_PENDING",
+  "native_session_id": "01a0ce8e-681a-77b3-83b8-5a6faab3f62d",
+  "reviewed_source": "9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27",
+  "reviewed_adapter_source": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "base_report_commit": "6a56776f3c6699542fa119ca6ca46b7c94c3039f",
+  "candidate_metadata_sha256": "4d113d93275b3b61a4dc0984532e0c192398471f1391ab84b97473d8cc9130e6",
+  "api_source_sha256": {
+    "__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "app.py": "45abd74890af3a9d8045aeec6de56d773266e31f8e098ece5084d1f0fe7cb897",
+    "backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "protocol.py": "257df8ac052af14cd44aabb0daf30fa333132d9a4be8074ccab8d9e571de3b1b",
+    "serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
+  },
+  "retained_installed_api_source_sha256": {
+    "__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "app.py": "4cad82ce35d4650c7f3242bd6816769010c6a52510fae1c3c26b8789acdc0d22",
+    "backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "protocol.py": "35653fa23fa883f20da9c869e75e7fd613008f23fe9793f16e240852b3e40243",
+    "serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
+  },
+  "retained_installed_manifest_sha256": "12969d9966f222217891791f0a2d6f4202ee2b0a7f83ef36f18d734a96721b07",
+  "narrow_source_replacements": [
+    "app.py",
+    "protocol.py"
+  ],
+  "qualification_manifest_sha256": null,
+  "final_capacity_handoff_sha256": null,
+  "root_transaction_go_sha256": null,
+  "all_seven_match_worktree_and_three_git_revisions": true,
+  "host_contact": false,
+  "transaction_helper_sha256": "432bf4ea600299966569dd77d1fd7c01863bdb6a42b6ed2bccce6ccddbb5ffa2",
+  "transaction_plan_sha256": "cc275ff9d4752efbc582165ae16b94737d2d86f6b8575205dafc2135ad5111d8",
+  "offline_transaction_checks_sha256": "91ae33f4c865eea8dedc762746e7e97a9400bc7af62212d32433b2bd986f829a"
+}

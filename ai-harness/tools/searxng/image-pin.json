@@ -1,0 +1,11 @@
+{
+  "image": "ghcr.io/searxng/searxng@sha256:1ef964f6dcc811a60e01049717b6e526b25a1c52935350143f04e0ae291b3dbd",
+  "version": "2026.9.21-df67eb6c2",
+  "source_revision": "df67eb6c2608c5b2f909ed7c42b0a4bd3823f78f",
+  "source": "https://github.com/searxng/searxng",
+  "license": "AGPL-3.0-or-later",
+  "linux_amd64_manifest": "sha256:ed67a5e84ec00b2a2d1ea5e2cda87eafe85a9c5aa40118479256462e4c2b32c5",
+  "config_digest": "sha256:b3bd7407f1f7fc37dec7ca38d372abc9180e70cc61ad680225b3394dcc6becc4",
+  "verified_utc": "2026-09-22",
+  "method": "Public GHCR OCI manifest and config; sha256 of downloaded bytes matched Docker-Content-Digest and manifest descriptors."
+}

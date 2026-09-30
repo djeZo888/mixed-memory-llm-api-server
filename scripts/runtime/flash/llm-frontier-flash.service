@@ -1,0 +1,21 @@
+[Unit]
+Description=H008 dedicated persistent GLM Flash frontier
+Requires=docker.service
+After=docker.service llmctl-boot.service
+RequiresMountsFor=/data /data/models-large
+BindsTo=data.mount data-models\x2dlarge.mount
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+User=root
+UMask=0077
+ExecStart=/usr/bin/python3 -I -B /data/services/flash-h008-20260926/source/owner.py resume
+ExecStop=/usr/bin/python3 -I -B /data/services/flash-h008-20260926/source/owner.py halt
+TimeoutStartSec=180
+TimeoutStopSec=60
+StandardOutput=append:/data/logs/flash-h008-20260926/owner.log
+StandardError=append:/data/logs/flash-h008-20260926/owner.log
+
+[Install]
+WantedBy=multi-user.target

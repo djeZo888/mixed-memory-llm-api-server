@@ -1,0 +1,56 @@
+{
+  "observed_utc": "2026-09-27T13:17:49.447621+00:00",
+  "authority": "ROOT-AUTHORITY-1327.md",
+  "candidate": {
+    "Id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "Name": "/llm-h016-mimo-pro-r5",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 2782009,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T12:37:37.213589148Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "owner_unit": "h016-mimo-initial-20260927-r5.service",
+  "owner_invocation": "4600b556d5d04305a9157da80149a511",
+  "owner_pid": 2779569,
+  "native_pid": 2782009,
+  "native_cgroup": "/sys/fs/cgroup/system.slice/docker-c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308.scope",
+  "client_unit": "h016-mimo-single64k-20260927-r5.service",
+  "client_invocation": "d3ebfcd422284086b9a6d0c7bb097c10",
+  "client_pid": 3254477,
+  "original_glm_container": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+  "original_glm_service": "llm-frontier-flash.service",
+  "original_glm_owner_source": "/data/services/flash-h008-20260926/source/owner.py",
+  "original_glm_owner_sha256": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+  "preserved_other_three": [
+    {
+      "container": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "started_at": "2026-09-27T07:23:02.292048637Z"
+    },
+    {
+      "container": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "started_at": "2026-09-27T07:24:24.160125383Z"
+    },
+    {
+      "container": "15031b926938cd0492e1c678d8319e4ed2363d1bc705e6d53ebed5f1ee9db1d6",
+      "started_at": "2026-09-27T07:25:19.347996519Z"
+    }
+  ],
+  "r5_guard_adapter": "/data/build/h014-pro-7ac59a6-20260927/prep.py",
+  "r5_guard_adapter_sha256": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c",
+  "owner_source_sha256": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
+  "single64k_source_sha256": "5f38a0ae058a70707267c6773c06d0dd459c8d133dec95485a9fb2d707132294",
+  "must_refresh_before_stop": true,
+  "recovery_executed_in_phase6": false,
+  "previous_early_stop_authority": "ROOT-AUTHORITY-1321.md_REVOKED",
+  "early_stop_authority_revoked": true
+}

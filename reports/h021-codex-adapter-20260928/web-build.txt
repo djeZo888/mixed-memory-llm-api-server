@@ -1,0 +1,14 @@
+
+> ai-harness-web@0.0.3 build
+> tsc --noEmit && vite build
+
+vite v8.3.0 building client environment for production...
+transforming...
+✓ 2146 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/index.html                   0.44 kB │ gzip:   0.28 kB
+dist/assets/index-DO7A_cev.css   20.21 kB │ gzip:   5.53 kB
+dist/assets/index-BwSBFpiD.js   444.80 kB │ gzip: 136.40 kB
+
+✓ built in 302ms

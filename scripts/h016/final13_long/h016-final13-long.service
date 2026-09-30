@@ -1,0 +1,16 @@
+[Unit]
+Description=H016 LAST near1M single request, root GO required
+RequiresMountsFor=/data /data/models-large
+
+[Service]
+Type=simple
+User=root
+UMask=0077
+Restart=no
+ExecStart=/usr/bin/python3 -I -B /data/build/H016-20260927/worker1-final13-long/client.py run
+ExecStopPost=/usr/bin/python3 -I -B /data/build/H016-20260927/worker1-final13-long/client.py settle
+RuntimeMaxSec=8h
+TimeoutStopSec=65
+KillMode=control-group
+StandardOutput=null
+StandardError=null

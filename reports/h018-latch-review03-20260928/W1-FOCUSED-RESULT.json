@@ -1,0 +1,10 @@
+{
+  "owner_sha256": "5853614c4213a86207429a3eacdb2fb02bd71c059c259a04f839982bafc39845",
+  "test_sha256": "57301375c8ad3873e01cf42e3a0dd5f69b0446f73c63efa6e7829278bc19887e",
+  "execution": "Only supplied LatchRefreshTests AST; supplied owner injected. Existing policy and temporary canonical lease real; no VM/GPU/network or broad suite.",
+  "tests_run": 6,
+  "failures": 0,
+  "errors": 1,
+  "successful": false,
+  "review_harness_note": "Initial ad hoc runner omitted json from its class globals; corrected here. Those NameErrors were reviewer harness errors, not W1 failures."
+}

@@ -1,0 +1,34 @@
+{
+  "status": "SOURCE_READY_NOT_DEPLOYED",
+  "sourceHead": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
+  "base": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+  "utc": "2026-09-29T07:53:28.966161+00:00",
+  "tests": {
+    "affectedResponsesNamespaceProvider": 35,
+    "failed": 0,
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "actualCapturedMemento": {
+    "status": "PASS",
+    "privateFixtureSha256": "df00c4adba80cdc905262cc215437e73215c68c387c923cae03c9e95f9603f08",
+    "beforeFailure": "Unknown history tool",
+    "afterTranslation": "PASS",
+    "unchangedInput": true,
+    "historicalCalls": 5,
+    "matchedResults": 5,
+    "idsNamesArgumentBytesPreserved": true,
+    "currentToolsEmpty": true,
+    "newUndeclaredCallRejected": true,
+    "liveInference": false
+  },
+  "changedBuildFiles": [
+    "server/dist/codex-responses.js"
+  ],
+  "responseSourceSha256": "c107f0b5e741c9ca3749c36ba5ed311b790f9ca11be681aeb7a190a5dbb9d7c0",
+  "responseModuleSha256": "f47cadef0f883f8eddbf6b3af4ccb690d885505fd0a44f79ada5b7dc1b776c4e",
+  "bundleSha256": "a33641af9844ed8f13992a006b39ad1e7d9207b6eb40bce301c1f2a2068f0236",
+  "diffSha256": "bde9d7e9c30f6727b9347dae1575db8ee2627b2e7737675cbf1649b6a844bc0a",
+  "entrypointsUntouched": true,
+  "liveAdmissionHeld": true
+}

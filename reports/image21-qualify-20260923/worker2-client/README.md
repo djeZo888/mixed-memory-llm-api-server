@@ -1,0 +1,7 @@
+# Worker2 independent API baseline
+
+Exactly one authenticated 1024×1024 generation and zero accepted edits. Actual request: seed 20260923, studio red teapot against cream background; the generation ladder uses its separate seed 42 recipe. This is API acceptance, not a same-recipe performance comparison. Original client visual NOT_TESTED remains unchanged; task-local ROOT-WORKER2-RESULT.md supplies root visual PASS bound by filename/hash in visual-review.json.
+
+The normalized receipt intersects the actual request's UTC interval with shared sampler segment2. It does not compare monotonic clocks across hosts. Request-window and full-window metrics are separate; end UTC is derived from the client monotonic duration, and cross-host UTC clock offset was not measured. Rounded native log time is 23.83 s and logged peak 37406.00 MB, interpreted as reserved under pinned runtime semantics. Native allocated peak is unavailable; no deployment-warm allocator result is borrowed.
+
+Raw PNG and telemetry stay task-local outside Git. Their paths/hashes, original receipts, request settings, margins, spool checks, root visual evidence, concurrency checks and refused edit are bound in normalized-baseline.json. Original client SHA256-MANIFEST.json intentionally also references task-local PNG and duplicate timestamp receipts omitted from this compact copy. Optional bridge and delivery history are excluded. No new API/VM/image call was made by this normalization.

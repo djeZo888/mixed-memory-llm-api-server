@@ -1,0 +1,47 @@
+{
+  "utc": "2026-09-27T16:42:33.658746+00:00",
+  "controller": "MainPID=0\nControlPID=0\nActiveState=failed\nSubState=failed\nInvocationID=3a323326650f4380a0dec32f96b13895\n",
+  "first": "MainPID=0\nControlPID=0\nActiveState=failed\nSubState=failed\nInvocationID=5d8f4acf47e6442e9283d5e8804a4d64\n",
+  "second": "MainPID=0\nControlPID=0\nActiveState=inactive\nSubState=dead\nInvocationID=\n",
+  "pair_status": "PAIR_STOPPED_ORIGINAL_GLM_READY_NO_REPLAY",
+  "profiles": {
+    "r10-spread02": {
+      "status": "SETTLED_ORIGINAL_GLM_READY",
+      "reason": null
+    }
+  },
+  "owner_status": "SETTLED_GLM_RESTORED",
+  "native_settled": {
+    "cgroup_empty": true,
+    "gpu_compute_empty": true,
+    "pid_zero": true,
+    "utc": "2026-09-27T16:38:47.414427+00:00"
+  },
+  "glm_restored_utc": "2026-09-27T16:40:29.084725+00:00",
+  "fresh_settlement_proof": {
+    "utc": "2026-09-27T16:42:33.814886+00:00",
+    "status": "PHYSICAL_SETTLEMENT_ORIGINAL_GLM_READY",
+    "profile": "r10-spread02",
+    "unit": {
+      "MainPID": "0",
+      "ControlPID": "0",
+      "ExecMainStartTimestamp": "Sun 2026-09-27 16:26:30 UTC",
+      "ExecStart": "{ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 -B /data/build/H016-20260927/worker1-r10-spread02/candidate_owner.py --run ; ignore_errors=no ; start_time=[Sun 2026-09-27 16:26:30 UTC] ; stop_time=[Sun 2026-09-27 16:40:31 UTC] ; pid=2101066 ; code=exited ; status=1 }",
+      "ControlGroup": "",
+      "LoadState": "loaded",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "InvocationID": "5d8f4acf47e6442e9283d5e8804a4d64"
+    },
+    "candidate_id": "47eb02c9b1e7a77b55ec58d778649e82826345f8d1e36537652eb23435aa58eb",
+    "native_settled": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_zero": true,
+      "utc": "2026-09-27T16:38:47.414427+00:00"
+    },
+    "original_glm_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+    "original_glm_ready": true
+  },
+  "fresh_settlement_proof_returncode": 0
+}

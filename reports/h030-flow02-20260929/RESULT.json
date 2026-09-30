@@ -1,0 +1,292 @@
+{
+  "task": "H030-FLOW02-20260929",
+  "worker": "actual native mac-worker2",
+  "nativeSessionId": "01a0ec13-2c4c-7572-9647-b1db6cd0c10d",
+  "startedUtc": "2026-09-29T07:31:13.839860+00:00",
+  "preparedFinalUtc": "2026-09-29T07:58:55.202490+00:00",
+  "hardDeadlineUtc": "2026-09-29T08:18:00Z",
+  "verdict": "PARTIAL_NOT_QUALIFIED",
+  "activation": {
+    "status": "PASS",
+    "source": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "completedUtc": "2026-09-29T07:33:31.684254+00:00",
+    "appPid": 103089,
+    "statusPid": 14480,
+    "unitSha256": "944df079cfa80910d327729c603d6dd24d53cf27402b6700b76b86ed3df4db2f",
+    "receiptSha256": "c4aaff00578df926d8903ea2518ad7072efec3f974c465271088e54348bf589d",
+    "originalRowsEventsPreserved": true,
+    "historicalUncertaintyPreserved": true,
+    "additiveHandoffTableInitiallyEmpty": true
+  },
+  "settlementBinding": {
+    "source": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "bindingSha256": "496bc9782a1753eb86a8289b132f12d783edf44483ac2cd207f00622bd825275",
+    "helperSha256": "5ff6b1ce87a99bfc2f27c5613ea64227f92edc49f561f4f943ec6ae23e235a94",
+    "helperPath": "/home/user/.cache/h030-flow02/settlement-readback.py",
+    "compiledModules": 60,
+    "semanticChange": false,
+    "nativeImageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "unitSha256": "944df079cfa80910d327729c603d6dd24d53cf27402b6700b76b86ed3df4db2f"
+  },
+  "cases": {
+    "pdfSchedulingInterruption": {
+      "status": "INTERRUPTED_CAPABILITY_NOT_TESTED",
+      "sessionId": "a8d59ecc-0646-4e1a-8cc2-b2a0c3020f12",
+      "runId": "f9d8fe5e-5306-42d7-a2f9-11cfb963db1e",
+      "submissionId": "3c09470d-9cb0-49c7-a0ce-0cff11fdf563",
+      "settled": true,
+      "operatorCancelOnce": true,
+      "replacementExplicitlyAuthorized": true,
+      "receipt": "PDF-INTERRUPTED.json"
+    },
+    "pdfReplacement": {
+      "name": "pdf",
+      "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+      "runId": "53543886-3e22-4709-ae4f-b6ca7b983f5d",
+      "submissionId": "b89a014a-f17e-46f4-a18e-b9f13791e702",
+      "ticket": {
+        "id": "0b231b6a-9c0b-4f58-8eaf-4df97b1a6cc7",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "expiresAt": 1790669100000,
+        "image": false,
+        "frontier": false
+      },
+      "settled": true,
+      "runStatus": "interrupted",
+      "nativeThreadId": "01a0ec1b-fce4-75f1-b50f-c93ff5dc7227",
+      "cancelled": false,
+      "monitorError": false,
+      "downloadError": false,
+      "sourceUnchanged": true,
+      "oraclePass": false,
+      "verdict": "FAIL",
+      "requestIds": [
+        "6c4d51eb-904e-4d56-81ae-a92150e3c637",
+        "d4beaad9-4a1a-4c69-97f8-cef7d3a28ba4",
+        "87073f1c-970a-4300-a7f3-13203c494e32"
+      ],
+      "completedUtc": "2026-09-29T07:43:45.628Z",
+      "retries": 0,
+      "status": "FAIL",
+      "evidenceReviewed": true,
+      "reason": "Native run interrupted after two successful help/skill exec tools; no extraction/render/summary, no artifact, no final answer. Detailed boundary capture pending. No operator cancellation.",
+      "failurePhase": "count/node_before",
+      "failureCode": "codex_qwen_identity_unqualified",
+      "failureReason": "hardware_state",
+      "failedRequestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+      "providerFinishReasons": [
+        "tool_calls",
+        "tool_calls",
+        null
+      ],
+      "nodeResponseFields": "NOT_RETAINED",
+      "actualToolCalls": 2,
+      "actualToolExitCodes": [
+        0,
+        0
+      ]
+    },
+    "compaction": {
+      "phase": "compact",
+      "status": "FAIL",
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "75dc5ea4-f7cb-480f-9cef-f3e4b40ef03f",
+      "actionId": "0105579d-0c60-46e4-951c-53ad4e48405f",
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "sameNativeThread": true,
+      "settled": true,
+      "runStatus": "interrupted",
+      "artifactOracle": true,
+      "cancelled": false,
+      "oraclePass": false,
+      "requiredParentReview": "Actual native compaction complete, preserved history/files, same action returned same run with no new dispatch",
+      "ticket": {
+        "id": "a457b54e-edc7-473a-a4be-0225d708cf0d",
+        "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "expiresAt": 1790669629564,
+        "image": false,
+        "frontier": false
+      },
+      "requestIds": [
+        "0893f613-127a-420d-976b-4604adea64e1",
+        "0ca24e6f-26e7-496b-9199-dc2246cf35dd",
+        "3d59d651-c56a-4b8d-ae88-e25bd04d2ab6",
+        "1b5a939c-2995-471a-8c29-51b1f3b6bca7",
+        "2a86ad82-40d2-4c6b-bee5-cc5c0e0b4450",
+        "56d31195-892d-482d-b13a-50132dfbad62",
+        "2a641d94-a37f-475e-a1bc-cb1c9b8aa5f2",
+        "35d268cd-c588-4d5b-a520-d80111d2b019"
+      ],
+      "retries": 0,
+      "completedUtc": "2026-09-29T07:44:52.702Z",
+      "reason": "Native compaction interrupted; no successful compaction event qualified. Triage-gate message surfaced in same shell call as admission and was not semantically reviewed first.",
+      "failurePhase": "Responses validation before admission/count/generation",
+      "failureCode": "unsupported_responses_contract",
+      "failureMessage": "Unknown history tool",
+      "nativeTaskId": "01a0ec1f-9ee4-70b1-8a0d-281a62189296",
+      "nativeTurnId": "01a0ec1f-9ed9-7dd3-a378-64e8044f7dbc",
+      "nativeDurationMs": 36,
+      "newProviderRequestCount": 1,
+      "admittedProviderRequests": 0,
+      "sameActionActiveReplaySameRun": true,
+      "sameActionTerminalReplayIdenticalSnapshot": true,
+      "sourceArtifactsUnchanged": true,
+      "recall": "NOT_TESTED",
+      "coldResume": "NOT_TESTED"
+    },
+    "recall": {
+      "status": "NOT_TESTED",
+      "reason": "compaction failed; all admissions held"
+    },
+    "coldResume": {
+      "status": "NOT_TESTED",
+      "reason": "compaction failed; all admissions held"
+    },
+    "image": {
+      "status": "NOT_TESTED",
+      "preflightHttp": 503,
+      "preflightCode": "image_readiness_unknown",
+      "utc": "2026-09-29T07:39:33.189Z",
+      "jobsSubmitted": 0,
+      "reason": "normal readiness rejected; later root ALLHOLD, no bypass"
+    },
+    "referenceEdit": {
+      "status": "NOT_TESTED",
+      "reason": "generation not qualified"
+    },
+    "crossEngineHandoff": {
+      "status": "NOT_TESTED",
+      "reason": "all admissions held; local driver prepared only"
+    }
+  },
+  "sourceRepair": {
+    "status": "SOURCE_READY_NOT_DEPLOYED",
+    "sourceHead": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
+    "base": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "utc": "2026-09-29T07:53:28.966161+00:00",
+    "tests": {
+      "affectedResponsesNamespaceProvider": 35,
+      "failed": 0,
+      "typecheck": "PASS",
+      "build": "PASS"
+    },
+    "actualCapturedMemento": {
+      "status": "PASS",
+      "privateFixtureSha256": "df00c4adba80cdc905262cc215437e73215c68c387c923cae03c9e95f9603f08",
+      "beforeFailure": "Unknown history tool",
+      "afterTranslation": "PASS",
+      "unchangedInput": true,
+      "historicalCalls": 5,
+      "matchedResults": 5,
+      "idsNamesArgumentBytesPreserved": true,
+      "currentToolsEmpty": true,
+      "newUndeclaredCallRejected": true,
+      "liveInference": false
+    },
+    "changedBuildFiles": [
+      "server/dist/codex-responses.js"
+    ],
+    "responseSourceSha256": "c107f0b5e741c9ca3749c36ba5ed311b790f9ca11be681aeb7a190a5dbb9d7c0",
+    "responseModuleSha256": "f47cadef0f883f8eddbf6b3af4ccb690d885505fd0a44f79ada5b7dc1b776c4e",
+    "bundleSha256": "a33641af9844ed8f13992a006b39ad1e7d9207b6eb40bce301c1f2a2068f0236",
+    "diffSha256": "bde9d7e9c30f6727b9347dae1575db8ee2627b2e7737675cbf1649b6a844bc0a",
+    "entrypointsUntouched": true,
+    "liveAdmissionHeld": true
+  },
+  "rootSourceReview": "PASS; integrated by root as b021a7de12a86dcbdf351acf8486c17cb4599353",
+  "repairDeployment": {
+    "status": "PROPOSED_NOT_STAGED",
+    "source": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
+    "oldSource": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "helperSha256": "e0d91b072cb939b02082823d33c2d04d7bff38ecedc0213b04ae00ac42a399d8",
+    "buildReceiptSha256": "80dca7c678607c0df414774dc537a93730cc80e7dfcc69425e3321d03d0575d5",
+    "archiveSha256": "b66761e4453f44b1cd9bffb09ac4e05cef64f230d027f6065d30d7bc577e75eb",
+    "oldUnitSha256": "944df079cfa80910d327729c603d6dd24d53cf27402b6700b76b86ed3df4db2f",
+    "appOnly": true,
+    "noMigration": true,
+    "changedCompiledModule": "server/dist/codex-responses.js",
+    "newModuleSha256": "f47cadef0f883f8eddbf6b3af4ccb690d885505fd0a44f79ada5b7dc1b776c4e",
+    "originalProtectedRowsPreserved": true,
+    "statusUnchangedRequired": true,
+    "maintenanceUnchangedRequired": true,
+    "sourceReviewRequired": true,
+    "liveAdmissionHeld": true
+  },
+  "sourceDeploymentDecision": "Root requests one combined app release with W1 readiness package; no independent activation. No late inference under expired cutoffs. Prepared exact package for next assigned worker.",
+  "acceptedRuns": 3,
+  "newGatewayRequestRecords": 5,
+  "upstreamGenerationsCompleted": 2,
+  "newImageJobs": 0,
+  "settlement": {
+    "allOwnedRunsSettled": true,
+    "activeRuns": [],
+    "pendingGatewayRequests": [],
+    "ownedTicketCount": 0,
+    "ownedTaskContainers": [],
+    "quarantineCount": 3,
+    "historicalUncertainOwners": [
+      {
+        "session_id": "bd71984f-2f90-4375-bca4-6c76730ba224",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e730-9304-7872-b176-41cd004044bf"
+      },
+      {
+        "session_id": "bed0fc3c-910c-4598-bfa6-11cabf637e3f",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e756-ec6e-7080-9f9b-89768b5cc89e"
+      }
+    ],
+    "policySha256": "c77afaf8b127f526c89a82a4066e73dc48bccb97c52207f0c1a4dc9e7f4e4a26"
+  },
+  "retainedState": {
+    "appSource": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "appPid": 103089,
+    "statusPid": 14480,
+    "default": "minimax",
+    "ordinaryMaintenance": true,
+    "publicApp503": true,
+    "publicApproval503": true,
+    "statusHttp": 200,
+    "internalHealth": "ok",
+    "availabilitySnapshot": {
+      "qwenGpu0": "unknown",
+      "qwenGpu1": "unknown",
+      "image": "unknown"
+    },
+    "imageFrontierFlags": false,
+    "nginxSha256": "0cf275f63b34b42dff6b42258e5b2b04e51401ba92d2ad7b26ca022ae14c54c6",
+    "nativeImage": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "nativePolicy": "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec",
+    "noBaselineRestore": true
+  },
+  "operationalDeviations": [
+    {
+      "incident": 1,
+      "description": "PDF dispatched before new W1 lifecycle HOLD surfaced; cancelled once and settled. W1 later reported no mutation overlap. Explicit root authorized one replacement."
+    },
+    {
+      "incident": 2,
+      "description": "Combined shell read/hash/start admitted compaction before new root triage gate was semantically reviewed. It immediately failed validation and settled. ALL admissions held after exact incident report. Subsequent INBOX reads were separate from actions."
+    }
+  ],
+  "unchangedGuards": {
+    "noAiVmContactOrMutation": true,
+    "noHardwareBmcFanDriverRuntimeChanges": true,
+    "noNewModelsOrDependencies": true,
+    "noNativeImageOrWebRebuild": true,
+    "noHistoryDeletionOrUncertaintyClearance": true,
+    "noGlobalCapabilityEnablement": true,
+    "noGithubPush": true
+  },
+  "privateEvidence": "Full provider/Responses/native capture, exact request bodies, DB scoped rows and protected backup remain private outside Git. Safe boundary summaries verified every indexed byte/hash.",
+  "close": "Useful work complete pending coordinated combined release. No paid idle wait. Wrapper records actual exit/finished UTC after this native turn.",
+  "frontierConfigSelected": {
+    "receipt": "FRONTIER-CONFIG-SELECTED.json",
+    "selectionMimoEnabled": true,
+    "candidateEnabled": false,
+    "candidateQualified": false,
+    "evidenceDigestMatchesSelection": true,
+    "ordinaryCodexFrontierEnabled": false,
+    "noConfigMutation": true
+  }
+}

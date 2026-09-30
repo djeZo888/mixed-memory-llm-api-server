@@ -1,0 +1,36 @@
+{
+  "upstream": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "baseImage": "sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "sourceProvenance": "llm and llm-retry equal retained pinned pristine; provider equals current patched identity",
+  "patchSha256": "e85a87cd59e0e2a298d001293fd30280f4b5d3f1b95a426edf7d2df23472688b",
+  "files": [
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/llm.ts",
+      "originalSha256": "80f43b4e02d1084739ad23d963e50ac0e303d89ef041b65f2d313d122c668e16",
+      "patchedSha256": "44dc9f2ae31622919cc5237600788e1b040a45a2d9d92cdb8af295b7e537436a"
+    },
+    {
+      "path": "packages/agent-core/src/pi-turn-runner/llm-retry.ts",
+      "originalSha256": "91550d853a2050e588c8ea084e5abd8ee4775236df97ac0683a02b5aa5225396",
+      "patchedSha256": "f202e1c1400533ce70796c1d505416ad7eddd727107f84b98bb43621f00c9e25"
+    },
+    {
+      "path": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+      "originalSha256": "ac725f4baa2a923a704b0250165b389f7745139231bf108f3ac3df3a0541e35a",
+      "patchedSha256": "8e461b8fb7381d1898b9dfb5b683b06ff3a26505bfe1a9790f408f23c327d9b8"
+    }
+  ],
+  "compiledStatus": "NOT_BUILT",
+  "requiredCompiledClosure": [
+    "CLI entrypoint and all changed imported chunks from bundler metafile",
+    "native-probes.mjs and metafile if they include affected modules",
+    "packaged release and source identity manifests"
+  ],
+  "untouched": [
+    "compiled estimator source",
+    "tools",
+    "dependencies",
+    "native llama runtime"
+  ],
+  "activation": "HELD; old6641 does not implement this patch"
+}

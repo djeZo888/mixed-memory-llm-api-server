@@ -1,0 +1,11 @@
+✔ H019 capacity requires actual 950000 receipt without conflating occupied input (4.026916ms)
+✔ preflight refuses outside its independent Linux systemd owner before file or host contact (0.401209ms)
+✔ admission boundary and exact profile source pin (0.542584ms)
+ℹ tests 3
+ℹ suites 0
+ℹ pass 3
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.436709

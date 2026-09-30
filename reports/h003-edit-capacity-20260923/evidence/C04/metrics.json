@@ -1,0 +1,245 @@
+{
+  "case": "C04",
+  "dispatch_utc": "2026-09-23T14:03:09.136852+00:00",
+  "native_response_complete_utc_derived": "2026-09-23T14:03:40.354330+00:00",
+  "completion_timestamp_method": "Dispatch intent UTC plus HTTP monotonic elapsed; not a server timestamp.",
+  "elapsed_seconds": 31.217477444995893,
+  "telemetry_file_samples": 102,
+  "first_continuous_sample_utc": "2026-09-23T14:03:08.956298+00:00",
+  "last_continuous_sample_utc": "2026-09-23T14:03:41.097234+00:00",
+  "final_settlement_sample_utc": "2026-09-23T14:03:41.219347+00:00",
+  "maximum_continuous_sample_gap_seconds": 0.3707599639892578,
+  "continuous_sample_spans_dispatch_through_completion": true,
+  "telemetry_durable_settled": true,
+  "sampling_limitation": "Sampled extrema; no guarantee of unobserved instantaneous peaks.",
+  "devices": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "total_mib": 97887,
+      "free_before_mib": 35610,
+      "minimum_free_mib": 35610,
+      "minimum_free_percent": 36.37868154096049,
+      "minimum_free_utc": "2026-09-23T14:03:08.310221+00:00",
+      "peak_device_used_mib": 62277,
+      "peak_process_used_mib": 61630,
+      "free_after_mib": 35610,
+      "gpu_pids_entire_window": [
+        "53583"
+      ]
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "total_mib": 97887,
+      "free_before_mib": 35612,
+      "minimum_free_mib": 35612,
+      "minimum_free_percent": 36.3807247131897,
+      "minimum_free_utc": "2026-09-23T14:03:08.310221+00:00",
+      "peak_device_used_mib": 62275,
+      "peak_process_used_mib": 61628,
+      "free_after_mib": 35612,
+      "gpu_pids_entire_window": [
+        "32839"
+      ]
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "total_mib": 49140,
+      "free_before_mib": 16236,
+      "minimum_free_mib": 6396,
+      "minimum_free_percent": 13.015873015873016,
+      "minimum_free_utc": "2026-09-23T14:03:40.144626+00:00",
+      "peak_device_used_mib": 42744,
+      "peak_process_used_mib": 42070,
+      "free_after_mib": 16236,
+      "gpu_pids_entire_window": [
+        "147055"
+      ]
+    }
+  ],
+  "host": {
+    "total_kib": 924629852,
+    "minimum_available_kib": 899133344,
+    "minimum_available_percent": 97.24251732248852,
+    "minimum_available_utc": "2026-09-23T14:03:41.219347+00:00"
+  },
+  "global_swap": {
+    "before_pages": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "after_pages": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "delta_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "all_observed_unchanged": true
+  },
+  "cgroups": {
+    "llm-image-backend": {
+      "memory_current_before_bytes": 5421408256,
+      "memory_current_peak_bytes": 5468536832,
+      "memory_current_after_bytes": 5444284416,
+      "memory_max_bytes": 103079215104,
+      "swap_current_before_bytes": 0,
+      "swap_current_peak_bytes": 0,
+      "swap_current_after_bytes": 0,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    },
+    "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv": {
+      "memory_current_before_bytes": 6871556096,
+      "memory_current_peak_bytes": 6872076288,
+      "memory_current_after_bytes": 6871556096,
+      "memory_max_bytes": 34359738368,
+      "swap_current_before_bytes": 0,
+      "swap_current_peak_bytes": 0,
+      "swap_current_after_bytes": 0,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    },
+    "llmctl-qwen38-27b-q1-480000-yarn4-bf16kv": {
+      "memory_current_before_bytes": 34352271360,
+      "memory_current_peak_bytes": 34353045504,
+      "memory_current_after_bytes": 34352271360,
+      "memory_max_bytes": 34359738368,
+      "swap_current_before_bytes": 155086848,
+      "swap_current_peak_bytes": 155086848,
+      "swap_current_after_bytes": 155086848,
+      "swap_current_delta_bytes": 0,
+      "memory_events_before": {
+        "high": 0,
+        "low": 0,
+        "max": 441,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "memory_events_delta": {
+        "high": 0,
+        "low": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_group_kill": 0,
+        "oom_kill": 0
+      },
+      "swap_events_before": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "swap_events_delta": {
+        "fail": 0,
+        "high": 0,
+        "max": 0
+      },
+      "all_observed_events_and_swap_unchanged": true
+    }
+  },
+  "all_gpu_uuid_pid_sets_unchanged": true,
+  "images": {
+    "delivered.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/delivered.png",
+      "sha256": "e93b0935ba3a584fac74e576d67cb900ec0c193c0d895e0e3e8c0d1719c75857",
+      "bytes": 1410107
+    },
+    "input-1.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/input-1.png",
+      "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "bytes": 1271632
+    },
+    "input-2.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/input-2.png",
+      "sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+      "bytes": 1299678
+    },
+    "raw-native.png": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/model/raw-native.png",
+      "sha256": "0357a2444510bf19d2fd27b7d76d9e3bc91417856f32cbe8e1a0d17ec051b1d2",
+      "bytes": 1842819
+    }
+  },
+  "delivery": {
+    "raw_mode": "RGBA",
+    "raw_alpha_extrema": [
+      251,
+      255
+    ],
+    "raw_dimensions": [
+      1024,
+      1024
+    ],
+    "delivered_mode": "RGB",
+    "delivered_dimensions": [
+      1024,
+      1024
+    ],
+    "delivered_opaque": true,
+    "exact_raw_top_rows_rgb": true
+  },
+  "settlement_checks": {
+    "api_remains_stopped": true,
+    "decoded_success": true,
+    "fresh_guards_and_reserve": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "telemetry_complete": true
+  },
+  "qualification_memory_pass": true,
+  "violations": []
+}

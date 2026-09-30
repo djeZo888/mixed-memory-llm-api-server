@@ -1,0 +1,1017 @@
+{
+  "schema_version": 1,
+  "created_utc": "2026-09-27T04:13:33.848232+00:00",
+  "source_commit": "31522361aee0b2eb3fa0037c0820c9cc1708cecd",
+  "requested_future_policy": "100% whenever GPU >=70 C; NOT ACTIVATED; root review after current 1M settles",
+  "nvml": {
+    "started_utc": "2026-09-27T04:10:19.539612+00:00",
+    "scope": "read-only getters; setter symbols resolved only; no setter invoked",
+    "binding_path": "in-memory-copy-of-container:/opt/conda/lib/python3.11/site-packages/pynvml.py",
+    "binding_sha256": "2828e66b483bec218f461314f6da96c1e56330ed4b297a20b3444b4c43cdd14e",
+    "rpm_abi_source": "installed pynvml c_nvmlFanSpeedInfo_t and nvmlFanSpeedInfo_v1; nvmlDeviceGetFanSpeedRPM wrapper",
+    "packages": {},
+    "binding_provenance": {
+      "installed_package": "nvidia-ml-py",
+      "installed_version": "13.615.71",
+      "container": "5e4fd432cd86ddac3021f804facae4f5dbf710bcaf2873200e8834ec323977ea",
+      "execution": "transient guest Python; exact installed binding source in memory; no guest file writes"
+    },
+    "init": {
+      "utc": "2026-09-27T04:10:19.540851+00:00",
+      "rc": 0,
+      "rc_name": "NVML_SUCCESS",
+      "value": null
+    },
+    "nvml_version": {
+      "utc": "2026-09-27T04:10:19.550351+00:00",
+      "rc": 0,
+      "rc_name": "NVML_SUCCESS",
+      "value": "13.595.84"
+    },
+    "driver_version": {
+      "utc": "2026-09-27T04:10:19.550476+00:00",
+      "rc": 0,
+      "rc_name": "NVML_SUCCESS",
+      "value": "595.84"
+    },
+    "library_mappings": [
+      "/usr/lib/x86_64-linux-gnu/libnvidia-ml.so.595.84"
+    ],
+    "symbols": {
+      "nvmlDeviceGetHandleByUUID": true,
+      "nvmlDeviceGetFanSpeed": true,
+      "nvmlDeviceGetFanSpeed_v2": true,
+      "nvmlDeviceGetNumFans": true,
+      "nvmlDeviceGetTargetFanSpeed": true,
+      "nvmlDeviceGetMinMaxFanSpeed": true,
+      "nvmlDeviceGetFanControlPolicy_v2": true,
+      "nvmlDeviceGetFanSpeedRPM": true,
+      "nvmlDeviceGetTemperature": true,
+      "nvmlDeviceSetFanSpeed_v2": true,
+      "nvmlDeviceSetFanControlPolicy": true,
+      "nvmlDeviceSetDefaultFanSpeed_v2": true
+    },
+    "devices": [
+      {
+        "role": "Q0",
+        "requested_uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "setter_calls": "NOT_TESTED",
+        "handle_by_uuid": {
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "utc": "2026-09-27T04:10:19.558483+00:00"
+        },
+        "uuid": {
+          "utc": "2026-09-27T04:10:19.558499+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+        },
+        "name": {
+          "utc": "2026-09-27T04:10:19.558521+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+        },
+        "temperature_c": {
+          "utc": "2026-09-27T04:10:19.558534+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 36
+        },
+        "fan_count": {
+          "utc": "2026-09-27T04:10:19.562370+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 2
+        },
+        "fan_percent_legacy": {
+          "utc": "2026-09-27T04:10:19.562394+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 30
+        },
+        "min_max_fan_percent": {
+          "utc": "2026-09-27T04:10:19.564021+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": [
+            30,
+            100
+          ]
+        },
+        "fans": [
+          {
+            "index": 0,
+            "index_basis": "enumerated",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.564900+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.565726+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.567410+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 0
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.567702+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 1199
+            }
+          },
+          {
+            "index": 1,
+            "index_basis": "enumerated",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.569166+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.570308+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.571920+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 0
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.572215+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 1200
+            }
+          }
+        ]
+      },
+      {
+        "role": "Flash",
+        "requested_uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "setter_calls": "NOT_TESTED",
+        "handle_by_uuid": {
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "utc": "2026-09-27T04:10:19.580363+00:00"
+        },
+        "uuid": {
+          "utc": "2026-09-27T04:10:19.580372+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+        },
+        "name": {
+          "utc": "2026-09-27T04:10:19.580388+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition"
+        },
+        "temperature_c": {
+          "utc": "2026-09-27T04:10:19.580397+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 61
+        },
+        "fan_count": {
+          "utc": "2026-09-27T04:10:19.582951+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 2
+        },
+        "fan_percent_legacy": {
+          "utc": "2026-09-27T04:10:19.582964+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 36
+        },
+        "min_max_fan_percent": {
+          "utc": "2026-09-27T04:10:19.583631+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": [
+            30,
+            100
+          ]
+        },
+        "fans": [
+          {
+            "index": 0,
+            "index_basis": "enumerated",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.584466+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 36
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.585009+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.585717+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 0
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.586110+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 1355
+            }
+          },
+          {
+            "index": 1,
+            "index_basis": "enumerated",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.586993+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 36
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.587517+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.588212+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 0
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.588364+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 1354
+            }
+          }
+        ]
+      },
+      {
+        "role": "Q1Server",
+        "requested_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "setter_calls": "NOT_TESTED",
+        "handle_by_uuid": {
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "utc": "2026-09-27T04:10:19.601198+00:00"
+        },
+        "uuid": {
+          "utc": "2026-09-27T04:10:19.601203+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+        },
+        "name": {
+          "utc": "2026-09-27T04:10:19.601213+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "NVIDIA RTX PRO 6000 Blackwell Server Edition"
+        },
+        "temperature_c": {
+          "utc": "2026-09-27T04:10:19.601219+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 37
+        },
+        "fan_count": {
+          "utc": "2026-09-27T04:10:19.602735+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 0
+        },
+        "fan_percent_legacy": {
+          "utc": "2026-09-27T04:10:19.602744+00:00",
+          "rc": 3,
+          "rc_name": "Not Supported",
+          "value": null
+        },
+        "min_max_fan_percent": {
+          "utc": "2026-09-27T04:10:19.602986+00:00",
+          "rc": 2,
+          "rc_name": "Invalid Argument",
+          "value": null
+        },
+        "fans": [
+          {
+            "index": 0,
+            "index_basis": "read-only fan-0 unsupported check; no fan existence implied",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.602997+00:00",
+              "rc": 2,
+              "rc_name": "Invalid Argument",
+              "value": null
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.603001+00:00",
+              "rc": 2,
+              "rc_name": "Invalid Argument",
+              "value": null
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.603005+00:00",
+              "rc": 2,
+              "rc_name": "Invalid Argument",
+              "value": null
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.603009+00:00",
+              "rc": 2,
+              "rc_name": "Invalid Argument",
+              "value": null
+            }
+          }
+        ]
+      },
+      {
+        "role": "Ada",
+        "requested_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "setter_calls": "NOT_TESTED",
+        "handle_by_uuid": {
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "utc": "2026-09-27T04:10:19.603029+00:00"
+        },
+        "uuid": {
+          "utc": "2026-09-27T04:10:19.603031+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        },
+        "name": {
+          "utc": "2026-09-27T04:10:19.603036+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": "NVIDIA RTX 6000 Ada Generation"
+        },
+        "temperature_c": {
+          "utc": "2026-09-27T04:10:19.603042+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 35
+        },
+        "fan_count": {
+          "utc": "2026-09-27T04:10:19.604548+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 1
+        },
+        "fan_percent_legacy": {
+          "utc": "2026-09-27T04:10:19.604556+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": 30
+        },
+        "min_max_fan_percent": {
+          "utc": "2026-09-27T04:10:19.605295+00:00",
+          "rc": 0,
+          "rc_name": "NVML_SUCCESS",
+          "value": [
+            30,
+            100
+          ]
+        },
+        "fans": [
+          {
+            "index": 0,
+            "index_basis": "enumerated",
+            "intended_percent": {
+              "utc": "2026-09-27T04:10:19.605893+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "target_percent": {
+              "utc": "2026-09-27T04:10:19.606497+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 30
+            },
+            "policy": {
+              "utc": "2026-09-27T04:10:19.607443+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 0
+            },
+            "rpm": {
+              "utc": "2026-09-27T04:10:19.607714+00:00",
+              "rc": 0,
+              "rc_name": "NVML_SUCCESS",
+              "value": 999
+            }
+          }
+        ]
+      }
+    ],
+    "policy_enum": {
+      "0": "NVML_FAN_POLICY_TEMPERATURE_CONTINOUS_SW (installed spelling)",
+      "1": "NVML_FAN_POLICY_MANUAL"
+    },
+    "limitations": [
+      "Percent readings are intended percentages, not measured RPM.",
+      "Symbol availability and successful getters do not establish setter permission/capability or physical ramping.",
+      "No policy or fan target change was attempted.",
+      "Server motherboard CHA_FAN3 route is distinct from GPU-integrated fans."
+    ],
+    "shutdown": {
+      "utc": "2026-09-27T04:10:19.608331+00:00",
+      "rc": 0,
+      "rc_name": "NVML_SUCCESS",
+      "value": null
+    },
+    "finished_utc": "2026-09-27T04:10:19.616070+00:00"
+  },
+  "guest_hardware": {
+    "started_utc": "2026-09-27T04:10:49.201725+00:00",
+    "hwmon": [],
+    "ipmi_dev_nodes": [],
+    "ipmi_class": [],
+    "dmi": {
+      "sys_vendor": {
+        "value": "QEMU",
+        "readable": true
+      },
+      "product_name": {
+        "value": "Standard PC (Q35 + ICH9, 2009)",
+        "readable": true
+      },
+      "product_version": {
+        "value": "pc-q35-11.0",
+        "readable": true
+      },
+      "board_vendor": {
+        "value": null,
+        "readable": false,
+        "errno": 2,
+        "error": "[Errno 2] No such file or directory: '/sys/class/dmi/id/board_vendor'"
+      },
+      "board_name": {
+        "value": null,
+        "readable": false,
+        "errno": 2,
+        "error": "[Errno 2] No such file or directory: '/sys/class/dmi/id/board_name'"
+      },
+      "board_version": {
+        "value": null,
+        "readable": false,
+        "errno": 2,
+        "error": "[Errno 2] No such file or directory: '/sys/class/dmi/id/board_version'"
+      },
+      "bios_vendor": {
+        "value": "Proxmox distribution of EDK II",
+        "readable": true
+      },
+      "bios_version": {
+        "value": "4.2026.08-1",
+        "readable": true
+      },
+      "bios_date": {
+        "value": "08/26/2026",
+        "readable": true
+      }
+    },
+    "platform_controller_names": [],
+    "i2c_existing_devices": [
+      {
+        "name": "i2c-0",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1f.3/i2c-0",
+        "name_attribute": {
+          "value": "SMBus I801 adapter at b000",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-1",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-1",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 1 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-10",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-10",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 4 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-11",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-11",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 5 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-12",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-12",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 6 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-13",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-13",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 1 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-14",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-14",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 2 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-15",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-15",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 3 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-16",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-16",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 4 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-17",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-17",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 5 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-18",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.1/0000:02:00.0/i2c-18",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 6 at 2:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-19",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.3/0000:04:00.0/i2c-19",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 1 at 4:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-2",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-2",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 2 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-20",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.3/0000:04:00.0/i2c-20",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 2 at 4:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-3",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-3",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 3 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-4",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-4",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 4 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-5",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-5",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 5 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-6",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.2/0000:03:00.0/i2c-6",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 6 at 3:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-7",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-7",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 1 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-8",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-8",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 2 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "name": "i2c-9",
+        "resolved": "/sys/devices/pci0000:00/0000:00:1c.0/0000:01:00.0/i2c-9",
+        "name_attribute": {
+          "value": "NVIDIA i2c adapter 3 at 1:00.0",
+          "readable": true
+        },
+        "driver": null
+      }
+    ],
+    "pci_basic_records": [
+      {
+        "bdf": "0000:00:00.0",
+        "class": {
+          "value": "0x060000",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x8086",
+          "readable": true
+        },
+        "device": {
+          "value": "0x29c0",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "bdf": "0000:00:01.0",
+        "class": {
+          "value": "0x030000",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1234",
+          "readable": true
+        },
+        "device": {
+          "value": "0x1111",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/bochs-drm"
+      },
+      {
+        "bdf": "0000:00:1c.0",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x000c",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/pcieport"
+      },
+      {
+        "bdf": "0000:00:1c.1",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x000c",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/pcieport"
+      },
+      {
+        "bdf": "0000:00:1c.2",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x000c",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/pcieport"
+      },
+      {
+        "bdf": "0000:00:1c.3",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x000c",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/pcieport"
+      },
+      {
+        "bdf": "0000:00:1e.0",
+        "class": {
+          "value": "0x060401",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x8086",
+          "readable": true
+        },
+        "device": {
+          "value": "0x244e",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "bdf": "0000:00:1f.0",
+        "class": {
+          "value": "0x060100",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x8086",
+          "readable": true
+        },
+        "device": {
+          "value": "0x2918",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/lpc_ich"
+      },
+      {
+        "bdf": "0000:00:1f.3",
+        "class": {
+          "value": "0x0c0500",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x8086",
+          "readable": true
+        },
+        "device": {
+          "value": "0x2930",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/i801_smbus"
+      },
+      {
+        "bdf": "0000:01:00.0",
+        "class": {
+          "value": "0x030000",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x10de",
+          "readable": true
+        },
+        "device": {
+          "value": "0x2bb1",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/nvidia"
+      },
+      {
+        "bdf": "0000:02:00.0",
+        "class": {
+          "value": "0x030000",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x10de",
+          "readable": true
+        },
+        "device": {
+          "value": "0x2bb1",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/nvidia"
+      },
+      {
+        "bdf": "0000:03:00.0",
+        "class": {
+          "value": "0x030000",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x10de",
+          "readable": true
+        },
+        "device": {
+          "value": "0x26b1",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/nvidia"
+      },
+      {
+        "bdf": "0000:04:00.0",
+        "class": {
+          "value": "0x030200",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x10de",
+          "readable": true
+        },
+        "device": {
+          "value": "0x2bb5",
+          "readable": true
+        },
+        "driver": "/sys/bus/pci/drivers/nvidia"
+      },
+      {
+        "bdf": "0000:05:01.0",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x0001",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "bdf": "0000:05:02.0",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x0001",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "bdf": "0000:05:03.0",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x0001",
+          "readable": true
+        },
+        "driver": null
+      },
+      {
+        "bdf": "0000:05:04.0",
+        "class": {
+          "value": "0x060400",
+          "readable": true
+        },
+        "vendor": {
+          "value": "0x1b36",
+          "readable": true
+        },
+        "device": {
+          "value": "0x0001",
+          "readable": true
+        },
+        "driver": null
+      }
+    ],
+    "loaded_relevant_module_names": [
+      "i2c_i801",
+      "i2c_smbus",
+      "wmi"
+    ],
+    "limitations": [
+      "Existing sysfs/dev records only; no module loading, bus scanning or host/BMC contact.",
+      "No mapping of hwmon index to physical CHA_FAN3 is inferred."
+    ],
+    "finished_utc": "2026-09-27T04:10:49.204561+00:00"
+  },
+  "interpretation": {
+    "integrated_fan_control": "Plausible NVML route for Q0, Flash and Ada: enumerated fans plus successful min/max, policy and target getters; setters NOT TESTED and success/permission not established.",
+    "physical_ramping": "No fan ramping action performed or inferred. RPM readings are read-only instantaneous measurements.",
+    "server_fan_route": "Q1Server reports 0 NVML fans. Physical fans are on motherboard CHA_FAN3 per user; motherboard route is distinct from GPU NVML fans.",
+    "guest_exposure": "No /sys/class/hwmon entries, /dev/ipmi* nodes or /sys/class/ipmi devices observed. No physical motherboard fan controller exposed in the inspected guest records.",
+    "host_bmc_route": "UNKNOWN / NEEDS ROOT REVIEW. No known user-authorized host/BMC path established from the scoped project records inspected; no host/Proxmox/BMC contact or forced discovery.",
+    "causality": "H011 baseline preserved unchanged. Future 100% fan policy is an ADDITIONAL VARIABLE in the ECC comparison; result cannot be attributed to ECC alone.",
+    "policy_capability_limit": "Current automatic-policy getter succeeds on integrated fans. Symbol presence is not setter capability; supported writable policy transitions were not tested."
+  },
+  "project_records_inspected": [
+    "docs/h011-fourway-manual-1m-plan.md",
+    "docs/h011-status-20260927.md",
+    "docs/h013-ecc-off-repeat.md",
+    "docs/h009-status-20260926.md",
+    "bounded motherboard/BMC/IPMI/CHA_FAN/board-name text search in docs and H00x report records"
+  ],
+  "initial_container_scope_observation": "Initial existing Flash container binding read resolved Flash only; the other UUID handle calls returned NVML_ERROR_NOT_FOUND=6 because that container exposes only Flash. Those are preserved privately and are not guest device capability failures. Final per-device results come from guest context.",
+  "evidence": {
+    "fan_probe.py": {
+      "path": "private/fan_probe.py",
+      "sha256": "efc4a24c8fc3f97a85b3bc2891cdf5a4cbdddc8c83b1672f6bc8ef6a50803333"
+    },
+    "fan_probe_guest.py": {
+      "path": "private/fan_probe_guest.py",
+      "sha256": "17bf2d3755939a8db1c4159ce642154e6cfc81cad42075389971a7708f7cc01b"
+    },
+    "pynvml-installed.py": {
+      "path": "private/pynvml-installed.py",
+      "sha256": "2828e66b483bec218f461314f6da96c1e56330ed4b297a20b3444b4c43cdd14e"
+    },
+    "nvml-readback.json": {
+      "path": "private/nvml-readback.json",
+      "sha256": "341a0ac5db229c85cd0c457dd23bac2d7d56b3ee05445cf6924eb835753ae829"
+    },
+    "nvml-guest-readback.json": {
+      "path": "private/nvml-guest-readback.json",
+      "sha256": "e172b8f0a56d202b7580efa6efbc93484b44812805dd5b63d26ac0866eb79611"
+    },
+    "guest_hardware_probe.py": {
+      "path": "private/guest_hardware_probe.py",
+      "sha256": "47e591d5cfb177b626cbb088cce958cbcabf7e53848301a25e2f10d280d09bd8"
+    },
+    "guest-hardware-readback.json": {
+      "path": "private/guest-hardware-readback.json",
+      "sha256": "d6c4ae2c3b283a05c68731170fadb049698031308944e8843931426d83e466e7"
+    }
+  },
+  "actions": "Read-only NVML getters, symbol lookup, existing sysfs/dev/DMI/controller reads. No setter/manual policy/target changes, no module loading, scanning, install, GPU workload, driver/service/clock/ECC/reboot operation. No source implementation for activation."
+}

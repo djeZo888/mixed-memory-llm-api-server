@@ -1,0 +1,27 @@
+test_blocked_child_remains_isolated_then_reaped_and_retried (test_h013_fan_boost.BoundedAndLoggingTests.test_blocked_child_remains_isolated_then_reaped_and_retried) ... ok
+test_logging_deduplicates_samples_but_not_status_and_errors (test_h013_fan_boost.BoundedAndLoggingTests.test_logging_deduplicates_samples_but_not_status_and_errors) ... ok
+test_config_exact_identity_duplicates_unknown_and_extra (test_h013_fan_boost.SafetyTests.test_config_exact_identity_duplicates_unknown_and_extra) ... ok
+test_conflicting_manual_controller_not_taken_over (test_h013_fan_boost.SafetyTests.test_conflicting_manual_controller_not_taken_over) ... ok
+test_cooldown_resets_on_warm_gap_error_and_stale (test_h013_fan_boost.SafetyTests.test_cooldown_resets_on_warm_gap_error_and_stale) ... ok
+test_default_failure_reboosts_all_and_remains_degraded (test_h013_fan_boost.SafetyTests.test_default_failure_reboosts_all_and_remains_degraded) ... ok
+test_default_invalid_or_hot_temp_reboosts_every_fan (test_h013_fan_boost.SafetyTests.test_default_invalid_or_hot_temp_reboosts_every_fan) ... ok
+test_exact_cool_threshold_and_30_seconds (test_h013_fan_boost.SafetyTests.test_exact_cool_threshold_and_30_seconds) ... ok
+test_exact_hot_threshold_and_every_enumerated_fan (test_h013_fan_boost.SafetyTests.test_exact_hot_threshold_and_every_enumerated_fan) ... ok
+test_failed_intent_persistence_prevents_all_setters (test_h013_fan_boost.SafetyTests.test_failed_intent_persistence_prevents_all_setters) ... ok
+test_failed_readback_never_releases (test_h013_fan_boost.SafetyTests.test_failed_readback_never_releases) ... ok
+test_failed_setter_keeps_owner_and_other_devices_protected (test_h013_fan_boost.SafetyTests.test_failed_setter_keeps_owner_and_other_devices_protected) ... ok
+test_failed_setter_recovers_then_full_cooldown_releases (test_h013_fan_boost.SafetyTests.test_failed_setter_recovers_then_full_cooldown_releases) ... ok
+test_hot_stale_and_watchdog_stop_never_default (test_h013_fan_boost.SafetyTests.test_hot_stale_and_watchdog_stop_never_default) ... ok
+test_inspect_never_sets_and_unowned_setter_refused (test_h013_fan_boost.SafetyTests.test_inspect_never_sets_and_unowned_setter_refused) ... ok
+test_late_stop_requested_converts_default_to_boost (test_h013_fan_boost.SafetyTests.test_late_stop_requested_converts_default_to_boost) ... ok
+test_missing_passive_device_isolated_external_explicit (test_h013_fan_boost.SafetyTests.test_missing_passive_device_isolated_external_explicit) ... ok
+test_readonly_modes_never_submit_setters_or_save (test_h013_fan_boost.SafetyTests.test_readonly_modes_never_submit_setters_or_save) ... ok
+test_restart_owned_requires_new_continuous_cooldown (test_h013_fan_boost.SafetyTests.test_restart_owned_requires_new_continuous_cooldown) ... ok
+test_root_ownership_modes_identity_and_link_protection (test_h013_fan_boost.SafetyTests.test_root_ownership_modes_identity_and_link_protection) ... ok
+test_state_requires_exact_owner_uuids_and_boolean_intents (test_h013_fan_boost.SafetyTests.test_state_requires_exact_owner_uuids_and_boolean_intents) ... ok
+test_unowned_hot_with_auto_policy_and_target_error_attempts_boost (test_h013_fan_boost.SafetyTests.test_unowned_hot_with_auto_policy_and_target_error_attempts_boost) ... ok
+
+----------------------------------------------------------------------
+Ran 22 tests in 0.006s
+
+OK

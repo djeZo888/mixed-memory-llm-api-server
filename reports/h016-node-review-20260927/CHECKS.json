@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "verdict": "HOLD_ACTIVATION_SOURCE_BLOCKERS",
+  "scope": "local fixed-snapshot source review; no live qualification",
+  "native_session_id": "01a0e2b0-eedf-7101-aa11-e4c412f21b6f",
+  "wrapper_start_utc": "2026-09-27T11:47:21Z",
+  "wrapper_hard_deadline_utc": "2026-09-27T12:02:21.025718+00:00",
+  "review_recorded_utc": "2026-09-27T11:52:52.438252+00:00",
+  "wrapper_exit_receipts": [
+    "finished-01-utc",
+    "exit-01-code"
+  ],
+  "wrapper_exit_status": "written by wrapper only after this native session exits",
+  "input_verification": {
+    "base_commit": "a076c2c6a8cf409aa7890765d81ac288cd16d308",
+    "original_repo_sha256": {
+      "scripts/control/node.py": "fca4163a96fa76a23af24d4b453a2594604b2a890b3de42d2fd3e9c053c7632d",
+      "scripts/control/node_collectors.py": "2b3306f953d4fc615533d75b2d4a7ebb1548a6793cf86ccbcce5729e53fbdd3f",
+      "scripts/control/node_observation.py": "18b4f2d4c8e34a3b23e0e87a90c1b68821bd7becc02349196a598a86ad5b8666",
+      "scripts/control/passive.py": "7d94d00220ffe7921ce04c8692bebc39f8ce74f193d976411cbf696fcd7d5b5b",
+      "tests/test_node_passive.py": "68b161695bffbb16d383e5bc70d5d274fd7df5ac2809a9a448296828b1ea4403"
+    },
+    "snapshot_sha256": {
+      "scripts/control/node.py": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+      "scripts/control/node_collectors.py": "2dfb1aec9f34eb288231f39b836e74d38a32a2e4175700dd91b6d592f5a7598f",
+      "scripts/control/node_observation.py": "d2aee51e1c3e850022a565eee54feb0f1530ad9851867e0356a50bef7bd03841",
+      "scripts/control/passive.py": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+      "tests/test_node_passive.py": "0548d0756967ed3bed126dba48159d600ffba17305cf9c1d9aa61da88e1d1cd4"
+    },
+    "manifest_sha256": "2589e15266a7bdb570545ee93ae9bb4bfeecbc09ed3225acce189b363a24b838",
+    "contract_sha256": "7880c415d2e1969e6fd67656ff01d07a0af9f393786d6c0dc0b522043f1d27dc"
+  },
+  "final_overlay_sha256": {
+    "scripts/control/node.py": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+    "scripts/control/node_collectors.py": "2dfb1aec9f34eb288231f39b836e74d38a32a2e4175700dd91b6d592f5a7598f",
+    "scripts/control/node_observation.py": "d2aee51e1c3e850022a565eee54feb0f1530ad9851867e0356a50bef7bd03841",
+    "scripts/control/passive.py": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+    "tests/test_node_passive.py": "0548d0756967ed3bed126dba48159d600ffba17305cf9c1d9aa61da88e1d1cd4"
+  },
+  "snapshot_unchanged": true,
+  "overlay_unmodified_after_exact_copy": true,
+  "base_context_sha256": {
+    "tests/test_node_observation.py": "39e79b10a8aba037bc21c4ceb07ace5cf022a7daba1083c19df8efa5a24df097",
+    "tests/test_node_projection.py": "80fb355130d9894510f1902b536ed13198c513035bda5058ff57a252c271a7a4",
+    "ai-harness/server/src/node-availability.ts": "60b00effd4b2c4db5af2da9350ceac775762d12b100a6afca948f63f299d79f6",
+    "ai-harness/server/src/node-contract.ts": "fa15331c20b2c5ba4dd963359f6b894df57fcc9d6ad4941ffb5481171a1404e8",
+    "ai-harness/server/src/mimo-frontier.ts": "50d6ba41172e42ffbb5693f21076991a67de468b4e39cf4e1b15d9b17a836c01",
+    "ai-harness/server/src/active-frontier.ts": "540fb9dca5c7753599f90ebdab8e25b26fb8ebc490dc97db8589bb66bb71c94d",
+    "ai-harness/server/src/system-registry.ts": "b16e5413c9f0216623181604e24e473e9976921f5e82afcfc1211a2f988d6ceb",
+    "ai-harness/server/src/gateway.ts": "9241e4eb7d94c175b6225966af54a86de5fda54a8bd886275dbb058a7d8aa656"
+  },
+  "tests": [
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=tests python3 -m unittest -v test_node_passive.PassiveTests.test_600_reads_do_not_start_collectors_or_refresh test_node_passive.PassiveTests.test_hung_capacity_independent_and_late_result_discarded test_node_passive.PassiveTests.test_error_preserves_age_does_not_refresh_prior_success test_node_passive.PassiveTests.test_no_legacy_routes_and_strict_duplicate_action_body test_node_passive.CollectorsTests",
+      "status": "PASS",
+      "count": 11,
+      "elapsed_seconds": 0.155,
+      "output": "test_600_reads_do_not_start_collectors_or_refresh (test_node_passive.PassiveTests.test_600_reads_do_not_start_collectors_or_refresh) ... ok\ntest_hung_capacity_independent_and_late_result_discarded (test_node_passive.PassiveTests.test_hung_capacity_independent_and_late_result_discarded) ... ok\ntest_error_preserves_age_does_not_refresh_prior_success (test_node_passive.PassiveTests.test_error_preserves_age_does_not_refresh_prior_success) ... ok\ntest_no_legacy_routes_and_strict_duplicate_action_body (test_node_passive.PassiveTests.test_no_legacy_routes_and_strict_duplicate_action_body) ... ok\ntest_command_deadline_output_limit_and_no_shell (test_node_passive.CollectorsTests.test_command_deadline_output_limit_and_no_shell) ... ok\ntest_cpu_node_fraction_and_first_sample_unknown (test_node_passive.CollectorsTests.test_cpu_node_fraction_and_first_sample_unknown) ... ok\ntest_gpu_uuid_scoped_nullable_sensors_and_observed_extrema (test_node_passive.CollectorsTests.test_gpu_uuid_scoped_nullable_sensors_and_observed_extrema) ... ok\ntest_node_source_closure_and_credentials_protected_before_start (test_node_passive.CollectorsTests.test_node_source_closure_and_credentials_protected_before_start) ... ok\ntest_production_observers_are_bounded_and_individual (test_node_passive.CollectorsTests.test_production_observers_are_bounded_and_individual) ... ok\ntest_service_running_does_not_mean_ready_or_idle (test_node_passive.CollectorsTests.test_service_running_does_not_mean_ready_or_idle) ... ok\ntest_successful_empty_inventory_vs_failed_initialization (test_node_passive.CollectorsTests.test_successful_empty_inventory_vs_failed_initialization) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.155s\n\nOK\n"
+    },
+    {
+      "command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v tests.test_node_observation.PassiveProductionTests.test_real_canonical_container_labels_and_selection_projection tests.test_node_observation.PassiveProductionTests.test_passive_auth_route_exact_alias_and_no_idle_claim tests.test_node_observation.PassiveProductionTests.test_sticky_hardware_latch_survives_http_success tests.test_node_observation.PassiveProductionTests.test_readiness_auth_timeout_wrong_alias_are_unknown_not_missing tests.test_node_observation.PassiveProductionTests.test_busy_image_is_available_backpressure_without_idle_inference tests.test_node_observation.PassiveProductionTests.test_late_process_failure_cannot_refresh_old_negative_hardware_proof tests.test_node_observation.PassiveProductionTests.test_passive_prior_positive_survives_registration_outage_until_valid_newboot tests.test_node_projection.NodeProjectionTests.test_negative_requires_exact_current_boot_fresh_validation_not_missing_record tests.test_node_projection.NodeProjectionTests.test_stale_negative_latch_and_ready_do_not_claim_available tests.test_node_projection.NodeProjectionTests.test_healthy_independent_service_need_not_wait_for_inventory_collector tests.test_node_projection.NodeProjectionTests.test_boot_mismatch_never_claims_current_readiness",
+      "status": "PASS",
+      "count": 11,
+      "elapsed_seconds": 0.006,
+      "output": "test_real_canonical_container_labels_and_selection_projection (tests.test_node_observation.PassiveProductionTests.test_real_canonical_container_labels_and_selection_projection) ... ok\ntest_passive_auth_route_exact_alias_and_no_idle_claim (tests.test_node_observation.PassiveProductionTests.test_passive_auth_route_exact_alias_and_no_idle_claim) ... ok\ntest_sticky_hardware_latch_survives_http_success (tests.test_node_observation.PassiveProductionTests.test_sticky_hardware_latch_survives_http_success) ... ok\ntest_readiness_auth_timeout_wrong_alias_are_unknown_not_missing (tests.test_node_observation.PassiveProductionTests.test_readiness_auth_timeout_wrong_alias_are_unknown_not_missing) ... ok\ntest_busy_image_is_available_backpressure_without_idle_inference (tests.test_node_observation.PassiveProductionTests.test_busy_image_is_available_backpressure_without_idle_inference) ... ok\ntest_late_process_failure_cannot_refresh_old_negative_hardware_proof (tests.test_node_observation.PassiveProductionTests.test_late_process_failure_cannot_refresh_old_negative_hardware_proof) ... ok\ntest_passive_prior_positive_survives_registration_outage_until_valid_newboot (tests.test_node_observation.PassiveProductionTests.test_passive_prior_positive_survives_registration_outage_until_valid_newboot) ... ok\ntest_negative_requires_exact_current_boot_fresh_validation_not_missing_record (tests.test_node_projection.NodeProjectionTests.test_negative_requires_exact_current_boot_fresh_validation_not_missing_record) ... ok\ntest_stale_negative_latch_and_ready_do_not_claim_available (tests.test_node_projection.NodeProjectionTests.test_stale_negative_latch_and_ready_do_not_claim_available) ... ok\ntest_healthy_independent_service_need_not_wait_for_inventory_collector (tests.test_node_projection.NodeProjectionTests.test_healthy_independent_service_need_not_wait_for_inventory_collector) ... ok\ntest_boot_mismatch_never_claims_current_readiness (tests.test_node_projection.NodeProjectionTests.test_boot_mismatch_never_claims_current_readiness) ... ok\n\n----------------------------------------------------------------------\nRan 11 tests in 0.006s\n\nOK\n"
+    }
+  ],
+  "excluded_test": {
+    "name": "test_node_passive.PassiveTests.test_independent_authenticated_http_status_survives_hung_observer",
+    "reason": "would create real local HTTP traffic, explicitly prohibited"
+  },
+  "new_tests_added": false,
+  "test_dependency_blocker": null,
+  "finding_ids": {
+    "blockers": [
+      "B1",
+      "B2",
+      "B3"
+    ],
+    "nonblockers_and_limits": [
+      "N1",
+      "N2",
+      "N3",
+      "N4",
+      "N5"
+    ]
+  },
+  "live_evidence": "NONE; native count/usage/tool/live qualification pending Worker1",
+  "contacts": {
+    "ai_vm": false,
+    "ai_harness": false,
+    "bmc": false,
+    "http": false,
+    "ssh": false,
+    "network": false
+  },
+  "mutations": {
+    "exact_isolated_code_overlay": true,
+    "worker1_code_edits": false,
+    "build": false,
+    "deployment": false,
+    "inference": false,
+    "code_commit": false,
+    "push": false
+  },
+  "parallel_review": {
+    "task": "/root/harness_review",
+    "scope": "read-only local source; no edits/tests/network",
+    "result": "independently confirmed B3 and admission/capacity boundaries"
+  },
+  "template_evidence": {
+    "raw_gguf": {
+      "bytes": 3867,
+      "sha256": "11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059"
+    },
+    "effective_props_jinja": {
+      "bytes": 3866,
+      "sha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4"
+    },
+    "provenance": "user-supplied distinct identities; not read from native runtime during this review"
+  },
+  "campaign_constraints": "13:25 settlement reserve; trial otherwise GLM restore13:40; hardend13:48:08 unchanged (user-specified campaign clock)."
+}

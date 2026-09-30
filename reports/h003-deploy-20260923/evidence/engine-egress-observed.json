@@ -1,0 +1,10 @@
+{
+  "actual_engine_slirp_lan80_peers": [
+    "10.156.100.61"
+  ],
+  "probe_path": "/h003-deploy-peer-20260923",
+  "requests_logged": 1,
+  "matches_staged_deny": true,
+  "forwarding_headers_not_used": true,
+  "gateway80": "connection refused: nginx only binds private LAN80; direct8080 remains secret-gated"
+}

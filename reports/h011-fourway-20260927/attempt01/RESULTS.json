@@ -1,0 +1,248 @@
+{
+  "status": "FAILED",
+  "cancel_reason": "native_error_monitor_failed",
+  "barrier_utc": "2026-09-27T01:07:09.183692+00:00",
+  "end_utc": "2026-09-27T01:07:38.678419+00:00",
+  "sample_count": 30,
+  "sample_max_gap_s": 1.0022038819988666,
+  "three_blackwell_peak_same_sample": {
+    "utc": "2026-09-27T01:07:14.184847+00:00",
+    "three_blackwell_w": 1290.35,
+    "ada_external_w": 294.2,
+    "all_four_diagnostic_w": 1584.55
+  },
+  "all_four_diagnostic_peak_w": 1584.55,
+  "gpu": {
+    "flash": {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "power_peak_w": 94.96,
+      "power_at_three_blackwell_peak_w": 87.96,
+      "temp_peak_c": 38.0,
+      "free_min_mib": 65718.0,
+      "util_nonzero_samples": 27,
+      "util_at_least50_samples": 0,
+      "throttle_active_samples": {
+        "clocks_event_reasons.active": 0,
+        "clocks_event_reasons.sw_power_cap": 0,
+        "clocks_event_reasons.hw_slowdown": 0,
+        "clocks_event_reasons.hw_thermal_slowdown": 0,
+        "clocks_event_reasons.hw_power_brake_slowdown": 0,
+        "clocks_event_reasons.sw_thermal_slowdown": 0
+      },
+      "owned_swap_peak_bytes": 0,
+      "cgroup_current_peak_gib": 580.4354972839355,
+      "cgroup_events_delta": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      }
+    },
+    "qwen0": {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "power_peak_w": 600.88,
+      "power_at_three_blackwell_peak_w": 599.55,
+      "temp_peak_c": 60.0,
+      "free_min_mib": 35610.0,
+      "util_nonzero_samples": 8,
+      "util_at_least50_samples": 8,
+      "throttle_active_samples": {
+        "clocks_event_reasons.active": 0,
+        "clocks_event_reasons.sw_power_cap": 8,
+        "clocks_event_reasons.hw_slowdown": 0,
+        "clocks_event_reasons.hw_thermal_slowdown": 0,
+        "clocks_event_reasons.hw_power_brake_slowdown": 0,
+        "clocks_event_reasons.sw_thermal_slowdown": 0
+      },
+      "owned_swap_peak_bytes": 0,
+      "cgroup_current_peak_gib": 6.028263092041016,
+      "cgroup_events_delta": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      }
+    },
+    "qwen1": {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "power_peak_w": 602.84,
+      "power_at_three_blackwell_peak_w": 602.84,
+      "temp_peak_c": 64.0,
+      "free_min_mib": 35613.0,
+      "util_nonzero_samples": 8,
+      "util_at_least50_samples": 8,
+      "throttle_active_samples": {
+        "clocks_event_reasons.active": 0,
+        "clocks_event_reasons.sw_power_cap": 0,
+        "clocks_event_reasons.hw_slowdown": 0,
+        "clocks_event_reasons.hw_thermal_slowdown": 0,
+        "clocks_event_reasons.hw_power_brake_slowdown": 0,
+        "clocks_event_reasons.sw_thermal_slowdown": 0
+      },
+      "owned_swap_peak_bytes": 0,
+      "cgroup_current_peak_gib": 5.766345977783203,
+      "cgroup_events_delta": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      }
+    },
+    "image": {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "power_peak_w": 298.24,
+      "power_at_three_blackwell_peak_w": 294.2,
+      "temp_peak_c": 63.0,
+      "free_min_mib": 15080.0,
+      "util_nonzero_samples": 28,
+      "util_at_least50_samples": 28,
+      "throttle_active_samples": {
+        "clocks_event_reasons.active": 0,
+        "clocks_event_reasons.sw_power_cap": 28,
+        "clocks_event_reasons.hw_slowdown": 0,
+        "clocks_event_reasons.hw_thermal_slowdown": 0,
+        "clocks_event_reasons.hw_power_brake_slowdown": 0,
+        "clocks_event_reasons.sw_thermal_slowdown": 0
+      },
+      "owned_swap_peak_bytes": 0,
+      "cgroup_current_peak_gib": 37.55815505981445,
+      "cgroup_events_delta": {
+        "low": 0,
+        "high": 0,
+        "max": 0,
+        "oom": 0,
+        "oom_kill": 0,
+        "oom_group_kill": 0
+      }
+    }
+  },
+  "requests": {
+    "flash": [
+      {
+        "body_sent_utc": "2026-09-27T01:07:09.375618+00:00",
+        "bytes": 259788,
+        "done": false,
+        "end_monotonic": 13884.859089625,
+        "end_utc": "2026-09-27T01:07:14.256820+00:00",
+        "error": "incomplete_stream",
+        "error_type": "AssertionError",
+        "finish_reason": null,
+        "first_delta_monotonic": null,
+        "headers_utc": "2026-09-27T01:07:09.652679+00:00",
+        "http_status": 200,
+        "index": 0,
+        "max_tokens": 768,
+        "owner_utc": "2026-09-27T01:07:09.333133+00:00",
+        "payload_sha256": "b6436d8f9d4f256efe148fe6c8c305ec9943640783a0c4e36546cd1b267a1a31",
+        "start_monotonic": 13879.977540717,
+        "start_utc": "2026-09-27T01:07:09.375267+00:00",
+        "status": "PARTIAL_OR_ERROR",
+        "usage": null
+      }
+    ],
+    "qwen0": [
+      {
+        "body_sent_utc": "2026-09-27T01:07:09.627980+00:00",
+        "bytes": 881673,
+        "end_monotonic": 13884.858367597,
+        "end_utc": "2026-09-27T01:07:14.256096+00:00",
+        "error": "transport_or_capture_error",
+        "error_type": "RemoteDisconnected",
+        "index": 0,
+        "max_tokens": 128,
+        "owner_utc": "2026-09-27T01:07:09.586413+00:00",
+        "payload_sha256": "57fab3e586103d9f7df4bb6402013745e5a1aefa4a282889ab402a495c4b4ef0",
+        "start_monotonic": 13880.22983358,
+        "start_utc": "2026-09-27T01:07:09.627561+00:00",
+        "status": "PARTIAL_OR_ERROR"
+      }
+    ],
+    "qwen1": [
+      {
+        "body_sent_utc": "2026-09-27T01:07:09.956985+00:00",
+        "bytes": 881489,
+        "end_monotonic": 13884.858894862,
+        "end_utc": "2026-09-27T01:07:14.256623+00:00",
+        "error": "transport_or_capture_error",
+        "error_type": "RemoteDisconnected",
+        "index": 0,
+        "max_tokens": 128,
+        "owner_utc": "2026-09-27T01:07:09.861423+00:00",
+        "payload_sha256": "1cd6547b3fa177cbe9b3cacd8a4ad0a790a5a4d8bfdba3a0f9dba3c63fd18268",
+        "start_monotonic": 13880.558865196,
+        "start_utc": "2026-09-27T01:07:09.956591+00:00",
+        "status": "PARTIAL_OR_ERROR"
+      }
+    ],
+    "image": [
+      {
+        "body_sent_utc": "2026-09-27T01:07:10.482746+00:00",
+        "bytes": 379,
+        "end_monotonic": 13884.858995503,
+        "end_utc": "2026-09-27T01:07:14.256725+00:00",
+        "error": "transport_or_capture_error",
+        "error_type": "RemoteDisconnected",
+        "index": 0,
+        "max_tokens": null,
+        "owner_utc": "2026-09-27T01:07:10.406052+00:00",
+        "payload_sha256": "b436fd7033caa9a38bb838690a1931af335c6eb1f5138cf9179a8a61a14ba745",
+        "start_monotonic": 13881.084690107,
+        "start_utc": "2026-09-27T01:07:10.482412+00:00",
+        "status": "PARTIAL_OR_ERROR"
+      }
+    ]
+  },
+  "host_available_min_gib": 565.3824729919434,
+  "overlap_sample_left_interval_proxy_s": {
+    "four_client_intervals": 4.002520976999222,
+    "four_gpu_util_nonzero": 7.002795979997245,
+    "qwen_image_util_at_least50_flash_at_least16core": 8.00288036999882
+  },
+  "overlap_limit": "Samples and CPU deltas show activity; not kernel simultaneity. Left-sample intervals omit gaps >2.5s; no HTTP-only compute claim.",
+  "cpu_package_power": "UNAVAILABLE: guest powercap and hwmon empty; no BMC device exposed",
+  "bmc_devices_exposed": [],
+  "native_log_capability": null,
+  "software_power_limit_not_failure": true,
+  "host_swap_pages_delta": {
+    "pswpin": 10,
+    "pswpout": 0
+  },
+  "final_status": "HANDOFF_FLASH_WATCHDOG_EXIT_RECOVERY_REQUIRED",
+  "five_minute_qualification": "NOT_QUALIFIED",
+  "corrected_pass": "PREPARED_NOT_DISPATCHED",
+  "flash_terminal": {
+    "utc": "2026-09-27T01:18:17.841458+00:00",
+    "session_id": "01a0e05f-fc9a-7823-9166-be7657008b7e",
+    "status": "HANDOFF_FLASH_WATCHDOG_EXIT_RECOVERY_REQUIRED",
+    "test_qualification": "NOT_QUALIFIED",
+    "first_owner_unit": "h011-fourway",
+    "first_request_barrier_utc": "2026-09-27T01:07:09.183692+00:00",
+    "clients_closed_utc": "2026-09-27T01:07:14.257Z",
+    "driver_terminal": true,
+    "flash_container_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+    "flash_finished_utc": "2026-09-27T01:13:56.927221436Z",
+    "flash_exit_code": 0,
+    "flash_oom_killed": false,
+    "flash_watchdog_timeout_seconds": 300,
+    "all_owned_work_terminal_by_flash_exit": true,
+    "all_four_ready": false,
+    "qwen0_qwen1_ada_same_containers_ready": true,
+    "corrected_pass_dispatched": false,
+    "corrected_fixtures_prepared": {
+      "flash": 1,
+      "qwen0": 12,
+      "qwen1": 12
+    },
+    "manual_runner": "NOT_STAGED",
+    "model_lifecycle_actions_performed": false,
+    "app_restore_authorized_by_worker1": false,
+    "next_owner": "Root fresh native directly authorized Flash recovery and corrected pass; W2 retains app ownership",
+    "no_1m_allocation_or_inference": true
+  }
+}

@@ -1,0 +1,1 @@
+Initial git diff --cached --check exited 2 on HELPER.patch blank unified-diff context lines (single-space context markers). The exact patch is retained unchanged. Check excluding this stored patch artifact passed; no source whitespace edit or test rerun needed.

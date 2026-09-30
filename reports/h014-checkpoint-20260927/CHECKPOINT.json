@@ -1,0 +1,306 @@
+{
+  "schema": 1,
+  "derivation": "Mechanical coordinator extraction of completed native read-only snapshot; no extra VM access",
+  "native_session": "01a0e1c9-b107-7b72-acc1-0ebd1877d92d",
+  "native_start_utc": "2026-09-27T07:34:46Z",
+  "native_exit_utc": "2026-09-27T07:38:46Z",
+  "native_exit_code": 143,
+  "native_exit_note": "Bounded CLI exit after completed snapshot; no inference/job interruption. Compact formatting performed from saved raw after exit.",
+  "snapshot_start_utc": "2026-09-27T07:37:18.777169+00:00",
+  "snapshot_end_utc": "2026-09-27T07:37:18.860101+00:00",
+  "raw_sha256": "27cbfd655ca75cf2137c30b3794e3efa24ec685abc22040176b055159276a2db",
+  "units": {
+    "exit_code": 0,
+    "stdout": "RuntimeMaxUSec=1h 30min\nMainPID=1726144\nResult=success\nExecMainStartTimestamp=Sun 2026-09-27 07:20:01 UTC\nExecMainExitTimestamp=\nExecMainCode=0\nExecMainStatus=0\nId=h014-pro-download-20260927.service\nLoadState=loaded\nActiveState=active\nSubState=running\nActiveEnterTimestamp=Sun 2026-09-27 07:20:01 UTC\nInvocationID=528af0f4f3eb4002b934eea0a06217b7\n\nRuntimeMaxUSec=infinity\nMainPID=0\nResult=success\nExecMainStartTimestamp=\nExecMainExitTimestamp=\nExecMainCode=0\nExecMainStatus=0\nId=h014-pro-build-20260927-r2.service\nLoadState=not-found\nActiveState=inactive\nSubState=dead\nActiveEnterTimestamp=\nInvocationID=\n",
+    "stderr": ""
+  },
+  "download_status": {
+    "kind": "download",
+    "status": "STARTED",
+    "pid": 1726144,
+    "ppid": 1,
+    "session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+    "started_utc": "2026-09-27T07:20:01.337918+00:00",
+    "updated_utc": "2026-09-27T07:35:31.238188+00:00",
+    "deadline_utc": "2026-09-27T08:50:01.337914+00:00",
+    "runtime_pin": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "model_revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+    "source_sha256": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c",
+    "bytes_present": 99413943712,
+    "verified_shards": 1,
+    "files": {
+      "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf": {
+        "bytes_present": 5948832,
+        "pid": 1726510,
+        "sha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+        "sha256_verified": true,
+        "size": 5948832,
+        "status": "VERIFIED"
+      },
+      "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf": {
+        "bytes_present": 28224913408,
+        "pid": 1726573,
+        "sha256": "83f2fb7024a823a3c06e80869320f22f0e1a86b9b39ae12ed42a19a94d1ac300",
+        "size": 48771368416,
+        "status": "DOWNLOADING"
+      },
+      "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf": {
+        "bytes_present": 27468406784,
+        "pid": 1726636,
+        "sha256": "fd8176686f491b3809ec4fd696fa5c6d295f123f66b8030dd762760f0e49eac2",
+        "size": 48771368448,
+        "status": "DOWNLOADING"
+      },
+      "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf": {
+        "bytes_present": 22534410240,
+        "pid": 1726699,
+        "sha256": "a4214ed488d89b58312c0b06a5722b5996a6bc63dcd1c60d881403e5412c19d8",
+        "size": 48771368448,
+        "status": "DOWNLOADING"
+      },
+      "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf": {
+        "bytes_present": 21180264448,
+        "pid": 1729944,
+        "sha256": "34a0be954b0a7f252d0bedebd84ace8fa7b840bf4b878206199499559b951a99",
+        "size": 48771368448,
+        "status": "DOWNLOADING"
+      }
+    },
+    "model_loaded": false
+  },
+  "model_bytes": {
+    "expected_files": 13,
+    "expected_bytes": 577669438240,
+    "files": [
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+        "final_bytes": 5948832,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": true,
+        "durable_sha256_verified": true,
+        "verified_bytes": 5948832
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 31454322688,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 30727491584,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 25046347776,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 23870898176,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00006-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00007-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00008-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00009-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00010-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00011-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00012-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MiMo-V2.6-Pro-RL-MXFP4-00013-of-00013.gguf",
+        "final_bytes": 0,
+        "partial_bytes": 0,
+        "existing_hash_receipt_matches": false,
+        "durable_sha256_verified": false,
+        "verified_bytes": 0
+      }
+    ],
+    "final_bytes": 5948832,
+    "partial_bytes": 111099060224,
+    "present_bytes": 111105009056,
+    "verified_bytes": 5948832,
+    "verified_shards": 1,
+    "verification": "Existing hash receipts and durable status only; no new hashing. File sizes are a bounded non-atomic observation."
+  },
+  "build_status": {
+    "kind": "build",
+    "status": "BUILT_CLI_ONLY_NOT_LOADED",
+    "phase": "CLI_IDENTITY_ONLY",
+    "pid": 1764333,
+    "ppid": 1,
+    "session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+    "started_utc": "2026-09-27T07:22:42.414313+00:00",
+    "updated_utc": "2026-09-27T07:27:48.927544+00:00",
+    "finished_utc": "2026-09-27T07:27:53.358982+00:00",
+    "deadline_utc": "2026-09-27T08:52:42.414309+00:00",
+    "runtime_pin": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "model_revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+    "source_sha256": "928ac3495f61349a8f5460ef72499e0baef803074460828f8c3265bef44fdf84",
+    "exit_code": 0,
+    "image_tag": "local/llama-cpp:h014-mimo-7ac59a6-cu132-sm120",
+    "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "model_loaded": false,
+    "child_pid": 1804543,
+    "image_identity": {
+      "Id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "RepoTags": [
+        "local/llama-cpp:h014-mimo-7ac59a6-cu132-sm120"
+      ],
+      "RepoDigests": [
+        "local/llama-cpp@sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e"
+      ],
+      "Created": "2026-09-27T07:27:44.977207664Z",
+      "Architecture": "amd64",
+      "Os": "linux"
+    },
+    "image_labels": {
+      "local.h014.cuda.architectures": "120a-real",
+      "maintainer": "NVIDIA CORPORATION <cudatools@nvidia.com>",
+      "org.opencontainers.image.revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "org.opencontainers.image.source": "https://github.com/ggml-org/llama.cpp",
+      "org.opencontainers.image.version": "h014-7ac59a6"
+    }
+  },
+  "image_iid": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+  "existing_cli_version": "0.00.000.262 I srv  llama_server: initializing ...\nversion: 0.5.0-dev (build 1, commit 7ac59a6)\nbuilt with GNU 13.3.0 for Linux x86_64\n",
+  "gpu": {
+    "exit_code": 0,
+    "stdout": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 35, Disabled, Disabled\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 35, Disabled, Disabled\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 40, Disabled, Disabled\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 36, Disabled, Disabled\n",
+    "stderr": ""
+  },
+  "fan_active": {
+    "exit_code": 0,
+    "stdout": "active\n",
+    "stderr": ""
+  },
+  "fan_state": {
+    "owned": {
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": false,
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": false,
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": false
+    },
+    "owner": "h013-nvml-fan-boost-v1",
+    "version": 1
+  },
+  "readiness": {
+    "qwen0": {
+      "port": 30002,
+      "route": "/v1/readiness",
+      "http_status": 200,
+      "no_inference": true,
+      "fields": {
+        "ready": true
+      }
+    },
+    "qwen1": {
+      "port": 30004,
+      "route": "/v1/readiness",
+      "http_status": 200,
+      "no_inference": true,
+      "fields": {
+        "ready": true
+      }
+    },
+    "flash": {
+      "port": 30010,
+      "route": "/v1/readiness",
+      "http_status": 200,
+      "no_inference": true,
+      "fields": {
+        "ready": true
+      }
+    },
+    "flash_info": {
+      "port": 30010,
+      "route": "/get_server_info",
+      "http_status": 200,
+      "no_inference": true,
+      "fields": {
+        "status": "ready",
+        "model_path": "/models",
+        "served_model_name": "glm-5.3-flash",
+        "context_length": 1048576,
+        "max_total_num_tokens": 1048576,
+        "max_total_tokens": 1048576,
+        "max_req_input_len": 1048570,
+        "max_running_requests": 1
+      }
+    },
+    "image": {
+      "port": 30006,
+      "route": "/health/ready",
+      "http_status": 200,
+      "no_inference": true,
+      "fields": {
+        "ready": true
+      }
+    }
+  },
+  "canonical_node_dto": {
+    "status": "not_read",
+    "reason": "No existing known route readily available in retained readback; no route invented; Sova app state not assessed."
+  },
+  "no_mutation": true
+}

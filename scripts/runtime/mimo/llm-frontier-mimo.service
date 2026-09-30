@@ -1,0 +1,22 @@
+[Unit]
+Description=Single supervised MiMo production owner
+Requires=docker.service llmmimo.slice
+After=llmmimo.slice docker.service llmctl-boot.service llm-frontier-flash.service
+RequiresMountsFor=/data /data/models-large
+BindsTo=data.mount data-models\x2dlarge.mount
+
+[Service]
+Type=simple
+User=root
+UMask=0077
+Restart=no
+ExecCondition=/usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.py check-selected --service mimo-v2.6-pro-rl
+ExecStart=/usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.py supervise
+ExecStopPost=/usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.py settle
+TimeoutStopSec=45
+KillMode=control-group
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

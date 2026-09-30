@@ -1,0 +1,121 @@
+{
+  "base": "685e234a14f071fbc456a5d91a21a286aa81ab01",
+  "priorDirectory": "reports/h017-source-prep01-20260927",
+  "files": {
+    "verify-built.sh": {
+      "priorSha256": "d17d99efd983b179454e9a50dcb7da6562b7e30446a3a20ef3d30067af3b2a39",
+      "sha256": "757f6d2910872ddbe81efbbce056d0dfaa42f627edc35a91d57214a0dbbe1465",
+      "sameBytes": false
+    },
+    "check-rollback.mjs": {
+      "priorSha256": "29f10fb1e95188561a0f38fa0ffa4ec4ec0b052e589df2023910a62056915d16",
+      "sha256": "a0b0adf3d0a39ed6809e566a629735db030ba3f2cb1fee2851c8dcf27e875abf",
+      "sameBytes": false
+    },
+    "build-and-stage.sh": {
+      "priorSha256": "efdfeb4e872931270a6feeafc6266be97a6f450cc99c6503b531e654814da161",
+      "sha256": "977c06b5eee25d2de5edc71988724303e999f89f201177132e787b5e79d207a9",
+      "sameBytes": false
+    },
+    "assemble-final.py": {
+      "priorSha256": "f9db3f8b1857008f8eb20bcc554b52fe849f36dc79527bf59b9aba7cab83c117",
+      "sha256": "f9db3f8b1857008f8eb20bcc554b52fe849f36dc79527bf59b9aba7cab83c117",
+      "sameBytes": true
+    },
+    "stage-qualified-config.mjs": {
+      "priorSha256": "44588e8b12b5264685914bb7a8a414f37b5c961b77d082ff18d0f8bdf9d8bf8a",
+      "sha256": "44588e8b12b5264685914bb7a8a414f37b5c961b77d082ff18d0f8bdf9d8bf8a",
+      "sameBytes": true
+    },
+    "rollback-profiles.mjs": {
+      "priorSha256": "298778fd014b946ccae1a0d3fc5587ce3a2153fb518674c52c5d9040bb7defe6",
+      "sha256": "ccff528937fa0f795af3be9084ed92788c007b3526c2bf8c4a8ad2c12a3706ac",
+      "sameBytes": false
+    },
+    "package-fixture.py": {
+      "priorSha256": "be0ce8fa1f9d44f11cfcf0dc5ba3fdf5884798383ad04097d2e08baf39019ae5",
+      "sha256": "be0ce8fa1f9d44f11cfcf0dc5ba3fdf5884798383ad04097d2e08baf39019ae5",
+      "sameBytes": true
+    },
+    "launch-app-acceptance.sh": {
+      "priorSha256": "4e8b9dfed72909f1a06bbf76fcbec1ae2ee9a969eef9b28ebfdccc448ccdebb7",
+      "sha256": "a3176d8dc1ea3dd87b9c535cc9afd8fe864e081348d81997a129e61e85632b9d",
+      "sameBytes": false
+    },
+    "activate-pair.sh": {
+      "priorSha256": "f5d3f0b618f520c2af200d26c3fd20e38dad0a84b645fb2a9c42b61291617ba2",
+      "sha256": "7295e8d140c7ae46c1608e0b52459863fb7b53e85fc2ea2bd1a5587592020b2a",
+      "sameBytes": false
+    },
+    "verify-image.py": {
+      "priorSha256": "76a7ad15590d518d3bc43a4a1d58fe46ed683eec36df31033521d5bc0cbbd8b8",
+      "sha256": "06ee73f0a21edd47c05cc2c979c2f87b219b8df900bc64ff0f1eacce218f1df5",
+      "sameBytes": false
+    },
+    "driver/supervise_test.py": {
+      "priorSha256": "1a6ac094f10d2fc4fb3460bf44fc767dd8d3b8eee1ae5424a8a4a650205d46c3",
+      "sha256": "bf5f85db8cb32254bea64a8c84bb875fed35d37d0e6bc181eaaf4c6b3c6db3ad",
+      "sameBytes": false
+    },
+    "driver/guards.test.mjs": {
+      "priorSha256": "008a617cd4acceefb267569936dfd17d96860d2fb300e0377d38c183c319d325",
+      "sha256": "008a617cd4acceefb267569936dfd17d96860d2fb300e0377d38c183c319d325",
+      "sameBytes": true
+    },
+    "driver/live.mjs": {
+      "priorSha256": "e4a01e16e313e0cb03eb321008aac8b412bfecdf8049b99280f02d9390cc9988",
+      "sha256": "e4a01e16e313e0cb03eb321008aac8b412bfecdf8049b99280f02d9390cc9988",
+      "sameBytes": true
+    },
+    "driver/preflight.test.mjs": {
+      "priorSha256": "c11c5e532e947e6a09e4430f0d56528abab02893024c6a3e6b127482dd95672b",
+      "sha256": "b38f7b5821ef7682a2e6a927ae108b27d95a5193a0a04c11fae2145ba7e2fbb8",
+      "sameBytes": false
+    },
+    "driver/preflight.mjs": {
+      "priorSha256": "a117dab8aa1014e530e1f55d001054ea7218e0f23d4d452cef21cb29aada000d",
+      "sha256": "629f1db2f9c6b45ab12ceb6ea8d9954e46d5b3d1181eb9ce21f488421d04e217",
+      "sameBytes": false
+    },
+    "driver/preflight-cli.mjs": {
+      "priorSha256": "35b5c060934d761304b17fab88900a66b1c52fde49604e40c159176d5acd7869",
+      "sha256": "35b5c060934d761304b17fab88900a66b1c52fde49604e40c159176d5acd7869",
+      "sameBytes": true
+    },
+    "driver/policy-a.txt": {
+      "priorSha256": "47215dd871e87e71f0ed313893057390961d5bdddcb758abda3d7bff0b342402",
+      "sha256": "47215dd871e87e71f0ed313893057390961d5bdddcb758abda3d7bff0b342402",
+      "sameBytes": true
+    },
+    "driver/check.mjs": {
+      "priorSha256": "c12a2494df9baf41ce212c1c92f4115e77db7fb9a10428871b16447a8f3149f2",
+      "sha256": "c12a2494df9baf41ce212c1c92f4115e77db7fb9a10428871b16447a8f3149f2",
+      "sameBytes": true
+    },
+    "driver/policy-b.txt": {
+      "priorSha256": "ede232123fd44f6a08de0540d6f3cf75e317b909aac182d39e0a52ca2448e230",
+      "sha256": "ede232123fd44f6a08de0540d6f3cf75e317b909aac182d39e0a52ca2448e230",
+      "sameBytes": true
+    },
+    "driver/prompts.json": {
+      "priorSha256": "fd84224f5f58e0f2ad92bbe62e2aa68bc0a414446cb811310e3efc8a7fa43128",
+      "sha256": "fd84224f5f58e0f2ad92bbe62e2aa68bc0a414446cb811310e3efc8a7fa43128",
+      "sameBytes": true
+    },
+    "driver/guards.mjs": {
+      "priorSha256": "f17e55ce8001cb69035690f8cbd4b9a5a2e64a3611eca04f2a3586b88867a8fa",
+      "sha256": "f17e55ce8001cb69035690f8cbd4b9a5a2e64a3611eca04f2a3586b88867a8fa",
+      "sameBytes": true
+    },
+    "driver/edge.mjs": {
+      "priorSha256": "c164ce0369bafd0d54eaf4f022152cc25d637b26b2610c6ff88f02dbf86a24f1",
+      "sha256": "c164ce0369bafd0d54eaf4f022152cc25d637b26b2610c6ff88f02dbf86a24f1",
+      "sameBytes": true
+    },
+    "driver/supervise.py": {
+      "priorSha256": "58baf2dd7e825251da395da876eedb8ae759635d8f10866cb0e003e905d1def5",
+      "sha256": "6483eed72f6a74be6846b997ba2ae9beb643d0de31167707d8cc69bfb98899b7",
+      "sameBytes": false
+    }
+  }
+}

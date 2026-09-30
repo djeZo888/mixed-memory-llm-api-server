@@ -1,0 +1,131 @@
+{
+  "schema": 1,
+  "baseCommit": "d2333dcc7effe0de73bb1cbc48c31264de39da05",
+  "scope": "source-only delivery seam; no deployment acceptance",
+  "overlays": [
+    {
+      "engines": [
+        "minimax",
+        "codex"
+      ],
+      "source": "ai-harness/tools/image/image-mcp.mjs",
+      "containerTarget": "/opt/ai-harness/tools/image/image-mcp.mjs",
+      "mountOptions": "ro,rprivate",
+      "sha256": "d23616513961b053d7da4e61b9f5ca29025b48cce6290d52e871a8e82fb51a66"
+    },
+    {
+      "engines": [
+        "minimax",
+        "codex"
+      ],
+      "source": "ai-harness/tools/image/image.mjs",
+      "containerTarget": "/opt/ai-harness/tools/image/image.mjs",
+      "mountOptions": "ro,rprivate",
+      "sha256": "fb15f15951448169a6d3e1ca97805ce1075aa668b495e6e032069437ef8f6f6b"
+    },
+    {
+      "engines": [
+        "minimax"
+      ],
+      "source": "ai-harness/skills/image/SKILL.md",
+      "containerTarget": "/opt/ai-harness/skills/image/SKILL.md",
+      "mountOptions": "ro,rprivate",
+      "sha256": "824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc"
+    },
+    {
+      "engines": [
+        "minimax"
+      ],
+      "source": "ai-harness/deploy/engine/configure-profile.mjs",
+      "containerTarget": "/opt/ai-harness/engine/configure-profile.mjs",
+      "mountOptions": "ro,rprivate",
+      "sha256": "e4042d2a544d1422e840f084e7c77caa84b67668da428d462e84f563358fdcfc"
+    }
+  ],
+  "launcherSupport": [
+    {
+      "source": "ai-harness/deploy/run-engine.sh",
+      "sha256": "4701ffb23befd9b771603d302fa52c40934d554b8209420d56341763f26da920"
+    },
+    {
+      "source": "ai-harness/deploy/run-codex.sh",
+      "sha256": "8c038ce337e6253efd0768e04544563a98673218d1072c64a40a2c1fb7e65a5f"
+    },
+    {
+      "source": "ai-harness/deploy/engine/validate-image-overlays.py",
+      "sha256": "a7ed412433c2ed942a950881a1c8497b2e711d33d5cb9758ac0b156f7364360f"
+    }
+  ],
+  "retainedSkillMigration": {
+    "predecessorCommit": "efde32a0bb2057d014d5168b3a613fc3dbccd801",
+    "predecessorSha256": "56449a3fa8055915f085333c85a295a3e1c2676489efff3a2a5428c71aad3c01",
+    "successorSha256": "824aba75ad5e27b2388c3c2264d8dd5fd8fd39cd86e4b1f6134b6e3a4a4c1dbc",
+    "privateBackup": "${MINIMAX_DATA_DIR}/.image-skill-h033-56449a3f.md"
+  },
+  "unchangedPins": {
+    "codexToolPolicy": "73e00d27521f880f61418e2f8d3334909f5c62e61c9351affbb82a5152d8a63c",
+    "qwenInstructions": "84260e8947aa0e146a75ebbea318ad33e3c99ea19b6c2bf09551c8c240892971",
+    "codexImageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "codexBakedPatchset": "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec",
+    "minimaxRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+    "minimaxPatchset": "38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf"
+  },
+  "nativeThreadId": "01a0ee4e-949c-7671-b2c1-93a0e00e1304",
+  "nativeExitReceipt": "wrapper writes actual Popen.wait exit after CLI returns; no premature exit claim",
+  "validation": {
+    "profileMigration": {
+      "command": "node --test ai-harness/deploy/engine/configure-profile-image.test.mjs",
+      "passed": 32,
+      "failed": 0,
+      "skipped": 0,
+      "exitCode": 0
+    },
+    "launcherCommands": [
+      {
+        "argv": [
+          "python3",
+          "ai-harness/deploy/tests/test-image-overlays.py"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python3",
+          "ai-harness/deploy/tests/test-run-engine.py",
+          "LauncherContract.test_acp_transport_mounts_and_environment_allowlist",
+          "LauncherContract.test_missing_and_duplicate_arguments_fail_before_podman",
+          "LauncherContract.test_gateway_and_session_are_required_and_restricted",
+          "LauncherContract.test_unsafe_mount_paths_rejected"
+        ],
+        "exitCode": 0
+      },
+      {
+        "argv": [
+          "python3",
+          "ai-harness/deploy/tests/test-run-codex.py",
+          "CodexLauncherContract.test_acp_transport_mounts_and_environment_allowlist",
+          "CodexLauncherContract.test_image_catalog_requires_trusted_launcher_flag",
+          "CodexLauncherContract.test_missing_and_duplicate_arguments_fail_before_podman",
+          "CodexLauncherContract.test_gateway_and_session_are_required_and_restricted",
+          "CodexLauncherContract.test_unsafe_mount_paths_rejected"
+        ],
+        "exitCode": 0
+      }
+    ],
+    "launcherPassed": 25,
+    "syntax": [
+      "bash -n ai-harness/deploy/run-engine.sh ai-harness/deploy/run-codex.sh",
+      "node --check ai-harness/deploy/engine/configure-profile.mjs"
+    ],
+    "privateReceipts": [
+      {
+        "name": "profile-image-tests.tap",
+        "sha256": "202a187635d9ac998f9a81fd5ad5c42e899f1335d44ebb5d4a064e584fe75298"
+      },
+      {
+        "name": "launcher-focused-receipt.json",
+        "sha256": "c36eca9ee522f19853e040d276b9871d3849bae9804f98a3f840e02c7118ac83"
+      }
+    ]
+  }
+}

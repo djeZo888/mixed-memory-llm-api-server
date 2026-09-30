@@ -1,0 +1,43 @@
+✔ native compact memento tools[] retains all five historical exec calls/results without declaring them (1.873875ms)
+✔ retired historical function and custom identity/type/bytes survive opposite current declarations (0.375875ms)
+✔ undeclared arbitrary historical custom input is retained without applying current patch grammar (0.102125ms)
+✔ qualified native namespace history survives tools[] using only the fixed existing namespace mapping (0.140833ms)
+✔ unknown namespace members and reserved/invalid historical identities remain rejected with tools[] (0.546333ms)
+✔ retired history still rejects duplicate calls/results, unmatched results and mismatched result types (0.312292ms)
+✔ historical presence never grants NEW generated tool permission when tools[] is empty (1.126292ms)
+✔ actual pinned native namespace history and returned calls preserve the tuple (2.409625ms)
+✔ namespace unknown forms, duplicate tuples and reserved-name collisions fail closed (0.867833ms)
+✔ actual Linux MCP namespace catalog and calls retain scoped identities (0.959625ms)
+✔ image generation and edit preserve namespace, call IDs and multi-turn tool results (0.654541ms)
+✔ aliases are stable, collision checked and bounded across the qualified catalogs (2.449ms)
+✔ captured image schema and raw function arguments survive alias response and reconstructed history unchanged (0.786291ms)
+✔ reviewed providers keep distinct budgets, selected-model identity and serial-tool semantics (2.200542ms)
+✔ verified plaintext reasoning belongs to its assistant content and parallel call IDs/results, never a later message (0.499167ms)
+✔ plaintext tool and final responses roundtrip reasoning_text without fabricating encrypted state or final phase (1.434834ms)
+✔ encrypted, summary-only, cross-provider, orphaned or interleaved reasoning fails closed (2.021709ms)
+✔ reasoning-only stop cannot claim completion with history that cannot continue (0.323375ms)
+✔ serial provider rejects a second emitted tool even while old paired batches remain valid history (0.257417ms)
+✔ safe diagnostics retain requested and effective tool policy without altering the stream (0.258584ms)
+✔ PDF-shaped final text is preserved; raw finish observation and canonical terminal are separate evidence (3.099334ms)
+✔ diagnostic metadata retains malformed image argument evidence without changing strict schema or raw bytes (1.432209ms)
+✔ observer exceptions do not change completed output and invalid streams never get a terminal diagnostic (0.86325ms)
+✔ real pinned macOS CLI first and second request preserve instructions and history (1.581833ms)
+✔ unsupported fields, media, encrypted state, arbitrary grammar and settings fail before dispatch (0.724125ms)
+✔ two unique calls/results and second turn preserve IDs and custom text exactly (0.680084ms)
+✔ SSE text Unicode deltas, ordered completion and actual usage (1.104792ms)
+✔ SSE distinct function and custom tool deltas reconstruct losslessly (0.457208ms)
+✔ truncated/no-usage/real unqualified reasoning never pretends terminal success (1.079834ms)
+✔ pinned patch grammar validates hunks and rejects arbitrary custom syntax (0.290625ms)
+✔ valid final delta+finish, trailing SSE whitespace and empty reasoning remain supported (0.53375ms)
+✔ interleaved parallel tool/result ordering rejects before generating invalid chat (0.27975ms)
+✔ all actual native five-request tool/edit/read/continuation captures translate without dropping results (1.011208ms)
+✔ tool completion waits for native HTTP drain, not merely an SSE DONE marker (0.384709ms)
+✔ Qwen leading instruction merge preserves ordered role/content and preserves later policy positions (0.229875ms)
+ℹ tests 35
+ℹ suites 0
+ℹ pass 35
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 161.026375

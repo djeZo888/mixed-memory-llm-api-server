@@ -1,0 +1,35 @@
+{
+  "source_url": "https://raw.githubusercontent.com/scikit-image/scikit-image/v0.25.2/skimage/data/astronaut.png",
+  "source_documentation": "https://scikit-image.org/docs/stable/api/skimage.data.html#skimage.data.astronaut",
+  "attribution": "NASA Great Images / photograph of astronaut Eileen Collins, distributed as scikit-image astronaut sample",
+  "license": "Public domain / no known copyright restrictions, per official scikit-image documentation",
+  "original": {
+    "file": "astronaut-original.png",
+    "sha256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5",
+    "bytes": 791555,
+    "size": [
+      512,
+      512
+    ],
+    "mode": "RGB"
+  },
+  "working_copy": {
+    "file": "astronaut-1024.png",
+    "sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+    "size": [
+      1024,
+      1024
+    ],
+    "mode": "RGB"
+  },
+  "preparation": {
+    "authorization": "ROOT-D05-D06-REVIEW.md and Coordinator response to D05-FIXTURE-NEEDED.md; explicit user continuation",
+    "operation": "uniform2x LANCZOS resampling, original aspect1:1 preserved; no crop or padding",
+    "pillow_version": "12.3.0",
+    "original_preserved": true,
+    "product_upload_policy_changed": false,
+    "model_generation_calls": 0
+  },
+  "provenance": "Public natural photograph, not a model-generated reference; no model generation seed",
+  "utc": "2026-09-23T11:16:05.570003+00:00"
+}

@@ -1,0 +1,29 @@
+{
+  "utc": "2026-09-27T01:18:17.841458+00:00",
+  "session_id": "01a0e05f-fc9a-7823-9166-be7657008b7e",
+  "status": "HANDOFF_FLASH_WATCHDOG_EXIT_RECOVERY_REQUIRED",
+  "test_qualification": "NOT_QUALIFIED",
+  "first_owner_unit": "h011-fourway",
+  "first_request_barrier_utc": "2026-09-27T01:07:09.183692+00:00",
+  "clients_closed_utc": "2026-09-27T01:07:14.257Z",
+  "driver_terminal": true,
+  "flash_container_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+  "flash_finished_utc": "2026-09-27T01:13:56.927221436Z",
+  "flash_exit_code": 0,
+  "flash_oom_killed": false,
+  "flash_watchdog_timeout_seconds": 300,
+  "all_owned_work_terminal_by_flash_exit": true,
+  "all_four_ready": false,
+  "qwen0_qwen1_ada_same_containers_ready": true,
+  "corrected_pass_dispatched": false,
+  "corrected_fixtures_prepared": {
+    "flash": 1,
+    "qwen0": 12,
+    "qwen1": 12
+  },
+  "manual_runner": "NOT_STAGED",
+  "model_lifecycle_actions_performed": false,
+  "app_restore_authorized_by_worker1": false,
+  "next_owner": "Root fresh native directly authorized Flash recovery and corrected pass; W2 retains app ownership",
+  "no_1m_allocation_or_inference": true
+}

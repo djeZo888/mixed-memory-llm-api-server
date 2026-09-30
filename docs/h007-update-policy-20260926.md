@@ -1,0 +1,31 @@
+# Sova automatic update policy — 2026-09-26
+
+The user-authorized H007 policy supersedes H006's update-enabled setting. All 13 approved changes are deployed. Policy readback passes on both hosts. An APT update-unit execution during timer suppression is retained as a failed historical no-new-transaction check; it settled naturally with package-state and installation-log hashes unchanged. Root accepted the final disabled-update state with this explicit exception, not a transaction-free activation. No hostname or service name was changed. Controlled maintenance and snapshots remain **TODO**, not implemented.
+
+## Installed scope
+
+Both hosts have `/etc/apt/apt.conf.d/99zz-sova-disable-auto-updates`, root:root0644, exactly matching [the deployed template](../configs/host-recovery/sova-disable-auto-updates.conf), SHA256 `8434b093177095dff31721799a9a7d06941e5a140210f6fb1035557afd52bef4`. Effective APT values: `Update-Package-Lists=0`, `Download-Upgradeable-Packages=0`, `Unattended-Upgrade=0`, `InstallOnShutdown=false`, `Automatic-Reboot=false` (first three under APT::Periodic; last two under Unattended-Upgrade).
+
+Both hosts' system timers `apt-daily.timer`, `apt-daily-upgrade.timer`, `fwupd-refresh.timer`, and `update-notifier-download.timer` are disabled/stopped and persistently masked at `/etc/systemd/system/<timer> -> /dev/null`. ai-harness additionally masks system `podman-auto-update.timer`. Linked services remain unmasked and shutdown waiters remain alive. No worker was stopped. Existing needrestart/NVIDIA/APT housekeeping bytes and unrelated housekeeping/reporting timer states are preserved.
+
+`snap refresh --hold` without snap names returned “Auto-refresh of all snaps held indefinitely”; supported `snap get system refresh.hold` returned `forever` on each host. Each added exactly one completed `hold-snap` change; no Snap refresh/install change appeared. Socket activation was expected and observed; snapd later became inactive itself. No snapd restart/stop or state.json edit occurred.
+
+## Acceptance exception and preservation
+
+Fresh baseline and immediate mutation check found no package transaction. ai-vm `apt-daily.service` began at12:39:46 UTC during the first timer suppression, before the new APT snippet was installed at12:39:48. Readback observed apt-get holding `/var/lib/apt/lists/lock`. The task did not issue apt update/install/upgrade or kill/stop that worker. At12:41:09 the worker and lock were gone; PackageKit remained. Package database, dpkg log and APT history hashes were unchanged. The unit is configured to run `apt.systemd.daily update`, and the lists lock is consistent with metadata work; the actual apt-get arguments were not captured. Exact scheduling cause and network activity are not established; **do not claim a transaction-free activation**. No automatic rollback occurred.
+
+Both boot IDs, relevant AI/harness invocations/PIDs/start identities, all three model container ID/image/PID/start identities, two480000 contexts, image warm run and three JSON receipt hashes were preserved. Text/image/control readiness and current status passed; harness dispatch was ready with active_requests0/queue_depth0. A wrong-Host chat probe was403 both before/after; configured-Host readback was200. Native model counters and harness activity remain unknown. No inference, weight rehash, model/runtime/GPU/container change, AI/harness service restart or database-content read was performed.
+
+## Existing unscheduled paths and manual maintenance
+
+Discovery found no installed snaps/Livepatch, Watchtower/Diun, scheduled PackageKit client/offline transaction, or extra cron updater. systemd-sysupdate timers were disabled without definitions; harness user Podman timer was disabled with no container opt-in labels. Ubuntu Pro reporting and housekeeping were retained. Sova ACP launch uses its validated local engine image with `--pull=never`; prompt configuration autoUpdate is false. Interactive Codex/TUI behavior, arbitrary external schedulers and future installs are outside this evidence. Discovery reports survived, but its native launcher timed out at600s with exit143; internal task_exit0 was not native completion.
+
+Explicit `apt update`, `apt upgrade/install`, `unattended-upgrade`, `snap refresh` (global or named), `fwupdmgr refresh/update`, package-data-downloader and manual Podman operations remain available; none was exercised. Timer masks do not mask their linked service commands. Maintenance approval, scheduling and snapshots must be designed separately.
+
+## Protected backups and restore
+
+ai-vm: `/data/backups/h007-sova-auto-updates-20260926`, manifest SHA256 `42297a7d34cb0973e2c26cac34307e2cd64094e23cad37435c091b561330ca13`. ai-harness: `/var/backups/h007-sova-auto-updates-20260926`, manifest SHA256 `52fa8facae0717505e56f5bd1e14b885ae727d2c73cd8a0a795a6bdeed312c8b`. Directories root:root0700; PRIOR.json, RESTORE.txt and MANIFEST.json root:root0600. Backups contain exact APT absence, timer links/states and prior Snap hold/config; no chat database or model state copy. ai-vm used verified installed registered-storage/root guards and canonical lifecycle lease; harness used protected nonsymlink ancestry and free-space checks. The existing ai-vm less-than6GiB root-space warning remains.
+
+Restoration needs reviewed maintenance authority: compare deployed hash/masks against evidence, remove the exact new APT snippet (previously absent), unmask only task-created timer masks and restore recorded symlinks/enablement/active states. **Starting restored persistent timers may run overdue updates.** Never stop linked workers. Use supported global `snap refresh --unhold`, then restore the prior timed `refresh.hold` recorded in PRIOR.json with `snap set system refresh.hold=<captured>` (both prior values were expired); verify CLI semantics and readback first. Never replace state.json or restore journals/queues/sessions/model state. Preserve evidence; no automatic rollback.
+
+See [sanitized summary](../reports/h007-update-policy-20260926/summary.json). The worker delivered the exact template and evidence for reviewed Git integration. APT policy should precede timer metadata reloads in future procedures; that is an ordering improvement, not proof that every scheduling race can be prevented.

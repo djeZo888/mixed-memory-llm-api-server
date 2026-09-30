@@ -1,0 +1,58 @@
+{
+  "host_addresses": [
+    "10.156.100.61",
+    "127.0.0.1",
+    "2a00:ee2:2700:2c00:be24:11ff:fe6f:d908",
+    "::1",
+    "fe80::be24:11ff:fe6f:d908"
+  ],
+  "route_derivation": {
+    "10.156.100.61": [
+      {
+        "type": "local",
+        "dst": "10.156.100.61",
+        "dev": "lo",
+        "prefsrc": "10.156.100.61",
+        "flags": [],
+        "uid": 1000,
+        "cache": [
+          "local"
+        ]
+      }
+    ],
+    "127.0.0.1": [
+      {
+        "type": "local",
+        "dst": "127.0.0.1",
+        "dev": "lo",
+        "prefsrc": "127.0.0.1",
+        "flags": [],
+        "uid": 1000,
+        "cache": [
+          "local"
+        ]
+      }
+    ],
+    "10.156.100.60": [
+      {
+        "dst": "10.156.100.60",
+        "dev": "enp6s18",
+        "prefsrc": "10.156.100.61",
+        "flags": [],
+        "uid": 1000,
+        "cache": []
+      }
+    ]
+  },
+  "source_template_sha256": "d078bf243a68df9214401420224fdb15df0fc991da2b483bd060ccfe67a22ac3",
+  "staged_site_sha256": "5b7242929b16a7e1b9980b45366594496226b147dd81d15c0322a56b0bcc91d5",
+  "staged_unit_sha256": "f8cf9f43a0e80ad818ee250370fb95a2693436794f55611c267c88ef21533cb5",
+  "site_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/ai-harness.conf.staged",
+  "unit_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/ai-harness.service",
+  "unit_verify": "PASS",
+  "client_policy": "existing listener and allow all; own peer addresses denied only for issuance",
+  "forwarded_headers_trusted": false,
+  "engine_network": "reviewed slirp4netns:allow_host_loopback=true; host loopback gateway10.0.2.2",
+  "engine_egress_direct_observation": "PENDING receipt/window release; actual engine acceptance deferred, no private Worker2 engine touched",
+  "activated": false
+}

@@ -1,0 +1,17 @@
+{
+  "utc": "20260923T115442Z",
+  "root_backup": "/var/backups/ai-harness-H003-DEPLOY-20260923/20260923T115442Z",
+  "prior_site_sha256": "2cc30be5e59d8d0c05488eec896e989144bc67e377571f10908d6695ca855286",
+  "prior_enabled_site_target": "/etc/nginx/sites-available/ai-harness.conf",
+  "key_path": "/home/user/.config/ai-harness/browser-approval-key",
+  "key_reused": false,
+  "key_uid": 1000,
+  "key_mode": "0600",
+  "include_path": "/etc/ai-harness/image-approval-proxy.conf",
+  "include_reused": false,
+  "include_owner": "root:root",
+  "include_mode": "0600",
+  "separate_from_inference_key": true,
+  "header_scope": "staged approval-token location only; existing nginx site unchanged",
+  "nginx_reloaded": false
+}

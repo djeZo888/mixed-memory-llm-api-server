@@ -1,0 +1,1313 @@
+
+### tools/server/server.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server.cpp
+SHA256 7b093559250403e1f8bfbc53848ff2ffbbbf89f0637085761f858c732e9f64e5
+275:     ctx_http.post("/v1/rerank",                ex_wrapper(routes.post_rerank));
+276:     ctx_http.post("/v1/reranking",             ex_wrapper(routes.post_rerank));
+277:     ctx_http.post("/tokenize",                 ex_wrapper(routes.post_tokenize));
+278:     ctx_http.post("/detokenize",               ex_wrapper(routes.post_detokenize));
+279:     ctx_http.post("/apply-template",           ex_wrapper(routes.post_apply_template));
+280:     // token counting
+281:     ctx_http.post("/chat/completions/input_tokens",    ex_wrapper(routes.post_chat_completions_tok));
+282:     ctx_http.post("/v1/chat/completions/input_tokens", ex_wrapper(routes.post_chat_completions_tok));
+283:     ctx_http.post("/responses/input_tokens",           ex_wrapper(routes.post_responses_tok_oai));
+
+### tools/server/server-context.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-context.cpp
+SHA256 fdab7f863c6724d4afcf5c254e7350c64a8f6e6b39f132f675a93b41c037045e
+538:         GGML_ASSERT(add_ok && "batch must be large enough to hold the sampled and draft tokens");
+539:
+540:         prompt.tokens.push_back(sampled);
+1818:         slot.n_predict_max = task.params.n_predict != -1 ? task.params.n_predict : params_base.n_predict;
+1885:         // if context shifting is disabled, make sure that we don't run out of context
+1886:         if (!params_base.ctx_shift && slot.prompt.n_tokens() + 1 >= slot.n_ctx) {
+1887:             slot.truncated      = true;
+1888:             slot.stop           = STOP_TYPE_LIMIT;
+1889:             slot.has_next_token = false;
+1890:
+1891:             SLT_DBG(slot, "stopped due to running out of context capacity, prompt.n_tokens() = %d, task.n_tokens = %d, n_gen = %d, n_ctx = %d\n",
+1892:                     slot.prompt.n_tokens(), slot.task->n_tokens(), (int) slot.stats.n_gen, slot.n_ctx);
+1893:         }
+1894:
+1895:         // check the limits
+1896:         if (slot.stats.n_gen > 0 && slot.has_next_token && !slot.has_budget()) {
+1897:             slot.stop           = STOP_TYPE_LIMIT;
+1898:             slot.has_next_token = false;
+1899:
+1900:             SLT_DBG(slot, "stopped by limit, n_gen = %d, n_predict = %d\n", (int) slot.stats.n_gen, slot.task->params.n_predict);
+1952:         if (llama_vocab_is_eog(vocab, result.tok)) {
+1953:             slot.stop           = STOP_TYPE_EOS;
+1954:             slot.has_next_token = false;
+1955:
+1956:             SLT_DBG(slot, "%s", "stopped by EOS\n");
+2448:                                     slot.prompt_clear();
+2449:                                 }
+2450:                             }
+2451:                         }
+2452:                     }
+2453:                 } break;
+2454:             case SERVER_TASK_TYPE_CANCEL:
+2455:                 {
+2456:                     // release slot linked with the task id
+2457:                     for (auto & slot : slots) {
+2458:                         if (slot.task && slot.task->id == task.id_target) {
+2459:                             slot.release();
+2460:                             break;
+2461:                         }
+2462:                     }
+2463:                 } break;
+2479:                     if (task.params.control_action == "reasoning_end") {
+2480:                         // the budget sampler only exists when reasoning control was armed
+2481:                         if (!slot->task->params.sampling.reasoning_control) {
+2482:                             res->success = false;
+2483:                             res->message = "reasoning control not enabled for this completion";
+2484:                             queue_results.send(std::move(res));
+2485:                             break;
+2486:                         }
+2487:                         // act on the live slot mid generation, never defer
+2488:                         common_sampler_reasoning_budget_force(slot->smpl.get());
+2489:                         res->success = true;
+2490:                     } else {
+2491:                         res->success = false;
+2492:                         res->message = "unknown control action";
+2493:                     }
+2911:         // TODO: simplify and improve
+2912:         iterate(slots, [&](server_slot & slot) {
+2913:             if (slot.state == SLOT_STATE_GENERATING && slot.prompt.n_tokens() + 1 >= slot.n_ctx) {
+2914:                 if (!params_base.ctx_shift) {
+2915:                     // this check is redundant (for good)
+2916:                     // we should never get here, because generation should already stopped in process_token()
+2917:                     send_error(slot, "context shift is disabled", ERROR_TYPE_SERVER);
+2918:                     slot.release();
+2919:                     return;
+2942:
+2943:                 const int n_left    = slot.prompt.n_tokens() - n_keep;
+2944:                 int       n_discard = slot.task->params.n_discard ? slot.task->params.n_discard : (n_left / 2);
+2945:
+2946:                 // ref: https://github.com/ggml-org/llama.cpp/pull/24786
+2947:                 n_discard = std::clamp(n_discard, 0, std::max(0, n_left - 1));
+2948:
+2949:                 SLT_WRN(slot, "slot context shift, n_keep = %d, n_left = %d, n_discard = %d\n", n_keep, n_left, n_discard);
+2950:
+2951:                 slot.mem.seq_rm (slot.id, n_keep            , n_keep + n_discard);
+2952:                 slot.mem.seq_add(slot.id, n_keep + n_discard, slot.prompt.tokens.pos_next(), -n_discard);
+2953:
+3206:                         } else {
+3207:                             if (slot.task->n_tokens() >= slot.n_ctx) {
+3208:                                 send_error(slot,
+3209:                                            string_format("request (%d tokens) exceeds the available context size (%d "
+3210:                                                          "tokens), try increasing it",
+3211:                                                          slot.task->n_tokens(), slot.n_ctx),
+3212:                                            ERROR_TYPE_EXCEED_CONTEXT_SIZE);
+3213:                                 slot.release();
+3214:                                 return;
+3866:             slot.stats.n_gen += 1;
+3867:
+3868:             if (slot.stats.n_gen == 1) {
+3869:                 slot.stats.update_prompt_last();
+3885:             if (!process_token(result, slot)) {
+3886:                 // release slot because of stop condition
+3887:                 slot.print_timings();
+3888:                 send_final_response(slot);
+3889:                 slot.release();
+4026:     // context size of a single slot, capped by --kv-unified-per-slot and by the training context of the model
+4027:     int n_ctx_slot() const {
+4028:         int res = llama_n_ctx_seq(ctx_tgt);
+4029:
+4030:         if (params_base.kv_unified_per_slot > 0) {
+4031:             res = std::min(res, params_base.kv_unified_per_slot);
+4032:         }
+4033:
+4034:         return std::min(res, llama_model_n_ctx_train(model_tgt));
+4035:     }
+4265:     auto res = create_response();
+4266:     auto completion_id = gen_chatcmplid();
+4267:     auto & rd = res->rd;
+4268:     auto & params = this->params;
+4269:
+4291:         // process prompt
+4292:         std::vector<server_tokens> inputs;
+4293:
+4294:         if (res_type != TASK_RESPONSE_TYPE_NONE && ctx_server.mctx != nullptr) {
+4295:             // This is the case used by OAI compatible chat path with MTMD. TODO It can be moved to the path below.
+4296:             inputs.push_back(process_mtmd_prompt(ctx_server.mctx, prompt.get<std::string>(), files, ctx_server.init_opt));
+4297:         } else {
+4298:             // Everything else, including multimodal completions.
+4299:             inputs = tokenize_input_prompts(ctx_server.vocab, ctx_server.mctx, prompt, true, true, ctx_server.init_opt);
+4300:         }
+4326:             // OAI-compat
+4327:             task.params.res_type          = res_type;
+4328:             task.params.oaicompat_cmpl_id = completion_id;
+4329:             task.params.oaicompat_model   = meta->model_name;
+4443:                 server_response_reader & rd = res_this->rd;
+4444:
+4445:                 // check if there is more data
+4446:                 if (!rd.has_next()) {
+4447:                     switch (res_type) {
+4448:                         case TASK_RESPONSE_TYPE_NONE:
+4449:                         case TASK_RESPONSE_TYPE_OAI_RESP:
+4450:                         case TASK_RESPONSE_TYPE_ANTHROPIC:
+4451:                             output = "";
+4452:                             break;
+4453:
+4454:                         default:
+4455:                             output = "data: [DONE]\n\n";
+4456:                             break;
+4457:                     }
+4458:                     SRV_DBG("%s", "all results received, terminating stream\n");
+4459:                     return false; // no more data, terminate
+4604:     json default_generation_settings_for_props = json {
+4605:         { "params", tparams.to_json(true) },
+4606:         { "n_ctx",  meta.slot_n_ctx },
+4607:     };
+4608:
+4609:     std::string tmpl_default = common_chat_templates_source(meta.chat_params.tmpls.get(), "");
+4610:     std::string tmpl_tools   = common_chat_templates_source(meta.chat_params.tmpls.get(), "tool_use");
+4611:
+4612:     json props = {
+4613:         { "default_generation_settings", default_generation_settings_for_props },
+4614:         { "total_slots",                 params.n_parallel },
+4615:         { "model_alias",                 meta.model_name },
+4616:         { "model_ftype",                 meta.model_ftype },
+4617:         { "model_path",                  meta.model_path },
+4629:         { "chat_template",               tmpl_default },
+4630:         { "chat_template_caps",          meta.chat_template_caps },
+4631:         { "bos_token",                   meta.bos_token_str },
+4632:         { "eos_token",                   meta.eos_token_str },
+4633:         { "build_info",                  meta.build_info },
+4634:         { "is_sleeping",                 is_sleeping },
+4635:         { "cors_proxy_enabled",          params.ui_mcp_proxy },
+4654:     this->get_health = [this](const server_http_req &) {
+4655:         // error and loading states are handled by middleware
+4656:         auto res = create_response(true);
+4657:
+4658:         // this endpoint can be accessed during sleeping
+4659:         // the next LOC is to avoid someone accidentally use ctx_server
+4660:         bool ctx_server; // do NOT delete this line
+4661:         GGML_UNUSED(ctx_server);
+4662:
+4663:         res->ok({{"status", "ok"}});
+4664:         return res;
+4930:     this->post_chat_completions = [this](const server_http_req & req) {
+4931:         auto res = create_response();
+4932:         std::vector<raw_buffer> files;
+4933:         json body = json::parse(req.body);
+4934:         json body_parsed = oaicompat_chat_params_parse(
+4935:             body,
+4936:             meta->chat_params,
+4937:             files);
+4938:         return handle_completions_impl(
+4939:             req,
+4940:             SERVER_TASK_TYPE_COMPLETION,
+4941:             body_parsed,
+4942:             files,
+4943:             TASK_RESPONSE_TYPE_OAI_CHAT);
+4944:     };
+4945:
+4946:     this->post_chat_completions_tok = [this](const server_http_req & req) {
+4947:         return handle_count_tokens(req, TASK_RESPONSE_TYPE_OAI_CHAT);
+4948:     };
+5060:     this->post_apply_template = [this](const server_http_req & req) {
+5061:         auto res = create_response();
+5062:         std::vector<raw_buffer> files; // dummy, unused
+5063:         json body = json::parse(req.body);
+5064:         json data = oaicompat_chat_params_parse(
+5065:             body,
+5066:             meta->chat_params,
+5067:             files);
+5068:         res->ok({{ "prompt", std::move(data.at("prompt")) }});
+5069:         return res;
+5084:     this->post_tokenize = [this](const server_http_req & req) {
+5085:         auto res = create_response();
+5086:         const json body = json::parse(req.body);
+5087:         json tokens_response = json::array();
+5088:         if (body.count("content") != 0) {
+5089:             const bool add_special = json_value(body, "add_special", false);
+5090:             const bool parse_special = json_value(body, "parse_special", true);
+5091:             const bool with_pieces = json_value(body, "with_pieces", false);
+5092:
+5093:             llama_tokens tokens = tokenize_mixed(ctx_server.vocab, body.at("content"), add_special, parse_special);
+5513:     json body_parsed = oaicompat_chat_params_parse(
+5514:             body,
+5515:             meta->chat_params,
+5516:             files);
+5517:     json prompt = body_parsed.at("prompt");
+5518:     // SRV_DBG("prompt = %s\n", prompt.dump().c_str());
+5519:
+5520:     // TODO @ngxson : refactor this code block, move this to server-common and reuse it in other places
+5521:     size_t n_tokens;
+5522:     if (ctx_server.mctx != nullptr) {
+5523:         if (!prompt.is_string()) {
+5524:             throw std::runtime_error("for mtmd, input prompt must be a string.");
+5525:         }
+5526:         n_tokens = process_mtmd_prompt(ctx_server.mctx, prompt.get<std::string>(), files, ctx_server.init_opt, true).size();
+5527:     } else {
+5528:         n_tokens = tokenize_mixed(ctx_server.vocab, prompt, true, true).size();
+5529:     }
+5530:
+5531:     json response = {{"input_tokens", static_cast<int64_t>(n_tokens)}};
+5532:     if (is_oai) {
+5533:         response["object"] = "response.input_tokens";
+5534:     }
+5535:     res->ok(response);
+
+### tools/server/server-common.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-common.cpp
+SHA256 7423d66fb1b6d8fe8d18812526cc73808017a7181df3e47c67f356cedd321113
+867: llama_tokens tokenize_mixed(const llama_vocab * vocab, const json & json_prompt, bool add_special, bool parse_special) {
+868:     // If `add_bos` is true, we only add BOS, when json_prompt is a string,
+869:     // or the first element of the json_prompt array is a string.
+870:     llama_tokens prompt_tokens;
+871:
+872:     if (json_prompt.is_array()) {
+873:         bool first = true;
+874:         for (const auto & p : json_prompt) {
+875:             if (p.is_string()) {
+876:                 auto s = p.template get<std::string>();
+877:
+878:                 llama_tokens p;
+879:                 if (first) {
+880:                     p = common_tokenize(vocab, s, add_special, parse_special);
+895:     } else {
+896:         auto s = json_prompt.template get<std::string>();
+897:         prompt_tokens = common_tokenize(vocab, s, add_special, parse_special);
+898:     }
+899:
+900:     return prompt_tokens;
+981: static server_tokens tokenize_input_subprompt(const llama_vocab * vocab, mtmd_context * mctx, const json & json_prompt, bool add_special, bool parse_special, const mtmd_helper_init_opt & init_opt) {
+982:     constexpr char JSON_STRING_PROMPT_KEY[] = "prompt_string";
+983:     constexpr char JSON_MTMD_DATA_KEY[] = "multimodal_data";
+984:     const bool has_mtmd = mctx != nullptr;
+985:     if (json_prompt.is_string() || json_is_array_of_mixed_numbers_strings(json_prompt)) {
+986:         // string or mixed
+987:         llama_tokens tmp = tokenize_mixed(vocab, json_prompt, add_special, parse_special);
+988:         return server_tokens(tmp, false);
+1158:     auto tools = json_value(body, "tools", json());
+1159:     auto has_tools = tools.is_array() && !tools.empty();
+1160:     auto stream = json_value(body, "stream", false);
+1161:     auto tool_choice = json_value(body, "tool_choice", std::string("auto"));
+1162:
+1163:     if (!opt.use_jinja) {
+1164:         if (has_tools) {
+1165:             throw std::runtime_error("tools param requires --jinja flag");
+1166:         }
+1167:         if (tool_choice != "auto") {
+1168:             throw std::runtime_error("tool_choice param requires --jinja flag");
+1169:         }
+1282:             } else if (type != "text") {
+1283:                 throw std::invalid_argument("unsupported content[].type");
+1284:             }
+1285:         }
+1286:     }
+1287:
+1288:     auto caps = common_chat_templates_get_caps(opt.tmpls.get());
+1289:
+1290:     common_chat_templates_inputs inputs;
+1291:     inputs.messages               = common_chat_msgs_parse_oaicompat(messages);
+1292:     inputs.tools                  = common_chat_tools_parse_oaicompat(tools);
+1293:     inputs.tool_choice            = common_chat_tool_choice_parse_oaicompat(tool_choice);
+1294:     inputs.json_schema            = json_schema.is_null() ? "" : json_schema.dump();
+1295:     inputs.grammar                = grammar;
+1296:     inputs.use_jinja              = opt.use_jinja;
+1297:     inputs.parallel_tool_calls    = json_value(body, "parallel_tool_calls", caps["supports_parallel_tool_calls"]);
+1298:     inputs.add_generation_prompt  = json_value(body, "add_generation_prompt", true);
+1299:     inputs.continue_final_message = body.contains("continue_final_message") ?
+1302:     if (inputs.continue_final_message == COMMON_CHAT_CONTINUATION_NONE && opt.prefill_assistant
+1303:         && !inputs.messages.empty() && inputs.messages.back().role == "assistant") {
+1304:         if (inputs.messages.size() >= 2 && inputs.messages[inputs.messages.size() - 2].role == "assistant") {
+1305:             throw std::invalid_argument("Cannot have 2 or more assistant messages at the end of the list.");
+1306:         }
+1307:         inputs.continue_final_message = COMMON_CHAT_CONTINUATION_AUTO;
+1308:         inputs.add_generation_prompt  = false;
+1309:     }
+1310:     if (inputs.continue_final_message != COMMON_CHAT_CONTINUATION_NONE && inputs.add_generation_prompt) {
+1311:         throw std::invalid_argument("Cannot set both add_generation_prompt and continue_final_message to true.");
+1312:     }
+1313:     if (inputs.continue_final_message != COMMON_CHAT_CONTINUATION_NONE
+1314:         && !inputs.messages.empty()
+1315:         && inputs.messages.back().role == "assistant"
+1316:         && !inputs.messages.back().tool_calls.empty()) {
+1317:         throw std::invalid_argument("Cannot continue an assistant message that contains tool calls.");
+1319:     inputs.reasoning_format = opt.reasoning_format;
+1320:     if (body.contains("reasoning_format")) {
+1321:         inputs.reasoning_format = common_reasoning_format_from_name(body.at("reasoning_format").get<std::string>());
+1322:     }
+1323:     inputs.enable_thinking = opt.enable_thinking;
+1324:     if (!inputs.tools.empty() && inputs.tool_choice != COMMON_CHAT_TOOL_CHOICE_NONE) {
+1325:         if (body.contains("grammar")) {
+1326:             throw std::invalid_argument("Cannot use custom grammar constraints with tools.");
+1327:         }
+1328:         llama_params["parse_tool_calls"] = true;
+1329:     }
+1338:     // parse the "enable_thinking" kwarg to override the default value
+1339:     auto enable_thinking_kwarg = json_value(inputs.chat_template_kwargs, "enable_thinking", std::string(""));
+1340:     if (enable_thinking_kwarg == "true") {
+1341:         inputs.enable_thinking = true;
+1342:     } else if (enable_thinking_kwarg == "false") {
+1343:         inputs.enable_thinking = false;
+1344:     } else if (!enable_thinking_kwarg.empty() && enable_thinking_kwarg[0] == '"') {
+1345:         throw std::invalid_argument("invalid type for \"enable_thinking\" (expected boolean, got string)");
+1346:     }
+1347:
+1348:     // Parse the OAI "reasoning_effort" field; "none" disables reasoning.
+1349:     if (body.contains("reasoning_effort")) {
+1350:         auto reasoning_effort = json_value(body, "reasoning_effort", std::string(""));
+1351:         if (reasoning_effort == "none") {
+1352:             inputs.enable_thinking = false;
+1353:             inputs.chat_template_kwargs.erase("reasoning_effort");
+1354:         } else if (!reasoning_effort.empty()) {
+1355:             inputs.chat_template_kwargs["reasoning_effort"] = json(reasoning_effort).dump();
+1356:         }
+1361:     // Apply chat template to the list of messages
+1362:     auto chat_params = common_chat_templates_apply(opt.tmpls.get(), inputs);
+1363:
+1364:     llama_params["chat_format"] = static_cast<int>(chat_params.format);
+1365:     llama_params["prompt"]      = chat_params.prompt;
+1377:     llama_params["preserved_tokens"]  = chat_params.preserved_tokens;
+1378:     llama_params["generation_prompt"] = chat_params.generation_prompt;
+1379:     for (const auto & stop : chat_params.additional_stops) {
+1380:         llama_params["stop"].push_back(stop);
+1381:     }
+1382:     if (!chat_params.parser.empty()) {
+1383:         llama_params["chat_parser"] = chat_params.parser;
+1384:     }
+1416:     // Copy remaining properties to llama_params
+1417:     // This allows user to use llama.cpp-specific params like "mirostat", ... via OAI endpoint.
+1418:     // See "launch_slot_with_task()" for a complete list of params supported by llama.cpp
+1419:     for (const auto & item : body.items()) {
+1420:         // Exception: if "n_predict" is present, we overwrite the value specified earlier by "max_tokens"
+1421:         if (!llama_params.contains(item.key()) || item.key() == "n_predict") {
+1422:             llama_params[item.key()] = item.value();
+1423:         }
+1424:     }
+
+### tools/server/server-task.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-task.cpp
+SHA256 0fd5c8df2525e61214986e8abe3fc4edbb92f5dd652c9c2bfd1bc2712218a585
+162: common_chat_msg task_result_state::update_chat_msg(
+163:         const std::string & text_added,
+164:         bool is_partial,
+165:         std::vector<common_chat_msg_diff> & diffs,
+166:         bool filter_tool_calls) {
+167:     generated_text += text_added;
+168:     auto msg_prv_copy = chat_msg;
+169:     //SRV_DBG("Parsing chat message: %s\n", generated_text.c_str());
+170:     auto new_msg = common_chat_parse(
+171:         generated_text,
+172:         is_partial,
+173:         chat_parser_params);
+174:     if (!new_msg.empty()) {
+175:         new_msg.set_tool_call_ids(generated_tool_call_ids, gen_tool_call_id);
+176:         chat_msg = new_msg;
+177:         auto all_diffs = common_chat_msg_diff::compute_diffs(msg_prv_copy, chat_msg);
+365: json server_task_result_cmpl_final::usage_json_oaicompat() {
+366:     return json {
+367:         {"completion_tokens", n_decoded},
+368:         {"prompt_tokens",     n_prompt_tokens},
+369:         {"total_tokens",      n_decoded + n_prompt_tokens},
+370:         {"prompt_tokens_details", json { {"cached_tokens", n_prompt_tokens_cache} }},
+371:     };
+414: json server_task_result_cmpl_final::to_json_oaicompat_chat() {
+415:     std::string finish_reason = "length";
+416:     common_chat_msg msg;
+417:     if (!oaicompat_msg.empty()) {
+418:         msg = oaicompat_msg;
+419:     } else {
+420:         msg.role = "assistant";
+421:         msg.content = content;
+422:     }
+423:     if (stop == STOP_TYPE_WORD || stop == STOP_TYPE_EOS) {
+424:         finish_reason = msg.tool_calls.empty() ? "stop" : "tool_calls";
+462: json server_task_result_cmpl_final::to_json_oaicompat_chat_stream() {
+463:     std::time_t t = std::time(0);
+464:     std::string finish_reason = "length";
+465:     if (stop == STOP_TYPE_WORD || stop == STOP_TYPE_EOS) {
+466:         finish_reason = oaicompat_msg.tool_calls.empty() ? "stop" : "tool_calls";
+487:     deltas.push_back({
+488:         {"choices", json::array({
+489:             json {
+490:                 {"finish_reason", finish_reason},
+491:                 {"index", index},
+492:                 {"delta", json::object()},
+493:             },
+494:         })},
+495:         {"created",            t},
+496:         {"id",                 oaicompat_cmpl_id},
+497:         {"model",              oaicompat_model},
+498:         {"system_fingerprint", std::string(llama_build_info())},
+499:         {"object",             "chat.completion.chunk"},
+500:     });
+501:
+502:     if (include_usage) {
+503:         // OpenAI API spec for chat.completion.chunks specifies an empty `choices` array for the last chunk when including usage
+504:         // https://platform.openai.com/docs/api-reference/chat_streaming/streaming#chat_streaming/streaming-choices
+505:         deltas.push_back({
+506:             {"choices", json::array()},
+507:             {"created",            t},
+508:             {"id",                 oaicompat_cmpl_id},
+509:             {"model",              oaicompat_model},
+510:             {"system_fingerprint", std::string(llama_build_info())},
+511:             {"object",             "chat.completion.chunk"},
+512:             {"usage",              usage_json_oaicompat()},
+513:         });
+
+### tools/server/server-queue.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-queue.cpp
+SHA256 0e196113d16f130230d2cc0b232915e1f5b4f1dda184790afbfdc4986dd1fd58
+602: void server_response_reader::stop() {
+603:     queue_results.remove_waiting_task_ids(id_tasks);
+604:     if (has_next() && !cancelled) {
+605:         // if tasks is not finished yet, cancel them
+606:         cancelled = true;
+607:         std::vector<server_task> cancel_tasks;
+608:         cancel_tasks.reserve(id_tasks.size());
+609:         for (const auto & id_task : id_tasks) {
+610:             SRV_WRN("cancel task, id_task = %d\n", id_task);
+611:             server_task task(SERVER_TASK_TYPE_CANCEL);
+612:             task.id_target = id_task;
+613:             queue_results.remove_waiting_task_id(id_task);
+614:             cancel_tasks.push_back(std::move(task));
+615:         }
+616:         // push to beginning of the queue, so it has highest priority
+617:         queue_tasks.post(std::move(cancel_tasks), true);
+618:     } else {
+619:         SRV_DBG("%s", "all tasks already finished, no need to cancel\n");
+620:     }
+
+### tools/server/server-queue.h
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-queue.h
+SHA256 03589a5d4feaec7910f2d11a87cf86edb932cf04ff97b1bb26a2c6b8593156b3
+218:     ~server_response_reader() {
+219:         stop();
+220:     }
+
+### tools/server/server-http.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-http.cpp
+SHA256 b7a60c6bb3a6dc90a0e122b7467eba674922cae369295033a03adce3db4b5b05
+229:     if (params.api_keys.size() == 1) {
+230:         const auto key = params.api_keys[0];
+231:         const std::string substr = key.substr(std::max(static_cast<int>(key.length() - 4), 0));
+232:         SRV_TRC("api_keys: ****%s\n", substr.c_str());
+233:     } else if (params.api_keys.size() > 1) {
+234:         SRV_TRC("api_keys: %zu keys loaded\n", params.api_keys.size());
+250:     // Public endpoints - API routes plus all embedded UI assets
+251:     static const std::unordered_set<std::string> get_public_endpoints = []() {
+252:         std::unordered_set<std::string> endpoints {
+253:             "/health",
+254:             "/v1/health",
+255:         };
+260:     auto middleware_validate_api_key = [api_keys = params.api_keys](const httplib::Request & req, httplib::Response & res) {
+261:         // If API key is not set, skip validation
+262:         if (api_keys.empty()) {
+263:             return true;
+264:         }
+265:
+266:         // If path is public or a UI asset, skip validation
+267:         if (get_public_endpoints.count(req.path)) {
+268:             return true;
+269:         }
+307:     auto middleware_server_state = [this](const httplib::Request & req, httplib::Response & res) {
+308:         if (!is_ready.load()) {
+309:             if (frontend_paths.count(req.path)) {
+310:                 return true; // frontend asset, allow it to load and show "loading"
+311:             }
+312:             // no endpoints are allowed to be accessed when the server is not ready
+313:             // this is to prevent any data races or inconsistent states
+314:             res.status = 503;
+315:             res.set_content(
+316:                 safe_json_to_str(json {
+317:                     {"error", {
+318:                         {"message", "Loading model"},
+319:                         {"type", "unavailable_error"},
+320:                         {"code", 503}
+321:                     }}
+322:                 }),
+323:                 "application/json; charset=utf-8"
+324:             );
+325:             return false;
+
+### tools/server/server-chat.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-chat.cpp
+SHA256 91f48e09afc5a345033866380e82db1c3ad4d18baf1cec38ffa6cddaf6a6263e
+621: json server_chat_msg_diff_to_json_oaicompat(const common_chat_msg_diff & diff) {
+622:     json delta = json::object();
+623:     if (!diff.reasoning_content_delta.empty()) {
+624:         delta["reasoning_content"] = diff.reasoning_content_delta;
+625:     }
+626:     if (!diff.content_delta.empty()) {
+627:         delta["content"] = diff.content_delta;
+628:     }
+629:     if (diff.tool_call_index != std::string::npos) {
+630:         json tool_call;
+631:         tool_call["index"] = diff.tool_call_index;
+632:         if (!diff.tool_call_delta.id.empty()) {
+633:             tool_call["id"]   = diff.tool_call_delta.id;
+634:             tool_call["type"] = "function";
+635:         }
+636:         if (!diff.tool_call_delta.name.empty() || !diff.tool_call_delta.arguments.empty()) {
+637:             json function = json::object();
+638:             if (!diff.tool_call_delta.name.empty()) {
+639:                 function["name"] = diff.tool_call_delta.name;
+640:             }
+641:             if (!diff.tool_call_delta.arguments.empty()) {
+642:                 function["arguments"] = diff.tool_call_delta.arguments;
+643:             }
+644:             tool_call["function"] = function;
+645:         }
+646:         delta["tool_calls"] = json::array({ tool_call });
+647:     }
+648:     return delta;
+
+### common/chat.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/chat.cpp
+SHA256 3d28ec8d7d0d96c4b462b69026deaac3d6454327ae87ff09aeec7451c43f73f1
+345: common_chat_tool_choice common_chat_tool_choice_parse_oaicompat(const std::string & tool_choice) {
+346:     if (tool_choice == "auto") {
+347:         return COMMON_CHAT_TOOL_CHOICE_AUTO;
+348:     }
+349:     if (tool_choice == "none") {
+350:         return COMMON_CHAT_TOOL_CHOICE_NONE;
+351:     }
+352:     if (tool_choice == "required") {
+353:         return COMMON_CHAT_TOOL_CHOICE_REQUIRED;
+354:     }
+355:     throw std::invalid_argument("Invalid tool_choice: " + tool_choice);
+394:             if (has_content) {
+395:                 const auto & content = message.at("content");
+396:                 if (content.is_string()) {
+397:                     msg.content = content;
+398:                 } else if (content.is_array()) {
+399:                     for (const auto & part : content) {
+400:                         if (!part.contains("type")) {
+401:                             throw std::invalid_argument("Missing content part type: " + part.dump());
+402:                         }
+403:                         const auto & type = part.at("type");
+404:                         if (type != "text" && type != "media_marker") {
+405:                             throw std::invalid_argument("Unsupported content part type: " + type.dump());
+406:                         }
+407:                         common_chat_msg_content_part msg_part;
+408:                         msg_part.type = type;
+409:                         msg_part.text = part.at("text");
+410:                         msg.content_parts.push_back(msg_part);
+453:             if (message.contains("reasoning_content")) {
+454:                 msg.reasoning_content = message.at("reasoning_content");
+455:             }
+456:             if (message.contains("name")) {
+457:                 msg.tool_name = message.at("name");
+458:             }
+459:             if (message.contains("tool_call_id")) {
+460:                 msg.tool_call_id = message.at("tool_call_id");
+479:     // handle supports_string_content / supports_typed_content
+480:     // if string=true and array=false, convert array to string
+481:     // if string=false and array=true, convert string to array
+482:     // if both are true, do nothing
+483:     json normalize(const json & messages) {
+484:         bool only_string = caps.supports_string_content && !caps.supports_typed_content;
+485:         bool only_typed  = !caps.supports_string_content && caps.supports_typed_content;
+486:         if ((!only_string && !only_typed) || !messages.is_array()) {
+487:             return messages;
+488:         }
+489:         json normalized = json::array();
+490:         for (const auto & msg : messages) {
+491:             json copy = msg;
+492:             if (copy.contains("content")) {
+493:                 json & it = copy.at("content");
+494:                 if (only_typed && it.is_string()) {
+495:                     it = json::array({
+496:                         json{
+497:                             {"type", "text"},
+498:                             {"text", it.get<std::string>()},
+499:                         }
+500:                     });
+501:                 } else if (only_string && it.is_array()) {
+502:                     it = concat_content_parts(it);
+503:                 }
+511:     static std::string concat_content_parts(const json & parts) {
+512:         std::string text;
+513:         bool last_was_media_marker = false;
+514:         for (const auto & part : parts) {
+515:             std::string type = part.value("type", "");
+516:             bool add_new_line = true;
+517:             if (type == "text") {
+518:                 add_new_line = !last_was_media_marker && !text.empty();
+519:                 last_was_media_marker = false;
+520:             } else if (type == "media_marker") {
+521:                 add_new_line = false;
+522:                 last_was_media_marker = true;
+523:             } else {
+524:                 LOG_WRN("Ignoring content part type: %s\n", type.c_str());
+525:                 continue;
+526:             }
+527:
+528:             if (add_new_line) {
+529:                 text += '\n';
+530:             }
+531:
+532:             text += part.value("text", "");
+538: static json render_message_to_json(const std::vector<common_chat_msg> & msgs, const jinja::caps & c) {
+539:     if (!c.supports_string_content && !c.supports_typed_content) {
+540:         LOG_WRN("%s: Neither string content nor typed content is supported by the template. This is unexpected and may lead to issues.\n", __func__);
+541:     }
+542:
+543:     json messages = json::array();
+544:     for (const auto & msg : msgs) {
+545:         messages.push_back(msg.to_json_oaicompat(/* concat_typed_text= */ false));
+546:     }
+547:     return messages_inp_normalizer(c).normalize(messages);
+830:         token_bos = get_token(llama_vocab_bos(vocab), "BOS", "bos_token");
+831:         token_eos = get_token(llama_vocab_eos(vocab), "EOS", "eos_token");
+832:         add_bos   = llama_vocab_get_add_bos(vocab);
+833:         add_eos   = llama_vocab_get_add_eos(vocab);
+834:     }
+835:     common_chat_templates_ptr tmpls(new common_chat_templates());
+836:     tmpls->has_explicit_template = has_explicit_template;
+837:     tmpls->add_bos               = add_bos;
+838:     tmpls->add_eos               = add_eos;
+958:     // TODO: improve this later
+959:     if (inputs.add_bos && string_starts_with(result, tmpl.bos_token())) {
+960:         result = result.substr(tmpl.bos_token().size());
+961:     }
+962:     if (inputs.add_eos && string_ends_with(result, tmpl.eos_token())) {
+963:         result = result.substr(0, result.size() - tmpl.eos_token().size());
+964:     }
+965:     return result;
+1004: static void map_developer_role_to_system(json & messages) {
+1005:     for (auto & message : messages) {
+1006:         if (message.contains("role")) {
+1007:             if (message["role"] == "developer") {
+1008:                 message["role"] = "system";
+1009:             }
+1010:         }
+1211:
+1212:     // Qwen3-Coder XML tool calls, also used by Nemotron Nano 3, Qwen3.5 and StepFun-3.5-Flash
+1213:     if (src.find("<tool_call>") != std::string::npos &&
+1214:         src.find("<function=") != std::string::npos &&
+1215:         src.find("<parameter=") != std::string::npos &&
+1216:         // Exclude models that don't use \n between tags
+1217:         src.find("'<tool_call><function=' ~ tool_call.name ~ '>'") == std::string::npos) {
+1218:         LOG_DBG("Using specialized template: Qwen3-Coder\n");
+1219:         return common_chat_params_init_qwen3_coder(tmpl, params);
+1220:     }
+1221:
+1222:     return std::nullopt;
+1223: }
+1227:     autoparser::generation_params params;
+1228:     params.tools = common_chat_tools_to_json_oaicompat(inputs.tools);
+1229:     const auto & tmpl =
+1230:         params.tools.is_array() && tmpls->template_tool_use ? *tmpls->template_tool_use : *tmpls->template_default;
+1231:     const auto & src             = tmpl.source();
+1232:     const auto & caps            = tmpl.original_caps();
+1233:     std::vector<common_chat_msg>        trimmed_messages;
+1234:     const std::vector<common_chat_msg> * messages_to_render = &inputs.messages;
+1235:     if (src.find("You have access to the following functions in JSONSchema format") != std::string::npos) {
+1236:         // StepFun: trim message contents (including typed content parts) before rendering,
+1237:         // otherwise leftover whitespace drives the model into reasoning loops (issue #24181)
+1238:         trimmed_messages   = inputs.messages;
+1239:         workaround::trim_all_content(trimmed_messages);
+1240:         messages_to_render = &trimmed_messages;
+1241:     }
+1242:     params.messages              = render_message_to_json(*messages_to_render, tmpl.original_caps());
+1243:     params.tool_choice           = inputs.tool_choice;
+1244:     params.reasoning_format      = inputs.reasoning_format;
+1245:     params.enable_thinking       = inputs.enable_thinking;
+1246:     params.grammar               = inputs.grammar;
+1247:     params.now                   = inputs.now;
+1248:     params.add_generation_prompt = inputs.add_generation_prompt;
+1249:     params.add_bos               = tmpls->add_bos;
+1273:     if (src.find("<|channel|>") == std::string::npos) {
+1274:         // map developer to system for all models except for GPT-OSS
+1275:         workaround::map_developer_role_to_system(params.messages);
+1276:     }
+1277:
+1278:     if (!tmpl.original_caps().supports_system_role) {
+1279:         workaround::system_message_not_supported(params.messages);
+1280:     }
+1281:
+1282:     if (tmpl.original_caps().supports_tool_calls) {
+1283:         // some templates will require the content field in tool call messages
+1284:         // to still be non-null, this puts an empty string everywhere where the
+1285:         // content field is null
+1286:         workaround::requires_non_null_content(params.messages);
+1287:     }
+1288:
+1289:     if (tmpl.original_caps().supports_object_arguments) {
+1290:         workaround::func_args_not_string(params.messages);
+1291:     }
+1331:     if (auto result = common_chat_try_specialized_template(tmpl, src, params)) {
+1332:         return *result;
+1333:     }
+1334:
+1335:     try {
+1336:         LOG_DBG("%s: using differential autoparser\n", __func__);
+1337:         struct autoparser::autoparser autoparser;
+1338:         autoparser.analyze_template(tmpl);
+1339:         auto auto_params = autoparser::peg_generator::generate_parser(tmpl, params, autoparser);
+1351:         auto_params.supports_thinking = autoparser.reasoning.mode != autoparser::reasoning_mode::NONE;
+1352:         if (auto_params.supports_thinking) {
+1353:             auto_params.thinking_start_tag = trim_whitespace(autoparser.reasoning.start);
+1354:             auto end_tag = trim_whitespace(autoparser.reasoning.end);
+1355:             if (!end_tag.empty()) {
+1356:                 auto_params.thinking_end_tags = {std::move(end_tag)};
+1357:             }
+1358:         }
+1359:         common_peg_arena arena;
+1360:         arena.load(auto_params.parser);
+1361:         LOG_DBG("%s: generated parser:\n%s\n\nparser generation prompt: %s\n", __func__, arena.dump(arena.root()).c_str(), auto_params.generation_prompt.c_str());
+1362:         return auto_params;
+1363:     } catch (const std::exception & e) {
+1364:         throw std::invalid_argument(std::string("Unable to generate parser for this template. Automatic parser generation failed: ") + e.what());
+
+### common/arg.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/arg.cpp
+SHA256 25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9
+1735:     ).set_env("LLAMA_ARG_CACHE_IDLE_SLOTS").set_examples({LLAMA_EXAMPLE_SERVER}));
+1736:     add_opt(common_arg(
+1737:         {"--context-shift"},
+1738:         {"--no-context-shift"},
+1739:         string_format("whether to use context shift on infinite text generation (default: %s)", params.ctx_shift ? "enabled" : "disabled"),
+1740:         [](common_params & params, bool value) {
+1741:             params.ctx_shift = value;
+1742:         }
+1743:     ).set_examples({LLAMA_EXAMPLE_COMPLETION, LLAMA_EXAMPLE_CLI, LLAMA_EXAMPLE_SERVER, LLAMA_EXAMPLE_IMATRIX, LLAMA_EXAMPLE_PERPLEXITY}).set_env("LLAMA_ARG_CONTEXT_SHIFT"));
+1744:     add_opt(common_arg(
+2755:     add_opt(common_arg(
+2756:         {"-cmoe", "--cpu-moe"},
+2757:         "keep all Mixture of Experts (MoE) weights in the CPU",
+2758:         [](common_params & params) {
+2759:             params.tensor_buft_overrides.push_back(llm_ffn_exps_cpu_override());
+2760:         }
+2761:     ).set_env("LLAMA_ARG_CPU_MOE"));
+2762:     add_opt(common_arg(
+2763:         {"-ncmoe", "--n-cpu-moe"}, "N",
+2764:         "keep the Mixture of Experts (MoE) weights of the first N layers in the CPU",
+2765:         [](common_params & params, int value) {
+2766:             if (value < 0) {
+2767:                 throw std::invalid_argument("invalid value");
+2768:             }
+2769:             llm_add_n_cpu_ffn_overrides(value, LLM_FFN_EXPS_REGEX, params.tensor_buft_overrides);
+2770:         }
+2771:     ).set_env("LLAMA_ARG_N_CPU_MOE"));
+2772:     add_opt(common_arg(
+2773:         {"-ncffn", "--n-cpu-ffn"}, "N",
+3498:     add_opt(common_arg(
+3499:         {"--api-key-file"}, "FNAME",
+3500:         "path to file containing API keys, one per line; lines starting with a hash are treated as comments (default: none)",
+3501:         [](common_params & params, const std::string & value) {
+3502:             std::ifstream key_file(value);
+3503:             if (!key_file) {
+3504:                 throw std::runtime_error(string_format("error: failed to open file '%s'\n", value.c_str()));
+3505:             }
+3506:             std::string key;
+3507:             while (std::getline(key_file, key)) {
+3508:                 if (!key.empty() && key[0] != '#') {
+3509:                     params.api_keys.push_back(key);
+3510:                 }
+3511:             }
+3512:             key_file.close();
+3513:         }
+3514:     ).set_examples({LLAMA_EXAMPLE_SERVER}).set_env("LLAMA_ARG_API_KEY_FILE"));
+3780:     add_opt(common_arg(
+3781:         {"--prefill-assistant"},
+3782:         {"--no-prefill-assistant"},
+3783:         string_format(
+3784:             "whether to prefill the assistant's response if the last message is an assistant message (default: prefill enabled)\n"
+3785:             "when this flag is set, if the last message is an assistant message then it will be treated as a full message and not prefilled\n"
+3786:         ),
+3787:         [](common_params & params, bool value) {
+3788:             params.prefill_assistant = value;
+3789:         }
+
+### common/chat-auto-parser-generator.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/chat-auto-parser-generator.cpp
+SHA256 9f76ec58eb8e7aa8d2c40df1be0a75ba2e90a0486fc347f6a00e73b4457d1df4
+34:     // Create the result structure
+35:     common_chat_params data;
+36:     data.prompt            = common_chat_template_direct_apply(tmpl, inputs);
+37:     data.generation_prompt = common_chat_template_generation_prompt(tmpl, inputs);
+38:     data.format            = COMMON_CHAT_FORMAT_PEG_NATIVE;
+39:     data.preserved_tokens  = autoparser.preserved_tokens;
+40:     data.additional_stops.insert(data.additional_stops.end(),
+41:         autoparser.additional_stops.begin(), autoparser.additional_stops.end());
+67:     // Build grammar if tools are present
+68:     bool has_tools =
+69:         autoparser.tools.format.mode != tool_format::NONE && inputs.tools.is_array() && !inputs.tools.empty();
+70:     std::string trigger_marker = !autoparser.tools.format.section_start.empty() ? autoparser.tools.format.section_start :
+71:                                                                                   autoparser.tools.format.per_call_start;
+72:
+73:     bool has_response_format = !inputs.json_schema.empty() && inputs.json_schema.is_object();
+74:     bool include_grammar = has_response_format || (has_tools &&
+75:             ((inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_AUTO && !trigger_marker.empty()) ||
+76:               inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_REQUIRED));
+77:
+78:     if (include_grammar) {
+79:         data.grammar_lazy = !has_response_format && inputs.tool_choice == COMMON_CHAT_TOOL_CHOICE_AUTO;
+80:         data.grammar      = build_grammar([&](const common_grammar_builder & builder) {
+81:             parser.build_grammar(builder, data.grammar_lazy);
+82:         });
+
+### src/llama-context.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-context.cpp
+SHA256 564a96d60361bdac69fcff60681de5ba4bab27aaa2ab971cb363df3b124a0538
+289:     cparams.n_ctx = GGML_PAD(cparams.n_ctx, 256);
+290:
+291:     if (cparams.kv_unified) {
+292:         cparams.n_ctx_seq = cparams.n_ctx;
+293:     } else {
+294:         cparams.n_ctx_seq = cparams.n_ctx / cparams.n_seq_max;
+295:         cparams.n_ctx_seq = GGML_PAD(cparams.n_ctx_seq, 256);
+296:
+297:         if (cparams.n_ctx_seq == 0) {
+298:             throw std::runtime_error("n_ctx_seq == 0");
+299:         }
+300:
+301:         if (cparams.n_ctx != cparams.n_ctx_seq * cparams.n_seq_max) {
+302:             cparams.n_ctx =  cparams.n_ctx_seq * cparams.n_seq_max;
+303:             LLAMA_LOG_WARN("%s: n_ctx is not divisible by n_seq_max - rounding down to %u\n", __func__, cparams.n_ctx);
+304:         }
+305:     }
+306:
+307:     LLAMA_LOG_INFO("%s: n_seq_max             = %u\n",   __func__, cparams.n_seq_max);
+308:     LLAMA_LOG_INFO("%s: n_ctx                 = %u\n",   __func__, cparams.n_ctx);
+309:     LLAMA_LOG_INFO("%s: n_ctx_seq             = %u\n",   __func__, cparams.n_ctx_seq);
+
+### src/llama-kv-cache-iswa.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-kv-cache-iswa.cpp
+SHA256 567fe836543e1dd9cdd5b7cb3a91afd049c17c7010f0bddf9fe149b02b5243cb
+69:     const uint32_t size_base = kv_size;
+70:
+71:     // note: the SWA cache is always padded to 256 for performance
+72:     //       https://github.com/ggml-org/llama.cpp/issues/17037
+73:     uint32_t size_swa = GGML_PAD(std::min(size_base, hparams.n_swa*(unified ? n_seq_max : 1) + n_ubatch), 256);
+74:
+75:     // when using full-size SWA cache, we set the SWA cache size to be equal to the base cache size
+76:     if (swa_full) {
+77:         LLAMA_LOG_WARN("%s: using full-size SWA cache (ref: %s)\n",
+78:                 __func__, "https://github.com/ggml-org/llama.cpp/pull/13194#issuecomment-2868343055");
+79:
+80:         size_swa = size_base;
+
+### tools/server/server-schema.cpp
+https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-schema.cpp
+SHA256 0bab859883207554fb724774892e8756ec0c956252b7653424756a0ee582efa8
+23:     add((new field_bool("stream", params.stream))
+24:         ->set_desc("Allows receiving each predicted token in real-time instead of waiting for the completion to finish"));
+25:
+26:     add((new field_nested("stream_options"))
+27:         ->add_subfield((new field_bool("include_usage", params.include_usage))
+28:             ->set_desc("Whether to include usage information in the stream"))
+29:         ->set_desc("Additional options for streaming responses"));
+44:     add((new field_num("n_predict", params.n_predict))
+45:         ->set_hard_limits(-1, INT32_MAX)
+46:         ->add_alias("max_completion_tokens")
+47:         ->add_alias("max_tokens")
+48:         ->set_desc("Set the maximum number of tokens to predict. When 0, no tokens will be generated but the prompt is evaluated into the cache"));
+49:
+50:     add((new field_num("n_indent", params.n_indent))
+51:         ->set_hard_limits(0, INT32_MAX)
+52:         ->set_desc("Specify the minimum line indentation for the generated text in number of whitespace characters. Useful for code completion tasks"));
+53:
+54:     add((new field_num("n_keep", params.n_keep))
+55:         ->set_hard_limits(-1, INT32_MAX)
+56:         ->set_desc("Specify the number of tokens from the initial prompt to retain when context size is exceeded. Use -1 to retain all tokens from the prompt"));
+57:
+58:     add((new field_num("n_discard", params.n_discard))
+59:         ->set_hard_limits(0, INT32_MAX)
+60:         ->set_desc("Number of tokens after n_keep that may be discarded when shifting context (0 = half context)"));
+475:     add((new field_bool("ignore_eos", params.sampling.ignore_eos))
+476:         ->set_desc("Ignore the end-of-sequence token and continue generating")
+477:         ->set_handler([&](field_eval_context & ctx, const json & data) {
+478:             GGML_ASSERT(ctx.logit_bias_eog != nullptr);
+479:             ctx.params.sampling.ignore_eos = data.at("ignore_eos").get<bool>();
+480:             if (ctx.params.sampling.ignore_eos && ctx.logit_bias_eog) {
+481:                 ctx.params.sampling.logit_bias.insert(
+482:                     ctx.params.sampling.logit_bias.end(),
+483:                     ctx.logit_bias_eog->begin(), ctx.logit_bias_eog->end());
+
+### pro-tokenizer_config.json
+https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/resolve/73875d00b30a89ef8cc353a0b60b0e9f9561952d/tokenizer_config.json
+SHA256 413a7845f52943ccf4de0e5c838414507d16c44dbf573da9e20bc8902b384d06
+280:         "<|mimo_audio_end|>"
+281:     ],
+282:     "bos_token": null,
+284:     "clean_up_tokenization_spaces": false,
+285:     "eos_token": "<|im_end|>",
+286:     "errors": "replace",
+287:     "model_max_length": 1048576,
+288:     "pad_token": "<|endoftext|>",
+289:     "split_special_tokens": false,
+290:     "tokenizer_class": "Qwen2Tokenizer",
+291:     "unk_token": null,
+292:     "add_bos_token": false
+293: }
+
+### ai-harness/server/src/frontier.ts
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 024a1b11265d850be9a7ceef7fa3d9bd4953edbfb02258c3a1b1bbf1302ef692
+3: export const FRONTIER_REVISION = "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a";
+4: // Root-frozen source evidence: SGLang-KT tp_worker.py267-271,
+5: // scheduler.py1395 and utils.py101 at this exact revision (Flash pin above).
+6: // For accepted pool P: input <=P-7, input+requested output <=P-2.
+7: // Actual pool/readback remains a backend activation gate.
+8: export const FRONTIER_RUNTIME_REVISION =
+9:   "541ddc37cbc92c60dc748db5ff1a2aad0b069a80";
+10: export const FRONTIER_INPUT_MARGIN = 7;
+11: export const FRONTIER_TOTAL_MARGIN = 2;
+12: export const FRONTIER_MODEL = "glm-5.3-flash";
+13: export const FRONTIER_URL = "http://10.156.100.60:30010/v1";
+126:   // Pin all template-affecting inputs. No caller URL, provider, template or model overrides.
+127:   const allowed = new Set([
+128:     "model",
+129:     "messages",
+130:     "tools",
+131:     "tool_choice",
+132:     "parallel_tool_calls",
+133:     "stream",
+134:     "stream_options",
+135:     "max_tokens",
+136:     "max_completion_tokens",
+137:     "temperature",
+138:     "top_p",
+139:     "stop",
+140:     "reasoning_effort",
+141:     "chat_template_kwargs",
+142:     "store",
+178:   const result = {
+179:     ...b,
+180:     max_tokens: Math.min(Number(a ?? c ?? 65536), 65536),
+181:     reasoning_effort: "high",
+182:     chat_template_kwargs: { clear_thinking: true },
+183:   };
+184:   delete (result as Record<string, unknown>).max_completion_tokens;
+185:   delete (result as Record<string, unknown>).prompt_cache_key;
+186:   delete (result as Record<string, unknown>).prompt_cache_retention;
+187:   delete (result as Record<string, unknown>).store;
+238:     const v = JSON.parse(text);
+239:     if (
+240:       v.tokenizer_revision !== options.tokenizerRevision ||
+241:       v.template_revision !== options.templateRevision ||
+242:       v.context_limit !== options.contextWindow ||
+243:       !Number.isSafeInteger(v.count) ||
+244:       v.count < 0
+245:     )
+246:       throw Error("count identity mismatch");
+247:     // The frozen count includes every rendered history/tool/template prefix.
+248:     // max_tokens reserves all future reasoning + answer tokens. Retain the
+249:     // pinned native input/total margins even though the template is exact.
+250:     // Reject overflow rather than mutate the payload after it has been counted.
+251:     const output = Number(body.max_tokens);
+252:     if (
+253:       !Number.isSafeInteger(output) ||
+254:       output < 1 ||
+255:       output > 65536 ||
+256:       v.count > options.contextWindow - FRONTIER_INPUT_MARGIN ||
+257:       v.count + output > options.contextWindow - FRONTIER_TOTAL_MARGIN
+285:   if (
+286:     v.qualified !== true ||
+287:     v.model !== FRONTIER_MODEL ||
+288:     typeof v.contextWindow !== "number" ||
+289:     ![128000, 256000, 480000, 1048576].includes(v.contextWindow) ||
+290:     v.maxOutputTokens !== 65536 ||
+291:     v.tokenizerRevision !== FRONTIER_REVISION ||
+292:     v.templateRevision !== FRONTIER_REVISION
+
+### ai-harness/server/src/gateway.ts
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 eed404d341107d00406bc9df4d66fe375a92802febf2b2facf23c9eca2195e35
+485:   const frontierAdmission = options.frontier
+486:     ? new Admission(
+487:         [{ url: frontierUrl(options.frontier), alias: FRONTIER_MODEL }],
+488:         8,
+489:         128 * 1024 * 1024,
+490:         positive(
+491:           options.frontier.fixtureQueueTimeoutMs,
+492:           30 * 60 * 1000,
+493:           "frontier queue timeout",
+494:         ),
+495:         options.initialLaneStates,
+496:         options.onLaneState,
+497:         frontierAvailability,
+498:       )
+662:     const record: FrontierRecord | undefined = frontier
+663:       ? {
+664:           id: randomBytes(16).toString("hex"),
+665:           sessionId,
+666:           state: "queued",
+667:           model: FRONTIER_MODEL,
+668:           contextWindow: options.frontier!.contextWindow,
+669:           updatedAt: new Date().toISOString(),
+670:         }
+671:       : undefined;
+672:     const recordState = (state: FrontierRecord["state"]) => {
+673:       if (record) {
+674:         record.state = state;
+675:         record.updatedAt = new Date().toISOString();
+676:         options.frontier!.onRequestState({ ...record });
+693:     const disconnect = () => {
+694:       if (reply.raw.writableEnded) return;
+695:       disconnected = true;
+696:       cancelled.abort();
+697:       // A cancelled consumer is detached. Keep consuming upstream with bounded
+698:       // observation buffers; aborting its socket would not prove GPU settlement.
+699:       upstreamResponse?.resume();
+700:     };
+947:           response.once("end", () => {
+948:             if (settled) return;
+949:             observe.end();
+950:             const status = response.statusCode ?? 502;
+951:             const rejectedBeforeGeneration = [
+952:               400, 401, 403, 404, 405, 413, 415, 422, 429,
+953:             ].includes(status);
+954:             const success = status >= 200 && status < 300;
+955:             // For SSE success, an early EOF without [DONE] is ambiguous. Even if
+956:             // content was emitted, no retry and no automatic lane recovery occurs.
+957:             // A proxy 5xx/timeout also cannot prove that its backend GPU is idle.
+958:             const confirmed =
+959:               response.complete &&
+960:               (rejectedBeforeGeneration ||
+961:                 (success && (body.stream !== true || observe.terminal)));
+962:             if (!disconnected && !reply.raw.destroyed) reply.raw.end();
+963:             settle(confirmed);
+1022:     frontierSnapshot: () => ({
+1023:       model: FRONTIER_MODEL,
+1024:       configured: !!options.frontier,
+1025:       contextWindow: options.frontier?.contextWindow ?? null,
+1026:       queued: frontierAdmission?.queued ?? 0,
+1027:       state: frontierAdmission?.lanes[0]?.state ?? "unavailable",
+1028:       availability: serviceAvailability(frontierAvailability, FRONTIER_MODEL),
+1029:     }),
+1030:     reconcileAfterOwnerSettlement: (aliases) => {
+1031:       const qwen = admission.reconcileAfterOwnerSettlement(aliases);
+1032:       // Only an exact owner-settlement alias may release frontier uncertainty.
+1033:       const frontier = aliases.includes(FRONTIER_MODEL)
+1034:         ? (frontierAdmission?.reconcileAfterOwnerSettlement([FRONTIER_MODEL]) ??
+1035:           true)
+1036:         : true;
+1037:       return qwen && frontier;
+
+### ai-harness/server/src/frontier-ledger.ts
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 b028db5736a255449b990b6157fb5a5d0d41460fb1c825f3d49e6c28161a21c2
+4: export class FrontierLedger {
+5:   constructor(private db: DatabaseSync) {
+6:     db.exec(`CREATE TABLE IF NOT EXISTS frontier_requests(
+7:       id TEXT PRIMARY KEY, session_id TEXT NOT NULL, state TEXT NOT NULL,
+8:       updated_at TEXT NOT NULL, value TEXT NOT NULL);
+9:       CREATE INDEX IF NOT EXISTS frontier_requests_by_session ON frontier_requests(session_id,updated_at DESC);
+10:       UPDATE frontier_requests SET state='quarantined', value=json_set(value,'$.state','quarantined') WHERE state='active';
+11:       UPDATE frontier_requests SET state='cancelled', value=json_set(value,'$.state','cancelled') WHERE state='queued';`);
+12:     // Recovery never dispatches a request. The separate durable lane ledger
+13:     // also restores active/quarantined frontier ownership as quarantined.
+14:   }
+
+### ai-harness/server/src/main.ts
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 82b51736dea773e78f646a0d9072d69638cecc03798b94d0742ae676eae783bf
+152:     const frontier = configured
+153:       ? {
+154:           ...configured,
+155:           // Lazy read: missing frontier credential never prevents Qwen startup.
+156:           upstreamKey: () =>
+157:             readProtectedCredential(required("AI_HARNESS_FRONTIER_KEY_FILE")),
+158:           onRequestState: (record: import("./frontier.js").FrontierRecord) =>
+159:             frontierLedger!.record(record),
+
+### ai-harness/deploy/engine/configure-profile.mjs
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 43f671c752b3376e552623b0508b1c9c25b89c941e6332161f3c25daf1c3e362
+37:       frontier: {
+38:         kind: 'custom', name: 'Local frontier gateway', enabled: true,
+39:         api: 'openai-completions',
+40:         options: { baseURL: 'http://10.0.2.2:8081/frontier/v1', apiKey: token, timeout: REQUEST_TIMEOUT_MS },
+41:         models: { [FRONTIER_MODEL]: { id: FRONTIER_MODEL, name: 'GLM-5.3-Flash', enabled: true,
+42:           tool_call: true, reasoning: true,
+43:           limit: { context: FRONTIER_CONTEXT, output: 65536 },
+44:           thinking: { effortOptions: ['high'], defaultEffort: 'high' },
+45:           modalities: { input: ['text'], output: ['text'] },
+46:         } },
+211: export function frontierAgentMarkdown() {
+212:   return `---
+213: name: frontier
+214: description: Deep research, multi-document analysis, hard reasoning and independent diagnosis; selective escalation from Qwen.
+215: model: custom_provider:frontier/glm-5.3-flash
+216: effort: high
+217: disallowedTools: [task, task_append]
+218: x-mavis:
+219:   contextWindow: ${FRONTIER_CONTEXT}
+220:   maxOutputTokens: 65536
+221: ---
+222: ${FRONTIER_INSTRUCTIONS}
+223: Use the normal approved tools, research, browser, search, PDF, code and image capabilities. Do not delegate recursively. Report uncertainty and evidence; reuse completed results.
+234:   if (statIfPresent(directory)) {
+235:     safeDirectory(directory, true);
+236:     const previous = safeRead(target, true);
+237:     if (previous.equals(content)) return;
+238:     // Only the exact prior reviewed 480K managed file is eligible. Custom bytes,
+239:     // unsafe ownership/modes, links and extra profile content are never adopted.
+240:     if (createHash('sha256').update(previous).digest('hex') !== PRIOR_FRONTIER_AGENT_SHA256) {
+241:       throw new Error('Existing frontier agent differs; explicit migration required.');
+
+### scripts/control/node_observation.py
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 18b4f2d4c8e34a3b23e0e87a90c1b68821bd7becc02349196a598a86ad5b8666
+382:         elif service_id == 'glm-5.3-flash':
+383:             from runtime.flash.owner import validate_container, BASE, NAME, OWNER, GPU
+384:             state = binding.read_json('services', BASE + '/state.json')
+385:             config = binding.read_json('services', BASE + '/config.json')
+386:             identity = state.get('container')
+387:             if state.get('owner') != OWNER or state.get('schema_version') != 1:
+388:                 raise ValueError('frontier_owner_unknown')
+389:             owner = None
+390:             if identity is not None:
+391:                 owner = self._container(identity, remaining(), {'io.llm-frontier.owner':OWNER,
+392:                     'io.llm-frontier.gpu':GPU})
+393:                 raw = strict_json(self.run(['/usr/bin/docker','inspect',identity['id']],remaining()))
+394:                 validate_container(raw[0], config, state)
+395:             else:
+396:                 self._absent(NAME, remaining())
+397:             binding.validate_path('services', BASE + '/source')
+398:             source_context = flash_source_context(config, self.read)
+399:             result.update(selected='glm-5.3-flash', deployment_id=None,
+400:                 model_alias='glm-5.3-flash', configured_context_tokens=None, max_output_tokens=65536,
+401:                 source_context_tokens=source_context,
+580:             if self.service_id == 'glm-5.3-flash':
+581:                 response = self.get(30010, '/v1/readiness', key, max(.001, seconds - (self.clock() - started)))
+582:                 status = text_readiness(*response, 'glm-5.3-flash')
+583:                 if status['ready']:
+584:                     capacity = flash_native_context(*self.get(30010, '/get_server_info', key,
+585:                         max(.001, seconds - (self.clock() - started))), result.get('source_context_tokens'))
+586:                     # Bracket readback with the same source/container/boot identity.
+587:                     current = self.reader.service(self.service_id, max(.001, seconds - (self.clock() - started)))
+588:                     if (type(result.get('generation')) is not int or type(current.get('generation')) is not int
+589:                             or not current.get('ownership_valid') or not current.get('running')
+590:                             or current.get('generation') != result.get('generation')
+591:                             or self.clock() - started >= seconds):
+592:                         raise ValueError('frontier_capacity_identity_changed')
+593:                     status.update(capacity)
+
+### scripts/runtime/flash/file_auth.py
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 5cad2c509e5c82cd7162f7a10ded2d08c4af768a20dbb9d8ddafb9a49fa5ecbb
+114:     os.environ['TVM_FFI_CACHE_DIR'] = '/cache/tvm-ffi'
+115:     verify_sources()
+116:     from tool_runtime import install as install_tools
+117:     install_tools()
+118:     fd=os.open('/run/secrets/llm-api-key',os.O_RDONLY|os.O_NOFOLLOW)
+119:     try:
+120:         st=os.fstat(fd);key=os.read(fd,4097)
+121:         if not stat.S_ISREG(st.st_mode) or stat.S_IMODE(st.st_mode)!=0o600 or st.st_uid!=0 or not 1<=len(key)<=4096 or any(c<33 or c>126 for c in key):
+122:             raise RuntimeError('invalid_key_file')
+123:     finally: os.close(fd)
+124:     from sglang.srt.server_args import ServerArgs
+125:     from sglang.srt.entrypoints import http_server as server
+
+### scripts/runtime/flash/owner.py
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1
+35: def mounts():
+36:     return {'/models':(MODEL,False), '/runtime':(BASE+'/source',False),
+37:             '/cache':(BASE+'/cache',True), '/tmp':(BASE+'/tmp',True),
+38:             '/run/secrets/llm-api-key':('/data/services/secrets/llm-api-key',False)}
+
+### ai-harness/server/src/protected-credential.ts
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 0cd0c7d6dd9a625b72c4b7f1ce95647f3453abf56f023be291c7eddb1e19edfb
+5: export async function readProtectedCredential(file: string): Promise<string> {
+6:   if (!path.isAbsolute(file) || (await realpath(file)) !== file)
+7:     throw new Error("Unsafe inference credential path");
+8:   const before = await lstat(file);
+9:   if (
+10:     !before.isFile() ||
+11:     before.isSymbolicLink() ||
+12:     before.nlink !== 1 ||
+13:     (before.mode & 0o077) !== 0 ||
+14:     ![0, process.getuid?.()].includes(before.uid)
+15:   )
+16:     throw new Error(
+17:       "Inference credential must be a protected owner-only regular file",
+18:     );
+19:   const handle = await open(file, constants.O_RDONLY | constants.O_NOFOLLOW);
+20:   try {
+21:     const info = await handle.stat();
+22:     if (info.ino !== before.ino || info.dev !== before.dev || info.size > 8192)
+23:       throw new Error("Unsafe inference credential identity");
+24:     const value = (await handle.readFile("utf8")).trim();
+25:     if (!value || !/^[\x21-\x7e]+$/.test(value))
+
+### ai-harness/config/frontier.json
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 5c099305b84baccaa2d736f90a8100953ee203001b9ad822b314aefe9cd065c3
+1: {
+2:   "model": "glm-5.3-flash",
+3:   "contextWindow": 1048576,
+4:   "maxOutputTokens": 65536,
+5:   "tokenizerRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+6:   "qualified": true,
+7:   "templateRevision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+8: }
+
+### reports/h014-mimo-selection-20260927/sources/pro-chat_template.jinja
+Source revision 54744f3d16d237837919ae604ce78b90731bcb4c
+SHA256 11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059
+9: {%- macro render_content(message_content) -%}
+10:     {%- if message_content is string -%}
+11:         {{- message_content -}}
+12:     {%- elif message_content is iterable -%}
+13:         {%- for part in message_content -%}
+14:             {%- if part is not mapping -%}
+15:                 {{- part -}}
+16:             {%- elif part['type'] == 'image' or 'image' in part or 'image_url' in part -%}
+17:                 {{- '<|vision_start|><|image_pad|><|vision_end|>' -}}
+18:             {%- elif part['type'] == 'audio' or part['type'] == 'input_audio' or 'audio' in part or 'audio_url' in part or 'input_audio' in part -%}
+19:                 {{- '<|mimo_audio_start|><|audio_pad|><|mimo_audio_end|>' -}}
+20:             {%- elif part['type'] == 'video' or 'video' in part or 'video_url' in part -%}
+21:                 {{- '<|vision_start|><|video_pad|><|vision_end|>' -}}
+22:             {%- elif 'text' in part -%}
+23:                 {{- part['text'] -}}
+24:             {%- endif -%}
+44:         {{- '<tool_call><function=' ~ tool_call.name ~ '>' -}}
+45:         {%- if tool_call.input is defined and tool_call.input is string -%}
+46:             {{- tool_call.input -}}
+47:         {%- elif tool_call.arguments -%}
+48:             {%- if tool_call.arguments is string -%}
+49:                 {{- tool_call.arguments -}}
+50:             {%- else -%}
+51:                 {%- for args_name, args_value in tool_call.arguments | items -%}
+52:                     {{- '<parameter=' ~ args_name ~ '>' ~ render_value(args_value) ~ '</parameter>' -}}
+53:                 {%- endfor -%}
+54:             {%- endif -%}
+55:         {%- endif -%}
+56:         {{- '</function></tool_call>' -}}
+60: {%- macro render_assistant_message(message) -%}
+61:     {%- set content = render_content(message.content) -%}
+62:     {%- set reasoning = message.reasoning_content if message.reasoning_content is string else '' -%}
+63:     {{- '<|im_start|>assistant\n<think>' ~ reasoning ~ '</think>' ~ content -}}
+64:     {%- if message.tool_calls is defined and message.tool_calls is iterable and message.tool_calls | length > 0 -%}
+65:         {{- render_tool_calls(message.tool_calls) -}}
+66:     {%- endif -%}
+67:     {{- '<|im_end|>' -}}
+70: {%- if tools is defined and tools is iterable and tools | length > 0 -%}
+71:     {{- '<|im_start|>system\n' ~ render_tools(tools) ~ '<|im_end|>' -}}
+72: {%- endif -%}
+73:
+74: {%- for message in messages -%}
+75:     {%- if message.role == 'assistant' -%}
+76:         {{- render_assistant_message(message) -}}
+77:     {%- else -%}
+78:         {%- set body = render_content(message.content) -%}
+79:         {{- '<|im_start|>' ~ message.role ~ '\n' ~ body -}}
+80:         {%- if message.tools is defined and message.tools is iterable and message.tools | length > 0 -%}
+81:             {%- if body -%}
+82:                 {{- '\n\n' -}}
+83:             {%- endif -%}
+84:             {{- render_tools(message.tools) -}}
+85:         {%- endif -%}
+86:         {{- '<|im_end|>' -}}
+87:     {%- endif -%}
+88: {%- endfor -%}
+89:
+90: {%- if add_generation_prompt -%}
+91:     {{- '<|im_start|>assistant\n' -}}
+92:     {%- if enable_thinking is false -%}
+93:         {{- '<think></think>' -}}
+94:     {%- endif -%}
+95: {%- endif -%}

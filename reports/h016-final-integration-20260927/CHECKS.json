@@ -1,0 +1,23 @@
+{
+  "source_commit": "df0702412b1a8f594db7d3211ca63f6aafe8a026",
+  "owner_tests": 13,
+  "server_tests": 11,
+  "driver_hook_tests": 1,
+  "failures": 0,
+  "server_compile": "PASS existing locked prepared deps, no install/network",
+  "compiled_delta": "active-frontier.js receipt literal only",
+  "stage": "PASS",
+  "activation": "HELD final capacity + qualification + separate root GO",
+  "native_qualification": false,
+  "full17_qualified": false,
+  "live_app_acceptance": "NOT_TESTED",
+  "driver_proposal": "syntax and offline fixtures only; preflight/launcher unconditionally HELD",
+  "engine_rebuilt": false,
+  "vm_contact": false,
+  "inference": false,
+  "service_start_or_restart": false,
+  "pushes": false,
+  "subagents": false,
+  "data_preservation": "26 sessions / 133 messages / 62 files / 17597 nonDB files exact identities preserved",
+  "owner_sha256": "ee5d623f3334afba341e1539383ca672f7f4db096cf329adf1c69d2b871ec814"
+}

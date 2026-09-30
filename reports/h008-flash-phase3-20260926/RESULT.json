@@ -1,0 +1,761 @@
+{
+  "utc": "2026-09-26T19:00:28.092148+00:00",
+  "status": "PARTIAL_NATIVE_READY_FORCED_TOOL_SEMANTICS_FAILED",
+  "source_commit": "f91453c6a98a788f624110c0823eaad90e540f55",
+  "container_id": "3c9501c8937ee2319eedd26b0b12dfb4dd11ec1d05b09543abc6f1187957e1a2",
+  "image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+  "model_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "publication": {
+    "backup": "/data/backups/h008-flash-cache-r5-20260926",
+    "config_sha256": "b704ed5985d5437930fc06187fb301e98a5f39478362f4dc43c426b27c8680e3",
+    "launcher_sha256": "0361f8689fe4c24c28f072a1d6d31fd3a483136d59dc5311fa0346a3c2d9d18a",
+    "manifest_sha256": "fe79c4bbd6cd8da27b45676379089069b1672f6c92e8c147b5a7505231bc427f",
+    "preserved_receipts": {
+      "/data/services/llm-manager/deployment-instance.json": "cb43e68a1af0c74d781f6f2cff8976eb68ec1f47085154ef230b72052f2bd0e4",
+      "/data/services/llm-manager/evidence/dualq-480k.accepted.json": "0978d79d2ee6121ba38e87db7f27dc64a438b7ba3570534c079d6fd89b96567a"
+    },
+    "release": "/data/services/releases/h008-flash-cache-r5-20260926",
+    "source_commit": "f91453c6a98a788f624110c0823eaad90e540f55",
+    "status": "SOURCE_PUBLISHED_NOT_STARTED",
+    "utc": "2026-09-26T18:38:36.623065+00:00"
+  },
+  "native_allocation": {
+    "container_started_at": "2026-09-26T18:38:38.431861217Z",
+    "receipt": {
+      "context": 480000,
+      "max_req_input_len": 479994,
+      "max_req_len": 479999,
+      "pool": 480000,
+      "resolved_cache_dtype": "torch.float8_e4m3fn",
+      "sm120_execution": "PASS"
+    }
+  },
+  "configured_context": 480000,
+  "allocated_native_pool": 480000,
+  "largest_completed_occupied_context": 213,
+  "near_full_occupied_context": "NOT_TESTED",
+  "native_cpu_settings": {
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 2,
+    "max_running_requests": 1
+  },
+  "expert_affinity": {
+    "numa_0": {
+      "threads_including_pool_master": 32,
+      "cpu_masks": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1,
+        "7": 1,
+        "8": 1,
+        "9": 1,
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 1,
+        "14": 1,
+        "15": 1,
+        "0-15": 16,
+        "0": 1
+      }
+    },
+    "numa_1": {
+      "threads_including_pool_master": 32,
+      "cpu_masks": {
+        "17": 1,
+        "18": 1,
+        "19": 1,
+        "20": 1,
+        "21": 1,
+        "22": 1,
+        "23": 1,
+        "16-23": 24,
+        "16": 1
+      }
+    }
+  },
+  "auth": {
+    "correct": 200,
+    "none": 401,
+    "wrong": 401
+  },
+  "auth_routes": {
+    "/v1/chat/completions": {
+      "correct": 200,
+      "none": 401,
+      "wrong": 401
+    },
+    "/v1/tokenize": {
+      "correct": 200,
+      "none": 401,
+      "wrong": 401
+    }
+  },
+  "fixture_parity": {
+    "parity_multilingual": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 42,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 42,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 43
+      }
+    },
+    "parity_prose": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 36,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 36,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 37
+      }
+    },
+    "parity_tools_history": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 212,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 212,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 213
+      }
+    }
+  },
+  "text_policy": {
+    "array_inference_usage": [
+      {
+        "completion_tokens": 1,
+        "prompt_tokens": 16,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 17
+      },
+      {
+        "completion_tokens": 1,
+        "prompt_tokens": 16,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 17
+      }
+    ],
+    "array_tokenizer": [
+      {
+        "context_limit": 480000,
+        "count": 16,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      {
+        "context_limit": 480000,
+        "count": 16,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      }
+    ],
+    "arrays_preserved_no_separator": true,
+    "developer_system_inference_usage": [
+      {
+        "completion_tokens": 1,
+        "prompt_tokens": 15,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 16
+      },
+      {
+        "completion_tokens": 1,
+        "prompt_tokens": 15,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 16
+      }
+    ],
+    "developer_system_tokenizer": [
+      {
+        "context_limit": 480000,
+        "count": 15,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      {
+        "context_limit": 480000,
+        "count": 15,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      }
+    ],
+    "developer_to_system": true,
+    "status": "PASS"
+  },
+  "payload_rejection": {
+    "http_status": {
+      "audio": {
+        "/v1/chat/completions": 400,
+        "/v1/tokenize": 400
+      },
+      "image": {
+        "/v1/chat/completions": 400,
+        "/v1/tokenize": 400
+      },
+      "unknown_text": {
+        "/v1/chat/completions": 400,
+        "/v1/tokenize": 400
+      },
+      "video": {
+        "/v1/chat/completions": 400,
+        "/v1/tokenize": 400
+      }
+    },
+    "status": "PASS"
+  },
+  "benchmarks": {
+    "discarded_warm_4k": {
+      "end_utc": "2026-09-26T18:56:43.839010+00:00",
+      "error_code": "native_stream_incomplete",
+      "error_type": "AssertionError",
+      "requested_output": 32,
+      "start_utc": "2026-09-26T18:51:43.794691+00:00",
+      "status": "FAIL"
+    },
+    "measured_4k": {
+      "status": "NOT_TESTED"
+    },
+    "measured_16k": {
+      "status": "NOT_TESTED"
+    },
+    "coherent_short": {
+      "decode_tokens_per_second": 0.7374153511022112,
+      "end_utc": "2026-09-26T18:44:48.996765+00:00",
+      "finish_reason": "stop",
+      "input_tokens": 29,
+      "input_tokens_per_second_ttft_basis": 4.041085912774827,
+      "occupied_context_tokens": 39,
+      "output_tokens": 10,
+      "requested_output": 2048,
+      "seconds": 19.381079579005018,
+      "start_utc": "2026-09-26T18:44:29.576176+00:00",
+      "status": "PASS",
+      "ttft_seconds": 7.176288905000547,
+      "usage": {
+        "completion_tokens": 10,
+        "prompt_tokens": 29,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 39
+      }
+    }
+  },
+  "forced_tool": {
+    "status": "FAIL_FORCED_TOOL_SEMANTICS",
+    "transport_http": 200,
+    "request": {
+      "model": "glm-5.3-flash",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Call the weather tool for Ljubljana. Do not guess the weather."
+        }
+      ],
+      "max_tokens": 2048,
+      "reasoning_effort": "high",
+      "chat_template_kwargs": {
+        "clear_thinking": true
+      },
+      "temperature": 0,
+      "tools": [
+        {
+          "type": "function",
+          "function": {
+            "name": "weather",
+            "description": "Return temperature for a city",
+            "parameters": {
+              "type": "object",
+              "properties": {
+                "city": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "city"
+              ]
+            }
+          }
+        }
+      ],
+      "tool_choice": {
+        "type": "function",
+        "function": {
+          "name": "weather"
+        }
+      },
+      "stream": true,
+      "stream_options": {
+        "include_usage": true,
+        "continuous_usage_stats": true
+      }
+    },
+    "raw_tool_deltas": [
+      {
+        "function": {
+          "arguments": "{}",
+          "name": null
+        },
+        "id": null,
+        "index": 0,
+        "type": "function"
+      }
+    ],
+    "usage": {
+      "completion_tokens": 3,
+      "prompt_tokens": 170,
+      "prompt_tokens_details": null,
+      "reasoning_tokens": 0,
+      "total_tokens": 173
+    },
+    "finish_reason": "stop",
+    "elapsed_seconds": 12.417291751000448,
+    "ttft_seconds": 12.417232951003825,
+    "decode_tokens_per_second": null,
+    "invalid_rate_reason": "Single buffered delta; prior34013.6 value divides by negligible post-first-delta interval and is not meaningful decode throughput",
+    "harness_ordinary_auto_tools": "NOT_TESTED",
+    "assembly_error": "TypeError adding None function name; independent task reporter error retained",
+    "source_receipt_sha256": "57f2dad9bfca45c53b679c36a11b80822cd1fbe00cb0e54a4458edda9c45a51e",
+    "admission": "Following request admitted after prior429 and bounded wait; no persistent active latch observed",
+    "original_429_body": "NOT_CAPTURED; HTTP429 status retained, inferred middleware cleanup is not body proof"
+  },
+  "auto_tool": {
+    "status": "NOT_TESTED"
+  },
+  "resources": {
+    "after_load": {
+      "utc": "2026-09-26T18:43:48.636647+00:00",
+      "gpu": {
+        "free_mib": "73610",
+        "temp_c": "42",
+        "total_mib": "97887",
+        "used_mib": "23640",
+        "util_pct": "0",
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      },
+      "ram": {
+        "MemAvailable": 606921342976,
+        "MemFree": 298935152640,
+        "MemTotal": 946820964352
+      },
+      "cgroup": {
+        "memory.current": 423053262848,
+        "memory.peak": 428669755392,
+        "memory.swap.current": 0
+      },
+      "memory_stat": {
+        "anon": 311283757056,
+        "file": 111036178432,
+        "file_dirty": 27004928,
+        "file_mapped": 48898048,
+        "kernel": 731684864,
+        "kernel_stack": 4128768,
+        "pagetables": 670031872,
+        "shmem": 21876736,
+        "slab": 54834392,
+        "sock": 0
+      },
+      "process_memory": {
+        "largest_processes": [
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "sglang::schedul",
+            "pid": 2910596,
+            "rss_anon_bytes": 308464234496,
+            "rss_bytes": 309176406016,
+            "rss_file_bytes": 690339840,
+            "rss_shmem_bytes": 21831680,
+            "threads": 168
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2910369,
+            "rss_anon_bytes": 1156907008,
+            "rss_bytes": 1656238080,
+            "rss_file_bytes": 499331072,
+            "rss_shmem_bytes": 0,
+            "threads": 9
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "sglang::detoken",
+            "pid": 2910597,
+            "rss_anon_bytes": 909275136,
+            "rss_bytes": 1335914496,
+            "rss_file_bytes": 426639360,
+            "rss_shmem_bytes": 0,
+            "threads": 5
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2955686,
+            "rss_anon_bytes": 365412352,
+            "rss_bytes": 676143104,
+            "rss_file_bytes": 310722560,
+            "rss_shmem_bytes": 8192,
+            "threads": 5
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956198,
+            "rss_anon_bytes": 380948480,
+            "rss_bytes": 494202880,
+            "rss_file_bytes": 113242112,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956188,
+            "rss_anon_bytes": 376086528,
+            "rss_bytes": 487710720,
+            "rss_file_bytes": 111611904,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956200,
+            "rss_anon_bytes": 375197696,
+            "rss_bytes": 484712448,
+            "rss_file_bytes": 109502464,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956190,
+            "rss_anon_bytes": 375214080,
+            "rss_bytes": 484663296,
+            "rss_file_bytes": 109436928,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          }
+        ],
+        "process_count": 37,
+        "rss_anon_sum_bytes": 322645135360,
+        "rss_file_sum_bytes": 3737935872,
+        "rss_shared_pages_may_be_counted_more_than_once": true,
+        "rss_sum_bytes": 326405132288
+      }
+    },
+    "after_warm": null,
+    "after_warm_status": "NOT_AVAILABLE_incomplete_warm_request",
+    "sampled_peak_gpu_resources": {
+      "utc": "2026-09-26T18:51:54.147612+00:00",
+      "gpu": {
+        "free_mib": "65076",
+        "temp_c": "38",
+        "total_mib": "97887",
+        "used_mib": "32174",
+        "util_pct": "4",
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      },
+      "ram": {
+        "MemAvailable": 606805745664,
+        "MemFree": 299279261696,
+        "MemTotal": 946820964352
+      },
+      "cgroup": {
+        "memory.current": 424412950528,
+        "memory.peak": 428669755392,
+        "memory.swap.current": 0
+      },
+      "memory_stat": {
+        "anon": 312524345344,
+        "file": 111151325184,
+        "file_dirty": 1445888,
+        "file_mapped": 150941696,
+        "kernel": 736313344,
+        "kernel_stack": 4243456,
+        "pagetables": 673390592,
+        "shmem": 119943168,
+        "slab": 56052880,
+        "sock": 0
+      },
+      "process_memory": {
+        "largest_processes": [
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "sglang::schedul",
+            "pid": 2910596,
+            "rss_anon_bytes": 309652041728,
+            "rss_bytes": 310504091648,
+            "rss_file_bytes": 732147712,
+            "rss_shmem_bytes": 119902208,
+            "threads": 175
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2910369,
+            "rss_anon_bytes": 1157005312,
+            "rss_bytes": 1656389632,
+            "rss_file_bytes": 499384320,
+            "rss_shmem_bytes": 0,
+            "threads": 9
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "sglang::detoken",
+            "pid": 2910597,
+            "rss_anon_bytes": 909275136,
+            "rss_bytes": 1335914496,
+            "rss_file_bytes": 426639360,
+            "rss_shmem_bytes": 0,
+            "threads": 5
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2955686,
+            "rss_anon_bytes": 365412352,
+            "rss_bytes": 676143104,
+            "rss_file_bytes": 310722560,
+            "rss_shmem_bytes": 8192,
+            "threads": 5
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956198,
+            "rss_anon_bytes": 380948480,
+            "rss_bytes": 494202880,
+            "rss_file_bytes": 113242112,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956188,
+            "rss_anon_bytes": 376086528,
+            "rss_bytes": 487710720,
+            "rss_file_bytes": 111611904,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956200,
+            "rss_anon_bytes": 375197696,
+            "rss_bytes": 484712448,
+            "rss_file_bytes": 109502464,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          },
+          {
+            "cpus_allowed_list": "0-71",
+            "name": "python",
+            "pid": 2956190,
+            "rss_anon_bytes": 375214080,
+            "rss_bytes": 484663296,
+            "rss_file_bytes": 109436928,
+            "rss_shmem_bytes": 12288,
+            "threads": 2
+          }
+        ],
+        "process_count": 37,
+        "rss_anon_sum_bytes": 323839328256,
+        "rss_file_sum_bytes": 3932504064,
+        "rss_shared_pages_may_be_counted_more_than_once": true,
+        "rss_sum_bytes": 327891980288
+      }
+    },
+    "sampled_peak_gpu_mib": 32174,
+    "min_sampled_gpu_free_mib": 65076,
+    "peak_gpu_core_c": 47,
+    "min_host_memavailable_bytes": 601575821312,
+    "cgroup_memory_peak_bytes": 428669755392,
+    "cpu_temperature": "NOT_AVAILABLE",
+    "sampling_limit": "2second samples; no claim to capture every transient peak. R3 failed allocation exceeded reserve despite its sampler missing the brief peak."
+  },
+  "last_live_native": {
+    "30002": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "qwen3.8-27b-gpu0",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      }
+    },
+    "30004": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "qwen3.8-27b",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      }
+    },
+    "30010": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "glm-5.3-flash",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      }
+    }
+  },
+  "last_projected_services": [
+    {
+      "service_id": "qwen-gpu0",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "freshness": "fresh",
+      "observed_at": "2026-09-26T18:58:32.357224+00:00"
+    },
+    {
+      "service_id": "qwen-gpu1",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "freshness": "fresh",
+      "observed_at": "2026-09-26T18:58:32.355446+00:00"
+    },
+    {
+      "service_id": "image",
+      "availability": "available",
+      "ready": true,
+      "admitting": true,
+      "hardware_latched": false,
+      "freshness": "fresh",
+      "observed_at": "2026-09-26T18:58:32.355004+00:00"
+    },
+    {
+      "service_id": "glm-5.3-flash",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "freshness": "fresh",
+      "observed_at": "2026-09-26T18:58:32.356415+00:00"
+    },
+    {
+      "service_id": "control",
+      "availability": "available",
+      "ready": true,
+      "admitting": null,
+      "hardware_latched": false,
+      "freshness": "fresh",
+      "observed_at": "2026-09-26T18:58:32.108550+00:00"
+    }
+  ],
+  "lane": {
+    "utc": "2026-09-26T18:59:29.239460+00:00",
+    "released": true,
+    "status": "WORKER1_BENCHMARK_LANE_RELEASED_TO_ROOT",
+    "root_must_coordinate_worker2": true,
+    "qualification_units": {
+      "h008-flash-qualification-r5": "inactive",
+      "h008-flash-qualification-r5-cont1": "inactive",
+      "h008-flash-qualification-r5-cont2": "inactive"
+    },
+    "last_job": "h008-flash-qualification-r5-cont2.service",
+    "last_invocation_id": "ffedd63d0aad407188d9f798b7b53246",
+    "job_end_utc": "2026-09-26T18:56:44.135876+00:00",
+    "native_request_active_at_finalize": false,
+    "established_frontier_connections": "",
+    "native_readiness": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "glm-5.3-flash",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      }
+    },
+    "settlement_basis": "Owned qualification jobs inactive; qualifier closed active connection, current TCP30010 established connections empty. Native active-request counter unavailable; no atomic drain claim. No additional worker1 inference will be sent.",
+    "warm_4k": "FAIL_native_stream_incomplete_at_300s_request_cap",
+    "measured_4k": "NOT_TESTED",
+    "measured_16k": "NOT_TESTED",
+    "auto_tool": "NOT_TESTED_deferred_to_root_coordinated_worker2",
+    "forced_tool": "FAIL_NULL_NAME_EMPTY_ARGUMENTS",
+    "container_retained_warm": true
+  },
+  "idle_600s_and_wake": "NOT_TESTED; insufficient coordinated quiet budget after required active work",
+  "sustained_2048": "NOT_TESTED; root explicitly dropped",
+  "runtime_performance_setting": "disable_overlap_schedule=True; no optimal-speed claim; CPU0-23 affinity preserved by root direction",
+  "durable_job_units": {
+    "h008-flash-qualification-r5": "inactive",
+    "h008-flash-qualification-r5-cont1": "inactive",
+    "h008-flash-qualification-r5-cont2": "inactive"
+  },
+  "telemetry_artifacts": {
+    "QUALIFICATION-R2-TELEMETRY.jsonl": {
+      "bytes": 3779,
+      "sha256": "12b0e8c9828d2732b4bdec8f319eb9abe60abe1202b606e2ced1a5f06bc0d4df"
+    },
+    "QUALIFICATION-R4-TELEMETRY.jsonl": {
+      "bytes": 110057,
+      "sha256": "e4a440e0ea85baff6fe1384b1db68f4efcf36bcbc98ab3393047f24be40b5c41"
+    },
+    "QUALIFICATION-R5-CONT2-TELEMETRY.jsonl": {
+      "bytes": 393819,
+      "sha256": "56d04f5a933deaed1b34ed7ced7e8d2b35afe33aebbc0ca366dc90fd3c5e2706"
+    },
+    "QUALIFICATION-R5-CONT1-TELEMETRY.jsonl": {
+      "bytes": 24606,
+      "sha256": "bdb407366b50a4c86527242945bc3e860c80d663b429cc12792a365148185dbd"
+    },
+    "QUALIFICATION-R3-TELEMETRY.jsonl": {
+      "bytes": 11318,
+      "sha256": "f29ae68b27b883df6f31986cce34d4f878361c14acdde6259b001d4c7b1f8de6"
+    },
+    "QUALIFICATION-R5-TELEMETRY.jsonl": {
+      "bytes": 430151,
+      "sha256": "4720b820eecbfc08101c158a3445ee1a11fc4367aa4cea24d1ba171090bab5bb"
+    }
+  },
+  "retained_failures": [
+    "R2 native tokenize route collision before weights",
+    "R3 GPU expert allocation CUDA OOM:93.44GiB process,1.49GiB free; sampler missed this short transient",
+    "R4 expert-loaded graph initialization TVM-FFI /root/.cache EROFS",
+    "R5 original immediate-post-SSE tool HTTP429; actual error body not captured; following attempt admitted",
+    "Discarded4K warm ended after300s watchdog without terminal finish; partial native usage not persisted; measured4K/16K not run",
+    "Forced tool emitted null name and empty arguments; transport succeeded but semantics failed; original TypeError assembly and invalid single-delta rate preserved"
+  ],
+  "evidence_boundaries": "App/KT/cache probes are synthetic no-weight checks. Actual native pool/dtype/SM120/readiness and HTTP fixtures are live. Performance rows name exact completed native counts. No1M/full480K occupied acceptance, no new Qwen benchmark, no idle acceptance, no CPU affinity optimization."
+}

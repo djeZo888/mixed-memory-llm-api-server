@@ -1,0 +1,16 @@
+{
+  "before_filter": "-P INPUT ACCEPT\n-P FORWARD DROP\n-P OUTPUT ACCEPT\n-N DOCKER\n-N DOCKER-BRIDGE\n-N DOCKER-CT\n-N DOCKER-FORWARD\n-N DOCKER-INTERNAL\n-N DOCKER-USER\n-A FORWARD -j DOCKER-USER\n-A FORWARD -j DOCKER-FORWARD\n-A DOCKER -d 172.19.0.2/32 ! -i br-4d21a85d6dc3 -o br-4d21a85d6dc3 -p tcp -m tcp --dport 30007 -j ACCEPT\n-A DOCKER -d 172.17.0.3/32 ! -i docker0 -o docker0 -p tcp -m tcp --dport 30002 -j ACCEPT\n-A DOCKER -d 172.17.0.2/32 ! -i docker0 -o docker0 -p tcp -m tcp --dport 30004 -j ACCEPT\n-A DOCKER ! -i br-eb3e767411b8 -o br-eb3e767411b8 -j DROP\n-A DOCKER ! -i docker0 -o docker0 -j DROP\n-A DOCKER ! -i br-4d21a85d6dc3 -o br-4d21a85d6dc3 -j DROP\n-A DOCKER-BRIDGE -o br-eb3e767411b8 -j DOCKER\n-A DOCKER-BRIDGE -o docker0 -j DOCKER\n-A DOCKER-BRIDGE -o br-4d21a85d6dc3 -j DOCKER\n-A DOCKER-CT -o br-eb3e767411b8 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT\n-A DOCKER-CT -o docker0 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT\n-A DOCKER-CT -o br-4d21a85d6dc3 -m conntrack --ctstate RELATED,ESTABLISHED -j ACCEPT\n-A DOCKER-FORWARD -j DOCKER-CT\n-A DOCKER-FORWARD -j DOCKER-INTERNAL\n-A DOCKER-FORWARD -j DOCKER-BRIDGE\n-A DOCKER-FORWARD -i br-eb3e767411b8 -j ACCEPT\n-A DOCKER-FORWARD -i docker0 -j ACCEPT\n-A DOCKER-FORWARD -i br-4d21a85d6dc3 -j ACCEPT\n",
+  "owner": "llm-private-n1s-v1",
+  "signature": {
+    "helper": "d7b82c296fb94846ea9825c1f38d1892b67a8b853279f7e01f807668ea2e9b33",
+    "llm-private-control.service": "8a2c5350d8fdffdf0a1fc154538d5210f40b09c0eb88cddf6368fa77d748ba24",
+    "llm-private-control.socket": "9fc827cdb6b0819dd5c1d01e860bf44f230e174f5a27af02cdf3645a727e19fc",
+    "llm-private-glm.service": "329b70c762a866acc8f1547f8374d18d97c19f8e8caface17f77507517d108a8",
+    "llm-private-glm.socket": "884d669f6cb05aab8460fe01c634370025eea366b151a70a888fb746a4967fee",
+    "llm-private-image.service": "09591c9274bcdec62774a5cb44fc5e82fe731bb8b5ea4dc7be372adcc7dfc3c2",
+    "llm-private-image.socket": "56d0f877ae87a1d268b0f1ad78113a4ab86bc0e0135e3dbf497775aab1e97761",
+    "llm-private-qwen38.service": "a7cfd0d1a333a9a830d1ef63449dbdc5607978712ea0f616fa4bd9d67fffbff5",
+    "llm-private-qwen38.socket": "0c964858717fbf9b838fe2b0e606f19128ee9ef7dfba0ed6fb660d7dc1282ad7",
+    "policy": "eb04d179cd6c9af896dfc1809e7804ef533c9e52fd356da9ecc0d4907bd3c064"
+  }
+}

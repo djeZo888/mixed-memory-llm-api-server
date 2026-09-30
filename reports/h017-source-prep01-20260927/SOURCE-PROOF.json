@@ -1,0 +1,164 @@
+{
+  "baseCommit": "d09620402007046881606dfbdc74c9ee3fde09b2",
+  "preparedOnly": true,
+  "targetContextDecimal": 950000,
+  "actual950000Readback": "PENDING_W1",
+  "imageBuild": false,
+  "sourceFiles": {
+    "ai-harness/deploy/engine/configure-profile.mjs": "1767aec74793b161b07feeee9e8dc97c3a4ffc9970c5c8f532bbf443b9f8ea1c",
+    "ai-harness/deploy/engine/configure-profile.test.mjs": "dbf49b8ef311b2ae9c8dc439b9c3ce0ae64488fae98bd4ac305d338c422384ea",
+    "reports/h017-source-prep01-20260927/activate-pair.sh": "f5d3f0b618f520c2af200d26c3fd20e38dad0a84b645fb2a9c42b61291617ba2",
+    "reports/h017-source-prep01-20260927/assemble-final.py": "f9db3f8b1857008f8eb20bcc554b52fe849f36dc79527bf59b9aba7cab83c117",
+    "reports/h017-source-prep01-20260927/build-and-stage.sh": "efdfeb4e872931270a6feeafc6266be97a6f450cc99c6503b531e654814da161",
+    "reports/h017-source-prep01-20260927/check-rollback.mjs": "29f10fb1e95188561a0f38fa0ffa4ec4ec0b052e589df2023910a62056915d16",
+    "reports/h017-source-prep01-20260927/driver/check.mjs": "c12a2494df9baf41ce212c1c92f4115e77db7fb9a10428871b16447a8f3149f2",
+    "reports/h017-source-prep01-20260927/driver/edge.mjs": "c164ce0369bafd0d54eaf4f022152cc25d637b26b2610c6ff88f02dbf86a24f1",
+    "reports/h017-source-prep01-20260927/driver/guards.mjs": "f17e55ce8001cb69035690f8cbd4b9a5a2e64a3611eca04f2a3586b88867a8fa",
+    "reports/h017-source-prep01-20260927/driver/guards.test.mjs": "008a617cd4acceefb267569936dfd17d96860d2fb300e0377d38c183c319d325",
+    "reports/h017-source-prep01-20260927/driver/live.mjs": "e4a01e16e313e0cb03eb321008aac8b412bfecdf8049b99280f02d9390cc9988",
+    "reports/h017-source-prep01-20260927/driver/policy-a.txt": "47215dd871e87e71f0ed313893057390961d5bdddcb758abda3d7bff0b342402",
+    "reports/h017-source-prep01-20260927/driver/policy-b.txt": "ede232123fd44f6a08de0540d6f3cf75e317b909aac182d39e0a52ca2448e230",
+    "reports/h017-source-prep01-20260927/driver/preflight-cli.mjs": "35b5c060934d761304b17fab88900a66b1c52fde49604e40c159176d5acd7869",
+    "reports/h017-source-prep01-20260927/driver/preflight.mjs": "a117dab8aa1014e530e1f55d001054ea7218e0f23d4d452cef21cb29aada000d",
+    "reports/h017-source-prep01-20260927/driver/preflight.test.mjs": "c11c5e532e947e6a09e4430f0d56528abab02893024c6a3e6b127482dd95672b",
+    "reports/h017-source-prep01-20260927/driver/prompts.json": "fd84224f5f58e0f2ad92bbe62e2aa68bc0a414446cb811310e3efc8a7fa43128",
+    "reports/h017-source-prep01-20260927/driver/supervise.py": "58baf2dd7e825251da395da876eedb8ae759635d8f10866cb0e003e905d1def5",
+    "reports/h017-source-prep01-20260927/driver/supervise_test.py": "1a6ac094f10d2fc4fb3460bf44fc767dd8d3b8eee1ae5424a8a4a650205d46c3",
+    "reports/h017-source-prep01-20260927/launch-app-acceptance.sh": "4e8b9dfed72909f1a06bbf76fcbec1ae2ee9a969eef9b28ebfdccc448ccdebb7",
+    "reports/h017-source-prep01-20260927/package-fixture.py": "be0ce8fa1f9d44f11cfcf0dc5ba3fdf5884798383ad04097d2e08baf39019ae5",
+    "reports/h017-source-prep01-20260927/replay-native-ready.py": "d431020b3c21586f47de554d22138d4f98360d3db0b875646f76f4547aa23df0",
+    "reports/h017-source-prep01-20260927/rollback-profiles.mjs": "298778fd014b946ccae1a0d3fc5587ce3a2153fb518674c52c5d9040bb7defe6",
+    "reports/h017-source-prep01-20260927/stage-qualified-config.mjs": "44588e8b12b5264685914bb7a8a414f37b5c961b77d082ff18d0f8bdf9d8bf8a",
+    "reports/h017-source-prep01-20260927/verify-built.sh": "d17d99efd983b179454e9a50dcb7da6562b7e30446a3a20ef3d30067af3b2a39",
+    "reports/h017-source-prep01-20260927/verify-image.py": "76a7ad15590d518d3bc43a4a1d58fe46ed683eec36df31033521d5bc0cbbd8b8"
+  },
+  "task18Reuse": {
+    "activate-pair.sh": {
+      "priorSha256": "595dd2557df8acabca307abc229457d988c6e52415ff6d66417281b838d08180",
+      "sameBytes": false
+    },
+    "assemble-final.py": {
+      "priorSha256": "e4ca5236ff5fe05189837ba7ca12793f9da394e989340c6f8ab655faf19a349b",
+      "sameBytes": false
+    },
+    "build-and-stage.sh": {
+      "priorSha256": "2af85aff46c99adbfceedf63a25549208aacb14708f38bc6acd3fd41ab4d2236",
+      "sameBytes": false
+    },
+    "check-rollback.mjs": {
+      "priorSha256": "28f85092460cc849cee3cdaab2e2742ba482b53e7f35f6e00b5a29af8be78af8",
+      "sameBytes": false
+    },
+    "driver/check.mjs": {
+      "priorSha256": "c12a2494df9baf41ce212c1c92f4115e77db7fb9a10428871b16447a8f3149f2",
+      "sameBytes": true
+    },
+    "driver/edge.mjs": {
+      "priorSha256": "c164ce0369bafd0d54eaf4f022152cc25d637b26b2610c6ff88f02dbf86a24f1",
+      "sameBytes": true
+    },
+    "driver/guards.mjs": {
+      "priorSha256": "f17e55ce8001cb69035690f8cbd4b9a5a2e64a3611eca04f2a3586b88867a8fa",
+      "sameBytes": true
+    },
+    "driver/guards.test.mjs": {
+      "priorSha256": "008a617cd4acceefb267569936dfd17d96860d2fb300e0377d38c183c319d325",
+      "sameBytes": true
+    },
+    "driver/live.mjs": {
+      "priorSha256": "e4a01e16e313e0cb03eb321008aac8b412bfecdf8049b99280f02d9390cc9988",
+      "sameBytes": true
+    },
+    "driver/policy-a.txt": {
+      "priorSha256": "47215dd871e87e71f0ed313893057390961d5bdddcb758abda3d7bff0b342402",
+      "sameBytes": true
+    },
+    "driver/policy-b.txt": {
+      "priorSha256": "ede232123fd44f6a08de0540d6f3cf75e317b909aac182d39e0a52ca2448e230",
+      "sameBytes": true
+    },
+    "driver/preflight-cli.mjs": {
+      "priorSha256": "35b5c060934d761304b17fab88900a66b1c52fde49604e40c159176d5acd7869",
+      "sameBytes": true
+    },
+    "driver/preflight.mjs": {
+      "priorSha256": "0ad9f6724f6219200b64e6b83439384d283cab5636043f2300b1efa382357a63",
+      "sameBytes": false
+    },
+    "driver/preflight.test.mjs": {
+      "priorSha256": "bb5f9ef44552f75529a04c5a36edb2a70f21b661f3c4b91ba6e545f8b2868929",
+      "sameBytes": false
+    },
+    "driver/prompts.json": {
+      "priorSha256": "fd84224f5f58e0f2ad92bbe62e2aa68bc0a414446cb811310e3efc8a7fa43128",
+      "sameBytes": true
+    },
+    "driver/supervise.py": {
+      "priorSha256": "2ca32f64536f3565ebc722f610ad7f490f5f1698fa24155f13a5541c5c52163b",
+      "sameBytes": false
+    },
+    "driver/supervise_test.py": {
+      "priorSha256": "566baf117fc1b72940d4fbf512d8a44b3d2bdb23fc1894bbfa2ceb2081fcb824",
+      "sameBytes": false
+    },
+    "launch-app-acceptance.sh": {
+      "priorSha256": "c0716410fb56b8b186b81fec2b57e9a29beb2a1071d88b10ecd8ced2c2fd0a2f",
+      "sameBytes": false
+    },
+    "rollback-profiles.mjs": {
+      "priorSha256": "a726a4124c0c1dca42e28f63016ac38ec4c83e5d8c3e3772594cb488441d2deb",
+      "sameBytes": false
+    },
+    "stage-qualified-config.mjs": {
+      "priorSha256": "2b3c230dd37e1eec1df21b64656f4fee568588412858d95280423bc566e9e745",
+      "sameBytes": false
+    },
+    "verify-built.sh": {
+      "priorSha256": "a1f1c8910bc7781e740952de40de2f374d13717b47f0a025b4f57a92ed724651",
+      "sameBytes": false
+    },
+    "verify-image.py": {
+      "priorSha256": "c2287cd621ea2f92fd0043566769b2039542a6099b08394293e819c5f9f1f5fd",
+      "sameBytes": false
+    }
+  },
+  "unchangedOwnerSha256": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+  "privateEvidenceSha256": {
+    "diagnostic.json": "5dc92f2c136b742c2cd1248ead6fe3deab1dccb3a890245610fb74365fc28e85",
+    "R9-READ-ONCE.json": "b7b3f33e8add3db97db43fa4e46f21c820719ad4004372c5772636267f57918f",
+    "readiness-20260927T180632Z.json": "97b18a70679373556b2ccc3e03748cbc6019f5b7e2161af8533f3b8862f1d5da"
+  },
+  "retainedCompiledClosure": {
+    "config/system-registry.json": "a2d69b9ba6ddba922b9ec128ce2a7cf89e16602154d47fafc5376dd3f1bf5ddc",
+    "deploy/engine/pins.json": "d779a5c0d7848845652f8d7bc874cb01030a49981eab0798cdd9b59b6a7bf84a",
+    "deploy/patches/0001-gateway-request-budget.patch": "28d00e116d47b355e6e2f249b18fdc5e9e48bb290f16bb512a8ab532f756b161",
+    "deploy/patches/0002-acp-compaction-notifications.patch": "ec56ccb5834dd75f7e4c9a9bff9599ebaf1da41c101c0cbde858c47f46cc8d2f",
+    "deploy/patches/0003-gateway-undici-dependency.patch": "f1db7f0c33096b818ed5eea9b8899c0845e81ab74917eb98aec028a168c62c08",
+    "deploy/patches/0004-gateway-fetch-timeouts.patch": "544f0c8bb830b9cbc8da9b700220b5dfc9ff9e270cd9949142618efd3dcb2569",
+    "deploy/patches/0005-gateway-dispatcher-type-bridge.patch": "5b4e758778aa81e7a3f99ee3296f3bfec37d7d07b80e380b208e20951dbee4bc",
+    "deploy/patches/0006-browser-workspace-downloads.patch": "a7f39896847bec656665b30d17621928c6dab7e10771b713ed369140fccd96bf",
+    "deploy/patches/0007-native-completion.patch": "882f4e01cd3e7be14690b7070118233aad59a72d7c76c2777aba286f5c834a5e",
+    "deploy/patches/0008-message-metadata-and-snapshots.patch": "fe7576ed96beb19202ad04f3b1d7b64cd16a39496bcf9d15500f903a0192bf65",
+    "deploy/patches/0009-builtin-audit-selector.patch": "9c10f0ae1d79fe17208a59367dbe4ce8197bea2dcc32178be51e4310ba7dddab",
+    "deploy/patches/0010-frontier-model-accounting.patch": "43a2620284ccb6110723119ab4720d0f047ffd3805db8d84a3eaf7463d501c99",
+    "deploy/patches/0011-mimo-request-budget.patch": "e85a87cd59e0e2a298d001293fd30280f4b5d3f1b95a426edf7d2df23472688b",
+    "deploy/patches/README.md": "aa6f64d828131cc7f65ddb5e9b4b5d6fa9d05880949f91888fc71d8e2e64773c",
+    "deploy/patches/SHA256SUMS": "38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf",
+    "deploy/patches/compaction-notes.md": "0ed73ad3b6e57f52356ae61b143cfff8c16c46715d8bf66ae71f390ad7f4dc6b",
+    "deploy/patches/dependency-patched.SHA256SUMS": "26eb15d8640ceb121056a1f6af463eb3c5afde1f9fd04811ec09acfd7da392a9",
+    "deploy/patches/dependency-patches.SHA256SUMS": "eb4be0bcbc1940bb4e74de7ca45845be0170cfbdd42e86361c0baf6a26271592",
+    "deploy/patches/dependency-source.SHA256SUMS": "c51f001b87548533db0685991e390b06f86bc455b3c107917cd283d7d3215609",
+    "deploy/patches/identity.json": "35261341e72fd6c8b74269b4b3f81b163c29aba1b0781300baefa3a8052e8517",
+    "deploy/patches/patched.SHA256SUMS": "20524e559825807f793a94afaf636b68df32225864b89de3a34868dd58342246",
+    "deploy/patches/source-patched.SHA256SUMS": "8240908d66cc913e5ad8306a9d33d4aa91fa767a6191567904c25187553b5b7f",
+    "deploy/patches/source-patches.SHA256SUMS": "506892da3dcb745f45d1c349311335fd4628e420c12fe740bea608a5591d9881",
+    "deploy/patches/source-source.SHA256SUMS": "a45b76c378f2afcc784f7f636e02445678c16ecf5460f23a0043593dfaf4c98b",
+    "deploy/patches/source.SHA256SUMS": "52f897360fe6d04e1d95958b0526907e551016eb1a1868dac4c9d2c371b0c4a9",
+    "deploy/run-engine.sh": "b315d97a14d76ac617222fd074d046f0e9c04575d81317fb50a17d357c5092d1",
+    "server/dist/gateway.d.ts": "bdbd1a74e09f9e1884a607c0c6c2d3be0ca92aebaacec8c243034fbeb27435c2",
+    "server/dist/gateway.js": "6757fc31c791e132fd408f416a12b032994f5a96914fb6086bbb4833baa528de",
+    "server/dist/system-registry.d.ts": "7f1f5638547e2c7a0808fe1e2ad4e7257822a7fb818c0167ffccc0dbd806273e",
+    "server/dist/system-registry.js": "8938652968cd69a621395e98eda5c21e9128114bad06023be70c769af683cb1b",
+    "server/dist/active-frontier.js": "3a4b7f6a2563fd1c123cc14532fdd29c1ba3613544c87f7a3056b17bfefa0c35"
+  }
+}

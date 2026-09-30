@@ -1,0 +1,509 @@
+{
+  "source": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+  "nativeSessionId": "01a0ec13-2c4c-7572-9647-b1db6cd0c10d",
+  "pdf": {
+    "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+    "runId": "53543886-3e22-4709-ae4f-b6ca7b983f5d",
+    "settled": true,
+    "runStatus": "interrupted",
+    "failedRequestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+    "diagnostics": [
+      {
+        "requestId": "6c4d51eb-904e-4d56-81ae-a92150e3c637",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "lane": "qwen3.8-27b-gpu0",
+        "diagnostic": {
+          "type": "provider_finish",
+          "responseId": "resp_2994a342-544b-4625-b35b-ea0b892d2720",
+          "model": "qwen3.8-27b",
+          "finishReason": "tool_calls",
+          "finishReasonSha256": "afa9a5b7f2f60ef7d67b4495f2edb5204aae87965dd3f2680ab1cf2994524088",
+          "toolPolicy": {
+            "requestedParallelToolCalls": true,
+            "effectiveParallelToolCalls": true
+          }
+        }
+      },
+      {
+        "requestId": "6c4d51eb-904e-4d56-81ae-a92150e3c637",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "lane": "qwen3.8-27b-gpu0",
+        "diagnostic": {
+          "type": "response_terminal",
+          "responseId": "resp_2994a342-544b-4625-b35b-ea0b892d2720",
+          "model": "qwen3.8-27b",
+          "finishReason": "tool_calls",
+          "status": "completed",
+          "messageId": "msg_18fb6cd0-1dc3-4c7d-b2fa-08f6e29d2021",
+          "text": {
+            "bytes": 89,
+            "sha256": "4a1876e0a4f431fbe0daead536cf6a3b57150877a1fe8a24f17c18f43ef0f339"
+          },
+          "tools": [
+            {
+              "callId": "call_d59c4ead8e32451e8ed8edd0",
+              "callIdSha256": "ec31ede2bb64684355994b925d35d763ec604732af6a79e44176fd0b9c909d4c",
+              "transportName": "exec_command",
+              "name": "exec_command",
+              "providerArguments": {
+                "bytes": 139,
+                "sha256": "2452e4a8714eda8cd53fc548bdea25f396903fee9af2ea0c5a7ea0e8bf448840"
+              },
+              "responseArguments": {
+                "bytes": 139,
+                "sha256": "2452e4a8714eda8cd53fc548bdea25f396903fee9af2ea0c5a7ea0e8bf448840"
+              },
+              "argumentShape": "object",
+              "argumentKeys": [
+                "cmd"
+              ],
+              "otherKeyCount": 0
+            }
+          ],
+          "usage": {
+            "input_tokens": 11523,
+            "output_tokens": 110,
+            "total_tokens": 11633
+          },
+          "toolPolicy": {
+            "requestedParallelToolCalls": true,
+            "effectiveParallelToolCalls": true
+          }
+        }
+      },
+      {
+        "requestId": "d4beaad9-4a1a-4c69-97f8-cef7d3a28ba4",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "lane": "qwen3.8-27b-gpu0",
+        "diagnostic": {
+          "type": "provider_finish",
+          "responseId": "resp_77d0af73-c207-4c46-ad43-67f20992b2f6",
+          "model": "qwen3.8-27b",
+          "finishReason": "tool_calls",
+          "finishReasonSha256": "afa9a5b7f2f60ef7d67b4495f2edb5204aae87965dd3f2680ab1cf2994524088",
+          "toolPolicy": {
+            "requestedParallelToolCalls": true,
+            "effectiveParallelToolCalls": true
+          }
+        }
+      },
+      {
+        "requestId": "d4beaad9-4a1a-4c69-97f8-cef7d3a28ba4",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "lane": "qwen3.8-27b-gpu0",
+        "diagnostic": {
+          "type": "response_terminal",
+          "responseId": "resp_77d0af73-c207-4c46-ad43-67f20992b2f6",
+          "model": "qwen3.8-27b",
+          "finishReason": "tool_calls",
+          "status": "completed",
+          "text": {
+            "bytes": 0,
+            "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+          },
+          "tools": [
+            {
+              "callId": "call_62fb1833bd604baea8e68fea",
+              "callIdSha256": "81d4d3eae38cfac526ddd23a318649bf315f8181da11c2d57b07e70c4d674770",
+              "transportName": "exec_command",
+              "name": "exec_command",
+              "providerArguments": {
+                "bytes": 63,
+                "sha256": "be86a37de7de8887a781e24b9a03e631b7e1ee55d3b1ca46aecec107a8e5afdb"
+              },
+              "responseArguments": {
+                "bytes": 63,
+                "sha256": "be86a37de7de8887a781e24b9a03e631b7e1ee55d3b1ca46aecec107a8e5afdb"
+              },
+              "argumentShape": "object",
+              "argumentKeys": [
+                "cmd"
+              ],
+              "otherKeyCount": 0
+            }
+          ],
+          "usage": {
+            "input_tokens": 12212,
+            "output_tokens": 40,
+            "total_tokens": 12252
+          },
+          "toolPolicy": {
+            "requestedParallelToolCalls": true,
+            "effectiveParallelToolCalls": true
+          }
+        }
+      },
+      {
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "sessionId": "08ab3a5d-16a4-4d7d-b6e0-7f072a4913d1",
+        "model": "qwen3.8-27b",
+        "phase": "counting",
+        "code": "codex_qwen_identity_unqualified"
+      }
+    ],
+    "failingAdmission": [
+      {
+        "time": "2026-09-29T07:43:04.280Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "control_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 9723
+      },
+      {
+        "time": "2026-09-29T07:43:04.283Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "node_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 3
+      },
+      {
+        "time": "2026-09-29T07:43:04.289Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "native",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 6
+      },
+      {
+        "time": "2026-09-29T07:43:04.810Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "control_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 10254
+      },
+      {
+        "time": "2026-09-29T07:43:04.812Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "node_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 2
+      },
+      {
+        "time": "2026-09-29T07:43:04.819Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "native",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 6
+      },
+      {
+        "time": "2026-09-29T07:43:14.251Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "control_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 9962
+      },
+      {
+        "time": "2026-09-29T07:43:14.255Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "node_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 4
+      },
+      {
+        "time": "2026-09-29T07:43:14.255Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b",
+        "phase": "admission",
+        "step": "lane",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 19699
+      },
+      {
+        "time": "2026-09-29T07:43:14.903Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "control_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 10084
+      },
+      {
+        "time": "2026-09-29T07:43:14.906Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "node_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 2
+      },
+      {
+        "time": "2026-09-29T07:43:14.906Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "admission",
+        "step": "lane",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 20350
+      },
+      {
+        "time": "2026-09-29T07:43:24.847Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "control_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 9936
+      },
+      {
+        "time": "2026-09-29T07:43:24.849Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "node_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 2
+      },
+      {
+        "time": "2026-09-29T07:43:24.854Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "native",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 5
+      },
+      {
+        "time": "2026-09-29T07:43:34.016Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "control_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 9161
+      },
+      {
+        "time": "2026-09-29T07:43:34.020Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "node_after",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 4
+      },
+      {
+        "time": "2026-09-29T07:43:43.157Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "control_before",
+        "outcome": "pass",
+        "reason": "ok",
+        "elapsedMs": 9101
+      },
+      {
+        "time": "2026-09-29T07:43:43.159Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "node_before",
+        "outcome": "reject",
+        "reason": "hardware_state",
+        "elapsedMs": 2
+      },
+      {
+        "time": "2026-09-29T07:43:43.159Z",
+        "schema": 1,
+        "requestId": "87073f1c-970a-4300-a7f3-13203c494e32",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "tokenize",
+        "outcome": "reject",
+        "reason": "hardware_state",
+        "elapsedMs": 28249
+      }
+    ],
+    "nativeEvents": [
+      {
+        "timestamp": "2026-09-29T07:40:52.358Z",
+        "ordinal": 1,
+        "type": "event_msg",
+        "payload": {
+          "type": "task_started",
+          "turn_id": "01a0ec1b-fd01-7f81-94c3-38956f5309b9",
+          "root_turn_id": "01a0ec1b-fd01-7f81-94c3-38956f5309b9",
+          "started_at": 1790667652,
+          "model_context_window": 480000,
+          "collaboration_mode_kind": "default"
+        }
+      },
+      {
+        "timestamp": "2026-09-29T07:43:43.168Z",
+        "ordinal": 20,
+        "type": "event_msg",
+        "payload": {
+          "type": "task_complete",
+          "turn_id": "01a0ec1b-fd01-7f81-94c3-38956f5309b9",
+          "last_agent_message": null,
+          "error": {
+            "message": "unexpected status 503 Service Unavailable: Current Qwen identity or native allocation is not qualified, url: http://10.0.2.2:8081/v1/responses",
+            "codex_error_info": {
+              "http_connection_failed": {
+                "http_status_code": 503
+              }
+            }
+          },
+          "started_at": 1790667652,
+          "completed_at": 1790667823,
+          "duration_ms": 170814,
+          "time_to_first_token_ms": 59010
+        }
+      }
+    ],
+    "actualTools": 2,
+    "toolExitCodes": [
+      0,
+      0
+    ],
+    "summaryArtifacts": 0,
+    "sourceUnchanged": true
+  },
+  "compact": {
+    "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+    "runId": "75dc5ea4-f7cb-480f-9cef-f3e4b40ef03f",
+    "actionId": "0105579d-0c60-46e4-951c-53ad4e48405f",
+    "settled": true,
+    "runStatus": "interrupted",
+    "newRequestId": "35d268cd-c588-4d5b-a520-d80111d2b019",
+    "diagnostics": [
+      {
+        "requestId": "35d268cd-c588-4d5b-a520-d80111d2b019",
+        "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "model": "qwen3.8-27b",
+        "phase": "validation",
+        "code": "unsupported_responses_contract"
+      }
+    ],
+    "failureMessage": "Unknown history tool",
+    "nativeEvents": [
+      {
+        "timestamp": "2026-09-29T07:44:50.395Z",
+        "ordinal": 49,
+        "type": "event_msg",
+        "payload": {
+          "type": "task_started",
+          "turn_id": "01a0ec1f-9ed9-7dd3-a378-64e8044f7dbc",
+          "root_turn_id": "01a0ec1f-9ed9-7dd3-a378-64e8044f7dbc",
+          "started_at": 1790667890,
+          "model_context_window": 480000,
+          "collaboration_mode_kind": "default"
+        }
+      },
+      {
+        "timestamp": "2026-09-29T07:44:50.431Z",
+        "ordinal": 50,
+        "type": "event_msg",
+        "payload": {
+          "type": "task_complete",
+          "turn_id": "01a0ec1f-9ed9-7dd3-a378-64e8044f7dbc",
+          "last_agent_message": null,
+          "error": {
+            "message": "{\"error\":{\"code\":\"unsupported_responses_contract\",\"message\":\"Unknown history tool\"}}",
+            "codex_error_info": "other"
+          },
+          "started_at": 1790667890,
+          "completed_at": 1790667890,
+          "duration_ms": 36
+        }
+      }
+    ],
+    "capturedRequest": {
+      "tools": [],
+      "toolChoice": "auto",
+      "parallelToolCalls": false,
+      "historyToolNames": [
+        "exec_command"
+      ],
+      "requestKind": "compaction",
+      "trigger": "manual",
+      "implementation": "responses",
+      "strategy": "memento"
+    },
+    "actualModelDispatches": 0,
+    "artifactOracle": true,
+    "sameActionReplayCreatedNoDuplicate": true
+  },
+  "admissionsHeld": true,
+  "ownedState": {
+    "utc": "2026-09-29T07:45:33.673523+00:00",
+    "app": {
+      "MainPID": "103089",
+      "WorkingDirectory": "/opt/ai-harness/releases/h030-flow01-6c5d64955e5435f661bee8fe961d73ccfb95a9e4/ai-harness/server",
+      "ActiveState": "active"
+    },
+    "status": {
+      "MainPID": "14480",
+      "WorkingDirectory": "/opt/ai-harness/components/h028-accept01-fc7c121/ai-harness/server",
+      "ActiveState": "active"
+    },
+    "activeRuns": [],
+    "gatewayPending": [],
+    "protectedOwners": [
+      {
+        "session_id": "bd71984f-2f90-4375-bca4-6c76730ba224",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e730-9304-7872-b176-41cd004044bf"
+      },
+      {
+        "session_id": "bed0fc3c-910c-4598-bfa6-11cabf637e3f",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e756-ec6e-7080-9f9b-89768b5cc89e"
+      }
+    ],
+    "quarantineCount": 3,
+    "holdCount": 0,
+    "ownedPolicyTicketCount": 0,
+    "nginxSha256": "0cf275f63b34b42dff6b42258e5b2b04e51401ba92d2ad7b26ca022ae14c54c6"
+  },
+  "limitations": "PDF hardware_state is a gate classification, not a diagnosed hardware failure. No W2 VM/model/hardware changes. Raw complete capture private."
+}

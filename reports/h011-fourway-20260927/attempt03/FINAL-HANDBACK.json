@@ -1,0 +1,290 @@
+{
+  "utc": "2026-09-27T01:45:16.663782+00:00",
+  "all_owned_requests_terminal": true,
+  "settlement_basis": "Flash original-owner halt observed PID0/GPUprocessabsence before resume; fourway task inactive/PID0; all text native ready and 480000, image ready busyfalse, no established model sockets, three idle samples GPUutil0. Not an atomic native request-counter proof.",
+  "all_four_ready": true,
+  "flash_ready_utc": "2026-09-27T01:44:30.252340+00:00",
+  "flash_recreated": false,
+  "containers": [
+    {
+      "name": "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 57701,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-26T21:17:57.468332196Z",
+        "FinishedAt": "2026-09-26T21:15:00.376273795Z"
+      },
+      "gpu_requests": [
+        {
+          "Driver": "",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": {}
+        }
+      ],
+      "memory_limit": 34359738368,
+      "memory_swap_limit": 34359738368
+    },
+    {
+      "name": "llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 25450,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-26T21:16:38.303017095Z",
+        "FinishedAt": "2026-09-26T21:15:10.094870104Z"
+      },
+      "gpu_requests": [
+        {
+          "Driver": "",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": {}
+        }
+      ],
+      "memory_limit": 34359738368,
+      "memory_swap_limit": 34359738368
+    },
+    {
+      "name": "llm-image-backend",
+      "id": "a04f14100b35e40399e9dd46ecfcd40c1a08e47445021ad3d478ac65eeffa488",
+      "image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 120981,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-26T21:22:28.504653577Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      },
+      "gpu_requests": [
+        {
+          "Driver": "",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": {}
+        }
+      ],
+      "memory_limit": 103079215104,
+      "memory_swap_limit": 103079215104
+    },
+    {
+      "name": "llm-frontier-flash",
+      "id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+      "image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+      "state": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 3881182,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-27T01:42:52.455239413Z",
+        "FinishedAt": "2026-09-27T01:42:51.366435791Z"
+      },
+      "gpu_requests": [
+        {
+          "Driver": "",
+          "Count": 0,
+          "DeviceIDs": [
+            "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+          ],
+          "Capabilities": [
+            [
+              "gpu"
+            ]
+          ],
+          "Options": {}
+        }
+      ],
+      "memory_limit": 697932185600,
+      "memory_swap_limit": 697932185600
+    }
+  ],
+  "native": {
+    "30002": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "qwen3.8-27b-gpu0",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      },
+      "server_info_status": 200,
+      "capacity": {
+        "context_length": 480000,
+        "max_total_tokens": 480000,
+        "max_total_num_tokens": 480000,
+        "max_running_requests": 1,
+        "kv_cache_dtype": "bfloat16",
+        "kt_cpuinfer": null,
+        "kt_threadpool_count": 2,
+        "kt_numa_nodes": null,
+        "disable_radix_cache": true,
+        "chunked_prefill_size": 2048,
+        "kt_gpu_prefill_token_threshold": null,
+        "kt_method": "AMXINT4",
+        "kt_weight_path": null,
+        "kt_num_gpu_experts": null,
+        "model_path": "/models",
+        "served_model_name": "qwen3.8-27b-gpu0",
+        "host": "0.0.0.0",
+        "port": 30002
+      }
+    },
+    "30004": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "qwen3.8-27b",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      },
+      "server_info_status": 200,
+      "capacity": {
+        "context_length": 480000,
+        "max_total_tokens": 480000,
+        "max_total_num_tokens": 480000,
+        "max_running_requests": 1,
+        "kv_cache_dtype": "bfloat16",
+        "kt_cpuinfer": null,
+        "kt_threadpool_count": 2,
+        "kt_numa_nodes": null,
+        "disable_radix_cache": true,
+        "chunked_prefill_size": 2048,
+        "kt_gpu_prefill_token_threshold": null,
+        "kt_method": "AMXINT4",
+        "kt_weight_path": null,
+        "kt_num_gpu_experts": null,
+        "model_path": "/models",
+        "served_model_name": "qwen3.8-27b",
+        "host": "0.0.0.0",
+        "port": 30004
+      }
+    },
+    "30010": {
+      "status": 200,
+      "readiness": {
+        "schema_version": 1,
+        "model_alias": "glm-5.3-flash",
+        "ready": true,
+        "state": "up",
+        "admitting": null
+      },
+      "server_info_status": 200,
+      "capacity": {
+        "context_length": 480000,
+        "max_total_tokens": 480000,
+        "max_total_num_tokens": 480000,
+        "max_running_requests": 1,
+        "kv_cache_dtype": "fp8_e4m3",
+        "kt_cpuinfer": 64,
+        "kt_threadpool_count": 8,
+        "kt_numa_nodes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "disable_radix_cache": true,
+        "chunked_prefill_size": 2048,
+        "kt_gpu_prefill_token_threshold": 2048,
+        "kt_method": "FP8",
+        "kt_weight_path": "/models",
+        "kt_num_gpu_experts": 0,
+        "model_path": "/models",
+        "served_model_name": "glm-5.3-flash",
+        "host": "127.0.0.1",
+        "port": 30010
+      }
+    }
+  },
+  "image_ready": {
+    "status": 200,
+    "body": {
+      "ready": true,
+      "busy": false,
+      "admitting": true,
+      "state": "ready",
+      "maximum_supported_generation_size": "1920x1080"
+    }
+  },
+  "hardware_latch_targets": {},
+  "hardware_latches_cleared": false,
+  "boot_id": "1c706f0b-7243-41a0-aea3-c447ef51664f",
+  "uptime": "16121.07 1058917.89",
+  "idle_gpu_readback": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 17.73, 0, 47, 35610\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 95.28, 0, 49, 73626\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 9.32, 0, 43, 16270\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 83.02, 0, 39, 35613\n",
+  "sova": "KEEP_PAUSED per root; latest Worker2 receipt01:30:09.896",
+  "further_inference_authorized": false,
+  "one_million": "NOT_EXECUTED; postponed until cooling fixed",
+  "manual_runner": "NOT_STAGED",
+  "sova_final": {
+    "utc": "2026-09-27T01:46:01.974992+00:00",
+    "host": "aiharness",
+    "scope": "user unit",
+    "readonly": true,
+    "unit": "MainPID=0\nLoadState=loaded\nActiveState=inactive\nSubState=dead\nFragmentPath=/home/user/.config/systemd/user/ai-harness.service\nUnitFileState=enabled\n",
+    "quiet": true
+  },
+  "final_cooling_and_errors": {
+    "utc": "2026-09-27T01:46:02.156143+00:00",
+    "kernel": "-- No entries --\n",
+    "gpu": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 16.55, 600.00, 0, 43, 30, Not Active, Not Active, Not Active\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 32.82, 600.00, 0, 42, 30, Not Active, Not Active, Not Active\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 8.61, 300.00, 0, 40, 30, Not Active, Not Active, Not Active\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 82.27, 600.00, 0, 37, [N/A], Not Active, Not Active, Not Active\n",
+    "units": {
+      "h011-fourway03": "MainPID=0\nResult=success\nActiveState=inactive\nSubState=dead\n",
+      "h011-warm03": "MainPID=0\nResult=success\nActiveState=inactive\nSubState=dead\n"
+    }
+  }
+}

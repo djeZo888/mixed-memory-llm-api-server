@@ -1,0 +1,18 @@
+{
+  "utc": "2026-09-29T12:42:59.885Z",
+  "name": "codex",
+  "engineKind": "codex",
+  "sessionId": "8f3070a0-6a03-4010-b651-f98550a007a6",
+  "submissionId": "ec4d920a-508c-481b-a7e0-0263ef41f198",
+  "ticket": {
+    "id": "7dc1632d-6fbb-4d51-8c6b-513f50eb4cd4",
+    "sessionId": "8f3070a0-6a03-4010-b651-f98550a007a6",
+    "expiresAt": 1790686500000,
+    "frontier": true,
+    "image": false
+  },
+  "status": 202,
+  "body": {
+    "runId": "87a909cb-2b20-4ce6-83e8-d8758ddde450"
+  }
+}

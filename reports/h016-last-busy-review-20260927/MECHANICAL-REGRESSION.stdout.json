@@ -1,0 +1,68 @@
+{
+  "scope": "offline actual run/reader/getresponse/settle; fake wire, no sockets or live services",
+  "results": [
+    {
+      "name": "HTTP_0_9_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    },
+    {
+      "name": "HTTP_1_1_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    },
+    {
+      "name": "wrong_marker_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    },
+    {
+      "name": "missing_marker_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    },
+    {
+      "name": "timeout_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "TimeoutError"
+    },
+    {
+      "name": "duplicate_date_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    },
+    {
+      "name": "folded_marker_must_remain_ambiguous",
+      "pass": true,
+      "client_status": "FAILED_NO_RETRY",
+      "reader_status": "FAILED_QUARANTINE_NO_RETRY",
+      "request_may_be_active": true,
+      "synthetic_owner_stop_count": 1,
+      "error_type": "RuntimeError"
+    }
+  ]
+}

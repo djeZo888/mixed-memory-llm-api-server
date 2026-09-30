@@ -1,0 +1,14 @@
+{
+  "sessionId": "01a0e494-7218-7250-9539-e6c40d2f8625",
+  "phase": "direct root original Sova recovery",
+  "phaseFirstObservedUtc": "2026-09-27T20:46:44Z",
+  "hardDeadlineUtc": "2026-09-27T20:59:00Z",
+  "globalDeadlineUtc": "2026-09-27T21:07:11Z",
+  "startReturnedUtc": "2026-09-27T20:48:08.349833+00:00",
+  "essentialChecksFinishedUtc": "2026-09-27T20:49:08.339252+00:00",
+  "packagingUtc": "2026-09-27T20:50:56.349409+00:00",
+  "status": "PASS_ORIGINAL_SOVA_RESTORED",
+  "rootReceiptDeliveredBeforePackaging": true,
+  "actualNativeExit": "wrapper records after return",
+  "baseCommit": "be1b5f3e1e19797eee08a1ad35abb1c56f295914"
+}

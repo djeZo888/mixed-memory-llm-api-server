@@ -1,0 +1,83 @@
+{
+  "status": "NOT_QUALIFIED",
+  "current_identity": {
+    "container_id": "5b7fc5b24279a290d5ca6b698d7fcf2d4baffd931a018e6c9da70462760a3208",
+    "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "name": "llm-frontier-mimo-production",
+    "pid": 1997941,
+    "pid_start_ticks": "5334216",
+    "started_at": "2026-09-27T20:23:58.787814571Z"
+  },
+  "launch_id": "b50f557c5eb5409989948ac5d40727ab",
+  "historical_R9": {
+    "sha256": "f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455",
+    "scope": "Archived immutable artifact/image/tensor/tokenizer/admission lineage. Historical4K16K only usable1000000; never new950K evidence."
+  },
+  "tiny": {
+    "correctness": "PASS",
+    "usage": {
+      "completion_tokens": 2,
+      "prompt_tokens": 14,
+      "prompt_tokens_details": {
+        "cached_tokens": 0
+      },
+      "total_tokens": 16
+    },
+    "finish_reason": "stop",
+    "done": true,
+    "full_http_drain": true,
+    "native_settlement": {
+      "is_processing": false,
+      "monotonic_seconds": 54026.630937876,
+      "slot_id": 0,
+      "status": "AUTHENTICATED_SLOT_IDLE_AFTER_FULL_DRAIN",
+      "utc": "2026-09-27T20:35:23.283209+00:00"
+    }
+  },
+  "current_occupiedTested": 14,
+  "full17": "NOT_TESTED_NO_REQUEST_SENT",
+  "strict_true_enforcement": "NOT_TESTED",
+  "strict_false_nested": "Historical adapter/fixture preservation only; current full17 not completed.",
+  "digest_scopes": {
+    "runtimeBuildSha256": "Immutable image digest, not new binary hash.",
+    "loadedTensorMetadataSha256": "Archived GGUF-INVENTORY.json, no new runtime attestation.",
+    "loadedTokenizerSha256": "Whole verified5948832byte tensor_count0 carrier shard00001, not tokenizer-only hash."
+  },
+  "private_receipts": {
+    "CLIENT.json": {
+      "sha256": "6f0ce569736ca290c5634972e969ac8d225bfab26cd0af1d34c248b346d9ef99",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/CLIENT.json"
+    },
+    "ALLOCATION.json": {
+      "sha256": "4b90c3c33e0d531298da0fbe8740f8c4b1d39bc76eaf8ae5956280042b00af5f",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/ALLOCATION.json"
+    },
+    "SHORT-TEXT.json": {
+      "sha256": "1ddb54d2005b78f14095836f1543cf162758db440ef64e5821c906a9cc133250",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/SHORT-TEXT.json"
+    },
+    "GUARD-PROGRESS.json": {
+      "sha256": "566a4471020aed4af8afb0bf9af3b42247ae02336be7c552a73b372668f680f0",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/GUARD-PROGRESS.json"
+    },
+    "SHORT-TEXT-PROGRESS.jsonl": {
+      "sha256": "6bbc62c6f6048995f35cc43f96804bb6049279be82d000b3bd5290ea2dde8302",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/SHORT-TEXT-PROGRESS.jsonl"
+    },
+    "SHORT-TEXT-REQUEST.json": {
+      "sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/SHORT-TEXT-REQUEST.json"
+    },
+    "SHORT-TEXT-RAW.jsonl": {
+      "sha256": "062b8c973bed8a9fd2335820fb283f626927757966210fb07e16d812455ef7c5",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/SHORT-TEXT-RAW.jsonl"
+    },
+    "SHORT-TEXT-GUARD-AFTER.json": {
+      "sha256": "566a4471020aed4af8afb0bf9af3b42247ae02336be7c552a73b372668f680f0",
+      "remote_path": "/data/logs/H017-20260927/worker1-receipt04-short/SHORT-TEXT-GUARD-AFTER.json"
+    }
+  },
+  "collection_sha256": "953d75923b2e126df66ce0f542988be67534f03bb8619b32f4714e1bb7e6c587",
+  "final_physical_read_sha256": "d081ebebee26da020f23187937e2108abcd72720d09facb1fd79a40adb9b1021",
+  "streams_sha256": "e58c65d2cc6cf3b2e3303fb0c6f98de64c7423498edb7a4cda9d0a1ef8d3278b"
+}

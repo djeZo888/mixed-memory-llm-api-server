@@ -1,0 +1,12 @@
+{
+  "status": "PASS",
+  "scope": "changed documentation and compact evidence; static checks only",
+  "files": 78,
+  "json_count": 47,
+  "json_parse": "PASS",
+  "targeted_secret_patterns": "PASS",
+  "maximum_individual_bytes": 111084,
+  "literal_backslash_n_review": [],
+  "tests_run": false,
+  "vm_contact_count": 0
+}

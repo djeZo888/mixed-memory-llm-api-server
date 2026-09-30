@@ -1,0 +1,85 @@
+{
+  "case": "C01",
+  "status": "PASS_ROOT_VISUAL_AND_MEMORY",
+  "api_source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "runner_source_commit": "91f60ddb862e39193e0f006a7c70f377af94d295",
+  "accepted_calls": 1,
+  "budget_total_used": 1,
+  "budget_max": 4,
+  "seed": 46,
+  "size": "1024x1024",
+  "references": 1,
+  "steps": 40,
+  "cfg": 1,
+  "recipe": "torch_sdpa/eager/allresident",
+  "images": {
+    "source_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/input-1.png",
+    "source_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+    "raw_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/raw-native.png",
+    "raw_sha256": "ce98884f295568a36f89b785d99536b1d35b1183a8aa7bf70bf480d954f3ea38",
+    "raw_mode": "RGBA",
+    "raw_alpha_extrema": [
+      251,
+      255
+    ],
+    "delivered_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/model/delivered.png",
+    "delivered_sha256": "f282f5654d2c53db2495e6ff23d213d014015f43d098684f34e215ad8752f882",
+    "delivered_mode": "RGB",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "delivered_opaque": true,
+    "raw_delivered_rgb_pixels_equal": true,
+    "opaque_conversion": "Reviewed codec drops native alpha via RGB conversion; raw RGBA is retained unchanged."
+  },
+  "dispatch_utc": "2026-09-23T13:29:38.239991+00:00",
+  "elapsed_seconds": 27.15086695300124,
+  "peak_device_used_mib": 39982,
+  "minimum_ada_free_mib": 9158,
+  "minimum_ada_free_percent": 18.636548636548635,
+  "minimum_host_available_percent": 97.24827054361641,
+  "global_swap_delta_pages": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "all_container_swap_events_unchanged": true,
+  "q1_existing_swap_bytes": 155086848,
+  "telemetry_samples": 89,
+  "telemetry_max_gap_seconds": 0.33496928215026855,
+  "native_operation_settled": true,
+  "settlement_checks": {
+    "api_remains_stopped": true,
+    "decoded_success": true,
+    "fresh_guards_and_reserve": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "telemetry_complete": true
+  },
+  "qualification_memory_pass": true,
+  "root_visual_review": "PASS",
+  "public_profile_enabled": false,
+  "api_intentionally_stopped": true,
+  "public_ready": false,
+  "all_model_identities_unchanged": true,
+  "both_text_contexts": 480000,
+  "native_health": {
+    "status": 200,
+    "body": {
+      "status": "ok"
+    }
+  },
+  "original_failed_shutdown_sha256": "6ff05a981433d782d3b918338a27f803c243707d892cbbd52119a6c124ae02b5",
+  "asgi_cleanup": "UNPROVEN",
+  "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+  "settled_case_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+  "metrics_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/metrics.json",
+  "telemetry_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C01/telemetry.jsonl",
+  "metrics_limitation": "Sampled peaks; no instantaneous maximum guarantee.",
+  "forecast": "CAPACITY-FORECAST.json",
+  "original_seed42_regression": "FAIL preserved; pass43 counterpart preserved",
+  "user_guarded_edit_acceptance": "APPROVED",
+  "profile_enabled": false,
+  "budget_total_used_at_final_checkpoint": 4
+}

@@ -1,0 +1,50 @@
+{
+  "/etc/llm-server/image-api.json": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/__init__.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "7ebde3edc9cdc54b83d8063c8956384aa6e32edff5d86f8852b75592cb719cad",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/protection.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "ebca2b024d236d03475dde15a63414c49fb86714733afa1bbf8ca68d88fd5238",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "uid": 0
+  },
+  "/usr/local/lib/llm-server/image-api/scripts/image_api/uploads.py": {
+    "gid": 0,
+    "mode": 420,
+    "sha256": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93",
+    "uid": 0
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "sessionId": "01a0e62a-3ce0-7432-9a50-c750e08bee7a",
+  "recordedUtc": "2026-09-28T04:11:29.358090+00:00",
+  "baseCommit": "e256814c6f2b9cc421ba68cde3febd1e0a6c9aa8",
+  "sourceCommit": "739462b7e246f92a3c4161c4535a1a2d8a0886f2",
+  "sourcePatchSha256": "fe301953a4e20903a46516b78e70c8b754bbc2308ab7b003004a212ccc972191",
+  "sourceHashes": {
+    "ai-harness/config/system-registry.json": "91fe53ad7228fb11ea48f191bb88177aa2e088672a8b25b5fc1b3f1be68070a9",
+    "ai-harness/docs/status-registry.md": "889d49faf59ba88161744ab18b56904c196225897bf933ada4dfdcb458512a67",
+    "ai-harness/server/src/status-projection.ts": "26886db5d7e6935b8f732fea7bc34d20ca1af8cc741b553906ab642ed6d3f444",
+    "ai-harness/server/src/status-ui.ts": "609373e3e4b0e6551a993efb31fac2634434c8f7aab270d21868ca6cf4cf51c3",
+    "ai-harness/server/src/system-registry.ts": "25439800047d892bf013118b640e95f0edc4cbfc8aab8eb0c553c4ea5e740807",
+    "ai-harness/server/test/frontier-registry.test.ts": "429cdae9cf1a1542c8745adc877a204c5dbefcc00710bdcc5e19373d580783fc",
+    "ai-harness/server/test/status-browser.mjs": "65d3a2441882eb25268b4d1b11de2d3cc4c23fee4e1521a9b85360c6901353e0",
+    "ai-harness/server/test/status-service.test.ts": "045db205411e93ae6c315004801f6f7a40609e9c6715745a400b597d0fa972e4"
+  },
+  "tests": {
+    "focused": {
+      "pass": 17,
+      "fail": 0
+    },
+    "statusTypecheck": "PASS",
+    "syntheticChromeStatusAdmin": "PASS (custom labels, selection, GPU dependency language, transport loss masking, desktop/mobile, existing admin safeguards)"
+  },
+  "stagedRelease": "/opt/ai-harness/releases/739462b7e246f92a3c4161c4535a1a2d8a0886f2-h020-status01/ai-harness",
+  "deploymentAuthorized": false,
+  "desiredSelectionSource": "deployed H019 active-frontier.json, sha256 6fac2925b81e0c40154635643a327f8f3149f7211cf8b78a4f321f6d5b09dc22",
+  "deployedSelection": "mimo-v2.6-pro-rl",
+  "passiveEvidence": "PASSIVE-EVIDENCE.json",
+  "remaining": "Exact final source/tests/staging ready for root/W1 review and root GO. Compact report packaging in progress. Earlier4e05 candidate retained but superseded.",
+  "previousSourceCommit": "4e05c1b70cede85a1374360abc3170516b2775d9",
+  "followupDelta": "Root fixes: frontier endpoints GLM30010/v1 MiMo30012/v1 verified local fixed clients; ready GPU dependents require projected ready=true; dormant raw-ready service shows selection_conflict. Focused both-ready and unknown-selection GPU tests pass.",
+  "stagedAtUtc": "2026-09-28T04:12:53.761141+00:00",
+  "deploymentManifest": "../DEPLOYMENT.json",
+  "dropInSha256": "1dd0a243708343390e41ecb127728bce18f1c043461fc76ac622132409006d78",
+  "stagedChangedFiles": 7,
+  "stagedSelectionSha256": "6fac2925b81e0c40154635643a327f8f3149f7211cf8b78a4f321f6d5b09dc22",
+  "stagingLimitations": "Seven changed files vs retained H019 release (3 JS, 3 declarations, registry). No unit/drop-in applied or daemon reload/restart. Status remains original PID301728; chat inactive."
+}

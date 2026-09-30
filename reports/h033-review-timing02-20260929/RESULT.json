@@ -1,0 +1,70 @@
+{
+  "schema": 1,
+  "task": "H033-REVIEW-TIMING02",
+  "nativeSessionId": "01a0edaa-bcc0-7cb1-a08c-434c3a6d5430",
+  "base": "37f9aa581c3f860e2860a9c2324524daeb5cf437",
+  "reviewedW2Commit": "20108e59420ff482b425075c1071b23f88dc0c07",
+  "perf01Commit": "9aba9d30fbff27a87daba5bb18c66bcf91ed7419",
+  "review": "PASS_NO_BLOCKING_FINDING",
+  "reviewScope": "SOURCE_AND_RETAINED_EVIDENCE_ONLY",
+  "retainedTests": {
+    "associationCapabilitiesPass": 51,
+    "guidanceContractsPass": 41,
+    "optionalNativeSkip": 1,
+    "perf01Pass": 40,
+    "rerun": false,
+    "disjointTotalClaimed": false
+  },
+  "scriptValidation": "NODE_SYNTAX_CHECK_PASS_AND_READ_ONLY_REVIEW",
+  "comparison": {
+    "status": "NOT_TESTED_NO_W2_IDLE_READINESS_SOURCE_GRANT",
+    "counterInvocations": 0,
+    "tokenizePosts": 0,
+    "generationRequests": 0,
+    "retries": 0,
+    "beforeSource": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+    "afterSource": "NOT_DEPLOYED_BOUND_BY_THIS_REVIEWER",
+    "measuredSpeedup": null,
+    "theoreticalControlReads": [
+      4,
+      2
+    ],
+    "theoreticalNodeReads": [
+      4,
+      2
+    ],
+    "theoreticalNativeReads": [
+      2,
+      2
+    ],
+    "bodySha256": "0abfb2b98ef4baf9e199f6227fac8a1ea436d0008b155b5d00a7ceb7e806011a"
+  },
+  "sourceFixes": 0,
+  "productionWrites": 0,
+  "vmOperations": 0,
+  "githubPushes": 0,
+  "inputArtifactSha256": {
+    "ASSOCIATION-PROOF.json": "4ea241b5f1115a6284843d4852fd078e370475f70cb28f4bced310330d23ca90",
+    "W2-SOURCE.bundle": "e9a1dce31a5e83b043493e341a75555c6e755b1c155330b4511c0f18adc24c7a",
+    "W2-SOURCE.patch": "0aaf6de397bad0440aed1295932a35ecbc5f661cea9eeadc2564d0c57c78071f",
+    "association-tests.tap": "f113141869e03b57307940e0286093ee6eb67499e1a84995a0b83728dd67adeb",
+    "build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "guidance-tests.tap": "a42c498bdfa2a264d0483624410017ea8448b67a2bc2cc06292591421d856863",
+    "typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  },
+  "preparedArtifactSha256": {
+    "REVIEW.md": "f801e23e5e2f8453ee126cdefb6262629c1bed08568d58550b3ffafb61216042",
+    "COUNT-PLAN.md": "c634796022b9d904381c77ec90c583e29ad16f6bb124b7eab8eeb7b7fd17db4a",
+    "count-once.mjs": "82b2237cf8e0171ad681f7975fcdbd1dc3a6a87337f87f0daf8007687b0b1c0f"
+  },
+  "inboxSha256": "1fd92042269f5af307757b4550c76abb24d5dff54175c83f437bfec81b0883b0",
+  "checkpointUtc": "2026-09-29T15:05:22.291758+00:00",
+  "closingEarly": true,
+  "processExitCode": null,
+  "processExitCodeAuthority": "Wrapper records actual rc after native process exits; not yet available",
+  "limits": [
+    "Live H032 AppServer transcript absent; live rollout payloads independently matched, separate native capture packet-backed.",
+    "No deployed association, image qualification or latency improvement proven.",
+    "Original failures and historical uncertain owners/quarantines unchanged."
+  ]
+}

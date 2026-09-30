@@ -1,0 +1,13 @@
+diff --git a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+--- a/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
++++ b/third_party/pi-mono/packages/ai/src/providers/openai-completions.ts
+@@ -70,7 +70,8 @@
+ 		const url = typeof input === "string" ? input : input instanceof URL ? input.href : input.url;
+ 		if (!isHarnessGateway(url)) return fetch(input, init);
+ 		// Preserve explicit AbortSignal, request body and all existing fetch options.
+-		return fetch(input, { ...init, dispatcher: gatewayDispatcher } as RequestInit);
++		// Node 24 fixtures validate dispatch; ambient undici-types differ structurally.
++		return fetch(input, { ...init, dispatcher: gatewayDispatcher } as unknown as RequestInit);
+ 	};
+ }
+ 

@@ -1,0 +1,17 @@
+{
+  "status": "PASS",
+  "source": "private R2-PRESTOP raw; exact same assertions as reviewed benchmark",
+  "tool_call": {
+    "input": 122,
+    "output": 26,
+    "total_seconds": 925.8670722440002,
+    "correctness": "PASS"
+  },
+  "continuation": {
+    "input": 160,
+    "output": 23,
+    "total_seconds": 333.83590114099934,
+    "correctness": "PASS"
+  },
+  "first4k": "not completed; discarded warm partial at stop"
+}

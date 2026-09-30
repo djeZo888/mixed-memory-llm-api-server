@@ -94,8 +94,11 @@ class ClosedDualQwenLauncher(unittest.TestCase):
             source.assert_not_called()
         for slot in wrapper.SLOTS:
             base = wrapper.pinned_base(ROOT / 'scripts/runtime/sglang38_file_auth.py')
-            with patch.object(wrapper, 'pinned_base', return_value=base), patch.object(base, 'main', return_value=0) as launch:
+            with patch.object(wrapper, 'pinned_base', return_value=base), \
+                    patch.object(wrapper, 'verify_adaptive_overlay') as overlay_guard, \
+                    patch.object(base, 'main', return_value=0) as launch:
                 self.assertEqual(wrapper.main(['--slot', slot]), 0)
+                overlay_guard.assert_called_once_with()
                 self.assertEqual(launch.call_args.args[0][-3:], ['480000', '--disable-radix-cache', '--disable-overlap-schedule'])
 
     def test_fixture_slot_binds_native_alias_port_identity_and_child_arguments(self):

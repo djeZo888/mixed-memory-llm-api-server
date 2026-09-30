@@ -1,0 +1,47 @@
+{
+  "task": "H029-FINALCONTROL03",
+  "status": "FAIL_SAFE_CAUSE_EXPOSED",
+  "requestId": "ca467d41-e78a-42e1-8d84-7d5c6759ec30",
+  "startedUtc": "2026-09-29T03:02:40.173Z",
+  "settledUtc": "2026-09-29T03:02:58.899Z",
+  "actualSourceRoot": "/opt/ai-harness/releases/h029-accept02-2662bd08e65c3fca5ce399761f4e672fb5d8f824/ai-harness/server",
+  "distSha256": {
+    "codex-production.js": "1a327ce772643125e41d1fad77712b0453eecd6d1aa56bb7b2ab349c34a109bd",
+    "codex-admission.js": "364773cbc3afd36c8bf4099d3ec8250c6fcab5874dc96c04f22ac8b03fa52b64",
+    "codex-qwen.js": "b2154592dedec376e27604366b33fb8a047c2bf2ad00c97b155a9de2750454f5"
+  },
+  "getterRequests": 6,
+  "firstFailure": {
+    "time": "2026-09-29T03:02:49.720Z",
+    "kind": "getter",
+    "requestId": "ca467d41-e78a-42e1-8d84-7d5c6759ec30",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "control_before",
+    "outcome": "reject",
+    "transport": {
+      "kind": "http_status",
+      "httpStatus": 409,
+      "controlCode": "lifecycle_busy"
+    },
+    "elapsedMs": 9547
+  },
+  "parallelLanePassed": "qwen3.8-27b",
+  "countVerifierFirst": "NOT_TESTED_ADMISSION_FAILED",
+  "countVerifierSecond": "NOT_TESTED_ADMISSION_FAILED",
+  "tokenizerExercised": false,
+  "generationRequests": 0,
+  "tokenizeRequests": 0,
+  "retries": 0,
+  "sshProcessExitCode": 0,
+  "historicalAccept02Cause": "UNKNOWN",
+  "rootCauseFixed": false,
+  "furtherCalls": 0,
+  "sourcePointers": [
+    "scripts/control/core.py:467-479",
+    "scripts/common/lifecycle_lease.py:34-36",
+    "scripts/control/core.py:656-657",
+    "scripts/control/core.py:686"
+  ]
+}

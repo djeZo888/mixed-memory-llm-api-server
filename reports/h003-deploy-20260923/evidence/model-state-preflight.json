@@ -1,0 +1,83 @@
+{
+  "utc": "2026-09-23T11:55:17.123162+00:00",
+  "containers": [
+    {
+      "id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+      "name": "/llm-image-backend",
+      "image": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "started": "2026-09-23T06:22:18.622164192Z",
+      "pid": 146684,
+      "running": true,
+      "cmd_sha256": "e297d7c6576212e82d5901861b179e42123f5352ca0aa5738698c85c00f93705",
+      "cmd": [
+        "-I",
+        "-B",
+        "/runtime/native_server.py",
+        "a5a5aad28d4f4f01851fe0008f132e8e"
+      ],
+      "allowed_env": {
+        "CUDA_DEVICE_ORDER": "PCI_BUS_ID",
+        "CUDA_VISIBLE_DEVICES": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "NVIDIA_VISIBLE_DEVICES": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+      },
+      "memory_limit": 103079215104,
+      "cpuset_cpus": "8-15"
+    },
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "started": "2026-09-23T02:05:36.354298377Z",
+      "pid": 53058,
+      "running": true,
+      "cmd_sha256": "3320a7799812e5e6465fc26c7a63ce1d00da119f08e62eab041428562a8c39d4",
+      "cmd": [
+        "/opt/llmctl/sglang38_pair_file_auth.py",
+        "--slot",
+        "gpu0"
+      ],
+      "allowed_env": {
+        "CUDA_VISIBLE_DEVICES": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "NVIDIA_VISIBLE_DEVICES": "all"
+      },
+      "memory_limit": 34359738368,
+      "cpuset_cpus": "0-7"
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "name": "/llmctl-qwen38-27b-q1-480000-yarn4-bf16kv",
+      "image": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "started": "2026-09-23T02:04:14.101319306Z",
+      "pid": 32207,
+      "running": true,
+      "cmd_sha256": "48bc3696751dcbd50fb331c9a0cfbff72482c76556a452131b1127d7344cc9e9",
+      "cmd": [
+        "/opt/llmctl/sglang38_pair_file_auth.py",
+        "--slot",
+        "gpu1"
+      ],
+      "allowed_env": {
+        "CUDA_VISIBLE_DEVICES": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "NVIDIA_VISIBLE_DEVICES": "all"
+      },
+      "memory_limit": 34359738368,
+      "cpuset_cpus": "0-7"
+    }
+  ],
+  "units": "MainPID=144838\nExecMainStartTimestamp=Wed 2026-09-23 06:22:09 UTC\nId=llm-image-api.service\nActiveState=active\n\nMainPID=0\nExecMainStartTimestamp=Wed 2026-09-23 06:22:16 UTC\nId=llm-image-backend.service\nActiveState=active\n",
+  "gpu_memory_mib": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 61018, 36232, 0\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 97887, 61018, 36232, 0\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, NVIDIA RTX 6000 Ada Generation, 49140, 32272, 16240, 0",
+  "gpu_processes": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 53583, 61008\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 32839, 61008\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 147055, 32226",
+  "host_memory_bytes": {
+    "MemTotal": 946820968448,
+    "MemAvailable": 921066582016,
+    "SwapTotal": 3157258240,
+    "SwapFree": 3157258240
+  },
+  "swap_counters": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "host_available_fraction": 0.9727990958267265,
+  "mutations": 0,
+  "inference_calls": 0
+}

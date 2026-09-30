@@ -1,0 +1,6 @@
+{
+  "secretScan": "PASS scoped source/report patterns; no credential contents accessed",
+  "diffReview": "namespace/clock substitutions only in23 copies; nine acceptance bodies byte-identical",
+  "whitespace": "PASS git diff --cached --check required before commit",
+  "productProfileOwnerNodeChanges": false
+}

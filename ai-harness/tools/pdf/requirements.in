@@ -1,0 +1,4 @@
+# Runtime Python >=3.11. Exact transitive versions and artifact hashes in requirements.lock.
+pypdf==6.19.0
+pdfplumber==0.11.10
+Markdown==3.10.3

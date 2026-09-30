@@ -1,0 +1,12 @@
+# H028 finite recovery; existing socket enablement remains authoritative.
+[Unit]
+Description=Bounded recovery of enabled private API sockets
+After=network.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 -I -B /usr/local/lib/llm-server/private-network/private_network_rearm.py rearm
+TimeoutStartSec=120
+Restart=no
+UMask=0077
+LimitCORE=0

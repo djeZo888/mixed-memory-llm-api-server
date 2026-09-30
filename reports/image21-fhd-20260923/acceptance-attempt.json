@@ -1,0 +1,31 @@
+{
+  "source_commit": "36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e",
+  "helper_sha256": "56c74620e2c9bb847b9f2923a2fb9b7da3121fed54bceb09197643e04c48469f",
+  "command": [
+    "ssh",
+    "ai-vm",
+    "sudo -n /usr/bin/python3 -I -B /usr/local/lib/llm-server/image-api/examples/generate.py --example lake-bled --seed 42 --output /data/services/image-api/examples/output/fhd-acceptance-lake-bled.png"
+  ],
+  "request": {
+    "model": "qwen-image-2.1",
+    "prompt": "Photorealistic landscape photograph of Lake Bled in Slovenia on a calm early autumn morning, viewed from an elevated lakeside overlook. Compose a wide horizontal frame with the small wooded island slightly left of center, its pale church walls and slender bell tower rising naturally above the trees. Place the castle on its rocky cliff along the distant right-hand shore, with layered alpine ridges receding behind it. Soft sunlight from the left warms the church, treetops and castle while cool blue shadows retain detail. Clear turquoise water near the shore deepens toward the lake center; delicate ripples gently break reflections in physically plausible directions. Include a restrained foreground of dark leaves and rock, balanced open water, faint atmospheric haze and a lightly clouded sky. Use realistic proportions, natural autumn greens and golds, subtle contrast and crisp detail with graceful distant softness.",
+    "size": "1920x1080",
+    "n": 1,
+    "background": "opaque",
+    "response_format": "b64_json",
+    "seed": 42
+  },
+  "prompt_authority": "ROOT-PRESET-CLARIFICATION.md supersedes draft summer prompt",
+  "started_utc": "2026-09-23T05:45:42.815167+00:00",
+  "public_generation_attempts": 1,
+  "retry": false,
+  "finished_utc": "2026-09-23T05:46:37.891961+00:00",
+  "ssh_command_elapsed_seconds": 55.075921292067505,
+  "exit_code": 0,
+  "stdout": "Saved /data/services/image-api/examples/output/fhd-acceptance-lake-bled.png | 54.8s | 1920x1080\n",
+  "stderr": "",
+  "helper_elapsed_seconds": 54.8,
+  "helper_elapsed_scope": "HTTP request, response checks and ordinary-user PNG write; rounded to0.1s",
+  "http_status": 200,
+  "native_elapsed_seconds": null
+}

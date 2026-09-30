@@ -1,0 +1,67 @@
+{
+  "utc": "2026-09-27T20:27:17.080025+00:00",
+  "task": "H017-RECEIPT-04-20260927",
+  "milestone": "DIAGNOSTIC_RETRY_LOADING_FRESH_SHORT_SOURCE_STAGED",
+  "cause": "UNKNOWN",
+  "instrumentation_only": true,
+  "diagnostic_start_utc": "Sun 2026-09-27 20:23:57 UTC",
+  "latest_observation_utc": "2026-09-27T20:25:36.689546+00:00",
+  "latest_status": "LOADING",
+  "production_identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+    "supervisor": {
+      "invocation_id": "736061cbb3fc45718902c57a34fa4be0",
+      "pid": 1997457,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "launch_id": "b50f557c5eb5409989948ac5d40727ab",
+    "native": {
+      "container_id": "5b7fc5b24279a290d5ca6b698d7fcf2d4baffd931a018e6c9da70462760a3208",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1997941,
+      "pid_start_ticks": "5334216",
+      "started_at": "2026-09-27T20:23:58.787814571Z"
+    }
+  },
+  "selection": {
+    "generation": 7,
+    "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "owner_sha256": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786",
+  "manifest_sha256": "e5fa5be2a05c037ac8bac892f73c484f7bbf18e510008d1f4c00729ffd2a77fb",
+  "patch_sha256": "f561f89655e6ae3535f324a02e283a9ba3c9d0af0e1e744e912468c03d62f583",
+  "tests": "Owner38PASS/1SKIP; fresh short7PASS",
+  "initial_job": {
+    "status": "FAILED_NO_RETRY",
+    "short": "READY14input/2output PASS terminal/full drain",
+    "full17": "No request body or turn receipt",
+    "initial_owner": "624bd settled/released; archived; exact stopped container removed once",
+    "cause": "unexpected_error/resource_validate; UNKNOWN"
+  },
+  "fresh_short": {
+    "status": "SHORT_STAGED_NOT_INSTALLED_OR_DISPATCHED",
+    "unit": "h017-receipt04-short.service",
+    "authority_sha256": "6f63f7ba62f242014f0062a54bcf52c82806892a6872adbac52691854258b027",
+    "admit_before_utc": "2026-09-27T20:45:00+00:00",
+    "active_cap_seconds": 900,
+    "hard_end_utc": "2026-09-27T21:00:00+00:00",
+    "qualification": "NOT_TESTED",
+    "request_dispatched": false
+  },
+  "current_capacity": {
+    "configured": 950000,
+    "allocated": "NOT_YET_CONFIRMED_FOR_NEW_INSTANCE",
+    "occupied_tested": "NOT_TESTED_FOR_NEW_INSTANCE",
+    "published": 1048576
+  },
+  "qualified_json": null,
+  "qualified_json_sha256": null,
+  "Sova": "NOT_TESTED_W2_HOLD",
+  "LAST": "INACTIVE_NO_STAGE_INSTALL_DISPATCH",
+  "next": "Bounded READ-STATUS.py at meaningful loading/ready event; if READY then one DISPATCH-SHORT.py dispatch; later COLLECT-SHORT.py. On new owner failure capture primary and cleanup and prepare originalGLM normal recovery for root; no furtherMiMo load.",
+  "paid_wait": false
+}

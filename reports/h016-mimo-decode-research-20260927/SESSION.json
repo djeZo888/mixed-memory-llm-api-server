@@ -1,0 +1,11 @@
+{
+  "native_id": "01a0e30e-180c-7353-8011-18519eb72482",
+  "wrapper_started_utc": "2026-09-27T13:29:06Z",
+  "original_deadline_utc": "2026-09-27T13:54:06.433827+00:00",
+  "max_minutes": 25,
+  "branch": "worker2/h016-mimo-decode-research",
+  "base": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+  "whole_h016_extension": "15:48:08 UTC does not extend this wrapper",
+  "intentional_interruptions": "Phases interrupted by root after completed source reads to relay same-session factual steering; scope/ID/cap unchanged",
+  "exact_exit": "wrapper-owned exit/finished artifacts; not synthesized"
+}

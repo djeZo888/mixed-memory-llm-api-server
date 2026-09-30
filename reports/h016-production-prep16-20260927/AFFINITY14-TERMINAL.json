@@ -1,0 +1,14 @@
+{
+  "utc": null,
+  "controller": null,
+  "pair_status": null,
+  "second_profile": null,
+  "second_gate": null,
+  "first_owner_status": null,
+  "native_settled": null,
+  "glm_restored_utc": null,
+  "glm": null,
+  "glm_readiness": null,
+  "registered_storage_root_guard": null,
+  "error": "Traceback (most recent call last):\n  File \"<stdin>\", line 11, in <module>\nAssertionError: controller_identity_conflict\n"
+}

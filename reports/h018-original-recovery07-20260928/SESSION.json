@@ -1,0 +1,16 @@
+{
+  "task": "H018-ORIGINAL-RECOVERY07-20260928",
+  "nativeSessionId": "01a0e599-c8dc-7593-a605-bbfb9c12135e",
+  "host": "mac-worker2",
+  "deadline": {
+    "startedUtc": "2026-09-28T01:20:55.509949+00:00",
+    "hardDeadlineUtc": "2026-09-28T01:28:55.509949+00:00",
+    "maximumSeconds": 480
+  },
+  "recoveryCommandExit": 0,
+  "nativeExit": "PENDING_WRAPPER_AFTER_RETURN",
+  "nativeExitAuthoritativePath": "../exit-code",
+  "nativeFinishedUtcAuthoritativePath": "../finished-utc",
+  "executionMode": "fresh bounded native Codex CLI; ai-harness via existing SSH only",
+  "independentReview": "read-only local subagent /root/review_recovery; no blocking mismatch"
+}

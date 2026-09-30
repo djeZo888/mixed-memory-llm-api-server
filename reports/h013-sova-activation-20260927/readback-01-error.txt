@@ -1,0 +1,1 @@
+Readback recorder only failed at owner.sqlite: sqlite3.OperationalError: database is locked. app.ts:125-127 intentionally holds BEGIN EXCLUSIVE in this zero-byte ownership lock. No app failure or second startup. Corrected read-only recorder checks durable ownership in harness.sqlite and dispatch ledger, preserves live owner lock.

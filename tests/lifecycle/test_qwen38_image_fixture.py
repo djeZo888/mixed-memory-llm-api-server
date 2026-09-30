@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import secrets
 import stat
+import sys
 import tempfile
 from types import SimpleNamespace
 import unittest
@@ -71,6 +72,168 @@ def lifetime(context):
 
 
 class Qwen38ImageFixtureTests(unittest.TestCase):
+    def adaptive_binding_fixture(self, pair):
+        """Synthetic completed-build collaborator; never native evidence."""
+        binding = pair.runtime_binding(ROOT)
+        value = copy.deepcopy(binding.load(require_complete=False))
+        value.update(status="COMPLETE_VERIFIED_BUILD", build_receipt_sha256="8" * 64)
+        for target, digit in (("text", "6"), ("image", "7")):
+            value[target].update(image_id="sha256:" + digit * 64,
+                                 image_config_digest="sha256:" + digit * 64,
+                                 image_manifest_digest=None, image_id_domain="oci_config")
+        return binding, value
+
+    def test_derived_pair_fixture_selects_exact_image_sources_wrapper_and_preserves_legacy(self):
+        pair = load("run_pair_fixture")
+        binding, value = self.adaptive_binding_fixture(pair)
+        before = (pair.host.IMAGE_ID, pair.host.IMAGE_REFERENCE, pair.host.OCI, pair.host.read_provenance)
+        with patch.object(pair, "runtime_binding", return_value=binding), \
+                patch.object(binding, "load", return_value=value):
+            provenance, _ = pair.adaptive_provenance(ROOT)
+            native = native_result(provenance, pair.CONTEXT)
+            native.update(image_id_pin=value["text"]["image_config_digest"],
+                          image_reference=value["text"]["image_id"],
+                          extension_identity=pair.pair_identity(ROOT, adaptive=True),
+                          model_config_resolution=pair.expected_extension_resolution(provenance))
+            observed = inspected()
+            observed[0]["Id"] = value["text"]["image_id"]
+            observed[0]["RepoDigests"] = []
+            observed[0]["Config"]["Labels"]["io.llmctl.adaptive-idle.overlay-sha256"] = value["text"]["overlay_sha256"]
+            with pair.fixture_mode(adaptive=True):
+                command = pair.host.docker_command(ROOT, {}, pair.CONTEXT)
+                self.assertIn(value["text"]["image_id"], command)
+                self.assertNotIn(pair.LEGACY_IMAGE_REFERENCE, command)
+                self.assertEqual(command[-3:], ["--slot", "gpu1", "--adaptive-overlay"])
+                self.assertIn("srt/managers/adaptive_text_drain.py", provenance["sources"])
+                self.assertEqual(provenance["sources"]["srt/entrypoints/http_server.py"]["sha256"],
+                                 value["text"]["final_source_sha256"]["python/sglang/srt/entrypoints/http_server.py"])
+                # All unchanged legacy source pins remain in the derived closure.
+                legacy, _ = pair.legacy_provenance(ROOT)
+                for name, identity in legacy["sources"].items():
+                    if "python/sglang/" + name not in value["text"]["final_source_sha256"]:
+                        self.assertEqual(provenance["sources"][name], identity)
+            with patch.object(pair.host, "validate_output_path"), \
+                    patch.object(pair.host.subprocess, "run", return_value=SimpleNamespace(
+                        returncode=0, stdout=json.dumps(observed).encode())), \
+                    patch.object(pair.host, "run_disposable_fixture", return_value=(SimpleNamespace(
+                        returncode=0, stdout=json.dumps(native).encode(), stderr=b""), lifetime(pair.CONTEXT))), \
+                    patch.object(pair.host, "write_receipt") as writer:
+                receipt = pair.run(ROOT, Path("/synthetic/never-published.json"), adaptive=True)
+                writer.assert_called_once()
+            self.assertEqual(receipt["model_execution"], "NOT_TESTED")
+            pair.check_pair_receipt(receipt, ROOT, adaptive=True)
+            for key, replacement in (("image_id", pair.LEGACY_IMAGE_ID),
+                                     ("image_reference", pair.LEGACY_IMAGE_REFERENCE),
+                                     ("source_hashes", {name: entry["sha256"] for name, entry in legacy["sources"].items()})):
+                with self.subTest(key=key), self.assertRaises(Exception):
+                    pair.check_pair_receipt({**receipt, key: replacement}, ROOT, adaptive=True)
+        self.assertEqual(before, (pair.host.IMAGE_ID, pair.host.IMAGE_REFERENCE,
+                                  pair.host.OCI, pair.host.read_provenance))
+
+    def test_derived_inner_mode_is_explicit_and_inherited_by_fault_children(self):
+        child = load("run_pair_pinned_image")
+        binding, value = self.adaptive_binding_fixture(child.contract)
+        before = (child.inner.IMAGE_ID, child.inner.IMAGE_REFERENCE, child.inner.DRAIN_TARGET,
+                  child.inner.source_provenance, child.inner.CHILD_ARGUMENTS)
+        def inspect_mode(arguments):
+            self.assertEqual(child.inner.DRAIN_TARGET, "text")
+            self.assertEqual(child.inner.IMAGE_ID, value["text"]["image_config_digest"])
+            self.assertEqual(child.inner.IMAGE_REFERENCE, value["text"]["image_id"])
+            self.assertEqual(child.inner.CHILD_ARGUMENTS, ("--slot", "gpu0", "--adaptive-overlay"))
+            self.assertIn("srt/managers/adaptive_text_drain.py", child.inner.source_provenance(ROOT)["sources"])
+            return 0
+        with patch.object(child.contract, "runtime_binding", return_value=binding), \
+                patch.object(binding, "load", return_value=value), \
+                patch.object(child.inner, "main", side_effect=inspect_mode):
+            self.assertEqual(child.main(["--actual-image", "--repo", str(ROOT), "--slot", "gpu0",
+                                         "--context", "480000", "--adaptive-overlay"]), 0)
+        self.assertEqual(before, (child.inner.IMAGE_ID, child.inner.IMAGE_REFERENCE, child.inner.DRAIN_TARGET,
+                                  child.inner.source_provenance, child.inner.CHILD_ARGUMENTS))
+
+    def test_derived_missing_build_refuses_before_docker_or_receipt(self):
+        pair = load("run_pair_fixture")
+        binding = pair.runtime_binding(ROOT)
+        with patch.object(pair, "runtime_binding", return_value=binding), \
+                patch.object(binding, "text_oci", side_effect=ValueError("h005_runtime_blocked_by_build")), \
+                patch.object(pair.host.subprocess, "run") as docker, \
+                patch.object(pair.host, "write_receipt") as writer:
+            with self.assertRaisesRegex(ValueError, "h005_runtime_blocked_by_build"):
+                pair.run(ROOT, Path("/synthetic/never-published.json"), adaptive=True)
+            docker.assert_not_called()
+            writer.assert_not_called()
+
+    def test_exact_outer_drain_wrapper_and_native_app_are_both_required(self):
+        args = object()
+        native = SimpleNamespace(server_args=args)
+        for target, module_name, filename, class_name in (
+                ("text", "sglang.srt.managers.adaptive_text_drain", "adaptive_text_drain.py",
+                 "GenerationDrainMiddleware"),
+                ("image", "sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain",
+                 "adaptive_diffusion_drain.py", "DiffusionDrainMiddleware")):
+            module = host.source_module(module_name, ROOT / "scripts/runtime" / filename)
+            wrapper = getattr(module, class_name)
+            server = SimpleNamespace(app=native, **{class_name: wrapper})
+            class Subclass(wrapper):
+                pass
+            with self.subTest(target=target), patch.dict(sys.modules, {module_name: module}):
+                self.assertIs(inner.native_application(server, wrapper(native), args, target=target), native)
+                for invalid in (native, SimpleNamespace(app=native), Subclass(native),
+                                wrapper(object()), wrapper(wrapper(native))):
+                    with self.assertRaisesRegex(inner.FixtureFailure, "native_outer_drain_application_not_retained"):
+                        inner.native_application(server, invalid, args, target=target)
+                with self.assertRaisesRegex(inner.FixtureFailure, "native_global_application_not_retained"):
+                    inner.native_application(server, wrapper(native), object(), target=target)
+                with patch.object(server, class_name, Subclass), self.assertRaises(inner.FixtureFailure):
+                    inner.native_application(server, wrapper(native), args, target=target)
+                # The historical fixture does not accept a wrapper implicitly.
+                self.assertIs(inner.native_application(server, native, args), native)
+                with self.assertRaises(inner.FixtureFailure):
+                    inner.native_application(server, wrapper(native), args)
+        with self.assertRaisesRegex(inner.FixtureFailure, "native_drain_target_invalid"):
+            inner.native_application(SimpleNamespace(app=native), native, args, target="other")
+
+    @unittest.skipUnless(os.environ.get("H005_PINNED_TEXT_ROOT") and os.environ.get("ADAPTIVE_IMAGE_SOURCE_ROOT"),
+                         "exact complete native source roots not supplied")
+    def test_full_pinned_outer_wrapper_imports_and_native_app_identity(self):
+        # Complete raw files are hash-checked and patched by the real packager.
+        # Only the wrapper import/expression is executed with framework fixtures;
+        # this does not claim a full native dependency or actual-image import.
+        sys.path.insert(0, str(ROOT / "scripts"))
+        self.addCleanup(sys.path.remove, str(ROOT / "scripts"))
+        from runtime import build_adaptive_idle_overlay as builder
+        for target, environment, filename, module_name, class_name in (
+                ("text", "H005_PINNED_TEXT_ROOT", "srt/entrypoints/http_server.py",
+                 "sglang.srt.managers.adaptive_text_drain", "GenerationDrainMiddleware"),
+                ("image", "ADAPTIVE_IMAGE_SOURCE_ROOT", "multimodal_gen/runtime/launch_server.py",
+                 "sglang.multimodal_gen.runtime.managers.adaptive_diffusion_drain", "DiffusionDrainMiddleware")):
+            with self.subTest(target=target), tempfile.TemporaryDirectory() as directory:
+                output = Path(directory) / target
+                receipt = builder.prepare(Path(os.environ[environment]), target, output)
+                self.assertFalse(receipt["image_built"])
+                package = output / "files/python/sglang"
+                tree = ast.parse((package / filename).read_bytes())
+                imports = [node for node in ast.walk(tree) if isinstance(node, ast.ImportFrom)
+                           and node.module == module_name]
+                self.assertEqual(len(imports), 1)
+                self.assertEqual([name.name for name in imports[0].names], [class_name])
+                calls = [node for node in ast.walk(tree) if isinstance(node, ast.Call)
+                         and isinstance(node.func, ast.Attribute) and isinstance(node.func.value, ast.Name)
+                         and (node.func.value.id, node.func.attr) == ("uvicorn", "run")
+                         and node.args and isinstance(node.args[0], ast.Call)
+                         and isinstance(node.args[0].func, ast.Name) and node.args[0].func.id == class_name]
+                self.assertEqual(len(calls), 1)
+                self.assertEqual(ast.unparse(calls[0].args[0]), class_name + "(app)")
+                helper = package / (module_name.removeprefix("sglang.").replace(".", "/") + ".py")
+                module = host.source_module(module_name, helper)
+                args = object()
+                native = SimpleNamespace(server_args=args)
+                namespace = {"app": native}
+                with patch.dict(sys.modules, {module_name: module}):
+                    exec(compile(ast.Module(body=imports, type_ignores=[]), filename, "exec"), namespace)
+                    application = eval(compile(ast.Expression(calls[0].args[0]), filename, "eval"), namespace)
+                    server = SimpleNamespace(app=native, **{class_name: namespace[class_name]})
+                    self.assertIs(inner.native_application(server, application, args, target=target), native)
+
     def test_rayon_threads_required_before_fixture_source_or_native_imports(self):
         for context in (131072, 262144, 1000000):
             for value in (None, "", "0", "64", " 1", "1 ", "1.0", "1"):

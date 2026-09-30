@@ -112,16 +112,35 @@ class BootSourceTests(unittest.TestCase):
     def test_conservative_timeouts_and_no_root_journal_output(self):
         fixture, binding, source, instance = self.fixture()
         service = parse_unit(render_boot_unit(binding, source, instance))["Service"]
-        deployment_timeouts = [json.loads(path.read_text())["launch"]["timeout_seconds"]
-                               for path in (ROOT / "configs/deployments").glob("*.json")]
+        deployments = []
+        separate_candidates = set()
+        for path in (ROOT / "configs/deployments").glob("*.json"):
+            deployment = json.loads(path.read_text())
+            runtime_id = deployment["runtime"]
+            runtime = json.loads((ROOT / "configs/runtimes" / (runtime_id + ".json")).read_text())
+            self.assertEqual(runtime.get("id"), runtime_id)
+            self.assertEqual(runtime.get("schema_version"), 1)
+            # Manager.backend/validate_deployment require a supported backend
+            # and Docker runtime. The retained KT build manifest belongs to the
+            # separate frontier owner and cannot enter this lifecycle path.
+            if runtime.get("kind") != "docker" or runtime.get("backend") not in {"llama_cpp", "sglang", "sglang_qwen38"}:
+                self.assertEqual(runtime_id, "kt-sglang-glm53-flash-h008")
+                separate_candidates.add(deployment["id"])
+                continue
+            deployments.append(deployment)
+        self.assertEqual(separate_candidates, {
+            "glm-5.3-flash-480000-fp8-kt", "glm-5.3-flash-1048576-fp8-kt"})
+        self.assertTrue(deployments, "must cover actual lifecycle deployment profiles")
+        # Required launch/logging fields remain mandatory on every selected
+        # profile; missing fields cannot silently drop it from this check.
+        deployment_timeouts = [deployment["launch"]["timeout_seconds"] for deployment in deployments]
         self.assertGreater(seconds(service["TimeoutStartSec"][0]), max(deployment_timeouts))
         self.assertGreaterEqual(seconds(service["TimeoutStopSec"][0]), 150)
         self.assertLessEqual(seconds(service["TimeoutStopSec"][0]), 600)
         self.assertEqual(service["StandardOutput"], ["null"])
         self.assertEqual(service["StandardError"], ["null"])
         self.assertEqual(service["UMask"], ["0077"])
-        for path in (ROOT / "configs/deployments").glob("*.json"):
-            deployment = json.loads(path.read_text())
+        for deployment in deployments:
             self.assertEqual(deployment["docker_restart_policy"], "no")
             self.assertEqual(deployment["logs"], {"driver": "json-file", "max_size": "20m", "max_file": 3})
 

@@ -1,0 +1,121 @@
+{
+  "task_id": "H013-BMC-POWER-20260927",
+  "parent_task_id": "H013",
+  "parent_orchestrator_session_id": null,
+  "parent_session_id_note": "Not supplied in this bounded task packet.",
+  "native_session_id": "01a0e17f-eac5-7fa2-b574-6767cf2aedc1",
+  "prior_operator_task_id": "H013-BMC-OPERATOR-20260927",
+  "prior_operator_native_session_id": "01a0e13b-4708-7ae2-ac5d-959157e52c8d",
+  "worker": "mac-worker2",
+  "base_commit": "cb4cdf87b692b3b81b124b54b7c848cfc225175a",
+  "branch": "worker2/h013-bmc-power",
+  "wrapper_started_utc": "2026-09-27T06:14:11Z",
+  "hard_deadline_utc": "2026-09-27T06:24:11Z",
+  "probe_deadline_utc": "2026-09-27T06:23:00Z",
+  "discovery_finished_utc": "2026-09-27T06:16:24.703852+00:00",
+  "report_written_utc": "2026-09-27T06:18:32.150074+00:00",
+  "state": "DONE_READONLY_POWER_MEANING_UNQUALIFIED",
+  "usable_host_or_psu_power_proven": false,
+  "sampler_created": false,
+  "long_sampling_started": false,
+  "target": {
+    "host": "10.156.100.40",
+    "port": 443,
+    "originating_host": "ai-harness",
+    "leaf_der_sha256": "0f1ee547edbdbca346ea2d884d3271a8f28351d57a16baa911c388198063f7ec"
+  },
+  "http_gets": 2,
+  "max_authorized_gets": 8,
+  "successful_actual_socket_pin_checks": 2,
+  "other_http_methods": 0,
+  "redirects_followed": 0,
+  "retries": 0,
+  "endpoint_provenance": [
+    {
+      "path": "/redfish/v1/Chassis/Self",
+      "source": "Prior retained Redfish Chassis collection; fresh read recovers omitted Power link."
+    },
+    {
+      "path": "/redfish/v1/Chassis/Self/Power",
+      "source": "Fresh Chassis.Power.@odata.id in GET-EVIDENCE.json receipt 1."
+    }
+  ],
+  "findings": [
+    {
+      "resource": "/redfish/v1/Chassis/Self/Power#/PowerControl/0",
+      "name": "Chassis Power Control",
+      "member_id": "0",
+      "property": "PowerConsumedWatts",
+      "raw_value": 20,
+      "unit": "W (property name)",
+      "physical_context": "Intake",
+      "oem_label": null,
+      "status": null,
+      "classification": "unknown measurement scope; no system-total, wall-AC, PSU-input/output, or CPU attribution proven",
+      "physical_measurement_time": null,
+      "sample_interval_seconds": null,
+      "counter_semantics": "Power-valued property, not an energy counter; instantaneous versus cached/averaged acquisition unqualified.",
+      "metrics": {
+        "AverageConsumedWatts": 0,
+        "MinConsumedWatts": 0,
+        "MaxConsumedWatts": 0,
+        "IntervalInMin": 0
+      },
+      "metrics_usable": false
+    },
+    {
+      "resource": "/redfish/v1/Chassis/Self/Power#/PowerSupplies/0",
+      "name": "Power Supply 1",
+      "member_id": "0",
+      "state": "Absent",
+      "power_supply_type": "AC",
+      "line_input_voltage_type": "Unknown",
+      "raw_power_input_watts": 0,
+      "raw_power_output_watts": 0,
+      "raw_last_power_output_watts": 0,
+      "usable_reading": null,
+      "classification": "absent resource; no usable individual PSU AC-input/DC-output measurement"
+    },
+    {
+      "resource": "/redfish/v1/Chassis/Self/Power#/PowerSupplies/1",
+      "name": "Power Supply 2",
+      "member_id": "1",
+      "state": "Absent",
+      "power_supply_type": "AC",
+      "line_input_voltage_type": "Unknown",
+      "raw_power_input_watts": 0,
+      "raw_power_output_watts": 0,
+      "raw_last_power_output_watts": 0,
+      "usable_reading": null,
+      "classification": "absent resource; no usable individual PSU AC-input/DC-output measurement"
+    }
+  ],
+  "freshness": "HTTP request/response times and server Date are transport timestamps, not physical acquisition times. No measurement timestamp or usable nonzero measurement interval exposed by retained power fields; BMC source freshness unknown.",
+  "coverage_limit": "This bounded discovery does not prove absence of all hardware telemetry. The advertised Sensors collection was not crawled; no PowerSubsystem link was advertised by the fresh chassis. No CPU-specific power reading established. Chassis power cannot be assumed to include the separate Ada PSU.",
+  "decision": "Stop with unknown semantics; no speculative sampler and no further probe/benchmark. Does not gate or expand H013/H014.",
+  "validation": {
+    "live": "Two authenticated HTTP 200 GETs with actual-socket pin verified before credential load/auth, each under a 10-second whole-request bound.",
+    "offline_tests_run": 0,
+    "offline_tests_note": "No sampler created; requested conditional sampler tests inapplicable. No broad tests or historical readiness replay.",
+    "review": "Source/diff/whitespace and narrow committed-file secret-pattern review passed before delivery; initial dash-leading grep pattern invocation corrected with -e."
+  },
+  "prohibited_operations_performed": {
+    "vm_contact": 0,
+    "fan_writes": 0,
+    "service_changes": 0,
+    "auth_post": 0,
+    "account_changes": 0,
+    "ipmi_raw": 0,
+    "inference": 0,
+    "subagents": 0,
+    "pushes": 0
+  },
+  "artifacts_sha256": {
+    "discover.py": "0fce56fbb45fc3a74481c0abb38874b3815fe26b757144a09cab76b11edcbc27",
+    "GET-EVIDENCE.json": "2437e07d5bc8713f294fb5845b39c9e3f91d11d53b44900c4c0f0e2a53e72899"
+  },
+  "prior_artifacts_sha256": {
+    "probe.py": "c07a4fc9958a50d611ad42c4a3eec547ddb9387ddce8d80ab14b31c49028ecd0",
+    "RECEIPTS.json": "cc958f0f9e944529629adacabbb6598b4f304f8f3b4b74ebabe4ba349e70eb2a"
+  }
+}

@@ -1,0 +1,20 @@
+--- /home/user/.config/systemd/user/ai-harness.service
++++ /home/user/ai-harness-build/H016-FINAL-BUILD-ACTIVATE-20260927/proposed/ai-harness.service
+@@ -1,4 +1,4 @@
+-# User unit template. Replace /opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness, /home/user/.local/opt/ai-harness/node-v24.21.0, /home/user/.local/share/ai-harness and
++# User unit template. Replace /opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness, /home/user/.local/opt/ai-harness/node-v24.21.0, /home/user/.local/share/ai-harness and
+ # /home/user/.config/ai-harness/browser-approval-key and /home/user/.config/ai-harness/inference-key with reviewed absolute paths; no credentials in this file.
+ [Unit]
+ Description=ai-harness v0.0.1 local web server and inference gateway
+@@ -9,9 +9,9 @@
+ Type=simple
+ LoadCredential=node-control-key:/home/user/.config/ai-harness/node-control-key
+ ExecStartPre=/usr/bin/python3 /opt/ai-harness/releases/63dcb23ebd0b2cb82a295bea78192f3e1a433a6e/h005-preparation/state-precheck.py --dispatch
+-WorkingDirectory=/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server
++WorkingDirectory=/opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness/server
+ Environment="PATH=/home/user/.local/opt/ai-harness/node-v24.21.0/bin:/usr/local/bin:/usr/bin:/bin"
+-ExecStart=/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/deploy/run-server.sh --node-prefix /home/user/.local/opt/ai-harness/node-v24.21.0 --app-dir /opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness --data-dir /home/user/.local/share/ai-harness --inference-key-file /home/user/.config/ai-harness/inference-key --browser-approval-key-file /home/user/.config/ai-harness/browser-approval-key --node-control-key-file %d/node-control-key --frontier-key-file /home/user/.config/ai-harness/inference-key
++ExecStart=/opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness/deploy/run-server.sh --node-prefix /home/user/.local/opt/ai-harness/node-v24.21.0 --app-dir /opt/ai-harness/releases/6c4b5869d9bc7658fcaf565b642bd951ad0f5752-h016-final18/ai-harness --data-dir /home/user/.local/share/ai-harness --inference-key-file /home/user/.config/ai-harness/inference-key --browser-approval-key-file /home/user/.config/ai-harness/browser-approval-key --node-control-key-file %d/node-control-key --frontier-key-file /home/user/.config/ai-harness/inference-key
+ UMask=0077
+ Restart=on-failure
+ RestartSec=5

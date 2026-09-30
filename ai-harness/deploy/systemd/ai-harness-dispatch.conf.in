@@ -1,0 +1,10 @@
+# SOURCE TEMPLATE ONLY. Root-reviewed activation creates these private paths.
+# Render @HARNESS_USER@/@HARNESS_GROUP@ as the EXISTING ordinary account/group.
+# Neither path may appear in workspace/profile mounts, nginx aliases or TCP
+# forwarding. keep-id means UID/mode alone does not isolate a mounted socket.
+# No age/cleanup rule: preserve state, holds and uncertain operation receipts.
+d /var/lib/ai-harness-dispatch 0700 @HARNESS_USER@ @HARNESS_GROUP@ - -
+d /run/ai-harness-dispatch 0700 @HARNESS_USER@ @HARNESS_GROUP@ - -
+# Reuse the canonical lifecycle owner directory. No alternate lock is created.
+# Never replace/delete an existing lifecycle.lock or clear its ownership.
+d /run/llmctl 0700 root root - -

@@ -1,0 +1,110 @@
+{
+  "schema": 1,
+  "sourceBase": "7fe2bf0adde6ffdae1e5d7f04bd5d1c4c4cfeee8",
+  "scope": "Offline current-source replay of retained actual input and provider output; no inference or native process.",
+  "auditedUtc": "2026-09-29T21:33:41.833Z",
+  "h034InstructionSourceMatchesRetainedComparison": true,
+  "h034InstructionsSha256": "84260e8947aa0e146a75ebbea318ad33e3c99ea19b6c2bf09551c8c240892971",
+  "h034AndH035BothHavePersistence": true,
+  "h034AndH035SameExplicitHostGateSentence": true,
+  "h034ActualRawAvailableLocally": false,
+  "results": [
+    {
+      "label": "H035_first",
+      "runId": "cfe55e79-cea8-4282-ae5b-d8543a8980ab",
+      "verifiedCaptureFiles": 142,
+      "manifestSha256": "319a32b27431c546b28ed9fa87371a71a698c0e7a370ddac90ce65318f630c5e",
+      "rawRequestSha256": "0eb54ca313aa633654d5bceb18ab322cb128b5c8719379b9407587c8f81f6c47",
+      "strictPromptSha256": "37374b62c65ff3be70ead65b0a68e41148637cc95717b869a9afdc3fe79512c3",
+      "latestAssembledInputSha256": "40adf97844e15c4c4b54aa6e32e60446bd8a21ccc90892f2203ad63bf367a62a",
+      "instructionsSha256": "f7bb7510b3df3546210fee7e6d305f86df9e45c971186088dc6c157977dbecc7",
+      "developerMessageSha256": "0eceff3b65c4288457bf465ad9c7a8d626a716b44ce13ad96ee5168189ba0c4f",
+      "completionContractPresent": true,
+      "sameCurrentInstructions": true,
+      "historyInputRoles": {
+        "developer": 1,
+        "user": 11,
+        "assistant": 11,
+        "function_call": 20,
+        "function_call_output": 20
+      },
+      "historicalInvalidPromptShapedCapabilitiesCalls": 8,
+      "explicitImageDisabledClauseInDeveloper": false,
+      "publicImageGateFieldsInDeveloper": false,
+      "exactRequestPreserved": true,
+      "completeTranslatedBodyMatchesApartFromSelectedLane": true,
+      "selectedLane": "qwen3.8-27b-gpu0",
+      "requestedModel": "qwen3.8-27b",
+      "providerFinish": "stop",
+      "introducedCalls": 0,
+      "originalFinalPreserved": true,
+      "finalSha256": "48563750d90c05833c35bc3f6dc575809d9d261e3e94a87923339702ec52759a",
+      "finalBytes": 240,
+      "newImageJobs": 0,
+      "savedJobStates": [
+        {
+          "id": "0aae2635-c9c7-4aa5-ad6e-d8b5a9aefffd",
+          "state": "completed",
+          "runId": "ec762194-446f-4938-b0ca-e94b50ab95fe",
+          "artifactId": "c386922f-d6eb-4dba-beb1-e056dddd4ff0"
+        },
+        {
+          "id": "21b33898-8c22-4366-903a-ef60f9946b23",
+          "state": "completed",
+          "runId": "957d298c-63a6-4297-9d1b-2c24f85da8af",
+          "artifactId": "e9149151-0896-400e-8236-ecf28271ca69"
+        }
+      ],
+      "strictWorkflowOutcome": "FAIL_RETAINED_NOT_RETESTED"
+    },
+    {
+      "label": "H035_retest",
+      "runId": "a2dbab1c-fca0-46e0-995d-726157a620af",
+      "verifiedCaptureFiles": 202,
+      "manifestSha256": "0130032e584370c6ec9c5399785d34d5e13fe8908d87b8035ce848f65daec773",
+      "rawRequestSha256": "c160e979a00bdc744721586b08d0e2f99b0317ef858df3a37d323f253b01040d",
+      "strictPromptSha256": "37374b62c65ff3be70ead65b0a68e41148637cc95717b869a9afdc3fe79512c3",
+      "latestAssembledInputSha256": "522ac5ddcb0890ced02f0968f1f62bd6276b81c2c3edd61d991c8312ab06833b",
+      "instructionsSha256": "f7bb7510b3df3546210fee7e6d305f86df9e45c971186088dc6c157977dbecc7",
+      "developerMessageSha256": "0eceff3b65c4288457bf465ad9c7a8d626a716b44ce13ad96ee5168189ba0c4f",
+      "completionContractPresent": true,
+      "sameCurrentInstructions": true,
+      "historyInputRoles": {
+        "developer": 1,
+        "user": 12,
+        "assistant": 12,
+        "function_call": 20,
+        "function_call_output": 20
+      },
+      "historicalInvalidPromptShapedCapabilitiesCalls": 8,
+      "explicitImageDisabledClauseInDeveloper": false,
+      "publicImageGateFieldsInDeveloper": false,
+      "exactRequestPreserved": true,
+      "completeTranslatedBodyMatchesApartFromSelectedLane": true,
+      "selectedLane": "qwen3.8-27b-gpu0",
+      "requestedModel": "qwen3.8-27b",
+      "providerFinish": "stop",
+      "introducedCalls": 0,
+      "originalFinalPreserved": true,
+      "finalSha256": "06b0b62413f64899fe29978f21d78614c2b5a9d20367c5d5acca2465e6217ac6",
+      "finalBytes": 297,
+      "newImageJobs": 0,
+      "savedJobStates": [
+        {
+          "id": "0aae2635-c9c7-4aa5-ad6e-d8b5a9aefffd",
+          "state": "completed",
+          "runId": "ec762194-446f-4938-b0ca-e94b50ab95fe",
+          "artifactId": "c386922f-d6eb-4dba-beb1-e056dddd4ff0"
+        },
+        {
+          "id": "21b33898-8c22-4366-903a-ef60f9946b23",
+          "state": "completed",
+          "runId": "957d298c-63a6-4297-9d1b-2c24f85da8af",
+          "artifactId": "e9149151-0896-400e-8236-ecf28271ca69"
+        }
+      ],
+      "strictWorkflowOutcome": "FAIL_RETAINED_NOT_RETESTED"
+    }
+  ],
+  "interpretation": "No dropped tool call, missing generic completion instruction, or explicit false image gate instruction demonstrated. Behavioral causality remains unresolved. This verifies preservation, not completion of the requested workflow."
+}

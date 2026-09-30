@@ -1,0 +1,9 @@
+{
+  "result": "PASS",
+  "units_containers_queues_data_unchanged": true,
+  "non_database_files": 17597,
+  "credentials_metadata_unchanged_contents_unread": true,
+  "production_tag": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "activation": false,
+  "qualification_present": false
+}

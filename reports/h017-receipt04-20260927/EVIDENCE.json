@@ -1,0 +1,151 @@
+{
+  "status": "PARTIAL_PASS_OVERALL_NOT_QUALIFIED",
+  "collection_utc": "2026-09-27T20:14:47.728058+00:00",
+  "collection_sha256": "765a84fcf05a06b081025de22f2c9b688f8219dca3fd086caf39deb0eb420e3e",
+  "receipts": {
+    "CLIENT.json": {
+      "sha256": "8fd51f60865df7d581102083152792654355fb9485508c2cd4c635c23f9e9ad4",
+      "remote_path": "/data/logs/H017-20260927/worker1-qualify03-short/CLIENT.json"
+    },
+    "ALLOCATION.json": {
+      "sha256": "9226b1a01324a6e3945f8de13383fe2df456f48107b0654227ff6d09faf30535",
+      "remote_path": "/data/logs/H017-20260927/worker1-qualify03-short/ALLOCATION.json"
+    },
+    "SHORT-TEXT.json": {
+      "sha256": "238621fde64ebd1e8ccee800db76f218e3372249f22ae1fe53668fc63eb34d6b",
+      "remote_path": "/data/logs/H017-20260927/worker1-qualify03-short/SHORT-TEXT.json"
+    },
+    "GUARD-PROGRESS.json": {
+      "sha256": "1dc466baef70417fd990058149f69a16658bc8096ccf1780cc4cc5540bed03b7",
+      "remote_path": "/data/logs/H017-20260927/worker1-qualify03-short/GUARD-PROGRESS.json"
+    },
+    "SHORT-TEXT-PROGRESS.jsonl": {
+      "sha256": "424ba822c148eb6aab266faf75ed9c8f0afbf4e63261be7347cfe07454983810",
+      "remote_path": "/data/logs/H017-20260927/worker1-qualify03-short/SHORT-TEXT-PROGRESS.jsonl"
+    }
+  },
+  "production_identity": {
+    "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "launch_id": "b08bc770f6244655a803ec1ba835813f",
+    "manifest_sha256": "83daa3e66924a8f945c168dfe9e0856c8c518196908335e029708eb46c0636eb",
+    "native": {
+      "container_id": "624bd1f5bb049adc8ead5205ff0f2446d4c61c6701b551871ee4fc42ab3deb8f",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1541651,
+      "pid_start_ticks": "5182991",
+      "started_at": "2026-09-27T19:58:46.550187738Z"
+    },
+    "supervisor": {
+      "invocation_id": "6e0c4561cfdf4ecd83a373ce2aa4b7d5",
+      "pid": 1540308,
+      "unit": "llm-frontier-mimo.service"
+    }
+  },
+  "native_result": {
+    "short_text": "PASS",
+    "full17": "NO_COLLECTED_TURN_OR_QUALIFICATION_RECEIPT",
+    "full17_completed": false,
+    "ceiling65536": "NOT_TESTED_ON_THIS_INSTANCE",
+    "short_output_budget": 32,
+    "short_completed_output": 2
+  },
+  "capacity": {
+    "published": 1048576,
+    "configured": 950000,
+    "allocated": 950000,
+    "occupiedTested": 14
+  },
+  "capacity_scope": "Configured/allocated950000 observed before owner failure; fresh occupied input14. No current live readiness claim.",
+  "physical_pool": {
+    "native_reported_pre_cap_tokens": 950016,
+    "usable_slot_tokens": 950000,
+    "raw_native_confirmation": true,
+    "scope": "Old stopped instance native log20:08:02.415789009 explicitly caps per-slot950016 to950000; no occupied950K claim."
+  },
+  "historical_provenance": {
+    "qualifier_path": "reports/h016-production-prep16-20260927/QUALIFICATION-R9.json",
+    "qualifier_sha256": "f03120cf00356e0d1992129aac81ae37959677519f9cc2c463ab6f98a0867455",
+    "evidence_sha256": "c2d43fe768e7bb4c47398e205c5af496d077fdd9fbc0a931795f253726d9cbd3",
+    "configured_and_usable": 1000000,
+    "occupied_input_tested": 16384,
+    "scope": "Historical R9 4K/16K/full17, original tested instance/generation; never a current950K benchmark.",
+    "pins_reused": {
+      "model": "mimo-v2.6-pro-rl",
+      "runtimeRevision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "runtimeBuildSha256": "cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "artifactRevision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+      "artifactManifestSha256": "6ac4242ac5d4df5b083b133062c78b792f1fdc7716d32c0e0000122e3263744b",
+      "loadedTensorMetadataSha256": "a53a1db6e53c8a0f2a8f8381c40894643e18edad28f62d97b9925bd7d53bf0ae",
+      "loadedTokenizerSha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+      "loadedTemplateSha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+      "serverInstance": "e281df9fb64d87e32668cc4da2e368d41c2a48fe0b3d7b8d4923615a84d3807e",
+      "serverGeneration": "f7d09bc5011543f99d321e1bdd4e5adb",
+      "actualSlotContext": 1000000,
+      "maxOutputTokens": 65536,
+      "parallel": 1,
+      "contextShift": false,
+      "speculative": false,
+      "mtp": false,
+      "multimodal": false,
+      "assistantPrefill": false,
+      "jinja": true,
+      "kvUnified": true,
+      "swaFull": false
+    },
+    "new_shard_rehash": false
+  },
+  "digest_scopes": {
+    "runtimeBuildSha256": "Immutable Docker image ID; no fresh binary or memory hash.",
+    "loadedTensorMetadataSha256": "Archived GGUF-INVENTORY.json of previously verified artifact; no new runtime attestation.",
+    "loadedTokenizerSha256": "Entire verified5948832-byte carrier shard00001, not tokenizer-only extracted digest.",
+    "loadedTemplateSha256": "Current saved native props template equals historical template SHA256.",
+    "artifactManifestSha256": "Accepted manifest for the immutable13 verified shards;577669438240bytes not rehashed."
+  },
+  "partial_qualifier": {
+    "path": "reports/h017-receipt04-20260927/QUALIFICATION-950K.NOT_QUALIFIED.json",
+    "sha256": "a1d2ddbcadb0afcca666159c1cbfd7b3ba39544006c3fd720cc64c1bc29d44b3",
+    "host_validator_must_reject": true,
+    "flags": "All top-level qualified flags and qualification.qualified are false; generation ceiling acceptance and reasoning/tools false.",
+    "retained_check_scope": "Artifact/precision/admission arithmetic/text-array checks reuse historical immutable evidence. Allocation/reserve/template/count and single-owner checks have current short evidence only, not enduring readiness."
+  },
+  "strict_nested_scope": "Historical strict:false Boolean/nested schemas only; current full17 incomplete. strict:true constrained generation NOT_TESTED.",
+  "remote_private_body": {
+    "path": "/data/logs/H017-20260927/worker1-qualify03-short/SHORT-TEXT-REQUEST.json",
+    "sha256": "473f1f4eccca14ab47c92bf19d3b2cb107c77f0ff143cfaae1569b33a4c314ef",
+    "scope": "SHA256 recorded by reader for exact counted/sent body; body retained remotely, not collected locally."
+  },
+  "raw_stream_scope": "Byte-exact base64 raw SSE chunks and terminal events in private collected SHORT-TEXT.json; separate remote RAW.jsonl retained.",
+  "ordinary_terminal": {
+    "status": "SETTLED",
+    "request_hold": false,
+    "primary_failure": {
+      "code": "unexpected_error",
+      "cycle_elapsed_s": 0.04864,
+      "observed_at": "2026-09-27T20:10:22.160610+00:00",
+      "operation": "resource_validate",
+      "phase": "RUNNING"
+    },
+    "settlement_failure": {
+      "code": "command_timeout",
+      "observed_at": "2026-09-27T20:10:29.928770+00:00",
+      "operation": "settlement",
+      "phase": "SETTLING"
+    },
+    "settlement": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_released": true
+    }
+  },
+  "root_cause": "UNKNOWN; unexpected_error during resource_validate is a recorded code, not a causal diagnosis.",
+  "last_guard": {
+    "observed_at": "2026-09-27T20:10:17.204898+00:00",
+    "status": "ok",
+    "scope": "Last persisted guard only; stale at collection and not current readiness."
+  },
+  "sova_acceptance": "NOT_TESTED",
+  "optimized64k": "NOT_TESTED",
+  "near950k": "NOT_TESTED",
+  "remote_activity_this_task": "Historical receipt phase: one COLLECT-SHORT. Later direct root authority added one diagnostic read, one diagnostic source installation/start, one startup read and source-only short staging; no new inference."
+}

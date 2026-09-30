@@ -1,0 +1,196 @@
+TAP version 13
+# Subtest: Codex MiMo shares serial admission/count bytes, roundtrips actual reasoning and holds native drain after revoke
+ok 1 - Codex MiMo shares serial admission/count bytes, roundtrips actual reasoning and holds native drain after revoke
+  ---
+  duration_ms: 100.83975
+  type: 'test'
+  ...
+# Subtest: MiMo source descriptor does not open frontier without independent acceptance and existing hold
+ok 2 - MiMo source descriptor does not open frontier without independent acceptance and existing hold
+  ---
+  duration_ms: 7.072042
+  type: 'test'
+  ...
+# Subtest: current capsule rebinds only ephemeral receipt identity and rejects a restart within owned work
+ok 3 - current capsule rebinds only ephemeral receipt identity and rejects a restart within owned work
+  ---
+  duration_ms: 1.436792
+  type: 'test'
+  ...
+# Subtest: changed owner across native props/slots invalidates current capsule before count
+ok 4 - changed owner across native props/slots invalidates current capsule before count
+  ---
+  duration_ms: 0.216833
+  type: 'test'
+  ...
+# Subtest: unknown/stale/held/changed capacity and physical GPU never qualify from a static receipt
+ok 5 - unknown/stale/held/changed capacity and physical GPU never qualify from a static receipt
+  ---
+  duration_ms: 0.155583
+  type: 'test'
+  ...
+# Subtest: control transport sends no browser fetch metadata and respects cancellation
+ok 6 - control transport sends no browser fetch metadata and respects cancellation
+  ---
+  duration_ms: 9.696041
+  type: 'test'
+  ...
+# Subtest: owner identity ignores ordinary active request and thermal sample telemetry
+ok 7 - owner identity ignores ordinary active request and thermal sample telemetry
+  ---
+  duration_ms: 0.105208
+  type: 'test'
+  ...
+# Subtest: one shared owner survives GLM/MiMo alias switch and restart; no unrelated clear
+ok 8 - one shared owner survives GLM/MiMo alias switch and restart; no unrelated clear
+  ---
+  duration_ms: 73.287917
+  type: 'test'
+  ...
+# Subtest: canonical count bytes equal dispatch, actual selected service, validated serial completion releases existing lane
+ok 9 - canonical count bytes equal dispatch, actual selected service, validated serial completion releases existing lane
+  ---
+  duration_ms: 16.986875
+  type: 'test'
+  ...
+# Subtest: full tool stream is retained until HTTP drain; incomplete EOF quarantines without tool execution/replay
+ok 10 - full tool stream is retained until HTTP drain; incomplete EOF quarantines without tool execution/replay
+  ---
+  duration_ms: 8.942625
+  type: 'test'
+  ...
+# Subtest: consumer disconnect keeps native drain owner; valid completion allows next serial request
+ok 11 - consumer disconnect keeps native drain owner; valid completion allows next serial request
+  ---
+  duration_ms: 36.636667
+  type: 'test'
+  ...
+# Subtest: identity change after drain quarantines, never releases based on HTTP alone
+ok 12 - identity change after drain quarantines, never releases based on HTTP alone
+  ---
+  duration_ms: 7.581
+  type: 'test'
+  ...
+# Subtest: native observations separate static provenance from props/slots and reject capacity/template drift
+ok 13 - native observations separate static provenance from props/slots and reject capacity/template drift
+  ---
+  duration_ms: 0.397334
+  type: 'test'
+  ...
+# Subtest: strict nested schemas preserved; false storage discarded before canonical count, unsupported options rejected
+ok 14 - strict nested schemas preserved; false storage discarded before canonical count, unsupported options rejected
+  ---
+  duration_ms: 0.2135
+  type: 'test'
+  ...
+# Subtest: selected registry reports both canonical inventory identities on the shared frontier
+ok 15 - selected registry reports both canonical inventory identities on the shared frontier
+  ---
+  duration_ms: 5.731125
+  type: 'test'
+  ...
+# Subtest: granular qualification cannot mistake arithmetic or requested ceiling for native occupied/output proof
+ok 16 - granular qualification cannot mistake arithmetic or requested ceiling for native occupied/output proof
+  ---
+  duration_ms: 0.084291
+  type: 'test'
+  ...
+# Subtest: durable unresolved request blocks a switch even if lane row was missing
+ok 17 - durable unresolved request blocks a switch even if lane row was missing
+  ---
+  duration_ms: 1.086708
+  type: 'test'
+  ...
+# Subtest: MiMo elapsed budget is eight hours; Qwen and GLM retain two, fixture timeouts do not replay
+ok 18 - MiMo elapsed budget is eight hours; Qwen and GLM retain two, fixture timeouts do not replay
+  ---
+  duration_ms: 1010.889334
+  type: 'test'
+  ...
+# Subtest: disabled candidate pins all artifacts but advertises no live capacity or readiness
+ok 19 - disabled candidate pins all artifacts but advertises no live capacity or readiness
+  ---
+  duration_ms: 1.1095
+  type: 'test'
+  ...
+# Subtest: full history and pure text arrays survive without mutation or false equivalence
+ok 20 - full history and pure text arrays survive without mutation or false equivalence
+  ---
+  duration_ms: 0.352875
+  type: 'test'
+  ...
+# Subtest: closed grammar rejects media, role/control injection, malformed history and unsafe limits
+ok 21 - closed grammar rejects media, role/control injection, malformed history and unsafe limits
+  ---
+  duration_ms: 6.5885
+  type: 'test'
+  ...
+# Subtest: required actual qualified identity, exact P+O=S-1 boundary and no output shrinking
+ok 22 - required actual qualified identity, exact P+O=S-1 boundary and no output shrinking
+  ---
+  duration_ms: 3.141
+  type: 'test'
+  ...
+# Subtest: native count POST uses byte-identical full canonical generation body and strict integer response
+ok 23 - native count POST uses byte-identical full canonical generation body and strict integer response
+  ---
+  duration_ms: 2.027958
+  type: 'test'
+  ...
+# Subtest: native count accepts exact captured response and optional object tag in either field order
+ok 24 - native count accepts exact captured response and optional object tag in either field order
+  ---
+  duration_ms: 0.860208
+  type: 'test'
+  ...
+# Subtest: native count tagged responses reject ambiguous keys, wrong tags and unsafe integer spellings
+ok 25 - native count tagged responses reject ambiguous keys, wrong tags and unsafe integer spellings
+  ---
+  duration_ms: 2.63925
+  type: 'test'
+  ...
+# Subtest: complete stream handles arbitrary byte splits, empty fragments, usage-only frame and HTTP drain
+ok 26 - complete stream handles arbitrary byte splits, empty fragments, usage-only frame and HTTP drain
+  ---
+  duration_ms: 1.24725
+  type: 'test'
+  ...
+# Subtest: mixed reasoning/content/tool deltas assemble native IDs/names/arguments only after complete drain
+ok 27 - mixed reasoning/content/tool deltas assemble native IDs/names/arguments only after complete drain
+  ---
+  duration_ms: 0.213583
+  type: 'test'
+  ...
+# Subtest: protocol failures never produce completed tools or silently accept truncated/mismatched output
+ok 28 - protocol failures never produce completed tools or silently accept truncated/mismatched output
+  ---
+  duration_ms: 0.858084
+  type: 'test'
+  ...
+# Subtest: ambiguity holds existing owner without replay/switch; transport completion does not prove settlement
+ok 29 - ambiguity holds existing owner without replay/switch; transport completion does not prove settlement
+  ---
+  duration_ms: 0.076125
+  type: 'test'
+  ...
+# Subtest: count aborts bounded observation, post and stalled body without retry; bad SSE envelopes fail closed
+ok 30 - count aborts bounded observation, post and stalled body without retry; bad SSE envelopes fail closed
+  ---
+  duration_ms: 19.373875
+  type: 'test'
+  ...
+# Subtest: root regression: role and finish reason require strings without coercion
+ok 31 - root regression: role and finish reason require strings without coercion
+  ---
+  duration_ms: 0.43875
+  type: 'test'
+  ...
+1..31
+# tests 31
+# suites 0
+# pass 31
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1353.08475

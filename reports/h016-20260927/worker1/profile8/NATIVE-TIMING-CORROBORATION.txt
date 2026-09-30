@@ -1,0 +1,9 @@
+2026-09-27T14:10:23.418326485Z 11.13.402.592 I slot print_timing: id  0 | task 0 | prompt eval time =    3319.57 ms /    29 tokens (  114.47 ms per token,     8.74 tokens per second)
+2026-09-27T14:10:23.418413946Z 11.13.402.597 I slot print_timing: id  0 | task 0 |        eval time =    8387.00 ms /     8 tokens ( 1198.14 ms per token,     0.83 tokens per second)
+2026-09-27T14:10:23.418416851Z 11.13.402.598 I slot print_timing: id  0 | task 0 |       total time =   11706.57 ms /    37 tokens
+2026-09-27T14:12:43.256938025Z 13.33.242.234 I slot print_timing: id  0 | task 10 | prompt eval time =    3135.76 ms /    83 tokens (   37.78 ms per token,    26.47 tokens per second)
+2026-09-27T14:12:43.256963883Z 13.33.242.362 I slot print_timing: id  0 | task 10 |        eval time =  135798.13 ms /   128 tokens ( 1069.28 ms per token,     0.94 tokens per second)
+2026-09-27T14:12:43.256965025Z 13.33.242.370 I slot print_timing: id  0 | task 10 |       total time =  138933.89 ms /   211 tokens
+2026-09-27T14:14:57.410482880Z 15.47.394.948 I slot print_timing: id  0 | task 140 | prompt eval time =    3088.82 ms /    83 tokens (   37.21 ms per token,    26.87 tokens per second)
+2026-09-27T14:14:57.410508749Z 15.47.394.954 I slot print_timing: id  0 | task 140 |        eval time =  129291.93 ms /   128 tokens ( 1018.05 ms per token,     0.98 tokens per second)
+2026-09-27T14:14:57.410510031Z 15.47.394.955 I slot print_timing: id  0 | task 140 |       total time =  132380.75 ms /   211 tokens

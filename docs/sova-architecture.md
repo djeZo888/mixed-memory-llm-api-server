@@ -1,10 +1,5 @@
 # Sova architecture
 
-The deployed harness, image and status features described here are documented
-from `feature/system-topology` (PRs 5–8) and are **not yet merged into main**.
-Their current source/configuration/evidence links explicitly target that
-feature branch; this main-based change adds documentation only.
-
 Sova names the whole system; existing source paths, VM names and runtime IDs
 remain unchanged. This H007 document separates current source behavior from the
 **accepted design for future routing and scaling**. It implements no routing,
@@ -13,15 +8,15 @@ the [overview diagram](../README.md) and [work queue](../TODO.md).
 
 ## Current implementation
 
-The [engine profile](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/deploy/engine/configure-profile.mjs) configures
+The [engine profile](../ai-harness/deploy/engine/configure-profile.mjs) configures
 one Qwen model family, `qwen3.8-27b`. Both `defaultModel` and `defaultLightModel`
 use that same gateway model. The profile retains MiniMax's native delegation
 tools; main sessions, child agents, compression and auxiliary inference calls
 share the gateway. Configured context/output limits are described in the
-[harness capacity guide](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/README.md#capacity-and-context); configured
+[harness capacity guide](../ai-harness/README.md#capacity-and-context); configured
 limits do not establish measured occupancy or throughput.
 
-The [gateway](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/server/src/gateway.ts) accepts that single model ID
+The [gateway](../ai-harness/server/src/gateway.ts) accepts that single model ID
 and requires exactly two reviewed Qwen upstream aliases, on ai-vm ports 30002
 and 30004. There are **exactly two globally shared inference slots**, one per
 endpoint, with a bounded FIFO queue and durable lane settlement/quarantine.
@@ -32,21 +27,21 @@ current harness deployment, not a distributed admission implementation. There is
 no GLM harness integration or arbitrary-model routing. Direct ai-vm inference
 endpoints remain separate; ai-vm has no common inference router.
 
-The [run broker](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/server/src/broker.ts) owns session runners,
+The [run broker](../ai-harness/server/src/broker.ts) owns session runners,
 supplies their gateway authorization and serializes runs sharing a workspace.
 The profile exposes a separate image MCP tool path through the gateway's image
-job routes to the [image broker](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/server/src/image-broker.ts) and
-[image upstream](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/server/src/image-upstream.ts). Its durable image
+job routes to the [image broker](../ai-harness/server/src/image-broker.ts) and
+[image upstream](../ai-harness/server/src/image-upstream.ts). Its durable image
 lane neither acquires nor releases the two text slots. Image generation/editing
 is a specialist tool operation, not general-purpose agent delegation. Existing
-[image limits and worker restrictions](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/README.md#image-generation-and-editing)
+[image limits and worker restrictions](../ai-harness/README.md#image-generation-and-editing)
 continue to apply.
 
 Status and administration use deterministic software and typed lifecycle
 operations. Models reason and request permitted tools; they do not own lifecycle
 authority. Current operations retain their ownership, admission holds, leases,
-confirmation and recovery boundaries; see [operator guidance](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/README.md#operator-use)
-and the [control contract](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/control-api.md).
+confirmation and recovery boundaries; see [operator guidance](../ai-harness/README.md#operator-use)
+and the [control contract](control-api.md).
 
 ## Accepted future model and routing design
 
@@ -121,17 +116,17 @@ does not deliver these properties or establish performance.
 
 ## Registry and evidence boundaries
 
-The [registry](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/config/system-registry.json) and its
-[loader](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/server/src/system-registry.ts) provide the existing
+The [registry](../ai-harness/config/system-registry.json) and its
+[loader](../ai-harness/server/src/system-registry.ts) provide the existing
 observation and placement foundation. Node observation transports are consumed
 from configuration, while workload endpoint references remain informational;
 current inference consumers retain their existing bindings. Registry edits do
 not move workloads/data, implement model selection or grant lifecycle actions.
-Follow the [H006 configuration and extension guide](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/docs/status-registry.md)
+Follow the [H006 configuration and extension guide](../ai-harness/docs/status-registry.md)
 for the actual credential, observer and action boundaries.
 
-The [H006 closeout](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-closeout-20260926.md) and
-[dated topology plan](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/system-topology-plan.md) retain their historical facts,
+The [H006 closeout](h006-closeout-20260926.md) and
+[dated topology plan](system-topology-plan.md) retain their historical facts,
 including the then-undecided name and enabled package updates. H007 selects Sova;
 the [manual-update policy](../TODO.md#immediate-h007-policy) is now verified on
 the two current VMs. The linked policy report defines its actual coverage and

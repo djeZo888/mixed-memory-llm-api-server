@@ -1,0 +1,10 @@
+test_ambiguous_dispatch_never_replayed (test_controller.Tests.test_ambiguous_dispatch_never_replayed) ... ok
+test_exact_GO_and_expiry (test_controller.Tests.test_exact_GO_and_expiry) ... ok
+test_failed_warm_no_main_and_exclusive_intent_no_replay (test_controller.Tests.test_failed_warm_no_main_and_exclusive_intent_no_replay) ... ok
+test_qualification_refuses_stale_wrong_id_cancel_and_usage (test_controller.Tests.test_qualification_refuses_stale_wrong_id_cancel_and_usage) ... ok
+test_success_dispatches_each_once_and_exits_after_four_body_proof (test_controller.Tests.test_success_dispatches_each_once_and_exits_after_four_body_proof) ... ok
+
+----------------------------------------------------------------------
+Ran 5 tests in 0.007s
+
+OK

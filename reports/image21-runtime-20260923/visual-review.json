@@ -1,0 +1,26 @@
+{
+  "utc": "2026-09-23T03:10:40.001337+00:00",
+  "method": "ActualPNGviewedbyprimaryandindependentreviewer",
+  "generation": {
+    "status": "PASS",
+    "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+    "observation": "Red ceramic teapot on wooden table beside window with soft daylight, correct composition and no blank/corrupt output"
+  },
+  "single_reference_edit": {
+    "status": "PARTIAL_SEMANTIC_COLOR_CHANGE_VISUAL_FIDELITY_FAIL",
+    "input_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+    "output_sha256": "ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1",
+    "observation": "Teapot darkblue/navy and composition preserved, but strong unwanted contrast, coarse surface/detail and changed background blur/lighting fail unchanged-scene instruction"
+  },
+  "fully_qualified_edit_profile": false,
+  "further_attempts": "NOT_RUN_ROOT_DIRECTED_NO_RETRY",
+  "transparency_qualification": "NOT_TESTED_RGBAdecodingisnotproof",
+  "rgb_comparison": {
+    "status": "PARTIAL_SEMANTIC_COLOR_CHANGE_VISUAL_FIDELITY_FAIL",
+    "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+    "output_sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+    "observation": "ActualcomparisonPNGviewed; same darknavyteapot with heavycontrast/coarsetexture/sharpenedbackground and alteredsoftlighting. OpaqueRGBnormalizationdidnotresolveobservedfidelityfailure.",
+    "authorization": "ROOT-EDIT-RGB-COMPARISON-GO.md",
+    "causal_limit": "Onenarrowcomparisononly; doesnotestablishrootcause"
+  }
+}

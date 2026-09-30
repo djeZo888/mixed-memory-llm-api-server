@@ -1,0 +1,193 @@
+{
+  "scope": "ORIGINAL_TWO_POOL_PLACEMENT_BEFORE_RELOAD_DIAGNOSTIC_ONLY",
+  "source": {
+    "task_relative_path": "evidence/AUTO-SAMPLERFIX.json",
+    "sha256": "eb1292f5f87860a655882faaaee05fc2ea37eba299f4289d30363953057cf3ed"
+  },
+  "status": "PASS",
+  "start_utc": "2026-09-26T20:11:07.616287+00:00",
+  "end_utc": "2026-09-26T20:11:44.940497+00:00",
+  "fixture": {
+    "native_tokenize": {
+      "context_limit": 480000,
+      "count": 177,
+      "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+      "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+    },
+    "tool_choice": "OMITTED_NATIVE_AUTO"
+  },
+  "native_capacity": {
+    "context_length": 480000,
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 2,
+    "kv_cache_dtype": "fp8_e4m3",
+    "max_req_input_len": 479994,
+    "max_req_len": null,
+    "max_running_requests": 1,
+    "max_total_num_tokens": 480000,
+    "max_total_tokens": 480000
+  },
+  "memory_summary": {
+    "cgroup_peak_bytes": 428669755392,
+    "max_cgroup_swap_bytes": 0,
+    "max_gpu_temp_c": 39.0,
+    "min_gpu_free_mib": 65076.0,
+    "min_host_available_bytes": 606964703232,
+    "peak_gpu_used_mib": 32174.0
+  },
+  "established_tcp30010_after_close": "",
+  "native_active_counter": "NOT_AVAILABLE_UNLESS_EXPLICIT_FRESH_NATIVE_READBACK",
+  "request": {
+    "status": "TRANSPORT_PASS",
+    "semantic_status": "PASS_WEATHER_LJUBLJANA",
+    "http_status": 200,
+    "start_utc": "2026-09-26T20:11:08.339322+00:00",
+    "end_utc": "2026-09-26T20:11:44.319164+00:00",
+    "elapsed_seconds": 35.687469268988934,
+    "ttft_seconds": 11.4300828849955,
+    "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+    "first_positive_native_usage_seconds": 11.4300828849955,
+    "last_nonempty_delta_seconds": 31.33548805899045,
+    "input_tokens": 177,
+    "output_tokens": 15,
+    "usage": {
+      "completion_tokens": 15,
+      "prompt_tokens": 177,
+      "prompt_tokens_details": null,
+      "reasoning_tokens": 0,
+      "total_tokens": 192
+    },
+    "finish_reason": "tool_calls",
+    "assembled_tool_calls": [
+      {
+        "arguments": "{\"city\": \"Ljubljana\"}",
+        "name": "weather"
+      }
+    ],
+    "decode_tokens_per_second": 0.4943793233608287,
+    "decode_rate_status": "NATIVE_INCREMENTAL_USAGE_OBSERVED_CLIENT_TIME_WINDOW",
+    "decode_rate_window": {
+      "end_native_tokens": 15,
+      "end_seconds": 33.68020436099323,
+      "start_native_tokens": 4,
+      "start_seconds": 11.4300828849955
+    },
+    "native_usage_samples": [
+      {
+        "seconds": 11.4300828849955,
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 181
+        }
+      },
+      {
+        "seconds": 14.763185527990572,
+        "usage": {
+          "completion_tokens": 4,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 181
+        }
+      },
+      {
+        "seconds": 15.67436415499833,
+        "usage": {
+          "completion_tokens": 6,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 183
+        }
+      },
+      {
+        "seconds": 17.537143663997995,
+        "usage": {
+          "completion_tokens": 8,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 185
+        }
+      },
+      {
+        "seconds": 26.59418545299559,
+        "usage": {
+          "completion_tokens": 9,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 186
+        }
+      },
+      {
+        "seconds": 27.508262203991762,
+        "usage": {
+          "completion_tokens": 10,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 187
+        }
+      },
+      {
+        "seconds": 28.73018213600153,
+        "usage": {
+          "completion_tokens": 11,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 188
+        }
+      },
+      {
+        "seconds": 29.597391796996817,
+        "usage": {
+          "completion_tokens": 12,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 189
+        }
+      },
+      {
+        "seconds": 30.470543381990865,
+        "usage": {
+          "completion_tokens": 13,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 190
+        }
+      },
+      {
+        "seconds": 31.33548805899045,
+        "usage": {
+          "completion_tokens": 14,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 191
+        }
+      },
+      {
+        "seconds": 33.68020436099323,
+        "usage": {
+          "completion_tokens": 15,
+          "prompt_tokens": 177,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 192
+        }
+      }
+    ],
+    "output_cap_reached": false,
+    "requested_output": 256,
+    "sse_done": true,
+    "body_drained": true,
+    "request_socket_closed": true
+  }
+}

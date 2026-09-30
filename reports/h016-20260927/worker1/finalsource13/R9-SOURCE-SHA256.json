@@ -1,0 +1,13 @@
+{
+  "LAUNCH.json": "44fae95b9e124db6a42ed1a343840d0912b7cfd114abddcbdf2b4e0bb7582ed8",
+  "allocation.py": "e7ea91ca49e78d37537301a49347925b9cb06c98506898a01f2ecfe9221d0edb",
+  "benchmark.py": "269a8572a24ade777d48ad14804c9d7eef218bf6a8207a6a8be474d387ce0144",
+  "candidate_owner.py": "9ed901ac7a198b66fb4c9d5dddb56985d1392e256b9971df754a345f5784c253",
+  "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+  "launch_r9.py": "396858e98010afdd302299de2ab9286598b83bdf85107709a850a6c4b78c47c8",
+  "native_identity.py": "15e3a67acef5c60e48728d51c12cefbe0e46037d4f76ed7ec9eb59841bba43ed",
+  "private_proxy.py": "334e206552b55379c27ddc663dfc202be20d26d290a977457c77c2028eee0f25",
+  "profile_activity.py": "dadbb73a4096364a5ddd401dd8dbd3f40d1dd9ec453d1ce10eebc59c82fe051a",
+  "telemetry.py": "79b63724750bdc51f029353bd2f3e6670da224946071b963d8b833e980f50c99",
+  "verify_retained.py": "fd98e17a1c8712ddb9aa9393057a81243d1751a2ea45cca76e33738e1cd3a32c"
+}

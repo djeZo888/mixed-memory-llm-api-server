@@ -1,0 +1,106 @@
+{
+  "api_calls": 4,
+  "artifact_reconciliation": "PENDING_ARTIFACT",
+  "artifacts": [
+    "REVIEW.md",
+    "REVIEW-EVIDENCE.json",
+    "STATUS.md",
+    "RESULT.json",
+    "FINAL-GET-ATTEMPT.json",
+    "FINAL-GET-RESULT.json",
+    "FINAL-GET-CAPABILITIES.json",
+    "INPUTS.sha256",
+    "SHA256SUMS"
+  ],
+  "credential_reads": 1,
+  "edit_profiles": [],
+  "expected_protected_manifest_sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b",
+  "final_advertised_profiles": [
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "native_size": "1216x704",
+      "operation": "generation",
+      "references": 0,
+      "size": "1216x704",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+      "native_size": "1024x1024",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x1024",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+      "native_size": "1920x1088",
+      "operation": "generation",
+      "references": 0,
+      "size": "1920x1088",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "native_size": "1472x832",
+      "operation": "generation",
+      "references": 0,
+      "size": "1472x832",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "native_size": "1024x576",
+      "operation": "generation",
+      "references": 0,
+      "size": "1024x576",
+      "transparent": false
+    },
+    {
+      "crop_bottom": 0,
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "native_size": "1760x992",
+      "operation": "generation",
+      "references": 0,
+      "size": "1760x992",
+      "transparent": false
+    }
+  ],
+  "final_capabilities": "FINAL-GET-CAPABILITIES.json",
+  "final_get_receipt": "FINAL-GET-RESULT.json",
+  "final_live_status": "PASS",
+  "highest_supplied_passing_size": "1920x1088",
+  "image_ownership": "Worker1",
+  "material_discrepancies": [],
+  "native_metric_definition": "RESOLVED_FROM_SUPPLIED_PINNED_UPSTREAM",
+  "next_action": "Reconcile only local final Worker1 artifacts when supplied; do not repeat GETs.",
+  "not_tested": [
+    "UHD unsupported/unmeasured",
+    "2112x1184 unrun forecast STOP",
+    "Final Worker1 receipt/projection/report and profile evidence-hash mapping pending",
+    "Final original Qwen identity/start artifact reconciliation pending"
+  ],
+  "offline_review": "PASS_SUPPLIED_SNAPSHOTS_AND_REFINEMENT",
+  "protected_manifest_locally_validated": false,
+  "refinement_receipt_sha256": "5c47dd6b76d8824fad3a94d187417a60c333b2cbaf68e5642dcf7ff383ef9597",
+  "schema_version": 1,
+  "session_id": "01a0cc7e-6a5f-7852-bef0-6f55a846b262",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "source_verification_scope": "Root current deployment confirmation; these GETs do not expose source commit",
+  "status": "PASS",
+  "supplied_passing_sizes_with_visual_evidence": [
+    "1024x1024",
+    "1024x576",
+    "1216x704",
+    "1472x832",
+    "1760x992",
+    "1920x1088"
+  ],
+  "unrun_forecast_stop": "2112x1184",
+  "updated_utc": "2026-09-23T04:35:10.172599+00:00"
+}

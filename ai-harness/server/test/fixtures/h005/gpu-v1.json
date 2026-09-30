@@ -1,0 +1,29 @@
+{
+  "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+  "generation": null,
+  "affected_services": [
+    "qwen-gpu0"
+  ],
+  "state": "unknown",
+  "observed_at": null,
+  "age_ms": null,
+  "freshness": "unknown",
+  "reason": "not_observed",
+  "name": null,
+  "index": null,
+  "pci_bus_id": null,
+  "memory_total_mib": null,
+  "memory_used_mib": null,
+  "temperature_c": null,
+  "temperature_min_c": null,
+  "temperature_max_c": null,
+  "sampling_since": null,
+  "ecc_mode": null,
+  "ecc_uncorrected_volatile": null,
+  "power_draw_w": null,
+  "power_limit_w": null,
+  "pcie_generation": null,
+  "pcie_width": null,
+  "pcie_generation_max": null,
+  "pcie_width_max": null
+}

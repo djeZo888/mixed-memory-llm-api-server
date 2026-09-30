@@ -1,0 +1,45 @@
+{
+  "utc": "2026-09-29T21:03:26.932080+00:00",
+  "closeActualExitCode": 0,
+  "closeMethod": "Popen.communicate then Popen.wait",
+  "closeStdout": "{\"state\": \"MAINTENANCE_RESTORED\", \"utc\": \"2026-09-29T21:03:26.826981+00:00\", \"sha256\": \"0cf275f63b34b42dff6b42258e5b2b04e51401ba92d2ad7b26ca022ae14c54c6\"}\n",
+  "closeStderr": "",
+  "maintenance": {
+    "utc": "2026-09-29T21:03:26.826768+00:00",
+    "reason": "operator_explicit_close",
+    "state": "MAINTENANCE_RESTORED",
+    "sha256": "0cf275f63b34b42dff6b42258e5b2b04e51401ba92d2ad7b26ca022ae14c54c6",
+    "checks": [
+      {
+        "argv": [
+          "sudo",
+          "-n",
+          "nginx",
+          "-t"
+        ],
+        "returncode": 0
+      },
+      {
+        "argv": [
+          "sudo",
+          "-n",
+          "systemctl",
+          "reload",
+          "nginx.service"
+        ],
+        "returncode": 0
+      }
+    ]
+  },
+  "watcher": {
+    "pid": 282571,
+    "beforeCmdline": [
+      "/usr/bin/python3",
+      "/home/user/.cache/h035-activation-acceptance01-release/maintenance-review-window.py",
+      "watch"
+    ],
+    "signalSent": "SIGTERM",
+    "processGone": true
+  },
+  "nativeWorkerWrapperUntouched": true
+}

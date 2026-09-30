@@ -1,0 +1,288 @@
+{
+  "result": "PASS_WITH_EXPLICIT_EVIDENCE_SCOPE",
+  "at": "2026-09-26T01:00:13.880279+00:00",
+  "native_session_id": "01a0da5a-f10a-7d12-ab52-e6429586ce84",
+  "source": {
+    "commit": "142a9505e004680dbe6d2a4e63dd0f4a1cbc2a8a",
+    "clean": true,
+    "new_source_changes": false,
+    "diagnostics_deployed": true
+  },
+  "diagnostics_limit": "New failures only. Original historical22:16 rejection subtype remains unknown; diagnostics are not a claimed fix.",
+  "image_wake": {
+    "result": "PASS",
+    "count": 1,
+    "size": [
+      1024,
+      1024
+    ],
+    "seed": 358518687,
+    "excluded_source_seed": 42,
+    "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+    "output_sha256": "d41bdd928e11fab1af8e3ae6bc78ebd4beb3be69823f51a74acf6113d7cd62c4",
+    "root_visual_review": "PASS blue teapot; scene retained",
+    "post_harness_reboot_bytes_verified": true
+  },
+  "new_rejected_vm_request": {
+    "operation_id": "ai-vm~relay-05896847-92f3-4333-8898-56cebd4747a8",
+    "result": "REJECTED",
+    "phase": "owner_request",
+    "node_status": 409,
+    "node_code": "lifecycle_busy",
+    "replayed": false,
+    "current_lock_observation": "PID420046 llm-node.service held canonicalinode1797 at3samples5secondsapart and released by eachnext1second sample; periodic collector contention, no stucklock demonstrated; exact request-time holder not retrospectively proven"
+  },
+  "vm_reboot": {
+    "result": "PASS_AUTOMATIC_ALL_THREE_RECOVERY",
+    "operation_id": "ai-vm~relay-a108115b-24ad-4bbc-b340-fbc13d761d17",
+    "canonical_owner_id": "4eb373ab570845d0b1a5249167a10faf",
+    "old_boot": "56fe4c47-0751-44ed-916d-a052ef4a134c",
+    "new_boot": "8f6ec8f7-85bd-4aab-ae3b-b424eaaba72e",
+    "post_attempts": 1,
+    "fresh_lock_release_at": "2026-09-26T00:45:23.428796+00:00",
+    "accepted_at": "2026-09-26T00:45:23.581Z",
+    "automatic_readiness_release_at": "2026-09-26T00:50:25.852Z",
+    "release_reason": "validated_owner_readiness",
+    "manual_starts": 0,
+    "current_proofs": "Fresh all3 protected validatedGPUproofs and exactGPUread-only queries plus finalpublicready/available/hardwareclear"
+  },
+  "harness_reboot": {
+    "result": "PASS",
+    "operation_id": "ai-harness~relay-bf7b3830-a1f2-4113-9bfb-0f2ee3da1fa5",
+    "canonical_owner_id": "cd579638-ef18-49aa-8fbe-4b82f01fbb22",
+    "old_boot": "1ced881f-5c60-494c-8abd-69375b71eb7a",
+    "new_boot": "3c9f2583-5098-4243-8aaf-49a85deee4f6",
+    "post_attempts": 1,
+    "accepted_at": "2026-09-26T00:53:25.294Z",
+    "settled_at": "2026-09-26T00:53:43.568Z",
+    "release_reason": "validated_owner_readiness",
+    "transient_receipt": "helper_restarted_no_replay initiallyunknown; current reconciledsucceeded retainsreasonunknown",
+    "history_metadata_identical": true,
+    "credential_metadata_identical": true,
+    "source_identities_identical": true,
+    "counts": {
+      "events": 25359,
+      "files": 62,
+      "h003_image_file_meta": 18,
+      "h003_image_jobs": 19,
+      "h003_run_image_refs": 2,
+      "handoffs": 1,
+      "messages": 133,
+      "quarantined_workspaces": 1,
+      "runs": 48,
+      "sessions": 26
+    },
+    "file_preservation_scope": "Metadata/counts and existingfixtures; one owned outputPNG bytes verified across reboot, not all file contents checksummed."
+  },
+  "postboot_containment": {
+    "result": "PASS_CURRENT_BOOT_PLACEMENT_AND_INITIALIZE_FIXTURE",
+    "fixture_count": 1,
+    "acp_requests": [
+      "initialize"
+    ],
+    "model_requests": 0,
+    "old_slice_inode": 17347,
+    "new_slice_inode": 5720,
+    "new_boot_bound": true,
+    "nft_attestation": "143a571a04dada6b7a7ab9f1678bc51c9e5fee87ac6c530127daf7cdb0a69939",
+    "socket_and_helper_ancestor4": "PASS existing acceptedplacement function with exactcurrent ownedtask and searchunit identities",
+    "settlement": "PASS exactcontainer absent; supervisoscopeempty; fixture retained",
+    "historical_wrapper_correction": "First observationalwrapper used oldsearchcontainerID and failed; rebound exactcurrentunit container to unchanged acceptedimage, then PASS; initialreceipt retained",
+    "scope_limit": "Historical packet/browser/private-path proof retained. No new packet matrix, browser matrix or watcherfailure repeat after reboot. Current proof covers freshinode/currentnft/live socket and helper ancestry and initialize-only fixture."
+  },
+  "final": {
+    "verified_at": "2026-09-26T00:58:42.762438+00:00",
+    "vm_boot": "8f6ec8f7-85bd-4aab-ae3b-b424eaaba72e",
+    "harness_boot": "3c9f2583-5098-4243-8aaf-49a85deee4f6",
+    "models": {
+      "qwen-gpu0": {
+        "ready": true,
+        "availability": "available",
+        "hardware_latched": false,
+        "configured_context_tokens": 480000,
+        "generation": 5831630948082731
+      },
+      "qwen-gpu1": {
+        "ready": true,
+        "availability": "available",
+        "hardware_latched": false,
+        "configured_context_tokens": 480000,
+        "generation": 7035889623429404
+      },
+      "image": {
+        "ready": true,
+        "availability": "available",
+        "hardware_latched": false,
+        "configured_context_tokens": null,
+        "generation": 4124955512785354
+      },
+      "control": {
+        "ready": true,
+        "availability": "available",
+        "hardware_latched": false,
+        "configured_context_tokens": null,
+        "generation": 6537911681035823
+      }
+    },
+    "all_three_warm_ready_available": true,
+    "holds": 0,
+    "unreleased_relays": 0,
+    "nonterminal_runs": 0,
+    "task_slice_pids": 0,
+    "quarantine": 1,
+    "image_jobs": {
+      "jobs_by_state": {
+        "cancelled": 1,
+        "completed": 18
+      },
+      "lane": "idle",
+      "uncertain": 0
+    },
+    "owned_fixture_settled": true,
+    "pending_worker2_actions": 0
+  },
+  "retained_limits": [
+    "Completed665.25second idleobserver not repeated.",
+    "W1 originalNOT_ACCEPTED receipt retained: finalsingle lease snapshot collided with collector; distinct current automatic model readiness proof is separate.",
+    "Original failed automaticrestore and rejectedrequests remain unchanged."
+  ],
+  "receipt_sha256": {
+    "CLOSEOUT-DIAGNOSTIC-PUBLISHED.json": "3872ce5350bbf51c987b72f95aa2cc6c520480f1615477c32dcfcafe9a0ebfb3",
+    "IMAGE-WAKE-SETTLED.json": "262b726a427c17282d0dced936039e733baf7549b725e683eb06c514f0436898",
+    "IMAGE-WAKE-DOWNLOAD.json": "873ceb33d454d7afb2b4f67021d22178ae7f3ffbb3bbeb3cac1f6f15abf7057b",
+    "CLOSEOUT-REBOOT-REJECTION.json": "479e2c1b8cf2f9d2e24978f6c87505ae70dad82c9cc15241a71f83cd3e6461fd",
+    "AI-VM-REBOOT-3.json": "01dbb1085b82fc2588ce5d07eb0af2e3cf4e01e7063057c2dbdb66334d2ce2f6",
+    "LOCK-SAMPLE-CLOSEOUT.jsonl": "841f5d4187dcc2fc1d1ac0278a7d12ad9b30c608271f4f4e8ba4cc9cc3f0c169",
+    "LOCK-RELEASE-BEFORE-REBOOT-4.json": "eda700f81c7c24e289258f7653c7825898dfd365262630fbbee9a8f629e875e1",
+    "VM-REBOOT-4-PREFLIGHT.json": "0a24beb0e258b4e84e47833aba15c9e35d815f1b263dad9c8e9d230f93bf2009",
+    "AI-VM-REBOOT-4.json": "b1e3b4d75796014103ee9f63396888bfbcdbb65537dadf5b8934329eb627edd0",
+    "VM-REBOOT-4-LATCH-DETAIL.json": "e696641e7cbf739bee47fe7ac7cf56ee331a61465efa6c9be6b2b756a63a0159",
+    "VM-REBOOT-4-AFTER-STATUS.json": "544dd13c7c85bf9aba34c21933872d239e1a9d33aeabb72bb5596718bc168694",
+    "HARNESS-REBOOT-FINAL-BEFORE-METADATA.json": "47a1e4c490a02c273d74c1cb919e1988c70ee8d43eec05fe9dccde08d13cbe05",
+    "AI-HARNESS-REBOOT-1.json": "d0699de41a101599c5b74edd1bbd732199c924697496e07d8a6fb906981c1dc6",
+    "HARNESS-REBOOT-AFTER-METADATA.json": "b72bd2463ae26b72168f5128c3eac75447892783da72398f7bee9c5dff7b982a",
+    "POSTBOOT-FIXTURE-ATTESTATION.json": "c6b4adcdfae15cbe6b8eb02211e6c36dc3427dc0af462b68bdf1aac1b118360e",
+    "POSTBOOT-FIXTURE-LAUNCH.jsonl": "2cef4697c60c572cc004e64d7c4cc915f62b4003b19eafc287fdaccaee9a4b71",
+    "POSTBOOT-PLACEMENT.jsonl": "83d673290521f21b40b26653657a2af7d7c7ccb19de456cd8e919eb362196124",
+    "POSTBOOT-PLACEMENT-CURRENT.jsonl": "0dd0a6f4a96b9c1e3a173b77a942aac1b0d43c281b2ddef6da887912906d2668",
+    "POSTBOOT-FIXTURE-SETTLED.jsonl": "13d6619f71a2d6e3868e267bf35702e394606c9dcdb444e9aa74eb14aee3e322",
+    "POSTBOOT-IMAGE-READBACK.json": "a44eec83138b3b16be7724f6734bdb66b7ecd883f652a2802e3a4c8c0b7ed046",
+    "CLOSEOUT-FINAL-METADATA.json": "27e20bcb25d9f93028e5125d75665241c3582b6273688ffff01d7e6e7da85849",
+    "CLOSEOUT-FINAL-STATUS.json": "257d048812146437bb5904f8e3e7967ef9bce33a4647bdc0e6516d8e7ca79a39",
+    "TEXT-WAKES-SETTLED.json": "c3c5fd90622c82c20c6fbef1af422b83924e023a5c8de9c5a6518455057c6c3f",
+    "QUIET-RECOVERED-SUMMARY.json": "adc6510f2511f755a65130c66203b3856787b72b80d7ef9e78c450ac7c48449b"
+  },
+  "idle_observation": {
+    "scope": "Measured665.25second idle observation; later text and image wakes independently accepted",
+    "elapsed_seconds": 665.246772295,
+    "metrics": {
+      "qwen-gpu0": {
+        "samples": 14,
+        "mean_one_core_pct": 0.314,
+        "max_one_core_pct": 0.4,
+        "all_main_threads_blocked": true
+      },
+      "qwen-gpu1": {
+        "samples": 14,
+        "mean_one_core_pct": 0.329,
+        "max_one_core_pct": 0.6,
+        "all_main_threads_blocked": true
+      },
+      "image": {
+        "samples": 14,
+        "mean_one_core_pct": 0.843,
+        "max_one_core_pct": 1.0,
+        "all_main_threads_blocked": true
+      }
+    },
+    "flags": [],
+    "status_errors": 0,
+    "vram_extrema": {
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": {
+        "core_temp_c": [
+          34.0,
+          34.0
+        ],
+        "power_w": [
+          14.66,
+          16.98
+        ],
+        "vram_used_mib": [
+          61018.0,
+          61018.0
+        ]
+      },
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": {
+        "core_temp_c": [
+          35.0,
+          35.0
+        ],
+        "power_w": [
+          29.85,
+          31.57
+        ],
+        "vram_used_mib": [
+          61050.0,
+          61050.0
+        ]
+      },
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": {
+        "core_temp_c": [
+          33.0,
+          33.0
+        ],
+        "power_w": [
+          7.73,
+          9.6
+        ],
+        "vram_used_mib": [
+          32238.0,
+          32238.0
+        ]
+      }
+    }
+  },
+  "text_wakes": {
+    "at": "2026-09-26T00:29:13.669966+00:00",
+    "requests": [
+      {
+        "lane": "qwen-gpu0",
+        "ttft_seconds": 0.05533594900043681,
+        "total_seconds": 0.08335144900047453,
+        "usage": {
+          "prompt_tokens": 24,
+          "total_tokens": 26,
+          "completion_tokens": 2,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0
+        },
+        "attempts": 1,
+        "result": "COMPLETED_FULL_SSE_EOF"
+      },
+      {
+        "lane": "qwen-gpu1",
+        "ttft_seconds": 0.10127008999916143,
+        "total_seconds": 0.12818726200021047,
+        "usage": {
+          "prompt_tokens": 24,
+          "total_tokens": 26,
+          "completion_tokens": 2,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0
+        },
+        "attempts": 1,
+        "result": "COMPLETED_FULL_SSE_EOF"
+      }
+    ],
+    "process_identity_preserved": true,
+    "renewed_busy_grace_observed": true
+  },
+  "root_review": {
+    "status": "PASS_SCOPED",
+    "worker_receipt_sha256": "99ec42a2fb3e070c08bbdbd66984a4cbbe946ae03f304fd91a77b2bad197f945",
+    "verified_receipt_hashes": 22,
+    "image_visual_review": "Requestedcolourchange withscene/lighting retained; one guardedfreshseed only",
+    "source_baseline": "8cc57e592afb3adf283e94558c7c0e225da1c2bb",
+    "new_product_source_in_closeout": false
+  }
+}

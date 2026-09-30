@@ -1,0 +1,242 @@
+{
+  "status": "AUTHENTICATED_GLM_1M_AND_ALL_FOUR_READY",
+  "utc": "2026-09-28T01:19:41.037039+00:00",
+  "finished_utc": "2026-09-28T01:19:41.101424+00:00",
+  "scope": "AUTHENTICATED_STATUS_ONLY_NO_GENERATION_NO_LIFECYCLE_MUTATION",
+  "selection": {
+    "generation": 11,
+    "schema_version": 1,
+    "selected_frontier": "glm-5.3-flash"
+  },
+  "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+  "glm_preserved_sha256": {
+    "config.json": "4a5ea3904fba96480884b91414524617683b50e6f79fef96261e2b92183e6b71",
+    "source/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1"
+  },
+  "glm_source_sha256": {
+    "file_auth.py": "5cad2c509e5c82cd7162f7a10ded2d08c4af768a20dbb9d8ddafb9a49fa5ecbb",
+    "idle.py": "3fd14b64793b79d97da179c98606c1f9b58a05420fe3eb01096d0301e63086e4",
+    "native-source-pins.json": "b5fab69c0466d61adda5ea02494e87bab61beff2bc0194f28b3ac4aa7d77f195",
+    "numa-seccomp.json": "835759ce29944318d0a8de36cc62940e79125a15eedec3448fde1edd3fa320bf",
+    "owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+    "tokenize_adapter.py": "f5f863fd41732a7e56cb73e883471572819ac4554b687befd8e6205006509386",
+    "tool_runtime.py": "bd44a5a2970bfe5cc4c789b526a6b8b605b7bfb0d4a650da83adc0a43ac346fa"
+  },
+  "glm_container": {
+    "Id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+    "Name": "/llm-frontier-flash",
+    "Image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 3099917,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-28T01:14:13.228759037Z",
+      "FinishedAt": "2026-09-27T23:49:30.623092027Z"
+    }
+  },
+  "glm_pid_start_ticks": "7075659",
+  "glm_unit": {
+    "MainPID": "0",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "exited",
+    "UnitFileState": "enabled",
+    "InvocationID": "f710770756a34accbcfcb6171b3fef30"
+  },
+  "node_unit": {
+    "MainPID": "3309508",
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "running",
+    "UnitFileState": "enabled",
+    "InvocationID": "7264f712a5024b2484d38535790b94df"
+  },
+  "glm_readiness": {
+    "http_status": 200,
+    "body": {
+      "schema_version": 1,
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    }
+  },
+  "glm_models": {
+    "http_status": 200,
+    "body": {
+      "object": "list",
+      "data": [
+        {
+          "id": "glm-5.3-flash",
+          "object": "model",
+          "created": 1790558381,
+          "owned_by": "sglang",
+          "root": "glm-5.3-flash",
+          "parent": null,
+          "max_model_len": 1048576
+        }
+      ]
+    }
+  },
+  "server_info_http_status": 200,
+  "capacity_proof": {
+    "context_length": [
+      1048576,
+      1048576
+    ],
+    "max_total_tokens": [
+      1048576,
+      1048576
+    ],
+    "max_total_num_tokens": [
+      1048576
+    ],
+    "max_req_input_len": [
+      1048570
+    ]
+  },
+  "node_http_status": 200,
+  "node_manager": {
+    "state": "ok",
+    "observed_at": "2026-09-28T01:19:39.971268+00:00",
+    "age_ms": 1094,
+    "freshness": "fresh",
+    "reason": null,
+    "service_id": "node",
+    "running": true,
+    "generation": 5625531562043346,
+    "actions": []
+  },
+  "canonical_ready_checks": {
+    "glm-5.3-flash": true,
+    "qwen-gpu0": true,
+    "qwen-gpu1": true,
+    "image": true
+  },
+  "preserved": [
+    {
+      "Id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "Name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1784601,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-27T07:23:02.292048637Z",
+        "FinishedAt": "2026-09-27T07:11:24.16930904Z"
+      }
+    },
+    {
+      "Id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "Name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1819707,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-27T07:24:24.160125383Z",
+        "FinishedAt": "2026-09-27T07:11:10.564546771Z"
+      }
+    },
+    {
+      "Id": "15031b926938cd0492e1c678d8319e4ed2363d1bc705e6d53ebed5f1ee9db1d6",
+      "Name": "/llm-image-backend",
+      "Image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "State": {
+        "Status": "running",
+        "Running": true,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 1833066,
+        "ExitCode": 0,
+        "Error": "",
+        "StartedAt": "2026-09-27T07:25:19.347996519Z",
+        "FinishedAt": "0001-01-01T00:00:00Z"
+      }
+    }
+  ],
+  "actual_glm_ready": true,
+  "local_started_utc": "2026-09-28T01:19:40.711973+00:00",
+  "raw_private_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H018-RECOVERY-06-20260928/private/GLM-SUPPORTED-20260928T011940Z.json",
+  "raw_sha256": "75489612c61fbd7f81fdbb03de2d5e1a26b8be2cf3feba60682e8e578b44048e",
+  "remote_command_sha256": "2f01984cbeb58388fa489f3fe8b0d9849bbe38056f61bf42e7e6880368e65e12",
+  "native_session_id": "01a0e596-88bd-7f91-bb98-4a1a21311f63",
+  "native_started_utc": "2026-09-28T01:17:22Z",
+  "hard_end_utc": "2026-09-28T01:33:00Z",
+  "canonical_services": [
+    {
+      "state": "ok",
+      "observed_at": "2026-09-28T01:19:40.238030+00:00",
+      "age_ms": 827,
+      "freshness": "fresh",
+      "service_id": "qwen-gpu0",
+      "availability": "available",
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "configured_context_tokens": 480000
+    },
+    {
+      "state": "ok",
+      "observed_at": "2026-09-28T01:19:40.252423+00:00",
+      "age_ms": 813,
+      "freshness": "fresh",
+      "service_id": "qwen-gpu1",
+      "availability": "available",
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b",
+      "configured_context_tokens": 480000
+    },
+    {
+      "state": "ok",
+      "observed_at": "2026-09-28T01:19:40.236231+00:00",
+      "age_ms": 829,
+      "freshness": "fresh",
+      "service_id": "image",
+      "availability": "available",
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "image21-runtime-20260923",
+      "model_alias": "qwen-image-2.1",
+      "configured_context_tokens": null
+    },
+    {
+      "state": "ok",
+      "observed_at": "2026-09-28T01:19:40.543758+00:00",
+      "age_ms": 522,
+      "freshness": "fresh",
+      "service_id": "glm-5.3-flash",
+      "availability": "available",
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "glm-5.3-flash-1048576-fp8-kt",
+      "model_alias": "glm-5.3-flash",
+      "configured_context_tokens": 1048576
+    }
+  ]
+}

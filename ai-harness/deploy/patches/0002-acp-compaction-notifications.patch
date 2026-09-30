@@ -1,0 +1,62 @@
+diff --git a/packages/tui/src/acp/agent.ts b/packages/tui/src/acp/agent.ts
+--- a/packages/tui/src/acp/agent.ts
++++ b/packages/tui/src/acp/agent.ts
+@@ -1377,2 +1377,51 @@
+   if (!supportsTuiAcpExtensionNotifications(options.clientCapabilities)) return projections;
++  if (
++    resolved &&
++    (options.event.type === 'session.compaction.started' ||
++      options.event.type === 'session.compaction.completed' ||
++      options.event.type === 'session.compaction.failed')
++  ) {
++    const [acpSessionId, active] = resolved;
++    const event = options.event;
++    if (
++      typeof event.compactionId === 'string' &&
++      event.compactionId.length > 0 &&
++      !isTuiInternalSubagentSession(active.session)
++    ) {
++      const status =
++        event.type === 'session.compaction.started'
++          ? 'start'
++          : event.type === 'session.compaction.completed'
++            ? 'completed'
++            : 'failed';
++      projections.push({
++        // Each transition needs its own lane: a quick completion must not replace start.
++        key: `${acpSessionId}\0compaction\0${event.compactionId}\0${status}`,
++        run: async (signal) => {
++          if (
++            !isCurrentAttachment(options.sessions, acpSessionId, active, signal) ||
++            active.attachmentController.signal.aborted ||
++            active.session.sessionId !== event.sessionId
++          ) {
++            return;
++          }
++          await options.client.notify('mcode/session/compaction_update', {
++            schemaVersion: 1,
++            sessionId: acpSessionId,
++            compactionId: event.compactionId,
++            status,
++            estimated: true,
++            ...(typeof event.tokensBefore === 'number' &&
++            Number.isSafeInteger(event.tokensBefore) && event.tokensBefore >= 0
++              ? { tokensBefore: event.tokensBefore }
++              : {}),
++            ...(typeof event.tokensAfter === 'number' &&
++            Number.isSafeInteger(event.tokensAfter) && event.tokensAfter >= 0
++              ? { tokensAfter: event.tokensAfter }
++              : {}),
++          });
++        },
++      });
++    }
++  }
+   if (resolved && options.event.type === 'session.queue.updated') {
+diff --git a/packages/tui/src/acp/extensions.ts b/packages/tui/src/acp/extensions.ts
+--- a/packages/tui/src/acp/extensions.ts
++++ b/packages/tui/src/acp/extensions.ts
+@@ -35,2 +35,3 @@
+   'mcode/session/delegation_update',
++  'mcode/session/compaction_update',
+ ] as const;

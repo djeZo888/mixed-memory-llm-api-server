@@ -1,0 +1,64 @@
+{
+  "runId": "ca5c50aa-3dae-4ab9-9ab7-b9e1c5c83aae",
+  "sessionId": "a4298170-a5bf-43fe-8e13-cd7a5e3725e6",
+  "submissionId": "b8c3e77f-35b8-4da8-8e07-d63f5ac67932",
+  "ticketId": "e9b4ea49-98a4-4a59-aa2e-abd45ca8af26",
+  "utc": "2026-09-29T12:37:41.458Z",
+  "verdict": "FAIL_INVALID_CAPABILITY_ARGUMENTS_STOPPED_AT_RETAINED_BOUND",
+  "settled": true,
+  "runStatus": "cancelled",
+  "nativeThreadId": "01a0ed2b-bdf1-7441-9dad-f8c4ceed5655",
+  "requestIds": [
+    "70823266-e744-4287-84ad-4774e26f9ce0",
+    "408af2e0-510b-4a7f-97dc-32861d0a8a4c",
+    "9b69ee17-4dd6-41d7-86cf-ad2986f78919",
+    "f7f5dbcd-53c2-4ef0-852d-3eeaaef928ea"
+  ],
+  "imageJobs": [],
+  "artifactCount": 0,
+  "sourceBoundSettlement": true,
+  "ticketRemoved": true,
+  "stopAcceptedOnce": true,
+  "failureDetails": [
+    {
+      "id": "tool:call_af67c72ac6d1422a820582c0",
+      "runId": "ca5c50aa-3dae-4ab9-9ab7-b9e1c5c83aae",
+      "kind": "tool",
+      "name": "read_mcp_resource",
+      "status": "failed",
+      "summary": "read_mcp_resource",
+      "updatedAt": "2026-09-29T12:38:44.027Z",
+      "detail": "{\"server\":\"mcp__image\",\"arguments\":{\"server\":\"mcp__image\",\"uri\":\"image://image/capabilities\"},\"result\":null,\"error\":{\"message\":\"resources/read failed: unknown MCP server 'mcp__image'\"}}",
+      "toolCallId": "call_af67c72ac6d1422a820582c0"
+    },
+    {
+      "id": "tool:call_7f6d2e13179848b6a820a85c",
+      "runId": "ca5c50aa-3dae-4ab9-9ab7-b9e1c5c83aae",
+      "kind": "tool",
+      "name": "image_capabilities",
+      "status": "failed",
+      "summary": "image_capabilities",
+      "updatedAt": "2026-09-29T12:39:45.492Z",
+      "detail": "{\"server\":\"image\",\"arguments\":{\"references\":\"[]\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \\\"references\\\"\"}],\"structuredContent\":null,\"_meta\":null},\"error\":null}",
+      "toolCallId": "call_7f6d2e13179848b6a820a85c"
+    },
+    {
+      "id": "tool:call_9b1a52c99fd24b47851d7c49",
+      "runId": "ca5c50aa-3dae-4ab9-9ab7-b9e1c5c83aae",
+      "kind": "tool",
+      "name": "image_capabilities",
+      "status": "failed",
+      "summary": "image_capabilities",
+      "updatedAt": "2026-09-29T12:40:44.382Z",
+      "detail": "{\"server\":\"image\",\"arguments\":{\"skill\":\"sova-local-tools\"},\"result\":{\"content\":[{\"type\":\"text\",\"text\":\"MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \\\"skill\\\"\"}],\"structuredContent\":null,\"_meta\":null},\"error\":null}",
+      "toolCallId": "call_9b1a52c99fd24b47851d7c49"
+    }
+  ],
+  "followupEdit": "NOT_TESTED_GENERATION_FAILED",
+  "child": "NOT_TESTED_GENERATION_FAILED",
+  "replay": false,
+  "argumentsRewritten": false,
+  "completedUtc": "2026-09-29T12:42:35.486857+00:00",
+  "classification": "MODEL_TOOL_RELIABILITY_INVALID_ARGUMENTS_WITH_SCHEMA_PRESERVED",
+  "schemaAndArgumentsEvidence": "IMAGE-ARGUMENT-EVIDENCE.json"
+}

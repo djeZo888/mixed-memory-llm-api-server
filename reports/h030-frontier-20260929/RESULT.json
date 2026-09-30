@@ -1,0 +1,90 @@
+{
+  "task": "H030-FRONTIER01-20260929",
+  "checkpointUtc": "2026-09-29T08:15:25.971532+00:00",
+  "hardDeadlineUtc": "2026-09-29T08:28:00Z",
+  "source": {
+    "base": "a4b73725bdd60cff5c73d167cdb9b9e57353f19f",
+    "hardwareCommit": "69293e8efe5122c9158598cbdc46e262e4998aba",
+    "productionCommit": "7139978f5b4d37c6e33656c3ecb4d5073d22fba2",
+    "finalTestCommit": "b73ec3b4a5627bacffcd7cb0bdb805797f27c77d",
+    "workingTree": "clean",
+    "pushed": false,
+    "appDeploymentByW1": false
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "build": "PASS",
+    "combinedFocused": {
+      "pass": 50,
+      "fail": 0
+    },
+    "specialistScoped": {
+      "pass": 42,
+      "fail": 0
+    },
+    "strongerSpecialistFinal": {
+      "pass": 24,
+      "fail": 0
+    },
+    "testCountsOverlap": true
+  },
+  "qwen": {
+    "historicalHardwarePredicate": "UNKNOWN_UNCAPTURED",
+    "current55SecondSample": "NOT_REPRODUCED",
+    "samples": 55,
+    "allHardwareLatched": false,
+    "allExpectedUuid": true,
+    "maxProofAgeMs": 9812.307,
+    "predicateWeakened": false
+  },
+  "image": {
+    "before": "API_CLOSED_BACKEND_WARM",
+    "action": "ONE_SUPPORTED_API_RESTART_WITH_NORMAL_BACKEND_RELOAD",
+    "after": "API_READY_ADMITTING_IDLE",
+    "settledUtc": "2026-09-29T07:57:50.830005+00:00",
+    "container": "88c5e402c4d277339c855b7ba56a39dbc0eff3b5880b2bcdbbb4f00fcf5e7906",
+    "userWorkflowGenerationRequests": 0,
+    "normalOwnerDeterministicWarm": true
+  },
+  "mimo": {
+    "nativeProfile": "NEW_LOAD_NOT_YET_OBSERVED_PRIOR_PROFILE_MATCHED",
+    "canonicalOwner": "NEW_OWNED_LOADING_NOT_READY",
+    "primaryFailure": "mandatory_guard_timeout",
+    "settlementFailure": null,
+    "failureUtc": "2026-09-29T07:56:17.804132+00:00",
+    "currentGuardStale": null,
+    "exactHistoricalLeaseHolder": "NOT_CAPTURED",
+    "sourceCriticalSection": "image start holds canonical lease through native load and deterministic warm",
+    "recoveryHelper": "FIRST_STOP_TIMEOUT_THEN_REVIEWED_CHANGED_STATE_RECONCILIATION_PASS",
+    "candidateActivation": "HOLD",
+    "liveCodexChild": "NOT_TESTED",
+    "liveMiniMaxDelegation": "NOT_TESTED",
+    "unresolvedProductionBlocker": "Image lifecycle warm holds canonical lease and can starve MiMo mandatory guard",
+    "normalStartDispatched": true,
+    "physicalDisposition": "PREVIOUS_OWNER_FULLY_SETTLED",
+    "physicalDispositionUtc": "2026-09-29T08:14:17.524091+00:00",
+    "originalFailureArchiveSha256": "5cd2def22c964571a5811826899849bf0e31992eae82e20eb498b23c78aa31aa",
+    "priorSettlementFailure": "command_timeout",
+    "commandTimeoutArchiveSha256": "2ecc52c7a0f6d76541c0d3161c8f5949419b8bd8c697332a72efc46b47f7fb54",
+    "launchId": "fbfd46357f0d4e3482aa1c7da14f5147",
+    "containerId": "87d2b6f131b9e6e98249f5ba148c0191c6a58fb17b58cf7f792ec27b14ef6d57",
+    "nativePid": 3442849,
+    "supervisorPid": 3442364,
+    "supervisorInvocationId": "a1aed8cfbc0046c8a247922dfbe11e70",
+    "startedAt": "2026-09-29T08:14:19.131765939Z",
+    "handoffOwner": "llm-frontier-mimo.service; coordinator fresh final acceptance near08:26"
+  },
+  "pending": [
+    "Root schedules fresh actual MiMo current readiness/profile readback near08:26",
+    "W2 combined deployment and separately reviewed candidate activation only after readiness",
+    "Actual Codex MiMo child/tool-continuation and MiniMax delegation remain NOT_TESTED",
+    "Image long canonical lease production blocker remains unresolved"
+  ],
+  "ownedInferenceRequests": [],
+  "guardOrHardwarePolicyChanges": false,
+  "endWindowRestoration": false,
+  "noFurtherMutationsByW1": true,
+  "workerCloseReason": "All source and immediate lifecycle work settled; normal load independently owned and explicitly handed off, no paid waiting",
+  "closedUtc": "2026-09-29T08:17:00.987031+00:00",
+  "workerProcessesPending": false
+}

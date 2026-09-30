@@ -1,0 +1,24 @@
+test_await_terminal_once_success_and_failure (test_corrections.Corrections.test_await_terminal_once_success_and_failure) ... ok
+test_cancel_socket_first_exact_inflight_targets_once (test_corrections.Corrections.test_cancel_socket_first_exact_inflight_targets_once) ... ok
+test_exact_identity_and_restart_refusals (test_corrections.Corrections.test_exact_identity_and_restart_refusals) ... ok
+test_flash_string_base_halt_borrowed_lease (test_corrections.Corrections.test_flash_string_base_halt_borrowed_lease) ... ok
+test_nonempty_cgroup_refuses_bookkeeping (test_corrections.Corrections.test_nonempty_cgroup_refuses_bookkeeping) ... ok
+test_nonterminal_failure_keeps_monitor_until_owner_concludes (test_corrections.Corrections.test_nonterminal_failure_keeps_monitor_until_owner_concludes) ... ok
+test_qwen_bookkeeping_exact_slot_borrowed_lease_retains_intent (test_corrections.Corrections.test_qwen_bookkeeping_exact_slot_borrowed_lease_retains_intent) ... ok
+test_short_stop_checks_receipt_before_exact_id_and_bookkeeping_after (test_corrections.Corrections.test_short_stop_checks_receipt_before_exact_id_and_bookkeeping_after) ... ok
+test_short_stop_failure_never_bookkeeps_or_retries (test_corrections.Corrections.test_short_stop_failure_never_bookkeeps_or_retries) ... ok
+test_warm_counts_and_main_identity_unchanged (test_corrections.Corrections.test_warm_counts_and_main_identity_unchanged) ... ok
+test_all_thermal_and_memory_floors (test_driver.DriverTests.test_all_thermal_and_memory_floors) ... ok
+test_fault_counters_and_historical_swap (test_driver.DriverTests.test_fault_counters_and_historical_swap) ... ok
+test_missing_image_refuses_dispatch_before_ssh (test_driver.DriverTests.test_missing_image_refuses_dispatch_before_ssh) ... ok
+test_retained_fixture_bytes_and_counts (test_driver.DriverTests.test_retained_fixture_bytes_and_counts) ... ok
+test_stream_has_no_guard_or_fsync_per_delta (test_driver.DriverTests.test_stream_has_no_guard_or_fsync_per_delta) ... ok
+test_assembled_warm_bounds_and_main_bounds (test_warm02.Warm02.test_assembled_warm_bounds_and_main_bounds) ... ok
+test_existing_main_gate_rejects_stale_wrong_ids_missing_counts_cancel (test_warm02.Warm02.test_existing_main_gate_rejects_stale_wrong_ids_missing_counts_cancel) ... ok
+test_flash_first_failure_stops_before_qwen (test_warm02.Warm02.test_flash_first_failure_stops_before_qwen) ... ok
+test_main_is_identical_except_warm_namespace (test_warm02.Warm02.test_main_is_identical_except_warm_namespace) ... ok
+
+----------------------------------------------------------------------
+Ran 19 tests in 0.079s
+
+OK

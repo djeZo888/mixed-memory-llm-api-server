@@ -1,0 +1,158 @@
+diff --git a/packages/tui/src/acp/agent.ts b/packages/tui/src/acp/agent.ts
+index 011ef0a..fb5d879 100644
+--- a/packages/tui/src/acp/agent.ts
++++ b/packages/tui/src/acp/agent.ts
+@@ -41,7 +41,7 @@ import {
+ import { runTuiAcpInteractions, type TuiAcpRuntimeProjection } from './interactions.js';
+ import { modelSupportsVariant } from './model-selection.js';
+ import { TuiAcpPromptContinuation } from './prompt-continuation.js';
+-import { TuiAcpUpdateProjector } from './updates.js';
++import { TuiAcpUpdateProjector, tuiAcpMessageMetadata } from './updates.js';
+ import {
+   assertNativeRunIdentity,
+   followNativeRun,
+@@ -1233,6 +1233,11 @@ export function createTuiAcpAgent(options: CreateTuiAcpAgentOptions): acp.AgentA
+           : undefined;
+       if (eventId && projectedEventIds.has(eventId)) return;
+       if (eventId) projectedEventIds.add(eventId);
++      const metadata = tuiAcpMessageMetadata(event, context.params.sessionId);
++      if (metadata && supportsTuiAcpExtensionNotifications(clientCapabilities)) {
++        pendingUpdates.push(context.client.notify('mcode/session/message_update', metadata)
++          .catch((error: unknown) => { projectionError ??= error; }));
++      }
+       for (const update of projector.project(event)) {
+         pendingUpdates.push(
+           context.client.notify(acp.methods.client.session.update, {
+diff --git a/packages/tui/src/acp/extensions.ts b/packages/tui/src/acp/extensions.ts
+index 3565d81..4d7e8a9 100644
+--- a/packages/tui/src/acp/extensions.ts
++++ b/packages/tui/src/acp/extensions.ts
+@@ -35,6 +35,7 @@ export const TUI_ACP_EXTENSION_NOTIFICATIONS = [
+   'mcode/session/goal_update',
+   'mcode/session/delegation_update',
+   'mcode/session/compaction_update',
++  'mcode/session/message_update',
+ ] as const;
+ 
+ export function tuiAcpExtensionCapabilities(runtime: Pick<TuiAcpRuntime, 'isGoalEnabled' | 'beginNativeRun' | 'getNativeRunSettlement' | 'waitNativeRunSettlement' | 'cancelNativeRun'>): {
+diff --git a/packages/tui/src/acp/updates.ts b/packages/tui/src/acp/updates.ts
+index b7b2c81..a1150b2 100644
+--- a/packages/tui/src/acp/updates.ts
++++ b/packages/tui/src/acp/updates.ts
+@@ -11,7 +11,7 @@ import { isTuiAcpAbsolutePath } from './paths.js';
+ export class TuiAcpUpdateProjector {
+   private readonly toolIds = new Map<string, string>();
+   private readonly completedToolIds = new Set<string>();
+-  private readonly streamedMessageIds = new Set<string>();
++  private readonly streamedMessageParts = new Map<string, Set<string>>();
+   private nextAnonymousToolId = 1;
+ 
+   project(event: TuiStreamEvent): acp.SessionUpdate[] {
+@@ -22,7 +22,10 @@ export class TuiAcpUpdateProjector {
+     if (event.type !== 'delta') return [];
+     const updates: acp.SessionUpdate[] = [];
+     if (event.messageId && (event.thinking || event.content)) {
+-      this.streamedMessageIds.add(event.messageId);
++      const parts = this.streamedMessageParts.get(event.messageId) ?? new Set<string>();
++      if (event.thinking) parts.add("thinking");
++      if (event.content) parts.add("text");
++      this.streamedMessageParts.set(event.messageId, parts);
+     }
+     if (event.thinking) {
+       updates.push({
+@@ -49,9 +52,10 @@ export class TuiAcpUpdateProjector {
+     message: Extract<TuiStreamEvent, { type: 'message' }>['message'],
+   ): acp.SessionUpdate[] {
+     if (message.role !== 'assistant') return [];
+-    if (message.id && this.streamedMessageIds.has(message.id)) return [];
+-    if (message.id) this.streamedMessageIds.add(message.id);
+-    return buildTuiMessageParts(message).flatMap((part): acp.SessionUpdate[] => {
++    const seen = message.id ? this.streamedMessageParts.get(message.id) ?? new Set<string>() : new Set<string>();
++    const parts = buildTuiMessageParts(message);
++    const result = parts.flatMap((part): acp.SessionUpdate[] => {
++      if (part.type !== 'tool' && seen.has(part.type)) return [];
+       if (part.type === 'thinking') {
+         return [
+           {
+@@ -73,6 +77,8 @@ export class TuiAcpUpdateProjector {
+       const update = this.projectTool(part.toolCall);
+       return update ? [update] : [];
+     });
++    if (message.id) this.streamedMessageParts.set(message.id, new Set([...seen, ...parts.map(p => p.type)]));
++    return result;
+   }
+ 
+   private projectTool(tool: TuiToolCall): acp.SessionUpdate | undefined {
+@@ -249,3 +255,17 @@ function parseUnifiedDiff(diff: string): { oldText?: string; newText: string } {
+ function compact<T extends object>(value: T): T {
+   return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry !== undefined)) as T;
+ }
++
++/** Metadata follows native events independently of channel text deduplication. */
++export function tuiAcpMessageMetadata(event: TuiStreamEvent, sessionId: string) {
++  const message = event.type === 'message' && event.message.role === 'assistant' ? event.message : undefined;
++  const messageId = message?.id ?? (event.type === 'delta' ? event.messageId : undefined);
++  const turnId = message?.turnId ?? (event.type === 'delta' ? event.turnId : undefined);
++  if (!messageId || !turnId || (!message && event.type !== 'delta')) return undefined;
++  return {
++    schemaVersion: 1, sessionId, messageId, turnId,
++    kind: message?.kind === 'preamble' || message?.kind === 'final' ? message.kind : null,
++    ...(message?.finishReason ? { finishReason: message.finishReason } : {}),
++    status: message ? 'completed' as const : 'streaming' as const,
++  };
++}
+diff --git a/packages/tui/src/runtime/adapters/delegation-access.ts b/packages/tui/src/runtime/adapters/delegation-access.ts
+index 2575d61..f4e4659 100644
+--- a/packages/tui/src/runtime/adapters/delegation-access.ts
++++ b/packages/tui/src/runtime/adapters/delegation-access.ts
+@@ -24,11 +24,11 @@ export class TuiDelegationAccess {
+   constructor(private readonly options: TuiDelegationAccessOptions) {}
+ 
+   async getSnapshot(rootSessionId: string): Promise<TuiDelegationSnapshot> {
+-    const sessions = await this.listAllSessions();
++    const { sessions, complete } = await this.listAllSessions();
+     const members = collectTuiDelegatedSessions(sessions, rootSessionId).map((session) =>
+       toTuiDelegatedAgent(session),
+     );
+-    return { schemaVersion: 1, rootSessionId, members };
++    return { schemaVersion: 1, rootSessionId, members, complete };
+   }
+ 
+   async stop(rootSessionId: string): Promise<TuiDelegationStopReceipt> {
+@@ -76,6 +76,8 @@ export class TuiDelegationAccess {
+   private async listAllSessions() {
+     const sessions = [];
+     let cursor: string | undefined;
++    const cursors = new Set<string>();
++    let complete = false;
+     for (let pageIndex = 0; pageIndex < MAX_DELEGATION_PAGES; pageIndex += 1) {
+       const page = await this.options.listSessionPage({
+         allAgents: true,
+@@ -85,10 +87,12 @@ export class TuiDelegationAccess {
+         ...(cursor ? { cursor } : {}),
+       });
+       sessions.push(...page.sessions);
+-      if (!page.hasMore || !page.nextCursor) break;
++      if (!page.hasMore) { complete = true; break; }
++      if (!page.nextCursor || cursors.has(page.nextCursor)) break;
++      cursors.add(page.nextCursor);
+       cursor = page.nextCursor;
+     }
+-    return sessions;
++    return { sessions, complete };
+   }
+ 
+   private async abort(
+diff --git a/packages/tui/src/runtime/port.ts b/packages/tui/src/runtime/port.ts
+index 1cb73f1..7ce73d4 100644
+--- a/packages/tui/src/runtime/port.ts
++++ b/packages/tui/src/runtime/port.ts
+@@ -563,6 +563,8 @@ export interface TuiDelegatedAgent {
+ 
+ export interface TuiDelegationSnapshot {
+   schemaVersion: 1;
++  /** True only when all session pages were enumerated without truncation. */
++  complete?: boolean;
+   rootSessionId: string;
+   members: TuiDelegatedAgent[];
+ }

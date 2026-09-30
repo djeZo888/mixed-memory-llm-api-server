@@ -1,0 +1,111 @@
+{
+  "utc": "2026-09-28T00:43:02.693423+00:00",
+  "status": "FAILED_BEFORE_NEW_NATIVE_LAUNCH",
+  "actual_systemd_unit": {
+    "MainPID": "0",
+    "Result": "exit-code",
+    "ExecMainStatus": "255",
+    "ControlGroup": "",
+    "ActiveState": "failed",
+    "UnitFileState": "disabled",
+    "InvocationID": "c9a82e6c31da4c46a72492370245b2cc"
+  },
+  "dispatch_utc": "2026-09-28T00:43:01.728991+00:00",
+  "manifest_sha256": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+  "selection": {
+    "generation": 10,
+    "manifest_sha256": "952ac402a3f76b31da1e80bdb0b92541b61374737c4850aa8d4a5937fad2fcee",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "owner_sha256": "218c890f1f3d8f7f80998aaf5cf7463c32febf5e454713f40da76a9ed60027d0",
+  "shared_policy": {
+    "imported_path": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+    "sha256": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229"
+  },
+  "staging_lease_released_before_dispatch": true,
+  "new_launch_id": null,
+  "new_container_id": null,
+  "new_native_pid": null,
+  "predecessor_state_retained": {
+    "status": "SETTLED",
+    "launch_id": "ddd222dc06b1421fb217cc08d4fd6762",
+    "native": {
+      "container_id": "d7ab15410156d2a10523b3cb62ff8c07a0cc390d7ecd5eebbe110f6d20e176c7",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 1830344,
+      "pid_start_ticks": "6649083",
+      "started_at": "2026-09-28T00:03:07.469603798Z"
+    },
+    "supervisor": {
+      "invocation_id": "671c7010ad1f49148432714c6e74f1cb",
+      "pid": 1829936,
+      "unit": "llm-frontier-mimo.service"
+    },
+    "primary_failure": {
+      "code": "owned_gpu_latch_unproven",
+      "cycle_elapsed_s": 0.115341,
+      "observed_at": "2026-09-28T00:16:03.140247+00:00",
+      "operation": "hardware_latch",
+      "phase": "RUNNING"
+    },
+    "settlement_failure": {
+      "code": "command_timeout",
+      "observed_at": "2026-09-28T00:16:12.436586+00:00",
+      "operation": "settlement",
+      "phase": "SETTLING"
+    },
+    "prior_request_completion": "FAILED_UNPROVEN_NEVER_REPLAY",
+    "root_authorized_reconciliation": {
+      "archive": {
+        "imported_shared_policy": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+        "mode": "0400",
+        "original_request_completion": "UNPROVEN_FAILED",
+        "original_state_sha256": "6f460676efc90d0abdc9502fd233b33ae9f9d3bab2e7ff9070a1180698d7614c",
+        "path": "/data/build/H018-20260928/live04/FAILED-ddd222-IMMUTABLE.json",
+        "sha256": "748e31feeedd5dfc859b487a305c70fa7070f19d35c9366005c30b615cf5a47f"
+      },
+      "authority": "ROOT GO 2026-09-28T00:39Z; exact W2 owner/policy PASS00:38:45",
+      "utc": "2026-09-28T00:43:00.741917+00:00"
+    }
+  },
+  "primary_failure": {
+    "phase": "CLI",
+    "code": "lifecycle_busy",
+    "observed_at": "2026-09-28T00:43:02.440498+00:00",
+    "pid": 2539315
+  },
+  "cleanup_failure": {
+    "phase": "CLI",
+    "code": "recovery_invocation_changed",
+    "observed_at": "2026-09-28T00:43:02.508875+00:00",
+    "pid": 2539751
+  },
+  "dispatch_check_failure": {
+    "class": "RuntimeError",
+    "reason": "dispatch_not_loading"
+  },
+  "failed_predecessor_archive": {
+    "imported_shared_policy": "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py",
+    "mode": "0400",
+    "original_request_completion": "UNPROVEN_FAILED",
+    "original_state_sha256": "6f460676efc90d0abdc9502fd233b33ae9f9d3bab2e7ff9070a1180698d7614c",
+    "path": "/data/build/H018-20260928/live04/FAILED-ddd222-IMMUTABLE.json",
+    "sha256": "748e31feeedd5dfc859b487a305c70fa7070f19d35c9366005c30b615cf5a47f"
+  },
+  "no_retry": true,
+  "short02": "PREINSTALLED_INACTIVE_UNDISPATCHED",
+  "LAST": "INACTIVE",
+  "scope": "The new systemd invocation failed before a new launch/container/PID was written; all predecessor identity is explicitly historical.",
+  "diagnostic_read_utc": "2026-09-28T00:43:52.117842+00:00",
+  "frontier_compute_empty_at_read": true,
+  "request_disposition": "No new request. Prior failed request remains failed/unproven in immutable archive; cleanup refusal is not evidence of new active inference.",
+  "lock_holder_at_failure": "UNKNOWN; no failure-time holder was retained. Parent staging context exited before child start; attribution to another holder is not proven.",
+  "rollback": {
+    "rollback_path": "/data/build/H018-20260928/live04/ROLLBACK.json",
+    "rollback_sha256": "5dbcea257df61e7918a6838aee937a83c40534aab7323d6b03c387c945570c78"
+  },
+  "resident_identity_limits_unchanged_across_reload": true,
+  "raw_diagnostic_sha256": "20df4323a6b2ec9b3399abbb2da1967ed2ce775efb47df5b63570076b13274cf"
+}

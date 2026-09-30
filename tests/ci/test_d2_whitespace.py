@@ -8,7 +8,8 @@ import textwrap
 import unittest
 
 
-WORKFLOW = Path(__file__).resolve().parents[2] / ".github/workflows/d2-lifecycle.yml"
+SOURCE_ROOT = Path(__file__).resolve().parents[2]
+WORKFLOW = SOURCE_ROOT / ".github/workflows/d2-lifecycle.yml"
 ZERO = "0" * 40
 
 
@@ -56,7 +57,8 @@ class WhitespaceRangeTests(unittest.TestCase):
 
     def commit(self, filename, content, repo=None):
         repo = repo or self.repo
-        (repo / filename).write_text(content)
+        (repo / filename).parent.mkdir(parents=True, exist_ok=True)
+        (repo / filename).write_bytes(content if isinstance(content, bytes) else content.encode())
         self.git("add", "--", filename, repo=repo)
         self.git("commit", "-m", "Fixture change: " + filename, repo=repo)
         return self.git("rev-parse", "HEAD", repo=repo)
@@ -82,6 +84,66 @@ class WhitespaceRangeTests(unittest.TestCase):
     def assert_whitespace_failure(self, result):
         self.assert_fail(result)
         self.assertIn("trailing whitespace", result.stdout + result.stderr)
+
+    def retained_evidence_rules(self):
+        rules = {}
+        for line in (SOURCE_ROOT / ".gitattributes").read_text().splitlines():
+            if line and not line.startswith("#"):
+                path, attribute = line.split()
+                self.assertTrue(path.startswith("/"), path)
+                self.assertFalse(any(char in path for char in "*?[]"), path)
+                self.assertIn(attribute, ("whitespace=-blank-at-eol",
+                                          "whitespace=-blank-at-eof", "whitespace=cr-at-eol"))
+                rules[path[1:]] = attribute
+        return rules
+
+    def test_pr_retains_exact_evidence_bytes_and_rejects_ordinary_source(self):
+        rules = self.retained_evidence_rules()
+        for name in rules:
+            self.commit(name, (SOURCE_ROOT / name).read_bytes())
+        self.assert_whitespace_failure(self.check(event="pull_request"))
+        self.commit(".gitattributes", (SOURCE_ROOT / ".gitattributes").read_bytes())
+        self.assert_pass(self.check(event="pull_request"))
+        for name in rules:
+            self.assertEqual((self.repo / name).read_bytes(), (SOURCE_ROOT / name).read_bytes())
+            blob = subprocess.check_output(["git", "show", "HEAD:" + name], cwd=self.repo)
+            self.assertEqual(blob, (SOURCE_ROOT / name).read_bytes())
+        self.commit("scripts/ordinary.py", b"value = 1  \n")
+        self.assert_whitespace_failure(self.check(event="pull_request"))
+
+    def test_evidence_attributes_do_not_match_neighbors_or_nested_paths(self):
+        self.commit(".gitattributes", (SOURCE_ROOT / ".gitattributes").read_bytes())
+        names = ["reports/ordinary.py", "scripts/ordinary.py", "ordinary.md"]
+        for name in self.retained_evidence_rules():
+            names.extend((name + ".unlisted", "nested/" + name))
+        for name in names:
+            self.assertEqual(self.git("check-attr", "whitespace", "--", name),
+                             name + ": whitespace: unspecified")
+            path = self.repo / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"ordinary content  \n")
+        self.git("add", ".")
+        self.git("commit", "-m", "Unlisted whitespace must fail")
+        result = self.check(event="pull_request")
+        self.assert_whitespace_failure(result)
+        for name in names:
+            self.assertIn(name + ":1: trailing whitespace.", result.stdout)
+
+    def test_evidence_rules_keep_other_whitespace_checks(self):
+        self.commit(".gitattributes", (SOURCE_ROOT / ".gitattributes").read_bytes())
+        expected = []
+        for name, attribute in self.retained_evidence_rules().items():
+            if attribute == "whitespace=-blank-at-eol":
+                content, error = b"content\n\n", ":2: new blank line at EOF."
+            else:
+                content = b"content  \r\n" if attribute == "whitespace=cr-at-eol" else b"content  \n"
+                error = ":1: trailing whitespace."
+            self.commit(name, content)
+            expected.append(name + error)
+        result = self.check(event="pull_request")
+        self.assert_fail(result)
+        for error in expected:
+            self.assertIn(error, result.stdout)
 
     def test_push_multicommit_ignores_inherited_and_checks_whole_range(self):
         self.commit("first.txt", "first clean change\n")

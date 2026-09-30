@@ -1,0 +1,20 @@
+{
+  "completedUtc": "2026-09-29T02:39:30.758232+00:00",
+  "commit": "d111edb987cd06f24a806f5bd10007e83c1a455f",
+  "parent": "7f433726b12987cea96ee290d07b6f11040d1fe2",
+  "coreSha256": "5a2fef84e4dd77c9c6101a183ef1904b2a47dca244d24a7794938e334ca4150c",
+  "bundleSha256": "726cfa428b295eb952fb7442068b329c27bbbba33e502ed5feab7915dc372fcf",
+  "patchSha256": "c88a2ca3a8dd16c3c15a86f9816a310154b105626e4a57037266e40339c2f39a",
+  "tests": {
+    "command": "PYTHONPATH=tests:scripts python3 -m unittest test_control_targeted_errors test_control_refresh test_control_slots",
+    "passed": 24,
+    "failed": 0,
+    "newCases": 4
+  },
+  "independentReview": "PASS",
+  "deployed": false,
+  "sourceOnly": true,
+  "historicalCause": "UNKNOWN",
+  "liveActionsSinceSequence": 0,
+  "requiredFutureDeployment": "Separate reviewed ai-vm source-closure/receipt successor and explicit root/W2 lifecycle gap; no deployment authorization in this task"
+}

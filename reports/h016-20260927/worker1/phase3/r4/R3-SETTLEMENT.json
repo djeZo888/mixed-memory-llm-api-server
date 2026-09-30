@@ -1,0 +1,70 @@
+{
+  "utc": "2026-09-27T12:24:12.494988+00:00",
+  "unit": {
+    "MainPID": "0",
+    "ControlPID": "0",
+    "ActiveState": "failed",
+    "SubState": "failed",
+    "InvocationID": "157a9f7cb09d47968d744dc52bae38f9"
+  },
+  "owner": {
+    "candidate_id": "9392b7e58b460fc16c616f7538f1c8e1cb4482ee12a6ec9bab8908f52ff69e06",
+    "error": "owned_supervisor_interrupted",
+    "error_type": "RuntimeError",
+    "glm_restored_utc": "2026-09-27T12:19:30.875754+00:00",
+    "glm_suppressed": false,
+    "memory_limit_bytes": 759135469568,
+    "native_cgroup": "/sys/fs/cgroup/system.slice/docker-9392b7e58b460fc16c616f7538f1c8e1cb4482ee12a6ec9bab8908f52ff69e06.scope",
+    "native_pid": 2411235,
+    "native_settled": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_zero": true,
+      "utc": "2026-09-27T12:18:03.276949+00:00"
+    },
+    "native_started_at": "2026-09-27T12:13:01.655286021Z",
+    "old_glm_settled_utc": "2026-09-27T12:13:00.873341+00:00",
+    "pid": 2408129,
+    "post_glm_baseline": {
+      "MemAvailable": 918732218368,
+      "MemTotal": 946820976640,
+      "SwapFree": 3093032960,
+      "SwapTotal": 3157258240
+    },
+    "started_utc": "2026-09-27T12:12:48.855489+00:00",
+    "status": "SETTLED_GLM_RESTORED"
+  },
+  "candidate": {
+    "Id": "9392b7e58b460fc16c616f7538f1c8e1cb4482ee12a6ec9bab8908f52ff69e06",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "Name": "/llm-h016-mimo-pro-r3",
+    "State": {
+      "Status": "exited",
+      "Running": false,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 0,
+      "ExitCode": 137,
+      "Error": "",
+      "StartedAt": "2026-09-27T12:13:01.655286021Z",
+      "FinishedAt": "2026-09-27T12:18:03.039980123Z"
+    }
+  },
+  "old_native_pid_absent": true,
+  "old_cgroup_empty": true,
+  "glm_state": {
+    "Status": "running",
+    "Running": true,
+    "Paused": false,
+    "Restarting": false,
+    "OOMKilled": false,
+    "Dead": false,
+    "Pid": 2475233,
+    "ExitCode": 0,
+    "Error": "",
+    "StartedAt": "2026-09-27T12:18:04.569744176Z",
+    "FinishedAt": "2026-09-27T12:13:00.551106389Z"
+  }
+}

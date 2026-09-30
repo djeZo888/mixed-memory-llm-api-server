@@ -1,0 +1,185 @@
+{
+  "utc": "2026-09-23T03:10:41.003357+00:00",
+  "status": "RESIDENT_NATIVE_GENERATION_WARM_EDIT_VISUAL_UNQUALIFIED",
+  "config": {
+    "checkpoint_path": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+    "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+    "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "network_id": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+    "network_policy": {
+      "host_publish": "127.0.0.1:30007:30007/tcp",
+      "internal": false,
+      "name": "llm-image-backend-private",
+      "native_http_bind_inside_namespace": "0.0.0.0:30007",
+      "reason": "InternalbridgepublishunsupportedonDocker29.6.1; dedicatedordinarybridgewithsoleloopbackpublication",
+      "unpublished_internal_ports": [
+        30008,
+        30009,
+        30010
+      ]
+    },
+    "owner": "IMAGE21-RUNTIME-20260923",
+    "schema_version": 1,
+    "source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "source_sha256": {
+      "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+      "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+      "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+      "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+    },
+    "upstream_repair": {
+      "count": 1,
+      "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+      "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+      "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+      "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+    }
+  },
+  "config_file_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "source_sha256": {
+    "native_request.py": "91180c1613de1fa113426dba2c534a8c31b851f066a252c1dcfd08fa8012bf6f",
+    "native_server.py": "a98a99b984f354c0a339a45233aea01abae589b9bc25ea44a9f3b861429111ee",
+    "service.py": "0edadcb43ec83d369d7bdb66dddc7035962d620475314b0142cb9f047b197586",
+    "telemetry.py": "a6d5f9262de82a318c7aa86dfef599fa6228463bb712c94d916c653afba2f0e9"
+  },
+  "residency": {
+    "container_id": "fb6b3501fcaae5cb87bfc002a7da7bf60c9ed00149f97233e07480e7f35dd4e3",
+    "started_at": "2026-09-23T02:58:49.380411157Z",
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "87156",
+        "32230"
+      ]
+    ],
+    "device_current": {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "total_bytes": 51527024640,
+      "free_bytes": 17024679936
+    },
+    "host_current": {
+      "MemTotal": 946820968448,
+      "MemAvailable": 921168924672,
+      "SwapTotal": 3157258240,
+      "SwapFree": 3157258240
+    }
+  },
+  "container": {
+    "id": "fb6b3501fcaae5cb87bfc002a7da7bf60c9ed00149f97233e07480e7f35dd4e3",
+    "created": "2026-09-23T02:58:48.49859324Z",
+    "state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 86805,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-23T02:58:49.380411157Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    },
+    "device_requests": [
+      {
+        "Driver": "",
+        "Count": 0,
+        "DeviceIDs": [
+          "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+        ],
+        "Capabilities": [
+          [
+            "gpu"
+          ]
+        ],
+        "Options": {}
+      }
+    ],
+    "cpuset_cpus": "8-15",
+    "memory_bytes": 103079215104,
+    "memory_swap_bytes": 103079215104,
+    "network_mode": "llm-image-backend-private",
+    "port_bindings": {
+      "30007/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30007"
+        }
+      ]
+    },
+    "effective_ports": {
+      "30007/tcp": [
+        {
+          "HostIp": "127.0.0.1",
+          "HostPort": "30007"
+        }
+      ]
+    },
+    "networks": {
+      "llm-image-backend-private": {
+        "IPAMConfig": null,
+        "Links": null,
+        "Aliases": null,
+        "DriverOpts": null,
+        "GwPriority": 0,
+        "NetworkID": "4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80",
+        "EndpointID": "c69ad165efc4a512733300d64d1f0ae84c439f32a95bb6d254fc4d802afd4400",
+        "Gateway": "172.19.0.1",
+        "IPAddress": "172.19.0.2",
+        "MacAddress": "82:34:6b:51:6f:ef",
+        "IPPrefixLen": 16,
+        "IPv6Gateway": "",
+        "GlobalIPv6Address": "",
+        "GlobalIPv6PrefixLen": 0,
+        "DNSNames": [
+          "llm-image-backend",
+          "fb6b3501fcaa"
+        ]
+      }
+    }
+  },
+  "unit": "Result=success\nExecStart={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 -I -B /data/services/image21-runtime-20260923/source/service.py start ; ignore_errors=no ; start_time=[Wed 2026-09-23 02:58:47 UTC] ; stop_time=[Wed 2026-09-23 02:59:44 UTC] ; pid=86161 ; code=exited ; status=0 }\nAfter=systemd-tmpfiles-setup.service -.mount llmctl-boot.service system.slice \"data-models\\\\x2dlarge.mount\" docker.service sysinit.target basic.target data.mount\nActiveState=active\nSubState=exited\nUnitFileState=disabled\n",
+  "adapter_load_state": "not-found",
+  "host_native_listeners": [
+    "LISTEN 0      4096               127.0.0.1:30007 0.0.0.0:* users:((\"docker-proxy\",pid=87017,fd=8))                            "
+  ],
+  "running_containers": "fb6b3501fcaae5cb87bfc002a7da7bf60c9ed00149f97233e07480e7f35dd4e3 llm-image-backend sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8\na2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c llmctl-qwen38-27b-q0-480000-yarn4-bf16kv lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262\na71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e llmctl-qwen38-27b-q1-480000-yarn4-bf16kv lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262\n",
+  "no_orphan_active_task_containers": true,
+  "retained_stopped_task_artifacts": "f740337dcdb5 condescending_kepler Exited (2) 52 minutes ago\n",
+  "patched_image_source": {
+    "patched_cuda_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+    "built_repair_receipt": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de  /opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py\n9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e  /opt/image-receipts/sglang-nvml-uuid.patch\n"
+  },
+  "visual_qualification": {
+    "utc": "2026-09-23T03:10:40.001337+00:00",
+    "method": "ActualPNGviewedbyprimaryandindependentreviewer",
+    "generation": {
+      "status": "PASS",
+      "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+      "observation": "Red ceramic teapot on wooden table beside window with soft daylight, correct composition and no blank/corrupt output"
+    },
+    "single_reference_edit": {
+      "status": "PARTIAL_SEMANTIC_COLOR_CHANGE_VISUAL_FIDELITY_FAIL",
+      "input_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+      "output_sha256": "ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1",
+      "observation": "Teapot darkblue/navy and composition preserved, but strong unwanted contrast, coarse surface/detail and changed background blur/lighting fail unchanged-scene instruction"
+    },
+    "fully_qualified_edit_profile": false,
+    "further_attempts": "NOT_RUN_ROOT_DIRECTED_NO_RETRY",
+    "transparency_qualification": "NOT_TESTED_RGBAdecodingisnotproof",
+    "rgb_comparison": {
+      "status": "PARTIAL_SEMANTIC_COLOR_CHANGE_VISUAL_FIDELITY_FAIL",
+      "input_sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+      "output_sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+      "observation": "ActualcomparisonPNGviewed; same darknavyteapot with heavycontrast/coarsetexture/sharpenedbackground and alteredsoftlighting. OpaqueRGBnormalizationdidnotresolveobservedfidelityfailure.",
+      "authorization": "ROOT-EDIT-RGB-COMPARISON-GO.md",
+      "causal_limit": "Onenarrowcomparisononly; doesnotestablishrootcause"
+    },
+    "run_id": "2088c347bc1e41a9a3e086b20b9be7be",
+    "image_admission": "CLOSED_FOR_QUALIFICATION_ADAPTER_ABSENT",
+    "native_generation_warm_residency": true
+  },
+  "historical_state_fields_note": "failure_code/cleanup from earlier attempts remain historical; current phasewarm/CID/readiness independently verified",
+  "canonical_lease_busy_after_release": false
+}

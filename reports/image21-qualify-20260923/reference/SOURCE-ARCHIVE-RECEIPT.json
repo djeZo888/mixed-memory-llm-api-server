@@ -1,0 +1,106 @@
+{
+  "archive_members": {
+    "CORRECTION-PINS.json": {
+      "bytes": 1681,
+      "sha256": "67b714f72269da9c75b63b8f09b02cfcae72e7fc694a99b6b321f6092bbd6e14"
+    },
+    "DEPENDENCIES.json": {
+      "bytes": 3018,
+      "sha256": "25ea96a3804d194e70b785abe497db342c9e54f53463a700ee064957e3ff2827"
+    },
+    "METRICS-CORRECTED.json": {
+      "bytes": 2338,
+      "sha256": "24cdcd5a216ddc3922752249006340f28cd181a92f4023d5553415429f8d1753"
+    },
+    "RECIPE.json": {
+      "bytes": 4017,
+      "sha256": "470b6561acf78f38e38095f259df69ffbcc731b96c66f6fbc6ab3afaafacd52a"
+    },
+    "RESULT.json": {
+      "bytes": 3176,
+      "sha256": "31ee2c3fbde742009eba9a3bd9af232efc9712d1ad4afb948534b61dd34a26be"
+    },
+    "RESULT.md": {
+      "bytes": 4789,
+      "sha256": "12fd01bef0ec29b01396fdc4e44f5b7a273030f74115b7900358f96d2e4547be"
+    },
+    "ROOT-CACHE-CORRECTION-GO.md": {
+      "bytes": 2341,
+      "sha256": "fbf567ef93ccc266db82ce868f60f173072ce3d38c7b08263c995feaac13a179"
+    },
+    "ROOT-CORRECTED-RESULT-CLOSEOUT.md": {
+      "bytes": 964,
+      "sha256": "3416007837c2d8faf6a1e2c6749615dbe740febd4a3b2b8d2efedfeef27c3c73"
+    },
+    "SESSION.json": {
+      "bytes": 541,
+      "sha256": "e15ce0b2604414eaec70da6bd66f5eed4e6b6bbcacf33f56551346f1d786ed87"
+    },
+    "requirements.freeze.txt": {
+      "bytes": 4710,
+      "sha256": "1ce51ab5c10ea0fa7a136d132edaf1f4f5bec3a8eed3622d1db49cb6bc12b495"
+    },
+    "source/Dockerfile": {
+      "bytes": 1746,
+      "sha256": "74f1ac25cb1981975de9a3d03792f22daffd9782b3298eeef03f3ef004c52eed"
+    },
+    "source/README-corrected.md": {
+      "bytes": 964,
+      "sha256": "57ebca59215f40e0ed77515fa544bb8c3eacd060d5f43ef09fad4bbeeeb4a0c1"
+    },
+    "source/README.md": {
+      "bytes": 2034,
+      "sha256": "1db6c64d762df42141521ee7b7ef0dab48c827a56d05305fad0ca204321423a7"
+    },
+    "source/build.py": {
+      "bytes": 1682,
+      "sha256": "6a8a2cc46a7c33581015d8c80d74b55ceb5f06da8c9dff74372160530a0818b1"
+    },
+    "source/corrected_entry.py": {
+      "bytes": 1091,
+      "sha256": "72fcc03e9de3e7bfe2dc1f8f6a4286374d42a47636aab340d676c329feaf7cfb"
+    },
+    "source/reference_edit.py": {
+      "bytes": 6219,
+      "sha256": "69c38e1aca561f0b702f5947b25be4b96fa648d3e777cef6d119019bbbf18ba5"
+    },
+    "source/remote_common.py": {
+      "bytes": 1379,
+      "sha256": "75c1d2196a33b06fdc45384eeb07fce9eb4815ba19f277cce18ec6e0322dd804"
+    },
+    "source/trial.py": {
+      "bytes": 7053,
+      "sha256": "9aef4e2f0d5e96a4fd2891df4b26a13ec619672cd43cbeef5bba9a0809b261d4"
+    },
+    "source/trial_corrected.py": {
+      "bytes": 7529,
+      "sha256": "a6d5fbaca2cbdf2bac0823ebfd6edbd6d1932e1c299ed5c79773398e678c7266"
+    },
+    "source/verify_close.py": {
+      "bytes": 1618,
+      "sha256": "c2b4feb9346f1bc2c1c0807b24d61ca065d8895145adb5157cac364c421faf06"
+    },
+    "source/verify_corrected_close.py": {
+      "bytes": 1695,
+      "sha256": "1ff3743fb170a9a235f339fd20b2f29a980d4cf8d7ac37233f3cff089589bb2f"
+    }
+  },
+  "bytes": 22955,
+  "not_in_git": [
+    "reference-corrected-source.tar.gz",
+    "output.png"
+  ],
+  "original_bundle_historical_receipt": {
+    "bytes": 16199,
+    "filename": "reference-source.tar.gz",
+    "local_verification": "NOT_TESTED",
+    "locally_supplied": false,
+    "sha256": "723bf453fb26bf1cc005d69363951f4c6f73ffe40d48248544f877a5130c9dc7",
+    "source": "REFERENCE-HANDOFF.md"
+  },
+  "schema_version": 1,
+  "scope": "Local byte verification only; archive was inspected without executing source or making a VM/image call.",
+  "sha256": "24d7d6c2da98d12ba719096fd640d2032f932fdeb52959d7b1b9f802b343475d",
+  "task_relative_path": "reference-evidence/reference-corrected-source.tar.gz",
+  "verification": "PASS: available dependency, correction and restored source hashes match archive members; four copied JSON receipts match archive bytes; requirements.freeze.txt hash matches dependency receipt."
+}

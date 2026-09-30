@@ -1,0 +1,134 @@
+{
+  "returncode": 0,
+  "stderr": "",
+  "events": [
+    {
+      "key": "failed_archived",
+      "value": {
+        "path": "/data/build/H016-20260927/worker1-deploy17/failed-original",
+        "container": "144757b104c97ffad8d05158e93f1abcb929d34083a1a944c5690e0e801e7fdc",
+        "settlement": "PASS"
+      }
+    },
+    {
+      "key": "removed_only",
+      "value": "144757b104c97ffad8d05158e93f1abcb929d34083a1a944c5690e0e801e7fdc"
+    },
+    {
+      "key": "source_preflight",
+      "value": {
+        "status": "SOURCE_PREFLIGHT_ONLY",
+        "manifest_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b"
+      }
+    },
+    {
+      "key": "corrected_launch",
+      "value": {
+        "utc": "2026-09-27T17:55:00.447581+00:00",
+        "unit": "MainPID=3481160\nControlPID=0\nResult=success\nExecMainStartTimestamp=Sun 2026-09-27 17:54:58 UTC\nExecMainStatus=0\nControlGroup=/system.slice/llm-frontier-mimo.service\nActiveState=active\nSubState=running\nInvocationID=2e31e65bdcfe403f9c76bd1ba49f276e\n",
+        "state": {
+          "baseline": {
+            "Active": 147422461952,
+            "Active(anon)": 6204207104,
+            "Active(file)": 141218254848,
+            "AnonHugePages": 0,
+            "AnonPages": 11595214848,
+            "Bounce": 0,
+            "Buffers": 91136000,
+            "Cached": 505868767232,
+            "CommitLimit": 476567744512,
+            "Committed_AS": 40707895296,
+            "DirectMap1G": 46170898432,
+            "DirectMap2M": 893894262784,
+            "DirectMap4k": 24084643840,
+            "Dirty": 1019904,
+            "FileHugePages": 0,
+            "FilePmdMapped": 0,
+            "HardwareCorrupted": 0,
+            "HugePages_Free": 0,
+            "HugePages_Rsvd": 0,
+            "HugePages_Surp": 0,
+            "HugePages_Total": 0,
+            "Hugepagesize": 2097152,
+            "Hugetlb": 0,
+            "Inactive": 370108592128,
+            "Inactive(anon)": 7919255552,
+            "Inactive(file)": 362189336576,
+            "KReclaimable": 2692145152,
+            "KernelStack": 28901376,
+            "Mapped": 3362131968,
+            "MemAvailable": 919009120256,
+            "MemFree": 417860034560,
+            "MemTotal": 946820976640,
+            "Mlocked": 28409856,
+            "NFS_Unstable": 0,
+            "PageTables": 67936256,
+            "Percpu": 116195328,
+            "SReclaimable": 2602778624,
+            "SUnreclaim": 924340224,
+            "SecPageTables": 0,
+            "Shmem": 2543337472,
+            "ShmemHugePages": 0,
+            "ShmemPmdMapped": 0,
+            "Slab": 3527118848,
+            "SwapCached": 20049920,
+            "SwapFree": 3050565632,
+            "SwapTotal": 3157258240,
+            "Unaccepted": 0,
+            "Unevictable": 28422144,
+            "VmallocChunk": 0,
+            "VmallocTotal": 14073748835531776,
+            "VmallocUsed": 667025408,
+            "Writeback": 0,
+            "WritebackTmp": 0,
+            "Zswap": 0,
+            "Zswapped": 0
+          },
+          "boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+          "container_id": "57954b459c29ad393c2b30588644ebd2585f94cf2acef8faeec2de65330e16cf",
+          "launch_id": "e531d11ccdf44614b70c3e4a78b33f49",
+          "manifest_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+          "native": {
+            "container_id": "57954b459c29ad393c2b30588644ebd2585f94cf2acef8faeec2de65330e16cf",
+            "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+            "name": "llm-frontier-mimo-production",
+            "pid": 3481564,
+            "pid_start_ticks": "4440311",
+            "started_at": "2026-09-27T17:54:59.739250868Z"
+          },
+          "native_cgroup": "/sys/fs/cgroup/system.slice/docker-57954b459c29ad393c2b30588644ebd2585f94cf2acef8faeec2de65330e16cf.scope",
+          "proxy_started": false,
+          "request_hold": false,
+          "schema_version": 2,
+          "selection": {
+            "generation": 3,
+            "manifest_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+            "schema_version": 1,
+            "selected_frontier": "mimo-v2.6-pro-rl"
+          },
+          "status": "LOADING",
+          "supervisor": {
+            "invocation_id": "2e31e65bdcfe403f9c76bd1ba49f276e",
+            "pid": 3481160,
+            "unit": "llm-frontier-mimo.service"
+          }
+        },
+        "selection": {
+          "generation": 3,
+          "manifest_sha256": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+          "schema_version": 1,
+          "selected_frontier": "mimo-v2.6-pro-rl"
+        },
+        "manifest_canonical": "c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b",
+        "manifest_raw": "475efd8d27ab2f637444dfa1ce906ee10e4e5101d90e1f2897550d67076658c5",
+        "source_changes": {
+          "/data/services/mimo-h016-20260927/source/owner.py": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+          "/data/services/mimo-h016-20260927/source/llm-frontier-mimo.service": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a",
+          "/etc/systemd/system/llm-frontier-mimo.service": "c0c260e2fd554fc74ab045d072bdfa902780d05fa23b88f69f6324079e40573a"
+        },
+        "cutoff_timer": "NextElapseUSecRealtime=Sun 2026-09-27 18:10:00 UTC\nActiveState=active\nSubState=waiting\n",
+        "journal": "2026-09-27T17:54:58+00:00 llmserver systemd[1]: Starting llm-frontier-mimo.service - Single supervised MiMo production owner...\n2026-09-27T17:54:58+00:00 llmserver systemd[1]: Started llm-frontier-mimo.service - Single supervised MiMo production owner.\n"
+      }
+    }
+  ]
+}

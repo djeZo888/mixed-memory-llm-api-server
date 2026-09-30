@@ -21,7 +21,7 @@ import time
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT / "scripts"))
 from common.lifecycle_lease import acquire_lease
-from control.core import Application
+from control.core import Application, digest
 from control.http import make_server
 from control.journal import Journal
 from control.protocol import ControlError, PackageBlocked, StorageUnavailable
@@ -120,6 +120,17 @@ class SyntheticSession:
         with self.backend.lock:
             self.backend.calls.append((action, target, identity, thread))
         return self.backend
+
+    def refresh_anchor(self, deadline):
+        deadline.remaining()
+        with self.backend.lock:
+            return digest([self.backend.state, self.backend.storage_available,
+                           self.backend.records, getattr(self.backend, 'boot', 'fixture-boot')])
+
+    def publish_refresh(self, lease, deadline, journal, reconcile):
+        lease.validate()
+        deadline.remaining()
+        return reconcile()
 
     def observe(self, deadline):
         deadline.remaining()

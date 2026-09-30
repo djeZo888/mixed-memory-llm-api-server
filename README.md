@@ -1,40 +1,69 @@
 # Sova
 
-The deployed harness, image and status features described here are documented
-from `feature/system-topology` (PRs 5–8) and are **not yet merged into main**.
-Their current source/configuration/evidence links explicitly target that
-feature branch; this main-based change adds documentation only.
-
 Sova is the whole-system name for this open-source AI workspace project: a
-chat/task harness, MiniMax agent runtime, two Qwen text instances, dedicated
+chat/task harness, MiniMax and optional Codex agent runtimes, three configured Qwen text instances, a selectable
+frontier reasoning worker, dedicated
 image generation and guarded editing, search/browser/PDF/coding tools, and
 deterministic lifecycle, status and administration software. Source paths, VM
-names and runtime identifiers retain their existing names. The intended
-top-level Apache-2.0 license text remains outstanding; see [License](#license)
-and the [harness component licenses](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/README.md#licenses).
+names and runtime identifiers retain their existing names. First-party harness
+additions are MIT; upstream tools, dependencies and models retain their own
+licenses. The intended top-level Apache-2.0 text remains outstanding; see
+[License](#license) and [component licenses](ai-harness/README.md#licenses).
 
-Start with the [harness user guide](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/README.md),
+Start with the [harness user guide](ai-harness/README.md),
 [architecture and future routing design](docs/sova-architecture.md), and
 **[TODO and current H007 update policy](TODO.md)**. The
-[H006 registry/configuration extension guide](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/ai-harness/docs/status-registry.md)
-and [H006 closeout](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h006-closeout-20260926.md) describe the reviewed
+[H006 registry/configuration extension guide](ai-harness/docs/status-registry.md)
+and [H006 closeout](docs/h006-closeout-20260926.md) describe the reviewed
 observation and placement foundation. H006's naming and update-policy statements
 remain evidence of that dated checkpoint; Sova is now the selected system name.
 The manual-update policy now supersedes H006's package-installation-enabled
 policy. Automatic APT updates and the discovered refresh/update timers are
 disabled on both current VMs; Snap has a global indefinite hold. Current Sova
 service launch paths remain pinned. Manual update commands are available.
-See the [verified policy and coverage limits](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h007-update-policy-20260926.md). The historical H006
+See the [verified policy and coverage limits](docs/h007-update-policy-20260926.md). The historical H006
 report stays unchanged. Maintenance-window automation is future work.
+
+**September 30 recovery:** MiMo at 480K and all three Qwen instances are ready.
+The application and search cold-start repairs are deployed. Public access was
+restored at 07:45 UTC after the final Codex/MiMo workflow passed; see the
+[current recovery report](reports/h036-resumed-recovery.md) and
+[compact results](reports/h036-resumed-recovery-results.json).
+MiniMax remains the default, with Codex as a per-chat preview using local Qwen.
+The external image GPU was deliberately removed from passthrough and its service
+reports unavailable without blocking text inference.
+
+Retained evidence covers image generation/guarded editing, coding and follow-up,
+PDF extraction/OCR, and Qwen compaction of 402,104 input tokens into a 237-token
+summary preserving four facts. The interrupted conversation was physically
+recovered without changing its original outcome, messages or files. A distinct
+follow-up passed, reading the retained file and returning all four facts and the
+correct calculation. This does not isolate summary-only recall because the file
+also contains those facts. Normal Chrome ZIP completion, integrity and saved-link
+reload pass. The controller observation repair is deployed; a fresh Codex MiMo
+child executed a real Python tool, continued from its result and returned the
+correct final answer. Parent and child fully settled. MiniMax native image
+recognition is **PARTIAL**; Codex native vision is **UNSUPPORTED**. Document/OCR
+and specialist image generation are separate capabilities.
+
+The [harness guide](ai-harness/README.md#capacity-and-context) explains context and
+compaction. The [H036 plan](reports/h036-execution-plan.md) defines the authorized
+work; [H035](reports/h035-codex-checkpoint.md) remains the unchanged earlier
+checkpoint. Status and hardware history remain in
+[H020](docs/h020-results.md), [H025](reports/h025-overview.md) and
+[H028](reports/h028-overview.md). The separate Ada 200K API is not in harness routing.
 
 ```mermaid
 flowchart TB
     User["LAN browser"]
     subgraph H["current placement: ai-harness VM"]
         Web["Web chat and task API"]
+        Engines["Per-chat engine selection / MiniMax default"]
         Agent["MiniMax main and child agents"]
+        Codex["Codex preview / private App Server"]
+        Responses["Local Responses adapter / two 480K Qwen instances"]
         Tools["Search, browser, PDF and coding tools"]
-        Gateway["Fixed-Qwen gateway: two shared slots"]
+        Gateway["Inference gateway: two Qwen slots + one frontier slot"]
         ImageJobs["Image tools and job broker"]
         Data[("Chat metadata, workspaces and artifacts")]
         Status["Status and typed admin"]
@@ -43,8 +72,10 @@ flowchart TB
     subgraph M["current placement: ai-vm VM"]
         Node["Node status and typed operations"]
         Control["Deterministic text lifecycle control"]
-        Q0["Qwen text instance 0 / GPU0"]
-        Q1["Qwen text instance 1 / GPU1"]
+        Q0["Qwen text instance 0 / fast Blackwell"]
+        Q1["Qwen text instance 1 / Server Blackwell"]
+        Q2["Qwen text instance 2 / new Ada / separate 200K API"]
+        Frontier["Selected frontier: MiMo / CPU experts + fast Blackwell"]
         Image["Separate image API and Qwen-Image service / Ada"]
     end
     subgraph Future["FUTURE / OPTIONAL — not deployed"]
@@ -53,7 +84,13 @@ flowchart TB
     end
     User --> Web
     User --> Status
-    Web --> Agent
+    Web --> Engines
+    Engines --> Agent
+    Engines --> Codex
+    Codex --> Responses
+    Responses --> Gateway
+    Codex --> Tools
+    Codex --> ImageJobs
     Web --> Data
     Agent --> Tools
     Agent --> Gateway
@@ -61,11 +98,14 @@ flowchart TB
     ImageJobs --> Data
     Gateway --> Q0
     Gateway --> Q1
+    Gateway --> Frontier
     ImageJobs --> Image
     Status --> Node
     Status --> Helper
     Node --> Control
     Node --> Image
+    Node --> Frontier
+    Node -. observes .-> Q2
     Control --> Q0
     Control --> Q1
     User -.-> LB
@@ -86,60 +126,58 @@ adequate resources, registered storage, network/security policy and explicit
 deployment work. Registry edits alone do not relocate workloads or select models.
 
 The ai-vm role remains API-only, with separate direct inference endpoints and
-**no common ai-vm inference router**. The harness already has its own fixed-Qwen
-gateway: main agents, child agents and auxiliary calls share exactly two global
-inference slots. Image tools use a separate service; GLM is not integrated into
-the harness. Flexible routing is an accepted future design, not implemented
-arbitrary-model selection.
+**no common ai-vm inference router**. The harness gateway provides two Qwen slots
+and one independent frontier slot; image jobs use their own service. Qwen coordinates
+tasks and normally handles coding and agentic work. MiniMax can delegate difficult
+research, document analysis and reasoning to its native `frontier` child running
+the selected qualified frontier model. This fixed routing policy does not implement
+arbitrary-model selection. See [H009 delegation qualification](docs/h009-status-20260926.md) and
+[H010 64K benchmark and capacity estimate](docs/h010-status-20260927.md).
 
-## Historical September 21 runtime and API acceptance
+## Current models and dated acceptance
 
-The following preserves the September 21 checkpoint and its acceptance
-limits, not current whole-system readiness. Later harness/image/status
-deployment evidence is on `feature/system-topology`; see the
-[H005 resilience closeout](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/feature/system-topology/docs/h005-closeout-20260926.md)
-and the H006 links in the current overview above.
+MiMo V2.6 Pro-RL is active at **480,000 configured context tokens**, with its
+protected profile delivered to both harness launch paths. Fresh native tool
+calling and actual-result continuation passed after recovery, with full HTTP
+completion and physical idle confirmed. These tiny requests establish workflow
+and allocation, **not occupied-480K performance**. Fresh MiniMax and Codex
+delegation both passed with actual tool calls and complete settlement. Historical full-roster/schema and
+65,536-output-ceiling support is carried forward only for the unchanged runtime;
+earlier 950K workflow results are not relabeled as 480K tests.
 
-At this checkpoint the project covered the API-only local AI server for
-**Qwen3.8-27B FP8** and **GLM5.3 UD-Q4_K_XL**.
-Reviewed source `04143b18cca7aca724d9a4a4bcf943fe86c040db` defines **dual-qwen**
-as the default: one Qwen instance per GPU. Optional **glm-qwen** replaces only
-GPU0 with GLM; returning to dual-qwen replaces GPU0 with Qwen again.
+Qwen0 and Qwen1 retain 480,000-token configurations and the two shared harness
+lanes. The separate Qwen Ada API has 200,000 allocated tokens and is not a 480K
+fallback. GLM-5.3-Flash's retained 1,048,576-token profile is dormant. MiMo and
+GLM are alternate owners of frontier hardware, not simultaneously resident.
+Qwen-Image-2.1 uses a separate Ada service for generation and guarded editing.
+That external GPU is currently absent and the service reports unavailable;
+see [image sizes and limits](ai-harness/README.md#image-generation-and-editing).
 
-**Live production acceptance PASS — 2026-09-21, 03:21 UTC.** The saved
-[activation proof](reports/dualq-480k-20260921.md#dated-production-acceptance--2026-09-21)
-records both Qwen instances warm/ready with persisted running/resume intent.
-GPU0 Qwen → GLM → Qwen took 255.585590 / 120.568066 s per operation, excluding
-pre-admission/status overhead; GPU1 retained its identity through both switches.
-Qwen schema/tool continuation and GLM native 480K plus a correct smoke passed.
-Refresh status before use; this is a dated snapshot.
+No 1M, 950K or full occupied-480K benchmark was repeated for H036. Preserve the
+[failed near-950K result](reports/h022-950k-status.md),
+[earlier MiMo measurements](docs/h016-mimo-results-20260927.md),
+[GLM 1M evidence](docs/h013-status-20260927.md),
+[Qwen migration measurements](docs/h008-status-20260926.md) and
+[historical dual-Q acceptance](reports/dualq-480k-20260921.md).
+Those dated measurements do not establish current readiness or aggregate
+throughput. Sustained four-model load remains unqualified after the retained
+thermal-guard failure. [Full HD image acceptance](reports/image21-fhd-20260923/RESULT.md)
+and [guarded editing limits](reports/h003-edit-capacity-20260923/RESULT.md)
+retain their original scope.
 
-| Placement / control target | Deployment ID and public instance ID | Inference alias / port |
-| --- | --- | --- |
-| GPU0 / `glm`, default | `qwen38-27b-q0-480000-yarn4-bf16kv` | `qwen3.8-27b-gpu0` / 30002 |
-| GPU1 / `qwen`, both modes | `qwen38-27b-q1-480000-yarn4-bf16kv` | `qwen3.8-27b` / 30004 |
-| GPU0 / `glm`, optional | `glm-5.3-ud-q4-k-xl-g1-480000` | `glm-5.3` / 30002 |
-
-All three configure **480,000 tokens** on the existing **72-vCPU guest**.
-Both Qwen instances share guest CPUs 0–7 (union 8); optional GLM uses 0–71,
-sharing 0–7 with GPU1 Qwen. These are guest affinity masks, not exclusive cores
-or physical host pinning. [Model matrix](docs/model-matrix.md) records resources
-and the distinction between configured, accepted and measured occupied context.
-
-The [one-pair dual-Q benchmark](reports/dualq-480k-20260921.md) completed in
-258.9091 s: occupied context 479,490 / 479,495. Both semantic checks passed;
-Q1's outer JSON fence failed strict formatting. Output windows did not overlap.
-Its STOPPED/manual restoration is historical benchmark state, not production
-state or activation acceptance.
-
-### API contract at the September 21 checkpoint
+## Use the APIs
 
 Control uses `http://10.156.100.60:30000/control/v1/...`. Clients discover and
-explicitly address separate inference bases on ports 30002 and 30004, each
-with `/v1`; the aliases above identify the loaded instance. There is no common
-inference router or automatic fallback. Native listeners stay authenticated
-IPv4 loopback behind the reviewed private transport.
+explicitly address separate inference bases: Qwen0 on 30002, Qwen1 on 30004,
+MiMo on 30012, separate Ada Qwen on 30014, and dormant GLM on 30010, each with
+`/v1`. Discover current identity and readiness before use. These direct ai-vm
+APIs have no common inference router or automatic fallback; the harness's
+Qwen/frontier gateway is a separate client-side component. Native listeners stay
+authenticated IPv4 loopback behind the reviewed private transport.
 
+- [Image API source and integration](docs/image-api.md): private image API interface.
+  The [current acceptance report](docs/service-resilience-acceptance.md) records
+  qualified generation/editing, retained limitations and exact runtime identities.
 - [API operations and examples](docs/ai-vm-api-operations.md): discovery,
   separate credentials, targeted switch/poll and inference.
 - [Control contract](docs/control-api.md) and [inference contract](docs/api-contract.md).
@@ -148,26 +186,37 @@ IPv4 loopback behind the reviewed private transport.
 - [Private client transport](docs/direct-client-network.md) and
   [protected credentials](docs/agent-client.md#protected-key-file).
 
-`mutation_busy` describes lifecycle work. Inference running/queued counts and
-external backlog remained unknown; Ready does not mean idle. At this checkpoint
-the harness was future work, expected to own dispatch, backlog and drain before
-a targeted switch. Switching a
+`mutation_busy` describes lifecycle work; readiness does not mean idle. The
+harness owns its dispatch, backlog and drain before a targeted switch. Switching a
 running target requires `allow_interrupt:true`, fresh identity/generation and
 operation polling; the server provides no atomic drain guarantee.
 
-Enabled VM services own control, private transport and lifecycle, with no
-Worker1, SSH or benchmark-keeper lifetime dependency. Control restart and warm
-idempotent boot-intent replay passed; fresh clients still received correct
-answers after activation SSH exited. **Hardware boot, cold-boot replay and
-live full rollback remain NOT_TESTED.**
+The [September 26 resilience closeout](docs/h005-closeout-20260926.md) records
+successful idle/wake and sequential VM reboot recovery. Both Qwens and the Ada
+image service restored automatically. Status/admin services, history metadata
+and current-boot task containment were verified. Earlier failed attempts remain
+in the linked historical record.
 
-At this checkpoint tools, browsing and file work ran on ordinary external
-clients in trusted workspaces, and a separate frontend VM was planned. The
-[current overview](#sova) describes the deployed harness and flexible placement;
-two VMs are not required for every deployment. **Installer implementation and
-tests remain paused.**
+Tools, browsing and file work run as an ordinary user in trusted client
+workspaces, currently through [ai-harness](ai-harness/README.md) on its own VM.
+It provides the deployed shared-LAN chat and task interface; that placement is
+not a requirement for all Sova deployments. General installer expansion remains
+deferred; H036 included narrow existing CI fixture/temporary-path repairs.
 
-### Earlier historical evidence
+## Status and administration
+
+Open [status](http://10.156.100.61/status) for read-only service observations and
+[admin](http://10.156.100.61/admin) for canonical typed operations. Admin uses the
+deployed anonymous trusted/shared-LAN access scope: it has no per-user login or
+authentication. Normal operations use admin so ownership, holds and receipts are
+maintained; follow the [operator guidance](ai-harness/README.md#operator-use) for
+status meanings, idle/wake behavior and uncertain results.
+
+The optional `status.ai-harness` DNS alias is user-managed and status-only. A local
+DNS entry may point it at `10.156.100.61`; this guide does not claim DNS is configured.
+Use the recorded IP-based admin address above for operations.
+
+## Historical evidence
 
 The prior [singleton acceptance](reports/apiaccept-lan-acceptance.md),
 [stage-one qualifications](reports/stage1-ai-vm-status.md),
@@ -178,5 +227,9 @@ acceptance. Historical reports are unchanged.
 
 ## License
 
-Apache-2.0 is intended; the full license text remains outstanding.
-See [LICENSE.todo.md](LICENSE.todo.md).
+First-party harness server, tool and skill additions are MIT; see the
+[component licenses and notices](ai-harness/README.md#licenses). Upstream tools,
+dependencies and model weights keep their own terms, including the separate
+AGPL-3.0-or-later SearXNG service. This is not a blanket MIT relicensing.
+The intended top-level Apache-2.0 text is still outstanding:
+[LICENSE.todo.md](LICENSE.todo.md).

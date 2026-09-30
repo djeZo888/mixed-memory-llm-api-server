@@ -1,0 +1,48 @@
+diff --git a/packages/local-runtime-v2/src/service/agent/application/agent-profile.ts b/packages/local-runtime-v2/src/service/agent/application/agent-profile.ts
+index 8e28eec..d7d7b05 100644
+--- a/packages/local-runtime-v2/src/service/agent/application/agent-profile.ts
++++ b/packages/local-runtime-v2/src/service/agent/application/agent-profile.ts
+@@ -421,7 +421,7 @@ async function renderBuiltinProfile(
+   }
+   if (rendered.promptSnapshot) {
+     const profile = await bundledBuiltinProfile(context, rendered);
+-    return { ...profile, configSelection: toConfigSelection(managed) };
++    return { ...profile, configSelection: toBuiltinModelSelection(managed) };
+   }
+   const base = toBuiltinProfile(context, rendered, resolveLocale, toCapabilityCeiling);
+   const withoutPersona = { ...base };
+@@ -435,10 +435,10 @@ async function renderBuiltinProfile(
+     ...withoutPersona,
+     agentSystemPrompt: managed.systemPrompt,
+     corePrompt: [managed.systemPrompt.trim(), sharedBasePrompt.trim()].filter(Boolean).join('\n\n'),
+-    // Canonical selectors are intersected with the ready inventory at Turn
+-    // admission; they are not static builtin MCP tool IDs.
++    // Builtin capability fields in this file are an audit mirror. The shipped
++    // definition and capability ceiling remain authoritative at Turn admission.
+     capabilityCeiling: toCapabilityCeiling(context.capabilities),
+-    configSelection: toConfigSelection(managed),
++    configSelection: toBuiltinModelSelection(managed),
+   };
+ }
+ 
+@@ -560,6 +560,20 @@ export async function readCanonicalCustomAvatar(
+   }
+ }
+ 
++/** Builtin files persist model choices; their audit fields are not selectors. */
++function toBuiltinModelSelection(config: CanonicalAgentConfig): AgentConfigurationSelection {
++  return {
++    ...(config.model ? { model: config.model } : {}),
++    ...(config.effort ? { effort: config.effort } : {}),
++    ...(config.xMavis?.contextWindow === undefined
++      ? {}
++      : { contextWindow: config.xMavis.contextWindow }),
++    ...(config.xMavis?.maxOutputTokens === undefined
++      ? {}
++      : { maxOutputTokens: config.xMavis.maxOutputTokens }),
++  };
++}
++
+ function toConfigSelection(config: CanonicalAgentConfig): AgentConfigurationSelection {
+   return {
+     ...(config.model ? { model: config.model } : {}),

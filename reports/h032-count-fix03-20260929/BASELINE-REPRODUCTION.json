@@ -1,0 +1,10 @@
+{
+  "status": "PASS_EXPECTED_BASELINE_FAILURE",
+  "base": "f8af1ee2dfbf07fa4e4c522d8fba4fcfe464702b",
+  "responseSha256": "3c9985a47794bc3743f760ace2a4ce7c3fc74bae2e03eae9ea4c99dfb978a77e",
+  "errorCode": "mimo_count_malformed",
+  "scope": "local fixture response transport; no network",
+  "posts": 1,
+  "observations": 1,
+  "utc": "2026-09-29T13:00:04.114Z"
+}

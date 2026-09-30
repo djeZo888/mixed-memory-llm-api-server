@@ -1,0 +1,9 @@
+{
+  "id": "01a0e3dd-9332-7960-833b-022910d7c636",
+  "startedUtc": "2026-09-27T17:15:44.211248+00:00",
+  "hardDeadlineUtc": "2026-09-27T17:23:44.211248+00:00",
+  "maximumSeconds": 480,
+  "reportWrittenUtc": "2026-09-27T17:20:14.841850+00:00",
+  "actualExitUtc": null,
+  "actualExitAuthority": "task wrapper finished-utc and exit-code after native process exits"
+}

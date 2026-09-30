@@ -15,6 +15,8 @@ from lifecycle import concurrent_profiles as pair
 from lifecycle.manager import Manager
 from runtime import sglang38_pair_file_auth as launcher
 
+ADA_UUID = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
+
 
 def bound(identifier, binding=None):
     binding = binding or BindingFixture()
@@ -25,7 +27,7 @@ def bound(identifier, binding=None):
     return d
 
 
-def receipt(d):
+def receipt(d, *, gpu_memory=None):
     """In-memory schema fixture; this is not a live measurement or authority."""
     binding = d['_storage_binding']
     value = {'schema_version': 2, 'kind': 'root-reviewed-dualq-480k',
@@ -58,7 +60,31 @@ def receipt(d):
             if identifier in pair.QWEN_PROFILES:
                 proof.update(pair_launcher_sha256=pair.PINS['scripts/runtime/sglang38_pair_file_auth.py'],
                     native_auth_checks={name: 'PASS' for name in q.AUTH_CHECKS})
+            if gpu_memory is not None:
+                # Synthetic (total, minimum free) measurements must precede
+                # every dated snapshot and H005/H008 digest in this chain.
+                proof['gpu_total_bytes'], proof['minimum_free_gpu_bytes'] = gpu_memory[slot]
     path = binding.path('data', pair.ACCEPTANCE_SUFFIX)
+    # Explicit dependency fixture: dated predecessor stays separate; this does
+    # not mint deployed measurement or actual-image authentication evidence.
+    from runtime.h005_runtime_binding import BINDING_SHA256, load
+    predecessor = copy.deepcopy(value)
+    binding.documents[binding.path('data', pair.PREDECESSOR_SUFFIX)] = predecessor
+    value['h005_transition'] = {
+        'kind': 'inherited-capacity-new-runtime-auth', 'runtime_binding_sha256': BINDING_SHA256,
+        'runtime_source_commit': load(require_complete=False)['runtime_source_commit'],
+        'predecessor_receipt_sha256': pair.receipt_sha256(predecessor),
+        'capacity_observed_at': '2026-09-21', 'live_acceptance': 'SEPARATE_RECEIPT_REQUIRED'}
+    h008_prior = copy.deepcopy(value)
+    binding.documents[binding.path('data', 'services/llm-manager/evidence/h008-predecessor.accepted.json')] = h008_prior
+    fresh = {'kind': 'h008-qwen1-fresh-hardware-allocation', 'source_sha256': pair.source_identity(),
+        'gpu_uuid': pair.GPU_UUIDS[1], 'configured_context': 480000, 'native_pool_tokens': 480000,
+        'native_input_limit': 479994, 'short_output': 'PASS', 'auth': 'PASS',
+        'observed_at': 'SYNTHETIC', 'container_id': 'b' * 64,
+        'slot_proof': copy.deepcopy(value['modes']['dual-qwen']['slots']['qwen'])}
+    binding.documents[binding.path('data', 'services/llm-manager/evidence/h008-qwen1-proof.json')] = fresh
+    value['h008_transition'] = {'kind': 'qwen1-server-migration-fresh-proof',
+        'predecessor_sha256': pair.receipt_sha256(h008_prior), 'proof_sha256': pair.receipt_sha256(fresh)}
     binding.documents[path] = value
     instance = {'id': 'synthetic-instance', 'concurrent_pair_acceptance': {
         'path': path, 'sha256': pair.receipt_sha256(value), 'reviewed_source_commit': 'a' * 40}}
@@ -123,12 +149,54 @@ class Profiles(unittest.TestCase):
             with patch.object(pair, 'ROOT', root), self.assertRaisesRegex(LifecycleError, 'concurrent_source_pin_mismatch'):
                 pair.declared_profile(pair.GLM_PROFILE)
 
-    def test_gpu_inventory_rejects_indices_duplicates_unknown_and_remapping(self):
-        pair.validate_gpu_inventory('0, ' + pair.GPU_UUIDS[0] + '\n1, ' + pair.GPU_UUIDS[1] + '\n')
-        for rows in ([(0, pair.GPU_UUIDS[1]), (1, pair.GPU_UUIDS[0])], [(0, pair.GPU_UUIDS[0])],
-                     [(0, pair.GPU_UUIDS[0]), (0, pair.GPU_UUIDS[1])], [], None, '0, unknown\n1, unknown'):
+    def test_gpu_inventory_retains_two_gpus_and_accepts_extra_and_reordered_indices(self):
+        inventories = [list(enumerate(pair.GPU_UUIDS)),
+            [(0, pair.GPU_UUIDS[1]), (1, pair.GPU_UUIDS[0])],
+            [(0, pair.GPU_UUIDS[0]), (1, pair.GPU_UUIDS[1]), (2, ADA_UUID)],
+            [(7, pair.GPU_UUIDS[1]), (0, ADA_UUID), (3, pair.GPU_UUIDS[0])]]
+        for rows in inventories:
+            for value in (rows, '\n'.join(f'{index}, {uuid}' for index, uuid in rows) + '\n'):
+                with self.subTest(rows=value):
+                    pair.validate_gpu_inventory(value)
+
+    def test_gpu_inventory_requires_each_fixed_uuid_once_and_unique_physical_indices(self):
+        valid = list(enumerate(pair.GPU_UUIDS))
+        inventories = [[], None, [(0, ADA_UUID)],
+            [(0, pair.GPU_UUIDS[0]), (2, ADA_UUID)],
+            [(1, pair.GPU_UUIDS[1]), (2, ADA_UUID)]]
+        inventories += [valid + [(2, uuid)] for uuid in pair.GPU_UUIDS]
+        inventories += [valid + [(2, ADA_UUID), (3, ADA_UUID)],
+            [(0, pair.GPU_UUIDS[0]), ('0', pair.GPU_UUIDS[1])], valid + [('1', ADA_UUID)]]
+        for rows in inventories:
             with self.subTest(rows=rows), self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
                 pair.validate_gpu_inventory(rows)
+
+    def test_target_requirement_accepts_missing_peer_without_ordinal_substitution(self):
+        for target in pair.GPU_UUIDS:
+            peer = next(uuid for uuid in pair.GPU_UUIDS if uuid != target)
+            for rows in ([(7, target)], [(0, ADA_UUID), (7, target)], [(7, target), (0, ADA_UUID)]):
+                pair.validate_gpu_inventory(rows, required_uuids=[target])
+            for rows in ([(0, peer)], [(0, ADA_UUID)], [(0, target), (7, target)]):
+                with self.subTest(target=target, rows=rows), self.assertRaisesRegex(
+                        LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                    pair.validate_gpu_inventory(rows, required_uuids=[target])
+        for required in ([], ['0'], [ADA_UUID], [pair.GPU_UUIDS[0]] * 2):
+            with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_requirement_invalid'):
+                pair.validate_gpu_inventory(list(enumerate(pair.GPU_UUIDS)), required_uuids=required)
+
+    def test_gpu_inventory_rejects_malformed_identity_rows_including_extra_device(self):
+        valid = list(enumerate(pair.GPU_UUIDS))
+        bad_rows = [None, '2, ' + ADA_UUID, (2,), (2, ADA_UUID, 'extra'),
+            (True, ADA_UUID), (2.0, ADA_UUID), (-1, ADA_UUID), ('-1', ADA_UUID),
+            ('02', ADA_UUID), ('2.0', ADA_UUID), ('+2', ADA_UUID), ('\u0662', ADA_UUID),
+            ('', ADA_UUID), (2, None), (2, 123), (2, 'RTX 6000 Ada'),
+            (2, 'GPU-unknown'), (2, ADA_UUID[:-1]), (2, ADA_UUID.replace('-', '', 1))]
+        for row in bad_rows:
+            with self.subTest(row=row), self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                pair.validate_gpu_inventory(valid + [row])
+        for text in ('0, unknown\n1, unknown', '0, ' + pair.GPU_UUIDS[0] + ', extra'):
+            with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
+                pair.validate_gpu_inventory(text)
 
     def test_glm_full_command_pins_allocation_and_native_defaults(self):
         d = bound(pair.GLM_PROFILE)
@@ -174,6 +242,23 @@ class Acceptance(unittest.TestCase):
         self.assertEqual(accepted['slots']['glm']['configured_context'], 480000)
         self.assertEqual(accepted['slots']['glm']['largest_occupied_context'], 65008)
         pair.check_acceptance(bound(pair.QWEN_PROFILE, d['_storage_binding']), instance)
+
+    def test_historical_two_gpu_inventory_and_measurement_bytes_remain_unchanged(self):
+        d = bound(pair.QWEN0_PROFILE); proof, instance = receipt(d)
+        original = copy.deepcopy(proof)
+        for identifier in pair.PROFILES:
+            pair.check_acceptance(bound(identifier, d['_storage_binding']), instance)
+        self.assertEqual(proof, original)
+        self.assertEqual(proof['gpu_inventory'], list(enumerate(pair.GPU_UUIDS)))
+
+    def test_old_critical_source_hash_refuses_even_with_matching_receipt_digest(self):
+        d = bound(pair.QWEN0_PROFILE); proof, instance = receipt(d)
+        critical = 'scripts/lifecycle/concurrent_profiles.py'
+        self.assertIn(critical, proof['source_sha256'])
+        proof['source_sha256'][critical] = '0' * 64
+        instance['concurrent_pair_acceptance']['sha256'] = pair.receipt_sha256(proof)
+        with self.assertRaisesRegex(LifecycleError, 'concurrent_acceptance_identity_mismatch'):
+            pair.check_acceptance(d, instance)
 
     def test_actual_capacity_source_and_margin_evidence_fail_closed(self):
         d = bound(pair.QWEN_PROFILE); original, instance = receipt(d)
@@ -252,6 +337,26 @@ class QwenPairLauncher(unittest.TestCase):
 class ManagerPairIntegration(unittest.TestCase):
     """Real Manager create/reuse validation; synthetic image, storage and receipts."""
     def setUp(self):
+        from runtime import h005_runtime_binding
+        # Explicit source-only completed-build collaborator. The production
+        # image/source/receipt guards all run; only their external facts are
+        # synthetic and no protected receipt is published by these tests.
+        completed = copy.deepcopy(h005_runtime_binding.load(require_complete=False))
+        completed.update(status='COMPLETE_VERIFIED_BUILD', build_receipt_sha256='8' * 64)
+        for target, digit in (('text', '6'), ('image', '7')):
+            completed[target].update(image_id='sha256:' + digit * 64,
+                image_config_digest='sha256:' + digit * 64,
+                image_manifest_digest=None, image_id_domain='oci_config')
+        binding_patch = patch.object(h005_runtime_binding, 'load', return_value=completed)
+        binding_patch.start()
+        self.addCleanup(binding_patch.stop)
+        self.pair_fixture = q.pair_auth_fixture()
+        fixture_binding = patch.object(self.pair_fixture, 'runtime_binding', return_value=h005_runtime_binding)
+        fixture_binding.start()
+        self.addCleanup(fixture_binding.stop)
+        fixture_patch = patch.object(q, 'pair_auth_fixture', return_value=self.pair_fixture)
+        fixture_patch.start()
+        self.addCleanup(fixture_patch.stop)
         self.binding = BindingFixture()
         self.binding.identity = {'synthetic': 'registered-storage-fixture'}
         self.manager = Manager(pair.ROOT / 'configs', {'schema_version': 1, 'id': 'synthetic-instance',
@@ -259,6 +364,11 @@ class ManagerPairIntegration(unittest.TestCase):
             'paths': {'state': {'role': 'data', 'suffix': 'services/llm-manager/active'}}},
             binding=self.binding, test_paths=True,
             run_fn=lambda *a, **k: self.fail('unexpected external process'))
+        # Hardware persistence/lease is exercised by test_hardware_policy;
+        # these existing source/resource fixtures enter prepare_start directly.
+        self.hardware_patch = patch.object(self.manager, 'require_hardware')
+        self.hardware_patch.start()
+        self.addCleanup(self.hardware_patch.stop)
         self.inspects = []
         self.images = {}
         def capture(*args, **kwargs):
@@ -276,10 +386,36 @@ class ManagerPairIntegration(unittest.TestCase):
         _, instance = receipt(d)
         self.manager.instance.update(instance)
         if identifier in pair.QWEN_PROFILES:
-            _, runtime = auth_receipt(d)
-            self.manager.instance.update(runtime)
-            self.images[q.IMAGE_REFERENCE] = qimage(d)
-            c = qcontainer(d)
+            from types import SimpleNamespace
+            from tests.lifecycle.test_qwen38_image_fixture import native_result, lifetime
+            fixture = self.pair_fixture
+            slot = 'gpu0' if d['concurrent_pair']['slot'] == 'glm' else 'gpu1'
+            provenance, _ = fixture.adaptive_provenance(pair.ROOT)
+            native = native_result(provenance, fixture.CONTEXT)
+            native.update(image_id_pin=provenance['image_id'], image_reference=provenance['image_reference'],
+                extension_identity=fixture.pair_identity(pair.ROOT, slot=slot, adaptive=True),
+                model_config_resolution=fixture.expected_extension_resolution(provenance))
+            observed = qimage(d)
+            observed.update(Id=provenance['image_reference'], RepoDigests=[])
+            observed['Config']['Labels']['io.llmctl.adaptive-idle.overlay-sha256'] = (
+                fixture.runtime_binding(pair.ROOT).load()['text']['overlay_sha256'])
+            with patch.object(fixture.host, 'validate_output_path'), \
+                    patch.object(fixture.host.subprocess, 'run', return_value=SimpleNamespace(
+                        returncode=0, stdout=json.dumps([observed]).encode())), \
+                    patch.object(fixture.host, 'run_disposable_fixture', return_value=(SimpleNamespace(
+                        returncode=0, stdout=json.dumps(native).encode(), stderr=b''), lifetime(fixture.CONTEXT))), \
+                    patch.object(fixture.host, 'write_receipt') as writer:
+                proof = fixture.run(pair.ROOT, Path('/synthetic/never-published.json'), slot=slot, adaptive=True)
+                writer.assert_called_once()
+            path = self.binding.path('data', 'services/llm-manager/evidence/h005-' + slot + '.auth.json')
+            self.binding.documents[path] = proof
+            self.manager.instance.setdefault('h005_pair_runtime_evidence', {})[identifier] = {
+                'path': path, 'sha256': pair.receipt_sha256(proof)}
+            self.images[d['_runtime']['image_ref']] = observed
+            with patch('tests.lifecycle.test_qwen38.image', return_value=observed):
+                c = qcontainer(d)
+            c['Image'] = provenance['image_reference']
+            c['Config']['Image'] = provenance['image_reference']
             c['HostConfig']['PortBindings'] = {str(d['container_port']) + '/tcp':
                 [{'HostIp': '127.0.0.1', 'HostPort': str(d['endpoint']['port'])}]}
         else:
@@ -329,16 +465,64 @@ class ManagerPairIntegration(unittest.TestCase):
             with self.assertRaisesRegex(LifecycleError, 'concurrent_reviewed_acceptance_required'):
                 self.manager.validate_reused_contract(c, d)
 
+    def test_derived_pair_requires_new_auth_and_rejects_parent_receipts_before_image_inspect(self):
+        for identifier in pair.QWEN_PROFILES:
+            d, _ = self.prepare(identifier)
+            reference = self.manager.instance['h005_pair_runtime_evidence'].pop(identifier)
+            self.inspects.clear()
+            with self.subTest(identifier=identifier), \
+                    self.assertRaisesRegex(LifecycleError, 'h005_pair_auth_reference_required'):
+                self.manager.create_args(d)
+            self.assertEqual(self.inspects, [])
+            parent_proof, _ = auth_receipt(d)
+            self.binding.documents[reference['path']] = parent_proof
+            self.manager.instance['h005_pair_runtime_evidence'][identifier] = {
+                'path': reference['path'], 'sha256': pair.receipt_sha256(parent_proof)}
+            with self.subTest(parent_receipt=identifier), self.assertRaises(LifecycleError):
+                self.manager.create_args(d)
+            self.assertEqual(self.inspects, [])
+
     def test_current_gpu_inventory_blocks_before_artifacts_or_container_creation(self):
         d, _ = self.prepare(pair.GLM_PROFILE)
-        wrong = '0, ' + pair.GPU_UUIDS[1] + '\n1, ' + pair.GPU_UUIDS[0]
+        wrong = '0, ' + ADA_UUID + '\n1, ' + pair.GPU_UUIDS[1]
         with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
                 patch.object(self.manager, 'run', return_value=wrong) as run, \
                 patch.object(self.manager, 'check_artifacts') as artifacts:
             with self.assertRaisesRegex(LifecycleError, 'concurrent_gpu_inventory_mismatch'):
                 self.manager.prepare_start(d)
-            run.assert_called_once_with(['nvidia-smi', '--query-gpu=index,uuid', '--format=csv,noheader'], timeout=30)
+            run.assert_called_once_with(['nvidia-smi', '--id=' + pair.GPU_UUIDS[0],
+                                         '--query-gpu=index,uuid', '--format=csv,noheader'], timeout=30)
             artifacts.assert_not_called()
+            self.assertEqual(self.inspects, [])
+
+    def test_manager_accepts_target_when_peer_is_absent_before_artifact_gate(self):
+        for identifier in pair.PROFILES:
+            d, _ = self.prepare(identifier)
+            inventory = f"9, {d['launch']['gpus'][0]}\n0, {ADA_UUID}\n"
+            self.manager.instance.update(obsolete_boot_owner_disabled=True,
+                                         obsolete_boot_owner_evidence=['SYNTHETIC'])
+            def target_only(argv, *, timeout):
+                if argv != ['nvidia-smi', '--id=' + d['launch']['gpus'][0],
+                            '--query-gpu=index,uuid', '--format=csv,noheader']:
+                    raise LifecycleError('synthetic_unassigned_gpu_query_hang')
+                return inventory
+            with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
+                    patch.object(self.manager, 'run', side_effect=target_only), \
+                    patch.object(self.manager, 'check_artifacts', side_effect=LifecycleError('synthetic_artifact_gate')):
+                with self.subTest(identifier=identifier), self.assertRaisesRegex(LifecycleError, 'synthetic_artifact_gate'):
+                    self.manager.prepare_start(d)
+
+    def test_manager_accepts_reordered_extra_gpu_before_existing_artifact_gate(self):
+        d, _ = self.prepare(pair.QWEN0_PROFILE)
+        inventory = f'7, {pair.GPU_UUIDS[1]}\n0, {ADA_UUID}\n3, {pair.GPU_UUIDS[0]}\n'
+        self.manager.instance.update(obsolete_boot_owner_disabled=True,
+                                     obsolete_boot_owner_evidence=['SYNTHETIC'])
+        with patch.object(self.manager, 'check_sources'), patch.object(self.manager, 'host_guards'), \
+                patch.object(self.manager, 'run', return_value=inventory), \
+                patch.object(self.manager, 'check_artifacts', side_effect=LifecycleError('synthetic_artifact_gate')) as artifacts:
+            with self.assertRaisesRegex(LifecycleError, 'synthetic_artifact_gate'):
+                self.manager.prepare_start(d)
+            artifacts.assert_called_once_with(d)
             self.assertEqual(self.inspects, [])
 
 

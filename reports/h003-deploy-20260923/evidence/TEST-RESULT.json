@@ -1,0 +1,34 @@
+{
+  "time": "2026-09-23T11:33:26.500835+00:00",
+  "fix_base": "198fae25ce75dd067228c041bc24f71b0003d257",
+  "scope": "final root item6 admission rollback; two affected offline regressions only",
+  "results": [
+    {
+      "check": "build",
+      "exit": 0
+    },
+    {
+      "check": "admission-recovery-and-queue-revisions",
+      "exit": 0
+    },
+    {
+      "check": "diff-whitespace",
+      "exit": 0
+    },
+    {
+      "check": "bundle-verify",
+      "exit": 0
+    },
+    {
+      "check": "full-range-patch-reverse-check",
+      "exit": 0
+    }
+  ],
+  "tests": 2,
+  "regression_red_phase": "expected queued, actual running before source fix; new regression failed as intended",
+  "bundle_base": "e17082dfb983ba2acdd425ab9203744b4d0642d7",
+  "candidate": "1df7d52f4c9d661d9fa80b519a074208c9c985e8",
+  "git_clean": true,
+  "author": "CodexWorker1 <codex-worker1@localhost>",
+  "committer": "CodexWorker1 <codex-worker1@localhost>"
+}

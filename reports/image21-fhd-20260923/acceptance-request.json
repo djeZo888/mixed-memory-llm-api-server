@@ -1,0 +1,9 @@
+{
+  "model": "qwen-image-2.1",
+  "prompt": "Photorealistic landscape photograph of Lake Bled in Slovenia on a calm early autumn morning, viewed from an elevated lakeside overlook. Compose a wide horizontal frame with the small wooded island slightly left of center, its pale church walls and slender bell tower rising naturally above the trees. Place the castle on its rocky cliff along the distant right-hand shore, with layered alpine ridges receding behind it. Soft sunlight from the left warms the church, treetops and castle while cool blue shadows retain detail. Clear turquoise water near the shore deepens toward the lake center; delicate ripples gently break reflections in physically plausible directions. Include a restrained foreground of dark leaves and rock, balanced open water, faint atmospheric haze and a lightly clouded sky. Use realistic proportions, natural autumn greens and golds, subtle contrast and crisp detail with graceful distant softness.",
+  "size": "1920x1080",
+  "n": 1,
+  "background": "opaque",
+  "response_format": "b64_json",
+  "seed": 42
+}

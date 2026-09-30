@@ -1,0 +1,36 @@
+{
+  "status": "INDEPENDENT_INITIAL_JOB_STARTED",
+  "utc": "2026-09-27T11:26:42.229687+00:00",
+  "session": "01a0e27e-32c5-7530-ac90-390e985795a2",
+  "hard_deadline_utc": "2026-09-27T11:26:56Z",
+  "root_source": "02c24f148a85223290d37f6c3585518a83054923",
+  "tests": {
+    "passed": 9,
+    "syntax": "PASS",
+    "whitespace": "PASS"
+  },
+  "artifact_verified_shards": 13,
+  "actual_tensor_counts": {
+    "MXFP4": 207,
+    "BF16": 163,
+    "F32": 357
+  },
+  "packet_staged": true,
+  "candidate_loaded": false,
+  "glm_halted": false,
+  "initial_unit_launched": true,
+  "blocker": null,
+  "source_sha256": {
+    "candidate_owner.py": "3ffcbb3bf84345246b80380164fe42aebb00f72eac4defd37b24b26dc64cdaf3",
+    "benchmark.py": "ef99fa39ace38d3a6e0cffb841ebc96e4848145100c4e0d23d114e33e1488fef",
+    "private_proxy.py": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+    "telemetry.py": "df2c572fba760c963886a80a4a534c12b3c817465efc4a54aa85e01a72c7f39f",
+    "verify_retained.py": "2aa4ffac4a8ed2474e79512ba0116c352652f59c810fcfb6fcfca21cd57bcb0d",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "LAUNCH.json": "9f96098b3c491b9e22602144c5fa2f3ac7d706e7f41103a8f3539171e19bb211",
+    "HARNESS-QUIET-01.json": "2858831152358589f305a70aab6f1bcb39a6206ccd522889188dfc0bc2112200"
+  },
+  "unit": "MainPID=1695832\nExecMainStartTimestamp=Sun 2026-09-27 11:26:06 UTC\nControlGroup=/system.slice/h016-mimo-initial-20260927.service\nActiveState=active\nSubState=running\nInvocationID=2ce0a1b765cd47cfa6df437483612e4f\n",
+  "current_owner_phase": "LOADING",
+  "native_acceptance": "PENDING_NO_CLAIM"
+}

@@ -1,0 +1,110 @@
+{
+  "task": "H021-REPAIR-ACCEPT09",
+  "source": "bbeec44d44c29d1b50ce8374c5d26170bc844f5a",
+  "workerNativeSessionId": "01a0e776-79a7-7311-8e8d-5706775b1cab",
+  "qualifiedModelLane": "qwen3.8-27b-gpu0",
+  "configuredContext": 480000,
+  "outputCeiling": 65536,
+  "cases": {
+    "stop": {
+      "verdict": "PASS",
+      "sessionId": "28321c7a-ba32-492b-8f43-79a048d38642",
+      "runId": "6282e135-008a-40e8-a497-cb62a2d14e05",
+      "settled": true,
+      "runStatus": "cancelled",
+      "nativeThreadId": "01a0e778-e766-7462-9654-36184eeff5db",
+      "nativeOwnership": "idle",
+      "activeTurnId": null,
+      "doneEvent": true,
+      "quarantined": false,
+      "pendingRequests": 0,
+      "pendingImageJobs": 0,
+      "receiptSha256": "ca27947625d355e6dd152e9be3300dddfc93165b2e4b62232bd4b0cfa08d3d34",
+      "cancelPostUtc": "2026-09-28T10:04:31.998Z",
+      "gatewaySettledUtc": "2026-09-28T10:05:10.547Z",
+      "cancelToGatewayDrainSeconds": 38.549,
+      "remainedCancellingUntilSettlement": true
+    },
+    "sameThreadFollowupAndReconnect": {
+      "verdict": "PASS",
+      "sessionId": "28321c7a-ba32-492b-8f43-79a048d38642",
+      "runId": "8fbbbd16-c8ea-4c9c-9f5c-4e207c3c48c8",
+      "settled": true,
+      "runStatus": "completed",
+      "nativeThreadId": "01a0e778-e766-7462-9654-36184eeff5db",
+      "nativeOwnership": "idle",
+      "activeTurnId": null,
+      "doneEvent": true,
+      "quarantined": false,
+      "pendingRequests": 0,
+      "pendingImageJobs": 0,
+      "receiptSha256": "f12bbe150a75705d991de3d20658216fea867ccae8bcfd0bfbf2a7ab405d5a91",
+      "durationFromRunCreationToTerminalSeconds": 19.605,
+      "expectedTwoSentenceAnswer": true,
+      "freshInferenceRequests": 1,
+      "contextUsed": 12210,
+      "contextEstimated": true,
+      "rootScreenshotReview": "PASS"
+    },
+    "image": {
+      "verdict": "FAIL",
+      "sessionId": "457e363d-3c63-43ae-ae4d-7be6a52045fa",
+      "runId": "1fdee1d7-14ec-4b0d-94d9-5437e90ffc02",
+      "settled": true,
+      "runStatus": "cancelled",
+      "nativeThreadId": "01a0e77a-50be-7de2-ab73-bdb7e68a86e8",
+      "nativeOwnership": "idle",
+      "activeTurnId": null,
+      "doneEvent": true,
+      "quarantined": false,
+      "pendingRequests": 0,
+      "pendingImageJobs": 0,
+      "receiptSha256": "48ccf74d01fd80fdadc8160f8e4b8465caef9eeeaf4a3be79ced972550a5396b",
+      "modelRequests": 4,
+      "invalidCapabilityCalls": 2,
+      "invalidArguments": {
+        "__v": "0"
+      },
+      "toolError": "MCP -32602: Unrecognized key __v",
+      "submittedImageJobs": 0,
+      "outputImages": 0,
+      "sameTurnStoppedAtBound": true,
+      "schemaWasNotWeakened": true,
+      "simplerAliasHypothesis": "Did not qualify the unchanged image workflow",
+      "errorEvidenceSha256": "a8de986802d26335182e87dce5ee3d84da457dc2bb771152ad73a3b8f0f48df7"
+    }
+  },
+  "imageGate": {
+    "state": "APP_HEALTH_PASS_IMAGE_GATE_OFF",
+    "receiptSha256": "5c5efb0977af19f8f19f2e0c236a4ed201afa233e821c98399992e34b70fe436",
+    "completedUtc": "2026-09-28T10:11:08.007665+00:00",
+    "unitSha256": "2ce7e40cc0eac4b3c20345233e876c17870c1ddb56b02b9ea8b88ad44df79029",
+    "codexImageToolEnabled": false,
+    "miniMaxDefault": true,
+    "miniMaxImageUnchanged": true,
+    "singleAppStopStart": true,
+    "sameAttemptReadback": "Initial data-event check ran before normal startup finished. Later read-only check passed exact six-event preservation; no extra restart or helper change."
+  },
+  "protectedBenchmark": "H019 neither inspected nor changed",
+  "earlierFailures": "Retained in h021-codex-focused-cases.json and h021-codex-cancellation.json",
+  "finalCleanup": {
+    "acceptanceHold": "REMOVED exact Qwen1 c624 row",
+    "frontierHold": "PRESERVED for independent benchmark",
+    "historicalQuarantinesPreserved": 3,
+    "noNewOwnedWork": true,
+    "receiptSha256": "93540f6bdade1e9d0f224e715999dba7678590cec4c9f1a424122f4564d6c363",
+    "observedAt": "2026-09-28T10:12:50.870235+00:00",
+    "workerExit": {
+      "code": 0,
+      "at": "2026-09-28T10:15:32Z",
+      "receiptSha256": "d0a51a17eeeede2ead64c0115bcf94a6ffe2fd45e4d0893a83380c38d2e6d1b2"
+    }
+  },
+  "sourceWorkerReportSha256": "af543b7c56a79e4b2282ee82c06f16059f0bfd5dfdb22b1d7d88e49680a89996",
+  "boundedAcceptanceOverall": "PARTIAL: text lifecycle passed; image workflow failed and was disabled",
+  "compactEvidenceBundleSha256": "7f8ddef1cb7a639a8c08fabe809807d55a8bc9abdd658cc431e6cabd6cc4a066",
+  "retainedAcceptanceChats": [
+    "28321c7a-ba32-492b-8f43-79a048d38642",
+    "457e363d-3c63-43ae-ae4d-7be6a52045fa"
+  ]
+}

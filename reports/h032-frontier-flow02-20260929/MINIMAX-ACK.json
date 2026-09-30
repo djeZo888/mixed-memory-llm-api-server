@@ -1,0 +1,18 @@
+{
+  "utc": "2026-09-29T12:43:11.959Z",
+  "name": "minimax",
+  "engineKind": "minimax",
+  "sessionId": "76db5b44-722c-473e-9b81-c6c89e4bdd02",
+  "submissionId": "63f68ccd-7f95-4e43-a229-ae480b9ed8ce",
+  "ticket": {
+    "id": "f3349a43-3fe1-4d13-ba14-060a5947c0e3",
+    "sessionId": "76db5b44-722c-473e-9b81-c6c89e4bdd02",
+    "expiresAt": 1790686500000,
+    "frontier": true,
+    "image": false
+  },
+  "status": 202,
+  "body": {
+    "runId": "41c71c82-ab53-42ec-90b6-0518c637a887"
+  }
+}

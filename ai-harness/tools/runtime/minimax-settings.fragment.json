@@ -1,0 +1,20 @@
+{
+  "skills": {
+    "external": {
+      "enabled": false
+    }
+  },
+  "agents": {
+    "default": {
+      "skills": ["code-review"],
+      "builtinTools": [],
+      "features": {
+        "webSearch": false,
+        "delegation": true
+      }
+    }
+  },
+  "beta": {
+    "browserUseTooling": true
+  }
+}

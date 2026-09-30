@@ -1,0 +1,118 @@
+{
+  "task": "H020-REVIEW01",
+  "status": "SOURCE_REVIEW_COMPLETE_CANDIDATE_PENDING",
+  "sourceCommit": "e256814c6f2b9cc421ba68cde3febd1e0a6c9aa8",
+  "candidateCommit": null,
+  "candidateStatus": "not received; no candidate or deployment verdict",
+  "reviewedPins": [
+    "e256814c6f2b9cc421ba68cde3febd1e0a6c9aa8"
+  ],
+  "scope": "Independent source contract, saved sanitized Worker2 evidence and focused local synthetic fixtures",
+  "findings": [
+    {
+      "id": "R1",
+      "severity": "high",
+      "path": "ai-harness/server/src/status-projection.ts",
+      "lines": [
+        7,
+        18
+      ],
+      "risk": "Fresh service ID accepts wrong or missing model_alias as configured-model readiness",
+      "recommendation": "Separate configured model from observed alias and gate model health on fresh identity match"
+    },
+    {
+      "id": "R2",
+      "severity": "medium",
+      "path": "ai-harness/server/src/system-registry.ts",
+      "lines": [
+        158,
+        175
+      ],
+      "risk": "Hardcoded labels override registry and startup selection remains stale until process reload",
+      "recommendation": "Registry labels plus explicit selection metadata and documented reload semantics"
+    },
+    {
+      "id": "R3",
+      "severity": "medium",
+      "path": "scripts/control/node.py",
+      "lines": [
+        200,
+        211,
+        269,
+        276
+      ],
+      "risk": "Required GPU UUIDs and affected_services are dependency configuration, not observed running-model occupancy",
+      "recommendation": "Keep dependency/required UUIDs distinct from measured UUID telemetry and fresh observed service identity"
+    },
+    {
+      "id": "R4",
+      "severity": "medium",
+      "path": "ai-harness/server/src/status-ui.ts",
+      "lines": [
+        30,
+        36
+      ],
+      "risk": "UI omits observed alias/context/endpoint and shows raw ready values even when health unknown; calls dependency list Assigned",
+      "recommendation": "Render separate configured and observed identity/capacity with freshness and honest GPU relationship labels"
+    },
+    {
+      "id": "R5",
+      "severity": "medium",
+      "path": "ai-harness/server/test/status-service.test.ts",
+      "lines": [
+        251,
+        267
+      ],
+      "risk": "Existing missing-node/authority fixture asserts 5 ai-vm services, but retained MiMo makes 6; fails before authority assertions",
+      "recommendation": "Update stale expected count in Worker2 candidate and run this focused test to completion; do not claim its post-count authority checks passed on base"
+    }
+  ],
+  "actualChecks": [
+    {
+      "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/frontier-registry.test.ts ai-harness/server/test/system-registry.test.ts",
+      "result": "6 passed, 0 failed; existing local deps reused; TAP retained",
+      "artifact": "repo/reports/h020-review01-20260928/baseline-focused.tap"
+    },
+    {
+      "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 reports/h020-review01-20260928/identity-review.test.ts",
+      "result": "0 passed, 4 failed, actual exit 1; confirms uncovered base risks",
+      "artifact": "repo/reports/h020-review01-20260928/identity-review-result.json"
+    },
+    {
+      "command": "tsx --test --test-timeout=15000 --test-name-pattern=\"cached successful HTTP|registry retains third|mismatched or duplicate native|fresh success ages independently\" ai-harness/server/test/status-service.test.ts ai-harness/server/test/observer-cache.test.ts",
+      "result": "3 pass / 1 fail, actual exit 1; existing expected row-count drift 6 != 5 at line 267",
+      "artifact": "repo/reports/h020-review01-20260928/boundary-focused-result.json"
+    },
+    {
+      "command": [
+        "ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-timeout=15000",
+        "reports/h020-review01-20260928/retained-boundaries.test.ts"
+      ],
+      "result": "2 PASS / 0 FAIL; actual exit 0",
+      "artifact": "repo/reports/h020-review01-20260928/retained-boundaries-result.json"
+    }
+  ],
+  "worker2Evidence": {
+    "file": "input/W2-EARLY-FINDINGS.json",
+    "atUtc": "2026-09-28T04:00:48.566414+00:00",
+    "attribution": "Worker2 report, not Worker1 independent observation",
+    "runningStatusRelease": "7143c17d73173db9364b77956679c86d7026a4ae",
+    "loadedUnitRelease": "34959c67baea0d8a357cbea4cefac1658f3553f0-h019-prep01",
+    "selection": "deployed H019 selection MiMo; repository default GLM must not replace it",
+    "additionalSnapshot": "input/W2-passive-before.json",
+    "snapshotLimitations": "Capture-time sanitized subset; age_ms and observed capacity omitted; never replayed or claimed current"
+  },
+  "liveReads": false,
+  "deploymentScope": false,
+  "implementationChanges": false,
+  "authorityAssessment": "No widening found in base; exact candidate comparison remains pending",
+  "remaining": [
+    "Exact Worker2 commit/diff/hash review",
+    "Candidate identity/selection/freshness/instance/GPU/endpoint tests",
+    "Verify existing action authority remains unchanged in candidate",
+    "Root owns review/publication and any status-only deployment authorization"
+  ],
+  "updatedUtc": "2026-09-28T04:07:38.812356+00:00"
+}

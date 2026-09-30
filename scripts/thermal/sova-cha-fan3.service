@@ -1,0 +1,42 @@
+[Unit]
+Description=Fixed server Blackwell CHA_FAN3 hysteresis controller
+After=network-online.target
+Wants=network-online.target
+StartLimitIntervalSec=300
+StartLimitBurst=3
+
+[Service]
+Type=notify
+User=user
+Group=user
+UMask=0077
+StateDirectory=sova-cha-fan3
+StateDirectoryMode=0700
+RuntimeDirectory=sova-cha-fan3-credentials
+RuntimeDirectoryMode=0700
+BindReadOnlyPaths=/home/user/.config/sova-private/bmc.json:/run/sova-cha-fan3-credentials/bmc.json
+BindReadOnlyPaths=/home/user/.config/ai-harness/node-control-key:/run/sova-cha-fan3-credentials/node-control-key
+ExecStart=/usr/bin/python3 /usr/local/lib/sova-cha-fan3/cha_fan3.py run
+ExecStopPost=/usr/bin/python3 /usr/local/lib/sova-cha-fan3/cha_fan3.py failsafe
+Restart=on-failure
+RestartPreventExitStatus=78
+RestartSec=30
+WatchdogSec=30
+TimeoutStartSec=45
+TimeoutStopSec=45
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectControlGroups=yes
+RestrictSUIDSGID=yes
+RestrictAddressFamilies=AF_INET AF_UNIX
+StandardOutput=journal
+StandardError=journal
+LogRateLimitIntervalSec=60
+LogRateLimitBurst=5
+
+[Install]
+WantedBy=multi-user.target

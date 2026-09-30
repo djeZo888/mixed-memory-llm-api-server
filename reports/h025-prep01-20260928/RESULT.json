@@ -1,0 +1,135 @@
+{
+  "task": "H025-PREP01-20260928",
+  "native_session_id": "01a0e95d-b245-7063-92b5-6fef492c3907",
+  "started_utc": "2026-09-28T18:53:46.386534+00:00",
+  "hard_exit_utc": "2026-09-28T19:35:00Z",
+  "checkpoint_utc": "2026-09-28T19:22:21.392233+00:00",
+  "source_base": "a9fc29ffdaa5d0eb67f6b47917b5a1159e782ea5",
+  "behavior_commit": "4c5fda642ad410eb5e70a41c866a01d2ce85d5a7",
+  "result": "PREPARED_NOT_LIVE_QUALIFIED",
+  "generation_requests": 0,
+  "test_dispatches": 0,
+  "native_readiness": {
+    "qwen0": {
+      "ready": true,
+      "identity_unchanged_since1912": true,
+      "container_id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "context_tokens": 480000
+    },
+    "qwen1": {
+      "ready": true,
+      "identity_unchanged_since1912": true,
+      "container_id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "context_tokens": 480000
+    },
+    "flash": {
+      "ready": true,
+      "identity_unchanged_since1912": true,
+      "container_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+      "context_tokens": 1048576
+    },
+    "image": {
+      "ready": true,
+      "identity_unchanged_since1912": true,
+      "container_id": "b511313dbb043aeaa237ab0304b53db3f43009b04b77141c4d1154379ef14318",
+      "context_tokens": null
+    }
+  },
+  "glm_native_count_only": {
+    "count": 16257,
+    "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "context_limit": 1048576
+  },
+  "glm_task_unit": "Result=success\nActiveState=active\nSubState=exited\nInvocationID=62b5ec329269476ab5076a72671cd42f\n",
+  "permanent_selection": {
+    "generation": 12,
+    "manifest_sha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "mimo": {
+    "status": "SETTLED",
+    "primary_failure": {
+      "code": "mandatory_guard_timeout",
+      "cycle_elapsed_s": 5.000095,
+      "hardware_evidence": {
+        "lease_contentions": 54,
+        "pre": {
+          "hardware_latched": null,
+          "hardware_latched_boot_id": null,
+          "identity": [
+            [
+              "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+              "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+              "validated"
+            ]
+          ],
+          "reason": "hardware_latch_unknown"
+        },
+        "refresh_attempted": false,
+        "stage": "canonical_lease"
+      },
+      "observed_at": "2026-09-28T18:04:30.560063+00:00",
+      "operation": "hardware_latch",
+      "phase": "RUNNING"
+    },
+    "settlement": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_released": true
+    },
+    "settlement_failure": {
+      "code": "command_timeout",
+      "observed_at": "2026-09-28T18:04:39.128397+00:00",
+      "operation": "settlement",
+      "phase": "SETTLING"
+    },
+    "repair_restart_or_clear_performed": false
+  },
+  "quiet": {
+    "paused_utc": "2026-09-28T19:17:38.873610+00:00",
+    "app_status_stopped_enabled_preserved": true,
+    "search_left_active": true,
+    "holds_unchanged": true,
+    "table_changes": {
+      "h003_image_lane": {
+        "before": {
+          "rows": 1,
+          "sha256": "e9bc3f09fe47b363172ddaef0cf510df1fbf7a40f7557f958bc51e6dfe1fa980"
+        },
+        "after": {
+          "rows": 1,
+          "sha256": "56d994d4e38d429e78bb9c6b0b440dac01b94e17f65c791640d741d2989d0359"
+        }
+      }
+    },
+    "normal_stop_image_lane": "idle=>quarantined by existing owner; uncertainty0 unchanged; no manual clearing",
+    "historical_workspace_quarantines_preserved": true,
+    "history_sessions_messages_files_runs_events_preserved": true,
+    "restore_owner": "Root/fresh bounded TEST01 W2 after final load/settlement",
+    "restore_commands": [
+      [
+        "systemctl",
+        "--user",
+        "start",
+        "ai-harness.service"
+      ],
+      [
+        "sudo",
+        "-n",
+        "systemctl",
+        "start",
+        "ai-harness-status.service"
+      ]
+    ]
+  },
+  "checks": {
+    "initial_focused_suite": "115 PASS /42.393s",
+    "affected_final_boundary_fixtures": "5+32+41 PASS",
+    "live_overlap": "NOT_TESTED",
+    "fan_actual_actuator": "PENDING_W1",
+    "psu_wall_power": "NOT_MEASURED"
+  },
+  "next": "Fresh bounded TEST01 only after actual W1 idle actuator proof, exact fan/current owner binding and rootGO. PREP will not dispatch."
+}

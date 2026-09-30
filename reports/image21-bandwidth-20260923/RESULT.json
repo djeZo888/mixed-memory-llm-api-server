@@ -1,0 +1,700 @@
+{
+  "task": "IMAGE21-BW-20260923",
+  "status": "COMPLETE_WITH_DOCUMENTED_LIMITATIONS",
+  "completed_utc": "2026-09-23T01:54:42.856232+00:00",
+  "session_id": "01a0cbea-2be6-7720-8869-e897cd3b9a4c",
+  "publication": {
+    "status": "PUBLISHED_VERIFIED",
+    "timestamp_utc": "2026-09-23T01:41:29.599410+00:00",
+    "branch": "feature/qwen-image-ada-20260923",
+    "commit": "9a0430c8e3eea56cc432821116cb448a58fbabc8",
+    "remote_sha": "9a0430c8e3eea56cc432821116cb448a58fbabc8",
+    "remote": "https://github.com/djeZo888/mixed-memory-llm-api-server.git",
+    "bundle_sha256": "f045552c67e6be290a65068be133d45708e1a412338862603e89ea55c658d7ff",
+    "unchanged_planning_commit": true,
+    "normal_push": true,
+    "force_push": false,
+    "pr_created": false,
+    "main_changed": false,
+    "credential_note": "osxkeychain had no matching credential; reused existing protected gh authentication through ephemeral git credential helper override; no rotation or credential output",
+    "checks": [
+      "exact bundle and HEAD",
+      "planning diff only",
+      "clean tree",
+      "diff --check",
+      "scoped secret scan"
+    ]
+  },
+  "source_unchanged": {
+    "head": "9a0430c8e3eea56cc432821116cb448a58fbabc8",
+    "clean": true,
+    "implementation_delta": false,
+    "source_bundle_created": false
+  },
+  "bandwidth": {
+    "status": "MEASURED",
+    "complete_cases": 18,
+    "measured_samples": 90,
+    "discarded_warmup_samples": 18,
+    "window_start_utc": "2026-09-23T01:46:30.700221+00:00",
+    "window_end_utc": "2026-09-23T01:49:49.539057+00:00",
+    "window_wall_seconds": 198.838836,
+    "original_total_window_limit_seconds": 540,
+    "timeout_note": "Last combined Ada1024 H2D+D2H call timed out at60s after five complete H2D samples and native result. Only missing D2H was completed once with120s limit on same exact container/tool. No completed case or whole campaign rerun. Any unflushed partial D2H from aborted invocation is not counted.",
+    "memory": "CUDA pinned/page-locked host memory",
+    "methodology": "Per UUID and size: one discarded one-sample invocation per direction, then5 native samples, each16 timed CE copies; native4-copy warmup before EVERY sample retained. Default verification enabled. Native CUDA-event copy timing excludes allocation/verification and disk/network.",
+    "sizes_MiB": [
+      32,
+      256,
+      1024
+    ],
+    "cpu_policy": {
+      "cpuset_cpus": "8-15",
+      "cpuset_mems": "0",
+      "native_disableAffinity": true,
+      "container_memory_limit": "12GiB",
+      "container_memory_swap_limit": "12GiB",
+      "same_for_all_gpus": true
+    },
+    "selection": "Fresh host UUID/index/PCI map; full CUDA_VISIBLE_DEVICES UUID each invocation plus CUDA_DEVICE_ORDER=PCI_BUS_ID; tool exposes only Device0; every emitted PCI/name matched expected UUID mapping. No remembered host ordinal used.",
+    "units": "Decimal GB/s; optional GiB/s conversion = rounded GB/s *1e9/2^30",
+    "aggregation": "Median/min/max derived from five verbose native samples printed at0.01GB/s resolution. Tool matrix MIN/MAX are not used as temporal range.",
+    "results": [
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 32,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 56.92,
+        "min_GB_per_s": 56.91,
+        "max_GB_per_s": 56.92,
+        "median_GiB_per_s": 53.0109,
+        "samples_GB_per_s": [
+          56.91,
+          56.91,
+          56.92,
+          56.92,
+          56.92
+        ],
+        "started_utc": "2026-09-23T01:46:31.187043+00:00",
+        "ended_utc": "2026-09-23T01:46:31.619712+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 32,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.46,
+        "min_GB_per_s": 56.46,
+        "max_GB_per_s": 56.46,
+        "median_GiB_per_s": 52.5825,
+        "samples_GB_per_s": [
+          56.46,
+          56.46,
+          56.46,
+          56.46,
+          56.46
+        ],
+        "started_utc": "2026-09-23T01:46:31.187043+00:00",
+        "ended_utc": "2026-09-23T01:46:31.619712+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 256,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 57.01,
+        "min_GB_per_s": 56.99,
+        "max_GB_per_s": 57.01,
+        "median_GiB_per_s": 53.0947,
+        "samples_GB_per_s": [
+          57.01,
+          57.01,
+          57.01,
+          57.01,
+          56.99
+        ],
+        "started_utc": "2026-09-23T01:46:32.170185+00:00",
+        "ended_utc": "2026-09-23T01:46:33.589951+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 256,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.49,
+        "min_GB_per_s": 56.49,
+        "max_GB_per_s": 56.5,
+        "median_GiB_per_s": 52.6104,
+        "samples_GB_per_s": [
+          56.49,
+          56.49,
+          56.49,
+          56.49,
+          56.5
+        ],
+        "started_utc": "2026-09-23T01:46:32.170185+00:00",
+        "ended_utc": "2026-09-23T01:46:33.589951+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 1024,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 57.01,
+        "min_GB_per_s": 57.01,
+        "max_GB_per_s": 57.02,
+        "median_GiB_per_s": 53.0947,
+        "samples_GB_per_s": [
+          57.02,
+          57.02,
+          57.01,
+          57.01,
+          57.01
+        ],
+        "started_utc": "2026-09-23T01:46:35.076240+00:00",
+        "ended_utc": "2026-09-23T01:46:39.886508+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "size_MiB": 1024,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.51,
+        "min_GB_per_s": 56.51,
+        "max_GB_per_s": 56.51,
+        "median_GiB_per_s": 52.629,
+        "samples_GB_per_s": [
+          56.51,
+          56.51,
+          56.51,
+          56.51,
+          56.51
+        ],
+        "started_utc": "2026-09-23T01:46:35.076240+00:00",
+        "ended_utc": "2026-09-23T01:46:39.886508+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 32,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 56.92,
+        "min_GB_per_s": 56.91,
+        "max_GB_per_s": 56.92,
+        "median_GiB_per_s": 53.0109,
+        "samples_GB_per_s": [
+          56.91,
+          56.91,
+          56.92,
+          56.92,
+          56.92
+        ],
+        "started_utc": "2026-09-23T01:46:40.276876+00:00",
+        "ended_utc": "2026-09-23T01:46:40.693496+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 32,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.46,
+        "min_GB_per_s": 56.46,
+        "max_GB_per_s": 56.46,
+        "median_GiB_per_s": 52.5825,
+        "samples_GB_per_s": [
+          56.46,
+          56.46,
+          56.46,
+          56.46,
+          56.46
+        ],
+        "started_utc": "2026-09-23T01:46:40.276876+00:00",
+        "ended_utc": "2026-09-23T01:46:40.693496+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 256,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 57.01,
+        "min_GB_per_s": 57.01,
+        "max_GB_per_s": 57.01,
+        "median_GiB_per_s": 53.0947,
+        "samples_GB_per_s": [
+          57.01,
+          57.01,
+          57.01,
+          57.01,
+          57.01
+        ],
+        "started_utc": "2026-09-23T01:46:41.236649+00:00",
+        "ended_utc": "2026-09-23T01:46:42.630975+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 256,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.5,
+        "min_GB_per_s": 56.5,
+        "max_GB_per_s": 56.5,
+        "median_GiB_per_s": 52.6197,
+        "samples_GB_per_s": [
+          56.5,
+          56.5,
+          56.5,
+          56.5,
+          56.5
+        ],
+        "started_utc": "2026-09-23T01:46:41.236649+00:00",
+        "ended_utc": "2026-09-23T01:46:42.630975+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 1024,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 57.01,
+        "min_GB_per_s": 57.01,
+        "max_GB_per_s": 57.02,
+        "median_GiB_per_s": 53.0947,
+        "samples_GB_per_s": [
+          57.02,
+          57.02,
+          57.01,
+          57.01,
+          57.01
+        ],
+        "started_utc": "2026-09-23T01:46:44.069867+00:00",
+        "ended_utc": "2026-09-23T01:46:48.848983+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "size_MiB": 1024,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 56.51,
+        "min_GB_per_s": 56.51,
+        "max_GB_per_s": 56.51,
+        "median_GiB_per_s": 52.629,
+        "samples_GB_per_s": [
+          56.51,
+          56.51,
+          56.51,
+          56.51,
+          56.51
+        ],
+        "started_utc": "2026-09-23T01:46:44.069867+00:00",
+        "ended_utc": "2026-09-23T01:46:48.848983+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 32,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 2.61,
+        "min_GB_per_s": 2.61,
+        "max_GB_per_s": 2.61,
+        "median_GiB_per_s": 2.4308,
+        "samples_GB_per_s": [
+          2.61,
+          2.61,
+          2.61,
+          2.61,
+          2.61
+        ],
+        "started_utc": "2026-09-23T01:46:49.852656+00:00",
+        "ended_utc": "2026-09-23T01:46:52.878160+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 32,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 2.89,
+        "min_GB_per_s": 2.89,
+        "max_GB_per_s": 2.89,
+        "median_GiB_per_s": 2.6915,
+        "samples_GB_per_s": [
+          2.89,
+          2.89,
+          2.89,
+          2.89,
+          2.89
+        ],
+        "started_utc": "2026-09-23T01:46:49.852656+00:00",
+        "ended_utc": "2026-09-23T01:46:52.878160+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 256,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 2.61,
+        "min_GB_per_s": 2.61,
+        "max_GB_per_s": 2.61,
+        "median_GiB_per_s": 2.4308,
+        "samples_GB_per_s": [
+          2.61,
+          2.61,
+          2.61,
+          2.61,
+          2.61
+        ],
+        "started_utc": "2026-09-23T01:46:57.550349+00:00",
+        "ended_utc": "2026-09-23T01:47:19.123818+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 256,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 2.89,
+        "min_GB_per_s": 2.89,
+        "max_GB_per_s": 2.89,
+        "median_GiB_per_s": 2.6915,
+        "samples_GB_per_s": [
+          2.89,
+          2.89,
+          2.89,
+          2.89,
+          2.89
+        ],
+        "started_utc": "2026-09-23T01:46:57.550349+00:00",
+        "ended_utc": "2026-09-23T01:47:19.123818+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 1024,
+        "direction": "H2D",
+        "sample_count": 5,
+        "median_GB_per_s": 2.61,
+        "min_GB_per_s": 2.61,
+        "max_GB_per_s": 2.61,
+        "median_GiB_per_s": 2.4308,
+        "samples_GB_per_s": [
+          2.61,
+          2.61,
+          2.61,
+          2.61,
+          2.61
+        ],
+        "started_utc": "2026-09-23T01:47:36.759887+00:00",
+        "ended_utc": "2026-09-23T01:48:37.059813+00:00",
+        "evidence": "evidence/measurement.jsonl",
+        "native_case": "host_to_device_memcpy_ce",
+        "command_return_code": 124,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "size_MiB": 1024,
+        "direction": "D2H",
+        "sample_count": 5,
+        "median_GB_per_s": 2.89,
+        "min_GB_per_s": 2.89,
+        "max_GB_per_s": 2.89,
+        "median_GiB_per_s": 2.6915,
+        "samples_GB_per_s": [
+          2.89,
+          2.89,
+          2.89,
+          2.89,
+          2.89
+        ],
+        "started_utc": "2026-09-23T01:49:07.674908+00:00",
+        "ended_utc": "2026-09-23T01:49:49.538981+00:00",
+        "evidence": "evidence/measurement-missing-d2h.jsonl",
+        "native_case": "device_to_host_memcpy_ce",
+        "command_return_code": 0,
+        "case_complete": true,
+        "native_aggregation": "median; summarized from five verbose samples rounded to 0.01 decimal GB/s"
+      }
+    ]
+  },
+  "tool": {
+    "name": "official NVIDIA nvbandwidth",
+    "version": "v0.10.0",
+    "upstream": "https://github.com/NVIDIA/nvbandwidth",
+    "commit": "82fc4e8c6afa0babb8687793678f615b3b8d793e",
+    "binary_sha256": "6e72482d0ca7fa2c2aa74cc559ab10100e3dcca4f6bde4012123a794be2bf764",
+    "binary_host_path": "/data/build/IMAGE21-BW-20260923/nvbandwidth/build/nvbandwidth",
+    "container_path": "/work/nvbandwidth/build/nvbandwidth",
+    "existing_tool_search": "No tool on host PATH or bounded /usr/local,/opt,/data/build search; no tool in bounded existing runtime /usr/local/cuda,/opt search",
+    "build": "One unchanged-source build in existing exact-pinned CUDA13.0 runtime; GNU13.3.0, CMake3.31.1, nvcc13.0.88, CMAKE_CUDA_ARCHITECTURES=89;120; no host or container package installation needed",
+    "setup_start_utc": "2026-09-23T01:44:00.291076+00:00",
+    "setup_ready_utc": "2026-09-23T01:44:42.011396+00:00",
+    "dependency": "Official CMake fetched argparse v3.2 with SHA2569dcb3d8ce0a41b2a48ac8baa54b51a9f1b6a2c52dd374e28cc713bab0568ec98",
+    "actual_help_read": true
+  },
+  "gpu_inventory_and_links": [
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "index": "2",
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "pci_bus_id": "00000000:03:00.0",
+      "memory_total_MiB": 49140,
+      "driver": "595.84",
+      "max_generation": 3,
+      "max_width": 16,
+      "observed_test_link_states": [
+        "Gen1x4",
+        "Gen3x4"
+      ],
+      "observed_active_test_link_states": [
+        "Gen3x4"
+      ],
+      "telemetry_samples_matching_uuid_during_its_case": 731,
+      "nonzero_gpu_util_samples": 721,
+      "note": "200 ms guest nvidia-smi sampling during exact UUID copy-tool invocation, including native warmup and verification; not synchronized to CUDA event interval",
+      "idle_generation": 1,
+      "idle_width": 4
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "index": "1",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "pci_bus_id": "00000000:02:00.0",
+      "memory_total_MiB": 97887,
+      "driver": "595.84",
+      "max_generation": 5,
+      "max_width": 16,
+      "observed_test_link_states": [
+        "Gen1x16",
+        "Gen5x16"
+      ],
+      "observed_active_test_link_states": [
+        "Gen5x16"
+      ],
+      "telemetry_samples_matching_uuid_during_its_case": 43,
+      "nonzero_gpu_util_samples": 38,
+      "note": "200 ms guest nvidia-smi sampling during exact UUID copy-tool invocation, including native warmup and verification; not synchronized to CUDA event interval",
+      "idle_generation": 1,
+      "idle_width": 16
+    },
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "index": "0",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "pci_bus_id": "00000000:01:00.0",
+      "memory_total_MiB": 97887,
+      "driver": "595.84",
+      "max_generation": 5,
+      "max_width": 16,
+      "observed_test_link_states": [
+        "Gen1x16",
+        "Gen5x16"
+      ],
+      "observed_active_test_link_states": [
+        "Gen5x16"
+      ],
+      "telemetry_samples_matching_uuid_during_its_case": 45,
+      "nonzero_gpu_util_samples": 33,
+      "note": "200 ms guest nvidia-smi sampling during exact UUID copy-tool invocation, including native warmup and verification; not synchronized to CUDA event interval",
+      "idle_generation": 1,
+      "idle_width": 16
+    }
+  ],
+  "storage": {
+    "registration": "/etc/local-ai-server/storage.json",
+    "registration_owner_mode": "root:root0600",
+    "data_uuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "models_uuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+    "installed_guard_source": "/data/services/releases/04143b18cca7aca724d9a4a4bcf943fe86c040db-dualq-control-deadline-20260921/scripts/common/registered-storage.py",
+    "registered_and_root_guards": "PASS before/after task writes and final shutdown; read-only JSON streamed to Mac",
+    "warning": "root filesystem has less than6GiB free; approximately5.405GB available, guard passed",
+    "vm_task_root": "/data/build/IMAGE21-BW-20260923",
+    "docker_root": "/data/docker",
+    "evidence_guest_writes": false,
+    "persistent_task_writes": "Pinned official tool source/build/tmp/cache in task build root; isolated container writable layers in registered Docker/containerd roots; Docker task logs disabled"
+  },
+  "deployed_source": {
+    "reviewed_commit": "04143b18cca7aca724d9a4a4bcf943fe86c040db",
+    "roots": [
+      "/data/services/releases/04143b18cca7aca724d9a4a4bcf943fe86c040db-dualq-control-deadline-20260921",
+      "/usr/local/lib/llm-server/control-api"
+    ],
+    "critical_receipt_files_per_root": 28,
+    "critical_receipt_matches_both_roots": true,
+    "targeted_guard_lease_admission_matches_reviewed_git": true,
+    "drift_found": false,
+    "receipt_path": "/data/services/llm-manager/evidence/dualq-480k.accepted.json",
+    "receipt_canonical_sha256": "6f5e01a4aab0019b387ed3890fb5c282b71f16bad30a988b7bdf3a889b62867d",
+    "receipt_file_sha256": "f7a14c76010ce6ab1dd22a268a19f16b448c1663204b5577bde95faf4b754783",
+    "findings": [
+      {
+        "file": "scripts/lifecycle/concurrent_profiles.py",
+        "function": "validate_gpu_inventory",
+        "lines": "160-168",
+        "finding": "Requires exactly2 rows and ordered numeric indices0/1 with expected Blackwell UUIDs"
+      },
+      {
+        "file": "scripts/lifecycle/concurrent_profiles.py",
+        "function": "preflight_current",
+        "lines": "415-425",
+        "finding": "Second exact2-row requirement plus positional total/free VRAM lookup rows[index]; must use required UUIDs"
+      }
+    ]
+  },
+  "guardian_admission": {
+    "status": "READ_ONLY_SNAPSHOT",
+    "canonical_lock": "/run/llmctl/lifecycle.lock",
+    "canonical_lease_final": "RELEASED; observed free",
+    "guard_snapshot": "/data/logs/llmctl-root-disk-guard.json retained; historical mtime captured, no overwrite",
+    "package_service_policy_marker": "ABSENT",
+    "package_execution_gate_marker": "ABSENT",
+    "policy_rc_d": "ABSENT",
+    "dedicated_production_guardian_unit": "None found in bounded unit/name/source inspection; named source i2r guardian is disposable synthetic-test-only",
+    "admission_call_sites": "Manager.prepare_start865-874; current_pair_admission1019-1039; control.adapter.check_admission264-272/preflight274-297; source receipt check_acceptance229-244"
+  },
+  "preserved_state": {
+    "qwen_containers": "Both original IDs remain exited; original started/finished times and restart=no unchanged",
+    "boot_service": "llmctl-boot.service failed/exit1 unchanged",
+    "control_service": "llm-control.service active/running unchanged",
+    "canonical_desired_policy": "Both desired=running, boot_policy=resume, observed=failed, failure=concurrent_gpu_inventory_mismatch retained; no intent edit",
+    "protected_hashes_unchanged": {
+      "/data/services/llm-manager/active/active.json": "c3498cc2a08e34b8d121a6bd9bf66f5d29e6a370fc73ead9137737dac85e3ad5",
+      "/data/services/llm-manager/deployment-instance.json": "d0cca5d9da23123304174fdd99de62f56a32300d57c8199810fd31cc96f180c1",
+      "/data/services/llm-manager/evidence/dualq-480k.accepted.json": "f7a14c76010ce6ab1dd22a268a19f16b448c1663204b5577bde95faf4b754783"
+    },
+    "gpu_processes_after": "None reported",
+    "recovery_artifacts": "Retained"
+  },
+  "task_container": {
+    "name": "image21-bw-20260923",
+    "id": "561c55c9f0a1361dad474ecf0d93ddb99f63f5592186ec08abdf5567f0fafb14",
+    "image": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "final_state": "exited",
+    "restart_policy": "no",
+    "retained": true,
+    "ssh_keeper": false
+  },
+  "not_tested": [
+    {
+      "item": "pageable bandwidth",
+      "reason": "optional; selected official CE tests use pinned memory"
+    },
+    {
+      "item": "D2D/P2P/NUMA tuning",
+      "reason": "outside bounded scope"
+    },
+    {
+      "item": "model/inference/image/resolution qualification",
+      "reason": "future task only"
+    },
+    {
+      "item": "Qwen recovery/restart, compatibility implementation/tests/deployment",
+      "reason": "requires Worker2 source fix, root review and fresh activation GO"
+    },
+    {
+      "item": "physical-host PCIe topology diagnosis",
+      "reason": "No Proxmox/other host contact authorized; PCIe facts are guest observations"
+    },
+    {
+      "item": "continuous application throughput/physical NUMA locality",
+      "reason": "bounded memory-copy samples and guest cpuset evidence only"
+    }
+  ],
+  "next_bounded_action": "Worker2 implement required-Blackwell-UUID inventory validation and UUID-based VRAM lookup with targeted fixtures; root review exact source plus acceptance/source-receipt amendment; then dispatch fresh Worker1 activation GO. Root may separately review Ada guest Gen3x4 link finding; no topology change authorized here.",
+  "future_policy_retained": {
+    "image": "all-resident BF16/FP32 on Ada; no offload/model swapping",
+    "ada_gpu_headroom_percent": 5,
+    "host_headroom_percent": 15,
+    "blackwell_policies": "unchanged",
+    "ladder": "1024square baseline, then16:9 from1024x576 increasing dimensions about20% on supported grid, stopping at margin or exact3840x2160",
+    "root_amendment_future_API_only": "UHD reference qualification up to8.2944MP,32MiB/file,64MiB total; later contract only; no plan amendment"
+  },
+  "artifacts": {
+    "raw": [
+      "evidence/measurement.jsonl",
+      "evidence/measurement-missing-d2h.jsonl",
+      "evidence/tool-build.txt"
+    ],
+    "csv": "evidence/bandwidth-results.csv",
+    "telemetry": "evidence/pcie-telemetry.csv",
+    "source_findings": "evidence/source-review-local.md",
+    "methodology": "evidence/tool-methodology.md"
+  }
+}

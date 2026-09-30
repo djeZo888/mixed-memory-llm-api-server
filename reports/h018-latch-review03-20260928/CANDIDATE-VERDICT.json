@@ -1,0 +1,45 @@
+{
+  "status": "ACCEPT_SOURCE_ONLY",
+  "utc": "2026-09-28T00:37:06.325226+00:00",
+  "reviewer_session": "01a0e563-64ad-7eb0-9c28-60c9b8038a0f",
+  "base_commit": "5b3841755e295917b1b32bb1a66c37d68967e191",
+  "frozen_final_sha256": {
+    "test_mimo_owner.py": "22ff29fac16de71500c3da2a063584cc42104e038068221df2c5891b084afcb0",
+    "SOURCE.patch": "b96ca92b464058c57cfd32b5afb9df2dec49f486a9f6209a99d7f7b9653cadf4",
+    "owner.py": "8d916033b42cc7b7024cca70c59b0413c76c709abebf00c86cd68ff9789502ce",
+    "hardware_policy.py": "640aed9076e2b82872bc27c31f4b8ca1ac026caef830aca0587c37a023c5761d",
+    "PROPOSED-FIX.json": "53bf5f13155412840fbff49eb8d81247c843d3c9bd6e3cf4da7647dd55ae4082"
+  },
+  "blocking_findings": [],
+  "superseded": [
+    {
+      "id": "R1",
+      "resolution": "Root00:32 clarified that a fresh fully validated protected under-lease projection is affirmative evidence; stale WRITE still requires eligible stale same-boot proof. Initial stricter interpretation is not a blocker."
+    },
+    {
+      "id": "R2",
+      "resolution": "Final strict=True propagates owner protected-read exceptions including outer alarm. Explicit original cycle+5 monotonic checks bracket read/refresh/return paths. Exact independent alarm replay now raises MandatoryGuardTimeout on first read, no acceptance or second read."
+    }
+  ],
+  "source_review": [
+    "Optional strict read leaves passive callers default behavior unchanged; owner storage/schema errors now fail closed with bounded diagnostic stage.",
+    "Literal positive remains fatal before recovery; raw protected state refuses positive and requires stale same-boot proof before a WRITE; existing HardwarePolicy preserves same-boot sticky state and rechecks direct sample freshness.",
+    "New evidence derives from the already-required exact-one-row GPU resource sample, stable boot reads before/after probe, original capture timestamp and successful existing reserve/resource checks. No extra GPU query or TTL widening.",
+    "Nonblocking canonical lease, no loop, protected registered writes, existing whole cycle deadline, exact identity/source/resource/thermal/storage and settlement paths retained.",
+    "Final patch applies cleanly to current root base via git apply --check. W1 source bytes were never edited or installed by worker2."
+  ],
+  "verification": {
+    "baseline_contract": "5 passed",
+    "early_candidate_585": "Independent deadline failure reproduced; supplied focused class5 pass/1 signature error because draft test had deadline keyword ahead of owner. Both superseded by final source.",
+    "final_independent": "Only exact swallowed-alarm replay rerun as root requested; PASS, MandatoryGuardTimeout, one read, zero accepted-after-alarm.",
+    "W1_reported": "49 tests, OK, skipped1 per supplied PROPOSED-FIX.json; not rerun as broad suite by worker2.",
+    "limitation": "W1 positive test uses boot_age100 below120 grace, so that named test alone does not prove a latched positive; worker2 independently tested an actual typed positive against585 (refused) and pure same-boot sticky semantics. Final delta does not alter those predicates."
+  },
+  "evidence_conclusion": "Last saved proof conditionally crosses15s at failure. Exact failed projection and producer blocking/cessation/cause remain unproven. This repair addresses the supported stale-proof dependency, not a claimed proven hardware incident.",
+  "live_authorization": false,
+  "deployed": false,
+  "qualified950K": false,
+  "sova_activation": false,
+  "request_replay_authorized": false,
+  "retained_state": "Supplied exact native+proxy release00:21:31; HELD/request_hold/history unchanged, terminal full17 completion unproven."
+}

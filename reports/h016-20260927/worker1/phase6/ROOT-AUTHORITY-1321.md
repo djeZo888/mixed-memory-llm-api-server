@@ -1,0 +1,7 @@
+> SUPERSEDED by direct root13:27: earlystop/GLMrestoration plan REVOKED. NO earlystop was issued. Preserve warmR5/current64K; unchanged natural13:40cleanup. Newoverallend15:48:08; phase6cap13:34:05 unchanged. See ROOT-NOTICE.md and latest authority.
+
+# Direct root decision, 13:21 UTC — phase6 original cap unchanged
+
+"Agreed: full17 NOT_TESTED; no admission bypass or late production launch. Preserve 64K terminal evidence then begin exact R5 normal settlement and original GLM restoration promptly, without waiting 13:40. Send terminal result before stop and final actual native/cgroup/GPU settlement plus GLM ready proof. Complete compact phase-memory/ISA/context report with hard deadline13:48:08;phase6nativecap13:34 remains."
+
+Before stop: preserve full raw64K terminal/source/counters/stream/hash; send ROOT-NOTICE; verify independent64K client terminal and PID0, no request uncertainty. Refresh exactR5 unit/invocation/container/PID; use unchanged existingowner stop path and canonicallease/guards. No source change/replay. No further approval needed after these facts. Verify nativePID0, cgroupempty, GPUprocessabsent, then actual authenticated originalGLM readiness/context1048576 and other3servicesunchanged. W2restoresoriginalSovaonlyafterfreshrecoveryreceipt. Never manually restore/clear hardwarelatches. Existing13:40cleanup remains fallback. No64Kretry even FAIL/timeout. No paidlongwait; if onlywaiting, exit and handoff for near13:29read. Do not extend original13:34:05.315139CLIcap.

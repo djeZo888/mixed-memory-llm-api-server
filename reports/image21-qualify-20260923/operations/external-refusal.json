@@ -1,0 +1,25 @@
+{
+  "utc": "2026-09-23T03:57:15.006089+00:00",
+  "ports": {
+    "30007": {
+      "refused": true,
+      "error_type": "ConnectionRefusedError",
+      "errno": 61
+    },
+    "30008": {
+      "refused": true,
+      "error_type": "ConnectionRefusedError",
+      "errno": 61
+    },
+    "30009": {
+      "refused": true,
+      "error_type": "ConnectionRefusedError",
+      "errno": 61
+    },
+    "30010": {
+      "refused": true,
+      "error_type": "ConnectionRefusedError",
+      "errno": 61
+    }
+  }
+}

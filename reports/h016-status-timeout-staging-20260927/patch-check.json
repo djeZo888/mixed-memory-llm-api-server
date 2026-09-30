@@ -1,0 +1,7 @@
+{
+  "result": "PASS",
+  "command": "git apply --unidiff-zero --check; git apply --unidiff-zero; verify expected hashes",
+  "exactFiles": 3,
+  "patchSha256": "e85a87cd59e0e2a298d001293fd30280f4b5d3f1b95a426edf7d2df23472688b",
+  "compiled": "NOT_BUILT"
+}

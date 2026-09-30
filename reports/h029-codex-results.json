@@ -1,0 +1,243 @@
+{
+  "schemaVersion": 1,
+  "task": "H029-20260929",
+  "verdict": "PARTIAL_BLOCKED",
+  "authorizedWindow": {
+    "startUtc": "2026-09-29T01:25:00Z",
+    "deadlineUtc": "2026-09-29T03:25:00Z",
+    "newLiveSubmissionCutoffUtc": "2026-09-29T03:10:00Z"
+  },
+  "executionCompleteUtc": "2026-09-29T03:05:51.204Z",
+  "executionMode": "Root orchestration/review/publication; native bounded CLI implementation/build/test/VM sessions on both Mac workers.",
+  "branch": "feature/glm53-flash",
+  "mergeReady": false,
+  "defaultEngine": "minimax",
+  "codex": "optional_preview_unqualified",
+  "deployed": {
+    "applicationSource": "2662bd08e65c3fca5ce399761f4e672fb5d8f824",
+    "applicationActivatedUtc": "2026-09-29T02:42:06.186401Z",
+    "nativeCodexImage": "sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "controlCoreSha256": "5a2fef84e4dd77c9c6101a183ef1904b2a47dca244d24a7794938e334ca4150c",
+    "controlActivatedUtc": "2026-09-29T03:00:38.513461Z",
+    "acceptanceReceiptCanonicalSha256": "f5f727f786e96769c4e291f760cf86df0680a857ce2d4c210068d6b851c5e479",
+    "checkedSourceFilesPerRoot": 82,
+    "checkedSourceRoots": 3,
+    "miniMaxDefaultPreserved": true,
+    "statusDeployment": "independent H028 retained"
+  },
+  "changes": [
+    "Slow control collection outside lifecycle lease with current identity revalidation before publication.",
+    "Full unordered Docker Mounts comparison and exact dedicated Ada peer validation.",
+    "Bounded safe admission transport/control diagnostics.",
+    "Preserve original safe targeted control observation failure.",
+    "Durable ordinary submission IDs, canonical payload conflict and explicit browser retry."
+  ],
+  "verification": {
+    "countsOverlap": true,
+    "focusedRuns": [
+      {
+        "name": "control",
+        "passed": 124
+      },
+      {
+        "name": "admission",
+        "passed": 33,
+        "typecheck": "PASS"
+      },
+      {
+        "name": "submission server",
+        "passed": 76,
+        "build": "PASS"
+      },
+      {
+        "name": "submission browser",
+        "passed": 56,
+        "build": "PASS"
+      },
+      {
+        "name": "transport diagnostics",
+        "passed": 11,
+        "typecheck": "PASS"
+      },
+      {
+        "name": "targeted control errors",
+        "passed": 24
+      },
+      {
+        "name": "deployment helper",
+        "passed": 16
+      }
+    ],
+    "supplementalGateway": {
+      "passed": 18,
+      "failed": 1,
+      "failure": "Unchanged baseline source-order regex; runtime drain assertions passed."
+    },
+    "observedWarmControl": {
+      "totalSeconds": 9.086261,
+      "completeLeaseSeconds": 0.039714,
+      "samplingSeconds": 0.002,
+      "edgeCensored": false,
+      "scope": "one measurement, not a maximum guarantee"
+    },
+    "liveIdReplay": "PASS_ACTIVE_AND_INTERRUPTED_TERMINAL",
+    "changedPayloadConflicts": "PASS_TEXT_ATTACHMENTS_IMAGE_REFERENCES",
+    "liveCompletedReplay": "NOT_TESTED",
+    "ordinaryToolWorkflow": "FAIL_BEFORE_GENERATION",
+    "followup": "NOT_TESTED",
+    "pdf": "NOT_TESTED",
+    "compactionRecallColdResume": "NOT_TESTED"
+  },
+  "liveAttempts": [
+    {
+      "id": "ACCEPT01",
+      "acceptedUtc": "2026-09-29T02:18:27.147Z",
+      "verdict": "FAIL",
+      "phase": "count/control_before",
+      "reason": "transport",
+      "exactSubtype": "UNKNOWN",
+      "generationRequests": 0,
+      "settlement": "PASS"
+    },
+    {
+      "id": "ACCEPT02",
+      "acceptedUtc": "2026-09-29T02:51:45.013Z",
+      "verdict": "FAIL",
+      "phase": "count/control_after",
+      "httpStatus": 409,
+      "controlCode": "target_unavailable",
+      "elapsedMs": 9357,
+      "tokenizer": "one POST/local validation inferred from exact source path; raw count not retained",
+      "generationRequests": 0,
+      "settlement": "PASS"
+    }
+  ],
+  "finalDiagnostic": {
+    "verdict": "FAIL_SAFE_CAUSE_EXPOSED",
+    "startedUtc": "2026-09-29T03:02:40.173Z",
+    "settledUtc": "2026-09-29T03:02:58.899Z",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission/control_before",
+    "httpStatus": 409,
+    "controlCode": "lifecycle_busy",
+    "elapsedMs": 9547,
+    "peerLane": "qwen3.8-27b",
+    "peerVerdict": "PASS",
+    "getRequests": 6,
+    "tokenizeRequests": 0,
+    "generationRequests": 0,
+    "retries": 0,
+    "countBrackets": "NOT_REACHED",
+    "competingLeaseHolder": "NOT_OBSERVED",
+    "historicalMaskedCause": "UNKNOWN",
+    "rootCauseFixed": false
+  },
+  "modelState": {
+    "evidenceUtc": "2026-09-29T03:01:06.460740Z",
+    "qwenBlackwell0": {
+      "context": 480000,
+      "state": "READY"
+    },
+    "qwenBlackwell1": {
+      "context": 480000,
+      "state": "READY"
+    },
+    "qwenAda": {
+      "context": 200000,
+      "state": "READY",
+      "harnessRouting": false
+    },
+    "mimo": {
+      "selected": true,
+      "state": "UNAVAILABLE",
+      "recoveredThisWindow": false
+    },
+    "image": {
+      "state": "STOPPED",
+      "recoveredThisWindow": false
+    }
+  },
+  "preservation": {
+    "previousApplicationRowsChecked": 36613,
+    "tablesChecked": 25,
+    "normalStartupExceptionsDocumented": true,
+    "historyAndFilesPreserved": true,
+    "historicalUncertainOwnersAndQuarantinesPreserved": true,
+    "newPendingInference": 0,
+    "fanPowerEccRuntimePolicyChanges": false
+  },
+  "workers": [
+    {
+      "worker": "mac-worker1",
+      "task": "CORE01",
+      "sessionId": "01a0eac7-732c-7f92-8ece-6c85cf74950f",
+      "finishedUtc": "2026-09-29T02:14:51.234425Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker1",
+      "task": "ADMISSION02",
+      "sessionId": "01a0eaf9-3a8c-7210-9750-e12be8720ae5",
+      "finishedUtc": "2026-09-29T02:39:42Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker1",
+      "task": "CONTROLDEPLOY02",
+      "sessionId": "01a0eb0a-a0e5-7d91-8316-befecab1216f",
+      "finishedUtc": "2026-09-29T02:51:05.732Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker1",
+      "task": "FINALCONTROL03",
+      "sessionId": "01a0eb19-2155-7be1-b1fa-be89725907cc",
+      "finishedUtc": "2026-09-29T03:05:51.204Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "APP01",
+      "sessionId": "01a0eac7-7452-74c3-abee-d80aca0743c9",
+      "finishedUtc": "2026-09-29T01:46:52Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "DEPLOY01",
+      "sessionId": "01a0eade-81db-7f41-a2dc-2276b771edd6",
+      "finishedUtc": "2026-09-29T02:09:38Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "ACCEPT01",
+      "sessionId": "01a0eaf2-b3f4-7f51-a91c-662e03557ecf",
+      "finishedUtc": "2026-09-29T02:26:25Z",
+      "exitCode": 0
+    },
+    {
+      "worker": "mac-worker2",
+      "task": "ACCEPT02",
+      "sessionId": "01a0eb07-0aa7-7493-9026-5ed8044095b6",
+      "finishedUtc": "2026-09-29T03:01:56Z",
+      "exitCode": 0
+    }
+  ],
+  "nextTask": "Identify competing lifecycle-lease holder and qualify bounded publication scheduling that tolerates brief contention while preserving current identity and hardware guard latency; then unchanged ordinary application tool/follow-up acceptance.",
+  "deferred": [
+    "PDF completion",
+    "compaction/recall/cold resume",
+    "MiMo and image recovery and engine delegation",
+    "provider profiles and explicit Ada child budget",
+    "cross-engine handoff",
+    "remaining concurrency/restart acceptance"
+  ],
+  "evidence": [
+    "h029-core01-20260929/README.md",
+    "h029-worker2-20260929/RESULTS.json",
+    "h029-admission02-20260929/README.md",
+    "h029-controldeploy02-20260929/README.md",
+    "h029-finalcontrol03-20260929/DIAGNOSTIC-RESULT.json"
+  ]
+}

@@ -1,0 +1,421 @@
+{
+  "schema": 1,
+  "task": "H029 Worker2 public checkpoints",
+  "asOfUtc": "2026-09-29T03:00:45.024605+00:00",
+  "reportBaseCommit": "2662bd08e65c3fca5ce399761f4e672fb5d8f824",
+  "scope": "Sanitized report only; raw native/provider bodies and credentials stay private. Root publishes; incomplete branch is not merge-ready.",
+  "app01": {
+    "source": "b7cd5badffa2e7973b148a20f6581055bb780ae0",
+    "integratedAs": "fbb2eee",
+    "outcome": "SOURCE_CHECKPOINT_COMPLETE",
+    "changes": [
+      "Durable ordinary-message submission IDs and canonical payload conflict detection",
+      "Atomic accepted-intent writes and concurrent capability-race recheck",
+      "UI retains exact unsatisfied intent for explicit retry and blocks changed payload reuse"
+    ],
+    "checks": {
+      "ordinarySubmissionIdLocalFixtures": "PASS",
+      "serverFocused": {
+        "passed": 76,
+        "failed": 0
+      },
+      "webFocused": {
+        "passed": 56,
+        "failed": 0
+      },
+      "finalAffectedServer": {
+        "passed": 10,
+        "failed": 0
+      },
+      "finalAffectedWeb": {
+        "passed": 7,
+        "failed": 0
+      },
+      "countsOverlap": true,
+      "serverBuild": "PASS",
+      "webBuild": "PASS",
+      "retainedPinnedNativeImageFixture": "PASS_RETAINED_H024_RECHECKED_OFFLINE",
+      "historicalLiveImageWorkflow": "FAIL_RETAINED",
+      "historicalLivePdfWorkflow": "FAIL_RETAINED",
+      "historicalRawProviderFinishReason": "MISSING",
+      "historicalTranslationDefect": "NOT_DEMONSTRATED",
+      "liveSubmissionReplay": "NOT_TESTED",
+      "livePdfImageCompaction": "NOT_TESTED",
+      "crossEngineHandoff": "NOT_TESTED"
+    },
+    "checkCountsOverlap": true,
+    "historicalProtocolCause": "Original provider Chat finish/argument bytes and translated continuation were not retained; native completions and bad args alone cannot locate historical origin. Existing synthetic pinned-native fixture preserves exact argument transport.",
+    "deployedInTask": false,
+    "inferenceInTask": 0,
+    "firstLocalFailures": [
+      "Two new assertion defects: regex matched generic error wording; dynamic environment.now compared",
+      "Existing API test lacked new required ID argument",
+      "Old composer assertion expected ordinary send enabled after uncertain network error; new explicit retry semantics verified"
+    ],
+    "actualNativeExit": {
+      "exitCode": 0,
+      "finishedUtc": "2026-09-29T01:46:52Z"
+    }
+  },
+  "deploy01": {
+    "source": "0d92467974923241a46585850d2bc06f0c8f4b22",
+    "activationUtc": "2026-09-29T02:05:48.095518+00:00",
+    "outcome": "APP_ONLY_DEPLOYMENT_PASS; live acceptance NOT_TESTED in this session",
+    "build": "PASS",
+    "focusedCombinedChecks": {
+      "passed": 19,
+      "failed": 0
+    },
+    "overlappingSuccessorPolicyChecks": {
+      "passed": 7,
+      "failed": 0,
+      "scopeOverlapsCombined": true
+    },
+    "nativeImageRebuilt": false,
+    "preservation": "PASS",
+    "unitSha256": "a9da473a269b209243034e8091f3d7ade3c3a01ed63abec690d963f4162894d3",
+    "buildReceiptSha256": "0fb6020a3ef5f103c6d5fd5f0852e34121ac3eb663ab7cb5b96d2bf12158df42",
+    "bindingSha256": "561bd23ca68492392e32dcff192288622e7801aa3109ae406975bf279628dfaf",
+    "settlementHelperSha256": "24b349bb74929cedcef1200573a0554f5fb41dbe30ed24937c3f4b44704e1890",
+    "qwenPolicySha256": "58f90170ee27423e1fdbc9bdc3fb52e16bf6ae44887479273af2b608138dffdc",
+    "inference": 0,
+    "firstFailures": {
+      "modelFailures": 0,
+      "localPreparation": [
+        "AppleDouble metadata excluded by manifest extraction",
+        "gateway baseline query corrected using inspected schema"
+      ]
+    },
+    "actualNativeExit": {
+      "exitCode": 0,
+      "finishedUtc": "2026-09-29T02:09:38Z"
+    }
+  },
+  "accept01": {
+    "source": "0d92467974923241a46585850d2bc06f0c8f4b22",
+    "verdict": "FAIL",
+    "ordinaryToolTurn": {
+      "verdict": "FAIL",
+      "sessionId": "a9678198-c750-4051-9cb7-967af49f44e1",
+      "runId": "f9b6dcad-645a-456d-90c1-39e578e57521",
+      "submissionId": "c45342fa-808a-4b60-bf3e-2d425cc91caf",
+      "acceptedUtc": "2026-09-29T02:18:27.147Z",
+      "nativeThreadId": "01a0eaf4-d18b-7020-be6c-75ddb6bbb46f",
+      "nativeTurnId": "01a0eaf4-d1dd-79d1-a046-05cf4a4ca4d2",
+      "requestId": "75d651ef-86cd-4760-ad04-2867c28c6982",
+      "lane": "qwen3.8-27b-gpu0",
+      "runStatus": "interrupted",
+      "finishReason": null,
+      "usage": null,
+      "toolIds": [],
+      "artifactAssertions": {
+        "actualEdit": false,
+        "actualTestExecution": false,
+        "artifactsPresent": false,
+        "artifactCount": 0,
+        "originalFixtureHashes": [
+          {
+            "name": "demo.py",
+            "sha256": "7a439aeadde756b4813a45dbc587429f1f183bc20c0130d40d9f7268d6175cce"
+          },
+          {
+            "name": "test_demo.py",
+            "sha256": "a48a6f55bfabdde8d5fe58a7a9a8abaadf4e4a5ea4782139ffaa8adc4e2057df"
+          }
+        ],
+        "originalInputsHashReadback": [
+          {
+            "id": "ee5a003c-7a20-47a3-a73a-83711866b30c",
+            "name": "demo.py",
+            "sha256": "7a439aeadde756b4813a45dbc587429f1f183bc20c0130d40d9f7268d6175cce",
+            "unchanged": true
+          },
+          {
+            "id": "aacf1e45-3566-41fe-8dd7-d9c7d45ac905",
+            "name": "test_demo.py",
+            "sha256": "a48a6f55bfabdde8d5fe58a7a9a8abaadf4e4a5ea4782139ffaa8adc4e2057df",
+            "unchanged": true
+          }
+        ]
+      },
+      "failure": {
+        "phase": "count",
+        "step": "control_before",
+        "staticReason": "transport",
+        "elapsedMs": 9145,
+        "nativeHttpStatus": 503,
+        "code": "codex_qwen_identity_unqualified",
+        "upstreamGenerationDispatched": false,
+        "underlyingTransportSubtype": "UNKNOWN"
+      },
+      "settlement": "PASS"
+    },
+    "activeReplay": "PASS",
+    "interruptedTerminalReplay": "PASS; original whole-snapshot assertion failed on environment.now; durable equality independently established without replay",
+    "completedReplay": "NOT_TESTED",
+    "changedPayloadConflicts": {
+      "verdict": "PASS",
+      "text": 409,
+      "attachmentIds": 409,
+      "imageReferences": 409,
+      "extraDispatches": 0
+    },
+    "counts": {
+      "runs": 1,
+      "userMessages": 1,
+      "events": 14,
+      "gatewayRequests": 1,
+      "nativeTurns": 1,
+      "providerDispatch": 0
+    },
+    "settlement": "PASS",
+    "ticketRemoved": true,
+    "subtype": "NOT_RECOVERABLE",
+    "underlyingCause": "UNKNOWN",
+    "generationDispatches": 0,
+    "tokenizerPostReached": false,
+    "tools": 0,
+    "artifacts": 0,
+    "followupPdfCompaction": "NOT_TESTED",
+    "firstPreparationFailures": [
+      "Copied LIVE-GO relative path failed before dispatch and was corrected",
+      "Whole-snapshot comparison failed on volatile environment.now after successful same-ID replay",
+      "Local focused test command could not resolve tsx; exact deployed-source prior fixture result reused without claiming a new pass"
+    ],
+    "actualNativeExit": {
+      "exitCode": 0,
+      "finishedUtc": "2026-09-29T02:26:25Z"
+    }
+  },
+  "accept02": {
+    "source": "2662bd08e65c3fca5ce399761f4e672fb5d8f824",
+    "verdict": "FAIL",
+    "deployment": {
+      "verdict": "PASS",
+      "activationUtc": "2026-09-29T02:42:06.186401+00:00",
+      "release": "/opt/ai-harness/releases/h029-accept02-2662bd08e65c3fca5ce399761f4e672fb5d8f824/ai-harness",
+      "unitSha256": "3c391dcf811f34226c19a7c0283852e52c3dd5e1e99da1d9f94adfe305e93fbd",
+      "buildReceiptSha256": "605727e722a033469ae1dc0231f06b9a5b6f33170df7e25677396ee4be40e665",
+      "upgradeHelperSha256": "7ef50f7f7ac25621c01a3b8ddfaef10c8471d294cfc179424b98d7466a1b3968",
+      "settlementBinding": {
+        "source": "2662bd08e65c3fca5ce399761f4e672fb5d8f824",
+        "bindingSha256": "2beb24b1b57ef4b100cbfcdd76d8c1816ee8a7c591dd8d02bc784319a60b69e0",
+        "helperSha256": "3a985f22e463978244586f23d3073ffa1350c7db959ba15294496b83c39476d8",
+        "helperPath": "/home/user/.cache/h029-accept02/settlement-readback.py",
+        "compiledModules": 60,
+        "semanticChange": false,
+        "nativeImageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+        "unitSha256": "3c391dcf811f34226c19a7c0283852e52c3dd5e1e99da1d9f94adfe305e93fbd"
+      },
+      "appPid": 44539,
+      "statusPid": 14480,
+      "stopReadback": {
+        "Result": "success",
+        "ExecMainStatus": "0",
+        "ActiveState": "inactive"
+      },
+      "configReplacements": [],
+      "preservation": {
+        "allOriginalApplicationRowsAndEventsPreserved": true,
+        "historicalUncertaintyPreserved": true,
+        "normalStartupEvents": 6,
+        "volatileLaneTablesSeparatelyChecked": [
+          "gateway_lanes",
+          "h003_image_lane",
+          "h005_image_ownership"
+        ]
+      }
+    },
+    "ordinaryToolTurn": {
+      "verdict": "FAIL",
+      "sessionId": "6f66ad46-cf7e-4dc3-929c-ef557d245787",
+      "runId": "c4b1e5c6-2f30-404c-b935-7cecd067e57b",
+      "submissionId": "5c37b857-e371-4034-a633-bb68d684b477",
+      "acceptedUtc": "2026-09-29T02:51:45.013Z",
+      "nativeThreadId": "01a0eb13-4cec-7701-b7ac-b503fef64c8a",
+      "nativeTurnId": "01a0eb13-4d0f-7083-bef4-ec3e1fd41597",
+      "requestId": "02c660aa-3891-4361-add6-77c8d2e4b32e",
+      "lane": "qwen3.8-27b-gpu0",
+      "runStatus": "interrupted",
+      "failure": {
+        "time": "2026-09-29T02:52:42.901Z",
+        "schema": 1,
+        "requestId": "02c660aa-3891-4361-add6-77c8d2e4b32e",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "control_after",
+        "outcome": "reject",
+        "reason": "transport",
+        "transport": {
+          "kind": "http_status",
+          "httpStatus": 409,
+          "controlCode": "target_unavailable"
+        },
+        "elapsedMs": 9357
+      },
+      "nativeTerminalHttpStatus": 503,
+      "nativeTerminalCode": "codex_qwen_identity_unqualified",
+      "nativeDurationMs": 57102,
+      "upstreamGenerationDispatched": false,
+      "providerFinishReason": null,
+      "usage": null,
+      "tokenizer": {
+        "postReached": true,
+        "responsePassedLocalValidation": true,
+        "qualifiedCount": false,
+        "count": null,
+        "evidenceClass": "source-path inference: first verify fully passed, second verify entered and failed control_after; raw tokenizer response/count not captured"
+      },
+      "toolIds": [],
+      "actualArtifactEdit": false,
+      "independentPythonAssertionExecuted": false,
+      "artifacts": [],
+      "settlement": "PASS",
+      "retries": 0
+    },
+    "bothLaneAdmission": {
+      "verdict": "PASS",
+      "lanes": [
+        "qwen3.8-27b",
+        "qwen3.8-27b-gpu0"
+      ],
+      "selectedLane": "qwen3.8-27b-gpu0"
+    },
+    "activeReplay": {
+      "verdict": "PASS",
+      "sameOriginalRun": true,
+      "extraRunUserNativeGatewayDispatches": 0
+    },
+    "interruptedTerminalReplay": {
+      "verdict": "PASS",
+      "sameOriginalRun": true,
+      "durableSnapshotUnchanged": true,
+      "excludedVolatileField": "environment.now",
+      "extraRunUserNativeGatewayDispatches": 0
+    },
+    "completedReplay": {
+      "verdict": "NOT_TESTED",
+      "reason": "only accepted run interrupted; never completed"
+    },
+    "changedPayloadConflicts": {
+      "verdict": "PASS",
+      "changedText": 409,
+      "changedAttachmentIds": 409,
+      "changedImageReferences": 409,
+      "extraDispatches": 0
+    },
+    "counts": {
+      "sessions": 1,
+      "messages": 1,
+      "runs": 1,
+      "files": 2,
+      "events": 14,
+      "h021_session_engines": 1,
+      "h021_gateway_requests": 1,
+      "h003_image_jobs": 0,
+      "h029_message_submissions": 1,
+      "nativeTasksStarted": 1,
+      "nativeTasksComplete": 1,
+      "nativeUserItems": 1,
+      "nativeToolItems": 0
+    },
+    "settlement": {
+      "verdict": "PASS",
+      "settledObservedUtc": "2026-09-29T02:52:43.847Z",
+      "ownedAcceptedRuns": 1,
+      "ownedActiveRuns": [],
+      "ownedUnsettledGatewayRequests": [],
+      "nativeOwnership": "idle",
+      "activeNativeTurnId": null,
+      "doneEvent": true,
+      "exactContainerCleanupEvent": true,
+      "quarantined": false,
+      "ownedImagePending": [],
+      "consumedTicketRemovedUtc": "2026-09-29T02:52:44.318498+00:00",
+      "consumedTicketId": "35057d98-1a1c-4ada-b9fe-a7aeffb17fe7",
+      "restoredPolicySha256": "c77afaf8b127f526c89a82a4066e73dc48bccb97c52207f0c1a4dc9e7f4e4a26",
+      "remainingTickets": [],
+      "historicalOwnersPreserved": true,
+      "historicalQuarantinesPreserved": true
+    },
+    "hostHealth": {
+      "verdict": "PASS",
+      "observedUtc": "2026-09-29T02:54:24.324445+00:00",
+      "appPid": "44539",
+      "statusPid": "14480",
+      "checks": {
+        "status": true,
+        "statusFiles": true,
+        "configs": true,
+        "nativeImage": true,
+        "holds": true,
+        "oldOwnersPreserved": true,
+        "onlyNewIdleOwner": true,
+        "quarantinesPreserved": true,
+        "noActiveRuns": true,
+        "noPendingGateway": true,
+        "noTaskContainers": true,
+        "oneNewRun": true,
+        "oneNewSubmission": true
+      },
+      "default": "minimax",
+      "imageAndFrontierEnabled": false,
+      "preservedOriginalRows": 36613,
+      "preservedTables": 25,
+      "limitation": "app/status/ownership preservation; no new model readiness sweep"
+    },
+    "followupPdfCompaction": "NOT_TESTED; first gate failed",
+    "firstPreparationFailures": [
+      "Initial checkout remained predecessor until corrected root bundle import; no build/guest action before exact source verified",
+      "Bundle fetch without advertised ref failed; explicit feature ref import succeeded",
+      "Compiled manifest first expected only three JS outputs; reviewed additive admission declaration was included before staging",
+      "Initial post-preparation owner-list assertion included the new idle chat; all historical owners were separately proved unchanged"
+    ],
+    "controlMaskingCorrectionDeployed": false,
+    "controlRollbackEvidence": "W1 source correction was guardedly rolled back; root released on original control core with restored closure/receipt and native readiness. Full launch-fingerprint equivalence not established. W2 performed no ai-vm mutation.",
+    "diagnosticNotRepair": true,
+    "limits": [
+      "Actual new failure is HTTP409 target_unavailable at count/control_after; underlying control reason remains unknown.",
+      "ACCEPT01 count/control_before transport failure has no recoverable subtype and is not retroactively diagnosed by this result.",
+      "No generation, tools, artifacts or actual independent Python test executed; firstgate FAIL remains FAIL.",
+      "One tokenizer POST and response validation are inferred from exact source path; final count qualification failed and token count/raw tokenizer response were not retained.",
+      "Completed replay, followup, PDF and compaction NOT_TESTED.",
+      "W1 control masking correction was rolled back; original control core remains. Diagnostic TS deployment is observation, not repair."
+    ],
+    "nativeWorkerSessionId": "01a0eb07-0aa7-7493-9026-5ed8044095b6",
+    "nativeExit": "Wrapper records after this report; no exit claim yet"
+  },
+  "preservedPins": {
+    "nativeImage": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "nativePolicy": "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec",
+    "nativeVersion": "0.158.0",
+    "catalog": "75f39aa38c42d99265101686c15e0f3154aacecc325a3fb6c598e0a185a51823",
+    "qwenPolicyReceipt": "58f90170ee27423e1fdbc9bdc3fb52e16bf6ae44887479273af2b608138dffdc",
+    "controlAdapter": "127f1e7123f7126ac37cd0308f76ac0acec9df463435b880fc874c0dd602a55a",
+    "defaultEngine": "minimax",
+    "imageEnabled": false,
+    "frontierEnabled": false,
+    "mimoDisabled": true,
+    "qwenConfiguredTokens": [
+      480000,
+      480000
+    ],
+    "residentAdaConfiguredTokens": 200000
+  },
+  "evidenceHashes": {
+    "APP01-RESULT": "09b6d472cfb601c342c985c4b3df7bf4f97d4d7f2308ad04d27f095f8a95c20e",
+    "APP01-TESTS": "9df2b9527ba5e4ead4bcdbc298e6a025d535366f611cf303e6acec80a7589733",
+    "DEPLOY01-RESULT": "5f0df88fb415c6aec0ae50328e204bc6d8f18fa4a7574c8c086975c1785589e5",
+    "ACCEPT01-RESULT": "11d615a25c4d0a4e62067488e4977c3cf9edbba0e4c2381df133a2f5523a9c06",
+    "ACCEPT02-RESULT": "7ae0766ed0c23f1fd460f6b86c8ef69925b1874705297290c0771bbcff96ae51",
+    "ACCEPT02-BUILD": "605727e722a033469ae1dc0231f06b9a5b6f33170df7e25677396ee4be40e665",
+    "COMBINED-03": "357ba3570c6cd516770a071f38a2c5a0ce1d93d9cae02413985acb35e5e2b12e"
+  },
+  "remainingQualification": [
+    "Successful ordinary Codex artifact edit and independent assertion",
+    "Completed-run replay and same-native-thread followup",
+    "Unchanged original H021 PDF workflow",
+    "Typed compaction, fact recall and cold resume",
+    "Image/frontier and cross-engine handoff remain separately unqualified"
+  ]
+}

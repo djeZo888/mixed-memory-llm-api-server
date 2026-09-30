@@ -1,0 +1,47 @@
+{
+  "id": "D06",
+  "input_sha256": "c718b9feb9c7825cb66b69b69be5e87829b811fb536fcc109346c73533a281bb",
+  "prompt": "Change the blue teapot to green, keeping its shape, table, window, and lighting unchanged.",
+  "seed": 44,
+  "steps": 40,
+  "steps_completed": 40,
+  "outputs": [
+    {
+      "name": "raw-output.png",
+      "sha256": "75c99588774c91addaf902ac3ade64f4b4773402befbe6d9994dda46bc4ac569"
+    },
+    {
+      "name": "delivered-rgb.png",
+      "sha256": "c7fc3fd8c99bc1bdb29beb1c1a7a89da5be27a47917b39dd61eacc8a916df785"
+    }
+  ],
+  "latency_seconds": 27.873860678999336,
+  "native_seconds": 27.52005228499911,
+  "memory": {
+    "sampled_device_min_free_bytes": 9602531328,
+    "sampled_device_peak_used_bytes": 41924493312,
+    "host_min_available_fraction": 0.9726252749192008,
+    "host_swap_used_max": 0,
+    "cgroup_swap_used_max": 0,
+    "sampling": "200ms device / 1s host; between-sample peaks not observed"
+  },
+  "outcome": "Worker1 visual PASS guarded follow-up feasibility: blue teapot changed to green; major shape/spout/handle/lid geometry, table, blurred window and soft lighting perceptually preserved. Minor surface/reflection detail drift, no severe global contrast/texture/coherence artifacts. Independent root PNG review pending. Original exact seed42 regression remains FAIL.",
+  "ready_after": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "api_identity_preserved": true,
+  "gpu_processes_restored": true,
+  "native_operation_settled": true,
+  "probe_processes_absent": true,
+  "worker1_visual": "PASS",
+  "root_visual": "pending",
+  "raw_output_mode": "RGBA",
+  "raw_alpha_extrema": [
+    253,
+    255
+  ],
+  "delivery": "Opaque RGB; native RGB values preserved while alpha dropped by existing normalization."
+}

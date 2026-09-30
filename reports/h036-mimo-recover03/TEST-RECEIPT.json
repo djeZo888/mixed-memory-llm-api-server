@@ -1,0 +1,93 @@
+{
+  "offlineOnly": true,
+  "ownerSha256": "6e59b5ae7d4cc88a8f67bdc4fb6eebb34ae97b206255a5424f144327f7de1c53",
+  "helperSha256": "355ac7f6ab8d297550ab84c98d4c8a53f12e6f391af1471c72cd68f37085e046",
+  "suites": [
+    {
+      "name": "context timeout including exact private chain",
+      "collected": 8,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/context-timeout-04.log",
+      "sha256": "4e6b04b26c928e18e85c904795955ead2e886f498ca1f721b96f236e20a0c8f1"
+    },
+    {
+      "name": "bounded stop command/deadline",
+      "collected": 6,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/stop-client-01.log",
+      "sha256": "1e0a86ff9e95c5b1419d8cf81253cd42384bdf1cd91cc1c72c56cfc432bbc294"
+    },
+    {
+      "name": "existing context reduction",
+      "collected": 13,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/context-existing-02.log",
+      "sha256": "7c5c7b1c0ab3e97864a876fac3db0ceaa92ddb2580562805ef51a5755f661ce4"
+    },
+    {
+      "name": "source-only timeout",
+      "collected": 12,
+      "skipped": 1,
+      "status": "PASS",
+      "log": "private/test_mimo_stop_timeout_source-01.log",
+      "sha256": "2ab40bed375f9f7e9409654e0ed4242989337291cd98bedfb936bec915cf9bdb"
+    },
+    {
+      "name": "source-only owner amendment",
+      "collected": 13,
+      "skipped": 1,
+      "status": "PASS",
+      "log": "private/test_mimo_source_owner_amendment-01.log",
+      "sha256": "8c8bde920551ea97fbed86fb3f0d01b8731fda341cb220f9e323a5867e6721be"
+    },
+    {
+      "name": "same-boot source and physical absence",
+      "collected": 17,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/test_mimo_same_boot_source-01.log",
+      "sha256": "2fc360fec359898c1884b60c32bdaad8da561844f857fc2d3eb1decd5ca24605"
+    },
+    {
+      "name": "startup admission",
+      "collected": 11,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/test_mimo_startup_admission-03.log",
+      "sha256": "2ccba723299b0fbe7cc40aa73ff071f15e62edb02c2c0925744c228111d40b54"
+    },
+    {
+      "name": "owner settlement",
+      "collected": 11,
+      "skipped": 0,
+      "status": "PASS",
+      "log": "private/test_mimo_owner_settlement-01.log",
+      "sha256": "ad96df2a86da5136255be944b8a0e2d8b1b18617e8c622b8c3ac7cc5d9a490dd"
+    }
+  ],
+  "countNote": "Suites overlap through reused fixtures; do not sum them as distinct qualifications.",
+  "retainedFailures": [
+    {
+      "log": "private/context-existing-01.log",
+      "result": "1 error: missing supplement pin reached FileNotFoundError; added explicit supplement SHA precondition; context-existing-02 passed"
+    },
+    {
+      "log": "private/test_mimo_startup_admission-01.log",
+      "result": "ImportError common from discovery invocation"
+    },
+    {
+      "log": "private/test_mimo_startup_admission-02.log",
+      "result": "11 import setup errors: tests/lifecycle shadowed scripts/lifecycle under discovery"
+    },
+    {
+      "log": "private/test_mimo_startup_admission-03.log",
+      "result": "PASS with PYTHONPATH=scripts python3 -m unittest tests.test_mimo_startup_admission -q"
+    }
+  ],
+  "privateCapture": "H036_ACTUAL_EVIDENCE_DIR=../private/exact-capture; unmodified ACTIVATE02 bytes, OS/native/source-preflight boundaries mocked; not live acceptance",
+  "newTests": "8 context-timeout tests and6 deterministic command/deadline tests pass. Real supervise fixture explicitly counted one create, start, rename and consumption after failed preflight, zero stop/rm.",
+  "compileAndDiffCheck": "PASS"
+}

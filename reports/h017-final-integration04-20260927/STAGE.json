@@ -1,0 +1,79 @@
+{
+  "utc": "2026-09-27T20:38:04.559683+00:00",
+  "sourceCommit": "442ad88811c809e639d5ffe74be90e7a2f42582a",
+  "manifestSha256": "c2e7a2928fa696a6efb2fc723d182a5e008a676b5b9b100ddecb55e0b222c7c2",
+  "manifestEntries": 449,
+  "changedStageFiles": 16,
+  "changedChecks": "PASS",
+  "baseline449Checks": "REUSED_NOT_REPEATED",
+  "profileSha256": "1767aec74793b161b07feeee9e8dc97c3a4ffc9970c5c8f532bbf443b9f8ea1c",
+  "build": false,
+  "pairApplied": false,
+  "acceptanceDispatched": false,
+  "changedFiles": {
+    "REPORT.md": {
+      "old": "20321de061ce4af535d95b9b01abd0f77ceba569e7ef31b6966876ad4d8bb5a4",
+      "new": "bc78b152f4989eb016969f5152919ef97bc40800d4338000911958a3c59bcf6c"
+    },
+    "source/reports/h017-source-prep01-20260927/REPORT.md": {
+      "old": "20321de061ce4af535d95b9b01abd0f77ceba569e7ef31b6966876ad4d8bb5a4",
+      "new": "bc78b152f4989eb016969f5152919ef97bc40800d4338000911958a3c59bcf6c"
+    },
+    "SESSION.json": {
+      "old": "180edd1ac1720a42d59e96234af10792a177299f7fc3893d098f0967deeca167",
+      "new": "cc68629450143bf9361ce1a774b6fbc7b26b8c63663cac99a610da1f4cc7c6d8"
+    },
+    "source/reports/h017-source-prep01-20260927/SESSION.json": {
+      "old": "180edd1ac1720a42d59e96234af10792a177299f7fc3893d098f0967deeca167",
+      "new": "cc68629450143bf9361ce1a774b6fbc7b26b8c63663cac99a610da1f4cc7c6d8"
+    },
+    "SOURCE-PROOF.json": {
+      "old": "7723a0664cc69d815d3591535a5e76eeb8700242957f5deec154fc27d22ce251",
+      "new": "72b19b51be03efcbd974998182e57906bab5d391744b737d7222985b9cf35008"
+    },
+    "source/reports/h017-source-prep01-20260927/SOURCE-PROOF.json": {
+      "old": "7723a0664cc69d815d3591535a5e76eeb8700242957f5deec154fc27d22ce251",
+      "new": "72b19b51be03efcbd974998182e57906bab5d391744b737d7222985b9cf35008"
+    },
+    "driver/preflight.mjs": {
+      "old": "2f07c75588a547ea6d462e40eee7e1ed519497f5da0076e077b7fcc59d3a81df",
+      "new": "a117dab8aa1014e530e1f55d001054ea7218e0f23d4d452cef21cb29aada000d"
+    },
+    "source/reports/h017-source-prep01-20260927/driver/preflight.mjs": {
+      "old": "2f07c75588a547ea6d462e40eee7e1ed519497f5da0076e077b7fcc59d3a81df",
+      "new": "a117dab8aa1014e530e1f55d001054ea7218e0f23d4d452cef21cb29aada000d"
+    },
+    "driver/preflight.test.mjs": {
+      "old": "91431789bb3a1900e484a7bd88768719838ef80f4a7565848e7e876035b10363",
+      "new": "c11c5e532e947e6a09e4430f0d56528abab02893024c6a3e6b127482dd95672b"
+    },
+    "source/reports/h017-source-prep01-20260927/driver/preflight.test.mjs": {
+      "old": "91431789bb3a1900e484a7bd88768719838ef80f4a7565848e7e876035b10363",
+      "new": "c11c5e532e947e6a09e4430f0d56528abab02893024c6a3e6b127482dd95672b"
+    },
+    "driver/supervise.py": {
+      "old": "877ae980c0eb8e281f7f83b00a95477a99a830225f3fbd97ba64195f483b4a87",
+      "new": "58baf2dd7e825251da395da876eedb8ae759635d8f10866cb0e003e905d1def5"
+    },
+    "source/reports/h017-source-prep01-20260927/driver/supervise.py": {
+      "old": "877ae980c0eb8e281f7f83b00a95477a99a830225f3fbd97ba64195f483b4a87",
+      "new": "58baf2dd7e825251da395da876eedb8ae759635d8f10866cb0e003e905d1def5"
+    },
+    "driver/supervise_test.py": {
+      "old": "678ee5599431320a9a39060e8b3ff088379184052e8ea9f8e1727a2103324896",
+      "new": "1a6ac094f10d2fc4fb3460bf44fc767dd8d3b8eee1ae5424a8a4a650205d46c3"
+    },
+    "source/reports/h017-source-prep01-20260927/driver/supervise_test.py": {
+      "old": "678ee5599431320a9a39060e8b3ff088379184052e8ea9f8e1727a2103324896",
+      "new": "1a6ac094f10d2fc4fb3460bf44fc767dd8d3b8eee1ae5424a8a4a650205d46c3"
+    },
+    "launch-app-acceptance.sh": {
+      "old": "9a965ab623933d48f664a0f4980e25c220d6c6b2ead09a1cbb6e6431012acbc0",
+      "new": "4e8b9dfed72909f1a06bbf76fcbec1ae2ee9a969eef9b28ebfdccc448ccdebb7"
+    },
+    "source/reports/h017-source-prep01-20260927/launch-app-acceptance.sh": {
+      "old": "9a965ab623933d48f664a0f4980e25c220d6c6b2ead09a1cbb6e6431012acbc0",
+      "new": "4e8b9dfed72909f1a06bbf76fcbec1ae2ee9a969eef9b28ebfdccc448ccdebb7"
+    }
+  }
+}

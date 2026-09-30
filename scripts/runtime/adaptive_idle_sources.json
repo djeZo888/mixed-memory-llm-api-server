@@ -1,0 +1,154 @@
+{
+  "schema_version": 2,
+  "status": "candidate_exact_source_overlay_not_live_accepted",
+  "native_integration_accepted": false,
+  "raw_byte_pins_available": true,
+  "hash_semantics": "sha256 of unmodified raw source bytes; runtime build rechecks immutable parent before COPY",
+  "historical_normalized_evidence": {
+    "schema_version": 1,
+    "status": "candidate_policy_native_binding_incomplete",
+    "native_integration_accepted": false,
+    "retained_evidence": "H004-POSTBOOT-PLAN-20260925/final-observation.json",
+    "observed_date": "2026-09-25",
+    "hash_semantics": "sha256(Path.read_text().strip().encode()) from H004 initial.py read helper; NOT raw-byte identities",
+    "raw_byte_pins_available": false,
+    "text": {
+      "upstream_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+      "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "files": {
+        "python/sglang/srt/managers/scheduler.py": "6aacb3df56fcc396496220fc446d685939d0c8728510e208902f43d30b7ff696",
+        "python/sglang/srt/managers/scheduler_components/request_receiver.py": "abf13752fc2451e046f5879406b14f5c1b2d63b48421124e1f67009235b9b802",
+        "python/sglang/srt/managers/scheduler_components/idle_sleeper.py": "9a7ac3950b6a34d849ed87d94edae983d237376a58336ee77b1e86e27daff2b7"
+      }
+    },
+    "image": {
+      "upstream_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+      "image_reference": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "preserved_existing_patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+      "files": {
+        "python/sglang/multimodal_gen/runtime/managers/scheduler.py": "96e4ec52db4e16c6eb71dcea881177d66bc10a575efa621e01e1b2578298630f"
+      }
+    }
+  },
+  "source_observation": {
+    "utc": "2026-09-25T16:38:11.469108+00:00",
+    "boot_id": "37e425eb-3d3e-4070-80a0-5ecfb39604f1",
+    "installed_receipt_sha256": "73962ae7e1b166dc459ee474e584e82713b61dd743851476af0bb49da2453e54",
+    "official_receipt_sha256": "35efdc25cf805a7b76235152a27dc6cbb7e8c2b27210a036a89ac172c3b5e127",
+    "receipt_location": "H005-ADAPTIVE-IDLE-SOURCE-20260925 task scratch; full source remains outside Git",
+    "diffusion_helper_receipt_sha256": "c50a05ea50b8ffb2a009eb5d314a464bdbdfe0ffb5985d44cbbb7d93350b536d",
+    "unextracted_helper_boundary": "Additional text/diffusion helper raw pins use official revision source; installed-byte equality is only claimed for installed_raw_verified_files. Dockerfile rechecks all before overlay COPY.",
+    "text_image_digest_provenance_sha256": "f5b31d4d074f020b61e2447b4435e93a39a7ef9731963cb3166e5beaf9231f5f",
+    "diffusion_additional_helper_receipt_sha256": "b3f9c160d781c5bf36ec4171fe0dfba3f50a90b9854a2b2751ed6d5a76a34111",
+    "text_additional_helper_receipt_sha256": "abe649e0f05da89648d7043523ff7ba6fb42aee1625561e3ba6b5e0afb3f7d87"
+  },
+  "text": {
+    "upstream_revision": "0bcd822377da7b5718e674eaf9c870d349424dd1",
+    "image_reference": "lmsysorg/sglang@sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+    "native_package_root": "/sgl-workspace/sglang/python/sglang",
+    "installed_identity": {
+      "container_id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "image_id": "sha256:37bbbd3444732a464bbc68dee4fb0164e0ce9e18e2f027f3fc967f1152d3c262",
+      "pid": "40092",
+      "status": "running",
+      "started_at": "2026-09-25T13:52:26.172577357Z",
+      "restart_count": "0"
+    },
+    "files": {
+      "python/sglang/srt/managers/scheduler.py": "3a12fdfb9c21571d8007ba60aedd7e84b67636583bac8243373c75d6a2ab324e",
+      "python/sglang/srt/managers/scheduler_components/idle_sleeper.py": "95e18ef7544950823739ebdc424d18e579db5cca805a9129f5a1e3d6f297959c",
+      "python/sglang/srt/managers/scheduler_components/request_receiver.py": "a0f2451a09b6fe22e0c229006203006987d04284d1dd071b0790cfd41b0b5a94",
+      "python/sglang/srt/managers/schedule_batch.py": "170f847aba6701d8d876a98c5edb8a66f188f5bc12fc30973596d132fcbb8c72",
+      "python/sglang/srt/entrypoints/http_server.py": "d8cc81f8d9866957dd4c0aa59917afa3d4d7d0e28eefaff0a9800157ed068a43",
+      "python/sglang/srt/managers/tokenizer_manager.py": "bdfaa4f4f214515f2138a3a82e8215882735490dfa85c271d2c41830b682ad33",
+      "python/sglang/srt/managers/scheduler_components/batch_result_processor.py": "0f0a3d92603c58bc555969b4f01daf2796f5aac9f38ad5a7155455ef5ca3ed4a",
+      "python/sglang/srt/managers/scheduler_components/flush_wrapper.py": "5adbcdccd5fd6de5760735126fb83f9f578ea6d2d77c14dad374213ae0f2a925",
+      "python/sglang/srt/managers/scheduler_components/invariant_checker.py": "a1c67ff8f593b1d60336fea7810b5a0c5327630dd700387579db8de73314707b",
+      "python/sglang/srt/managers/scheduler_components/ipc_channels.py": "ec73fc4546bb75991daf1abf5be1b4f0fc23770eebcdb704ea0973e51285699e",
+      "python/sglang/srt/managers/scheduler_components/output_sender.py": "e1c4e17a45a69157a73396f2d46099cef2a48ec8a2c86ee652f460e58eef8611",
+      "python/sglang/srt/managers/scheduler_components/output_streamer.py": "67bd9278d0680c6a8b4ead37faa1970e2a5c200b676f62b73125a8461e3ea676",
+      "python/sglang/srt/managers/scheduler_input_blocker.py": "edfe07948d75b3871bae173997914397878aca66aba0b42ffb8e26eb7e97102d",
+      "python/sglang/srt/managers/io_struct.py": "ebe1d216c98d0918c39089832f872a225977ce53c244680c9bcee51dee70e9e6",
+      "python/sglang/srt/dllm/mixin/scheduler.py": "f5909181bb266d158e42cf07f51d380e67b6e7c75ff397145a9578d558cfce09",
+      "python/sglang/srt/constrained/grammar_manager.py": "dc4c94674191877a689c671713c739ab4693675f4fd26f68331a4751ecbc1903",
+      "python/sglang/srt/managers/utils.py": "be9abd9d37c801a8a3aa6383a8daf89cf84fac4f7f3a8ee5e333ae75ef1ff2a4",
+      "python/sglang/srt/managers/scheduler_components/recv_skipper.py": "45c7e0f78e9bed81ad9b16f9f42703d41f46e6c41464c1a42b509880d1bfd856",
+      "python/sglang/srt/constrained/base_grammar_backend.py": "b7d64faf02106383bc4c45f7881d124c17eb20b993c1c66f760d8b818089a063",
+      "python/sglang/srt/server_args.py": "204fe57ba81acc25b7badcabf3b4b741021767c91f1d64e0df949cb175464b7c"
+    },
+    "installed_raw_verified_files": [
+      "python/sglang/srt/managers/scheduler.py",
+      "python/sglang/srt/managers/scheduler_components/idle_sleeper.py",
+      "python/sglang/srt/managers/scheduler_components/request_receiver.py",
+      "python/sglang/srt/managers/schedule_batch.py",
+      "python/sglang/srt/entrypoints/http_server.py",
+      "python/sglang/srt/managers/tokenizer_manager.py",
+      "python/sglang/srt/managers/scheduler_components/batch_result_processor.py",
+      "python/sglang/srt/managers/scheduler_components/flush_wrapper.py",
+      "python/sglang/srt/managers/scheduler_components/invariant_checker.py",
+      "python/sglang/srt/managers/scheduler_components/ipc_channels.py",
+      "python/sglang/srt/managers/scheduler_components/output_sender.py",
+      "python/sglang/srt/managers/scheduler_components/output_streamer.py",
+      "python/sglang/srt/managers/scheduler_input_blocker.py",
+      "python/sglang/srt/managers/io_struct.py",
+      "python/sglang/srt/managers/utils.py",
+      "python/sglang/srt/managers/scheduler_components/recv_skipper.py",
+      "python/sglang/srt/server_args.py"
+    ],
+    "patches": [
+      "patches/text-adaptive-idle.patch",
+      "patches/text-adaptive-drain.patch",
+      "patches/text-adaptive-grammar.patch"
+    ],
+    "helpers": {
+      "python/sglang/srt/managers/scheduler_components/adaptive_idle.py": "adaptive_idle.py",
+      "python/sglang/srt/managers/scheduler_components/adaptive_text.py": "adaptive_text.py",
+      "python/sglang/srt/managers/adaptive_text_drain.py": "adaptive_text_drain.py"
+    },
+    "installed_preconditions": {}
+  },
+  "image": {
+    "upstream_revision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+    "image_reference": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "native_package_root": "/opt/image-venv/lib/python3.12/site-packages/sglang",
+    "installed_identity": {
+      "container_id": "d1c25418963ac96910bbafa1c18b6c64b9f176e12179bda1dbb8d5f05da5600e",
+      "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "pid": "42471",
+      "status": "running",
+      "started_at": "2026-09-25T13:53:11.289915506Z",
+      "restart_count": "0"
+    },
+    "files": {
+      "python/sglang/multimodal_gen/runtime/managers/scheduler.py": "84302a63933a7bb4a869aaafd842d2bdb24157339a8123270eab65537ec82077",
+      "python/sglang/multimodal_gen/runtime/managers/gpu_worker.py": "65895e2f92979a73ac1b5c11381813858c1cb17b93034b23c5f87005c9184aac",
+      "python/sglang/multimodal_gen/runtime/scheduler_client.py": "9f2e9aaf88d8227d78b80a063c10e9c1bf8674f485cf145a09eb8c94c52fc22e",
+      "python/sglang/multimodal_gen/runtime/server_warmup.py": "904304975c10baa8d51ac099882589f1f7337a5d54305d3ffc0e3898da7e33d4",
+      "python/sglang/multimodal_gen/runtime/server_args/server_args.py": "80a8197d79a279367ea84cce5bc206a7a70c6c0ae132c4750d92999dbed33e45",
+      "python/sglang/multimodal_gen/runtime/disaggregation/scheduler_mixin.py": "64b350f1d639a68f9992d72dc3a1fecb6f9492f82d817dc4d4573b89499858f8",
+      "python/sglang/multimodal_gen/runtime/pipelines_core/executors/sync_executor.py": "7b56b40f7a16f7668a046b7bf7cb5fede338865e9fab9e93ed6505ce4f365df5",
+      "python/sglang/multimodal_gen/runtime/pipelines_core/executors/pipeline_executor.py": "bef6b7e247151c33067e5d8f67013556ef7f0a56acd30305e98f67c5f456d32f",
+      "python/sglang/multimodal_gen/runtime/pipelines_core/executors/parallel_executor.py": "2ffba3c5278ff424b217dada919735ed2b7495ec173291767845f16da0944f77",
+      "python/sglang/multimodal_gen/runtime/entrypoints/http_server.py": "e4d11f5a5d43ab12d0ac6631524bb0b0b4aeee736e7f9cf3091eeb034cac2e41",
+      "python/sglang/multimodal_gen/runtime/launch_server.py": "d3b9d6ec9dd7d20f1fdc2b69874658b709a9416f9bc7095fc97a325294463af5"
+    },
+    "installed_raw_verified_files": [
+      "python/sglang/multimodal_gen/runtime/managers/scheduler.py",
+      "python/sglang/multimodal_gen/runtime/managers/gpu_worker.py",
+      "python/sglang/multimodal_gen/runtime/entrypoints/http_server.py"
+    ],
+    "patches": [
+      "patches/diffusion-adaptive-idle.patch",
+      "patches/diffusion-adaptive-drain.patch"
+    ],
+    "helpers": {
+      "python/sglang/multimodal_gen/runtime/managers/adaptive_idle.py": "adaptive_idle.py",
+      "python/sglang/multimodal_gen/runtime/managers/adaptive_diffusion.py": "adaptive_diffusion.py",
+      "python/sglang/multimodal_gen/runtime/managers/adaptive_diffusion_drain.py": "adaptive_diffusion_drain.py"
+    },
+    "installed_preconditions": {
+      "/opt/image-venv/lib/python3.12/site-packages/sglang/multimodal_gen/runtime/platforms/cuda.py": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de"
+    },
+    "preserved_existing_patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e"
+  }
+}

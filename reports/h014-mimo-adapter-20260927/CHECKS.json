@@ -1,0 +1,72 @@
+{
+  "scope": "OFFLINE_ONLY_NOT_NATIVE_QUALIFICATION",
+  "final_mimo_tests": {
+    "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts",
+    "exit_code": 0,
+    "passed": 11,
+    "failed": 0,
+    "output": "mimo-tests-phase2.txt"
+  },
+  "initial_glm_regression": {
+    "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts ai-harness/server/test/frontier-contract.test.ts",
+    "exit_code": 0,
+    "passed": 11,
+    "glm_tests": 2,
+    "evidence": "task events-01.jsonl; not repeated"
+  },
+  "final_typecheck": {
+    "command": "ai-harness/server/node_modules/.bin/tsc --noEmit -p ai-harness/server/tsconfig.json",
+    "exit_code": 0,
+    "stdout_stderr": "empty; PASS",
+    "application_build": false
+  },
+  "dependencies": "Reused matching local H008 node_modules temporarily; no install; symlink removed before commit",
+  "base_tracked_tree_unchanged": true,
+  "preserved_sha256": {
+    "AGENTS.md": "a18802b63ab75114d7d01b68e6b2d08c9963b258c1e88092c35cd7e362205a60",
+    "ai-harness/server/src/frontier.ts": "024a1b11265d850be9a7ceef7fa3d9bd4953edbfb02258c3a1b1bbf1302ef692",
+    "ai-harness/config/frontier.json": "5c099305b84baccaa2d736f90a8100953ee203001b9ad822b314aefe9cd065c3",
+    "ai-harness/server/src/gateway.ts": "eed404d341107d00406bc9df4d66fe375a92802febf2b2facf23c9eca2195e35",
+    "ai-harness/server/src/frontier-ledger.ts": "b028db5736a255449b990b6157fb5a5d0d41460fb1c825f3d49e6c28161a21c2",
+    "ai-harness/server/src/main.ts": "82b51736dea773e78f646a0d9072d69638cecc03798b94d0742ae676eae783bf",
+    "ai-harness/deploy/engine/configure-profile.mjs": "43f671c752b3376e552623b0508b1c9c25b89c941e6332161f3c25daf1c3e362",
+    "ai-harness/config/system-registry.json": "b9b9120afda6d9c007008a9222be375aa49f82b43faab07ba1c47f6256acd3cd"
+  },
+  "native_proof": false,
+  "bundle_checks": "See task ../DELIVERY.json after commit; no self-referential hashes",
+  "staged_scope": {
+    "result": "PASS",
+    "all_changes_additions": true,
+    "files": [
+      "ai-harness/config/mimo-candidate.json",
+      "ai-harness/server/src/mimo.ts",
+      "ai-harness/server/test/mimo.test.ts",
+      "reports/h014-mimo-adapter-20260927/CHECKS.json",
+      "reports/h014-mimo-adapter-20260927/REPORT.md",
+      "reports/h014-mimo-adapter-20260927/STATUS.json",
+      "reports/h014-mimo-adapter-20260927/mimo-tests.txt"
+    ]
+  },
+  "whitespace": "git diff --cached --check: PASS",
+  "secret_pattern_scan": {
+    "result": "PASS_NO_MATCH",
+    "tool": "rg -l -e",
+    "scope": "seven explicitly staged source/config/test/report files",
+    "patterns": "private-key headers, HF/GitHub/OpenAI/AWS credential formats; no credential contents printed"
+  },
+  "remote": "Local filesystem origin, no embedded credentials; no push performed",
+  "phase1_mimo_tests": {
+    "command": "ai-harness/server/node_modules/.bin/tsx --test --test-timeout=15000 ai-harness/server/test/mimo.test.ts",
+    "exit_code": 0,
+    "passed": 10,
+    "failed": 0,
+    "output": "mimo-tests.txt"
+  },
+  "root_review_followup": {
+    "scope": "two typeof guards and nonstring regression cases only",
+    "no_emit_typecheck": "PASS",
+    "phase1_logs_preserved": true,
+    "native_session_unchanged": true,
+    "full_tool_schema_and_production_roster_qualified": false
+  }
+}

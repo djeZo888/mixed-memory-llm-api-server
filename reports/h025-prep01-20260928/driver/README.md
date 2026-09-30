@@ -1,0 +1,1 @@
+H025 fixed finite driver. See ../PROPOSAL.md. Default `python3 driver.py` prints source package pins only and performs no network/model actions. `manifest.pending.json` deliberately refuses. Exact reviewed current manifest, root GO, independent systemd owner, fan receipt and quieting evidence are mandatory before `--run`.

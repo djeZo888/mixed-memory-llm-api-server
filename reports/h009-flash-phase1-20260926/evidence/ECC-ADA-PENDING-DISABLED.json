@@ -1,0 +1,75 @@
+{
+  "utc": "2026-09-26T20:39:41.191947+00:00",
+  "authority": "ROOT-CONTRACT explicituser20:35:14; rootrebootLAST20:36:41",
+  "before": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "36234 MiB"
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "65098 MiB"
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "46068 MiB",
+      "memory_free": "13221 MiB"
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "36237 MiB"
+    }
+  ],
+  "after": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "36234 MiB"
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "65098 MiB"
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "name": "NVIDIA RTX 6000 Ada Generation",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Disabled",
+      "memory_total": "46068 MiB",
+      "memory_free": "13221 MiB"
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "name": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "current_ecc": "Enabled",
+      "pending_ecc": "Enabled",
+      "memory_total": "97887 MiB",
+      "memory_free": "36237 MiB"
+    }
+  ],
+  "output": "Disabled ECC support for GPU 00000000:03:00.0.\nAll done.\nReboot required.\n",
+  "reboot_performed": false,
+  "FHD_profile_remains_disabled_until_reboot_capacity_restored": true
+}

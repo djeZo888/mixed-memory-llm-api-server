@@ -1,0 +1,55 @@
+{
+  "parent_image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "reference_image_id": "sha256:6c0635058db5b238b54d594e1aaa7b3175561e60b0ff151de1c00f85324e2b96",
+  "new_installs": [
+    {
+      "name": "diffusers",
+      "version": "0.41.0.dev0",
+      "source": "file:///opt/diffusers-src",
+      "archive_hashes": null
+    },
+    {
+      "name": "transformers",
+      "version": "5.17.0",
+      "source": "https://files.pythonhosted.org/packages/e8/d0/c502b60d684adbd98a8dc7d5bb866842772b816ac4354e4608be240041ae/transformers-5.17.0-py3-none-any.whl",
+      "archive_hashes": {
+        "sha256": "78ec1ce21579b38dfb83950a0658cd119f87212a2fcfdff478096ce9d6c03801"
+      }
+    },
+    {
+      "name": "tokenizers",
+      "version": "0.23.2",
+      "source": "https://files.pythonhosted.org/packages/2c/ca/ca6b93c7820df123b2662a9469e8facc826ccc94e98fdd0d615f6431e73a/tokenizers-0.23.2-cp310-abi3-manylinux_2_17_x86_64.manylinux2014_x86_64.whl",
+      "archive_hashes": {
+        "sha256": "41c2f84d172449b4dadb9cdc508e3e364076613c35b16e76ecfe47a60d1e3305"
+      }
+    }
+  ],
+  "removed_distribution": "sglang",
+  "inherited_distribution_versions": "requirements.freeze.txt",
+  "diffusers_git_commit": "8b3c707ebd3ec4881f4190cf42931da07eaf3b65",
+  "diffusers_built_wheel": {
+    "filename": "diffusers-0.41.0.dev0-py3-none-any.whl",
+    "bytes": "6037738",
+    "sha256": "10c9e83505ce34318e8c14f664761fb1a92ffb66d0df0ab8fd798136ff8f4c5f"
+  },
+  "hashes": {
+    "requirements.freeze.txt": "1ce51ab5c10ea0fa7a136d132edaf1f4f5bec3a8eed3622d1db49cb6bc12b495",
+    "pip-install-report.json": "6694f154c5f3c459bf22357bab4f6085696f6c34072fe3cc03b42d78bce8a08d",
+    "pip-inspect.json": "30a814380dd75c6aa060b6cad7be64211ed75bbb89ef715fb25dea6654ac6544",
+    "diffusers-tree.txt": "595dd3447a3e0146e070d9b35ac62043c295f3c373462335297010c61e577b18",
+    "distribution-records.sha256": "4cd42dd9235d4ea3d1f47f1b723efb03ae583bf50123ef92f310f84c1da4286c",
+    "dpkg-versions.tsv": "0b97a358a5595c4c3c9ad699bb8cec51ff6950ef199c5c10aeaa8f3b38751de4",
+    "python-version.txt": "5b3e43dc38ca01e3f5a7854ba50d4330864b0c1e0f646650b2c78cf072acc366",
+    "source/Dockerfile": "74f1ac25cb1981975de9a3d03792f22daffd9782b3298eeef03f3ef004c52eed",
+    "source/reference_edit.py": "69c38e1aca561f0b702f5947b25be4b96fa648d3e777cef6d119019bbbf18ba5",
+    "source/trial.py": "9aef4e2f0d5e96a4fd2891df4b26a13ec619672cd43cbeef5bba9a0809b261d4",
+    "source/remote_common.py": "75c1d2196a33b06fdc45384eeb07fce9eb4815ba19f277cce18ec6e0322dd804",
+    "source/build.py": "6a8a2cc46a7c33581015d8c80d74b55ceb5f06da8c9dff74372160530a0818b1"
+  },
+  "limits": [
+    "All installed versions frozen; inherited packages are identified by immutable accepted parent image.",
+    "Inherited original receipt lacks archive hashes for35 distributions. This is not a complete from-scratch archive lock.",
+    "distribution-records.sha256 hashes installed wheel RECORD manifests, not an independent rehash of all payload files."
+  ]
+}

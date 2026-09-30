@@ -1,0 +1,22 @@
+{
+  "createdUtc": "2026-09-29T20:10:09.439046+00:00",
+  "productionSource": "dbcd579f8b5ee91ff86c4035bfe643d51e8cd3d1",
+  "location": "External task output directory; raw retained captures remain private",
+  "files": {
+    "backend-final-tests.tap": "574bb61165e8b9c8e31fb24ae0c8dab9e68da9d046e2dc8335e1c8e3781e1344",
+    "image-helper-mcp-tests.tap": "40636c0678ac17f97ead62fa098cb2d0bc1391adfd64d80f66b12ef1177d0246",
+    "web-result-tests.txt": "c21e87e0757f422d908885f389e362b2edd9842925fdd1ae1167cd24c455e041",
+    "paired-guidance-tests.tap": "7ea91c9f16638ec14fbad9f8b23307723a002f0916f6b8c305a24044becb4692",
+    "profile-migration-tests.tap": "a0e0c825a4f8ba95ce6b1d434a3d95fae5659297a3c856cb5ab4fdd718209fdc",
+    "seam-regressions.tap": "4548fbc4a7ffdd4e5ab1df37054f07f42f7c864ec473a1be0b3e09bb32a1817f",
+    "server-typecheck.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "server-build.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "web-build.log": "30f33b1ebf87ede348bc27ed285a92fa9cf47f6e765b7a207cf26fef64b43416",
+    "overlay-tests.txt": "f6e4fb76ae250007e6c3b54e26752ae97a0332122ab7c9fc0886f50595d0aba3",
+    "engine-wrapper-tests.txt": "299f14120150ff83ce310da0a83e6835a1ca1330a9d3d33c71c12a0b173e56ff",
+    "codex-wrapper-final-tests.txt": "02fa4c431fce9b8705f429a91522191c4151441fea4855869a1b4f2c66dcca8b",
+    "overlay-wrapper-results.json": "902430a49cd54b8445da188a659d35d2972f62da3a72e6dab0da257aadf5c25a",
+    "overlay-wrapper-source-pins.json": "bbd4f25fcbf17236142e5c5bba5d72f5b4326a2a9153f5e67e3b6871de851a6d",
+    "PAIRED-DELIVERY-PINS.json": "02f69415cf9591de590cc3e9e85fc7df3d1bc4bc3cc8619bba53f542a3faccca"
+  }
+}

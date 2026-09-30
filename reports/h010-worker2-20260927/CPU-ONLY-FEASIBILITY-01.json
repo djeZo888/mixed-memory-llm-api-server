@@ -1,0 +1,299 @@
+{
+  "schema_version": 1,
+  "verdict": "NOT_MINOR_CHANGE_TRUE_CPU_ONLY_UNSUPPORTED_IN_PINNED_STACK",
+  "confidence": "high for lack of supported small-flag path; no CPU execution tested",
+  "research_start_utc": "2026-09-26T23:23:00Z",
+  "research_finished_utc": "2026-09-26T23:32:51.474424+00:00",
+  "research_deadline_utc": "2026-09-26T23:43:00Z",
+  "session_id": "01a0e004-c4a7-7aa2-84de-33c67f404124",
+  "baseline": "6772a77e9a8ecc37200509ec50f501be5fa48c11",
+  "scope": "source-only feasibility, no ai-vm contact, engine/model download, build, inference or activation",
+  "model": {
+    "repository": "https://huggingface.co/zai-org/GLM-5.3-Flash",
+    "revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "config_url": "https://huggingface.co/zai-org/GLM-5.3-Flash/raw/eb9eb208eb0d988989d07a6a12d0fdeb5f52574a/config.json",
+    "config_sha256": "bb8f01c42cb92a52ca72e65afb4d5bd8d11aef083cd210e8de25dfb904f23e9f",
+    "config_git_blob_sha1": "f93128cf7f31ca2b22e367cd63676c320c4164a7",
+    "config_matches_baseline_blob_pin": true,
+    "architecture": "Glm5NextForConditionalGeneration",
+    "model_type": "glm5_next",
+    "format": "official block E4M3 FP8",
+    "layers": 45,
+    "KDA_layers": 34,
+    "DSA_layers": 11
+  },
+  "runtime": {
+    "sglang_repository": "https://github.com/kvcache-ai/sglang",
+    "sglang_commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+    "ktransformers_repository": "https://github.com/kvcache-ai/ktransformers",
+    "ktransformers_commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+    "packages": "sglang-kt, kt-kernel, ktransformers 0.7.0.post4; transformers-kt5.6.0.post5",
+    "image_digest": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+    "image_basis": "baseline owner/runtime pins plus H009 deployed evidence; not re-inspected on ai-vm",
+    "base": "PyTorch2.9.1 CUDA12.8",
+    "server_args_sha256_matches_native_pin": true
+  },
+  "actual_hybrid_path": {
+    "basis": "H009 deployed/qualification evidence plus exact baseline file_auth launch and H010 canonical harness status; no new backend contact",
+    "context_tokens": 480000,
+    "max_output_tokens": 65536,
+    "kv_cache": "FP8 E4M3",
+    "kt_method": "FP8",
+    "cpu_expert_threads": 64,
+    "threadpools": 8,
+    "resident_gpu_experts": 0,
+    "conditional_gpu_prefill_threshold": 2048,
+    "conditional_gpu_prefill_execution_in_h010": "NOT_TESTED",
+    "attention_and_nonexpert_device": "CUDA in accepted runtime",
+    "description": "CPU expert offload integrated with CUDA model execution; conditional layerwise GPU expert staging is configured. Zero resident GPU experts is not CPU-only."
+  },
+  "evidence": [
+    {
+      "area": "Exact architecture device gate",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/server_args.py",
+      "lines": [
+        1863,
+        1872
+      ],
+      "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/server_args.py#L1863-L1872",
+      "fact": "The exact Glm5Next branch requires NVIDIA CUDA and explicitly excludes CPU, ROCm and NPU. This source file SHA256 exactly matches native-source-pins.json, independently of our deployment wrapper."
+    },
+    {
+      "area": "Device selection and accepted precision",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/server_args.py",
+      "lines": [
+        1536,
+        1540
+      ],
+      "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/server_args.py#L1536-L1540",
+      "fact": "Generic device auto-selection/--device cpu exists elsewhere (1202-1203, 4152-4156), but the exact model accepts only checkpoint-native FP8. Generic CPU support does not override its model gate."
+    },
+    {
+      "area": "KPool/MLA supported dispatch",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/server_args.py",
+      "lines": [
+        1672,
+        1715
+      ],
+      "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/server_args.py#L1672-L1715",
+      "fact": "Exact model requires its trtllm-named NSA dispatcher for prefill/decode and GPU-profile cache precision; alternative generic attention backends are rejected."
+    },
+    {
+      "area": "Actual SM120 path versus library imports",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/nsa_backend.py",
+      "lines": [
+        2241,
+        2269
+      ],
+      "sha256": "3118ef8d8803b7db9cfada1df2c7aa47383f15cf3076f7038145aed25b7274d6",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/nsa_backend.py#L2241-L2269",
+      "fact": "SM120 takes model-local sparse MLA before the FlashInfer import; decode selects its CUDA Triton kernel. Do not claim the SM120 route requires the FlashInfer TRTLLM ABI merely from dispatcher naming. Constructor nevertheless unconditionally queries torch.cuda capability (385); non-HIP module imports sgl_kernel FlashAttention (73-74)."
+    },
+    {
+      "area": "KDA prefill",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda.py",
+      "lines": [
+        104,
+        122
+      ],
+      "sha256": "65bbb53c264acbd8fa759b00cc8cc769fef77b5120e7eba5c7d259141735bf5e",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda.py#L104-L122",
+      "fact": "Prefill invokes FLA l2norm_fwd and chunk_kda through Glm5NextTritonKDAKernel; no CPU extend selection in this adapter."
+    },
+    {
+      "area": "Partial KDA CPU fallbacks",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/linear/glm5_next_kda_backend.py",
+      "lines": [
+        27,
+        52
+      ],
+      "sha256": "af09639b7f367a766a43ceb6a9489cb39c1b727b9988a3c44cac77dae65d2c79",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/linear/glm5_next_kda_backend.py#L27-L52",
+      "fact": "CPU causal-convolution update is imported conditionally, but the backend still selects Glm5NextTritonKDAKernel. CPU gate/decode reference helpers also exist in glm5_next_kda_ops.py (206-207, 478-494); these are not a complete CPU serving path."
+    },
+    {
+      "area": "Sparse attention CPU oracle",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/nsa/glm5_next_sparse_attention.py",
+      "lines": [
+        351,
+        369
+      ],
+      "sha256": "75027b642d5de012d61646aad03e295078e64cb9957cff24b57f08bda8c42739",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/nsa/glm5_next_sparse_attention.py#L351-L369",
+      "fact": "A CPU reference branch exists and dequantizes the flat FP8 cache to BF16 for indexing. The source identifies this as a tiny unit-test oracle; it does not establish complete CPU serving or production-sized memory behavior."
+    },
+    {
+      "area": "KPool state allocations",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/mem_cache/glm5_next_memory_pool.py",
+      "lines": [
+        545,
+        575
+      ],
+      "sha256": "394724b8186eb2c95bf8195e0854d98a07ee1b20d11f9a967295dd84d23db0e3",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/mem_cache/glm5_next_memory_pool.py#L545-L575",
+      "fact": "Exact hybrid pool requires MLA plus HybridReqToTokenPool and allocates on model_runner.device; source allocators take a device argument but that does not make the surrounding serving backend CPU supported."
+    },
+    {
+      "area": "Embedding/output allocation",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/models/glm5_next.py",
+      "lines": [
+        900,
+        912
+      ],
+      "sha256": "f7a7426a012ef51259d1cf2fdb18d30a9c6680744ed43738d5485281c32fbdba",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/models/glm5_next.py#L900-L912",
+      "fact": "GLM constructs ParallelLMHead/logits processor; embedding construction is at730-734. Model loader initializes parameters under target_device (loader.py667-678). Official config excludes lm_head and model.embed_tokens from FP8. They are not an intrinsic CPU blocker in isolation, but there is no model-wide CPU flag override."
+    },
+    {
+      "area": "General FP8 CPU limits",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/quantization/fp8.py",
+      "lines": [
+        468,
+        476
+      ],
+      "sha256": "b9fda2e76747a17940155e28c1125038ede99dc5d1c759d11cdf254b617ea777",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/quantization/fp8.py#L468-L476",
+      "fact": "The general block-FP8 linear CPU branch requires AMX; apply dispatches fp8_scaled_mm_cpu at725-735. This is distinct from the KT AVX-512 expert kernel and is not evidence that all GLM non-expert layers can execute on the existing host. No fresh CPU ISA probe was authorized/performed."
+    },
+    {
+      "area": "CPU expert integration still requires CUDA",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/moe/kt_ep_wrapper.py",
+      "lines": [
+        5476,
+        5505
+      ],
+      "sha256": "1376e93373b9bed4f37fa0057dfda02a51c416f649c3321684ac9449a081fd3e",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/moe/kt_ep_wrapper.py#L5476-L5505",
+      "fact": "Both ordinary expert submit and result synchronization obtain torch.cuda.current_stream even when resident GPU expert count is zero."
+    },
+    {
+      "area": "Conditional GPU expert prefill staging",
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/server_args.py",
+      "lines": [
+        1628,
+        1648
+      ],
+      "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+      "url": "https://github.com/kvcache-ai/sglang/blob/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/server_args.py#L1628-L1648",
+      "fact": "Positive kt_gpu_prefill_token_threshold enables layerwise GPU expert prefill and normalizes resident GPU expert count to zero. This describes configured conditional behavior; H010 Worker2 did not measure whether a particular request traversed it."
+    },
+    {
+      "area": "Native CPU expert dispatch",
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/python/experts.py",
+      "lines": [
+        348,
+        359
+      ],
+      "sha256": "e75740b3ad53b85eeb4d9db97b918aebc4d2f3e86162d7e5dc153f472a23752b",
+      "url": "https://github.com/kvcache-ai/ktransformers/blob/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/python/experts.py#L348-L359",
+      "fact": "FP8 selects NativeMoEWrapper. utils/amx.py imports compiled AMXFP8_MOE/AVX2FP8_MOE and checks availability; native CPU expert kernels are real, but cover expert computation only."
+    },
+    {
+      "area": "Compiled CPU expert format",
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/ext_bindings.cpp",
+      "lines": [
+        571,
+        578
+      ],
+      "sha256": "8fcb08b19ef97c3185da0dee35599569a4c13545f868eba36dab867d9c39bc49",
+      "url": "https://github.com/kvcache-ai/ktransformers/blob/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/ext_bindings.cpp#L571-L578",
+      "fact": "Compiled extension declares AVX-512 FP8 decode/BF16 execution and block-E4M3-128x128 layout when the required ISA macros are built; separate AMXFP8 and AVX2FP8 bindings occur at962 and995. These are source dispatch facts, not a new binary acceptance."
+    },
+    {
+      "area": "Native layerwise transport",
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/fp8_layerwise_transport.cpp",
+      "lines": [
+        539,
+        574
+      ],
+      "sha256": "de0e4f9e7ddd82e38cb0c659724e8d62210219869ed131bea94c731d209d122a",
+      "url": "https://github.com/kvcache-ai/ktransformers/blob/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/fp8_layerwise_transport.cpp#L539-L574",
+      "fact": "Pinned expert prefill transport creates CUDA streams/events and submits host-to-device cudaMemcpyAsync. Disabling this optional staging would not remove the model attention or stream-wrapper requirements."
+    }
+  ],
+  "wrapper_gate": {
+    "path": "scripts/runtime/flash/owner.py",
+    "lines": [
+      154,
+      164
+    ],
+    "fact": "GPU identity/free-memory/temperature admission and exact Docker GPU binding are protective deployment gates. Removing them cannot supply missing CPU serving implementations. Preserved unchanged."
+  },
+  "minor_vs_substantial": {
+    "minor_change_supported": false,
+    "minimal_cpu_flag_proposal": null,
+    "required_scope": [
+      "Implement/integrate a full CPU KDA prefill path and supported DSA/KPool backend/state lifecycle.",
+      "Replace CUDA stream expert integration and any required GPU allocations/transport with CPU execution scheduling.",
+      "Resolve checkpoint-native FP8 non-expert kernel support on target ISA; dequantization or alternate quantization would change the comparison.",
+      "Qualify complete model loading, semantic/tool parity, memory reserve, latency, occupied context and output limits before any production use."
+    ],
+    "migration_implemented": false
+  },
+  "alternatives": [
+    {
+      "name": "llama.cpp",
+      "classification": "exact architecture CPU support NOT_CONFIRMED in bounded primary-source check",
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "commit": "95887577ab5fead779581a7030a83c7752ff3234",
+      "paths": [
+        "src/llama-arch.cpp",
+        "convert_hf_to_gguf.py"
+      ],
+      "finding": "Inspected architecture registry names glm4/glm4moe, not glm5_next. No claim about all branches or later upstream. No exact GLM-5.3-Flash CPU route established; switching to GGUF would change engine/format and require conversion and qualification, beyond a small-flag comparison."
+    },
+    {
+      "name": "Existing PyTorch/CPU helper oracles",
+      "classification": "porting ingredients, not a supported alternative engine",
+      "finding": "Can inform a substantial CPU implementation, but incomplete integration, FP8 semantics, memory use and performance remain unqualified."
+    }
+  ],
+  "unresolved": [
+    "Complete target CPU ISA compatibility for generic non-expert FP8 kernels was not probed; explicit model exclusion and required CUDA operations already settle the minor-change question.",
+    "No guarantee of source/binary identity for every fetched module beyond published revision provenance; server_args hash matches deployed native source pin. No live binary inspection on Worker1-owned ai-vm.",
+    "No CPU model load, end-to-end execution, memory estimate or performance measurement.",
+    "Whether any conditional GPU expert staging ran in a particular H010 request belongs to Worker1 telemetry; configuration alone is insufficient."
+  ],
+  "NOT_TESTED": [
+    "CPU-only activation/build/model loading/inference",
+    "CPU speed or RAM footprint",
+    "new engine or weight conversion/quantization",
+    "H010 hybrid64K result",
+    "new parent/child harness benchmark",
+    "optional four-instance overlap smoke"
+  ],
+  "next_action": "Root review only. Keep Worker1 hybrid64K lane independent; no CPU trial dispatch justified by this report. App recovery requires fresh native session after explicit Worker1 handback."
+}

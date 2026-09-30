@@ -1,0 +1,195 @@
+{
+  "d02": {
+    "id": "D02",
+    "attempts": 1,
+    "encode_completed": 1,
+    "decode_completed": 1,
+    "denoising_steps_completed": 0,
+    "outputs": [
+      {
+        "name": "conditioning.png",
+        "sha256": "581c4ebc7abd7bef1b9d6e73d8d4bd9733136a8bf89a6b7525b70c9cb41d1ef3",
+        "mode": "RGBA",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "raw-reconstruction.png",
+        "sha256": "13f72d46fec3a91258da5121cb0161a36884c1922446048b436d96b53609bb7f",
+        "mode": "RGBA",
+        "size": [
+          1024,
+          1024
+        ]
+      },
+      {
+        "name": "delivered-rgb.png",
+        "sha256": "7257e60926f7d62dcaa3d18e5661429a27344f90d3145d997ac29c5d9be032a9",
+        "mode": "RGB",
+        "size": [
+          1024,
+          1024
+        ]
+      }
+    ],
+    "checkpoint_file": "/models/vae/diffusion_pytorch_model.safetensors",
+    "metadata_consumed": [],
+    "diagnostic_allocator_cap_bytes": 10737418240,
+    "load_seconds": 2.232959792003385,
+    "pixels": {
+      "shape": [
+        1,
+        4,
+        1,
+        1024,
+        1024
+      ],
+      "dtype": "torch.bfloat16",
+      "min": -1.0,
+      "max": 1.0,
+      "mean": 0.3001352548599243,
+      "std": 0.6536985635757446,
+      "finite": true
+    },
+    "encode_seconds": 0.4727674230016419,
+    "latent": {
+      "shape": [
+        1,
+        64,
+        1,
+        64,
+        64
+      ],
+      "dtype": "torch.bfloat16",
+      "min": -17.625,
+      "max": 20.25,
+      "mean": 0.056114695966243744,
+      "std": 4.540121555328369,
+      "finite": true
+    },
+    "condition": {
+      "shape": [
+        1,
+        4096,
+        64
+      ],
+      "dtype": "torch.bfloat16",
+      "min": -4.75,
+      "max": 5.34375,
+      "mean": -0.04027123376727104,
+      "std": 1.2051377296447754,
+      "finite": true
+    },
+    "inverse_normalization_max_abs_error": 0.125,
+    "decode_seconds": 0.21403184499649797,
+    "decoded": {
+      "shape": [
+        1,
+        4,
+        1,
+        1024,
+        1024
+      ],
+      "dtype": "torch.bfloat16",
+      "min": -1.0,
+      "max": 1.0,
+      "mean": 0.3002900183200836,
+      "std": 0.6530615091323853,
+      "finite": true
+    },
+    "rgb_mae": 0.6605825424194336,
+    "rgb_rmse": 1.270585624859053,
+    "allocator": {
+      "max_allocated": 4020660224,
+      "max_reserved": 6551502848
+    },
+    "status": "completed_visual_pending",
+    "total_seconds": 3.5370176569995238
+  },
+  "d03": {
+    "id": "D03",
+    "http_calls": 1,
+    "completed_outputs": 1,
+    "steps_completed": null,
+    "status": "completed_visual_pending",
+    "http_status": 200,
+    "latency_seconds": 27.225865560001694,
+    "outputs": [
+      {
+        "name": "raw-output.png",
+        "sha256": "dbd31e8147ff78b7c0189fdf5810169c121b8d20213dd7e67889ee9e4e65a5f5"
+      },
+      {
+        "name": "delivered-rgb.png",
+        "sha256": "44cd2e5047af6ef60010ed00d254020482b9f2f63d0d72bfe0a36ef54f3c1810"
+      }
+    ],
+    "raw_mode": "RGBA",
+    "raw_extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        235,
+        255
+      ]
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  },
+  "d04": {
+    "id": "D04",
+    "http_calls": 1,
+    "completed_outputs": 1,
+    "steps_completed": null,
+    "status": "completed_visual_pending",
+    "http_status": 200,
+    "latency_seconds": 27.24990554899705,
+    "outputs": [
+      {
+        "name": "raw-output.png",
+        "sha256": "1d91948757a0f7111d65baa6553236d853c3b0590b0b06cb36c6476c4b108412"
+      },
+      {
+        "name": "delivered-rgb.png",
+        "sha256": "c718b9feb9c7825cb66b69b69be5e87829b811fb536fcc109346c73533a281bb"
+      }
+    ],
+    "raw_mode": "RGBA",
+    "raw_extrema": [
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        0,
+        255
+      ],
+      [
+        252,
+        255
+      ]
+    ],
+    "size": [
+      1024,
+      1024
+    ]
+  }
+}

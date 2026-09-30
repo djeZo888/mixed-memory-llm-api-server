@@ -1,0 +1,1274 @@
+{
+  "schema_version": 1,
+  "base": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+  "runtime_revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+  "created_utc": "2026-09-27T13:48:48.058933+00:00",
+  "scope": "Source reads and bounded public primary retrievals only. No weights or private-host contact.",
+  "sources": [
+    {
+      "path": "ggml/src/ggml-cpu/ggml-cpu.c",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/ggml-cpu.c",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "559612b11d5aa286365c975dbe79deec9b3f4e89b06bd217bab98239cf30a942",
+      "bytes": 132087,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/ggml-cpu.c",
+      "retrieved_utc": "2026-09-27T13:31:09.352453+00:00",
+      "line_ranges": [
+        [
+          287,
+          292
+        ],
+        [
+          576,
+          611
+        ],
+        [
+          1477,
+          1729
+        ],
+        [
+          2171,
+          2213
+        ],
+        [
+          3098,
+          3161
+        ],
+        [
+          3202,
+          3215
+        ],
+        [
+          3355,
+          3375
+        ],
+        [
+          3645,
+          3652
+        ],
+        [
+          3413,
+          3451
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/ggml-cpu.c"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/ggml-cpu.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/ggml-cpu.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "7a850fc98efd2dfb94647ad3617c226cd87291f6eef4a2ec8cd58cc2ffc52725",
+      "bytes": 24798,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/ggml-cpu.cpp",
+      "retrieved_utc": "2026-09-27T13:31:09.295760+00:00",
+      "line_ranges": [
+        [
+          41,
+          83
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/ggml-cpu.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/arch/x86/quants.c",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/quants.c",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "3c489fdc77e3ab484a5f188bff9c60c0e9483c951ed65c1a562a04c249d5628e",
+      "bytes": 197407,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/arch/x86/quants.c",
+      "retrieved_utc": "2026-09-27T13:31:09.406027+00:00",
+      "line_ranges": [
+        [
+          918,
+          1002
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/quants.c"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/repack.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/repack.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "0d604f463513bc796ffd7031f770c1706300990c0a8670a0e9000949667155c3",
+      "bytes": 213451,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/repack.cpp",
+      "retrieved_utc": "2026-09-27T13:31:09.347978+00:00",
+      "line_ranges": [
+        [
+          4637,
+          4646
+        ],
+        [
+          4783,
+          4913
+        ],
+        [
+          5094,
+          5103
+        ],
+        [
+          5208,
+          5224
+        ],
+        [
+          5238,
+          5253
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/repack.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/CMakeLists.txt",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/CMakeLists.txt",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "afdc2e69e782f135b5861aeab32c780027832be85338450a753cd039195311ca",
+      "bytes": 30282,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/CMakeLists.txt",
+      "retrieved_utc": "2026-09-27T13:31:09.591393+00:00",
+      "line_ranges": [
+        [
+          20,
+          45
+        ],
+        [
+          309,
+          365
+        ],
+        [
+          584,
+          586
+        ],
+        [
+          79,
+          82
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/CMakeLists.txt"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/arch/x86/cpu-feats.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/cpu-feats.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "b0f6aaaeb0b12a4f3e15ceec14d0c2031633f91e864a6c15954a001d6390f6d4",
+      "bytes": 10727,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/arch/x86/cpu-feats.cpp",
+      "retrieved_utc": "2026-09-27T13:31:09.583287+00:00",
+      "line_ranges": [
+        [
+          263,
+          325
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/cpu-feats.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-backend-reg.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-backend-reg.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "0f63c69ad083e0744872f57d59d049b069283303f5bbc646222907d779afe4d1",
+      "bytes": 18555,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-backend-reg.cpp",
+      "retrieved_utc": "2026-09-27T13:31:09.597163+00:00",
+      "line_ranges": [
+        [
+          259,
+          259
+        ],
+        [
+          480,
+          583
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-backend-reg.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-backend.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-backend.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "2dd6a572f087a1fddaa52dbf2378b777cd21752f4b2a1292c8da3bcb05fbcfd9",
+      "bytes": 99321,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-backend.cpp",
+      "retrieved_utc": "2026-09-27T13:31:09.687297+00:00",
+      "line_ranges": [
+        [
+          951,
+          979
+        ],
+        [
+          1661,
+          1705
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-backend.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-common.h",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-common.h",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "0061131b615c5721fc88a78feeb22c1f8c450f1c2646a317d80796a653bf595c",
+      "bytes": 135161,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-common.h",
+      "retrieved_utc": "2026-09-27T13:31:09.808236+00:00",
+      "line_ranges": [
+        [
+          214,
+          219
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-common.h"
+    },
+    {
+      "path": "ggml/CMakeLists.txt",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/CMakeLists.txt",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "fc9bd29fea8b035a0372f160923098463f465c12d553110ac8a6f69f278da510",
+      "bytes": 21658,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/CMakeLists.txt",
+      "retrieved_utc": "2026-09-27T13:31:09.821609+00:00",
+      "line_ranges": [
+        [
+          86,
+          87
+        ],
+        [
+          105,
+          123
+        ],
+        [
+          141,
+          183
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/CMakeLists.txt"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/CMakeLists.txt",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/CMakeLists.txt",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "8810366d36247b5e4f923f58f92a340ba6071ad5700ef4e5af7eb0cb7f7bc67a",
+      "bytes": 10752,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cuda/CMakeLists.txt",
+      "retrieved_utc": "2026-09-27T13:31:09.838639+00:00",
+      "line_ranges": [
+        [
+          40,
+          96
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/CMakeLists.txt"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/mmq.cu",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/mmq.cu",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "77373dc9affde43269ce2af699e587884c654ebf74abb7515912f26c9233f5a4",
+      "bytes": 18307,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cuda/mmq.cu",
+      "retrieved_utc": "2026-09-27T13:31:09.831021+00:00",
+      "line_ranges": [
+        [
+          73,
+          139
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/mmq.cu"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/ggml-cuda.cu",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/ggml-cuda.cu",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "3743393c56dfc30a2b43cd18859187acebb407e61e1ef97a1ea5190762b24273",
+      "bytes": 241324,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cuda/ggml-cuda.cu",
+      "retrieved_utc": "2026-09-27T13:31:10.096101+00:00",
+      "line_ranges": [
+        [
+          5206,
+          5265
+        ],
+        [
+          5609,
+          5634
+        ],
+        [
+          5804,
+          5827
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/ggml-cuda.cu"
+    },
+    {
+      "path": "ggml/src/ggml-cuda/fattn.cu",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/fattn.cu",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "3d9d722104e693f2443c1e84bc4a9f46daeacc9e7b4181a25e96a8e8d546b9db",
+      "bytes": 30787,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cuda/fattn.cu",
+      "retrieved_utc": "2026-09-27T13:31:10.093638+00:00",
+      "line_ranges": [
+        [
+          317,
+          333
+        ],
+        [
+          589,
+          598
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cuda/fattn.cu"
+    },
+    {
+      "path": "src/models/mimo2.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/models/mimo2.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "2aa58a9bdc648ac83aec0decb0d9e4075cce2bd152da0b69b0ace4f0446224d0",
+      "bytes": 17215,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/src/models/mimo2.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.078034+00:00",
+      "line_ranges": [
+        [
+          25,
+          72
+        ],
+        [
+          196,
+          231
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/models/mimo2.cpp"
+    },
+    {
+      "path": "src/llama-graph.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-graph.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "2d0cd774d207115ce3956d1b1018f8adddaedf596e89c1bf1fd36fa5df90ce26",
+      "bytes": 139393,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/src/llama-graph.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.220668+00:00",
+      "line_ranges": [
+        [
+          2030,
+          2140
+        ],
+        [
+          2313,
+          2324
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-graph.cpp"
+    },
+    {
+      "path": "src/llama-model.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-model.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "15acd497f5ad85fd2754e8023b0ea524fd8961e326f6d3df15244fbd69b1b88b",
+      "bytes": 158953,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/src/llama-model.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.339867+00:00",
+      "line_ranges": [
+        [
+          1075,
+          1133
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-model.cpp"
+    },
+    {
+      "path": "src/llama-model-loader.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-model-loader.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "efdb5f273bd1ab77301f2cadea1a5a804bafb28040aca033e45605a97a450242",
+      "bytes": 78376,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/src/llama-model-loader.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.324141+00:00",
+      "line_ranges": [
+        [
+          557,
+          561
+        ],
+        [
+          1235,
+          1277
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-model-loader.cpp"
+    },
+    {
+      "path": "src/llama-context.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-context.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "564a96d60361bdac69fcff60681de5ba4bab27aaa2ab971cb363df3b124a0538",
+      "bytes": 157916,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/src/llama-context.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.104768+00:00",
+      "line_ranges": [
+        [
+          1454,
+          1454
+        ],
+        [
+          2566,
+          2591
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/src/llama-context.cpp"
+    },
+    {
+      "path": "common/arg.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/arg.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9",
+      "bytes": 220849,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/common/arg.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.104988+00:00",
+      "line_ranges": [
+        [
+          1513,
+          1621
+        ],
+        [
+          2418,
+          2432
+        ],
+        [
+          2686,
+          2732
+        ],
+        [
+          2755,
+          2771
+        ],
+        [
+          2942,
+          2950
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/arg.cpp"
+    },
+    {
+      "path": "common/common.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "727619fe7705a6137e82f40dc7f9003aaae9d4c957f1946d820d87ec7289eb96",
+      "bytes": 79012,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/common/common.cpp",
+      "retrieved_utc": "2026-09-27T13:31:10.107487+00:00",
+      "line_ranges": [
+        [
+          1646,
+          1646
+        ],
+        [
+          1700,
+          1700
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.cpp"
+    },
+    {
+      "path": "common/common.h",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.h",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "292817b2482dce5f4d23cd723ee02b0a4f1325f308e88130adda365908db7465",
+      "bytes": 51621,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/common/common.h",
+      "retrieved_utc": "2026-09-27T13:31:10.106693+00:00",
+      "line_ranges": [
+        [
+          495,
+          495
+        ],
+        [
+          573,
+          583
+        ],
+        [
+          1148,
+          1157
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/common/common.h"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/tiled/tiled.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/tiled/tiled.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "c5432dfe22878b61c0cddb9660243120eddc42d5aa29dc1a951a25bfbe9c1c04",
+      "bytes": 57989,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/tiled/tiled.cpp",
+      "retrieved_utc": "2026-09-27T13:32:56.471446+00:00",
+      "line_ranges": [
+        [
+          572,
+          642
+        ],
+        [
+          1202,
+          1245
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/tiled/tiled.cpp"
+    },
+    {
+      "path": "ggml/src/ggml-cpu/arch/x86/repack.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/repack.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "c69735f83caf854172cac78eed2cbc022ef81c077e5f6aca55a49d3404a02331",
+      "bytes": 665038,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/ggml-cpu/arch/x86/repack.cpp",
+      "retrieved_utc": "2026-09-27T13:32:56.521077+00:00",
+      "line_ranges": [
+        [
+          518,
+          643
+        ],
+        [
+          1700,
+          1711
+        ],
+        [
+          3511,
+          3524
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/ggml-cpu/arch/x86/repack.cpp"
+    },
+    {
+      "path": "ggml/src/CMakeLists.txt",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/CMakeLists.txt",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "38ddf053a1adfc14bb84b7722e3c4ec01909694f7e51e32013f36e7a324fa4f0",
+      "bytes": 26989,
+      "method": "bounded-primary-GET",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/ggml/src/CMakeLists.txt",
+      "retrieved_utc": "2026-09-27T13:32:56.721010+00:00",
+      "line_ranges": [
+        [
+          441,
+          482
+        ],
+        [
+          487,
+          519
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/ggml/src/CMakeLists.txt"
+    },
+    {
+      "path": "tools/server/server-context.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-context.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "fdab7f863c6724d4afcf5c254e7350c64a8f6e6b39f132f675a93b41c037045e",
+      "bytes": 225894,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/tools/server/server-context.cpp",
+      "line_ranges": [
+        [
+          395,
+          395
+        ],
+        [
+          1944,
+          1949
+        ],
+        [
+          3863,
+          3874
+        ],
+        [
+          4166,
+          4166
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-context.cpp"
+    },
+    {
+      "path": "tools/server/server-common.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-common.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "7423d66fb1b6d8fe8d18812526cc73808017a7181df3e47c67f356cedd321113",
+      "bytes": 69833,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/tools/server/server-common.cpp",
+      "line_ranges": [
+        [
+          84,
+          97
+        ],
+        [
+          1950,
+          1975
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-common.cpp"
+    },
+    {
+      "path": "tools/server/server-common.h",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-common.h",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "3c255d26a0d3a0e83eaf4c366355b726eb5ad11e6d5e53ede5be531928d214c7",
+      "bytes": 23196,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/tools/server/server-common.h",
+      "line_ranges": [
+        [
+          350,
+          429
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-common.h"
+    },
+    {
+      "path": "tools/server/server-queue.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-queue.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "0e196113d16f130230d2cc0b232915e1f5b4f1dda184790afbfdc4986dd1fd58",
+      "bytes": 22096,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/tools/server/server-queue.cpp",
+      "line_ranges": [
+        [
+          278,
+          360
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-queue.cpp"
+    },
+    {
+      "path": "tools/server/server-task.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-task.cpp",
+      "revision": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+      "sha256": "0fd5c8df2525e61214986e8abe3fc4edbb92f5dd652c9c2bfd1bc2712218a585",
+      "bytes": 67361,
+      "method": "reused-local-H014",
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/public-source/tools/server/server-task.cpp",
+      "line_ranges": [
+        [
+          340,
+          376
+        ]
+      ],
+      "line_number_basis": "original source, 1-based",
+      "browse_url": "https://github.com/ggml-org/llama.cpp/blob/7ac59a6e3ad851cd41af00f678effab0598ba9a8/tools/server/server-task.cpp"
+    },
+    {
+      "path": "scripts/h014/Dockerfile",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "929ddec4856baf0373a8fb53d03e61c78ba82fd7446efc04d4eaf4a0baa57dff",
+      "bytes": 3419,
+      "line_ranges": [
+        [
+          1,
+          47
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "scripts/runtime/mimo/launch.json",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "eb01106bcd28a9709c65624484a515043892008ad4813ab4e8b4b7f16d185976",
+      "bytes": 1479,
+      "line_ranges": [
+        [
+          1,
+          83
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "scripts/runtime/mimo/owner.py",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "9ec78b7dd9bb2900320307637796a727849339b78f6fa0b7758c41b3642d1ca6",
+      "bytes": 35017,
+      "line_ranges": [
+        [
+          156,
+          167
+        ],
+        [
+          369,
+          379
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "scripts/runtime/mimo/private_proxy.py",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "39f180ab7d73d04d0be5cc7984dabc142995bf53e9ff558aae2e19c63e6db11d",
+      "bytes": 11908,
+      "line_ranges": [
+        [
+          25,
+          30
+        ],
+        [
+          165,
+          235
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "scripts/benchmark/client.py",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "fa7838e9071772f2bbe65c333b3ddc08d35a410a3cfaa408bac4c22553706e03",
+      "bytes": 29514,
+      "line_ranges": [
+        [
+          108,
+          120
+        ],
+        [
+          250,
+          265
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "scripts/benchmark/glmrepair.py",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "819752216d9185fdb3ebd115e854e3cb8caf257c2cd074b2f73b53a042ab7dc4",
+      "bytes": 40423,
+      "line_ranges": [
+        [
+          569,
+          575
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "ai-harness/server/src/mimo-frontier.ts",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "50d6ba41172e42ffbb5693f21076991a67de468b4e39cf4e1b15d9b17a836c01",
+      "bytes": 7227,
+      "line_ranges": [
+        [
+          1,
+          80
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "docs/proxmox-72-vcpu-20260920.md",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "42cf3961c964f39f786775aa88f6e7f506ca7f975cee9b62f494ad541db03f9c",
+      "bytes": 8897,
+      "line_ranges": [
+        [
+          1,
+          30
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "docs/operations/2026-09-15-resumption-audit.md",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "33a075d95156dcfb9ec6769b773f5271ceccd85674bbd3405c283048c57d9ea1",
+      "bytes": 35397,
+      "line_ranges": [
+        [
+          50,
+          90
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "reports/h014-mimo-selection-20260927/sources/pro-config.json",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "a9dc00e2a0c2c172efd198f42e81e41c95472021b57c65366c06587d44038b62",
+      "bytes": 9263,
+      "line_ranges": [
+        [
+          45,
+          45
+        ],
+        [
+          121,
+          204
+        ],
+        [
+          351,
+          357
+        ]
+      ],
+      "line_number_basis": "original file, 1-based",
+      "url": "https://huggingface.co/XiaomiMiMo/MiMo-V2.6-Pro-RL/resolve/73875d00b30a89ef8cc353a0b60b0e9f9561952d/config.json",
+      "upstream_revision": "73875d00b30a89ef8cc353a0b60b0e9f9561952d"
+    },
+    {
+      "path": "reports/h014-backend-prep-20260927/SOURCE-BUILD-PROOF.json",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "22948461052bf26bfb4605afcd8aefed472ada78d73ecaaf92f9b383c1204877",
+      "bytes": 3363,
+      "line_ranges": [
+        [
+          1,
+          20
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    },
+    {
+      "path": "reports/h014-download-terminal-20260927/REPORT.md",
+      "revision": "e19489600e6a1619fa8d1de32e3227eee6b26b6c",
+      "source_kind": "local-repository",
+      "sha256": "9bd39e32ef64f6d22f6f0e23873d654a6e85d0ae4d33f03b572bf71e54bdedf0",
+      "bytes": 4274,
+      "line_ranges": [
+        [
+          19,
+          21
+        ]
+      ],
+      "line_number_basis": "original file, 1-based"
+    }
+  ],
+  "primary_sources": [
+    {
+      "id": "vllm-58178",
+      "url": "https://github.com/vllm-project/vllm/issues/58178",
+      "retrieval_url": "https://api.github.com/repos/vllm-project/vllm/issues/58178",
+      "revision": "updated_at=2026-09-25T09:29:11Z",
+      "author": "jmeadlock",
+      "sha256": "a0c4925f26341abbd9e2533a94d2fb5c81e30073e8f818ba871a62322958ea48",
+      "bytes": 7672,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/vllm-58178.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/vllm-58178.txt",
+      "text_sha256": "7ea0a2f8a9ec303c98a2834ebc924003fd266b83bb88bda7bde542be2fe38787",
+      "text_lines": 36,
+      "retrieved_utc": "2026-09-27T13:37:27.954230+00:00",
+      "line_ranges": [
+        [
+          1,
+          36
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "llama-29345",
+      "url": "https://github.com/ggml-org/llama.cpp/issues/29345",
+      "retrieval_url": "https://api.github.com/repos/ggml-org/llama.cpp/issues/29345",
+      "revision": "updated_at=2026-09-23T23:02:04Z",
+      "author": "Ryan-W-lab",
+      "sha256": "7ef3ee311384f850de47744e9bc3e970c0dac293a42a659fe66fe5cf559dc1e6",
+      "bytes": 8183,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/llama-29345.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/llama-29345.txt",
+      "text_sha256": "fd50d573d5b5ecdbc3838806d0a30cfdbdba1d6adcdf2080aa0f1a5dde88f771",
+      "text_lines": 100,
+      "retrieved_utc": "2026-09-27T13:37:27.954886+00:00",
+      "line_ranges": [
+        [
+          1,
+          42
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "expert-cache-28248",
+      "url": "https://github.com/ggml-org/llama.cpp/discussions/28248",
+      "retrieval_url": "https://github.com/ggml-org/llama.cpp/discussions/28248",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "98018da6ace91d9355e77c2d17ad1956c30a9b28979355bd4b499730ade82c80",
+      "bytes": 754338,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/expert-cache-28248.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/expert-cache-28248.txt",
+      "text_sha256": "a8ecbf81e1ce7acc05d626381f91978085cb099f554580b0e91d88fef7cbe945",
+      "text_lines": 1842,
+      "retrieved_utc": "2026-09-27T13:37:28.475291+00:00",
+      "line_ranges": [
+        [
+          177,
+          242
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "gb300-author",
+      "url": "https://al-engr.com/gb300-mimo-v26-pro-testing.html",
+      "retrieval_url": "https://al-engr.com/gb300-mimo-v26-pro-testing.html",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "a0737c1ad0c2386e90e9313d3c1a05484d9a6539395448327ef74f2755525fee",
+      "bytes": 65569,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/gb300-author.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/gb300-author.txt",
+      "text_sha256": "8036c4b3b63c6c3fbda82fb29bb5ba7240cdec476518d05d825100822102392c",
+      "text_lines": 771,
+      "retrieved_utc": "2026-09-27T13:37:28.291226+00:00",
+      "line_ranges": [
+        [
+          155,
+          184
+        ],
+        [
+          376,
+          407
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "dcgm-profiling",
+      "url": "https://docs.nvidia.com/datacenter/dcgm/latest/learn/modules/profiling.html",
+      "retrieval_url": "https://docs.nvidia.com/datacenter/dcgm/latest/learn/modules/profiling.html",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "390edeeb4029a34d99a123f1edd2ff5915098d3665c9caaa98a172cf54e0756e",
+      "bytes": 85530,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/dcgm-profiling.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/dcgm-profiling.txt",
+      "text_sha256": "5220fde444781fae64b2604056500fdb8897de1ded2704b4b1764b5cbfa205de",
+      "text_lines": 853,
+      "retrieved_utc": "2026-09-27T13:37:28.350362+00:00",
+      "line_ranges": [
+        [
+          147,
+          152
+        ],
+        [
+          188,
+          193
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "nsight-profiling",
+      "url": "https://docs.nvidia.com/nsight-compute/ProfilingGuide/",
+      "retrieval_url": "https://docs.nvidia.com/nsight-compute/ProfilingGuide/",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "6a84b367be4dd99a9df44a2ad5a0e2c58a1ba499562e939da8363b57889dc15f",
+      "bytes": 381812,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/nsight-profiling.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/nsight-profiling.txt",
+      "text_sha256": "5889a542454555e36467836ff4c04f4c0a87e03e0acb9fb0d118b8d8e72d695c",
+      "text_lines": 3589,
+      "retrieved_utc": "2026-09-27T13:37:28.291806+00:00",
+      "line_ranges": [
+        [
+          94,
+          99
+        ],
+        [
+          236,
+          241
+        ],
+        [
+          244,
+          249
+        ],
+        [
+          248,
+          253
+        ],
+        [
+          251,
+          256
+        ],
+        [
+          260,
+          265
+        ],
+        [
+          261,
+          266
+        ],
+        [
+          264,
+          269
+        ],
+        [
+          265,
+          270
+        ],
+        [
+          270,
+          275
+        ],
+        [
+          271,
+          276
+        ],
+        [
+          275,
+          280
+        ],
+        [
+          289,
+          294
+        ],
+        [
+          290,
+          295
+        ],
+        [
+          294,
+          299
+        ],
+        [
+          323,
+          328
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "nsight-cli",
+      "url": "https://docs.nvidia.com/nsight-compute/NsightComputeCli/",
+      "retrieval_url": "https://docs.nvidia.com/nsight-compute/NsightComputeCli/",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "b6db571443a5a641b74ef5168105eae56e073ad77f190a3d5e96ea0db2ddac9a",
+      "bytes": 162822,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/nsight-cli.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/nsight-cli.txt",
+      "text_sha256": "a45f09b23911ed83e7fe46bc000536552c6b17756e050e19864b6f4be14ef395",
+      "text_lines": 2208,
+      "retrieved_utc": "2026-09-27T13:37:28.659409+00:00",
+      "line_ranges": [
+        [
+          110,
+          115
+        ],
+        [
+          119,
+          124
+        ],
+        [
+          1577,
+          1582
+        ],
+        [
+          1583,
+          1588
+        ],
+        [
+          1596,
+          1601
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "numactl-man",
+      "url": "https://raw.githubusercontent.com/numactl/numactl/v2.0.18/numactl.8",
+      "retrieval_url": "https://raw.githubusercontent.com/numactl/numactl/v2.0.18/numactl.8",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "391fa3c334fa7f5953d66d53b013729eff795a332bf59914f81ff8e34eb11e90",
+      "bytes": 10516,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/numactl-man.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/numactl-man.txt",
+      "text_sha256": "f2699e31a0b5afa044a28483e4c4b04393fffab50a1a2e30151617166c834d23",
+      "text_lines": 388,
+      "retrieved_utc": "2026-09-27T13:37:28.596222+00:00",
+      "line_ranges": [
+        [
+          122,
+          128
+        ]
+      ],
+      "line_number_basis": "text_path extraction, 1-based"
+    },
+    {
+      "id": "perf-stat-v6.16",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.16/tools/perf/Documentation/perf-stat.txt",
+      "revision": "perf-stat-v6.16",
+      "sha256": "8b45f8a7ce3f17ab87b953319b779053d38f3a20319224ca0c7f15ff1e58f9c0",
+      "bytes": 24591,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/perf-stat-v6.16.raw",
+      "retrieved_utc": "2026-09-27T13:40:41.820312+00:00",
+      "line_ranges": [
+        [
+          66,
+          77
+        ],
+        [
+          126,
+          127
+        ],
+        [
+          273,
+          299
+        ]
+      ],
+      "line_number_basis": "raw file, 1-based"
+    },
+    {
+      "id": "nvml-util-r510",
+      "url": "https://docs.nvidia.com/deploy/archive/R510/nvml-api/structnvmlUtilization__t.html",
+      "revision": "nvml-util-r510",
+      "sha256": "ada6a3b6a6dde8e853ea5f72c2e16ef60575f82ffd86c4c78af5caecf3e9bd39",
+      "bytes": 21559,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/nvml-util-r510.raw",
+      "retrieved_utc": "2026-09-27T13:40:42.023833+00:00",
+      "line_ranges": [
+        [
+          72,
+          77
+        ],
+        [
+          74,
+          79
+        ],
+        [
+          83,
+          88
+        ],
+        [
+          90,
+          95
+        ]
+      ],
+      "line_number_basis": "raw file, 1-based"
+    },
+    {
+      "id": "web-docs-extraction.json",
+      "source_kind": "web-tool-extraction-not-original-HTML",
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/web-docs-extraction.json",
+      "sha256": "09d032777780912254c509d441eb04517dddbd75a453c22972b58b5472fc1ea6",
+      "bytes": 29536,
+      "line_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "note": "Contains exact document URLs/revisions and provider source line labels. AMD raw HTTP returned a JS shell; assertions rely on this documented extraction, not the shell."
+    },
+    {
+      "id": "web-docs-targeted.json",
+      "source_kind": "web-tool-extraction-not-original-HTML",
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/web-docs-targeted.json",
+      "sha256": "033b1d544e98ec265e51149c699d7ea4d5b78938a7f1e3055149860abd86f300",
+      "bytes": 13533,
+      "line_ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "note": "Contains exact document URLs/revisions and provider source line labels. AMD raw HTTP returned a JS shell; assertions rely on this documented extraction, not the shell."
+    }
+  ],
+  "retrieval_limitations": [
+    {
+      "id": "amd-pcm-options",
+      "url": "https://docs.amd.com/r/en-US/57368-uProf-user-guide/4.5.-AMDuProfPcm-Command-Line-Options",
+      "retrieval_url": "https://docs.amd.com/r/en-US/57368-uProf-user-guide/4.5.-AMDuProfPcm-Command-Line-Options",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "5d5e2939a8e0a03ce1c2c490a8a5bb1cf985ea478d8f3314f76bb2975025ff03",
+      "bytes": 2575,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/amd-pcm-options.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/amd-pcm-options.txt",
+      "text_sha256": "a0906649d1c2d9634ca39ff0fdab8f60011dd6f20636bd6527a02605354e3686",
+      "text_lines": 3,
+      "retrieved_utc": "2026-09-27T13:37:27.831741+00:00"
+    },
+    {
+      "id": "amd-virtualization",
+      "url": "https://docs.amd.com/r/en-US/57368-uProf-user-guide/Virtualization-support",
+      "retrieval_url": "https://docs.amd.com/r/en-US/57368-uProf-user-guide/Virtualization-support",
+      "revision": "retrieved mutable primary source",
+      "author": null,
+      "sha256": "722d4ff35484b629605ba2146e77a2180a708c9b0d84dacbab7915fbe45eca7b",
+      "bytes": 2575,
+      "local_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/amd-virtualization.raw",
+      "text_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H016-DECODE-RESEARCH-20260927/primary/amd-virtualization.txt",
+      "text_sha256": "a0906649d1c2d9634ca39ff0fdab8f60011dd6f20636bd6527a02605354e3686",
+      "text_lines": 3,
+      "retrieved_utc": "2026-09-27T13:37:27.970962+00:00"
+    },
+    {
+      "id": "nvml-utilization",
+      "url": "https://docs.nvidia.com/deploy/nvml-api/structnvmlUtilization__t.html",
+      "error": "HTTP Error 404: Not Found"
+    },
+    {
+      "id": "perf-stat",
+      "url": "https://raw.githubusercontent.com/torvalds/linux/v6.18/tools/perf/Documentation/perf-stat.adoc",
+      "error": "HTTP Error 404: Not Found"
+    }
+  ],
+  "observation_provenance": "User/root relayed W1 runtime packet at 13:36:34 UTC; no underlying profile-07 file or SHA available to Worker2. See RUNTIME-OBSERVATIONS.json.",
+  "search_scope": "Initial narrow published MiMo Pro CPU/GPU queries, then root-directed vLLM58178/llama29345/discussion28248 only; no exhaustive absence claim."
+}

@@ -1,0 +1,3 @@
+H032_ACTUAL_EVIDENCE_DIR=../input/W1-CURRENT/private/mimo PYTHONPATH=scripts python3 -m unittest -v $(cat ../output/TEST-CASES.txt) > ../output/TESTS.log 2>&1
+python3 -m py_compile scripts/runtime/mimo/owner.py tests/test_mimo_source_owner_amendment.py
+git diff --check

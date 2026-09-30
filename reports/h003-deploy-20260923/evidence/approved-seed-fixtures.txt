@@ -1,0 +1,18 @@
+test_explicit_seed_boundaries_are_preserved_and_reported (test_edit_seed.EditSeed.test_explicit_seed_boundaries_are_preserved_and_reported) ... ok
+test_generation_seed_and_response_contract_unchanged (test_edit_seed.EditSeed.test_generation_seed_and_response_contract_unchanged) ... ok
+test_missing_edit_seed_drawn_once_and_reported_exactly (test_edit_seed.EditSeed.test_missing_edit_seed_drawn_once_and_reported_exactly) ... ok
+test_native_failure_does_not_redraw_or_retry (test_edit_seed.EditSeed.test_native_failure_does_not_redraw_or_retry) ... ok
+test_unqualified_edit_never_draws_or_dispatches (test_edit_seed.EditSeed.test_unqualified_edit_never_draws_or_dispatches) ... ok
+test_explicit_mapping_capability_and_exact_native_crop (test_corrections.FullHD.test_explicit_mapping_capability_and_exact_native_crop) ... ok
+test_five_smaller_profiles_unchanged (test_corrections.FullHD.test_five_smaller_profiles_unchanged) ... ok
+test_invalid_mapping_and_edit_mapping_refused (test_corrections.FullHD.test_invalid_mapping_and_edit_mapping_refused) ... ok
+test_native_pixel_exception_only_applies_to_exact_output_crop (test_corrections.FullHD.test_native_pixel_exception_only_applies_to_exact_output_crop) ... ok
+test_protected_limits_required_exact_and_not_configurable (test_corrections.FullHD.test_protected_limits_required_exact_and_not_configurable) ... ok
+test_public_bounds_and_unqualified_transparency_refused_before_native (test_corrections.FullHD.test_public_bounds_and_unqualified_transparency_refused_before_native) ... ok
+test_wrong_native_dimensions_fail_instead_of_accepting_or_resizing (test_corrections.FullHD.test_wrong_native_dimensions_fail_instead_of_accepting_or_resizing) ... ok
+test_exact_generation_and_edit_wire_no_path_or_caller_headers (test_handlers.NativeWire.test_exact_generation_and_edit_wire_no_path_or_caller_headers) ... ok
+
+----------------------------------------------------------------------
+Ran 13 tests in 0.266s
+
+OK

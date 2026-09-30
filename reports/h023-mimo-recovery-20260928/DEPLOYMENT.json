@@ -1,0 +1,160 @@
+{
+  "boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+  "canonical_lease_identity": [
+    26,
+    1829
+  ],
+  "commit": "9ab4f3c088b2042e9c38b4f0460cf26b405ec961",
+  "deadline": {
+    "hardDeadlineUtc": "2026-09-28T16:03:02.943079+00:00",
+    "maximumSeconds": 1800,
+    "startedUtc": "2026-09-28T15:33:02.943079+00:00"
+  },
+  "failed_preflight": "INITIAL-BLOCKER.json",
+  "failed_preflight_count": 1,
+  "final_observed_utc": "2026-09-28T15:40:52.586695+00:00",
+  "h019_namespace_index": {
+    "/data/build/H019-20260928/worker1-final950k/CANDIDATE-AUTHORITY.json": {
+      "bytes": 18225,
+      "mtime_ns": 1790566565083142113,
+      "sha256": "70eacb03085d323fcbb2ba12346f526198eae7c3d99b008177f1f691bad37eb9"
+    },
+    "/data/build/H019-20260928/worker1-final950k/ROOT-GO.json": {
+      "bytes": 18225,
+      "mtime_ns": 1790566570665178573,
+      "sha256": "70eacb03085d323fcbb2ba12346f526198eae7c3d99b008177f1f691bad37eb9"
+    },
+    "/data/build/H019-20260928/worker1-final950k/final.py": {
+      "bytes": 11551,
+      "mtime_ns": 1790563435614286497,
+      "sha256": "abecd4a844a09536a20dc89c1ee73d8e82f1d354720085206950c80a65f56ca3"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/CLIENT.json": {
+      "bytes": 1536,
+      "mtime_ns": 1790581201253878913,
+      "sha256": "5753b4fcc4eca25bcec70643e26d597cfcc0f7333307852e54eccca240832ea5"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/DISPATCH-ATTEMPT.json": {
+      "bytes": 1520,
+      "mtime_ns": 1790566570683178690,
+      "sha256": "fd6ae0d6182a26e86ce4095ebf562bc46e714bb3fe3f3030bf93717ba019aee2"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/GUARD-BEFORE.json": {
+      "bytes": 4988,
+      "mtime_ns": 1790566571599184672,
+      "sha256": "03ec299e28837b4c23798ec2d39b5e26ffccd0899daf0066080b2cca0cf39eab"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/GUARD-PROGRESS.jsonl": {
+      "bytes": 11282632,
+      "mtime_ns": 1790581196450839772,
+      "sha256": "b2fa63304c8b0c1a92e8c470425d194189342d9aa9c92a5291f4bfdf06c406a1"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/H019-near950K-BODY-SENT.json": {
+      "bytes": 112,
+      "mtime_ns": 1790566576360215763,
+      "sha256": "04693b6721934593ab140b31b5d389704e2e6eee9e408ece26c909827e31b82a"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/H019-near950K-PROGRESS.jsonl": {
+      "bytes": 295,
+      "mtime_ns": 1790566576505216710,
+      "sha256": "fcdda64a2f465b735d2cce5dc40f0203297765fb2692585bccc2285b026503c6"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/H019-near950K-RAW.jsonl": {
+      "bytes": 68281,
+      "mtime_ns": 1790581181894721161,
+      "sha256": "61bf9b24108e31af5778d3df9d821d8d7808a5888bdbbd414e0297bcc5931eb8"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/H019-near950K-REQUEST.json": {
+      "bytes": 2581549,
+      "mtime_ns": 1790566576203214738,
+      "sha256": "932c76632afed416c80b2107d59b51cc85bde00e46e212d89e66c4a87661f0df"
+    },
+    "/data/logs/H019-20260928/worker1-final950k/H019-near950K.json": {
+      "bytes": 93281,
+      "mtime_ns": 1790581200902876053,
+      "sha256": "bc432c7e18f6c9ee67104a818439b6a61004e9108ee0ff5532bb207d0f27f89b"
+    }
+  },
+  "hardware_changes": 0,
+  "helper_sha256": "fee192fdd8b9e7aa2bf68b7b6540c2bc8f36e011c9380006c940c343067d8dee",
+  "history_backups": [
+    {
+      "bytes": 23322,
+      "mode": "0400",
+      "path": "/data/services/mimo-h016-20260927/new-boot-prior-manifest-17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125.json",
+      "sha256": "743edc0f8fa343f8c05efe7a307cf5a6eb4396b09ba9ed378230fe9d62e1e0a0"
+    },
+    {
+      "bytes": 58517,
+      "mode": "0400",
+      "path": "/data/services/mimo-h016-20260927/new-boot-prior-owner-17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125.py",
+      "sha256": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53"
+    },
+    {
+      "bytes": 127554,
+      "mode": "0400",
+      "path": "/data/services/mimo-h016-20260927/h023-recover02-17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125-history.json",
+      "sha256": "0d9d7d5a0ce1b74ced23d9bc6689496858cd9b0799c9bde0298a33c786d4edb2"
+    }
+  ],
+  "manifest_new_canonical_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+  "manifest_new_raw_sha256": "3f724d9b1d405916e4727d58d90b078ad53decbe056c3bbafe13bf5236c79615",
+  "manifest_old_canonical_sha256": "d8bd9326118458774ac2b585e6029faa2a607d195001d85e14c5d238f6c05be4",
+  "manifest_old_raw_sha256": "743edc0f8fa343f8c05efe7a307cf5a6eb4396b09ba9ed378230fe9d62e1e0a0",
+  "native_session_id": "01a0e8a5-ede3-7b22-af49-cf5563b86e83",
+  "new_inference_count": 0,
+  "old_boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+  "old_container_id": "aae59a6db7da41ff58056ce11e762060a6fe8aeecdad3d0e6813057573238d54",
+  "old_launch_id": "b23d112359424d909862207e30f0c9d7",
+  "original_raw_sha256": {
+    "guard.json": "6e63955bfe7340c2f885bb6d6de9aa46467b15778a8a456bd0721991a60cd7d7",
+    "manifest.json": "743edc0f8fa343f8c05efe7a307cf5a6eb4396b09ba9ed378230fe9d62e1e0a0",
+    "proxy-state.json": "e85b3e1c4f6b74f0707d33b0894bdddedc2a0f092ebd8548b87558453de5e5f6",
+    "selection.json": "2a9bb052add9192c71ceca042af669039e629a0af8cf1336249d85c4e38a44b1",
+    "source/owner.py": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53",
+    "state.json": "04bb9becc60530c97d2cd75875be3f2f36b86e1cedfa6cdd2bf8fb3e6e4dd939"
+  },
+  "owner_new_sha256": "27caaee3a1fc3d0010527ac5e3626ef294278e2ebd15b79e3c33e9ba6842bc5f",
+  "owner_old_sha256": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53",
+  "physical_absence": {
+    "cgroup_empty": true,
+    "container_id": "aae59a6db7da41ff58056ce11e762060a6fe8aeecdad3d0e6813057573238d54",
+    "current_boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+    "gpu_compute_empty": true,
+    "native_pid_absent": true,
+    "old_boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+    "owner_absent": true,
+    "physical_release": "REBOOT",
+    "prior_request_outcome": "FAILED_OR_UNKNOWN"
+  },
+  "prewrite_cas": "PASS",
+  "published_utc": "2026-09-28T15:41:49.335518+00:00",
+  "reconcile_command_count": 1,
+  "root_exact_go": "ROOT-JOB-FIX-GO.json",
+  "selection_before": {
+    "generation": 12,
+    "manifest_sha256": "d8bd9326118458774ac2b585e6029faa2a607d195001d85e14c5d238f6c05be4",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "source_closure_readback": "PASS",
+  "source_only_full_semantic_comparison": true,
+  "start_receipt": "START-RECEIPT.json",
+  "status": "DEPLOYED_RECONCILED_NORMAL_START_INDEPENDENT_LOADING",
+  "successful_guarded_stage_count": 1,
+  "systemctl_start_command_count": 1,
+  "unchanged_capacity": {
+    "context": 950000,
+    "generation": 12,
+    "gpu": [
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    ],
+    "max_output_tokens": 65536,
+    "memory": {
+      "limit_bytes": 755914244096,
+      "qualified_peak_bytes": 615649239040,
+      "startup_cache_bytes": 0
+    }
+  },
+  "utc": "2026-09-28T15:40:24.138853+00:00"
+}

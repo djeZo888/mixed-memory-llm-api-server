@@ -1,0 +1,113 @@
+--- r3/candidate_owner.py
++++ r4/candidate_owner.py
+@@ -20,2 +20,2 @@
+-BASE = '/data/build/H016-20260927/worker1-r3'
+-NAME = 'llm-h016-mimo-pro-r3'
++BASE = '/data/build/H016-20260927/worker1-r4'
++NAME = 'llm-h016-mimo-pro-r4'
+@@ -49 +49 @@
+-def gpu_rows():
++def gpu_rows(timeout=8):
+@@ -51 +51 @@
+-    raw = run_cmd(['nvidia-smi', '--query-gpu=uuid,memory.total,memory.used,memory.free,temperature.gpu,utilization.gpu,power.draw', '--format=csv,noheader,nounits'], 8)
++    raw = run_cmd(['nvidia-smi', '--query-gpu=uuid,memory.total,memory.used,memory.free,temperature.gpu,utilization.gpu,power.draw', '--format=csv,noheader,nounits'], timeout)
+@@ -301,0 +302,2 @@
++        from telemetry import bounded_placement
++        save(h, 'POST-LOAD-PLACEMENT.json', bounded_placement(state['native_pid']))
+--- r3/telemetry.py
++++ r4/telemetry.py
+@@ -6,0 +7,2 @@
++import subprocess
++import sys
+@@ -15,0 +18,2 @@
++    anonymous = collections.Counter()
++    policies = collections.Counter()
+@@ -17 +21,4 @@
+-        for field in line.split():
++        fields = line.split()
++        policies[fields[1]] += 1
++        anonymous_vma = any(x.startswith('anon=') for x in fields) and not any(x.startswith('file=') for x in fields)
++        for field in fields:
+@@ -20,0 +28,2 @@
++                if anonymous_vma:
++                    anonymous[k] += int(v)
+@@ -28 +37,45 @@
+-    return {'numa_resident_pages': dict(nodes), 'threads': tasks, 'scope': 'process resident pages; mmap length is not RSS; guest CPU topology only'}
++    return {'numa_resident_pages': dict(nodes), 'anonymous_vma_resident_pages_per_node': dict(anonymous), 'numa_policies': dict(policies), 'page_bytes': os.sysconf('SC_PAGE_SIZE'), 'threads': tasks, 'scope': 'process resident pages; mmap length is not RSS; guest CPU topology only'}
++
++
++def bounded_placement(pid, timeout=3):
++    """Optional post-load diagnostic; never called by the mandatory guard loop.
++
++    A stuck proc mapping reader is unavailable evidence, not a physical failure.
++    Kill only this child on timeout; even an uninterruptible child cannot make
++    this caller wait indefinitely. Retain its exact PID/settled state for audit.
++    """
++    started = time.monotonic()
++    try:
++        child = subprocess.Popen([sys.executable, '-B', '-c',
++            'import json,sys; from telemetry import placement; print(json.dumps(placement(int(sys.argv[1]))))',
++            str(pid)], cwd=str(P(__file__).parent), stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
++    except OSError as exc:
++        return {'status': 'UNAVAILABLE', 'reason': 'diagnostic_start_' + type(exc).__name__}
++    try:
++        raw, _ = child.communicate(timeout=timeout)
++    except subprocess.TimeoutExpired:
++        try:
++            child.kill()
++        except ProcessLookupError:
++            pass
++        settled = False
++        try:
++            child.wait(timeout=.2)
++            settled = True
++        except subprocess.TimeoutExpired:
++            pass
++        child.stdout.close()
++        return {'status': 'UNAVAILABLE', 'reason': 'timeout', 'diagnostic_pid': child.pid,
++                'diagnostic_settled': settled, 'seconds': time.monotonic() - started}
++    if child.returncode:
++        return {'status': 'UNAVAILABLE', 'reason': 'diagnostic_exit', 'exit_code': child.returncode,
++                'diagnostic_pid': child.pid, 'diagnostic_settled': True}
++    try:
++        result = json.loads(raw)
++        if not isinstance(result, dict):
++            raise ValueError('diagnostic_object_required')
++    except (ValueError, UnicodeError):
++        return {'status': 'UNAVAILABLE', 'reason': 'invalid_diagnostic_output', 'diagnostic_pid': child.pid,
++                'diagnostic_settled': True}
++    return {**result, 'status': 'AVAILABLE', 'diagnostic_pid': child.pid,
++            'diagnostic_settled': True, 'seconds': time.monotonic() - started}
+@@ -37 +90 @@
+-        xml = ET.fromstring(run_cmd(['nvidia-smi', '-q', '-x'], 10))
++        xml = ET.fromstring(run_cmd(['nvidia-smi', '-q', '-x'], 2))
+@@ -52 +104,0 @@
+-        pid = state['native_pid']
+@@ -54 +105,0 @@
+-        last_placement = 0
+@@ -58 +109 @@
+-                rows, mem = gpu_rows(), memory()
++                rows, mem = gpu_rows(timeout=2), memory()
+@@ -62,4 +113,2 @@
+-                sample['process_status'] = [x for x in P('/proc', str(pid), 'status').read_text().splitlines() if x.startswith(('VmRSS:', 'RssAnon:', 'RssFile:', 'VmSwap:', 'Cpus_allowed_list:', 'Mems_allowed_list:'))]
+-                if time.monotonic() - last_placement >= 60:
+-                    sample['placement'] = placement(pid)
+-                    last_placement = time.monotonic()
++                # Cgroup files are authority. No process status/maps/smaps or
++                # diagnostic subprocess belongs on this five-second safety path.
+@@ -77,0 +127,2 @@
++        if failed.is_set():
++            return  # Owner settlement already began; never interrupt its finally again.
+--- r3/benchmark.py
++++ r4/benchmark.py
+@@ -9 +9 @@
+-from telemetry import placement
++from telemetry import bounded_placement
+@@ -171 +171 @@
+-    save(h, 'POST-WARM-PLACEMENT.json', placement(state['native_pid']))
++    save(h, 'POST-WARM-PLACEMENT.json', bounded_placement(state['native_pid']))
+--- r3/verify_retained.py
++++ r4/verify_retained.py
+@@ -16 +16 @@
+-LOG = '/data/logs/H016-20260927/worker1-r3'
++LOG = '/data/logs/H016-20260927/worker1-r4'

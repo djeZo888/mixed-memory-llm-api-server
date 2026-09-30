@@ -1,0 +1,16 @@
+{
+  "utc": "2026-09-29T13:03:49.515610+00:00",
+  "source": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+  "base": "e9e4f71c53b2caade69c345aadb231f788323a3d",
+  "productionSha256": "a4a5b13c0d018182ec9e6b62cda1332d25be514811f2467a0d13021a738e9baf",
+  "compiledChanged": [
+    "server/dist/mimo.js"
+  ],
+  "mimoJsSha256": "336e6523ca907bcfc55b878f0a2e0d3c27dbe00bd72efdde849488d94ae131e8",
+  "archiveSha256": "95f178ebd0a41935669867b36abc96cef8af6e7cb40f15e23fbef75529c0464d",
+  "buildReceiptSha256": "99ba0cf476a982e3e324c549ff9f1603fca18a2c8f87e67ddfd4b82df2adff0c",
+  "helperSha256": "2d2dd2f9404bf7206f76e6be585ad3cce8203bd17e55cb986ba10030e0c7bb77",
+  "configReplacements": [],
+  "focusedTests": "W1 31PASS reused; not repeated",
+  "regression": "NOT_TESTED_CUTOFF"
+}

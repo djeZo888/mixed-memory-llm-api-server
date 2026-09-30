@@ -1,0 +1,13 @@
+{
+  "session_id": "01a0e356-2452-7482-816b-82a10eca07bc",
+  "base": "abe06821e02513efdc24637c565f12aed21c2cf3",
+  "branch": "worker2/h016-final-integration",
+  "start": "2026-09-27T14:47:48Z",
+  "native_deadline": "2026-09-27T15:05:48.133723Z",
+  "global_deadline": "2026-09-27T17:48:08Z",
+  "prompt_file": "../PROMPT-01.md",
+  "prompt_sha256": "adcc5247be29a532c87a728b629b981a5b209cac3f4fd342106b878e7a81bb13",
+  "steering": "Root extended global window only; final capacity qualification and managed profile tuple pending; all live clients independent systemd jobs; no current dispatch",
+  "packaged_utc": "2026-09-27T15:01:36.125424+00:00",
+  "wrapper_exit_authority": "../exit-01-code and ../finished-01-utc after native CLI exit"
+}

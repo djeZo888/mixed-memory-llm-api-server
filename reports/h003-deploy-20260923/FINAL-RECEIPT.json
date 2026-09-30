@@ -1,0 +1,189 @@
+{
+  "schema_version": 1,
+  "task": "H003-DEPLOY-20260923",
+  "status": "DEPLOYED_GENERATION_VERIFIED_WITH_NO_SWAP_EXCEPTION",
+  "completed_at_utc": "2026-09-23T12:16:20.662364+00:00",
+  "native_session_id": "01a0ce12-a26f-7d80-bebb-b2c880ec5e69",
+  "owner": "native Worker1 / mac-worker1",
+  "source": {
+    "reviewed_initial": "1b7ceb7467dc97228322077467e64ba382892ab5",
+    "input_bundle_sha256": "b5ee1d68db2292d50f3593723fb336451e8b5767e500cf1e436edf83aa65a2f2",
+    "packaging_correction": "158d3055f83efbe5edac915e867f4522ba23dabc",
+    "packaging_bundle_sha256": "d29f363065675b9352588c9bbccdf6e3643641d40cd08abeb5eccaaca4f35a71",
+    "deployed_commit": "b5717d03416252c8640c47d37baf892a0c4e532a",
+    "acceptance_bundle_sha256": "ff4f18b615a2941d2e3883d020d8bf1e5e29cec14e95bd322c6fcc62fae1d7a0",
+    "build_source": "158d3055f83efbe5edac915e867f4522ba23dabc",
+    "postbuild_delta": "native-integration.mjs probe only;217 final source files and39 unchanged compiled files verified",
+    "clean_git_tree": true,
+    "push_or_publication": false
+  },
+  "installed": {
+    "release_path": "/home/user/.local/share/ai-harness-app/releases/b5717d03416252c8640c47d37baf892a0c4e532a",
+    "version": "0.0.3",
+    "port80": "PASS",
+    "engine_id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+    "engine_digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+    "engine_source": "a9ea401bf454e12a2c59b2a1d6bd2dda797eb79d",
+    "engine_gate_receipt_sha256": "c48b96021447b873fb100b58f0d8549a3229e9e6ec30138af3bde581802e1a06",
+    "unit_sha256": "f8cf9f43a0e80ad818ee250370fb95a2693436794f55611c267c88ef21533cb5",
+    "site_sha256": "5b7242929b16a7e1b9980b45366594496226b147dd81d15c0322a56b0bcc91d5",
+    "health_receipt": "evidence/final-host-readback.json"
+  },
+  "build_checks": {
+    "server_linux": "PASS",
+    "web_linux": "PASS",
+    "combined_public_types": "PASS",
+    "sharp_linux_decode": "PASS sharp0.35.4/libvips8.18.6",
+    "nginx_test": "PASS",
+    "focused_source_evidence_reused": {
+      "broker_initial": 106,
+      "broker_first_fix": 37,
+      "broker_final_fix": 2,
+      "seed_api": 13
+    },
+    "no_broad_suite_or_rebuild": true
+  },
+  "activation": {
+    "utc": "2026-09-23T12:04:08.200744+00:00",
+    "graceful_idle_stop": true,
+    "existing_inference_credential_reused": true,
+    "protected_approval_secret_prepared": true,
+    "host_only_secret_in_issuance_location_only": true,
+    "actual_container_lan80_peer_denied": "10.156.100.61",
+    "gateway80": "ECONNREFUSED under existing private-listener topology",
+    "no_auth_or_firewall_redesign": true,
+    "evidence": "evidence/activation-receipt.json"
+  },
+  "preservation": {
+    "prior_records": 14,
+    "prior_visible_chats": 11,
+    "all_prior_session_workspace_native_identities_retained": true,
+    "prior_sqlite_counts": {
+      "sessions": 14,
+      "messages": 68,
+      "runs": 34,
+      "events": 10211,
+      "files": 30
+    },
+    "final_host_readback": "evidence/final-host-readback.json",
+    "rollback_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/rollback-20260923T120139Z",
+    "root_nginx_backup": "/var/backups/ai-harness-H003-DEPLOY-20260923/20260923T115442Z",
+    "rollback_manifest": "evidence/rollback-manifest-preactivation.json",
+    "final_idle_database_identity": "evidence/installed-identities.json",
+    "rollback_instructions": "ROLLBACK.md",
+    "rollback_executed": false
+  },
+  "selected_live": {
+    "requested": {
+      "main_generation_chats": 1,
+      "fullhd_image_generations": 1,
+      "independent_text_chats": 2,
+      "delegated_worker_requests": 0,
+      "edits": 0,
+      "warmup_inference": 0
+    },
+    "executed": {
+      "normal_chat_posts": 3,
+      "completed_acp_runs": 3,
+      "image_capabilities_mcp_calls": 1,
+      "image_generate_mcp_calls": 1,
+      "image_jobs": 1,
+      "image_upstream_dispatches": 1,
+      "image_artifacts": 1,
+      "independent_text_runs": 2,
+      "edit_calls": 0,
+      "delegated_worker_calls": 0,
+      "manual_replays": 0
+    },
+    "main": {
+      "sessionId": "0d53338d-9ee5-4c92-8ff8-1f070de1f089",
+      "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+      "jobId": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
+      "requestId": "9f76f517-bf3a-4e19-9b14-73b16e71a19b",
+      "artifactId": "303fbf98-ce8d-49b3-9028-05719e1bee8c",
+      "seed": 23092301,
+      "requestedSize": "1920x1080",
+      "actualSize": "1920x1080",
+      "startedAt": "2026-09-23T12:06:05.261Z",
+      "finishedAt": "2026-09-23T12:06:58.952Z",
+      "elapsedMs": 53691
+    },
+    "texts": [
+      {
+        "sessionId": "212a3b39-a503-4ade-9ba7-53d846cc1329",
+        "runId": "de2573f0-af75-4448-8278-7979eb8f1f48",
+        "submittedAt": "2026-09-23T12:06:05.338673+00:00",
+        "createdAt": "2026-09-23T12:06:05.340Z",
+        "finishedAt": "2026-09-23T12:06:08.868Z",
+        "output": "TEXT_A_OK",
+        "completed_during_image": true
+      },
+      {
+        "sessionId": "f776915b-bb4e-42a3-8938-05139869b7b3",
+        "runId": "80fdfc17-1cca-45dc-9a7b-5bae6ebaf5a5",
+        "submittedAt": "2026-09-23T12:06:05.340044+00:00",
+        "createdAt": "2026-09-23T12:06:05.376Z",
+        "finishedAt": "2026-09-23T12:06:08.767Z",
+        "output": "TEXT_B_OK",
+        "completed_during_image": true
+      }
+    ],
+    "both_text_lanes_progressed_during_image": true,
+    "dual_lane_overlap_ms": 1909.256,
+    "preview_download_opaque_png": "PASS identical SHA256262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+    "artifact_bytes": 2758770,
+    "full_evidence": "evidence/selected-live-checks.json",
+    "count_boundary": "Counts bind explicit chat submissions, persisted jobs and native tool activities. Native internal LLM requests/title housekeeping are not an exact request counter; lane transitions are sampled separately."
+  },
+  "restart_reconnect": {
+    "status": "PASS",
+    "started": "2026-09-23T12:09:47.491255+00:00",
+    "completed": "2026-09-23T12:09:48.044603+00:00",
+    "state_unchanged": true,
+    "sse_last_event_replayed": 430,
+    "additional_inference": 0,
+    "evidence": "evidence/restart-reconnect.json",
+    "coordination_timing": "Latest no-restart note was first observed after this restart; its current file mtime precedes restart. Idle gate proved no active runs/image jobs/text lanes. No later lifecycle/config mutation.",
+    "coordinator_note_current_mtime": "2026-09-23T12:14:50.661654+00:00"
+  },
+  "models": {
+    "all_three_readiness": "PASS current read-only upstream-final.json",
+    "qwen_context_each": 480000,
+    "generation_profiles": 6,
+    "edit_profiles": 0,
+    "container_pid_start_image_settings_preserved": true,
+    "read_only_checkpoint_headroom": "PASS device>=5%, host>=15%",
+    "peak_memory_boundary": "samples are after image completion, not an in-job peak campaign",
+    "no_swap_gate": "FAIL_OBSERVED_SWAP",
+    "baseline_swap_counters": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "final_swap_counters": {
+      "pswpin": 305,
+      "pswpout": 5323
+    },
+    "system_swap_used_bytes": 155189248,
+    "gpu1_qwen_cgroup_swap_bytes": 155086848,
+    "gpu1_qwen_memory_max_events": 441,
+    "oom_events": 0,
+    "scope_and_evidence": "evidence/model-preservation-result.json; evidence/swap-readonly-detail.json",
+    "remediation": "None: preserve warm models/settings and Worker2 acceptance window; root to assess separately",
+    "latest_checkpoint_readiness": "evidence/checkpoint-readiness.json",
+    "latest_checkpoint_readiness_utc": "2026-09-23T12:18:24.364Z",
+    "during_image_peak_margin_measurement": "NOT_TESTED"
+  },
+  "deferred_or_independent": {
+    "worker2_native_delegated_image1024": "separate authorized acceptance; not executed by Worker1",
+    "worker2_visible_browser_download_reconnect": "separate acceptance; Worker1 protocol checks only",
+    "qualified_editing": "DISABLED pending user decision; zero edit profiles",
+    "actual_approval_engine_bypass_acceptance": "NOT CLAIMED; deferred until qualified editing or separately justified narrow fixture",
+    "publication": "root owns after independent acceptance"
+  },
+  "limitations": [
+    "Strict no-swap requirement did not pass; current GPU1 Qwen cgroup uses swap with unchanged32GiB limit. No model/source/limit changes attempted.",
+    "Main assistant authored an absolute workspace Markdown link, which existing safe Markdown suppresses. Actual artifact preview/download API paths pass; visible artifact-card behavior belongs to Worker2.",
+    "Native internal LLM/title request count was not instrumented as exact; explicit3 chat posts/3 completed ACP runs/1 image MCP execution/2 independent text runs are exact."
+  ],
+  "artifacts_manifest": "evidence/SHA256SUMS"
+}

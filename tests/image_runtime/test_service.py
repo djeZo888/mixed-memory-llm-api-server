@@ -1,0 +1,314 @@
+"""Offline behavior checks only: no Docker, systemd, GPU or protected VM reads."""
+from __future__ import annotations
+
+import contextlib
+import copy
+import importlib.util
+import json
+from pathlib import Path
+import signal
+import subprocess
+import sys
+import unittest
+from unittest.mock import Mock, patch
+
+
+REPO = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(REPO / "scripts"))
+SPEC = importlib.util.spec_from_file_location("image_runtime_service_review", REPO / "scripts/image_runtime/service.py")
+service = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = service
+SPEC.loader.exec_module(service)
+CID = "a" * 64
+IMAGE = "sha256:" + "b" * 64
+RUN_ID = "c" * 32
+
+
+def completed(argv, stdout="", returncode=0):
+    return subprocess.CompletedProcess(argv, returncode, stdout, "")
+
+
+def owned_container():
+    return {
+        "Id": CID, "Name": "/" + service.NAME, "Image": IMAGE,
+        "Config": {"User": "1000:1001", "Env": ["CUDA_VISIBLE_DEVICES=" + service.GPU_UUID, "NVIDIA_VISIBLE_DEVICES=" + service.GPU_UUID], "Labels": {
+            "io.llm-image.owner": service.OWNER, "io.llm-image.invocation": RUN_ID,
+            "io.llm-image.gpu": service.GPU_UUID}},
+        "HostConfig": {"DeviceRequests": [{"DeviceIDs": [service.GPU_UUID], "Count": 0,
+            "Capabilities": [["gpu"]], "Driver": "", "Options": {}}],
+            "Privileged": False, "Devices": [], "DeviceCgroupRules": [], "CapDrop": ["ALL"],
+            "SecurityOpt": ["no-new-privileges"], "PidMode": "",
+            "CpusetCpus": "8-15", "Memory": service.CAP_BYTES,
+            "MemorySwap": service.CAP_BYTES, "RestartPolicy": {"Name": "no"},
+            "NetworkMode": "llm-image-backend-private",
+            "PortBindings": {"30007/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30007"}]}},
+        "State": {"Running": True},
+        "NetworkSettings": {"Ports": {"30007/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30007"}]}},
+    }
+
+
+def owned_state():
+    return {"run_id": RUN_ID, "container": {"id": CID, "image_id": IMAGE},
+            "phase": "warm", "warm": True}
+
+
+class ServiceReview(unittest.TestCase):
+    def tearDown(self):
+        service.OPERATION_DEADLINE = None
+        service.SETTLEMENT_DEADLINE = None
+
+    def runtime(self):
+        runtime = object.__new__(service.Runtime)
+        runtime.config = {"image_id": IMAGE}
+        return runtime
+
+    def test_current_device_queries_only_exact_ada_when_global_inventory_fails(self):
+        expected = ['nvidia-smi', '--id=' + service.GPU_UUID,
+                    '--query-gpu=uuid,memory.total,memory.free', '--format=csv,noheader,nounits']
+        # These peer inventories are intentionally inaccessible; the code must
+        # never inspect them or select a physical index to find dedicated Ada.
+        for peers in ([], ['GPU-text0'], ['GPU-extra', 'GPU-text1', 'GPU-text0']):
+            def target_only(argv, *, timeout):
+                if argv != expected:
+                    raise subprocess.TimeoutExpired('synthetic-global-inventory-' + str(len(peers)), timeout)
+                self.assertEqual(timeout, 5)
+                return completed(argv, f' {service.GPU_UUID}, 49140, 48000\n')
+            with self.subTest(peers=peers), patch.object(service, 'run', side_effect=target_only) as run:
+                self.assertEqual(self.runtime().current_device(), {
+                    'uuid': service.GPU_UUID, 'total_bytes': 49140 * 1024**2, 'free_bytes': 48000 * 1024**2})
+                run.assert_called_once_with(expected, timeout=5)
+
+    def test_current_device_missing_ambiguous_foreign_or_malformed_identity_refused(self):
+        valid = f'{service.GPU_UUID}, 49140, 48000\n'
+        rows = ['', '\n', 'GPU-foreign, 49140, 48000\n', valid + valid,
+                valid + 'GPU-foreign, 49140, 48000\n',
+                service.GPU_UUID, service.GPU_UUID + ', 49140',
+                service.GPU_UUID + ', 49140, 48000, extra']
+        for output in rows:
+            with self.subTest(output=output), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_identity_missing'):
+                    self.runtime().current_device()
+
+    def test_current_device_invalid_or_unknown_memory_never_invents_capacity(self):
+        for total, free in [('N/A', 'N/A'), ('0', '0'), ('49140', '49141'),
+                            ('49140', '-1'), ('-1', '0'), ('49140', '1.0'),
+                            ('49140', ''), ('٤٩١٤٠', '0'), ('49140', 'True')]:
+            output = f'{service.GPU_UUID}, {total}, {free}\n'
+            with self.subTest(total=total, free=free), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_memory_unavailable'):
+                    self.runtime().current_device()
+        with patch.object(service, 'run', return_value=completed([], 'x' * 4097)):
+            with self.assertRaisesRegex(RuntimeError, 'ada_memory_unavailable'):
+                self.runtime().current_device()
+
+    def test_current_device_shared_driver_failure_has_no_ordinal_or_global_fallback(self):
+        for failure in (RuntimeError('owned_command_failed'), subprocess.TimeoutExpired('synthetic-target-query', 5)):
+            with self.subTest(failure=type(failure).__name__), patch.object(service, 'run', side_effect=failure) as run:
+                with self.assertRaises(type(failure)):
+                    self.runtime().current_device()
+                self.assertEqual(run.call_count, 1)
+                self.assertEqual(run.call_args.args[0][1], '--id=' + service.GPU_UUID)
+
+    def test_host_node_listener_is_not_an_image_internal_port_conflict(self):
+        runtime = self.runtime()
+        peers = '\n'.join(f'LISTEN 0 4096 127.0.0.1:{port} 0.0.0.0:*'
+                          for port in (30000, 30002, 30004, 30008, 30009, 30010))
+        with patch.object(service, 'run', return_value=completed([], peers)):
+            runtime.check_ports()
+        for address in ('127.0.0.1', '0.0.0.0', '[::]'):
+            output = peers + f'\nLISTEN 0 4096 {address}:30007 0.0.0.0:*'
+            with self.subTest(address=address), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'native_port_already_owned'):
+                    runtime.check_ports()
+
+    def test_native_create_publishes_only_30007_in_owned_bridge_namespace(self):
+        runtime = self.runtime()
+        runtime.model = '/data/models-large/synthetic-model'
+        argv = runtime.create_argv(RUN_ID)
+        self.assertEqual([argv[index + 1] for index, flag in enumerate(argv) if flag == '--publish'],
+                         ['127.0.0.1:30007:30007/tcp'])
+        self.assertEqual(argv[argv.index('--network') + 1], service.NETWORK)
+        self.assertEqual(argv[argv.index('--gpus') + 1], 'device=' + service.GPU_UUID)
+        self.assertNotIn('--network=host', argv)
+
+    def test_cli_rejects_extra_or_user_controlled_actions_before_runtime(self):
+        for argv in (["service.py", "recover", "--unit", "other.service"],
+                     ["service.py", "arbitrary"], ["service.py"]):
+            with self.subTest(argv=argv), patch.object(service.sys, "argv", argv), \
+                    patch.object(service, "Runtime") as runtime:
+                with self.assertRaisesRegex(RuntimeError, "invalid_fixed_action"):
+                    service.main()
+                runtime.assert_not_called()
+
+    def test_recovery_shell_refuses_arguments_before_fixed_exec(self):
+        # The shell exits64 before the fixed VM Python path can execute.
+        result = subprocess.run(["/bin/sh", str(REPO / "scripts/image_runtime/llm-image-backend-recover"),
+                                 "other.service"], capture_output=True, text=True, timeout=2)
+        self.assertEqual(result.returncode, 64)
+        self.assertEqual(result.stdout, "")
+
+    def test_systemd_start_sets_its_own_active_and_settlement_deadlines(self):
+        runtime = Mock()
+        def start():
+            self.assertEqual(service.OPERATION_DEADLINE, 795)
+            self.assertEqual(service.SETTLEMENT_DEADLINE, 855)
+        runtime.start.side_effect = start
+        runtime.operation.side_effect = lambda action: contextlib.nullcontext()
+        with patch.object(service.sys, "argv", ["service.py", "start"]), \
+                patch.object(service.time, "monotonic", return_value=20), \
+                patch.object(service, "Runtime", return_value=runtime), \
+                patch.object(service, "acquire_lease", side_effect=lambda **kw: contextlib.nullcontext()):
+            service.main()
+        runtime.start.assert_called_once_with()
+
+    def test_command_budget_is_capped_and_expired_budget_starts_no_process(self):
+        service.OPERATION_DEADLINE = 101
+        with patch.object(service.time, "monotonic", return_value=100), \
+                patch.object(service.subprocess, "run", return_value=completed([])) as run:
+            service.run(["fixed-command"], timeout=60)
+            self.assertEqual(run.call_args.kwargs["timeout"], 1)
+            run.reset_mock()
+            service.OPERATION_DEADLINE = 99
+            with self.assertRaisesRegex(RuntimeError, "owned_operation_deadline"):
+                service.run(["fixed-command"], timeout=60)
+            run.assert_not_called()
+
+    def test_foreign_container_is_never_stopped_or_removed(self):
+        mutations = (
+            lambda value: value.update(Id="d" * 64),
+            lambda value: value.update(Name="/foreign"),
+            lambda value: value["Config"]["Labels"].update({"io.llm-image.owner": "foreign"}),
+            lambda value: value["Config"]["Labels"].update({"io.llm-image.invocation": "d" * 32}),
+            lambda value: value["Config"]["Labels"].update({"io.llm-image.gpu": "GPU-foreign"}),
+            lambda value: value["HostConfig"]["DeviceRequests"][0].update(DeviceIDs=["GPU-foreign"]),
+            lambda value: value["HostConfig"].update(Privileged=True),
+            lambda value: value["HostConfig"].update(Devices=[{"PathOnHost": "/dev/nvidia0"}]),
+            lambda value: value["HostConfig"].update(DeviceCgroupRules=["c 195:* rwm"]),
+            lambda value: value["HostConfig"]["DeviceRequests"][0].update(Count=-1),
+            lambda value: value["Config"]["Env"].append("NVIDIA_VISIBLE_DEVICES=all"),
+            lambda value: value.update(Mounts=[{"Source": "/", "Destination": "/host"}]),
+            lambda value: value["HostConfig"].update(NetworkMode="host"),
+            lambda value: value["HostConfig"].update(PortBindings={"30007/tcp": [{"HostIp": "0.0.0.0", "HostPort": "30007"}]}),
+            lambda value: value["HostConfig"]["PortBindings"].update({"30008/tcp": [{"HostIp": "127.0.0.1", "HostPort": "30008"}]}),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate):
+                runtime = self.runtime()
+                runtime.guards = Mock()
+                runtime.state = Mock(return_value=owned_state())
+                runtime.save = Mock()
+                value = owned_container()
+                mutate(value)
+                with patch.object(service, "run", return_value=completed([], json.dumps([value]))) as run:
+                    with self.assertRaisesRegex(RuntimeError, "owned_backend_(identity|policy)_mismatch"):
+                        runtime.settle_native(owned_state(), remove=True)
+                self.assertEqual([call.args[0] for call in run.call_args_list], [["docker", "inspect", CID]])
+                runtime.save.assert_not_called()
+
+    def test_ada_idle_gate_queries_only_ada_and_rejects_existing_process(self):
+        runtime = self.runtime()
+        expected = ['nvidia-smi', '--id=' + service.GPU_UUID, '--query-compute-apps=gpu_uuid,pid',
+                    '--format=csv,noheader,nounits']
+        for rows, allowed in (("\n", True), (service.GPU_UUID + ", 8\n", False)):
+            def target_only(argv, *, timeout):
+                if argv != expected:
+                    raise subprocess.TimeoutExpired('synthetic-unassigned-gpu-failed', timeout)
+                self.assertEqual(timeout, 5)
+                return completed(argv, rows)
+            with self.subTest(rows=rows), patch.object(service, "run", side_effect=target_only) as run:
+                if allowed:
+                    runtime.require_ada_idle()
+                else:
+                    with self.assertRaisesRegex(RuntimeError, "ada_compute_process_already_present"):
+                        runtime.require_ada_idle()
+                run.assert_called_once_with(expected, timeout=5)
+
+    def test_ada_idle_gate_rejects_malformed_or_ambiguous_target_process_proof(self):
+        runtime = self.runtime()
+        uuid = service.GPU_UUID
+        for output in ('GPU-text, 7\n', uuid, uuid + ', N/A', uuid + ', -1', uuid + ', 0',
+                       uuid + ', 7, extra', uuid + ', ٧', (uuid + ', 7\n') * 2, 'x' * 65537):
+            with self.subTest(output=output[:100]), patch.object(service, 'run', return_value=completed([], output)):
+                with self.assertRaisesRegex(RuntimeError, 'ada_process_inventory_invalid'):
+                    runtime.require_ada_idle()
+        with patch.object(service, 'run', side_effect=RuntimeError('owned_command_failed')) as run:
+            with self.assertRaisesRegex(RuntimeError, 'owned_command_failed'):
+                runtime.require_ada_idle()
+            self.assertEqual(run.call_count, 1)
+
+    def test_sampler_hang_kills_only_exact_child_and_returns(self):
+        sampler = Mock()
+        sampler.poll.return_value = None
+        sampler.wait.side_effect = [subprocess.TimeoutExpired("sampler", 5), -9]
+        self.assertEqual(service.settle_sampler(sampler), -9)
+        sampler.send_signal.assert_called_once_with(signal.SIGTERM)
+        sampler.kill.assert_called_once_with()
+        self.assertEqual([call.kwargs["timeout"] for call in sampler.wait.call_args_list], [5, 2])
+
+    def test_sampler_still_unsettled_is_a_result_not_an_exception(self):
+        sampler = Mock()
+        sampler.poll.return_value = None
+        sampler.wait.side_effect = [subprocess.TimeoutExpired("sampler", 5),
+                                    subprocess.TimeoutExpired("sampler", 2)]
+        self.assertEqual(service.settle_sampler(sampler), "sampler_unsettled")
+
+    # Parent/child recovery, foreign-generation refusal and admission failure
+    # are exercised through the operation protocol in test_recovery_admission.
+
+    def test_warm_failure_stops_backend_even_when_sampler_is_unsettled(self):
+        runtime = self.runtime()
+        state = {"container": None, "phase": "absent"}
+        runtime.expected_state = state
+        runtime.critical = lambda **kwargs: contextlib.nullcontext()
+        runtime.native_generation = lambda value: {"StartedAt": "fixture", "Pid": 42}
+        for method in ("guards", "require_hardware", "check_ports", "check_network", "require_ada_idle", "host_headroom", "make_work"):
+            setattr(runtime, method, Mock())
+        runtime.state = Mock(return_value=state)
+        stopped = [False]
+        def inspect(state, **kwargs):
+            if not state.get("container"):
+                return None
+            value = owned_container()
+            value["State"].update(StartedAt="fixture", Pid=0 if stopped[0] else 42, Running=not stopped[0])
+            return value
+        runtime.inspect_owned = Mock(side_effect=inspect)
+        runtime.current_device = Mock(return_value={"total_bytes": 50 * 1024**3, "free_bytes": 49 * 1024**3})
+        runtime.save = Mock()
+        runtime.create_argv = Mock(return_value=["docker", "create", "fixed-owned-fixture"])
+        runtime.native_health = Mock(return_value=True)
+        runtime.tmp_snapshot = Mock(return_value={"entries": []})
+        output = Mock()
+        output.fileno.return_value = 987
+        anchored = Mock()
+        anchored.open.return_value = contextlib.nullcontext(output)
+        runtime.anchor = Mock(side_effect=lambda: contextlib.nullcontext(anchored))
+        sampler = Mock()
+        sampler.poll.return_value = None
+        calls = []
+        def run(argv, **_kwargs):
+            calls.append(argv)
+            if argv[:2] == ["docker", "create"]:
+                return completed(argv, CID)
+            if argv[:2] == ["docker", "stop"]:
+                stopped[0] = True
+            if argv[:2] == ["docker", "exec"]:
+                raise subprocess.TimeoutExpired(argv, 1)
+            return completed(argv)
+        with patch.dict(service.os.environ, {"INVOCATION_ID": RUN_ID}), \
+                patch.object(service, "OPERATION_DEADLINE", service.time.monotonic() + 775), \
+                patch.object(service, "SETTLEMENT_DEADLINE", service.time.monotonic() + 835), \
+                patch.object(service, "run", side_effect=run), \
+                patch.object(service.time, "sleep"), \
+                patch.object(service.subprocess, "Popen", return_value=sampler), \
+                patch.object(service, "settle_sampler", return_value="sampler_unsettled"):
+            with self.assertRaises(subprocess.TimeoutExpired):
+                runtime.start()
+        self.assertIn(["docker", "stop", "--time", "30", CID], calls)
+        state = runtime.expected_state
+        self.assertEqual(state["phase"], "failed")
+        self.assertFalse(state["warm"])
+        self.assertEqual(state["cleanup"]["sampler"], "sampler_unsettled")
+
+
+if __name__ == "__main__":
+    unittest.main()

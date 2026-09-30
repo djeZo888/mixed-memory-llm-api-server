@@ -1,0 +1,10 @@
+{
+  "utc_authority": "2026-09-28T00:39:00Z",
+  "root": "FINAL GO",
+  "W2": "PASS00:38:45; exact owner + original shared policy; production cycle+5 with4.99s spent; swallowed alarm rejected13.85ms; one protected read/no lease/no write",
+  "owner_sha256": "218c890f1f3d8f7f80998aaf5cf7463c32febf5e454713f40da76a9ed60027d0",
+  "shared_policy_sha256": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+  "shared_deployment": false,
+  "one_load": true,
+  "hard_end_utc": "2026-09-28T01:00:00Z"
+}

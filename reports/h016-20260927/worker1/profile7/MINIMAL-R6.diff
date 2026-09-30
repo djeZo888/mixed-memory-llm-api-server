@@ -1,0 +1,766 @@
+--- r5/LAUNCH.json
++++ r6/LAUNCH.json
+@@ -84 +84 @@
+-  "benchmark_max_output": 256,
++  "benchmark_max_output": 128,
+@@ -86,4 +86,11 @@
+-  "native_load_timeout_seconds": 1800,
+-  "admission_end_utc": "2026-09-27T13:25:00Z",
+-  "request_end_utc": "2026-09-27T13:40:00Z",
+-  "first4k_only": true
++  "native_load_timeout_seconds": 1200,
++  "admission_end_utc": "2026-09-27T15:15:00Z",
++  "request_end_utc": "2026-09-27T15:35:00Z",
++  "global_end_utc": "2026-09-27T15:48:08Z",
++  "baseline_only": false,
++  "memory_cap_gib": 704,
++  "profile_pair_only": true,
++  "discarded_warmup_output": 8,
++  "fixture_seed": 270927,
++  "fixture_temperature": 0,
++  "fixture_thinking": false
+--- r5/benchmark.py
++++ r6/benchmark.py
+@@ -1 +1,2 @@
+-"""Serial native H016 acceptance, discarded representative warmup and first 4K."""
++"""Task-only H016 R6 short decode baseline; existing streaming capturer retained."""
++import base64
+@@ -79 +80 @@
+-    row = {'label': label, 'started_utc': h.now(), 'expected_input_tokens': expected, 'request_sha256': hashlib.sha256(raw).hexdigest(), 'thinking': payload['chat_template_kwargs']['enable_thinking'], 'output_budget': payload['max_tokens'], 'status': 'SUBMITTED'}
++    row = {'label': label, 'started_utc': h.now(), 'started_monotonic_seconds': start, 'raw_chunks': [], 'expected_input_tokens': expected, 'request_sha256': hashlib.sha256(raw).hexdigest(), 'thinking': payload['chat_template_kwargs']['enable_thinking'], 'output_budget': payload['max_tokens'], 'status': 'SUBMITTED'}
+@@ -84,0 +86 @@
++        row['request_sent_monotonic_seconds'] = time.monotonic()
+@@ -96,0 +99,2 @@
++            received = time.monotonic()
++            row['raw_chunks'].append({'monotonic_seconds': received, 'elapsed_seconds': received - start, 'bytes': len(chunk), 'base64': base64.b64encode(chunk).decode('ascii')})
+@@ -115 +119,3 @@
+-                        row.setdefault('ttft_seconds', time.monotonic() - start)
++                        row.setdefault('ttft_seconds', received - start)
++                        row.setdefault('first_output_monotonic_seconds', received)
++                        row['last_output_monotonic_seconds'] = received
+@@ -128,0 +135 @@
++        row['drained_monotonic_seconds'] = time.monotonic()
+@@ -141,29 +148,9 @@
+-    # Private production roster: shape and canonical native count only, no 65536-token generation.
+-    from private_proxy import normalize
+-    raw_fixture = pathlib.Path(BASE, 'mimo-production-fixture-65536.json').read_bytes()
+-    h.require(hashlib.sha256(raw_fixture).hexdigest() == '2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78', 'production_fixture_file_identity')
+-    fixture_body = json.loads(raw_fixture)['canonicalBody']
+-    normalize(fixture_body)
+-    canonical = json.dumps(fixture_body, separators=(',', ':'), ensure_ascii=False).encode()
+-    tools = json.dumps(fixture_body['tools'], separators=(',', ':'), ensure_ascii=False).encode()
+-    h.require(hashlib.sha256(canonical).hexdigest() == 'c85d504741f038c1a0f150fdb59657a661ed38330958daab2b3f93f293e1e41b' and hashlib.sha256(tools).hexdigest() == '80e7a1e12e073ac57638e86638cf571158711ff821c96605135627777ce44e8c' and len(fixture_body['tools']) == 17, 'production_fixture_canonical_identity')
+-    tokens, _ = count(key, fixture_body)
+-    h.require(tokens + fixture_body['max_tokens'] <= 131071, 'production_fixture_count_capacity')
+-    save(h, 'PRODUCTION17-COUNT.json', {'status': 'SHAPE_AND_NATIVE_COUNT_ONLY', 'input_tokens': tokens, 'output_ceiling': 65536, 'tools': 17, 'generated_tokens': 0, 'body_sha256': hashlib.sha256(canonical).hexdigest(), 'native_tool_qualification': False})
+-    for thinking in [False, True]:
+-        row = request(h, key, body('Compute 17*19. Give only the integer.', thinking=thinking, output=2048 if thinking else 256), 'TEXT-' + str(thinking), failed)
+-        correct = row['finish_reason'] == 'stop' and row['content'].strip() == '323'
+-        row['correctness'] = 'PASS' if correct else 'FAIL_OR_TRUNCATED'
+-        save(h, 'TEXT-' + str(thinking) + '.json', row)
+-        h.require(correct, 'thinking_text_correctness_failed')
+-    tool = body('Call multiply with a=17,b=19, then report the tool result. Do not calculate without calling it.', output=2048)
+-    tool['tools'] = [{'type': 'function', 'function': {'name': 'multiply', 'description': 'Multiply two integers', 'strict': True, 'parameters': {'type': 'object', 'properties': {'a': {'type': 'integer'}, 'b': {'type': 'integer'}}, 'required': ['a', 'b'], 'additionalProperties': False}}}]
+-    row = request(h, key, tool, 'TOOL-CALL', failed)
+-    h.require(row['finish_reason'] == 'tool_calls' and len(row['tool_calls']) == 1, 'auto_tool_not_complete')
+-    call = row['tool_calls'][0]
+-    h.require(call['function']['name'] == 'multiply' and json.loads(call['function']['arguments']) == {'a': 17, 'b': 19}, 'tool_arguments_incorrect')
+-    tool['messages'] += [{'role': 'assistant', 'content': row['content'] or None, 'reasoning_content': row['reasoning_content'], 'tool_calls': row['tool_calls']}, {'role': 'tool', 'tool_call_id': call['id'], 'content': '323'}]
+-    row = request(h, key, tool, 'TOOL-CONTINUATION', failed)
+-    h.require(row['finish_reason'] == 'stop' and '323' in row['content'] and not row['tool_calls'], 'tool_continuation_incorrect')
+-    warm, _, _ = fixture(key, 4096, 'warm-' + h.now())
+-    request(h, key, warm, 'WARM4K-DISCARDED', failed)
++    # Root-authorized paired decode fixture. No quality/context/tool ladder.
++    from profile_activity import Activity, boundary
++    from profile_perf import Perf
++    warm = body('In one sentence, state the purpose of a pull-up resistor on an open-drain digital signal.',
++                thinking=False, output=8)
++    warm['seed'] = 270927
++    row = request(h, key, warm, 'WARM-TINY-DISCARDED', failed)
++    row.update(measurement_role='DISCARDED_TINY_WARMUP', correctness='UNSCORED')
++    save(h, 'WARM-TINY-DISCARDED.json', row)
+@@ -171,9 +158,30 @@
+-    save(h, 'POST-WARM-PLACEMENT.json', bounded_placement(state['native_pid']))
+-    test, _, codes = fixture(key, 4096, 'measured-' + h.now())
+-    row = request(h, key, test, 'BENCH4096', failed)
+-    row['correctness'] = 'PASS' if row['finish_reason'] == 'stop' and all(code in row['content'] for code in codes + ['323', '4095']) else 'FAIL_OR_TRUNCATED'
+-    row['warmth_limit'] = 'One discarded varied technical4K; expert coverage and full537.997GiB residency/page warmth unproven. See faults/cache/NUMA telemetry.'
+-    row['later_duration_planning_only_seconds'] = {str(n): row['total_seconds'] * n / 4096 for n in [16384, 65536]}
+-    row['projection_limit'] = 'Linear planning estimate from one4K; not measured throughput or quality, may be optimistic with context-dependent attention.'
+-    save(h, 'BENCH4096.json', row)  # Immediate checkpoint before root decides later admission.
+-    h.require(row['correctness'] == 'PASS', 'first4k_correctness_failed')
++    for label, tag, profiled in [('BASELINE128', 'A', False), ('PROFILE128', 'B', True)]:
++        payload = body('Scientific technical fixture ' + tag + '. Explain how a successive-approximation ADC samples a sensor signal. '
++                       'Write at least 800 words covering sample-and-hold, binary search, quantization error, reference voltage, '
++                       'source impedance, settling time, aliasing, and anti-alias filtering. Continue in detailed numbered paragraphs '
++                       'without an introduction or early conclusion until the response limit.', thinking=False, output=128)
++        payload['seed'] = 270927
++        before = boundary(state['native_pid'], state['native_cgroup'])
++        activity = Activity(state['native_pid'], state['native_cgroup']).start() if profiled else None
++        profiler = Perf(h, state['native_pid'], LOG).start() if profiled else None
++        try:
++            if profiler and not profiler.available():
++                save(h, label + '.json', {'status': 'NOT_RUN_PROFILERS_UNAVAILABLE', 'reason': 'Both CPU collectors exited before request; no blind second request.'})
++                continue
++            row = request(h, key, payload, label, failed)
++        finally:
++            after = boundary(state['native_pid'], state['native_cgroup'])
++            if profiler:
++                save(h, label + '-PERF.json', profiler.finish())
++            if activity:
++                save(h, label + '-ACTIVITY.json', activity.finish())
++            save(h, label + '-BOUNDARIES.json', {'before': before, 'after': after})
++        row.update(measurement_role='PROFILED_COMPARISON' if profiled else 'UNPROFILED_BASELINE',
++                   profiler_overhead='INCLUDED_IN_PROFILED_WALL_TIME' if profiled else 'NONE_OPTIONAL_PROFILERS_DISABLED',
++                   correctness='UNSCORED_NOT_A_QUALITY_TEST', seed=270927,
++                   output_ceiling_reached=row['usage']['completion_tokens'] == 128,
++                   sample_status='CEILING_SAMPLE' if row['usage']['completion_tokens'] == 128 else 'EARLY_STOP_SAMPLE_NO_RETRY',
++                   warmth_limit='Tiny representative discarded warmup; later request has additional baseline warming. Not a randomized overhead study.',
++                   host_dram_gb_s={'status': 'UNAVAILABLE', 'reason': 'Guest exposes no AMD UMC/uncore memory-controller PMU.'},
++                   gpu_vram_gb_s={'status': 'UNAVAILABLE', 'reason': 'No qualified byte counter collector; activity percent and PCIe throughput are not VRAM bandwidth.'})
++        save(h, label + '.json', row)
+--- r5/candidate_owner.py
++++ r6/candidate_owner.py
+@@ -20,2 +20,2 @@
+-BASE = '/data/build/H016-20260927/worker1-r5'
+-NAME = 'llm-h016-mimo-pro-r5'
++BASE = '/data/build/H016-20260927/worker1-r6'
++NAME = 'llm-h016-mimo-pro-r6'
+@@ -28,2 +28,2 @@
+-ADMIT_END = datetime.datetime(2026, 9, 27, 13, 25, tzinfo=datetime.timezone.utc).timestamp()
+-HARD_END = datetime.datetime(2026, 9, 27, 13, 40, tzinfo=datetime.timezone.utc).timestamp()
++ADMIT_END = datetime.datetime(2026, 9, 27, 15, 15, tzinfo=datetime.timezone.utc).timestamp()
++HARD_END = datetime.datetime(2026, 9, 27, 15, 35, tzinfo=datetime.timezone.utc).timestamp()
+@@ -81,0 +82,36 @@
++def require_r5_settled(h):
++    """Exact predecessor proof; never stop, extend, or adopt R5 here."""
++    old_log = P('/data/logs/H016-20260927/worker1-r5')
++    old = json.loads((old_log / 'OWNER.json').read_text())
++    cid = 'c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308'
++    h.require(old['candidate_id'] == cid and old['native_pid'] == 2782009 and
++              old['native_started_at'] == '2026-09-27T12:37:37.213589148Z', 'r5_identity_changed')
++    h.require(old['status'] == 'SETTLED_GLM_RESTORED' and not old['glm_suppressed'] and
++              old.get('glm_restored_utc') and all(old['native_settled'][k] is True
++              for k in ['pid_zero', 'cgroup_empty', 'gpu_compute_empty']), 'r5_not_normally_settled')
++    c = inspect(cid)
++    h.require(c['Id'] == cid and c['Image'] == IMAGE and not c['State']['Running'] and
++              c['State']['Pid'] == 0 and c['State']['StartedAt'] == old['native_started_at'], 'r5_native_not_settled')
++    for unit in ['h016-mimo-initial-20260927-r5.service', 'h016-mimo-single64k-20260927-r5.service']:
++        props = dict(x.split('=', 1) for x in run_cmd(['systemctl', 'show', unit, '-p',
++                         'MainPID,ControlPID,ActiveState']).splitlines())
++        h.require(props.get('MainPID') == props.get('ControlPID') == '0' and
++                  props.get('ActiveState') in ['inactive', 'failed'], 'r5_owner_or_client_active')
++        h.require(not P('/sys/fs/cgroup/system.slice', unit).exists(), 'r5_unit_cgroup_present')
++    h.require(not P(old['native_cgroup']).exists() and not P('/proc/2782009').exists() and
++              not P('/proc/3254477').exists(), 'r5_process_or_cgroup_present')
++
++
++def capture_native_log(h, state, label):
++    """Retain every emitted log line privately; never filter backend selection."""
++    if not state.get('candidate_id'):
++        return
++    result = subprocess.run(['docker', 'logs', '--timestamps', state['candidate_id']],
++                            stdout=subprocess.PIPE, stderr=subprocess.STDOUT, timeout=15)
++    raw = result.stdout
++    h.require(result.returncode == 0, 'native_log_capture_failed')
++    save(h, label + '.json', {'utc': h.now(), 'container_id': state['candidate_id'],
++         'sha256': hashlib.sha256(raw).hexdigest(), 'bytes': len(raw),
++         'unfiltered': True, 'text': raw.decode('utf-8', errors='replace')})
++
++
+@@ -82,0 +119 @@
++    require_r5_settled(h)
+@@ -256 +293,2 @@
+-        h.require(limit >= 560 * 1024**3, 'candidate_host_budget_insufficient')
++        h.require(limit >= 704 * 1024**3, 'candidate_host_budget_insufficient_for_fixed_704gib')
++        limit = 704 * 1024**3
+@@ -301,0 +340 @@
++        capture_native_log(h, state, 'NATIVE-STARTUP-FULL')
+@@ -310 +349 @@
+-        state.update(status='QUALIFIED_FIRST4K_WARM_AWAIT_ROOT_NEXT_STAGE', first4k_done_utc=h.now())
++        state.update(status='PROFILE_BASELINE_COMPLETE_WARM_AWAIT_ROOT', baseline_done_utc=h.now())
+@@ -325 +364,4 @@
+-        cleanup_proxy_and_settle(h, proxy)
++        try:
++            cleanup_proxy_and_settle(h, proxy)
++        finally:
++            capture_native_log(h, state, 'NATIVE-FINAL-FULL')
+--- /dev/null
++++ r6/launch_r6.py
+@@ -0,0 +1,47 @@
++#!/usr/bin/env python3
++"""Exact R6 systemd dispatch; --run only after direct root GO for this packet."""
++import argparse
++import json
++import pathlib
++import subprocess
++import time
++from candidate_owner import BASE, LOG, HARD_END, ADMIT_END, preflight, save, run_cmd
++from verify_retained import dependency
++
++
++def main(run=False):
++    h = dependency()
++    h.require(time.time() + 1500 < ADMIT_END, 'insufficient_load_and_pair_window')
++    cfg, proof = preflight(h)
++    unit = 'h016-mimo-profile-20260927-r6.service'
++    h.require(run_cmd(['systemctl', 'show', unit, '-p', 'LoadState', '--value']).strip() == 'not-found', 'r6_unit_exists_no_replay')
++    remaining = int(HARD_END - time.time())
++    argv = ['systemd-run', '--unit=' + unit, '--property=Type=exec', '--property=Restart=no',
++            '--property=RuntimeMaxSec=' + str(remaining), '--property=TimeoutStopSec=420',
++            '--property=KillMode=mixed', '--property=UMask=0077',
++            '--property=WorkingDirectory=' + BASE, '--property=StandardOutput=null', '--property=StandardError=null',
++            '--property=ExecStopPost=/usr/bin/python3 -B ' + BASE + '/candidate_owner.py --settle',
++            '/usr/bin/python3', '-B', BASE + '/candidate_owner.py', '--run']
++    receipt = {'utc': h.now(), 'status': 'REVIEWED_PREFLIGHT_NO_DISPATCH', 'unit': unit,
++               'command': argv, 'native_argv': cfg['native_argv'], 'proof': proof,
++               'source_hashes': json.loads(pathlib.Path(BASE, 'SOURCE-SHA256.json').read_text()),
++               'admission_end_utc': cfg['admission_end_utc'], 'settlement_utc': cfg['request_end_utc'],
++               'global_end_utc': cfg['global_end_utc'], 'no_inference_dispatched_by_launcher': True}
++    if run:
++        save(h, 'INITIAL-LAUNCH.json', receipt)
++        # All parent preflight/save transactions are closed. The independent
++        # child performs its authoritative preflight and lease acquisition.
++        subprocess.run(argv, check=True, stdout=subprocess.DEVNULL, timeout=10)
++        receipt['status'] = 'SYSTEMD_DISPATCHED_READBACK_REQUIRED'
++        receipt['unit_readback'] = run_cmd(['systemctl', 'show', unit, '-p',
++            'MainPID,InvocationID,ExecMainStartTimestamp,ActiveState,SubState,ControlGroup,RuntimeMaxUSec,TimeoutStopUSec'])
++        save(h, 'INITIAL-LAUNCH.json', receipt)
++    print(json.dumps(receipt))
++
++
++if __name__ == '__main__':
++    p = argparse.ArgumentParser(description=__doc__)
++    p.add_argument('--run', action='store_true')
++    p.add_argument('--dry-run', action='store_true')
++    a = p.parse_args()
++    main(run=a.run and not a.dry_run)
+--- r5/private_proxy.py
++++ r6/private_proxy.py
+@@ -114 +114 @@
+-            if chat and now >= datetime.datetime(2026, 9, 27, 13, 25, tzinfo=datetime.timezone.utc).timestamp():
++            if chat and now >= datetime.datetime(2026, 9, 27, 15, 15, tzinfo=datetime.timezone.utc).timestamp():
+@@ -116 +116 @@
+-            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 13, 40, tzinfo=datetime.timezone.utc).timestamp())
++            deadline = min(now + 7200, datetime.datetime(2026, 9, 27, 15, 35, tzinfo=datetime.timezone.utc).timestamp())
+--- /dev/null
++++ r6/profile_activity.py
+@@ -0,0 +1,198 @@
++"""Optional R6 request activity; buffered counters, never a safety guard."""
++import datetime
++import os
++import pathlib
++import subprocess
++import threading
++import time
++
++GPU_ARGV = ['nvidia-smi', 'dmon', '-i', 'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
++            '-s', 'ut', '-d', '5', '-c', '240', '-o', 'DT']
++
++
++def boundary(pid, cgroup):
++    """One cheap optional boundary snapshot; no sampler or GPU command starts."""
++    activity = Activity(pid, cgroup)
++    try:
++        activity._sample('boundary')
++        return {'status': 'AVAILABLE', 'clock_ticks_per_second': os.sysconf('SC_CLK_TCK'),
++                **activity.samples[0]}
++    except Exception as exc:
++        return {'status': 'UNAVAILABLE', 'reason': type(exc).__name__}
++
++
++class Activity:
++    """Call start before the request, finish after full drain; save at boundary."""
++
++    def __init__(self, pid, cgroup):
++        self.pid = int(pid)
++        self.proc = pathlib.Path('/proc', str(self.pid))
++        self.cgroup = pathlib.Path(cgroup)
++        self.samples = []
++        self.identity = None
++        self.error = None
++        self.stop = threading.Event()
++        self.ready = threading.Event()
++        self.thread = threading.Thread(target=self._run, daemon=True)
++        self.gpu = None
++        self.gpu_thread = None
++        self.gpu_chunks = []
++        self.gpu_error = None
++        self.gpu_started_utc = None
++
++    def _gpu_drain(self):
++        size = 0
++        try:
++            while True:
++                chunk = self.gpu.stdout.read1(65536)
++                if not chunk:
++                    break
++                size += len(chunk)
++                if size > 1024 * 1024:
++                    self.gpu_error = 'optional_dmon_output_bound'
++                    self.gpu.terminate()
++                    break
++                self.gpu_chunks.append(chunk)
++        except Exception as exc:
++            self.gpu_error = type(exc).__name__
++
++    def _gpu_finish(self):
++        if self.gpu is not None and self.gpu.poll() is None:
++            try:
++                self.gpu.terminate()
++                self.gpu.wait(timeout=1)
++            except subprocess.TimeoutExpired:
++                try:
++                    self.gpu.kill()
++                    self.gpu.wait(timeout=1)
++                except subprocess.TimeoutExpired:
++                    self.gpu_error = 'optional_dmon_unsettled'
++            except OSError as exc:
++                self.gpu_error = type(exc).__name__
++        if self.gpu_thread is not None:
++            self.gpu_thread.join(timeout=1)
++        settled = self.gpu is not None and self.gpu.poll() is not None
++        drained = self.gpu_thread is not None and not self.gpu_thread.is_alive()
++        if drained:
++            self.gpu.stdout.close()
++        raw = b''.join(list(self.gpu_chunks)).decode(errors='replace')
++        lines = [line for line in raw.splitlines() if line.strip() and not line.lstrip().startswith('#')]
++        unsupported = any(token in {'-', 'N/A'} for line in lines for token in line.split())
++        reason = self.gpu_error
++        if not reason and (not settled or not drained):
++            reason = 'optional_dmon_not_settled_and_drained'
++        if not reason and not lines:
++            reason = 'optional_dmon_no_samples'
++        if not reason and unsupported:
++            reason = 'unsupported_fields_in_raw_dmon'
++        if not reason and self.gpu.returncode not in [0, -15, -9]:
++            reason = 'optional_dmon_nonzero_exit'
++        return {'status': 'UNAVAILABLE' if reason else 'AVAILABLE', 'reason': reason,
++                'argv': GPU_ARGV, 'pid': self.gpu.pid if self.gpu else None,
++                'started_utc': self.gpu_started_utc,
++                'finished_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
++                'exit_code': self.gpu.returncode if self.gpu else None,
++                'sampler_settled': settled, 'pipe_drained': drained, 'raw': raw,
++                'scope': 'Utilization and PCIe Rx/Tx only; retain emitted units and local date/time exactly. PCIe throughput is not GPU VRAM bandwidth.'}
++
++    def _sample(self, phase):
++        # stat field 22 (starttime) distinguishes reuse of the same numeric PID.
++        fields = (self.proc / 'stat').read_text().rsplit(')', 1)[1].split()
++        identity = {'pid': self.pid, 'start_ticks': int(fields[19])}
++        if self.identity is None:
++            self.identity = identity
++        elif identity != self.identity:
++            raise RuntimeError('native_generation_changed')
++        row = {
++            'utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
++            'monotonic_seconds': time.monotonic(),
++            'phase': phase,
++            'native_identity': identity,
++            'process': {
++                'utime_ticks': int(fields[11]), 'stime_ticks': int(fields[12]),
++                'minor_faults': int(fields[7]), 'major_faults': int(fields[9]),
++                'io': {key.rstrip(':'): int(value) for key, value in
++                       (line.split() for line in (self.proc / 'io').read_text().splitlines())},
++            },
++            'cgroup': {},
++        }
++        for name in ['cpu.stat', 'memory.events']:
++            row['cgroup'][name] = {key: int(value) for key, value in
++                                   (line.split() for line in (self.cgroup / name).read_text().splitlines())}
++        for name in ['memory.current', 'memory.swap.current']:
++            row['cgroup'][name] = int((self.cgroup / name).read_text())
++        row['cgroup']['io.stat'] = {
++            fields[0]: {key: int(value) for key, value in
++                        (entry.split('=', 1) for entry in fields[1:])}
++            for fields in (line.split() for line in (self.cgroup / 'io.stat').read_text().splitlines())
++            if fields
++        }
++        # Recheck after the group of reads; never combine two process generations.
++        after = (self.proc / 'stat').read_text().rsplit(')', 1)[1].split()
++        if int(after[19]) != identity['start_ticks']:
++            raise RuntimeError('native_generation_changed')
++        row['sample_end_monotonic_seconds'] = time.monotonic()
++        self.samples.append(row)
++
++    def _run(self):
++        try:
++            self._sample('before')
++            self.ready.set()
++            while not self.stop.wait(1):
++                if len(self.samples) >= 1200:
++                    raise RuntimeError('optional_sampling_limit_1200')
++                self._sample('periodic')
++            self._sample('after')
++        except Exception as exc:
++            self.error = str(exc) if isinstance(exc, RuntimeError) else type(exc).__name__
++        finally:
++            self.ready.set()
++
++    def start(self):
++        try:
++            self.thread.start()
++            if not self.ready.wait(1):
++                self.error = 'optional_first_sample_timeout'
++                self.stop.set()
++        except Exception as exc:
++            self.error = type(exc).__name__
++            self.ready.set()
++        try:
++            self.gpu = subprocess.Popen(GPU_ARGV, stdout=subprocess.PIPE,
++                                        stderr=subprocess.STDOUT)
++            self.gpu_started_utc = datetime.datetime.now(datetime.timezone.utc).isoformat()
++            self.gpu_thread = threading.Thread(target=self._gpu_drain, daemon=True)
++            self.gpu_thread.start()
++        except Exception as exc:
++            self.gpu_error = type(exc).__name__
++        return self
++
++    def finish(self):
++        self.stop.set()
++        if self.thread.ident is not None:
++            self.thread.join(timeout=2)
++        alive = self.thread.is_alive()
++        samples = list(self.samples)
++        reason = 'optional_sampler_still_running' if alive else self.error
++        try:
++            gpu = self._gpu_finish()
++        except Exception as exc:
++            gpu = {'status': 'UNAVAILABLE', 'reason': type(exc).__name__,
++                   'argv': GPU_ARGV, 'pid': self.gpu.pid if self.gpu else None,
++                   'sampler_settled': self.gpu is not None and self.gpu.poll() is not None,
++                   'raw': b''.join(list(self.gpu_chunks)).decode(errors='replace')}
++        return {
++            'status': 'UNAVAILABLE' if reason else 'AVAILABLE',
++            'reason': reason,
++            'native_identity': self.identity,
++            'clock_ticks_per_second': os.sysconf('SC_CLK_TCK'),
++            'period_seconds': 1,
++            'sampler_settled': not alive,
++            'before': samples[0] if samples else None,
++            'after': samples[-1] if samples and samples[-1]['phase'] == 'after' else None,
++            'samples': samples,
++            'scope': 'Native process CPU/fault/I/O and container counters; not host DRAM or GPU VRAM bandwidth.',
++            'host_dram_gb_s': {'status': 'UNAVAILABLE', 'reason': 'No approved actual host memory-controller counter fixture.'},
++            'gpu_vram_gb_s': {'status': 'UNAVAILABLE', 'reason': 'No approved actual GPU memory-byte counter fixture.'},
++            'gpu_activity_pcie': gpu,
++        }
+--- /dev/null
++++ r6/profile_perf.py
+@@ -0,0 +1,156 @@
++"""Optional, root-reviewed R6 CPU profiling of the second short decode only."""
++import contextlib
++import datetime
++import os
++import signal
++import subprocess
++import threading
++import time
++
++EVENTS = 'task-clock,context-switches,cpu-migrations,page-faults,cycles,instructions,cache-references,cache-misses'
++
++
++class Perf:
++    def __init__(self, h, pid, log):
++        self.h, self.pid, self.log = h, int(pid), log
++        self.stack = contextlib.ExitStack()
++        self.children = []
++        self.error = None
++        self.timer = None
++        self.file = None
++        self.lock = threading.Lock()
++        self.started = None
++
++    def _drain(self, item):
++        try:
++            size = 0
++            while True:
++                chunk = item['process'].stderr.read1(65536)
++                if not chunk:
++                    return
++                size += len(chunk)
++                if size > 1024 * 1024:
++                    item['error'] = 'stderr_bound'
++                    item['process'].send_signal(signal.SIGINT)
++                    return
++                item['chunks'].append(chunk)
++        except Exception as exc:
++            item['error'] = type(exc).__name__
++
++    def _launch(self, name, argv, fds=()):
++        p = subprocess.Popen(argv, stdout=subprocess.DEVNULL, stderr=subprocess.PIPE,
++                             pass_fds=fds)
++        item = {'name': name, 'argv': argv, 'process': p, 'chunks': [], 'error': None}
++        self.children.append(item)
++        item['thread'] = threading.Thread(target=self._drain, args=(item,), daemon=True)
++        item['thread'].start()
++
++    def _stop(self):
++        with self.lock:
++            # Signal all exact children before bounded waits; never signal native PID.
++            for item in self.children:
++                p = item['process']
++                if p.poll() is None:
++                    try:
++                        p.send_signal(signal.SIGINT)
++                    except ProcessLookupError:
++                        pass
++                    except OSError as exc:
++                        item['error'] = type(exc).__name__
++            for item in self.children:
++                p = item['process']
++                try:
++                    p.wait(timeout=2)
++                except subprocess.TimeoutExpired:
++                    try:
++                        p.kill()
++                    except ProcessLookupError:
++                        pass
++                    except OSError as exc:
++                        item['error'] = type(exc).__name__
++                    try:
++                        p.wait(timeout=1)
++                    except subprocess.TimeoutExpired:
++                        item['error'] = 'profiler_child_unsettled'
++                except OSError as exc:
++                    item['error'] = type(exc).__name__
++
++    def start(self):
++        self.started = datetime.datetime.now(datetime.timezone.utc).isoformat()
++        try:
++            # Boundary transaction ends before any profiler starts.
++            with self.h.transaction():
++                self.h.s.root_payload_guard()
++            guard = self.stack.enter_context(self.h.MountedStorageGuard(self.h.s))
++            anchor = self.stack.enter_context(self.h.AnchoredRoot(self.log, guard))
++            self.file = self.stack.enter_context(anchor.open('PROFILE128-perf.data',
++                        os.O_RDWR | os.O_CREAT | os.O_EXCL))
++            fd = self.file.fileno()
++            # The systemd owner is already root. No sudo helper or permission changes.
++            self.timer = threading.Timer(240, self._stop)
++            self.timer.daemon = True
++            self.timer.start()
++            self._launch('stat', ['perf', 'stat', '-p', str(self.pid), '-e', EVENTS])
++            self._launch('record', ['perf', 'record', '-F', '49', '-e', 'cpu-clock',
++                         '--call-graph', 'fp', '-p', str(self.pid), '-B', '-N',
++                         '-o', '/proc/self/fd/' + str(fd)], (fd,))
++            time.sleep(.2)  # Detect immediate unsupported/permission failures, no retry.
++        except Exception as exc:
++            self.error = type(exc).__name__
++        return self
++
++    def available(self):
++        """Pre-request liveness only, never proof that counters are supported."""
++        return self.error is None and any(x['process'].poll() is None for x in self.children)
++
++    def finish(self):
++        rows, report = [], {'status': 'UNAVAILABLE', 'reason': 'record_not_available'}
++        if self.timer:
++            self.timer.cancel()
++        try:
++            self._stop()
++            for item in self.children:
++                item['thread'].join(timeout=1)
++                p = item['process']
++                raw = b''.join(list(item['chunks'])).decode(errors='replace')
++                reason = item['error']
++                if p.poll() is None or item['thread'].is_alive():
++                    reason = reason or 'profiler_not_settled_or_drained'
++                if p.returncode not in [0, -signal.SIGINT]:
++                    reason = reason or 'profiler_exit_' + str(p.returncode)
++                if any(x in raw.lower() for x in ['<not supported>', '<not counted>', 'permission', 'access denied']):
++                    reason = reason or 'unsupported_or_unavailable_counters'
++                rows.append({'name': item['name'], 'argv': item['argv'], 'pid': p.pid,
++                             'exit_code': p.returncode, 'raw_stderr': raw,
++                             'settled': p.poll() is not None,
++                             'status': 'UNAVAILABLE' if reason else 'AVAILABLE', 'reason': reason})
++            if self.file:
++                self.file.check()
++                if any(r['name'] == 'record' and r['status'] == 'AVAILABLE' for r in rows):
++                    fd = self.file.fileno()
++                    argv = ['perf', 'report', '--stdio', '--no-children', '--sort', 'symbol',
++                            '--call-graph', 'none', '--percent-limit', '0.5',
++                            '--symfs', '/proc/' + str(self.pid) + '/root',
++                            '-i', '/proc/self/fd/' + str(fd)]
++                    r = subprocess.run(argv, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
++                                       pass_fds=(fd,), timeout=15)
++                    report = {'status': 'AVAILABLE' if r.returncode == 0 else 'UNAVAILABLE',
++                              'argv': argv, 'exit_code': r.returncode,
++                              'raw_stdout': r.stdout.decode(errors='replace'),
++                              'raw_stderr': r.stderr.decode(errors='replace')}
++                self.file.check()
++            with self.h.transaction():
++                self.h.s.root_payload_guard()
++        except Exception as exc:
++            self.error = type(exc).__name__
++        finally:
++            try:
++                self.stack.close()
++            except Exception as exc:
++                self.error = type(exc).__name__
++        return {'status': 'AVAILABLE' if not self.error and any(r['status'] == 'AVAILABLE' for r in rows) else 'UNAVAILABLE',
++                'reason': self.error, 'started_utc': self.started,
++                'finished_utc': datetime.datetime.now(datetime.timezone.utc).isoformat(),
++                'attach_pid': self.pid, 'max_seconds': 240, 'collectors': rows, 'report': report,
++                'scope': 'CPU samples/counters only; cache misses are not host DRAM GB/s.',
++                'data_file': self.log + '/PROFILE128-perf.data'}
+--- /dev/null
++++ r6/test_profile_activity.py
+@@ -0,0 +1,94 @@
++"""Local mocked optional profiling regressions; never invoke profiling tools."""
++import io
++import pathlib
++import sys
++import tempfile
++import unittest
++from unittest import mock
++
++sys.path.insert(0, str(pathlib.Path(__file__).resolve().parent))
++import profile_activity as activity
++import profile_perf as perf
++
++
++class Child:
++    def __init__(self, raw):
++        self.stdout = io.BytesIO(raw)
++        self.pid, self.returncode = 987, None
++
++    def poll(self):
++        return self.returncode
++
++    def terminate(self):
++        self.returncode = -15
++
++    def kill(self):
++        self.returncode = -9
++
++    def wait(self, timeout=None):
++        return self.returncode
++
++
++class OptionalProfileTests(unittest.TestCase):
++    def fixture(self, root):
++        proc, cg = pathlib.Path(root, 'proc'), pathlib.Path(root, 'cg')
++        proc.mkdir(); cg.mkdir()
++        fields = ['0'] * 45
++        fields[0], fields[7], fields[9] = 'S', '2', '3'
++        fields[11], fields[12], fields[19] = '4', '5', '123'
++        (proc / 'stat').write_text('77 (fake name) ' + ' '.join(fields))
++        (proc / 'io').write_text('rchar: 22\nwchar: 33\nread_bytes: 44\nwrite_bytes: 55\n')
++        for name, value in {'cpu.stat': 'usage_usec 99\n', 'memory.events': 'oom 0\n',
++                            'memory.current': '123', 'memory.swap.current': '0',
++                            'io.stat': '8:1 rbytes=44 wbytes=55 rios=1 wios=1\n'}.items():
++            (cg / name).write_text(value)
++        return proc, cg, fields
++
++    def test_boundaries_identity_failure_and_unsupported_gpu_are_optional(self):
++        for case in ['normal', 'generation', 'missing_io', 'unsupported']:
++            with self.subTest(case=case), tempfile.TemporaryDirectory() as root:
++                proc, cg, fields = self.fixture(root)
++                if case == 'missing_io':
++                    (proc / 'io').unlink()
++                raw = b'# sm mem rxpci txpci\n20260927 14:00:00 0 10 20 2 3\n'
++                if case == 'unsupported':
++                    raw = b'# sm mem rxpci txpci\n20260927 14:00:00 0 10 20 - -\n'
++                child = Child(raw)
++                with mock.patch.object(activity.subprocess, 'Popen', return_value=child):
++                    sampler = activity.Activity(77, cg)
++                    sampler.proc = proc
++                    sampler.start()
++                    if case == 'generation':
++                        fields[19] = '999'
++                        (proc / 'stat').write_text('77 (fake name) ' + ' '.join(fields))
++                    result = sampler.finish()
++                self.assertEqual(result['status'], 'UNAVAILABLE' if case in ['generation', 'missing_io'] else 'AVAILABLE')
++                self.assertEqual(result['gpu_activity_pcie']['raw'], raw.decode())
++                self.assertEqual(result['gpu_activity_pcie']['status'], 'UNAVAILABLE' if case == 'unsupported' else 'AVAILABLE')
++                self.assertEqual(result['host_dram_gb_s']['status'], 'UNAVAILABLE')
++                self.assertEqual(result['gpu_vram_gb_s']['status'], 'UNAVAILABLE')
++                self.assertEqual(child.returncode, -15)
++                if case == 'normal':
++                    self.assertEqual(result['before']['process']['utime_ticks'], 4)
++                    self.assertEqual(result['after']['phase'], 'after')
++
++    def test_perf_boundary_failure_never_launches_or_claims_counters(self):
++        h = mock.Mock()
++        h.transaction.side_effect = PermissionError
++        with mock.patch.object(perf.subprocess, 'Popen') as popen:
++            profiler = perf.Perf(h, 123, '/test').start()
++            self.assertFalse(profiler.available())
++            result = profiler.finish()
++        popen.assert_not_called()
++        self.assertEqual(result['status'], 'UNAVAILABLE')
++        self.assertEqual(result['reason'], 'PermissionError')
++
++    def test_boundary_does_not_start_sampler_or_gpu(self):
++        with mock.patch.object(activity.Activity, '_sample', side_effect=FileNotFoundError), \
++                mock.patch.object(activity.subprocess, 'Popen') as popen:
++            self.assertEqual(activity.boundary(1, '/missing')['status'], 'UNAVAILABLE')
++        popen.assert_not_called()
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- /dev/null
++++ r6/test_profile_baseline.py
+@@ -0,0 +1,47 @@
++"""Focused R6 configuration/transport/decode contract, no inference."""
++import base64
++import copy
++import datetime
++import json
++import pathlib
++import threading
++import unittest
++from unittest import mock
++import benchmark
++import candidate_owner as owner
++
++
++class ProfileTests(unittest.TestCase):
++    def test_native_argv_and_guard_unchanged(self):
++        root = pathlib.Path(__file__).parent
++        old = json.loads((root.parent / 'r5/LAUNCH.json').read_text())
++        new = json.loads((root / 'LAUNCH.json').read_text())
++        self.assertEqual(old['native_argv'], new['native_argv'])
++        self.assertEqual((root / 'telemetry.py').read_bytes(), (root.parent / 'r5/telemetry.py').read_bytes())
++        self.assertEqual(owner.ADMIT_END, datetime.datetime(2026, 9, 27, 15, 15, tzinfo=datetime.timezone.utc).timestamp())
++        self.assertEqual(owner.HARD_END, datetime.datetime(2026, 9, 27, 15, 35, tzinfo=datetime.timezone.utc).timestamp())
++
++    def test_raw_sse_timing_and_length_survive_without_normalization(self):
++        events = [dict(id='fixed', choices=[dict(delta={'content':'technical '}, finish_reason=None)]),
++                  dict(id='fixed', choices=[dict(delta={'content':'details'}, finish_reason='length')],
++                       usage={'prompt_tokens':50,'completion_tokens':128},
++                       timings={'predicted_n':128,'predicted_ms':139093.771,'prompt_n':50,'prompt_ms':3000.123})]
++        chunks = [b'data: '+json.dumps(v).encode()+b'\n\n' for v in events]+[b'data: [DONE]\n\n',b'']
++        response=mock.Mock(status=200);response.read1.side_effect=chunks
++        connection=mock.Mock(sock=None);connection.getresponse.return_value=response
++        h=mock.Mock();h.now.return_value='2026-09-27T14:00:00Z'
++        h.require.side_effect=lambda ok, why: None if ok else (_ for _ in ()).throw(RuntimeError(why))
++        payload=benchmark.body('technical',False,128)
++        with mock.patch.object(benchmark,'count',return_value=(50,b'{}')), mock.patch.object(benchmark,'save'), mock.patch.object(benchmark.http.client,'HTTPConnection',return_value=connection), mock.patch.object(benchmark.time,'time',return_value=owner.ADMIT_END-10):
++            row=benchmark.request(h,b'fake-test-only',payload,'TEST',threading.Event())
++        self.assertEqual(row['native_timings'],events[-1]['timings'])
++        self.assertEqual(row['finish_reason'],'length')
++        self.assertEqual(row['correctness'],'UNSCORED')
++        self.assertTrue(row['done'] and row['full_http_drain'])
++        self.assertEqual(b''.join(base64.b64decode(x['base64']) for x in row['raw_chunks']),b''.join(chunks))
++        self.assertLessEqual(row['first_output_monotonic_seconds'],row['last_output_monotonic_seconds'])
++        self.assertLessEqual(row['last_output_monotonic_seconds'],row['drained_monotonic_seconds'])
++
++
++if __name__ == '__main__':
++    unittest.main()
+--- r5/test_repair.py
++++ r6/test_repair.py
+@@ -35,3 +35,3 @@
+-        self.assertTrue(owner.BASE.endswith('/worker1-r5'))
+-        self.assertTrue(owner.LOG.endswith('/worker1-r5'))
+-        self.assertEqual(owner.NAME, 'llm-h016-mimo-pro-r5')
++        self.assertTrue(owner.BASE.endswith('/worker1-r6'))
++        self.assertTrue(owner.LOG.endswith('/worker1-r6'))
++        self.assertEqual(owner.NAME, 'llm-h016-mimo-pro-r6')
+--- r5/verify_retained.py
++++ r6/verify_retained.py
+@@ -16 +16 @@
+-LOG = '/data/logs/H016-20260927/worker1-r5'
++LOG = '/data/logs/H016-20260927/worker1-r6'

@@ -1,0 +1,9 @@
+# Pinned watchdog recommendation: KEEP300s
+
+Fetched only five missing small exact-commit source files from kvcache-ai/sglang541ddc37cbc92c60dc748db5ff1a2aad0b069a80 into native-source-01/. scheduler.py, tp_worker.py, managers/utils.py and scheduler_runtime_checker_mixin.py hashes exactly match installed native-source-pins.json. Full URL/hash manifest retained.
+
+scheduler.py2364 increments forward_ct at entry to run_batch. scheduler_runtime_checker_mixin.py469–474 passes that counter and active predicate (is_initializing or cur_batch is not None) to WatchdogRaw. utils/watchdog.py131–145 checks unchanged counter while active, updates the timestamp when the counter changes, and sleeps timeout/2. Hard expiry logs/dumps and signals parent after a5s pause. It is an active forward-progress watchdog, not a whole-request2h wall limit. Healthy chunked prefill repeatedly entering run_batch renews it. Cancellation does not prove native drain; abort_request is a scheduler-side path and cannot interrupt a currently executing forward merely because a client socket closed.
+
+Recommendation: retain300s, no watchdog flag/profile change. No evidence establishes a healthy single1M-context2048-token chunk needs>300s. 1M attention/workspace remains unmeasured. Runtime/watchdog.py at the pinned commit hashes1156c3a9b41802d9683e79cb5b0d2e29930df378de02157ce89f10ba8a93fe67; current production native manifest does not separately bind it, so Worker1 may compare installed image file before launch. Four calling/margin sources are exactinstalledhashmatches.
+
+Bounds now source-backed directly: tp_worker.py287–292 sets max_req_len=min(context-1,max_token_pool_size-1), input=max_req_len-5. managers/utils.py111 rejects input>=max_req_input_len. scheduler.py1395 clips output to max_req_len-input-1. For exact matching context/poolP, wrapper input<=P-7, total<=P-2; expected native max_req_len=P-1/input=P-6. Actual allocation gate still mandatory.

@@ -1,0 +1,19 @@
+{
+  "task": "H003-IMAGE-API-ACTIVATE-20260923",
+  "native_session_id": "01a0ce8e-681a-77b3-83b8-5a6faab3f62d",
+  "status": "RELEASED",
+  "utc": "2026-09-23T14:22:36.475921+00:00",
+  "to": "root / root-authorized Worker2 acceptance",
+  "receipt_sha256": "b8c9fab3060a2ce20208e8adcc6d01155ea9d2ec12f3346a98a39957fdf23a6a",
+  "startup_recoveries": 1,
+  "fixed_warmups": 1,
+  "additional_image_requests": 0,
+  "ready": {
+    "ready": true,
+    "busy": false,
+    "admitting": true,
+    "state": "ready"
+  },
+  "broker_lane": "idle",
+  "no_further_host_actions": true
+}

@@ -57,6 +57,17 @@ class FixtureRunner:
         return {"state": "quiescent", "successful": True}
 
     def run_package(self, identity, argv, *, gate_path, timeout=120, env=None):
+        # Real AnchoredRoot, synthetic package execution: verify the held FD is
+        # usable at the mutation boundary without starting apt or any service.
+        self.owner.assertIsNotNone(self.owner.stage.prereqs._anchor)
+        self.owner.assertEqual(os.fstat(self.owner.stage.prereqs._anchor.fileno()).st_ino,
+                               self.owner.data.stat().st_ino)
+        for name in ("TMPDIR", "TMP", "TEMP"):
+            self.owner.assertRegex(env[name], r"^/proc/[0-9]+/fd/[0-9]+/cache/")
+            if sys.platform == "linux":
+                self.owner.assertEqual(Path(env[name]).resolve(),
+                                       self.owner.data / "cache/installer-apt/tmp")
+                self.owner.assertTrue(Path(env[name]).is_dir())
         return self.run(argv, timeout=timeout, env=env)
 
     def run(self, argv, timeout=60, env=None):
@@ -184,6 +195,7 @@ class ContainerTests(unittest.TestCase):
             if a[0] == "apt-get":
                 self.assertRegex(env["TMPDIR"], r"^/proc/[0-9]+/fd/[0-9]+/cache/")
         self.assertFalse(self.stage.check_gpu())
+        self.assertIsNone(self.stage.prereqs._anchor)
 
     def test_existing_config_preserved_with_narrow_merge_and_backup(self):
         original = {"data-root": str(self.data / "docker"), "dns": ["1.1.1.1"], "live-restore": True,
@@ -280,6 +292,22 @@ class ContainerTests(unittest.TestCase):
         self.assertTrue(all((self.system / "run/systemd/system" / unit).is_symlink() for unit in UNITS))
         self.present = True; self.runner.after_download = None
         self.assertTrue(self.stage.apply()["changed"])
+
+    def test_mutation_boundary_rechecks_live_anchor_before_owned_scope(self):
+        from install.storage_io import AnchoredRoot
+        subject = self.stage.prereqs
+        with AnchoredRoot(str(self.data), self.guard, uid=os.geteuid()) as anchor:
+            subject._anchor = anchor
+            self.present = False
+            try:
+                with patch("install.prerequisites.Prerequisites.package_transaction") as transaction:
+                    with self.assertRaisesRegex(InstallError, "mount_lost"):
+                        subject.package_transaction(["apt-get", "--no-download", "install", "fixture=1.0"],
+                                                    env={"TMPDIR": str(self.data / "tmp")})
+                    transaction.assert_not_called()
+            finally:
+                subject._anchor = None
+                self.present = True
 
     def test_gpu_command_requires_exact_host_image_and_boot_identity(self):
         self.stage.apply()

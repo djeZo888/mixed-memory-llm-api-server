@@ -1,0 +1,535 @@
+{
+  "accepted_edit_count": 0,
+  "accepted_generation_count": 1,
+  "backend_run_id": "49fe6ab1e155453b8a529e199f16a1a2",
+  "caller": "Worker2 sole accepted API image caller in authorized window",
+  "campaign_id": "IMAGE21-QUALIFY-20260923",
+  "case_id": "api-baseline-1024x1024",
+  "checkpoint_receipt_sha256": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+  "checkpoint_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+  "client_monotonic_bounds": [
+    544385.442347666,
+    544409.625449875
+  ],
+  "concurrency_evidence": {
+    "busy_confirmed": true,
+    "check": "concurrent_qwen",
+    "checks": [
+      {
+        "check": "concurrent_readiness",
+        "http_status": 200
+      },
+      {
+        "check": "invalid_n2_busy",
+        "healthy_busy_readiness": true,
+        "http_status": 429,
+        "retry_after_1": true
+      },
+      {
+        "characters": 2,
+        "check": "qwen3.8-27b-gpu0",
+        "context_length_from_receipt": 480000,
+        "elapsed_seconds": 0.183,
+        "http_status": 200,
+        "nonempty": true
+      },
+      {
+        "characters": 2,
+        "check": "qwen3.8-27b",
+        "context_length_from_receipt": 480000,
+        "elapsed_seconds": 0.187,
+        "http_status": 200,
+        "nonempty": true
+      }
+    ],
+    "image_window": [
+      544385.442347666,
+      544409.625449875
+    ],
+    "status": "LIVE_PASS",
+    "text_windows": [
+      [
+        544385.511832958,
+        544385.695047208
+      ],
+      [
+        544385.695090666,
+        544385.882409166
+      ]
+    ]
+  },
+  "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+  "criteria": {
+    "container_swap_zero": true,
+    "correct_decoded_output": true,
+    "device_free_at_least_5_percent": true,
+    "host_available_at_least_15_percent": true,
+    "no_observed_host_oom": true,
+    "no_observed_swap_activity": true,
+    "one_generation": true,
+    "ready_and_owned_after": true,
+    "sampler_clean_exit": true,
+    "tmp_cleanup": true,
+    "zero_accepted_edits": true
+  },
+  "delivered_output": {
+    "alpha_qualification": "NOT_TESTED",
+    "bytes": 966533,
+    "decode_evidence": "Worker2 client png() performed Pillow verify/load; local compiler verified original PNG hash, not an additional decoder run.",
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGB",
+    "sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+    "width": 1024
+  },
+  "editing_rejection": {
+    "at": "2026-09-23T04:10:55.401395+00:00",
+    "check": "reject_edit",
+    "elapsed_seconds": 0.092,
+    "error_code": "unqualified_profile",
+    "http_status": 400,
+    "response_bytes": 72,
+    "retry_after_1": false,
+    "status": "LIVE_PASS"
+  },
+  "evidence_sha256": {
+    "generation.png": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+    "telemetry.jsonl": "01b9ce5cb03129a09e477b6a3c4f62412ba9286e02dd12722b8c0399e202fd39"
+  },
+  "finished_utc": "2026-09-23T04:09:59.772259+00:00",
+  "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+  "http_status": 200,
+  "limitations": [
+    "Request end UTC is derived from client start UTC plus full-precision local monotonic duration, not a separately sampled UTC end.",
+    "Cross-host UTC clock offset was not measured; UTC intersection uses the supplied recorded clocks. Cross-host monotonic values were never compared.",
+    "NVML peaks between 200 ms samples are unobserved; query duration is not a synchronized metric timestamp.",
+    "Host/cgroup sampling is nominally 1 s. memory.peak is a cgroup lifetime high-water mark.",
+    "This independent API baseline uses seed 20260923 and its studio-teapot prompt, unlike the seed 42 ladder. It is not a same-recipe comparison.",
+    "No per-request native perf dump was saved. Native log timing and peak are rounded; allocated peak is unavailable. Deployment-warm allocator values were not reused.",
+    "Full-window margins include idle time, invalid checks and concurrent tiny text calls; request-window telemetry is separately identified.",
+    "Alpha/transparency qualification remains NOT_TESTED. No PSS polling."
+  ],
+  "measurement_receipt": "worker2-client-evidence/LIVE-generate.json",
+  "measurement_receipt_sha256": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5",
+  "metrics": {
+    "cgroup": {
+      "memory.current": {
+        "max": 5293105152,
+        "min": 5280264192,
+        "sample_count": 25
+      },
+      "memory.peak": {
+        "max": 5305413632,
+        "min": 5305413632,
+        "sample_count": 25
+      },
+      "memory.swap.current": {
+        "max": 0,
+        "min": 0,
+        "sample_count": 25
+      }
+    },
+    "device": {
+      "first_sample_used_bytes": 34496380928,
+      "last_sample_used_bytes": 36650156032,
+      "minimum_free_fraction": 0.20532534595034596,
+      "request_window_peak_used_bytes": 40947220480,
+      "sampled_min_free_bytes": 10579804160,
+      "sampled_peak_used_bytes": 40947220480,
+      "total_bytes": 51527024640
+    },
+    "host": {
+      "max_swap_used_bytes": 0,
+      "min_available_bytes": 921160019968,
+      "min_available_fraction": 0.9728977818033935,
+      "vmstat_counter_deltas": {
+        "oom_kill": 0,
+        "pgmajfault": 0,
+        "pswpin": 0,
+        "pswpout": 0
+      }
+    },
+    "limitations": [
+      "Request end UTC is derived from client start UTC plus full-precision local monotonic duration, not a separately sampled UTC end.",
+      "Cross-host UTC clock offset was not measured; UTC intersection uses the supplied recorded clocks. Cross-host monotonic values were never compared.",
+      "NVML peaks between 200 ms samples are unobserved; query duration is not a synchronized metric timestamp.",
+      "Host/cgroup sampling is nominally 1 s. memory.peak is a cgroup lifetime high-water mark.",
+      "This independent API baseline uses seed 20260923 and its studio-teapot prompt, unlike the seed 42 ladder. It is not a same-recipe comparison.",
+      "No per-request native perf dump was saved. Native log timing and peak are rounded; allocated peak is unavailable. Deployment-warm allocator values were not reused.",
+      "Full-window margins include idle time, invalid checks and concurrent tiny text calls; request-window telemetry is separately identified.",
+      "Alpha/transparency qualification remains NOT_TESTED. No PSS polling."
+    ],
+    "sampling": {
+      "first_sample_utc": "2026-09-23T04:09:35.656837+00:00",
+      "full_window_skipped_schedule_slots": 0,
+      "host_sample_count": 25,
+      "last_sample_to_request_end_seconds": 0.115445,
+      "last_sample_utc": "2026-09-23T04:09:59.656814+00:00",
+      "max_observed_interval_seconds": 0.20002287900024385,
+      "max_query_duration_seconds": 0.13378247899890994,
+      "request_start_to_first_sample_seconds": 0.06768,
+      "requested_interval_seconds": 0.2,
+      "sample_count": 121
+    },
+    "scope": "UTC-intersected actual Worker2 HTTP request; client monotonic clocks are not compared to VM monotonic clocks."
+  },
+  "metrics_full_shared_window": {
+    "cgroup": {
+      "memory.current": {
+        "max": 5293473792,
+        "min": 5280247808,
+        "sample_count": 276
+      },
+      "memory.peak": {
+        "max": 5305413632,
+        "min": 5305413632,
+        "sample_count": 276
+      },
+      "memory.swap.current": {
+        "max": 0,
+        "min": 0,
+        "sample_count": 276
+      }
+    },
+    "device": {
+      "first_sample_used_bytes": 34496380928,
+      "last_sample_used_bytes": 34498478080,
+      "minimum_free_fraction": 0.20532534595034596,
+      "request_window_peak_used_bytes": 40947220480,
+      "sampled_min_free_bytes": 10579804160,
+      "sampled_peak_used_bytes": 40947220480,
+      "total_bytes": 51527024640
+    },
+    "host": {
+      "max_swap_used_bytes": 0,
+      "min_available_bytes": 921160019968,
+      "min_available_fraction": 0.9728977818033935,
+      "vmstat_counter_deltas": {
+        "oom_kill": 0,
+        "pgmajfault": 0,
+        "pswpin": 0,
+        "pswpout": 0
+      }
+    },
+    "limitations": [
+      "Device peaks between200ms observations may be missed.",
+      "Cgroup memory.peak is a lifetime high-water mark; never reset here.",
+      "No PSS polling; NVML device totals are not allocator/process peaks.",
+      "NVML PCIe20ms counters and utilization remain in raw telemetry."
+    ],
+    "sampling": {
+      "max_observed_interval_seconds": 0.20054517599965038,
+      "requested_interval_seconds": 0.2,
+      "sample_count": 1380,
+      "skipped_schedule_slots": 0
+    }
+  },
+  "native_allocator": {
+    "after_forward": {},
+    "available": false,
+    "interpretation": "Reserved-memory interpretation follows pinned runtime/receipt semantics; log itself labels generic peak MB. No allocated peak is available.",
+    "log_excerpts": [
+      "[09-23 04:09:59] Pixel data generated successfully in 23.83 seconds",
+      "[09-23 04:09:59] Peak memory usage: 37406.00 MB"
+    ],
+    "log_receipt": {
+      "bytes": 20315,
+      "path": "artifacts/worker2-native-log.txt",
+      "sha256": "b90264b46b9b2d3352aa9c46d2a5124f9812e9b7af1373078fff56419d7ceeec"
+    },
+    "native_inference_seconds": 23.83,
+    "peak_allocated_mib": null,
+    "peak_reserved_mib": 37406.0,
+    "perf_dump_available": false,
+    "reported_label": "Peak memory usage: 37406.00 MB",
+    "reported_peak_reserved_mib": 37406.0,
+    "runtime_cumulative_peak": {},
+    "scope": "Rounded native request log; reserved interpretation inferred from known pinned semantics; no per-request performance dump.",
+    "source": "Rounded current API-call native log, not deployment-warm perf dump."
+  },
+  "native_inference_seconds": 23.83,
+  "native_output": null,
+  "numeric_criteria_pass": true,
+  "operation": "generation",
+  "ownership_return": {
+    "released_utc": "2026-09-23T04:10:55.514187+00:00",
+    "requests_in_flight": false,
+    "returned": true
+  },
+  "profile_eligible": false,
+  "raw_client_status": "PARTIAL",
+  "raw_client_visual_status": "NOT_TESTED",
+  "recipe_comparison": {
+    "actual_seed": 20260923,
+    "basis": "Actual attempt payload and native log; reviewed client defaults supply 40 steps, CFG1 and CPU noise RNG. No rerun authorized.",
+    "ladder_seed": 42,
+    "same_recipe_as_ladder": false,
+    "status": "ACCEPTED_INDEPENDENT_API_RECIPE"
+  },
+  "recovery": {
+    "attempted": false,
+    "required": false
+  },
+  "references": 0,
+  "request_count": 1,
+  "request_finished_utc": "2026-09-23T04:09:59.772259+00:00",
+  "request_seconds": 24.183102209004574,
+  "request_settings": {
+    "background": "opaque",
+    "generator_device": "cpu",
+    "guidance_scale": 1,
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "num_inference_steps": 40,
+    "prompt": "A studio photograph of one red ceramic teapot with a curved spout and round lid, centered on a pale wooden table against a plain cream background. Soft daylight, clear silhouette, no text, no other objects.",
+    "seed": 20260923,
+    "size": "1024x1024",
+    "true_cfg_scale": 1
+  },
+  "request_started_utc": "2026-09-23T04:09:35.589157+00:00",
+  "residency_after": {
+    "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "device_current": {
+      "free_bytes": 17028874240,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "115633",
+        "32226"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 921142452224,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T03:55:55.463204199Z"
+  },
+  "residency_before": {
+    "container_id": "9d33f864eb95e2a3a5462702941275514c8236f9c7507f5e6048de7e04b77773",
+    "device_current": {
+      "free_bytes": 17030971392,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "115633",
+        "32224"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 921210773504,
+      "MemTotal": 946820968448,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-23T03:55:55.463204199Z"
+  },
+  "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+  "runtime_source_commit": "0cd8be351d0825488f4b81c8931167bbab618eca",
+  "schema_version": 1,
+  "scope": "independent_authenticated_api_baseline_not_same_recipe_ladder",
+  "session_id": "01a0cc29-cf0d-7812-be6f-83899ac24917",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "source_receipts": [
+    {
+      "bytes": 2636,
+      "path": "worker2-client-evidence/LIVE-WINDOW-RELEASE.json",
+      "sha256": "1d7d79b581c1f1b6d51f07af65c6acddade466f7402e4cea23e037f401307beb"
+    },
+    {
+      "bytes": 3575,
+      "path": "worker2-client-evidence/LIVE-generate.json",
+      "sha256": "f476fd5eb3dfc213243f5832eaf904568847fef3f0d074a5da3f042e8b3a7ab5"
+    },
+    {
+      "bytes": 661,
+      "path": "worker2-client-evidence/evidence/baseline-generation.attempt.json",
+      "sha256": "f309ac6de13411505deda6afb7d2abcbf3e565704d5c552a8c389bfee2ddc4bb"
+    },
+    {
+      "bytes": 2303,
+      "path": "worker2-client-evidence/LIVE-reject-edit.json",
+      "sha256": "3bba71be62c0df0765b7c08bc9535802a09edd7e4c5a9f1dbcbc9c66c6d2a91a"
+    },
+    {
+      "bytes": 6980,
+      "path": "artifacts/worker2-baseline-segment2/window-result.json",
+      "sha256": "2b805df5ed03b0a080493afa8152d481088ac2ee10927057d808f94a4dd844cc"
+    },
+    {
+      "bytes": 1428822,
+      "path": "artifacts/worker2-baseline-segment2/telemetry.jsonl",
+      "sha256": "01b9ce5cb03129a09e477b6a3c4f62412ba9286e02dd12722b8c0399e202fd39"
+    },
+    {
+      "bytes": 19356,
+      "path": "DEPLOYMENT-RECEIPT.json",
+      "sha256": "4f2a4a9e3e5ca47a63ef5524be76897d59b906e4d31f4a240ad60debb2e5ca30"
+    },
+    {
+      "bytes": 1515,
+      "path": "ROOT-WORKER2-RESULT.md",
+      "sha256": "4d4cd86d7c7b31c527a20c889c50163bc34b96c7e5e22cd955618a721eb09773"
+    },
+    {
+      "bytes": 20315,
+      "path": "artifacts/worker2-native-log.txt",
+      "sha256": "b90264b46b9b2d3352aa9c46d2a5124f9812e9b7af1373078fff56419d7ceeec"
+    },
+    {
+      "bytes": 29965,
+      "path": "worker2-client-evidence/client.py",
+      "sha256": "11c24a2c835db2553eb901ba6e622b734e7d7b58aac877d31347d46b738643a4"
+    }
+  ],
+  "started_utc": "2026-09-23T04:09:35.589157+00:00",
+  "status": "PARTIAL",
+  "telemetry_file": "artifacts/worker2-baseline-segment2/telemetry.jsonl",
+  "timing_method": "UTC start plus full-precision client monotonic request interval; not a separately sampled UTC end",
+  "tmp_after": {
+    "entries": [
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmp3hgjagsu",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpcujd26ut",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpop4zvxdj",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpv6oq442l",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpwpcfkw9v",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu/cutlass_python_cache",
+        "uid": 1000
+      }
+    ],
+    "exists": true,
+    "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+  },
+  "tmp_before": {
+    "entries": [
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "0aa61d92a1396fa66401f3f0b82f778859d484c5c69b477a71ae5f3d41eee2d5-models-text_encoder-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "a9266072b484424e665444b9969db6247bd1789edd747c6c812cff9a5d4f90ea-models-transformer-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "fabcc496123b7f987ea6ad4d77406e2e1971ed2554072b6de71a3501dfee4bc0-models-vae-config.json.lock",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmp3hgjagsu",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpcujd26ut",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpop4zvxdj",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "tmpv6oq442l",
+        "uid": 1000
+      },
+      {
+        "bytes": 0,
+        "directory": false,
+        "path": "tmpwpcfkw9v",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu",
+        "uid": 1000
+      },
+      {
+        "bytes": 4096,
+        "directory": true,
+        "path": "ubuntu/cutlass_python_cache",
+        "uid": 1000
+      }
+    ],
+    "exists": true,
+    "path": "/data/services/image21-runtime-20260923/work/tmp/49fe6ab1e155453b8a529e199f16a1a2"
+  },
+  "tmp_new_entries": [],
+  "visual_verification": {
+    "overlay": "visual-review.json",
+    "status": "NOT_TESTED"
+  }
+}

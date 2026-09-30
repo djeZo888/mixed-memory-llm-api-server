@@ -1,0 +1,10 @@
+{
+  "authorizedAt": "2026-09-23T12:59:41.437930+00:00",
+  "reviewedSource": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "reviewedWindowHelperSha256": "2f873367b813a93edbe77cced162fa5ccd26f11fa86aacb48f0412f6979ba6c6",
+  "root_release": "OPEN_PRIVATE_CAPACITY_WINDOW",
+  "case": "C01",
+  "maxAcceptedCallsThisGo": 1,
+  "publicActivation": false,
+  "noAutomaticRetry": true
+}

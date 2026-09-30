@@ -1,0 +1,33 @@
+{
+  "utc": "2026-09-26T18:59:29.239460+00:00",
+  "released": true,
+  "status": "WORKER1_BENCHMARK_LANE_RELEASED_TO_ROOT",
+  "root_must_coordinate_worker2": true,
+  "qualification_units": {
+    "h008-flash-qualification-r5": "inactive",
+    "h008-flash-qualification-r5-cont1": "inactive",
+    "h008-flash-qualification-r5-cont2": "inactive"
+  },
+  "last_job": "h008-flash-qualification-r5-cont2.service",
+  "last_invocation_id": "ffedd63d0aad407188d9f798b7b53246",
+  "job_end_utc": "2026-09-26T18:56:44.135876+00:00",
+  "native_request_active_at_finalize": false,
+  "established_frontier_connections": "",
+  "native_readiness": {
+    "status": 200,
+    "readiness": {
+      "schema_version": 1,
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "state": "up",
+      "admitting": null
+    }
+  },
+  "settlement_basis": "Owned qualification jobs inactive; qualifier closed active connection, current TCP30010 established connections empty. Native active-request counter unavailable; no atomic drain claim. No additional worker1 inference will be sent.",
+  "warm_4k": "FAIL_native_stream_incomplete_at_300s_request_cap",
+  "measured_4k": "NOT_TESTED",
+  "measured_16k": "NOT_TESTED",
+  "auto_tool": "NOT_TESTED_deferred_to_root_coordinated_worker2",
+  "forced_tool": "FAIL_NULL_NAME_EMPTY_ARGUMENTS",
+  "container_retained_warm": true
+}

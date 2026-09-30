@@ -69,6 +69,16 @@ class ContainerPackages(Prerequisites):
             env = {key: value.replace(str(self.data), prefix) for key, value in env.items()}
         return super()._run(argv, timeout=timeout, env=env)
 
+    def package_transaction(self, argv, *, timeout=120, env=None):
+        # Mutations use the owned package scope, not _run. Keep their temporary
+        # paths on the same live storage anchor as preparation and apt options.
+        if self._anchor is None:
+            raise InstallError("package_storage_anchor_required")
+        prefix = self._anchor.proc_path()
+        if env is not None:
+            env = {key: value.replace(str(self.data), prefix) for key, value in env.items()}
+        return super().package_transaction(argv, timeout=timeout, env=env)
+
     def require_package_api(self):
         required = ("package_identity", "prepare_package", "hold_package_lease", "run_package", "inspect_package")
         if any(not callable(getattr(self.runner, name, None)) for name in required):

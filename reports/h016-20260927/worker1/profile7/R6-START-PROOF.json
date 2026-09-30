@@ -1,0 +1,144 @@
+{
+  "utc": "2026-09-27T13:59:41.490724+00:00",
+  "unit": {
+    "code": 0,
+    "text": "TimeoutStopUSec=7min\nRuntimeMaxUSec=1h 36min 4s\nMainPID=3992462\nControlPID=0\nControlGroup=/system.slice/h016-mimo-profile-20260927-r6.service\nActiveState=active\nSubState=running\nInvocationID=f19495600cec4c81aebbdaa9f628aa49\n"
+  },
+  "sources": {
+    "LAUNCH.json": "b235562819a543ca77c819ba2077a2c7b688c6e79706cbdcf1590645986791ae",
+    "SOURCE-SHA256.json": "10100d78d12c14000a40a35373f1c01e9f7240565a8cfb1622dfc47135361406",
+    "HARNESS-QUIET-01.json": "2858831152358589f305a70aab6f1bcb39a6206ccd522889188dfc0bc2112200",
+    "candidate_owner.py": "af03d05a1ba66ede3d06939b62e548d4d5a76847d56c6728e92bafa379e86d5f",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "verify_retained.py": "738a06ba04ecc6246b793eb8d4d4d0a2ac44cb5383dfe8a1697e92809e8557fd",
+    "benchmark.py": "c61f91a72c7d147efc359f02fdeba6fff9a972a3295a71e8556f551536bd1490",
+    "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "profile_activity.py": "908b571f49b53edd7f12bf2bf9e51078f28d6648f05cac63ab0eedaf48bb879a",
+    "private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
+    "profile_perf.py": "c757707c6b6edc0208669ade5bd2edfd4b6076233041e50aeb929646a3cc60df",
+    "telemetry.py": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "launch_r6.py": "b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01"
+  },
+  "container": {
+    "Id": "4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "Name": "/llm-h016-mimo-pro-r6",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 3995834,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T13:59:09.876064855Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "container_limits": {
+    "Memory": 755914244096,
+    "MemorySwap": 755914244096,
+    "CpusetCpus": "0-7,16-71",
+    "CpusetMems": "0-7",
+    "RestartPolicy": {
+      "Name": "no",
+      "MaximumRetryCount": 0
+    }
+  },
+  "telemetry_count": 7,
+  "owner": {
+    "candidate_id": "4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab",
+    "glm_suppressed": true,
+    "memory_limit_bytes": 755914244096,
+    "native_cgroup": "/sys/fs/cgroup/system.slice/docker-4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab.scope",
+    "native_pid": 3995834,
+    "native_started_at": "2026-09-27T13:59:09.876064855Z",
+    "old_glm_settled_utc": "2026-09-27T13:59:09.120491+00:00",
+    "pid": 3992462,
+    "post_glm_baseline": {
+      "MemAvailable": 918937976832,
+      "MemTotal": 946820976640,
+      "SwapFree": 3063672832,
+      "SwapTotal": 3157258240
+    },
+    "started_utc": "2026-09-27T13:58:57.837611+00:00",
+    "status": "LOADING"
+  },
+  "source_match": true,
+  "guard_readback": {
+    "sample_utc": "2026-09-27T13:59:41.288344+00:00",
+    "checks": {
+      "four_gpus": true,
+      "host_reserve": true,
+      "no_owned_swap": true,
+      "no_oom": true,
+      "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237": {
+        "reserve_pass": true,
+        "temperature_pass": true
+      },
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc": {
+        "reserve_pass": true,
+        "temperature_pass": true
+      },
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23": {
+        "reserve_pass": true,
+        "temperature_pass": true
+      },
+      "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528": {
+        "reserve_pass": true,
+        "temperature_pass": true
+      }
+    },
+    "host_available_bytes": 890746273792,
+    "gpus": [
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "total_mib": 97887.0,
+        "used_mib": 61016.0,
+        "free_mib": 36234.0,
+        "temp_c": 35.0,
+        "util_pct": 0.0,
+        "board_w": 14.92
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "total_mib": 97887.0,
+        "used_mib": 39282.0,
+        "free_mib": 57969.0,
+        "temp_c": 36.0,
+        "util_pct": 0.0,
+        "board_w": 31.51
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "total_mib": 49140.0,
+        "used_mib": 32238.0,
+        "free_mib": 16274.0,
+        "temp_c": 40.0,
+        "util_pct": 0.0,
+        "board_w": 26.24
+      },
+      {
+        "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "total_mib": 97887.0,
+        "used_mib": 61015.0,
+        "free_mib": 36237.0,
+        "temp_c": 36.0,
+        "util_pct": 0.0,
+        "board_w": 81.22
+      }
+    ],
+    "owned_cgroup_swap_bytes": 0,
+    "events": {
+      "low": "0",
+      "high": "0",
+      "max": "0",
+      "oom": "0",
+      "oom_kill": "0",
+      "oom_group_kill": "0"
+    }
+  },
+  "scope": "Actual native loading and guards after launcher SSH exited; not load or benchmark completion. Root checks continuation after this CLI exits."
+}

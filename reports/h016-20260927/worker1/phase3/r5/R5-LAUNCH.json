@@ -1,0 +1,179 @@
+{
+  "utc": "2026-09-27T12:37:25.582643+00:00",
+  "command": [
+    "systemd-run",
+    "--unit=h016-mimo-initial-20260927-r5",
+    "--property=Type=exec",
+    "--property=Restart=no",
+    "--property=RuntimeMaxSec=3754",
+    "--property=TimeoutStopSec=420",
+    "--property=KillMode=mixed",
+    "--property=UMask=0077",
+    "--property=StandardOutput=null",
+    "--property=StandardError=null",
+    "--property=ExecStopPost=/usr/bin/python3 -B /data/build/H016-20260927/worker1-r5/candidate_owner.py --settle",
+    "/usr/bin/python3",
+    "-B",
+    "/data/build/H016-20260927/worker1-r5/candidate_owner.py",
+    "--run"
+  ],
+  "root_go": "direct ROOT12:34 one no-host r5 after confirmed exact CPU override trace and r4 restoration",
+  "sources": {
+    "HARNESS-QUIET-01.json": "2858831152358589f305a70aab6f1bcb39a6206ccd522889188dfc0bc2112200",
+    "LAUNCH.json": "e04f52f10e50a85bd29b454255e45faca941e79cffd3e568b6a0f31d64960b06",
+    "benchmark.py": "ece4d5d801edc10505ae7d7e9e108a8d4a017e76ac436a220b050f0239e75803",
+    "candidate_owner.py": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "libnuma.so.1.0.0": "02d7582c5d391e460e56aa67a414360e3183b968206645b9123f9dc7bff5d009",
+    "mimo-production-fixture-65536.json": "2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78",
+    "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "numactl": "f3944bcd7848d64424f8daf27f350b03d7f3281b2fb9be5eaaba0ddd0e72efb8",
+    "private_proxy.py": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+    "telemetry.py": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "verify_retained.py": "c9538d968baeafcd8379315d58ffb90333459e0fea9ce6fa38243105dccd4b30"
+  },
+  "first4k_only": true,
+  "body_sent": false,
+  "native_status": "not yet started",
+  "old_settlement": {
+    "utc": "2026-09-27T12:37:22.793688+00:00",
+    "unit": {
+      "MainPID": "0",
+      "ControlPID": "0",
+      "ActiveState": "failed",
+      "SubState": "failed",
+      "InvocationID": "df2fbf94060b45ed935260449f3e9beb"
+    },
+    "owner": {
+      "candidate_id": "7eac71ae92738b478612a3e4bbc3777323e81e5fbe44475020d847e953a64ffe",
+      "error": "owned_supervisor_interrupted",
+      "error_type": "RuntimeError",
+      "glm_restored_utc": "2026-09-27T12:31:49.590161+00:00",
+      "glm_suppressed": false,
+      "guard_failure": "TimeoutExpired",
+      "memory_limit_bytes": 755914244096,
+      "native_cgroup": "/sys/fs/cgroup/system.slice/docker-7eac71ae92738b478612a3e4bbc3777323e81e5fbe44475020d847e953a64ffe.scope",
+      "native_pid": 2580497,
+      "native_settled": {
+        "cgroup_empty": true,
+        "gpu_compute_empty": true,
+        "pid_zero": true,
+        "utc": "2026-09-27T12:30:22.002250+00:00"
+      },
+      "native_started_at": "2026-09-27T12:24:27.253246722Z",
+      "old_glm_settled_utc": "2026-09-27T12:24:26.490296+00:00",
+      "pid": 2577861,
+      "post_glm_baseline": {
+        "MemAvailable": 916093366272,
+        "MemTotal": 946820976640,
+        "SwapFree": 3092508672,
+        "SwapTotal": 3157258240
+      },
+      "started_utc": "2026-09-27T12:24:17.640991+00:00",
+      "status": "SETTLED_GLM_RESTORED"
+    },
+    "candidate": {
+      "Id": "7eac71ae92738b478612a3e4bbc3777323e81e5fbe44475020d847e953a64ffe",
+      "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "Name": "/llm-h016-mimo-pro-r4",
+      "State": {
+        "Status": "exited",
+        "Running": false,
+        "Paused": false,
+        "Restarting": false,
+        "OOMKilled": false,
+        "Dead": false,
+        "Pid": 0,
+        "ExitCode": 137,
+        "Error": "",
+        "StartedAt": "2026-09-27T12:24:27.253246722Z",
+        "FinishedAt": "2026-09-27T12:27:59.25659636Z"
+      }
+    },
+    "old_native_pid_absent": true,
+    "old_cgroup_empty": true,
+    "glm_state": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 2661112,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T12:30:23.264890951Z",
+      "FinishedAt": "2026-09-27T12:24:26.17152715Z"
+    }
+  },
+  "baseline": {
+    "utc": "2026-09-27T12:37:23.368160+00:00",
+    "host": {
+      "MemTotal": 946820976640,
+      "MemAvailable": 604087308288,
+      "AnonPages": 323050676224,
+      "Mapped": 4193177600,
+      "Cached": 395592314880,
+      "Buffers": 248913920,
+      "Shmem": 2565963776,
+      "SwapTotal": 3157258240,
+      "SwapFree": 3092508672
+    },
+    "gpus": [
+      {
+        "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+        "total_mib": 97887.0,
+        "used_mib": 61016.0,
+        "free_mib": 36234.0,
+        "temp_c": 34.0,
+        "util_pct": 0.0,
+        "board_w": 14.98
+      },
+      {
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+        "total_mib": 97887.0,
+        "used_mib": 27742.0,
+        "free_mib": 69508.0,
+        "temp_c": 35.0,
+        "util_pct": 0.0,
+        "board_w": 30.98
+      },
+      {
+        "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "total_mib": 49140.0,
+        "used_mib": 32238.0,
+        "free_mib": 16274.0,
+        "temp_c": 39.0,
+        "util_pct": 0.0,
+        "board_w": 26.17
+      },
+      {
+        "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "total_mib": 97887.0,
+        "used_mib": 61015.0,
+        "free_mib": 36237.0,
+        "temp_c": 35.0,
+        "util_pct": 0.0,
+        "board_w": 81.21
+      }
+    ],
+    "r4_owned_swap": 0,
+    "r4_oom_killed": false,
+    "dependency_modes": {
+      "numactl": {
+        "uid": 0,
+        "gid": 1001,
+        "mode": "0o755",
+        "bytes": 36080
+      },
+      "libnuma.so.1.0.0": {
+        "uid": 0,
+        "gid": 1001,
+        "mode": "0o644",
+        "bytes": 52248
+      }
+    },
+    "note": "preflight baseline while restored GLM runs; owner records fresh post-GLM-stop memory and exact container limit before create"
+  },
+  "unit": "MainPID=2779569\nExecMainStartTimestamp=Sun 2026-09-27 12:37:26 UTC\nControlGroup=/system.slice/h016-mimo-initial-20260927-r5.service\nActiveState=active\nSubState=running\nInvocationID=4600b556d5d04305a9157da80149a511\n"
+}

@@ -1,0 +1,30 @@
+{
+  "source_hashes": {
+    "LAUNCH.json": "b235562819a543ca77c819ba2077a2c7b688c6e79706cbdcf1590645986791ae",
+    "benchmark.py": "c61f91a72c7d147efc359f02fdeba6fff9a972a3295a71e8556f551536bd1490",
+    "candidate_owner.py": "af03d05a1ba66ede3d06939b62e548d4d5a76847d56c6728e92bafa379e86d5f",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "launch_r6.py": "b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01",
+    "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
+    "profile_activity.py": "908b571f49b53edd7f12bf2bf9e51078f28d6648f05cac63ab0eedaf48bb879a",
+    "profile_perf.py": "c757707c6b6edc0208669ade5bd2edfd4b6076233041e50aeb929646a3cc60df",
+    "telemetry.py": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "test_bounded_placement.py": "7d82b3860a02ea82822fea1d5b1db9aa979b059cae40bf736e1d8cb8556b471c",
+    "test_guard_responsiveness.py": "093bf6e7192baa01bbccfcc2e7d8523e92285739a75c6a717a30b817d91e97ff",
+    "test_packet.py": "46990f49b0ad469226407e8f21ec03b39433191b9f8fd70f753e38bf588d6000",
+    "test_profile_activity.py": "975415c47bc4bd79e67df9ae3841fdca002a6d90b8d09367794874382a5ad9b9",
+    "test_profile_baseline.py": "2f4389e94515a969194764441579467ed341bdf03c5a93d7083fa7fcdfb2dc43",
+    "test_repair.py": "147edacb49fb2004175b5577d8956c809a879aec50b299733d36514d042b399a",
+    "verify_retained.py": "738a06ba04ecc6246b793eb8d4d4d0a2ac44cb5383dfe8a1697e92809e8557fd"
+  },
+  "minimal_diff_sha256": "92a5004228d7ee22990ce3a515f1de06f3d7124cc01dca78e9bc49049446dd92",
+  "source_base": "7d92f02",
+  "checks": ".......s...............\n----------------------------------------------------------------------\nRan 23 tests in 0.234s\n\nOK (skipped=1)\n",
+  "focused_final_checks": ".....\n----------------------------------------------------------------------\nRan 5 tests in 0.006s\n\nOK\n",
+  "final_review_adjustment": "perf report --symfs /proc/nativePID/root resolves existing container library symbols; no profiler or model setting changed.",
+  "diff_format": "zero context unified diff to avoid blank context trailing whitespace in stored patch",
+  "root_go_base": "6e8bd31",
+  "final_launcher_correction": "systemd-run outside h.transaction; no other runtime source changes",
+  "final_launcher_checks": "PASS: systemd-run outside all parent context managers at line 34\nPASS: all R6 Python syntax; native argv and mandatory guard unchanged\nlaunch_r6.py sha256 b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01\nstaging payload sha256 6737b179fcf53c6a63bd4832c5d08b08fd1202b98a288f66899702c4ae4e2364\n"
+}

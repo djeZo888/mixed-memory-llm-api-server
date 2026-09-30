@@ -1,0 +1,55 @@
+{
+  "source_base": "46f8c79815455c2e2dca2bc2df496b159996e762",
+  "native_identity": {
+    "alias": "mimo-v2.6-pro-rl",
+    "artifact_template_provenance": "original verified GGUF inventory; not inferred from props",
+    "bos_token": ",",
+    "build_info": "b1-7ac59a6",
+    "context": 131072,
+    "eos_token": "<|im_end|>",
+    "expected_effective_template_bytes": 3866,
+    "expected_effective_template_sha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+    "is_sleeping": false,
+    "model_path": "/models/MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+    "owner_id": "b0c319cce5c8fcececc28acb01ec92f68693588ba843c8136107927aa7ffbac1",
+    "pid": 232672,
+    "raw_artifact_template_bytes": 3867,
+    "raw_artifact_template_sha256": "11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059",
+    "slots": 1,
+    "template_bytes": 3866,
+    "template_sha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+    "utc": "2026-09-27T14:38:23.029481+00:00"
+  },
+  "owner": {
+    "unit": "h016-mimo-profile-20260927-r7.service",
+    "invocation": "2034e3b8f6004f6da8ebf7a92a389690",
+    "pid": 229308,
+    "native_pid": 232672,
+    "container_id": "b0c319cce5c8fcececc28acb01ec92f68693588ba843c8136107927aa7ffbac1",
+    "image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "started_at": "2026-09-27T14:28:05.871420053Z",
+    "memory_cap_bytes": 755914244096,
+    "memory_swap_limit_bytes": 755914244096,
+    "treatment": "GOMP_SPINCOUNT=0"
+  },
+  "idle_memory_snapshot": {
+    "utc": "2026-09-27T14:42:03.700211+00:00",
+    "memory_current_bytes": 656000737280,
+    "anon_bytes": 533789782016,
+    "file_bytes": 121156476928,
+    "kernel_bytes": 1054478336,
+    "sum_anon_file_kernel": 656000737280,
+    "file_mapped_subset_bytes": 262971392,
+    "shmem_subset_bytes": 260861952,
+    "memory_swap_current": 0,
+    "host_memtotal": 946820976640,
+    "host_memavailable": 383771136000,
+    "limit": "Do not add file_mapped/shmem to anon+file+kernel; reserved/mapped/cache are not all additional resident allocations. Host available is a separate host metric."
+  },
+  "mapped_dso_prior_receipt": {
+    "source": "Immediate PROFILE08 handoff; same exact immutable image retained, no fresh inventory",
+    "libgomp_sha256": "135f3c8f006d2fe5e68e51281c7974cb991a03de3bfb3593d68d174dfcf854d1",
+    "libgomp_buildid": "fa0c1b446610c4b7aca51e1183050acf5aa79503",
+    "zen4_buildid": "df8c05d922e6e0c61b858b42252e98254088e948"
+  }
+}

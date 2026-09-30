@@ -1,0 +1,6 @@
+{
+  "scripts/h017/receipt04/h017-receipt04-short.service": "662208a1b89fa5a787fe03a7f9e181935febe114ff1b51a4caf559e0602e0ed5",
+  "scripts/h017/receipt04/client.py": "2982fc5a3f41393590a0092319a5efda45b8326f8227476ee01485266cc845d0",
+  "scripts/h017/receipt04/test_client.py": "e3de04b55b0b61730a0657dee403f69e1867fc93794b120260b7fa5b41ceba99",
+  "scripts/runtime/mimo/owner.py": "dd9c10c75214fbbf8f1d5566618ac35bafa17f709ffc12ec3f84003dc9e30786"
+}

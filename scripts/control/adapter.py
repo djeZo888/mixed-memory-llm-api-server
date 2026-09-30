@@ -9,12 +9,15 @@ from contextlib import contextmanager
 import copy
 import hashlib
 import hmac
+import stat
+import threading
 from pathlib import Path
 from types import SimpleNamespace
 
 from common.lifecycle_lease import _validate_borrowed_lease
 from lifecycle.manager import load_manager, recovery_manager
 from lifecycle.runtime_io import Docker, LifecycleError, _read_key
+from lifecycle.storage_binding import BindingError, RegisteredStorageBinding, _binding_errors
 from .discovery import discover_records
 from .core import Application, digest, safe_error
 from .journal import Journal, JournalUnavailable, MAX_BYTES
@@ -28,14 +31,88 @@ def _lease(manager, lease):
                            trusted_uid=manager.trusted_uid)
 
 
+class _ObservationStorageBinding(RegisteredStorageBinding):
+    """Private read scope; the supplied binding and its runner stay untouched."""
+    def __init__(self, binding):
+        storage = copy.copy(binding.storage)
+        storage.runner = copy.copy(storage.runner)
+        super().__init__(storage, binding.registry)
+        self._guard = None
+        self._thread = None
+
+    def _active_guard(self):
+        return self._guard if self._thread == threading.get_ident() else None
+
+    @contextmanager
+    def observation(self, storage_io):
+        if self._guard is not None:
+            raise BindingError('nested_storage_observation')
+        # The existing descriptor guard owns full topology checks at both
+        # boundaries and fresh registry bytes/mountinfo checks on every call.
+        with self.mounted_guard(storage_io) as guard:
+            self._guard, self._thread = guard, threading.get_ident()
+            try:
+                yield self
+            finally:
+                self._guard, self._thread = None, None
+
+    @_binding_errors
+    def verify(self, roles=('data', 'models')):
+        if isinstance(roles, str) or not roles or not set(roles) <= {'data', 'models'}:
+            raise BindingError('invalid_storage_roles')
+        guard = self._active_guard()
+        return guard() if guard is not None else super().verify(roles=roles)
+
+    @_binding_errors
+    def validate_path(self, role, path):
+        guard = self._active_guard()
+        if guard is None:
+            return super().validate_path(role, path)
+        path = str(path)
+        root = self.path(role)
+        if path == root:
+            suffix = ''
+        elif path.startswith(root + '/'):
+            suffix = path[len(root) + 1:]
+        else:
+            raise BindingError('path_outside_storage_role')
+        if self.path(role, suffix) != path:
+            raise BindingError('invalid_storage_path')
+        snapshot = guard.check_path(path)
+        # The full-role guard permits either mount. Retain this API's exact
+        # requested-role mount/UUID/filesystem, including nested models mounts.
+        mounted = max((snapshot[name] for name in ('data', 'models')
+                       if path == snapshot[name]['mount']
+                       or path.startswith(snapshot[name]['mount'] + '/')),
+                      key=lambda entry: len(entry['mount']))
+        expected = self._registry[self.role_mount(role)]
+        if any(mounted[key] != expected[key] for key in ('mount', 'uuid', 'fstype')):
+            raise BindingError('path_crosses_unregistered_mount')
+        local = self.storage._no_symlink(path, protected=True)
+        guard.check_path(path)
+        return local
+
+
 class ManagerJournalStore:
     """Use L1's registered reader/writer; no guessed disk or root fallback."""
     def __init__(self, manager_loader):
         self.manager_loader = manager_loader
+        self._prepared = threading.local()
+
+    @contextmanager
+    def prepared(self, manager):
+        self._prepared.manager = manager
+        try:
+            yield
+        finally:
+            del self._prepared.manager
+
+    def _manager(self):
+        return getattr(self._prepared, "manager", None) or self.manager_loader()
 
     def read(self):
         try:
-            manager = self.manager_loader()
+            manager = self._manager()
             path = manager.binding.path('data', JOURNAL_SUFFIX)
             local = manager.binding.validate_path('data', path)
             # Absence is checked only after mounted identity/path verification.
@@ -48,7 +125,7 @@ class ManagerJournalStore:
 
     def write(self, value):
         try:
-            manager = self.manager_loader()
+            manager = self._manager()
             manager.persistent_json(manager.binding.path('data', JOURNAL_SUFFIX), value)
         except Exception:
             raise JournalUnavailable() from None
@@ -83,14 +160,14 @@ class ManagerSession:
         self._generations = {}
 
     @contextmanager
-    def _bounded(self, deadline):
+    def _bounded(self, deadline, *, manager=None):
         """Cap existing L1 external call budgets, without abandoning its lease.
 
         A filesystem/kernel call cannot be forcibly cancelled by a Python
         deadline. HTTP slots remain occupied until such a call actually returns.
         No second transition is admitted while an owner call is outstanding.
         """
-        manager = self.manager
+        manager = self.manager if manager is None else manager
         originals = {}
         def timed(function):
             def call(*args, **kwargs):
@@ -126,6 +203,104 @@ class ManagerSession:
             if storage_run is not None:
                 storage_runner.run = storage_run
 
+    def refresh_anchor(self, deadline):
+        """Read-only CAS token, with no readiness/network/storage discovery.
+
+        Stable file metadata covers state, owner/config/source replacement; boot
+        and mount identity plus one bounded Docker inventory cover external
+        writers as well as this process. Unknown anchors fail closed. Metadata
+        is never published. The full readiness checks remain in observe().
+        """
+        manager = self.manager
+        with self._bounded(deadline):
+            try:
+                state = manager.read_state(recovery=manager.recovery_only, offline=True)
+                paths = {manager.recovery_file}
+                from .installation import RECOVERY_FILES, NORMAL_FILES
+                root = manager.config_root.parent
+                paths.update(root / name for name in RECOVERY_FILES)
+                if not manager.recovery_only:
+                    paths.add(manager.state_file)
+                    paths.add(Path(manager.binding.path('data', JOURNAL_SUFFIX)))
+                    paths.add(Path(manager.binding.path('data', 'services/llm-manager/deployment-instance.json')))
+                    # Registered source/profile snapshots are small; never walk weights.
+                    from .node_installation import SOURCE_FILES
+                    paths.update(root / name for name in set(NORMAL_FILES) | set(SOURCE_FILES))
+                    if not manager.test_paths:
+                        from lifecycle.manager import protected_json
+                        instance_path = Path(manager.binding.path('data', 'services/llm-manager/deployment-instance.json'))
+                        if protected_json(instance_path) != manager.instance:
+                            raise ControlError('stale_state', 409)
+                        from install.storage import REGISTRATION_PATH
+                        paths.add(Path(REGISTRATION_PATH))
+                    for kind in ('deployments', 'models', 'runtimes'):
+                        directory = manager.config_root / kind
+                        paths.add(directory)
+                        paths.update(directory.glob('*.json'))
+                    # Receipt paths in the loaded owner are part of that proof.
+                    def receipt_paths(value):
+                        if isinstance(value, dict):
+                            for child in value.values(): receipt_paths(child)
+                        elif isinstance(value, list):
+                            for child in value: receipt_paths(child)
+                        elif isinstance(value, str) and value.startswith('/'):
+                            paths.add(Path(value))
+                    receipt_paths(manager.instance)
+                # Ancestors cover directory/mount replacement and optional-file
+                # creation. ctime prevents a same-content or mtime-restored ABA.
+                paths.update(parent for path in list(paths) for parent in path.parents)
+                files = []
+                for path in sorted(paths):
+                    deadline.remaining()
+                    try:
+                        meta = path.lstat()
+                    except FileNotFoundError:
+                        files.append((str(path), None))
+                        continue
+                    if stat.S_ISLNK(meta.st_mode):
+                        raise ControlError('observation_unavailable')
+                    stable = (str(path), meta.st_dev, meta.st_ino, meta.st_mode, meta.st_uid)
+                    files.append(stable if stat.S_ISDIR(meta.st_mode) else
+                                 stable + (meta.st_size, meta.st_mtime_ns, meta.st_ctime_ns))
+                # Fixtures supply their own native inventory; production uses
+                # Docker.run capped by the same one-second publication deadline.
+                def mounts(item):
+                    value = item.get('Mounts')
+                    if type(value) is not list or any(type(entry) is not dict for entry in value):
+                        raise ControlError('observation_unavailable')
+                    return sorted(value, key=digest)
+
+                native = [{key: item.get(key) for key in
+                           ('Id', 'Name', 'Image', 'Config', 'HostConfig', 'NetworkSettings')}
+                          # Docker emits Mounts in map iteration order; compare
+                          # the complete unordered entries, not their wire order.
+                          | {'mounts': mounts(item),
+                             'runtime': {key: item.get('State', {}).get(key) for key in
+                              ('Running', 'Restarting', 'Paused', 'StartedAt', 'FinishedAt', 'Pid')}}
+                          for item in manager.docker.inventory()]
+                system = manager.lease_system_root
+                boot_path = system / 'proc/sys/kernel/random/boot_id'
+                mounts_path = system / 'proc/self/mountinfo'
+                boot = boot_path.read_text() if not manager.test_paths else 'fixture-boot'
+                mounts = mounts_path.read_text() if not manager.test_paths else 'fixture-mounts'
+                return digest([boot, mounts, state, manager.instance, files,
+                               sorted(native, key=lambda item: item['Id'])])
+            except ControlError:
+                raise
+            except Exception:
+                raise ControlError('observation_unavailable') from None
+
+    def publish_refresh(self, lease, deadline, journal, reconcile):
+        _lease(self.manager, lease)
+        with self._bounded(deadline):
+            # Reuse the manager whose identity was just checked; do not perform
+            # another slow open/load inside publication. Existing anchored I1b
+            # writes and journal corruption/unavailable behavior are unchanged.
+            if isinstance(journal.store, ManagerJournalStore):
+                with journal.store.prepared(self.manager):
+                    return reconcile()
+            return reconcile()  # Explicit constructor-owned fixture store.
+
     def _separate_key(self, deployment):
         if self.control_key is None:  # Explicit test construction only.
             return
@@ -138,10 +313,29 @@ class ManagerSession:
         except Exception:
             raise ControlError('credential_separation_unverified') from None
 
-    def observe(self, deadline):
+    @contextmanager
+    def _observation_storage(self, deadline):
         manager = self.manager
-        recovery = manager.recovery_only
-        with self._bounded(deadline):
+        if manager.recovery_only or not isinstance(manager.binding, RegisteredStorageBinding):
+            with self._bounded(deadline):
+                yield manager
+            return
+        # Do not replace a shared manager's binding, even temporarily. L1's
+        # methods resolve self.binding on this private observation copy.
+        observed = copy.copy(manager)
+        observed.binding = _ObservationStorageBinding(manager.binding)
+        if type(manager.docker) is Docker:
+            observed.docker = copy.copy(manager.docker)
+        try:
+            with self._bounded(deadline, manager=observed), \
+                    observed.binding.observation(observed.persistent_writer()):
+                yield observed
+        except BindingError:
+            raise StorageUnavailable() from None
+
+    def observe(self, deadline):
+        recovery = self.manager.recovery_only
+        with self._observation_storage(deadline) as manager:
             try:
                 if not recovery:
                     manager.check_mounts()  # BOTH roles; data-only is not Ready.
@@ -158,7 +352,7 @@ class ManagerSession:
                 for slot in ('glm', 'qwen'):
                     item = dict(slots[slot], state_persisted=state.get('state_persisted', True))
                     try:
-                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery, slot=slot)
+                        raw['slots'][slot] = self._observe_slot(item, deadline, recovery, slot=slot, manager=manager)
                     except StorageUnavailable:
                         raise
                     except ControlError:
@@ -170,10 +364,10 @@ class ManagerSession:
                 return raw
             if recovery and state.get('container') is None:
                 raise ControlError('recovery_identity_unavailable')
-            return self._observe_slot(state, deadline, recovery)
+            return self._observe_slot(state, deadline, recovery, manager=manager)
 
-    def _observe_slot(self, state, deadline, recovery, *, slot=None):
-        manager = self.manager
+    def _observe_slot(self, state, deadline, recovery, *, slot=None, manager=None):
+        manager = self.manager if manager is None else manager
         raw = copy.deepcopy(state)
         identity = state.get('container')
         if state.get('pending_create') is not None:
@@ -271,11 +465,31 @@ class ManagerSession:
             except Exception:
                 raise PackageBlocked() from None
 
+    @contextmanager
+    def _hardware_owner(self, lease):
+        """Bind already-held canonical authority during pre-dispatch checks.
+
+        preflight intentionally runs before Manager.dispatch (and before old
+        target stop), so dispatch has not bound its lease yet. Restore the
+        prior binding even on refusal; no new lock or borrowed FD is created.
+        """
+        _lease(self.manager, lease)
+        missing = object()
+        previous = getattr(self.manager, '_hardware_lease', missing)
+        self.manager._hardware_lease = lease
+        try:
+            yield
+        finally:
+            if previous is missing:
+                del self.manager._hardware_lease
+            else:
+                self.manager._hardware_lease = previous
+
     def preflight(self, target, lease, deadline, *, slot=None):
         _lease(self.manager, lease)
         if self.manager.recovery_only:
             raise StorageUnavailable()
-        with self._bounded(deadline):
+        with self._bounded(deadline), self._hardware_owner(lease):
             try:
                 self.manager.check_package_admission()
                 deployment = self.manager.deployment(target)
@@ -330,8 +544,8 @@ class ManagerSession:
         return self._dispatch('start', lease, deadline, slot=slot)
 
 
-def production_application(config_root, control_key, *, advertised_policy=None):
+def production_application(config_root, control_key, *, advertised_policy=None, readiness_identity=None):
     backend = ProductionBackend(config_root, control_key=control_key)
     return Application(backend, Journal(ManagerJournalStore(backend.load)),
                        read_seconds=60, admission_seconds=60,
-                       advertised_policy=advertised_policy)
+                       advertised_policy=advertised_policy, readiness_identity=readiness_identity)

@@ -1,0 +1,21 @@
+{
+  "case": "C04",
+  "known_settled_reserve_only_C03_sha256": "9fd701c802a7b03e4122fc3c3a4f52b52564842ccfb3011a99db415e14634cf9",
+  "coordinator_note_sha256": "3cc01343b25c719f38ade231e2e34d823e2a7b4db208bd2ccc1bd7749d799f49",
+  "root_release": "completeHTTP200/normalsettlement/health/identities/zeroswap, reserve-onlymiss. C03 remainsDISABLED/unqualified, no retry/settingschange. Syncexactmin/peak+timingphase now. Root permits existing C04one-callGO with original6.13%forecast IF C03minoccurslate decode aspriorphaseobservations and remaininghealth/identity/storageguardspass (C04targetdecode1024sq). Confirmlatephase thenexecuteC04once, no morepermissioncycle. If reservemiss occurs earlyprefix/denoise, REPORTBEFOREC04, asforecastcouldbeinvalid. No actualphaseinstrumentation claim; timing inference labeled.\n\n\nRoot C03 visualPASS guardedcreativefidelity, but memoryFAILdecisive (46984peak/2156free4.387%) =>DISABLED. Root confirms C04conditionalgateMET: min64.914sof65.496s, prefinal2sfree9634MiB, consistentlate decode inference. PROCEED C04lastauthorizedcall now ifnativeguardshealthy; no newpermissioncycle. Preserve explicitrootreviewed C03reserve-only settled result; permit C04independentprofile without genericallyacceptingunknownfailures. Finaleditprofiles currentlyonly1ref1024square+1536x864; add2ref1024onlyifC04measured+visualpass. NoFHDedit.\n\n\nRoot C04 predecessor clarification: exact C03 oneHTTP200/normalsettlement/sameidentities/late-decode-onlyreserve miss is independentlyreviewed. The C04independent1024sq exception is explicitlyauthorized; avoid generic allpreviousqualificationpasses falseblock. Bind exactC03receipt/rootGO while preservingC03memoryFAIL and blockingunknown/unsettledfailures. Only independentC04execution permitted, no upgradeC03status. This is alreadyapprovedtask-specificcontinuation, no newpermissiongate.",
+  "late_phase_proof": {
+    "case": "C03",
+    "request_elapsed_seconds": 65.49602156499896,
+    "minimum_free_mib": 2156,
+    "minimum_utc": "2026-09-23T13:56:52.458536+00:00",
+    "minimum_offset_seconds": 64.91409826278687,
+    "seconds_before_http_completion_derived": 0.5819233022120898,
+    "early_minimum_free_mib": 9634,
+    "only_last2seconds_below5percent": true,
+    "phase_interpretation": "Late final-decode timing inference, consistent with prior measured cases and source ordering; not actual stage instrumentation."
+  },
+  "current_health_guards": "PASS; artifacts/C03/post-C03-readonly.json",
+  "C03_qualification_memory_pass": false,
+  "C04_calls_permitted": 1,
+  "budget_used_before": 3
+}

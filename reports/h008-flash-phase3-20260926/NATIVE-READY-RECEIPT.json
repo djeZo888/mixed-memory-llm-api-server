@@ -1,0 +1,175 @@
+{
+  "utc": "2026-09-26T18:44:43.314209+00:00",
+  "node_observed_at": "2026-09-26T18:44:39.511300+00:00",
+  "node_freshness": "fresh",
+  "flash_dto": {
+    "state": "ok",
+    "observed_at": "2026-09-26T18:44:39.821596+00:00",
+    "age_ms": 3600,
+    "freshness": "fresh",
+    "reason": null,
+    "service_id": "glm-5.3-flash",
+    "generation": 5120350736906977,
+    "affected_services": [
+      "glm-5.3-flash"
+    ],
+    "installed_capabilities": [
+      "chat.completions"
+    ],
+    "availability": "available",
+    "ready": true,
+    "admitting": null,
+    "hardware_latched": false,
+    "hardware_latched_boot_id": null,
+    "required_gpu_uuids": [
+      "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    ],
+    "activity": "unknown",
+    "queue_depth": null,
+    "active_requests": null,
+    "deployment_id": "glm-5.3-flash-480000-fp8-kt",
+    "model_alias": "glm-5.3-flash",
+    "configured_context_tokens": 480000,
+    "max_output_tokens": 65536,
+    "operation_profiles": []
+  },
+  "native_allocation": {
+    "container_started_at": "2026-09-26T18:38:38.431861217Z",
+    "receipt": {
+      "context": 480000,
+      "max_req_input_len": 479994,
+      "max_req_len": 479999,
+      "pool": 480000,
+      "resolved_cache_dtype": "torch.float8_e4m3fn",
+      "sm120_execution": "PASS"
+    }
+  },
+  "native_cpu_settings": {
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 2,
+    "max_running_requests": 1
+  },
+  "expert_thread_affinity": {
+    "numa_0": {
+      "threads_including_pool_master": 32,
+      "cpu_masks": {
+        "1": 1,
+        "2": 1,
+        "3": 1,
+        "4": 1,
+        "5": 1,
+        "6": 1,
+        "7": 1,
+        "8": 1,
+        "9": 1,
+        "10": 1,
+        "11": 1,
+        "12": 1,
+        "13": 1,
+        "14": 1,
+        "15": 1,
+        "0-15": 16,
+        "0": 1
+      }
+    },
+    "numa_1": {
+      "threads_including_pool_master": 32,
+      "cpu_masks": {
+        "17": 1,
+        "18": 1,
+        "19": 1,
+        "20": 1,
+        "21": 1,
+        "22": 1,
+        "23": 1,
+        "16-23": 24,
+        "16": 1
+      }
+    }
+  },
+  "auth": {
+    "correct": 200,
+    "none": 401,
+    "wrong": 401
+  },
+  "auth_routes": {
+    "/v1/chat/completions": {
+      "correct": 200,
+      "none": 401,
+      "wrong": 401
+    },
+    "/v1/tokenize": {
+      "correct": 200,
+      "none": 401,
+      "wrong": 401
+    }
+  },
+  "fixture_parity": {
+    "parity_multilingual": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 42,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 42,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 43
+      }
+    },
+    "parity_prose": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 36,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 36,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 37
+      }
+    },
+    "parity_tools_history": {
+      "status": "PASS",
+      "tokenizer": {
+        "context_limit": 480000,
+        "count": 212,
+        "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+        "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+      },
+      "usage": {
+        "completion_tokens": 1,
+        "prompt_tokens": 212,
+        "prompt_tokens_details": null,
+        "reasoning_tokens": 0,
+        "total_tokens": 213
+      }
+    }
+  },
+  "other_services": {
+    "qwen-gpu0": {
+      "ready": true,
+      "availability": "available",
+      "hardware_latched": false
+    },
+    "qwen-gpu1": {
+      "ready": true,
+      "availability": "available",
+      "hardware_latched": false
+    },
+    "image": {
+      "ready": true,
+      "availability": "available",
+      "hardware_latched": false
+    }
+  },
+  "benchmark_lane": "EXCLUSIVE_WORKER1_PENDING_REQUIRED_TESTS"
+}

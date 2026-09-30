@@ -1,0 +1,54 @@
+{
+  "status": "DISPATCHED_STARTUP_INSPECTION",
+  "utc": "2026-09-28T03:22:49.262821+00:00",
+  "unit": {
+    "MainPID": "0",
+    "ExecMainStartTimestamp": "Mon 2026-09-28 05:22:17 CEST",
+    "ExecMainStatus": "1",
+    "ActiveState": "failed",
+    "SubState": "failed",
+    "InvocationID": "b9a73132e5a54fb2b16f3f7ac88d15aa"
+  },
+  "hardstop": {
+    "ActiveState": "active",
+    "SubState": "waiting",
+    "InvocationID": "2edac4c76d344bfa83bd426dc06328e5"
+  },
+  "supervisor": {
+    "startedUtc": "2026-09-28T03:22:17.836482+00:00",
+    "supervisorPid": 514065,
+    "invocationId": "b9a73132e5a54fb2b16f3f7ac88d15aa",
+    "wallBudgetSeconds": 1380,
+    "absoluteSettlementUtc": "2026-09-28T03:50:00Z",
+    "status": "PREFLIGHT_REFUSED",
+    "nativeSettlement": "NOT_PROVEN",
+    "replayAllowed": false,
+    "preflightPid": 514068,
+    "exitCode": 1,
+    "endedUtc": "2026-09-28T03:22:17.870058+00:00",
+    "elapsedSeconds": 0.033588016987778246
+  },
+  "evidencePaths": {
+    "dispatchIntent": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver/dispatch-intent.json",
+    "supervisor": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver/supervisor-result.json",
+    "preflight": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver/preflight.log",
+    "hardstop": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver/hardstop-readback.txt",
+    "liveLog": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver/live-process.log",
+    "owner": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/live-acceptance-01/OWNER.json",
+    "events": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/live-acceptance-01/events.jsonl",
+    "result": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/live-acceptance-01/RESULT.json"
+  },
+  "replayAllowed": false,
+  "appAcceptance": "NOT_YET_PROVEN",
+  "observedEvents": [],
+  "preflightPassed": false,
+  "realParentRequestObserved": false,
+  "realFrontierActiveObserved": false,
+  "currentPhase": "preflight",
+  "sha256": {
+    "dispatchIntent": "25762965ce38e08758fc2fdda82839159ff04653c3c544dd2b59c59719f6ebbb",
+    "gate": "ad0b8dc76cef36c308789a0f0cb3ab8727f1ce63348dd9f3cd506d59f84dafb1",
+    "activation": "45c632c1e1c8acb88229ba4bd4dbfc5d355dfb3c8f04d448891f7d5c19b0e4dc",
+    "preflight": "7f290f8a8b3453cc1aa8608b93b71cf4c5c36b04e11eb6ce2bf1ec7aa4b21313"
+  }
+}

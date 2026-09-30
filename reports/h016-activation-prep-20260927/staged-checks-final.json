@@ -1,0 +1,14 @@
+{
+  "result": "PASS",
+  "staged_release": "/opt/ai-harness/releases/928b3b470058241f089a839367d4b30d5887a6e3-h016/ai-harness",
+  "source_archive_dist_dependencies": "PASS",
+  "unit_path_only_replacement": true,
+  "unit_hashes": {
+    "ai-harness.service": "154ed0d124746f82c016af244d3fa766d221e7737726f2362d9efa232e033ee0",
+    "30-h008-registry.conf": "cab208c9b889d0b2d5f6cee90b7587e8356ced3aa0686857d36357a81bc1a0e0"
+  },
+  "active_config_sha256": "7a4bea03394e51fb005f56d39cd3b5b7c4a28d8c2de85e99b45fc73913febe1a",
+  "status_entrypoint_exists": true,
+  "qualified": false,
+  "activated": false
+}

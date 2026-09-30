@@ -1,0 +1,100 @@
+{
+  "archive_sha256": "5536650d58dfa06b4f1da91a6f0e006c244cddbbd76b6ac98463070817d4a4cc",
+  "consumption": {
+    "recovery_sha256": "135b2b61f4cd247b9a44c6a1339a4b6f294c814c9043ccd71221d28a3ab79bc4",
+    "schema_version": 1,
+    "successor_launch_id": "3b42b8b128f945a188be6b1b439eacf9",
+    "supervisor": {
+      "invocation_id": "b9712462f5064a089cd06cdcee037284",
+      "pid": 661048,
+      "unit": "llm-frontier-mimo.service"
+    }
+  },
+  "consumption_raw_sha256": "c6f5065df2aef2c57c33924dbcece2a41b9f6438a4d086cc7f290e76681bd2a2",
+  "consumption_recovery_and_successor_binding": "PASS",
+  "historical_held_request_preserved_in_protected_archive": true,
+  "historical_outcome": "FAILED_OR_UNKNOWN",
+  "history_client_sha256": "5753b4fcc4eca25bcec70643e26d597cfcc0f7333307852e54eccca240832ea5",
+  "old_request_hold": true,
+  "old_status": "HELD",
+  "original_failure_fields_unchanged": true,
+  "primary_failure": {
+    "code": "lifecycle_busy",
+    "cycle_elapsed_s": 0.11069,
+    "hardware_evidence": {
+      "pre": {
+        "hardware_latched": null,
+        "hardware_latched_boot_id": null,
+        "identity": [
+          [
+            "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+            "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+            "validated"
+          ]
+        ],
+        "reason": "hardware_latch_unknown"
+      },
+      "refresh_attempted": false,
+      "stage": "canonical_lease"
+    },
+    "observed_at": "2026-09-28T07:40:00.423857+00:00",
+    "operation": "hardware_latch",
+    "phase": "RUNNING"
+  },
+  "receipt_canonical_sha256": "135b2b61f4cd247b9a44c6a1339a4b6f294c814c9043ccd71221d28a3ab79bc4",
+  "receipt_raw_sha256": "ebe50383b9e42cacb31e2bb24e776c3cf0ebe7e3ccc5cd3d453ac14ec492c805",
+  "reconcile_command": {
+    "action": "reconcile",
+    "command": "sudo -n /usr/bin/python3 -I -B /data/services/mimo-h016-20260927/source/owner.py reconcile-new-boot --expected-state-sha256 04bb9becc60530c97d2cd75875be3f2f36b86e1cedfa6cdd2bf8fb3e6e4dd939 --expected-boot-id 17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125 --expected-manifest-sha256 2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+    "exit": 0,
+    "finished_utc": "2026-09-28T15:40:33.967284+00:00",
+    "parent_lease_held": false,
+    "ssh_alias": "ai-vm",
+    "timeout_seconds": 120,
+    "utc": "2026-09-28T15:40:32.813765+00:00"
+  },
+  "recovery": {
+    "archive_name": "new-boot-archive-17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125.json",
+    "archive_sha256": "5536650d58dfa06b4f1da91a6f0e006c244cddbbd76b6ac98463070817d4a4cc",
+    "current_boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+    "manifest_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+    "physical_absence": {
+      "cgroup_empty": true,
+      "container_id": "aae59a6db7da41ff58056ce11e762060a6fe8aeecdad3d0e6813057573238d54",
+      "current_boot_id": "17ac5d50-a6a4-4df1-8f9e-7bfc3db5f125",
+      "gpu_compute_empty": true,
+      "native_pid_absent": true,
+      "old_boot_id": "6535a867-8e27-49d9-8a04-4ecc1adb1e32",
+      "owner_absent": true,
+      "physical_release": "REBOOT",
+      "prior_request_outcome": "FAILED_OR_UNKNOWN"
+    },
+    "preserved_container_name": "llm-frontier-mimo-production-prior-b23d112359424d909862207e30f0c9d7",
+    "prior_manifest_sha256": "d8bd9326118458774ac2b585e6029faa2a607d195001d85e14c5d238f6c05be4",
+    "prior_request_outcome": "FAILED_OR_UNKNOWN",
+    "prior_state_digest": "bf4f02b4d9d3f319599c0c424e20fd42daca1c0dabcbe70e3e944b2c38dfbbb6",
+    "schema_version": 1,
+    "selection": {
+      "generation": 12,
+      "manifest_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "status": "NEW_BOOT_RECONCILED"
+  },
+  "selection": {
+    "generation": 12,
+    "manifest_sha256": "2141e174172acced9fc8e2d0fc9a90b0fb053f8862dba6160fa55e5cc44226db",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "selection_raw_sha256": "669f8e9f22fb1e8b54182315701c5a5cb84e10494ab40e242845b44a042d8aed",
+  "settlement_failure": {
+    "code": "command_timeout",
+    "observed_at": "2026-09-28T07:40:09.535037+00:00",
+    "operation": "settlement",
+    "phase": "SETTLING"
+  },
+  "status": "RECOVERY_READBACK_PASS",
+  "utc": "2026-09-28T15:40:39.565238+00:00"
+}

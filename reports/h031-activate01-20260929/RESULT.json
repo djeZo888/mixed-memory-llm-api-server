@@ -1,0 +1,212 @@
+{
+  "baseSource": "752ecebc12ff439f7813197620522fab80f696dd",
+  "files": {
+    "/data/services/image21-runtime-20260923/config.json": {
+      "after": "439751ac672fc183799e65a434449aadd60d5b421d1f4887e47c35d3cb9088f7",
+      "before": "439751ac672fc183799e65a434449aadd60d5b421d1f4887e47c35d3cb9088f7",
+      "reviewedSuccessorNotInstalled": "874794b83ed0182b6651b607517af44ac94f6125abc3b6c1509886aa82b359c9"
+    },
+    "/data/services/image21-runtime-20260923/source/service.py": {
+      "after": "748b94a5b17e6c2cb4229d69f4dd142dc9cf099b05206f0f97e6c04173cab052",
+      "before": "748b94a5b17e6c2cb4229d69f4dd142dc9cf099b05206f0f97e6c04173cab052",
+      "reviewedSuccessorNotInstalled": "26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556"
+    },
+    "/data/services/mimo-h016-20260927/manifest.json": {
+      "after": "ad6b438f17154d7434426b3b9a4b0238558a86ba5ab764ccb5c3c2b0f0099c8b",
+      "before": "ad6b438f17154d7434426b3b9a4b0238558a86ba5ab764ccb5c3c2b0f0099c8b",
+      "reviewedSuccessorNotInstalled": "d0dfb09b126cff0ba132eb59cdcdc11b8538a53f1ef58e91c4ab990059e1492e"
+    },
+    "/data/services/mimo-h016-20260927/source/owner.py": {
+      "after": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098",
+      "before": "1cc1ee45eca7c578d9b84411d75c1cfd37c914edd7b5097389ee2f19fae23098",
+      "reviewedSuccessorNotInstalled": "206ccfe397d3b855836f28a05170ac1d5af56c7d93cb85e1bd1cb4ff6c84f5bc"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node.py": {
+      "after": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+      "before": "937271995122981809899f0bb6c6fc34cfbfce01cd41462710d40449e719360c",
+      "reviewedSuccessorNotInstalled": "32fa9fb3a0e7713799c28e7b52d783b87498e178e51187a2b3a691521017ff59"
+    },
+    "/usr/local/lib/llm-server/node-api/scripts/control/node_collectors.py": {
+      "after": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+      "before": "df94e1a52cfc75d7ddd024a05156becbf72812d95b1e011218c3a883c5d4a027",
+      "reviewedSuccessorNotInstalled": "20ccafc8a4ba2937332f53ec59b34ce9d98a9047e09f0462bb528a6d77bcdb77"
+    }
+  },
+  "finalPeers": {
+    "newTransitionFilesExist": {
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-d713d660b691a2573b2493ae82e8afd79e11d905aaa8f5a3795a28a3f63371b5-archive.json": false,
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-d713d660b691a2573b2493ae82e8afd79e11d905aaa8f5a3795a28a3f63371b5-consumed.json": false,
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-d713d660b691a2573b2493ae82e8afd79e11d905aaa8f5a3795a28a3f63371b5-receipt.json": false
+    },
+    "unchangedPeers": [
+      {
+        "id": "88c5e402c4d277339c855b7ba56a39dbc0eff3b5880b2bcdbbb4f00fcf5e7906",
+        "name": "/llm-image-backend",
+        "pid": 3080569,
+        "running": true,
+        "startedAt": "2026-09-29T07:56:00.256794277Z"
+      },
+      {
+        "id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+        "name": "/llm-qwen-ada200k-h028",
+        "pid": 833565,
+        "running": true,
+        "startedAt": "2026-09-28T23:44:52.546510973Z"
+      },
+      {
+        "id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+        "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+        "pid": 3647349,
+        "running": true,
+        "startedAt": "2026-09-29T02:07:52.812113852Z"
+      },
+      {
+        "id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+        "name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "pid": 3745649,
+        "running": true,
+        "startedAt": "2026-09-29T02:10:08.065244144Z"
+      }
+    ],
+    "unchangedUnits": {
+      "llm-image-api.service": {
+        "ActiveState": "active",
+        "ExecMainStatus": "0",
+        "InvocationID": "b66c802a941f4ee0a25863300fe58efa",
+        "MainPID": "3072661",
+        "Result": "success",
+        "SubState": "running"
+      },
+      "llm-image-backend.service": {
+        "ActiveState": "active",
+        "ExecMainStatus": "0",
+        "InvocationID": "dc44d4584a6d4df4b7b8ab523b5c271f",
+        "MainPID": "0",
+        "Result": "success",
+        "SubState": "exited"
+      },
+      "llm-node.service": {
+        "ActiveState": "active",
+        "ExecMainStatus": "0",
+        "InvocationID": "e20bd21c067b4085ba100260d7e96f2b",
+        "MainPID": "1401725",
+        "Result": "success",
+        "SubState": "running"
+      }
+    },
+    "utc": "2026-09-29T09:27:50.499815+00:00"
+  },
+  "furtherDisposition": "Root review of exact retained stopped failure required; no retry, fault clearing, source relaxation or old baseline restoration.",
+  "newOwners": [],
+  "nextReadinessUtc": null,
+  "normalStopSubmissions": 1,
+  "notExecuted": [
+    "image stop",
+    "node stop",
+    "six-path install",
+    "same-boot reconcile",
+    "selection amendment",
+    "receipt consumption",
+    "new native owner start",
+    "inference",
+    "readiness acceptance"
+  ],
+  "observedUtc": "2026-09-29T09:25:42.433754+00:00",
+  "prepare": {
+    "furtherAttemptsUsed": 1,
+    "initial": "ENTRY_ONLY_LeaseBusy_NO_INTENT",
+    "intent": {
+      "name": "source-stop-992bf979-efae-495b-9ab2-26e75ed5c5d0-fbfd46357f0d4e3482aa1c7da14f5147.json",
+      "sha256": "9cabae3e1335bda0028497638e5e968623e0870ef7cc339bd8d9a576243d8eee"
+    },
+    "rootAuthorizedFurtherLimit": 3,
+    "successUtc": "2026-09-29T09:24:27.537220+00:00"
+  },
+  "privateEvidenceOutsideGit": true,
+  "proposalSha256": "39739da1364518880a6971abcb1305618d609e32227822f89062fc7382b7aab1",
+  "selection": {
+    "generation": 12,
+    "manifest_sha256": "5c364e58cba01a569f13f6a239c6383dec1d5b92a94f3ab8d608962c0a178a39",
+    "schema_version": 1,
+    "selected_frontier": "mimo-v2.6-pro-rl"
+  },
+  "stage": {
+    "executedHelperSha256": "9e9f2217441be62941c14fba4484e2134daee2a6a938038d356a7830b8372762",
+    "exportOnlyDifference": "Unexecuted start branch uses root-approved single image API parent instead of direct backend start. No live helper replacement or start submitted.",
+    "exportedHelperSha256": "664febe1430f6274aec4672643f4b016838306b974934271b4f36e25999600c1",
+    "installedScratchDeltaSha256": "cd9b4a0fbb22e9d97f6ab826492282f6560402685c73b7e1023d94a6a7914e59",
+    "path": "/data/build/h031-activate01-20260929",
+    "predecessorAndPriorScratchPreserved": true
+  },
+  "status": "STOPPED_REVIEWED_INTENTIONAL_STOP_REFUSED_RETAINED_SETTLEMENT_TIMEOUT",
+  "stop": {
+    "cgroups": {
+      "/sys/fs/cgroup/llmmimo.slice/docker-87d2b6f131b9e6e98249f5ba148c0191c6a58fb17b58cf7f792ec27b14ef6d57.scope": {
+        "exists": false,
+        "pids": {}
+      },
+      "/sys/fs/cgroup/system.slice/llm-frontier-mimo.service": {
+        "exists": false,
+        "pids": {}
+      }
+    },
+    "gpuComputeEmpty": true,
+    "listener30012Empty": true,
+    "native": [
+      {
+        "Id": "87d2b6f131b9e6e98249f5ba148c0191c6a58fb17b58cf7f792ec27b14ef6d57",
+        "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+        "Name": "/llm-frontier-mimo-production",
+        "State": {
+          "Dead": false,
+          "Error": "",
+          "ExitCode": 137,
+          "FinishedAt": "2026-09-29T09:24:51.492416415Z",
+          "OOMKilled": false,
+          "Paused": false,
+          "Pid": 0,
+          "Restarting": false,
+          "Running": false,
+          "StartedAt": "2026-09-29T08:14:19.131765939Z",
+          "Status": "exited"
+        }
+      }
+    ],
+    "oldPids": {
+      "native": {
+        "exists": false,
+        "pid": 3442849
+      },
+      "proxy": {
+        "exists": false,
+        "pid": 3861754
+      },
+      "supervisor": {
+        "exists": false,
+        "pid": 3442364
+      }
+    },
+    "primary_failure": {
+      "code": "owner_interrupted",
+      "cycle_elapsed_s": 4.80748,
+      "observed_at": "2026-09-29T09:24:39.606796+00:00",
+      "operation": "cycle_sleep",
+      "phase": "RUNNING"
+    },
+    "settlement": {
+      "cgroup_empty": true,
+      "gpu_compute_empty": true,
+      "pid_released": true
+    },
+    "settlement_failure": {
+      "code": "command_timeout",
+      "observed_at": "2026-09-29T09:24:47.370273+00:00",
+      "operation": "settlement",
+      "phase": "SETTLING"
+    },
+    "stateRawSha256": "b1ba8b36d09aef570a0d90f769268a61d05a6dbb11899720a163a5bab8fa7420",
+    "status": "SETTLED",
+    "unit": "MainPID=0\nResult=exit-code\nExecMainStatus=255\nControlGroup=\nActiveState=failed\nSubState=failed\nJob=\nInvocationID=a1aed8cfbc0046c8a247922dfbe11e70\n"
+  },
+  "task": "H031-ACTIVATE01-20260929"
+}

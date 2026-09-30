@@ -1,0 +1,101 @@
+{
+  "attempts": [
+    {
+      "action": "recover",
+      "attempt_id": "340f152a1c864202b1d5957fbcb1db71",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "code": "ok",
+      "finished_utc": "2026-09-29T07:25:42.715617+00:00",
+      "invocation_id": "f69b6d70d3c14a5f82fc7a3ec589d15a",
+      "phase": "recover_verify",
+      "schema_version": 1,
+      "settlement_code": null,
+      "started_utc": "2026-09-29T07:24:20.800416+00:00",
+      "status": "succeeded"
+    },
+    {
+      "action": "start",
+      "attempt_id": "75f1046bb9dd4b25994da88f519cc276",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "code": "ok",
+      "finished_utc": "2026-09-29T07:25:41.714615+00:00",
+      "invocation_id": "693c21e60e194735b85b837001941b96",
+      "phase": "telemetry_verify",
+      "schema_version": 1,
+      "settlement_code": null,
+      "started_utc": "2026-09-29T07:24:23.012454+00:00",
+      "status": "succeeded"
+    }
+  ],
+  "containers": [
+    {
+      "Id": "80110dec37b6d037cfab7e06ed4f03bc37f0c1dee498d474fe8787e15ba02622",
+      "Image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "Name": "/llm-image-backend",
+      "pid": 2193285,
+      "running": true,
+      "started_at": "2026-09-29T07:24:25.778842174Z"
+    },
+    {
+      "Id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "Name": "/llm-qwen-ada200k-h028",
+      "pid": 833565,
+      "running": true,
+      "started_at": "2026-09-28T23:44:52.546510973Z"
+    },
+    {
+      "Id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "Name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "pid": 3647349,
+      "running": true,
+      "started_at": "2026-09-29T02:07:52.812113852Z"
+    },
+    {
+      "Id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+      "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+      "Name": "/llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "pid": 3745649,
+      "running": true,
+      "started_at": "2026-09-29T02:10:08.065244144Z"
+    }
+  ],
+  "readOnly": true,
+  "residentVerification": {
+    "container_id": "80110dec37b6d037cfab7e06ed4f03bc37f0c1dee498d474fe8787e15ba02622",
+    "device_current": {
+      "free_bytes": 17064525824,
+      "total_bytes": 51527024640,
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "gpu_processes": [
+      [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "2196097",
+        "32224"
+      ]
+    ],
+    "host_current": {
+      "MemAvailable": 916076339200,
+      "MemTotal": 946820820992,
+      "SwapFree": 3157258240,
+      "SwapTotal": 3157258240
+    },
+    "started_at": "2026-09-29T07:24:25.778842174Z"
+  },
+  "state": {
+    "container": {
+      "id": "80110dec37b6d037cfab7e06ed4f03bc37f0c1dee498d474fe8787e15ba02622",
+      "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+    },
+    "native_ready_seconds": 50.58060155899875,
+    "phase": "warm",
+    "run_id": "693c21e60e194735b85b837001941b96",
+    "start_utc": "2026-09-29T07:24:24.248978+00:00",
+    "updated_utc": "2026-09-29T07:25:41.415250+00:00",
+    "warm": true
+  },
+  "stateRawSha256": "09153b074af18a0a9a38654872384c402b23d9af8e64388332c6e0ddf4706091",
+  "utc": "2026-09-29T07:27:16.088254+00:00"
+}

@@ -1,0 +1,142 @@
+{
+  "state": "APP_STATUS_HEALTH_PASS",
+  "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "release": "/opt/ai-harness/releases/h030-flow03-2b40610e937ad6256450e055ffd1d5647997f4c5/ai-harness",
+  "oldRelease": "/opt/ai-harness/releases/h030-flow01-6c5d64955e5435f661bee8fe961d73ccfb95a9e4/ai-harness",
+  "utc": "2026-09-29T08:15:30.658454+00:00",
+  "buildReceiptSha256": "c1b310c6720fefd1033176e131e1b72640d988aab07a24231dee2bffea6b7913",
+  "helperSha256": "4ee791d7f9c94d424cbbc6da606fde4821dea1e43646b3e34149e64963018ca9",
+  "rootGoSha256": "e1be60051269669359c32f85d4f44a9f26da6e6c8471397a250c389aff74442c",
+  "appUnitSha256": "2ab06d8692d44b26743420f776b05fe9c009ecb2b8ecac6f26e2d65073d9c70d",
+  "configReplacements": [],
+  "statusUnchanged": true,
+  "imageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+  "codexPolicySha256": "dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec",
+  "stopReadback": {
+    "Result": "success",
+    "ExecMainStatus": "0",
+    "ActiveState": "inactive"
+  },
+  "preservation": {
+    "allOriginalApplicationRowsAndEventsPreserved": true,
+    "historicalUncertaintyPreserved": true,
+    "normalStartupEvents": 6,
+    "volatileLaneTablesSeparatelyChecked": [
+      "gateway_lanes",
+      "h003_image_lane",
+      "h005_image_ownership"
+    ]
+  },
+  "completedUtc": "2026-09-29T08:15:31.958889+00:00",
+  "health": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-29T08:15:31.724Z"
+    },
+    "status": "ok",
+    "visionAvailable": true,
+    "engines": {
+      "default": "minimax",
+      "minimax": {
+        "configured": true,
+        "available": true,
+        "preview": false,
+        "version": null,
+        "versionSource": "not-observed",
+        "readiness": "not-probed",
+        "protocolQualified": null,
+        "capabilities": {
+          "text": true
+        },
+        "capabilityDetails": {}
+      },
+      "codex": {
+        "available": true,
+        "preview": true,
+        "configured": true,
+        "imageToolEnabled": false,
+        "version": "0.158.0",
+        "versionSource": "deployment-policy",
+        "readiness": "not-probed",
+        "protocolQualified": true,
+        "capabilities": {
+          "text": true,
+          "media": false,
+          "steering": false,
+          "delegation": true,
+          "frontier": false,
+          "reasoning": false
+        },
+        "capabilityDetails": {
+          "compaction": {
+            "supported": true,
+            "qualification": "scripted_fixture",
+            "reason": "Pinned private compaction operation; local model recall remains unqualified"
+          },
+          "attachments": {
+            "supported": true,
+            "qualification": "scripted_fixture",
+            "reason": "Owned workspace file paths supplied as text references; original files preserved"
+          },
+          "nativeMedia": {
+            "supported": false,
+            "qualification": "not_tested",
+            "reason": "Native image/audio/video recognition is not qualified; specialist image tools are separate"
+          },
+          "search": {
+            "supported": true,
+            "qualification": "native_fixture",
+            "reason": "H021 matched Codex Qwen0 research used SearXNG, primary-source browsing and a correct cited answer; retained coordinator acceptance"
+          },
+          "browser": {
+            "supported": true,
+            "qualification": "native_fixture",
+            "reason": "H021 matched Codex Qwen0 primary-source browser research passed; direct rootless navigation/render and private-address rejection also passed"
+          },
+          "pdf": {
+            "supported": true,
+            "qualification": "native_fixture",
+            "reason": "Direct rootless Linux extraction/render/creation helpers passed. Matched Codex PDF workflow FAILED: no summary PDF or final numeric answer. Full workflow remains unqualified; the H024 diagnostic was blocked before generation by current Qwen identity verification"
+          },
+          "coding": {
+            "supported": true,
+            "qualification": "live",
+            "reason": "H021 matched Python, C++ and Node coding repairs passed independent original tests for both engines; earlier Qwen0 shell/edit/resumed follow-up passed"
+          },
+          "image": {
+            "supported": false,
+            "qualification": "not_tested",
+            "reason": "Protected live Codex image generation/edit/child evidence is absent or invalid"
+          },
+          "frontier": {
+            "supported": false,
+            "qualification": "not_tested",
+            "reason": "Protected live MiMo tool-continuation and Codex/MiniMax delegation evidence is absent or invalid; 950000 is configured capacity"
+          },
+          "nativeDelegation": {
+            "supported": true,
+            "qualification": "native_fixture",
+            "reason": "Pinned native mock lifecycle verified; shared gateway and live model acceptance are separate gates"
+          }
+        }
+      }
+    },
+    "availability": {
+      "qwenGpu0": "available",
+      "qwenGpu1": "available",
+      "image": "available"
+    }
+  },
+  "services": {
+    "ai-harness.service": "MainPID=118087\nWorkingDirectory=/opt/ai-harness/releases/h030-flow03-2b40610e937ad6256450e055ffd1d5647997f4c5/ai-harness/server\nActiveState=active\nFragmentPath=/home/user/.config/systemd/user/ai-harness.service\nUnitFileState=enabled",
+    "ai-harness-status.service": "MainPID=14480\nWorkingDirectory=/opt/ai-harness/components/h028-accept01-fc7c121/ai-harness/server\nActiveState=active\nFragmentPath=/etc/systemd/system/ai-harness-status.service\nUnitFileState=enabled"
+  },
+  "policySha256": "c77afaf8b127f526c89a82a4066e73dc48bccb97c52207f0c1a4dc9e7f4e4a26",
+  "holdsPreserved": true,
+  "acceptanceNotStarted": true
+}

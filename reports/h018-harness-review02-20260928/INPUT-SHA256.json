@@ -1,0 +1,12 @@
+{
+  "frozen_inputs": {
+    "owner.py": "dbb54dd908a5f9d1e833d34f9cf5d72fce27583fea089c35071b46e0b91f4e05",
+    "llm-frontier-mimo.service": "367b5ca357091523e6515889fb9920f9036821f839618bfab630378af8d343d5",
+    "llmmimo.slice": "7a656fbba99b8e20c40d6d653efa76029bd0a768b7e3dccefa7e74b318a3231f",
+    "REPRO704.json": "40ff96a051332f4baed4e7a930767cb9920f95c9327fff72714883f80b5e2af7",
+    "ROOT-NOTICE.json": "8434d5b32c9e5598ed30a3b964ac3831890c2487d578ef25d83cc2fb679765ae",
+    "SOURCE.patch": "fa4bdf31944c51d2448bea9310ae634c1e896d6a7cda1834e55075282644ec82",
+    "test_mimo_owner.py": "319ec5a33b2310aa5b6bec1b45491d90283744e361e2200494db6779b4f80bcc"
+  },
+  "early_verdict_sha256": "6b98f7aff4c341aaee26983df2fda473735f06ea110b60203f0f832a1f445fbd"
+}

@@ -218,5 +218,45 @@ class ClientTests(unittest.TestCase):
                 call("/props", None)
 
 
+class DispatchBoundaryTests(unittest.TestCase):
+    def test_cancel_after_connect_has_no_http_dispatch(self):
+        import threading
+        cancel = threading.Event()
+        with patch("http.client.HTTPConnection") as factory:
+            connection = factory.return_value
+            connection.connect.side_effect = cancel.set
+            send = c.http_transport("http://127.0.0.1:30002", "synthetic-key", cancel_event=cancel)
+            with self.assertRaises(f.HarnessError):
+                list(send(b"{}", 5))
+            connection.request.assert_not_called()
+            self.assertIs(send.request_clock["http_dispatched"], False)
+
+    def test_partial_send_retains_uncertain_dispatch(self):
+        with patch("http.client.HTTPConnection") as factory:
+            connection = factory.return_value
+            connection.request.side_effect = OSError("partial send synthetic fault")
+            send = c.http_transport("http://127.0.0.1:30002", "synthetic-key")
+            with self.assertRaises(OSError):
+                list(send(b"{}", 5))
+            self.assertIs(send.request_clock["http_dispatched"], True)
+            self.assertIn("send_started_monotonic_s", send.request_clock)
+            self.assertNotIn("body_sent_monotonic_s", send.request_clock)
+
+    def test_body_headers_full_eof_clocks(self):
+        with patch("http.client.HTTPConnection") as factory:
+            connection = factory.return_value
+            response = connection.getresponse.return_value
+            response.status = 200
+            response.getheader.return_value = "text/event-stream"
+            response.read1.side_effect = [b"data: [DONE]\n\n", b""]
+            send = c.http_transport("http://127.0.0.1:30002", "synthetic-key")
+            self.assertEqual(list(send(b"{}", 5)), [b"data: [DONE]\n\n"])
+            observed = send.request_clock
+            self.assertEqual(observed["terminal_reason"], "DRAINED")
+            self.assertLessEqual(observed["send_started_monotonic_s"], observed["body_sent_monotonic_s"])
+            self.assertLessEqual(observed["body_sent_monotonic_s"], observed["headers_monotonic_s"])
+            self.assertLessEqual(observed["headers_monotonic_s"], observed["terminal_monotonic_s"])
+
+
 if __name__ == "__main__":
     unittest.main()

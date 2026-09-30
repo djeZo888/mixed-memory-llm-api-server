@@ -1,0 +1,26 @@
+{
+  "canonical_manual_sha256": "aa6a03e34d64db6fa2d24c4d4327e938a0a9264a34f81a47eca4e4a5c0384175",
+  "candidate02_review": {
+    "utc": "2026-09-27T02:30:46.130638+00:00",
+    "archive": "/Users/agent/CodexProjects/llm-orchestration/tasks/H012-FLASH1M-20260927/H012-MANUAL1M-02-CANDIDATE.tar.gz",
+    "archive_sha256": "180b0e9188fd41846ffe4e31d6c90aa4c973a9f9170663786ce482b871b408d5",
+    "manual_sha256": "a661309ec32bde912f84395f8bb98fc0a9daca4ccf0c16d2cdfdb2f52c4f1560",
+    "manifest_sha256": "f5186cd4efdd0797c126b9c979c3055017aa8047dbb807e57c0aeca7cab1daa4",
+    "stage": "/data/services/h012-manual1m-02-20260927",
+    "test": {
+      "status": "PASS",
+      "checks": [
+        "reordered_mounts_equal",
+        "changed_Source_unequal",
+        "changed_RW_unequal",
+        "changed_Type_unequal",
+        "changed_Propagation_unequal",
+        "duplicate_destinations_refused",
+        "all_fields_preserved"
+      ]
+    }
+  },
+  "first_archive_preserved": "H011-MANUAL1M-CANDIDATE.tar.gz",
+  "second_archive_preserved": "H012-MANUAL1M-LEASEFIX-CANDIDATE.tar.gz",
+  "fresh_archive": "H012-MANUAL1M-02-CANDIDATE.tar.gz"
+}

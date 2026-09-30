@@ -1,0 +1,15 @@
+{
+  "backend_container_id": null,
+  "backend_container_id_observation": "NOT_REOBSERVED_AFTER_RECOVERY",
+  "exit_code": 0,
+  "provenance": {
+    "event_type": "item.completed",
+    "item_id": "item_235",
+    "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/events.jsonl",
+    "qualification_session_id": "01a0cc5e-a873-7813-9b5c-6e3124bdd181",
+    "sha256": "dfc4985b80af56597938563003b5933ddf6613dd2fbc1795b360c1097bcdf099"
+  },
+  "retained_output": "{\"status\": \"REVIEWED_GENERATION_PROFILES_INSTALLED_API_STILL_STOPPED\", \"sizes\": [\"1024x1024\", \"1024x576\", \"1216x704\", \"1472x832\", \"1760x992\", \"1920x1088\"], \"qualification_sha256\": \"d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b\", \"lease\": \"released\"}\n \n{\"ready\": true, \"busy\": false, \"admitting\": true, \"state\": \"ready\"}\nAPI ready via normal reconciliation; canonical lease released\n",
+  "schema_version": 1,
+  "scope": "Final profile installation and normal API recovery/warm already completed at approximately 04:26 UTC; no request repeated during closeout"
+}

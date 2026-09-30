@@ -1,0 +1,27 @@
+{
+  "backend_container": {
+    "id": "afce3bfaef0edf1c0d491011af9cfbdbc52d71787415b9f06e470888b1fc711f",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+  },
+  "backend_run_id": "da36ac05ad384ae8bf72165cdddc1124",
+  "ready": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "runtime_config_sha256": "4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76",
+  "source_commit": "36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e",
+  "text_containers": [
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "pid": 53058,
+      "started_at": "2026-09-23T02:05:36.354298377Z"
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "pid": 32207,
+      "started_at": "2026-09-23T02:04:14.101319306Z"
+    }
+  ]
+}

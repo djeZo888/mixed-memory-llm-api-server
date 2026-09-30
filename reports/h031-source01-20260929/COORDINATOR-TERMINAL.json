@@ -1,0 +1,21 @@
+{
+  "task": "H031-SOURCE01-20260929",
+  "host": "mac-worker2",
+  "nativeSessionId": "01a0ec5d-4cbc-7cf3-b414-b852c29c870c",
+  "wrapperStartedUtc": "2026-09-29T08:52:12.152593+00:00",
+  "finishedUtc": "2026-09-29T09:11:58Z",
+  "exitCode": 0,
+  "hardDeadlineUtc": "2026-09-29T09:30:00Z",
+  "sourceCommit": "9cd941cdbd9170fb56ccacbc87f3238e3bd40f0e",
+  "sourceBundleSha256": "0378d82a876b3c77fdac02993fcc13d5156b3686925d9c7f839c53d5682e8951",
+  "ownerSha256": "206ccfe397d3b855836f28a05170ac1d5af56c7d93cb85e1bd1cb4ff6c84f5bc",
+  "focusedTestsPassed": 99,
+  "liveActions": false,
+  "deployment": "NOT_DEPLOYED",
+  "ownedPendingWork": false,
+  "terminalEvidence": {
+    "exitCodeFileSha256": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+    "finishedUtcFileSha256": "69774da9ea371a1fe977f5ea2757d9e47cab75b329f6dc6528f62cddc46a945b"
+  },
+  "note": "Native report observed start08:52:22 is its first observation; wrapper start above is the actual launch. Native report pending terminal is superseded by this external wrapper receipt."
+}

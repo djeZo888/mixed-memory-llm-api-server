@@ -1,0 +1,32 @@
+{
+  "ownerSha256": "7768181c10bb35c7fcaa02d243913aaedf9ff7396416252b826dc2bbdb814a2c",
+  "rawR9Sha256": "b7b3f33e8add3db97db43fa4e46f21c820719ad4004372c5772636267f57918f",
+  "httpStatuses": [
+    200,
+    200
+  ],
+  "propsContext": 1000000,
+  "slotContext": 1000000,
+  "slotIsProcessing": true,
+  "templateBytes": 3866,
+  "templateSha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+  "toolTemplateKeyPresent": false,
+  "manifests": [
+    {
+      "manifest": "FAILED-MANIFEST.json",
+      "manifestSha256": "906530a52cd95fc9af27b79abcf73c4304728fe135ec77b5edbbb4ce512f449c",
+      "context": 1000000,
+      "nativeReady": true
+    },
+    {
+      "manifest": "REPAIR-MANIFEST.proposed.json",
+      "manifestSha256": "17d570d8c885878e9c770c056522323cfba0a1b4805b4dad5bbc58579b230547",
+      "context": 1000000,
+      "nativeReady": true
+    }
+  ],
+  "deterministicReadySnapshotIncompatibility": false,
+  "originalLiveFailureCause": "UNKNOWN",
+  "currentReadinessProven": false,
+  "contacts": 0
+}

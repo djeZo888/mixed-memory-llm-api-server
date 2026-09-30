@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+set -euo pipefail
+if [[ ${1:-} == --help ]]; then
+  printf '%s\n' 'Local ACP engine entrypoint. Requires isolated HOME, MINIMAX_DATA_DIR and three AI_HARNESS gateway/session environment variables.'
+  exit 0
+fi
+[[ $# == 0 ]] || { printf '%s\n' 'No engine command overrides are supported.' >&2; exit 2; }
+[[ $(id -u) != 0 ]] || { printf '%s\n' 'Refusing root: Chromium requires the nonroot sandbox path.' >&2; exit 1; }
+umask 077
+node /opt/ai-harness/engine/configure-profile.mjs
+exec node /opt/minimax/cli.js acp

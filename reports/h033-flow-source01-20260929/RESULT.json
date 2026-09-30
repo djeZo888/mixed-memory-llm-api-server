@@ -1,0 +1,186 @@
+{
+  "schema": 1,
+  "task": "H033-FLOW-SOURCE01",
+  "utc": "2026-09-29T15:14:07.426058+00:00",
+  "nativeSessionId": "01a0ed97-ff43-72c3-a1b0-2b98f3b418b9",
+  "state": "COMPLETE_HANDOFF_READY",
+  "base": "aec3d5964c4abd412872f496d03a397f8612dc57",
+  "w2Source": "20108e59420ff482b425075c1071b23f88dc0c07",
+  "w1ReviewedOriginal": "9aba9d30fbff27a87daba5bb18c66bcf91ed7419",
+  "reviewedAndActivatedSource": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+  "activationCompletedUtc": "2026-09-29T15:10:31.407224+00:00",
+  "appState": "APP_STATUS_HEALTH_PASS",
+  "results": {
+    "codex": {
+      "utc": "2026-09-29T15:05:01.343937+00:00",
+      "verdict": "PASS_POST_FIX_MIMO_DELEGATION",
+      "originalH032Failure": "PRESERVED_FAIL_COUNT_BEFORE_GENERATION",
+      "deployedSource": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+      "sessionId": "2b4709f8-baf7-4b63-b2b4-965ad1cecc2c",
+      "runId": "5d20fb05-3cf3-4722-94eb-99840e2b9e82",
+      "childNativeId": "01a0ed9b-4926-7e60-bcd0-9d83257326b0",
+      "parentNativeId": "01a0ed9a-1ca7-7812-935e-fe06d9bd471e",
+      "requestedModel": "mimo-v2.6-pro-rl",
+      "requestedEffort": "OMITTED_NATIVE_NULL_RAW_REASONING_EMPTY_OBJECT",
+      "effectiveThinking": true,
+      "effectiveParallelToolCalls": false,
+      "shellCalls": 1,
+      "shellResult": "437",
+      "shellExitCode": 0,
+      "toolContinuation": true,
+      "childFinal": {
+        "nativeMessageId": "msg_e5e075f9-1423-4b13-b480-88e3793b61bc",
+        "phase": null,
+        "text": "Python calculated `19 * 23 = 437`.",
+        "completedUtc": "2026-09-29T15:00:26.384Z",
+        "turnId": "01a0ed9b-493f-7102-8620-8c672053c56a"
+      },
+      "parentFinal": {
+        "nativeMessageId": "msg_070f389b-c511-495f-ad34-11071c0810eb",
+        "phase": null,
+        "text": "The child (mimo-v2.6-pro-rl) completed and returned: **437** \u2014 Python calculated 19 * 23 = 437.",
+        "completedUtc": "2026-09-29T15:02:25.954Z",
+        "turnId": "01a0ed9a-1cc2-7862-ace3-acf5cf452d51"
+      },
+      "parentCompleted": true,
+      "settled": true,
+      "appFinalMessageId": null,
+      "finalDisplayQualification": "UNCLASSIFIED_ON_C863_FIX_UNDEPLOYED",
+      "parentRunCompletedUtc": "2026-09-29T15:02:26.224Z",
+      "acceptedUtc": "2026-09-29T14:38:14.662Z",
+      "transcriptSha256": "389d5d9bd4b9805c784aff339fc2868d3c85381a8066f4b944efdea5c7da5f25",
+      "nativeHashes": {
+        "child": "308a2f56fc8f0a7bcbd2c79c18fbee97acc220ce63301c4259ae75fc589c6807",
+        "parent": "187f141363f97c6513c5696d3adfc04dde7d6e71c8901bf645cd7300479b2dc3"
+      },
+      "globalQualification": false,
+      "ticketRemoval": "REMOVED"
+    },
+    "minimax": {
+      "utc": "2026-09-29T14:56:52.946953+00:00",
+      "verdict": "PASS_POST_FIX_MIMO_DELEGATION",
+      "originalH032Failure": "PRESERVED_FAIL_COUNT_BEFORE_GENERATION",
+      "deployedSource": "c863d4984f4a75c237b6de97b7ce40b8570fca81",
+      "sessionId": "3fd899cc-5e06-4772-9afb-ac044239b3be",
+      "runId": "fbd49990-b80a-4431-b261-81812a1353a8",
+      "childNativeId": "mvs_e0933e47af1d4c9abe1359e50dfb3f7f",
+      "childFinal": {
+        "nativeMessageId": "98e086d0-248f-4247-8a79-dc5f9f425f23",
+        "nativeTurnId": "turn_task_bg_bg_091eaf90-ab57-4d30-8e0a-117d2e75ab37",
+        "text": "667, the result of 23 * 29 calculated in Python via the shell tool."
+      },
+      "shellCalls": 1,
+      "shellResult": "667\n",
+      "toolContinuation": true,
+      "parentCompleted": true,
+      "settled": true,
+      "childAndParentTerminalStates": [
+        {
+          "session_id": "mvs_73a3f84e7e1f47eda113e1c7bc426bf3",
+          "turn_id": "ffeb58e9-70e7-4dab-b63d-a5f55fb686d9",
+          "turn_sequence": 1,
+          "runtime_seq": null,
+          "event_id": "evt_ffeb58e9-70e7-4dab-b63d-a5f55fb686d9_coding_idle_83",
+          "terminal_outcome": "completed",
+          "updated_at_ms": 1790693699144
+        },
+        {
+          "session_id": "mvs_e0933e47af1d4c9abe1359e50dfb3f7f",
+          "turn_id": "turn_task_bg_bg_091eaf90-ab57-4d30-8e0a-117d2e75ab37",
+          "turn_sequence": 2,
+          "runtime_seq": null,
+          "event_id": "evt_turn_task_bg_bg_091eaf90-ab57-4d30-8e0a-117d2e75ab37_coding_idle_76",
+          "terminal_outcome": "completed",
+          "updated_at_ms": 1790693694958
+        }
+      ],
+      "nativeLocks": [],
+      "globalQualification": false,
+      "ticketRemoval": "REMOVED",
+      "requestedModel": "mimo-v2.6-pro-rl",
+      "requestedEffort": "medium",
+      "effectiveThinking": true,
+      "effectiveParallelToolCalls": false
+    }
+  },
+  "ownedTickets": [],
+  "ownedActiveWork": 0,
+  "acceptancePolicySha256": "c77afaf8b127f526c89a82a4066e73dc48bccb97c52207f0c1a4dc9e7f4e4a26",
+  "historicalPreservation": {
+    "allOriginalApplicationRowsAndEventsPreserved": true,
+    "historicalUncertaintyPreserved": true,
+    "normalStartupEvents": 6,
+    "volatileLaneTablesSeparatelyChecked": [
+      "gateway_lanes",
+      "h003_image_lane",
+      "h005_image_ownership"
+    ]
+  },
+  "unchanged": {
+    "nativeImageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+    "logicalPolicy": "sova-codex-0.158.0-qwen-text-v2",
+    "mimoCompiledSha256": "336e6523ca907bcfc55b878f0a2e0d3c27dbe00bd72efdde849488d94ae131e8",
+    "maintenanceChatHttp": 503,
+    "statusHttp": 200,
+    "defaultEngine": "minimax",
+    "globalFrontierGate": false,
+    "globalImageGate": false,
+    "mimoCandidateAdmission": true,
+    "mimoCandidateGeneration": true
+  },
+  "tests": {
+    "associationAndCapabilities": {
+      "pass": 51,
+      "file": "association-tests.tap"
+    },
+    "guidanceAndContracts": {
+      "pass": 41,
+      "optionalNativeSkipped": 1,
+      "file": "guidance-tests.tap"
+    },
+    "w1AffectedTestsReported": 40,
+    "buildAndTypecheck": "PASS",
+    "suiteCountsMayOverlap": true
+  },
+  "reader": {
+    "state": "SOURCE_BOUND_READER_VERIFIED",
+    "source": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+    "pilotId": "H033-FLOW-SOURCE01",
+    "acceptAfter": "2026-09-29T15:10:31.407224+00:00",
+    "receiptSha256": "2dc3f7e6c6d27490531cc30bc91b4e3120dba678e7a42069d7d92013972797e0",
+    "unitSha256": "83c51747390460436981d677cf22d1a6b93cbc7c5537a559c57b4585d9d74510",
+    "compiledModules": 61,
+    "readerPath": "/home/user/.cache/h033-flow-source01-release/settlement-readback.py"
+  },
+  "frontierEvidence": {
+    "state": "LOCAL_ACTUAL_OLD_PIN_DRAFT",
+    "file": "h033-frontier-actual-evidence.json",
+    "sha256": "06ac3e70d83aa44f830b0ecc75abdfeaf6a64d50dd75ac4d1d9146b405323f03",
+    "installed": false,
+    "compatibilityOwner": "W1"
+  },
+  "handoff": {
+    "task": "IMAGE-FLOW02",
+    "source": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+    "liveImageCasesHere": 0,
+    "finalAssociationLiveVerification": "NOT_RUN_ON_NEW_SOURCE",
+    "w1PerformanceBaseline": "SKIPPED_NOT_TESTED",
+    "mustUseFreshSessionSubmissionWorkspaceTicketIds": true
+  },
+  "nativeExit": {
+    "actualRc": null,
+    "owner": "unchanged wrapper Popen.wait after this native task exits",
+    "status": "NOT_YET_EXITED"
+  },
+  "privateEvidenceRoot": "/Users/agent/CodexProjects/llm-orchestration/tasks/H033-FLOW-SOURCE01-20260929/private",
+  "noSubagents": true,
+  "noGitHubPush": true,
+  "aiVmCalls": 0,
+  "report": "REPORT.md",
+  "finalExportUtc": "2026-09-29T15:15:19.287693+00:00",
+  "sourceBundle": {
+    "file": "APP-SOURCE.bundle",
+    "head": "eb8ed4283d83cfbdbcc97dfbeec7056d2538c05e",
+    "prerequisite": "aec3d5964c4abd412872f496d03a397f8612dc57"
+  }
+}

@@ -1,0 +1,602 @@
+[
+  {
+    "time": "2026-09-29T10:10:53.520Z",
+    "kind": "start",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "origin": "ai-harness",
+    "mode": "read_only_diagnostic_no_acceptance",
+    "sourceRoot": "/opt/ai-harness/releases/h030-flow03-2b40610e937ad6256450e055ffd1d5647997f4c5/ai-harness/server",
+    "distSha256": {
+      "codex-production.js": "ef17c89b4c028961f8e378ed58bbad0d08ad1bc4f9648fcb2dda145031fc5121",
+      "codex-admission.js": "1c10c3c91e3b9f33d9de18aff4c0f8cab71eafd3229ee066f9f121d38a1eb13c",
+      "codex-qwen.js": "b2154592dedec376e27604366b33fb8a047c2bf2ad00c97b155a9de2750454f5"
+    },
+    "receiptPath": "/opt/ai-harness/releases/h030-flow03-2b40610e937ad6256450e055ffd1d5647997f4c5/ai-harness/config/codex-qwen-receipt.json",
+    "receiptSha256": "58f90170ee27423e1fdbc9bdc3fb52e16bf6ae44887479273af2b608138dffdc",
+    "sequence": "one_parallel_both_admission_only",
+    "tokenizerExercised": false,
+    "generationRequests": 0,
+    "tokenizeRequests": 0
+  },
+  {
+    "time": "2026-09-29T10:11:03.188Z",
+    "kind": "selected_control_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "step": "control_before",
+    "fields": {
+      "observed_at": 1790676663.1849258,
+      "slot": "qwen",
+      "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "observed_deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "desired": "running",
+      "container_running": true,
+      "generation": 53,
+      "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+      "freshness": "fresh",
+      "mutation_busy": false,
+      "current_operation": null,
+      "observed": "ready",
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30004/v1",
+        "served_model": "qwen3.8-27b",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      }
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.188Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "control_before",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 9665
+  },
+  {
+    "time": "2026-09-29T10:11:03.188Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b",
+    "step": "control_before",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 9665
+  },
+  {
+    "time": "2026-09-29T10:11:03.191Z",
+    "kind": "selected_node_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "step": "node_before",
+    "node": {
+      "schema_version": 1,
+      "node_id": "ai-vm",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:00.563517+00:00",
+      "age_ms": 2625
+    },
+    "service": {
+      "service_id": "qwen-gpu1",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:00.768275+00:00",
+      "age_ms": 2420,
+      "generation": 7170410416647524,
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b",
+      "configured_context_tokens": 480000,
+      "required_gpu_uuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ],
+      "hardware_validation_age_ms": 7450.92551689042,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ]
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.191Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "node_before",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 3
+  },
+  {
+    "time": "2026-09-29T10:11:03.191Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b",
+    "step": "node_before",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 3
+  },
+  {
+    "time": "2026-09-29T10:11:03.196Z",
+    "kind": "selected_native_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "step": "native",
+    "fields": {
+      "status": "ready",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b",
+      "max_running_requests": 1,
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.196Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "native",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 5
+  },
+  {
+    "time": "2026-09-29T10:11:03.196Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b",
+    "step": "native",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 5
+  },
+  {
+    "time": "2026-09-29T10:11:03.310Z",
+    "kind": "selected_control_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "control_before",
+    "fields": {
+      "observed_at": 1790676663.2242265,
+      "slot": "glm",
+      "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "observed_deployment": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "desired": "running",
+      "container_running": true,
+      "generation": 57,
+      "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+      "freshness": "fresh",
+      "mutation_busy": false,
+      "current_operation": null,
+      "observed": "ready",
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30002/v1",
+        "served_model": "qwen3.8-27b-gpu0",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      }
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.310Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "control_before",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 9789
+  },
+  {
+    "time": "2026-09-29T10:11:03.310Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "control_before",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 9789
+  },
+  {
+    "time": "2026-09-29T10:11:03.312Z",
+    "kind": "selected_node_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "node_before",
+    "node": {
+      "schema_version": 1,
+      "node_id": "ai-vm",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:00.563517+00:00",
+      "age_ms": 2746
+    },
+    "service": {
+      "service_id": "qwen-gpu0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:00.770510+00:00",
+      "age_ms": 2539,
+      "generation": 5010297804242733,
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "configured_context_tokens": 480000,
+      "required_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "hardware_validation_age_ms": 7520.248813972343,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ]
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.312Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "node_before",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:03.312Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "node_before",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:03.318Z",
+    "kind": "selected_native_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "native",
+    "fields": {
+      "status": "ready",
+      "context_length": 480000,
+      "max_total_tokens": 480000,
+      "max_total_num_tokens": 480000,
+      "version": "0.5.19",
+      "served_model_name": "qwen3.8-27b-gpu0",
+      "max_running_requests": 1,
+      "tool_call_parser": "qwen3_coder",
+      "reasoning_parser": "qwen3"
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:03.318Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "native",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 6
+  },
+  {
+    "time": "2026-09-29T10:11:03.318Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "native",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 6
+  },
+  {
+    "time": "2026-09-29T10:11:12.805Z",
+    "kind": "selected_control_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "step": "control_after",
+    "fields": {
+      "observed_at": 1790676672.803316,
+      "slot": "qwen",
+      "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "observed_deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "desired": "running",
+      "container_running": true,
+      "generation": 53,
+      "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+      "freshness": "fresh",
+      "mutation_busy": false,
+      "current_operation": null,
+      "observed": "ready",
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30004/v1",
+        "served_model": "qwen3.8-27b",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      }
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:12.805Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "control_after",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 9609
+  },
+  {
+    "time": "2026-09-29T10:11:12.805Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b",
+    "step": "control_after",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 9609
+  },
+  {
+    "time": "2026-09-29T10:11:12.808Z",
+    "kind": "selected_node_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "step": "node_after",
+    "node": {
+      "schema_version": 1,
+      "node_id": "ai-vm",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:10.591545+00:00",
+      "age_ms": 2213
+    },
+    "service": {
+      "service_id": "qwen-gpu1",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:10.799987+00:00",
+      "age_ms": 2005,
+      "generation": 7170410416647524,
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b",
+      "configured_context_tokens": 480000,
+      "required_gpu_uuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ],
+      "hardware_validation_age_ms": 7021.21233955666,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+      ]
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:12.808Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "node_after",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:12.808Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b",
+    "step": "node_after",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:12.808Z",
+    "kind": "qualification",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b",
+    "phase": "admission",
+    "bracket": "admission",
+    "outcome": "pass"
+  },
+  {
+    "time": "2026-09-29T10:11:13.064Z",
+    "kind": "selected_control_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "control_after",
+    "fields": {
+      "observed_at": 1790676672.9803731,
+      "slot": "glm",
+      "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "observed_deployment": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "desired": "running",
+      "container_running": true,
+      "generation": 57,
+      "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+      "freshness": "fresh",
+      "mutation_busy": false,
+      "current_operation": null,
+      "observed": "ready",
+      "endpoint": {
+        "base_url": "http://10.156.100.60:30002/v1",
+        "served_model": "qwen3.8-27b-gpu0",
+        "authentication_required": true,
+        "address_scope": "private_network",
+        "server_relative": false,
+        "ready": true
+      }
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:13.064Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "control_after",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 9746
+  },
+  {
+    "time": "2026-09-29T10:11:13.064Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "control_after",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 9746
+  },
+  {
+    "time": "2026-09-29T10:11:13.066Z",
+    "kind": "selected_node_fields",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "node_after",
+    "node": {
+      "schema_version": 1,
+      "node_id": "ai-vm",
+      "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:10.591545+00:00",
+      "age_ms": 2472
+    },
+    "service": {
+      "service_id": "qwen-gpu0",
+      "state": "ok",
+      "freshness": "fresh",
+      "observed_at": "2026-09-29T10:11:10.789193+00:00",
+      "age_ms": 2274,
+      "generation": 5010297804242733,
+      "ready": true,
+      "hardware_latched": false,
+      "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "configured_context_tokens": 480000,
+      "required_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "hardware_validation_age_ms": 7256.433064302313,
+      "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+      "hardware_validated_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ]
+    }
+  },
+  {
+    "time": "2026-09-29T10:11:13.066Z",
+    "kind": "getter",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "step": "node_after",
+    "outcome": "pass",
+    "httpStatus": 200,
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:13.066Z",
+    "kind": "verifier",
+    "bracket": "admission",
+    "schema": 1,
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "phase": "admission",
+    "lane": "qwen3.8-27b-gpu0",
+    "step": "node_after",
+    "outcome": "pass",
+    "reason": "ok",
+    "elapsedMs": 2
+  },
+  {
+    "time": "2026-09-29T10:11:13.066Z",
+    "kind": "qualification",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "lane": "qwen3.8-27b-gpu0",
+    "phase": "admission",
+    "bracket": "admission",
+    "outcome": "pass"
+  },
+  {
+    "time": "2026-09-29T10:11:13.066Z",
+    "kind": "complete",
+    "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+    "admitted": [
+      true,
+      true
+    ],
+    "tokenizerExercised": false,
+    "generationRequests": 0,
+    "tokenizeRequests": 0,
+    "retries": 0
+  }
+]

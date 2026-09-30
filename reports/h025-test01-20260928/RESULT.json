@@ -1,0 +1,195 @@
+{
+  "task": "H025-TEST01-20260928",
+  "status": "NO_DISPATCH_FAN_RESTART_QUALIFICATION_PENDING",
+  "native_session_id": "01a0e97d-3d2d-77f0-9b90-29ec5dd606d7",
+  "started_utc": "2026-09-28T19:28:13.652334+00:00",
+  "hard_deadline_utc": "2026-09-28T20:05:00+00:00",
+  "checkpoint_utc": "2026-09-28T19:37:06.082802+00:00",
+  "source_head": "611504db7a2e2d5a08967538bec7b43b378a1775",
+  "behavior_commit": "4c5fda642ad410eb5e70a41c866a01d2ce85d5a7",
+  "package_sha256": "459a5a3bd2a46bc9c8b168afb649d0ceadf0e9317f685f05a836ded4a0a96dc8",
+  "driver_source_changed": false,
+  "passed_fixture_suite_rerun": false,
+  "source_staging": {
+    "path": "/data/logs/H025-TEST01-20260928/driver",
+    "file_count": 10,
+    "guard": "existing MountedStorageGuard and AnchoredRoot",
+    "permissions": "root0700 directories / root0600 files",
+    "intent": "preserve immutable staged files; do not replay staging"
+  },
+  "campaign": {
+    "result": "NOT_TESTED",
+    "root_go_received": false,
+    "reason": "Root deferred proposed19:36 campaign at19:33:10; final W1 physical restart qualification and exact filled manifest/GO absent",
+    "duration_seconds": null,
+    "fourway_http_intersection_seconds": null,
+    "longest_gaps_seconds": null,
+    "request_counts": {
+      "flash": 0,
+      "qwen0": 0,
+      "qwen1": 0,
+      "image": 0
+    },
+    "inference_requests": 0,
+    "warmup_requests": 0,
+    "tokenize_requests": 0,
+    "bridge_started": false,
+    "unit_started": false,
+    "unit_load_state": "not-found",
+    "manifest_go_campaign_namespace_consumed": false,
+    "test_owned_requests_or_containers": 0,
+    "physical_test_settlement": "NO_TEST_WORK_ADMITTED",
+    "gpu_cpu_ram_swap_power_fan_under_load": "NOT_TESTED",
+    "full_load_or_psu_claim": false
+  },
+  "current_readiness": {
+    "captured_utc": "2026-09-28T19:34:14.352036+00:00",
+    "four_lanes_ready": true,
+    "identities_source_capacity_unchanged": true,
+    "context_tokens": {
+      "flash": 1048576,
+      "qwen0": 480000,
+      "qwen1": 480000
+    },
+    "image": "1920x1080 retained40step profile",
+    "healthy_residents_retained": true,
+    "permanent_frontier_selection": {
+      "generation": 12,
+      "manifest_sha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "mimo": "Absent per current container inventory; no restart/repair/qualification/call",
+    "gpu_inventory_snapshot": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 32, 97887, 61638, 35612, 600.00, Disabled, Disabled\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, NVIDIA RTX PRO 6000 Blackwell Workstation Edition, 33, 97887, 27742, 69508, 600.00, Disabled, Disabled\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, NVIDIA RTX 6000 Ada Generation, 37, 49140, 32240, 16272, 300.00, Disabled, Disabled\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, NVIDIA RTX PRO 6000 Blackwell Server Edition, 33, 97887, 61637, 35615, 600.00, Disabled, Disabled\n"
+  },
+  "restoration": {
+    "captured_utc": "2026-09-28T19:34:35.837418+00:00",
+    "units": {
+      "ai-harness.service": "MainPID=62058\nResult=success\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=38670d849ffd448f8ca5513403e2bb63\n",
+      "ai-harness-status.service": "MainPID=62134\nResult=success\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=d1503d5ed0f34894a44116c6ce055bb0\n",
+      "sova-cha-fan3.service": "MainPID=0\nResult=exit-code\nActiveState=failed\nSubState=failed\nUnitFileState=disabled\nInvocationID=b0194bfa13d3488799c535a28f5de8e6\n",
+      "ai-harness-searxng.service": "MainPID=1655\nResult=success\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=e4fc2a45082141ad971879084f29aeb1\n"
+    },
+    "public_health_http": 200,
+    "public_health_status": "ok",
+    "public_status_http": 200,
+    "method": "normal systemctl user app start and sudo system status start",
+    "manual_db_edits": false,
+    "final_owner_impact": {
+      "frozen": false,
+      "ready": true,
+      "activity": "unknown",
+      "active_requests": 0,
+      "queue_depth": 0
+    },
+    "known_sova_mimo_codex_gaps_fixed": false
+  },
+  "preservation": {
+    "unchanged_table_hashes": [
+      "messages",
+      "files",
+      "runs",
+      "quarantined_workspaces",
+      "frontier_requests",
+      "h021_gateway_requests",
+      "h003_image_jobs",
+      "h005_image_ownership",
+      "gateway_lanes"
+    ],
+    "original_event_prefix": {
+      "rows": 35108,
+      "sha256": "9a65d02ea9ee94e08d9396b8029eb8371ac99571c94d51ef9e693a9c6fd2d562"
+    },
+    "events_after": 35114,
+    "sessions_before_after_count": [
+      51,
+      51
+    ],
+    "session_hash_unchanged": false,
+    "session_change_explanation": "Normal startup reconciled2existing uncertain sessions, updating state/context/timestamp and appending6state/context/error events; no replay. Native IDs remain present for both. No byte-identical session-table claim.",
+    "historical_workspace_quarantines": 3,
+    "holds": 0,
+    "holds_hash_unchanged": true,
+    "image_lane": "Normal app startup restored quarantined to idle; uncertain0 and terminal20jobs retained",
+    "gateway_requests_settled": 118,
+    "run_counts": {
+      "cancelled": 7,
+      "completed": 60,
+      "interrupted": 6
+    },
+    "image_job_counts": {
+      "completed": 19,
+      "cancelled": 1
+    },
+    "historical_uncertain_engine_ownership": [
+      [
+        "codex",
+        "idle",
+        15
+      ],
+      [
+        "codex",
+        "uncertain",
+        2
+      ],
+      [
+        "minimax",
+        "idle",
+        34
+      ]
+    ]
+  },
+  "fan_controller": {
+    "scope": "W1 exclusively owns changes; W2 made no BMC/controller/fan writes",
+    "last_protected_status_read": {
+      "actual_tach": 3600,
+      "actual_tach_units": null,
+      "bmc_logins": 1,
+      "bmc_put_attempts": 0,
+      "channel": "Zone4(CHA_FAN3)/PWMNum3",
+      "desired_duty": null,
+      "errors": [
+        "protected_file_unavailable:safe_high_unavailable"
+      ],
+      "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "host_boot_id": "a80a9860-7fde-4483-abc4-00903793c201",
+      "invariant_sha256": "450692842e449436e29afaad1d9c30b7002c2c19995d1d656e8eb9a0a8820e94",
+      "last_known_readback_duty": 80,
+      "last_write_at": null,
+      "mode": null,
+      "node_boot_id": null,
+      "pid": 61156,
+      "readback_at": "2026-09-28T19:30:16.605715+00:00",
+      "readback_duty": null,
+      "readback_kind": "first_four_curve_duties_not_measured_pwm",
+      "sampled_at": null,
+      "schema_version": 1,
+      "source_bits": null,
+      "source_sha256": "ff1e95d55dec1d08b70fb95703f545d9c72061c5a19b5afd29f04dc64773bdec",
+      "started_at": "2026-09-28T19:30:17.242413+00:00",
+      "state": "blocked",
+      "tach_at": "2026-09-28T19:30:17.024289+00:00",
+      "telemetry_age_seconds": null,
+      "temperature_c": null,
+      "updated_at": "2026-09-28T19:30:17.369676+00:00"
+    },
+    "unit_status_as_of_restore": "failed/disabled; W1-owned ongoing correction, not changed by W2",
+    "qualification": "NOT_ESTABLISHED_FOR_TEST01",
+    "root_reason": "ExecStopPost credential path unavailable on normal restart qualification"
+  },
+  "private_evidence_sha256": {
+    "CURRENT-NATIVE-READY.json": "c862b02d0422848fbcd0b7e9cc44c1061be7e9d53f989355924ffe0604ed8cfb",
+    "CURRENT-QUIET.json": "26d7427f3e9318f955e2e3782c2a6f47680da50dbf6fa4a6915d44154e915e58",
+    "FAN-STAGING-OBSERVATION.json": "08aaafae393e348b8f3013badfc092390570330aef461eb8ed4ff1fbe115e3ea",
+    "FINAL-NATIVE-READY.json": "1733ae501985ae3dff128290547b28e782252c012ab5bde8a33ce87d0087edce",
+    "FINAL-OWNERSHIP.json": "1195985a0a7d40adf235ce117530763ce8309121770e8af9228c9ba3da3a4913",
+    "NO-DISPATCH-FINAL.txt": "0af4b02e4e6494b2c4f7b370eb9571bce62ee329b06b91aaf2fc188ea36042c2",
+    "RESTORE-HEALTH-LOOPBACK-NOTE.json": "797805251939506335410fa8937ff6a556274a0fe58c24a4b6d82f3dd161f00e",
+    "RESTORE-HEALTH.json": "9d4f9b43203577dbe3dfa286b32064075d939ca4c62e5688d301f1e3977f0363",
+    "RESTORE-PRESERVATION.json": "4d901b9969953987f23e323f8fbbd6b3e0ea24c83f6ee7917b2aa100e7b64ca6",
+    "RESTORE-SESSION-METADATA.json": "9c76bdb15ee8b94b170c34f69d5b2bd0cbe59da7d3d9448ee9a1dbab20a2b37d",
+    "RESTORE-STARTUP-DETAIL.json": "ea9cd8c1bb7b8a5214cef5fe8ec98987830419beb0db15f41e44c611d611b647",
+    "SOURCE-STAGED.json": "4ee65203325301995b9da8947c3773e07351c3b8c8ffc274cddd7de735b48949",
+    "reviewed-cha_fan3.py": "ff1e95d55dec1d08b70fb95703f545d9c72061c5a19b5afd29f04dc64773bdec"
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "status": "R6_NATIVE_LOADING_GUARDS_PASS_EXIT_CLI",
+  "utc": "2026-09-27T14:00:59.083602+00:00",
+  "unit": "h016-mimo-profile-20260927-r6.service",
+  "invocation": "f19495600cec4c81aebbdaa9f628aa49",
+  "owner_pid": 3992462,
+  "native_pid": 3995834,
+  "native_id": "4e41d368b9a704b2f11ab525008b2367e9c4c354fa7d1b46213013967f290bab",
+  "native_started_at": "2026-09-27T13:59:09.876064855Z",
+  "r6_dispatched": true,
+  "load_complete": false,
+  "benchmark_complete": false,
+  "source_match": true,
+  "guard_samples_observed": 7,
+  "admission_end_utc": "2026-09-27T15:15:00Z",
+  "settlement_utc": "2026-09-27T15:35:00Z",
+  "global_end_utc": "2026-09-27T15:48:08Z",
+  "native_cli_cap_utc": "2026-09-27T14:10:03Z"
+}

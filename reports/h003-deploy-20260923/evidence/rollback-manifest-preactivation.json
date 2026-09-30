@@ -1,0 +1,197 @@
+{
+  "utc": "20260923T120139Z",
+  "backup_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/rollback-20260923T120139Z",
+  "consistent_sqlite_backup": true,
+  "owner_lock_database": "excluded: exclusive runtime process lock; never restore it over a live service",
+  "sqlite_integrity": "ok",
+  "manifest_path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/rollback-20260923T120139Z/files.manifest.json",
+  "manifest_sha256": "36830dde6e1f354a0d71082cdfb4e7c15956443c6f617d6a0b1c4586e4cf1e13",
+  "manifest_entries": 24203,
+  "sessions": [
+    {
+      "id": "2be21778-b7ba-4e2a-bda5-6dc8ec566d88",
+      "workspace_id": "28e7ad98-b5bc-43c8-aac5-3a5f02b12973",
+      "native_session_id": "mvs_114e55bfdbb64858a72cb67294c196ab",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "2dd91b4c-837a-46fd-96bf-e510678a4167",
+      "workspace_id": "69da4ce0-63ca-41d6-a69c-b36a427995c6",
+      "native_session_id": null,
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "325b167f-3e7f-456e-860b-ba64c9a25335",
+      "workspace_id": "63d011b6-49ca-4ff5-a10b-a4262b4fd016",
+      "native_session_id": "mvs_20d2014ea84f4282a699683d2654dbe0",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "49bc8766-c514-4dfd-9d6f-63343975ee16",
+      "workspace_id": "a98593f9-5c9b-42b7-93fa-82f825c5423c",
+      "native_session_id": "mvs_6e9f6761601b4237bdf21ad47771fccf",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "7651ecd1-250a-4ebf-80f8-8f586ac4f877",
+      "workspace_id": "1e7b4080-9b53-453b-ba0a-10767a84ab9c",
+      "native_session_id": "mvs_0b43ccba92864e50959c16bd47204f30",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "791bba11-5eb1-4bb9-8242-a4c128cdc0e8",
+      "workspace_id": "53bd7118-2bad-4e87-bb13-fe2386bc1f2a",
+      "native_session_id": "mvs_144ab29dd1c44f24b7704cde1ebb463c",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "8a252c41-6e08-4346-83ff-51f8efe3c0c4",
+      "workspace_id": "fcf3cf22-5a84-48dd-9cc4-7eee099fc719",
+      "native_session_id": "mvs_37b70c715737457a8c0cf79fc21e6556",
+      "deleted": 1,
+      "status": "idle"
+    },
+    {
+      "id": "927f8299-3c10-475c-879c-397a09d1caa8",
+      "workspace_id": "a2171276-c4e1-4eb4-b108-60c018c5f6b8",
+      "native_session_id": "mvs_fe884ccdfbbd42528432908fd158c674",
+      "deleted": 1,
+      "status": "idle"
+    },
+    {
+      "id": "a5811e71-a634-4ad8-a2cb-34c33353b4d4",
+      "workspace_id": "d5580a7f-cc29-4e8c-bc9b-bcb320caf061",
+      "native_session_id": "mvs_3940ebab590e46d0bb1cff28703d5bd1",
+      "deleted": 0,
+      "status": "interrupted"
+    },
+    {
+      "id": "cbbe3d60-5dc9-4b27-b227-071a14e02295",
+      "workspace_id": "788253e0-2108-48d2-9c79-ba1b4bf495d4",
+      "native_session_id": "mvs_536365985666410693aed986c3f68a0a",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "e3e6bcf2-fdc9-4f09-8164-7a2aea7d04b3",
+      "workspace_id": "37ebd9e2-563c-4288-bf22-f89d11382f2f",
+      "native_session_id": "mvs_a9ff98e0b87e459b9a7877eadc3479c0",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "eded0e8b-60b2-418e-afdc-a4ff508d8345",
+      "workspace_id": "63d011b6-49ca-4ff5-a10b-a4262b4fd016",
+      "native_session_id": "mvs_a67fdfcf787c437a98d3cc957cb8ae3b",
+      "deleted": 1,
+      "status": "idle"
+    },
+    {
+      "id": "f13173de-6b6d-4bbb-912e-55019f1607f8",
+      "workspace_id": "9daa57ce-2278-47ce-b8bd-90a2bd366546",
+      "native_session_id": "mvs_81e151e83bbf402e9f57cac0708cec9a",
+      "deleted": 0,
+      "status": "idle"
+    },
+    {
+      "id": "ff1eb31b-e9fb-418a-ac9e-d06c7b93e13e",
+      "workspace_id": "6b742605-1c35-4e1a-bb51-a58bb17538b6",
+      "native_session_id": "mvs_771dfd9936ee44408d8650ff68bc99c9",
+      "deleted": 0,
+      "status": "idle"
+    }
+  ],
+  "visible_sessions": 11,
+  "workspace_directory_ids": [
+    "1e7b4080-9b53-453b-ba0a-10767a84ab9c",
+    "28e7ad98-b5bc-43c8-aac5-3a5f02b12973",
+    "37ebd9e2-563c-4288-bf22-f89d11382f2f",
+    "53bd7118-2bad-4e87-bb13-fe2386bc1f2a",
+    "63d011b6-49ca-4ff5-a10b-a4262b4fd016",
+    "69da4ce0-63ca-41d6-a69c-b36a427995c6",
+    "6b742605-1c35-4e1a-bb51-a58bb17538b6",
+    "788253e0-2108-48d2-9c79-ba1b4bf495d4",
+    "9daa57ce-2278-47ce-b8bd-90a2bd366546",
+    "a2171276-c4e1-4eb4-b108-60c018c5f6b8",
+    "a98593f9-5c9b-42b7-93fa-82f825c5423c",
+    "d5580a7f-cc29-4e8c-bc9b-bcb320caf061",
+    "fcf3cf22-5a84-48dd-9cc4-7eee099fc719"
+  ],
+  "profile_directory_ids": [
+    "2be21778-b7ba-4e2a-bda5-6dc8ec566d88",
+    "2dd91b4c-837a-46fd-96bf-e510678a4167",
+    "325b167f-3e7f-456e-860b-ba64c9a25335",
+    "49bc8766-c514-4dfd-9d6f-63343975ee16",
+    "7651ecd1-250a-4ebf-80f8-8f586ac4f877",
+    "791bba11-5eb1-4bb9-8242-a4c128cdc0e8",
+    "8a252c41-6e08-4346-83ff-51f8efe3c0c4",
+    "927f8299-3c10-475c-879c-397a09d1caa8",
+    "a5811e71-a634-4ad8-a2cb-34c33353b4d4",
+    "cbbe3d60-5dc9-4b27-b227-071a14e02295",
+    "e3e6bcf2-fdc9-4f09-8164-7a2aea7d04b3",
+    "eded0e8b-60b2-418e-afdc-a4ff508d8345",
+    "f13173de-6b6d-4bbb-912e-55019f1607f8",
+    "ff1eb31b-e9fb-418a-ac9e-d06c7b93e13e"
+  ],
+  "counts": {
+    "sessions": 14,
+    "messages": 68,
+    "runs": 34,
+    "events": 10211,
+    "files": 30
+  },
+  "active_runs": [],
+  "gateway_lanes": [
+    {
+      "alias": "qwen3.8-27b-gpu0",
+      "state": "idle"
+    },
+    {
+      "alias": "qwen3.8-27b",
+      "state": "idle"
+    }
+  ],
+  "installed_health": {
+    "version": "0.0.2",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:01:41.756Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "prior_release": "/home/user/.local/share/ai-harness-app/releases/cacfdd43c42d675ab154ba7308404d71c81a64f1",
+  "prior_engine": {
+    "Id": "4af6da23f70c3bc20d557be623d3d3bed7ef5d889e2b510debe556dc54936da3",
+    "Digest": "sha256:e9ab4de40f3b36b2cfa08fc41f61c514800ab417e6d8e5a52683827fac1ca1f3",
+    "RepoDigests": [
+      "localhost/ai-harness-engine@sha256:e9ab4de40f3b36b2cfa08fc41f61c514800ab417e6d8e5a52683827fac1ca1f3"
+    ],
+    "Created": "2026-09-22T06:17:12.949037922Z",
+    "Labels": {
+      "io.buildah.version": "1.33.7",
+      "org.opencontainers.image.ai-harness.patchset": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+      "org.opencontainers.image.revision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+      "org.opencontainers.image.source": "https://github.com/MiniMax-AI/minimax-code",
+      "org.opencontainers.image.title": "ai-harness local MiniMax engine",
+      "org.opencontainers.image.version": "0.0.2"
+    }
+  },
+  "unit_sha256": "e48769bcfb2f38250c78f032f2a973606385cfe4826ba8f2ecc3f51efab5dd36",
+  "key": {
+    "path": "/home/user/.config/ai-harness/inference-key",
+    "uid": 1000,
+    "mode": "0o600"
+  },
+  "requires_refresh_before_activation": true
+}

@@ -1,0 +1,58 @@
+{
+  "utc": "2026-09-26T21:14:41.519203+00:00",
+  "status": "SECOND_GUEST_REBOOT_DISPATCHED",
+  "boot_id_before": "f2a01e1d-bb49-4287-8306-6df2092338b8",
+  "gpus_before": [
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "current": "Enabled",
+      "pending": "Enabled",
+      "total": "97887 MiB",
+      "free": "35618 MiB"
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "current": "Enabled",
+      "pending": "Enabled",
+      "total": "97887 MiB",
+      "free": "65062 MiB"
+    },
+    {
+      "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "current": "Enabled",
+      "pending": "Disabled",
+      "total": "46068 MiB",
+      "free": "13221 MiB"
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "current": "Enabled",
+      "pending": "Enabled",
+      "total": "97887 MiB",
+      "free": "36237 MiB"
+    }
+  ],
+  "source_hashes_match": true,
+  "storage_guard": "PASS",
+  "root_guard": "PASS",
+  "desired_intents_preserved": true,
+  "worker2_settlement": {
+    "received_utc": "2026-09-26T21:13:36.642767+00:00",
+    "source": "Direct collaboration message from Worker2 /root/h008_worker2_harness; actual native receipt file syncing separately",
+    "native_settled_utc": "2026-09-26T21:11:41.573613Z",
+    "supervisor_exit_code": 0,
+    "supervisor_status": "COMPLETED_REVIEW_REQUIRED",
+    "owned_containers_after": [],
+    "workflow": "child bash/read, write, bashcheck succeeded; parent final return",
+    "frontier_http_requests": "all completed; live driver closed broker/gateway/app normally",
+    "uppers": "remain stopped",
+    "timeout_or_emergency_stop": false,
+    "native_atomic_drain_claim": false,
+    "root_authority": "Root directly instructed immediate final AdaECCoff reboot after actualquietreceipt; no runtime/cachemutation; no furtherbenchmark"
+  },
+  "contract_sha256": "3e5f79acc6c8ee8d0b4fdb9e8eb2072222ab425f97e6ad266fdcadc4a97e1bfe",
+  "no_established_flash_connections_observed": true,
+  "atomic_drain_claim": false,
+  "loadwatch": "MainPID=0\nActiveState=inactive\nUnitFileState=disabled\n",
+  "flash_requests_phase2": 0
+}

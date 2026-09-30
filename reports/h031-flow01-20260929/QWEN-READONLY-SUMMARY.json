@@ -1,0 +1,91 @@
+{
+  "task": "H031-FLOW01",
+  "utc": "2026-09-29T10:11:50.506821+00:00",
+  "verifierRequestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+  "status": "READ_ONLY_QWEN_VERIFIER_PASS_BOTH_480K",
+  "boundDeployedSource": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "beforeAfterValidated": true,
+  "generationRequests": 0,
+  "tokenizeRequests": 0,
+  "eachLaneVerifierInvocations": 1,
+  "inferenceOrWorkflowPass": false,
+  "postRelease": false,
+  "captureSha256": "ffcb48fbbbc42a17d7aad2ad0b95f3f6046247ea562f0e6138ce02679ca23cd3",
+  "initialLocalInvocationFailure": "node not found in SSH PATH; verifier not invoked; app executable resolved and used once",
+  "lastFields": [
+    {
+      "time": "2026-09-29T10:11:12.808Z",
+      "kind": "selected_node_fields",
+      "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+      "lane": "qwen3.8-27b",
+      "step": "node_after",
+      "node": {
+        "schema_version": 1,
+        "node_id": "ai-vm",
+        "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "state": "ok",
+        "freshness": "fresh",
+        "observed_at": "2026-09-29T10:11:10.591545+00:00",
+        "age_ms": 2213
+      },
+      "service": {
+        "service_id": "qwen-gpu1",
+        "state": "ok",
+        "freshness": "fresh",
+        "observed_at": "2026-09-29T10:11:10.799987+00:00",
+        "age_ms": 2005,
+        "generation": 7170410416647524,
+        "ready": true,
+        "hardware_latched": false,
+        "deployment_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "model_alias": "qwen3.8-27b",
+        "configured_context_tokens": 480000,
+        "required_gpu_uuids": [
+          "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+        ],
+        "hardware_validation_age_ms": 7021.21233955666,
+        "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "hardware_validated_gpu_uuids": [
+          "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528"
+        ]
+      }
+    },
+    {
+      "time": "2026-09-29T10:11:13.066Z",
+      "kind": "selected_node_fields",
+      "requestId": "1bd2b3d2-ef83-4cea-99cc-939f40b729e1",
+      "lane": "qwen3.8-27b-gpu0",
+      "step": "node_after",
+      "node": {
+        "schema_version": 1,
+        "node_id": "ai-vm",
+        "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "state": "ok",
+        "freshness": "fresh",
+        "observed_at": "2026-09-29T10:11:10.591545+00:00",
+        "age_ms": 2472
+      },
+      "service": {
+        "service_id": "qwen-gpu0",
+        "state": "ok",
+        "freshness": "fresh",
+        "observed_at": "2026-09-29T10:11:10.789193+00:00",
+        "age_ms": 2274,
+        "generation": 5010297804242733,
+        "ready": true,
+        "hardware_latched": false,
+        "deployment_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "model_alias": "qwen3.8-27b-gpu0",
+        "configured_context_tokens": 480000,
+        "required_gpu_uuids": [
+          "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+        ],
+        "hardware_validation_age_ms": 7256.433064302313,
+        "hardware_validated_boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+        "hardware_validated_gpu_uuids": [
+          "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+        ]
+      }
+    }
+  ]
+}

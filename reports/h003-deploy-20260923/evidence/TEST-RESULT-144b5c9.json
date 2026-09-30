@@ -1,0 +1,39 @@
+{
+  "time": "2026-09-23T11:16:36.702142+00:00",
+  "scope": "offline source fixtures only; no runtime/inference/credentials contacted",
+  "results": [
+    {
+      "check": "build",
+      "exit": 0
+    },
+    {
+      "check": "focused-image-server",
+      "exit": 0
+    },
+    {
+      "check": "selected-app-lifecycle",
+      "exit": 0
+    },
+    {
+      "check": "server-launcher",
+      "exit": 0
+    },
+    {
+      "check": "shell-syntax",
+      "exit": 0
+    },
+    {
+      "check": "diff-whitespace",
+      "exit": 0
+    }
+  ],
+  "candidate": "144b5c97fd6d3ffdebede2b0895c90227baa14db",
+  "base": "e17082dfb983ba2acdd425ab9203744b4d0642d7",
+  "tests": {
+    "focused_server": 67,
+    "selected_app_lifecycle": 38,
+    "server_launcher": 1,
+    "total": 106
+  },
+  "git_clean": true
+}

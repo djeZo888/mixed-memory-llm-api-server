@@ -1,0 +1,138 @@
+{
+  "utc_started": "2026-09-27T13:17:49.330852+00:00",
+  "utc_finished": "2026-09-27T13:17:49.447621+00:00",
+  "units": {
+    "h016-mimo-initial-20260927-r5.service": {
+      "code": 0,
+      "text": "RuntimeMaxUSec=1h 2min 34s\nMainPID=2779569\nControlPID=0\nResult=success\nExecMainStatus=0\nExecStopPost={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 -B /data/build/H016-20260927/worker1-r5/candidate_owner.py --settle ; ignore_errors=no ; start_time=[n/a] ; stop_time=[n/a] ; pid=0 ; code=(null) ; status=0/0 }\nActiveState=active\nSubState=running\nInvocationID=4600b556d5d04305a9157da80149a511\n"
+    },
+    "h016-mimo-single64k-20260927-r5.service": {
+      "code": 0,
+      "text": "RuntimeMaxUSec=29min 32s\nMainPID=3254477\nControlPID=0\nResult=success\nExecMainStatus=0\nActiveState=active\nSubState=running\nInvocationID=d3ebfcd422284086b9a6d0c7bb097c10\n"
+    }
+  },
+  "container": {
+    "Id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+    "Image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "Name": "/llm-h016-mimo-pro-r5",
+    "State": {
+      "Status": "running",
+      "Running": true,
+      "Paused": false,
+      "Restarting": false,
+      "OOMKilled": false,
+      "Dead": false,
+      "Pid": 2782009,
+      "ExitCode": 0,
+      "Error": "",
+      "StartedAt": "2026-09-27T12:37:37.213589148Z",
+      "FinishedAt": "0001-01-01T00:00:00Z"
+    }
+  },
+  "source_hashes": {
+    "candidate_owner.py": "11041d78f05bb0522d48b293f0a4283629d4a15f787e8477be6591b4b7faa483",
+    "telemetry.py": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "benchmark.py": "ece4d5d801edc10505ae7d7e9e108a8d4a017e76ac436a220b050f0239e75803",
+    "private_proxy.py": "82d88ed7e13de4a4a36b1a74a4186927e7e03a5380e109860e4e076f3baeb50c",
+    "single64k_phase5.py": "5f38a0ae058a70707267c6773c06d0dd459c8d133dec95485a9fb2d707132294"
+  },
+  "gpu": {
+    "code": 0,
+    "text": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237, 97887, 61016, 36234, 638, 35\nGPU-69acfa26-8b60-61b5-702d-aee252c163cc, 97887, 46482, 50769, 638, 43\nGPU-5d895991-b794-2b4c-b9c4-5f1b668afd23, 49140, 32238, 16274, 630, 40\nGPU-93dbfca8-ef3a-9628-a798-6a4afd0af528, 97887, 61015, 36237, 636, 36\n"
+  },
+  "fixture_candidates": [
+    {
+      "name": "mimo-production-fixture-65536.json",
+      "size": 61475,
+      "sha256": "2fb03cef2e700b304f8eea538a5ef8df300afc53bb0a94241bc754c17679ef78"
+    }
+  ],
+  "owner_status": "QUALIFIED_FIRST4K_WARM_AWAIT_ROOT_NEXT_STAGE",
+  "native_identity": {
+    "alias": "mimo-v2.6-pro-rl",
+    "artifact_template_provenance": "original verified GGUF inventory; not inferred from props",
+    "bos_token": ",",
+    "build_info": "b1-7ac59a6",
+    "context": 131072,
+    "eos_token": "<|im_end|>",
+    "expected_effective_template_bytes": 3866,
+    "expected_effective_template_sha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+    "is_sleeping": false,
+    "model_path": "/models/MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+    "owner_id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+    "pid": 2782009,
+    "raw_artifact_template_bytes": 3867,
+    "raw_artifact_template_sha256": "11ea52e156de38a458e6b7720ad45915d65b97d4ec979a09f55e3c9bd1b4d059",
+    "slots": 1,
+    "template_bytes": 3866,
+    "template_sha256": "16b2dac352c6cf1aef8b0a976618c76deb28c5bf3aba4c8b788fb846aa3769a4",
+    "utc": "2026-09-27T12:48:59.581815+00:00"
+  },
+  "last_guard_utc": "2026-09-27T13:17:47.448504+00:00",
+  "guard_age_seconds": 1.999117,
+  "last_native_progress": "2026-09-27T13:17:27.290464430Z 39.49.978.301 I slot print_timing: id  0 | task 249 | prompt processing, n_tokens =  26624, progress = 0.41, t = 432.20 s / 61.60 tokens per second",
+  "stage_64k": {
+    "body_sent": true,
+    "body_sent_utc": "2026-09-27T13:10:15.062193+00:00",
+    "native_id": "c724b72b99f57f9e72b21bbc2a1fc104a9109b970657d5694ba05c25160a8308",
+    "native_pid": 2782009,
+    "pid": 3254477,
+    "projection64k": {
+      "actual_decode_seconds": 59.139754999999994,
+      "estimated_finish_utc": "2026-09-27T13:29:11.095434+00:00",
+      "estimated_seconds": 1137.756363,
+      "planning_only": true,
+      "prefill_scale": 4
+    },
+    "rungs": {
+      "65536": {
+        "admission": {
+          "counters_constant": {
+            "pgmajfault": 150,
+            "pgscan_direct": 128,
+            "pgsteal_direct": 128,
+            "workingset_refault_file": 1495332
+          },
+          "guard_age_seconds": 3.5013809204101562,
+          "guard_utc": "2026-09-27T13:10:10.962590+00:00",
+          "phase_samples": 65,
+          "prior": 16384,
+          "slot_idle": true,
+          "utc": "2026-09-27T13:10:14.464492+00:00"
+        },
+        "before": {
+          "cgroup": {
+            "cpu.stat": "usage_usec 35846180411\nuser_usec 35499359426\nsystem_usec 346820985\ncore_sched.force_idle_usec 0\nnr_periods 0\nnr_throttled 0\nthrottled_usec 0\nnr_bursts 0\nburst_usec 0",
+            "io.stat": "8:0 rbytes=352256 wbytes=0 rios=10 wios=0 dbytes=0 dios=0\n252:0 rbytes=352256 wbytes=0 rios=10 wios=0 dbytes=0 dios=0\n8:32 rbytes=558849085440 wbytes=0 rios=758845 wios=0 dbytes=0 dios=0\n8:16 rbytes=20623360 wbytes=32768 rios=341 wios=4 dbytes=0 dios=0",
+            "memory.current": "730150395904",
+            "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+            "memory.peak": "730688536576",
+            "memory.stat": "anon 533934387200\nfile 194499624960\nkernel 1716379648\nkernel_stack 1245184\npagetables 1047007232\nsec_pagetables 0\npercpu 3848\nsock 0\nvmalloc 12288\nshmem 260861952\nzswap 0\nzswapped 0\nfile_mapped 276295680\nfile_dirty 0\nfile_writeback 0\nswapcached 0\nanon_thp 0\nfile_thp 0\nshmem_thp 0\ninactive_anon 115144015872\nactive_anon 419051196416\ninactive_file 194217287680\nactive_file 21426176\nunevictable 0\nslab_reclaimable 664778456\nslab_unreclaimable 1211976\nslab 665990432\nworkingset_refault_anon 0\nworkingset_refault_file 1495332\nworkingset_activate_anon 0\nworkingset_activate_file 985885\nworkingset_restore_anon 0\nworkingset_restore_file 0\nworkingset_nodereclaim 0\npgscan 89021361\npgsteal 89021361\npgscan_kswapd 89021233\npgscan_direct 128\npgscan_khugepaged 0\npgsteal_kswapd 89021233\npgsteal_direct 128\npgsteal_khugepaged 0\npgfault 260221954\npgmajfault 150\npgrefill 2236\npgactivate 0\npgdeactivate 0\npglazyfree 0\npglazyfreed 0\nzswpin 0\nzswpout 0\nzswpwb 0\nthp_fault_alloc 0\nthp_collapse_alloc 0\nthp_swpout 0\nthp_swpout_fallback 0",
+            "memory.swap.current": "0"
+          },
+          "utc": "2026-09-27T13:10:14.464680+00:00"
+        },
+        "body_sent": true,
+        "body_sent_utc": "2026-09-27T13:10:15.062193+00:00",
+        "request_sha256": "db53e41394b2e78514e1ab58938b9fb0dc0082c2f455a87b1c1ae2a88521e645"
+      }
+    },
+    "status": "BODY_SENT",
+    "target": 65536,
+    "updated_utc": "2026-09-27T13:10:15.062201+00:00",
+    "utc": "2026-09-27T13:10:12.500521+00:00"
+  },
+  "benchmark_64k": {
+    "expected_input_tokens": 65536,
+    "label": "BENCH65536",
+    "output_budget": 256,
+    "request_sha256": "db53e41394b2e78514e1ab58938b9fb0dc0082c2f455a87b1c1ae2a88521e645",
+    "started_utc": "2026-09-27T13:10:14.781207+00:00",
+    "status": "SUBMITTED",
+    "thinking": false
+  },
+  "raw_snapshot_sha256": "c0d11830bc463122046c23b04b44c46c2524404cb586841098a9b74e6acaa157",
+  "mutations": "NONE",
+  "inference_requests": "NONE",
+  "owner_cleanup": "UNCHANGED"
+}

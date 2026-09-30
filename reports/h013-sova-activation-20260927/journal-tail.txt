@@ -1,0 +1,12 @@
+2026-09-27T07:32:20Z app_start_returned 0
+Starting ai-harness.service - ai-harness v0.0.1 local web server and inference gateway...
+H005 dispatch state metadata/schema PASS (read-only)
+Started ai-harness.service - ai-harness v0.0.1 local web server and inference gateway.
+ai-harness 0.0.3 listening on IPv4 loopback
+Stopping ai-harness-status.service - ai-harness independent read-only status and trusted LAN admin...
+ai-harness-status.service: Deactivated successfully.
+Stopped ai-harness-status.service - ai-harness independent read-only status and trusted LAN admin.
+ai-harness-status.service: Consumed 16.543s CPU time, 42.5M memory peak, 0B memory swap peak.
+Starting ai-harness-status.service - ai-harness independent read-only status and trusted LAN admin...
+H005 dispatch state metadata/schema PASS (read-only)
+Started ai-harness-status.service - ai-harness independent read-only status and trusted LAN admin.

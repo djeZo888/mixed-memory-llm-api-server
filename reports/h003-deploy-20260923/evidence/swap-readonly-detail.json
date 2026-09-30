@@ -1,0 +1,55 @@
+{
+  "utc": "2026-09-23T12:12:43.277364+00:00",
+  "page_size": 4096,
+  "vm_swap_counters": {
+    "pswpin": 308,
+    "pswpout": 5323
+  },
+  "swap_used_bytes": 155189248,
+  "containers": [
+    {
+      "name": "/llm-image-backend",
+      "id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+      "pid": 146684,
+      "cgroup": "/system.slice/docker-ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d.scope",
+      "memory": {
+        "memory.current": "5353713664",
+        "memory.max": "103079215104",
+        "memory.swap.current": "0",
+        "memory.swap.max": "0",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+        "memory.swap.events": "high 0\nmax 0\nfail 0"
+      }
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "pid": 53058,
+      "cgroup": "/system.slice/docker-a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c.scope",
+      "memory": {
+        "memory.current": "6871531520",
+        "memory.max": "34359738368",
+        "memory.swap.current": "0",
+        "memory.swap.max": "max",
+        "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+        "memory.swap.events": "high 0\nmax 0\nfail 0"
+      }
+    },
+    {
+      "name": "/llmctl-qwen38-27b-q1-480000-yarn4-bf16kv",
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "pid": 32207,
+      "cgroup": "/system.slice/docker-a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e.scope",
+      "memory": {
+        "memory.current": "34352271360",
+        "memory.max": "34359738368",
+        "memory.swap.current": "155086848",
+        "memory.swap.max": "max",
+        "memory.events": "low 0\nhigh 0\nmax 441\noom 0\noom_kill 0\noom_group_kill 0",
+        "memory.swap.events": "high 0\nmax 0\nfail 0"
+      }
+    }
+  ],
+  "read_only": true,
+  "attribution_limit": "Counters are cumulative system-wide since boot; sampled values cannot by themselves identify exact request that paged."
+}

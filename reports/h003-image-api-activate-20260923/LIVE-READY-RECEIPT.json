@@ -1,0 +1,300 @@
+{
+  "task": "H003-IMAGE-API-ACTIVATE-20260923",
+  "status": "LIVE_READY_SETTLED_WINDOW_RELEASED",
+  "verified_utc": "2026-09-23T14:22:36.475921+00:00",
+  "native_session_id": "01a0ce8e-681a-77b3-83b8-5a6faab3f62d",
+  "reviewed_transaction_commit": "56bf2c7c10fe6d8de0901e7f42b151ccf4977795",
+  "source_commit": "9de9ecf701bedd0bcb337d9dcb49a4aca1c3fa27",
+  "install_helper_sha256": "432bf4ea600299966569dd77d1fd7c01863bdb6a42b6ed2bccce6ccddbb5ffa2",
+  "manifest_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "profiles": [
+    {
+      "operation": "generation",
+      "size": "1024x1024",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+      "native_size": "1024x1024",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1024x576",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+      "native_size": "1024x576",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1216x704",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+      "native_size": "1216x704",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1472x832",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+      "native_size": "1472x832",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1760x992",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+      "native_size": "1760x992",
+      "crop_bottom": 0
+    },
+    {
+      "operation": "generation",
+      "size": "1920x1080",
+      "references": 0,
+      "transparent": false,
+      "evidence_sha256": "b33ceb2e05638c3342581b964b21ae2c201e0748ac4331a15ac13ffa992786eb",
+      "native_size": "1920x1088",
+      "crop_bottom": 8
+    },
+    {
+      "operation": "edit",
+      "size": "1024x1024",
+      "references": 1,
+      "transparent": false,
+      "evidence_sha256": "8ea1261c9fd96dbb88722b1547eb8a8122ea36133942b5e5a43588a372d6eb93",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "operation": "edit",
+      "size": "1536x864",
+      "references": 1,
+      "transparent": false,
+      "evidence_sha256": "5879deca84126408e71c39218dbc9e949cb94dd26b09730c5ffdc64e6a737306",
+      "native_size": "1536x864",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    },
+    {
+      "operation": "edit",
+      "size": "1024x1024",
+      "references": 2,
+      "transparent": false,
+      "evidence_sha256": "7cd06cec250b8e4ae90f8ef4ca0d9b6ca6dfbd2d392b3584cd4b5bd51bc49205",
+      "native_size": "1024x1024",
+      "crop_bottom": 0,
+      "input_padding": {
+        "top": 0,
+        "right": 0,
+        "bottom": 0,
+        "left": 0
+      }
+    }
+  ],
+  "installations": 1,
+  "startup_recoveries": 1,
+  "fixed_warmups": 1,
+  "additional_image_requests": 0,
+  "capacity_calls_repeated": 0,
+  "warmup": {
+    "run_id": "7166f85afcd245f4bded206488970a08",
+    "http_call_count": 1,
+    "started_utc": "2026-09-23T14:19:41.617475+00:00",
+    "finished_utc": "2026-09-23T14:20:05.958031+00:00",
+    "http_elapsed_seconds": 24.305537,
+    "output_sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+    "native_output_mode": "RGBA",
+    "size": "1024x1024",
+    "seed": 42,
+    "steps": 40
+  },
+  "ready": {
+    "ready": true,
+    "busy": false,
+    "admitting": true,
+    "state": "ready"
+  },
+  "auth": {
+    "unauthenticated_status": 401,
+    "protected_key_unchanged": true,
+    "loaded_credential_matches": true,
+    "credential_mode": "0440"
+  },
+  "published": {
+    "endpoint": "http://10.156.100.60:30006",
+    "from_host": "ai-harness",
+    "status": 200,
+    "capabilities_exact": true
+  },
+  "image_before": {
+    "id": "ca750f6dca24f2117ef8b91d0d28a1688d4a66b0bd671622840b8b1e243cfb8d",
+    "pid": 146684,
+    "started": "2026-09-23T06:22:18.622164192Z"
+  },
+  "image_after": {
+    "id": "4c00e0e2fd10915685bb8e238fce120a7cd64b570ae300a230f068461f695f7e",
+    "pid": 252575,
+    "started": "2026-09-23T14:19:10.883226019Z"
+  },
+  "image_gpu_processes_before": [
+    [
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "147055",
+      "32230"
+    ]
+  ],
+  "image_gpu_processes_after": [
+    [
+      "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "252930",
+      "32224"
+    ]
+  ],
+  "text_unchanged": [
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "pid": 53058,
+      "started": "2026-09-23T02:05:36.354298377Z",
+      "settings_sha256": "673dd8c68ab786f08db4d9e3770b0aa5dae400de795b759a4a14cfcf42fbc5c9"
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "pid": 32207,
+      "started": "2026-09-23T02:04:14.101319306Z",
+      "settings_sha256": "5234671fcbe5c66f6d9532db639d45746f0c84da7792d03ab53651180e0c9241"
+    }
+  ],
+  "text_contexts": [
+    480000,
+    480000
+  ],
+  "guards": "PASS before and after; canonical lease released",
+  "memory": {
+    "image_sample_count": 280,
+    "min_image_gpu_free_percent": 20.19879426129426,
+    "min_host_available_percent": 97.28844964871413,
+    "max_sample_interval_seconds": 0.20078004500101088,
+    "all_devices_final_reserve_pass": true,
+    "peak_limit": "Sampled image device/host load and warm interval; other devices checked before/after."
+  },
+  "swap": {
+    "operation_before_utc": "2026-09-23T14:19:01.794888+00:00",
+    "operation_before": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "operation_after_utc": "2026-09-23T14:20:19.810519+00:00",
+    "operation_after": {
+      "pswpin": 308,
+      "pswpout": 5323
+    },
+    "operation_delta_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "sampled_first": {
+      "utc": "2026-09-23T14:19:10.212473+00:00",
+      "pswpin": 308,
+      "pswpout": 5323,
+      "pgmajfault": 21051,
+      "oom_kill": 0
+    },
+    "sampled_last": {
+      "utc": "2026-09-23T14:20:05.213344+00:00",
+      "pswpin": 308,
+      "pswpout": 5323,
+      "pgmajfault": 21051,
+      "oom_kill": 0
+    },
+    "sampled_delta_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    },
+    "new_image_sampled_max_cgroup_swap_bytes": 0,
+    "current_cgroups": [
+      {
+        "id": "4c00e0e2fd10915685bb8e238fce120a7cd64b570ae300a230f068461f695f7e",
+        "name": "/llm-image-backend",
+        "cgroup": "/sys/fs/cgroup/system.slice/docker-4c00e0e2fd10915685bb8e238fce120a7cd64b570ae300a230f068461f695f7e.scope",
+        "counters": {
+          "memory.current": "5278797824",
+          "memory.max": "103079215104",
+          "memory.swap.current": "0",
+          "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+          "memory.swap.events": "high 0\nmax 0\nfail 0"
+        }
+      },
+      {
+        "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+        "name": "/llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+        "cgroup": "/sys/fs/cgroup/system.slice/docker-a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c.scope",
+        "counters": {
+          "memory.current": "6871556096",
+          "memory.max": "34359738368",
+          "memory.swap.current": "0",
+          "memory.events": "low 0\nhigh 0\nmax 0\noom 0\noom_kill 0\noom_group_kill 0",
+          "memory.swap.events": "high 0\nmax 0\nfail 0"
+        }
+      },
+      {
+        "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+        "name": "/llmctl-qwen38-27b-q1-480000-yarn4-bf16kv",
+        "cgroup": "/sys/fs/cgroup/system.slice/docker-a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e.scope",
+        "counters": {
+          "memory.current": "34352271360",
+          "memory.max": "34359738368",
+          "memory.swap.current": "155086848",
+          "memory.events": "low 0\nhigh 0\nmax 441\noom 0\noom_kill 0\noom_group_kill 0",
+          "memory.swap.events": "high 0\nmax 0\nfail 0"
+        }
+      }
+    ],
+    "q1_historical_swap_bytes": 155086848,
+    "different_image_cgroups_not_subtracted": true
+  },
+  "harness": {
+    "pid": 49895,
+    "engine_id": "11e764b2f30822ef7f65c6484c9e13892f8b18ac8b6ea4a9ae1fa2cd8473fb87",
+    "lane_before": "quarantined",
+    "lane_after": "idle",
+    "queued_active_images": 0,
+    "active_engine_runs": 0,
+    "stored_tables_unchanged_except_lane": true,
+    "protected_config_proxy_unchanged": true,
+    "restarts": 0,
+    "builds": 0
+  },
+  "rollback": {
+    "path": "/data/services/h003-image-api-activate-20260923/rollback",
+    "executed": false,
+    "source_restoration_remains_stopped": true
+  },
+  "historical_limits": {
+    "asgi_cleanup": "UNPROVEN original SIGTERM receipt preserved",
+    "seed42_edit_regression": "FAIL preserved; fresh-seed workaround not intrinsic repair",
+    "C03_FHD_edit": "EXCLUDED: 4.387464% reserve fail despite visual pass"
+  },
+  "window": {
+    "released": true,
+    "to": "root / root-authorized Worker2 acceptance",
+    "no_further_host_actions_by_this_task": true
+  },
+  "raw_evidence_directory": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-IMAGE-API-ACTIVATE-20260923/artifacts/live"
+}

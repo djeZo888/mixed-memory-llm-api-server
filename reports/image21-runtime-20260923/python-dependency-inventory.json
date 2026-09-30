@@ -1,0 +1,1879 @@
+{
+  "evidence_class": "BUILD_METADATA_ONLY",
+  "freeze_matches_inspect": true,
+  "installed": [
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "addict",
+      "requested": false,
+      "version": "2.4.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "aiohappyeyeballs",
+      "requested": false,
+      "version": "2.7.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "aiohttp",
+      "requested": false,
+      "version": "3.14.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "aiosignal",
+      "requested": false,
+      "version": "1.4.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "airportsdata",
+      "requested": false,
+      "version": "20260905"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "annotated-doc",
+      "requested": false,
+      "version": "0.0.5"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "annotated-types",
+      "requested": false,
+      "version": "0.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "anthropic",
+      "requested": false,
+      "version": "1.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "antlr4-python3-runtime",
+      "requested": false,
+      "version": "4.9.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "anyio",
+      "requested": false,
+      "version": "4.15.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "apache-tvm-ffi",
+      "requested": false,
+      "version": "0.1.11"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "asttokens",
+      "requested": false,
+      "version": "3.0.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "attrs",
+      "requested": false,
+      "version": "26.1.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "av",
+      "requested": false,
+      "version": "16.1.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "blobfile",
+      "requested": false,
+      "version": "3.0.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "build",
+      "requested": false,
+      "version": "1.6.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cache_dit",
+      "requested": false,
+      "version": "1.5.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "certifi",
+      "requested": false,
+      "version": "2026.7.22"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cffi",
+      "requested": false,
+      "version": "2.1.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "charset-normalizer",
+      "requested": false,
+      "version": "3.5.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "click",
+      "requested": false,
+      "version": "8.5.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cloudpickle",
+      "requested": false,
+      "version": "3.1.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "compressed-tensors",
+      "requested": false,
+      "version": "0.18.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cryptography",
+      "requested": false,
+      "version": "50.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "cuda-bindings",
+      "requested": false,
+      "version": "13.4.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cuda-core",
+      "requested": false,
+      "version": "1.2.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "cuda-pathfinder",
+      "requested": false,
+      "version": "1.8.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cuda-python",
+      "requested": false,
+      "version": "13.4.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "cuda-tile",
+      "requested": false,
+      "version": "1.6.0rc5"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "cuda-toolkit",
+      "requested": false,
+      "version": "13.0.3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "Cython",
+      "requested": false,
+      "version": "3.3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "datasets",
+      "requested": false,
+      "version": "5.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "decorator",
+      "requested": false,
+      "version": "5.3.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "diffusers",
+      "requested": false,
+      "version": "0.37.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "dill",
+      "requested": false,
+      "version": "0.4.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "diskcache",
+      "requested": false,
+      "version": "5.6.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "distro",
+      "requested": false,
+      "version": "1.9.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "docstring_parser",
+      "requested": false,
+      "version": "0.18.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "easydict",
+      "requested": false,
+      "version": "1.13"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "einops",
+      "requested": false,
+      "version": "0.8.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "executing",
+      "requested": false,
+      "version": "2.2.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "fastapi",
+      "requested": false,
+      "version": "0.141.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "filelock",
+      "requested": false,
+      "version": "4.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "flash-attn-4",
+      "requested": false,
+      "version": "4.0.0b19"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "flashinfer-python",
+      "requested": false,
+      "version": "0.6.18"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "frozenlist",
+      "requested": false,
+      "version": "1.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "fsspec",
+      "requested": false,
+      "version": "2026.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "gguf",
+      "requested": false,
+      "version": "0.19.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "grpcio",
+      "requested": false,
+      "version": "1.84.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "grpcio-health-checking",
+      "requested": false,
+      "version": "1.81.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "grpcio-reflection",
+      "requested": false,
+      "version": "1.81.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "h11",
+      "requested": false,
+      "version": "0.16.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "hf-xet",
+      "requested": false,
+      "version": "1.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "httpcore",
+      "requested": false,
+      "version": "1.0.9"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "httpcore2",
+      "requested": false,
+      "version": "2.13.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "httpx",
+      "requested": false,
+      "version": "0.28.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "httpx2",
+      "requested": false,
+      "version": "2.13.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "huggingface_hub",
+      "requested": false,
+      "version": "1.32.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "humanize",
+      "requested": false,
+      "version": "4.16.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "humming-kernels",
+      "requested": false,
+      "version": "0.1.12"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "idna",
+      "requested": false,
+      "version": "3.20"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "imageio",
+      "requested": false,
+      "version": "2.36.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "imageio-ffmpeg",
+      "requested": false,
+      "version": "0.5.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "importlib_metadata",
+      "requested": false,
+      "version": "9.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "interegular",
+      "requested": false,
+      "version": "0.3.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "ipython",
+      "requested": false,
+      "version": "9.17.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "ipython_pygments_lexers",
+      "requested": false,
+      "version": "1.1.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "jedi",
+      "requested": false,
+      "version": "0.20.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "Jinja2",
+      "requested": false,
+      "version": "3.1.6"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "jiter",
+      "requested": false,
+      "version": "0.17.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "jsonschema",
+      "requested": false,
+      "version": "4.26.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "jsonschema-specifications",
+      "requested": false,
+      "version": "2025.9.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "kernels",
+      "requested": false,
+      "version": "0.14.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "kernels-data",
+      "requested": false,
+      "version": "0.16.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "lark",
+      "requested": false,
+      "version": "1.3.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "lazy-loader",
+      "requested": false,
+      "version": "0.6"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "llguidance",
+      "requested": false,
+      "version": "1.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "llvmlite",
+      "requested": false,
+      "version": "0.47.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "loguru",
+      "requested": false,
+      "version": "0.7.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "lxml",
+      "requested": false,
+      "version": "6.1.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "markdown-it-py",
+      "requested": false,
+      "version": "4.2.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "MarkupSafe",
+      "requested": false,
+      "version": "3.0.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "matplotlib-inline",
+      "requested": false,
+      "version": "0.2.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "mdurl",
+      "requested": false,
+      "version": "0.1.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "mistral_common",
+      "requested": false,
+      "version": "1.12.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "ml_dtypes",
+      "requested": false,
+      "version": "0.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "modelscope",
+      "requested": false,
+      "version": "1.40.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "modelscope-hub",
+      "requested": false,
+      "version": "0.4.5"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "moviepy",
+      "requested": false,
+      "version": "2.2.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "mpmath",
+      "requested": false,
+      "version": "1.3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "msgpack",
+      "requested": false,
+      "version": "1.2.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "msgspec",
+      "requested": false,
+      "version": "0.21.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "multidict",
+      "requested": false,
+      "version": "6.9.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "multiprocess",
+      "requested": false,
+      "version": "0.70.19"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nccl4py",
+      "requested": false,
+      "version": "0.5.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nest-asyncio",
+      "requested": false,
+      "version": "1.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "networkx",
+      "requested": false,
+      "version": "3.7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "ninja",
+      "requested": false,
+      "version": "1.13.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "numba",
+      "requested": false,
+      "version": "0.65.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "numpy",
+      "requested": false,
+      "version": "2.3.5"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cublas",
+      "requested": false,
+      "version": "13.1.1.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cuda-cccl",
+      "requested": false,
+      "version": "13.3.4.3.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cuda-crt",
+      "requested": false,
+      "version": "13.4.92"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cuda-cupti",
+      "requested": false,
+      "version": "13.0.85"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cuda-nvcc",
+      "requested": false,
+      "version": "13.4.92"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cuda-nvdisasm",
+      "requested": false,
+      "version": "13.4.92"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cuda-nvrtc",
+      "requested": false,
+      "version": "13.0.88"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cuda-runtime",
+      "requested": false,
+      "version": "13.0.96"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cudnn-cu13",
+      "requested": false,
+      "version": "9.20.0.48"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cudnn-frontend",
+      "requested": false,
+      "version": "1.29.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cufft",
+      "requested": false,
+      "version": "12.0.0.61"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cufile",
+      "requested": false,
+      "version": "1.15.1.6"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-curand",
+      "requested": false,
+      "version": "10.4.0.35"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cusolver",
+      "requested": false,
+      "version": "12.0.4.66"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cusparse",
+      "requested": false,
+      "version": "12.6.3.3"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-cusparselt-cu13",
+      "requested": false,
+      "version": "0.8.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cutlass-dsl",
+      "requested": false,
+      "version": "4.6.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cutlass-dsl-libs-base",
+      "requested": false,
+      "version": "4.6.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cutlass-dsl-libs-core",
+      "requested": false,
+      "version": "4.6.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cutlass-dsl-libs-cu12",
+      "requested": false,
+      "version": "4.6.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-cutlass-dsl-libs-cu13",
+      "requested": false,
+      "version": "4.6.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-mathdx",
+      "requested": false,
+      "version": "25.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-ml-py",
+      "requested": false,
+      "version": "13.610.43"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-modelopt",
+      "requested": false,
+      "version": "0.46.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-nccl-cu13",
+      "requested": false,
+      "version": "2.29.7"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-nvjitlink",
+      "requested": false,
+      "version": "13.4.92"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-nvshmem-cu13",
+      "requested": false,
+      "version": "3.4.5"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "nvidia-nvtx",
+      "requested": false,
+      "version": "13.0.85"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvidia-nvvm",
+      "requested": false,
+      "version": "13.4.92"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "nvshmem4py-cu13",
+      "requested": false,
+      "version": "0.4.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "omegaconf",
+      "requested": false,
+      "version": "2.3.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "openai",
+      "requested": false,
+      "version": "2.6.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "openai-harmony",
+      "requested": false,
+      "version": "0.0.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "opencv-python-headless",
+      "requested": false,
+      "version": "4.10.0.84"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "orjson",
+      "requested": false,
+      "version": "3.12.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "outlines",
+      "requested": false,
+      "version": "0.1.11"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "outlines_core",
+      "requested": false,
+      "version": "0.1.26"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "packaging",
+      "requested": false,
+      "version": "26.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pandas",
+      "requested": false,
+      "version": "3.0.6"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "parso",
+      "requested": false,
+      "version": "0.8.7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "partial-json-parser",
+      "requested": false,
+      "version": "0.2.1.1.post7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pexpect",
+      "requested": false,
+      "version": "4.9.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pillow",
+      "requested": false,
+      "version": "11.3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "pip",
+      "requested": true,
+      "version": "26.2.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "proglog",
+      "requested": false,
+      "version": "0.1.12"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "prometheus_client",
+      "requested": false,
+      "version": "0.26.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "prompt_toolkit",
+      "requested": false,
+      "version": "3.0.53"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "propcache",
+      "requested": false,
+      "version": "0.5.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "protobuf",
+      "requested": false,
+      "version": "6.33.6"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "psutil",
+      "requested": false,
+      "version": "7.2.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "ptyprocess",
+      "requested": false,
+      "version": "0.7.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "PuLP",
+      "requested": false,
+      "version": "3.3.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pure_eval",
+      "requested": false,
+      "version": "0.2.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "py-spy",
+      "requested": false,
+      "version": "0.4.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pyarrow",
+      "requested": false,
+      "version": "25.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pybase64",
+      "requested": false,
+      "version": "1.5.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pycountry",
+      "requested": false,
+      "version": "26.2.16"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pycparser",
+      "requested": false,
+      "version": "3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pycryptodomex",
+      "requested": false,
+      "version": "3.23.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pydantic",
+      "requested": false,
+      "version": "2.13.5"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pydantic_core",
+      "requested": false,
+      "version": "2.46.5"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pydantic-extra-types",
+      "requested": false,
+      "version": "2.11.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "Pygments",
+      "requested": false,
+      "version": "2.21.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pyproject_hooks",
+      "requested": false,
+      "version": "1.3.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "python-dateutil",
+      "requested": false,
+      "version": "2.9.0.post0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "python-dotenv",
+      "requested": false,
+      "version": "1.2.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "python-multipart",
+      "requested": false,
+      "version": "0.0.32"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "PyYAML",
+      "requested": false,
+      "version": "6.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "pyzmq",
+      "requested": false,
+      "version": "27.2.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "quack-kernels",
+      "requested": false,
+      "version": "0.6.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "referencing",
+      "requested": false,
+      "version": "0.37.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "regex",
+      "requested": false,
+      "version": "2026.9.10"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "remote-pdb",
+      "requested": false,
+      "version": "2.1.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "requests",
+      "requested": false,
+      "version": "2.34.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "rich",
+      "requested": false,
+      "version": "15.0.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "rpds-py",
+      "requested": false,
+      "version": "2026.6.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "runai-model-streamer",
+      "requested": false,
+      "version": "0.16.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "safetensors",
+      "requested": false,
+      "version": "0.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "scikit-image",
+      "requested": false,
+      "version": "0.25.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "scipy",
+      "requested": false,
+      "version": "1.18.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "semantic-version",
+      "requested": false,
+      "version": "2.10.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sentencepiece",
+      "requested": false,
+      "version": "0.2.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "setproctitle",
+      "requested": false,
+      "version": "1.3.7"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "setuptools",
+      "requested": true,
+      "version": "84.0.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "setuptools-rust",
+      "requested": true,
+      "version": "1.13.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "setuptools-scm",
+      "requested": true,
+      "version": "10.2.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sgl-deep-ep",
+      "requested": false,
+      "version": "0.1.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sgl-deep-gemm",
+      "requested": false,
+      "version": "0.2.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sglang",
+      "requested": true,
+      "version": "0.0.0.dev1+g0cd8be351"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sglang-kernel",
+      "requested": false,
+      "version": "0.4.7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "shellingham",
+      "requested": false,
+      "version": "1.5.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "six",
+      "requested": false,
+      "version": "1.17.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "smg-grpc-proto",
+      "requested": false,
+      "version": "0.4.21"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "smg-grpc-servicer",
+      "requested": false,
+      "version": "0.12.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "sniffio",
+      "requested": false,
+      "version": "1.3.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "soundfile",
+      "requested": false,
+      "version": "0.13.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "st_attn",
+      "requested": false,
+      "version": "0.0.7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "stack-data",
+      "requested": false,
+      "version": "0.6.3"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "starlette",
+      "requested": false,
+      "version": "1.6.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "sympy",
+      "requested": false,
+      "version": "1.14.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tabulate",
+      "requested": false,
+      "version": "0.10.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tifffile",
+      "requested": false,
+      "version": "2026.9.20"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tiktoken",
+      "requested": false,
+      "version": "0.14.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tilelang",
+      "requested": false,
+      "version": "0.1.12"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "timm",
+      "requested": false,
+      "version": "1.0.16"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tokenizers",
+      "requested": false,
+      "version": "0.22.2"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tokenspeed-mla",
+      "requested": false,
+      "version": "0.1.8"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tokenspeed-triton",
+      "requested": false,
+      "version": "3.8.10.post20260920"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tomlkit",
+      "requested": false,
+      "version": "0.15.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "torch",
+      "requested": true,
+      "version": "2.13.0+cu130"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "torch_c_dlpack_ext",
+      "requested": false,
+      "version": "0.1.5"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "torch_memory_saver",
+      "requested": false,
+      "version": "0.0.10"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "torchaudio",
+      "requested": false,
+      "version": "2.11.0+cu130"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "torchcodec",
+      "requested": false,
+      "version": "0.15.0+cu130"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "torchvision",
+      "requested": false,
+      "version": "0.28.0+cu130"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "tqdm",
+      "requested": false,
+      "version": "4.70.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "traitlets",
+      "requested": false,
+      "version": "5.16.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "transformers",
+      "requested": false,
+      "version": "5.12.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "trimesh",
+      "requested": false,
+      "version": "5.1.0"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "triton",
+      "requested": false,
+      "version": "3.7.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "truststore",
+      "requested": false,
+      "version": "0.10.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "typer",
+      "requested": false,
+      "version": "0.27.2"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "typing_extensions",
+      "requested": false,
+      "version": "4.16.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "typing-inspection",
+      "requested": false,
+      "version": "0.4.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "urllib3",
+      "requested": false,
+      "version": "2.8.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "uvicorn",
+      "requested": false,
+      "version": "0.53.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "uvloop",
+      "requested": false,
+      "version": "0.22.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "vcs-versioning",
+      "requested": false,
+      "version": "2.4.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "vsa",
+      "requested": false,
+      "version": "0.0.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "watchfiles",
+      "requested": false,
+      "version": "1.3.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "wcwidth",
+      "requested": false,
+      "version": "0.8.4"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "websockets",
+      "requested": false,
+      "version": "17.1"
+    },
+    {
+      "install_report_archive_hash_recorded": false,
+      "installer": "pip",
+      "name": "wheel",
+      "requested": true,
+      "version": "0.48.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "xatlas",
+      "requested": false,
+      "version": "0.0.11"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "xgrammar",
+      "requested": false,
+      "version": "0.2.7"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "xxhash",
+      "requested": false,
+      "version": "4.0.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "yarl",
+      "requested": false,
+      "version": "1.25.1"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "z3-solver",
+      "requested": false,
+      "version": "4.15.4.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "zipp",
+      "requested": false,
+      "version": "4.1.0"
+    },
+    {
+      "install_report_archive_hash_recorded": true,
+      "installer": "pip",
+      "name": "zstandard",
+      "requested": false,
+      "version": "0.25.0"
+    }
+  ],
+  "installed_count": 240,
+  "installed_without_reported_archive_hash": [
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "cuda-bindings",
+      "version": "13.4.2"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "cuda-pathfinder",
+      "version": "1.8.2"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "cuda-toolkit",
+      "version": "13.0.3.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "filelock",
+      "version": "4.0.1"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "Jinja2",
+      "version": "3.1.6"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "MarkupSafe",
+      "version": "3.0.3"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "mpmath",
+      "version": "1.3.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "networkx",
+      "version": "3.7"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cublas",
+      "version": "13.1.1.3"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cuda-cupti",
+      "version": "13.0.85"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cuda-nvrtc",
+      "version": "13.0.88"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cuda-runtime",
+      "version": "13.0.96"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cudnn-cu13",
+      "version": "9.20.0.48"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cufft",
+      "version": "12.0.0.61"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cufile",
+      "version": "1.15.1.6"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-curand",
+      "version": "10.4.0.35"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cusolver",
+      "version": "12.0.4.66"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cusparse",
+      "version": "12.6.3.3"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-cusparselt-cu13",
+      "version": "0.8.1"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-nccl-cu13",
+      "version": "2.29.7"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-nvjitlink",
+      "version": "13.4.92"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-nvshmem-cu13",
+      "version": "3.4.5"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "nvidia-nvtx",
+      "version": "13.0.85"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "packaging",
+      "version": "26.3"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "pip",
+      "version": "26.2.1"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "semantic-version",
+      "version": "2.10.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "setuptools",
+      "version": "84.0.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "setuptools-rust",
+      "version": "1.13.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "setuptools-scm",
+      "version": "10.2.3"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "sympy",
+      "version": "1.14.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "torch",
+      "version": "2.13.0+cu130"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "triton",
+      "version": "3.7.1"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "typing_extensions",
+      "version": "4.16.0"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "vcs-versioning",
+      "version": "2.4.1"
+    },
+    {
+      "hash_status": "NOT_RECORDED_IN_SUPPLIED_INSTALL_REPORT",
+      "name": "wheel",
+      "version": "0.48.0"
+    }
+  ],
+  "pip_version": "26.2.1",
+  "python_environment": {
+    "implementation_name": "cpython",
+    "implementation_version": "3.12.3",
+    "os_name": "posix",
+    "platform_machine": "x86_64",
+    "platform_python_implementation": "CPython",
+    "platform_release": "6.8.0-139-generic",
+    "platform_system": "Linux",
+    "platform_version": "#139-Ubuntu SMP PREEMPT_DYNAMIC Sat Aug  1 03:52:05 UTC 2026",
+    "python_full_version": "3.12.3",
+    "python_version": "3.12",
+    "sys_platform": "linux"
+  },
+  "schema_version": 1
+}

@@ -1,0 +1,7 @@
+#!/bin/sh
+# Root-owned exact allowlist boundary; no user-supplied options or commands.
+set -eu
+if [ "$#" -ne 0 ]; then
+    exit 64
+fi
+exec /usr/bin/python3 -I -B /data/services/image21-runtime-20260923/source/service.py recover

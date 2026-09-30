@@ -1,0 +1,6 @@
+# Dedicated adapter environment; never install into a text or image runtime.
+fastapi==0.141.1
+uvicorn==0.53.0
+httpx==0.28.1
+Pillow==12.3.0
+python-multipart==0.0.32

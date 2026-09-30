@@ -1,0 +1,18 @@
+{
+  "artifact": "/Users/agent/CodexProjects/llm-orchestration/tasks/H011-WORKER2-20260927/H011-MANUAL1M-CANDIDATE.tar.gz",
+  "sha256": "19c2db15c8f5cd91ced676724a055787223448e21cad98053a18c5865d038088",
+  "bytes": 41838,
+  "manifest_sha256": "423a18cb6dbcdcc89e3150e404ebe819a8d2c6b8af301be67ac1f8b7d185554b",
+  "stage_path": "/data/services/h011-manual1m-20260927",
+  "status": "PREPARED_OFFLINE_NOT_EXECUTED",
+  "tests": {
+    "profile_count": 10,
+    "lifecycle": 8,
+    "stream": 11
+  },
+  "native1m_allocation": false,
+  "native1m_inference": false,
+  "production_source_modified": false,
+  "live_1m": "NOT_TESTED_THERMAL_BLOCK",
+  "staging_or_launch_this_turn": false
+}

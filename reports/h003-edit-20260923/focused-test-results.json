@@ -1,0 +1,26 @@
+{
+  "status": "PASS",
+  "checks": [
+    "original_hashes",
+    "RGB_normalization_pixel_identity",
+    "no_EXIF",
+    "native_square_resize_identity",
+    "adapter_input_byte_identity",
+    "native_settings",
+    "d02_actual_public_output_pixel_identity",
+    "d03_actual_public_output_pixel_identity"
+  ],
+  "outputs": [
+    {
+      "case": "d02",
+      "raw_sha256": "13f72d46fec3a91258da5121cb0161a36884c1922446048b436d96b53609bb7f",
+      "delivered_sha256": "7257e60926f7d62dcaa3d18e5661429a27344f90d3145d997ac29c5d9be032a9"
+    },
+    {
+      "case": "d03",
+      "raw_sha256": "dbd31e8147ff78b7c0189fdf5810169c121b8d20213dd7e67889ee9e4e65a5f5",
+      "delivered_sha256": "44cd2e5047af6ef60010ed00d254020482b9f2f63d0d72bfe0a36ef54f3c1810"
+    }
+  ],
+  "scope": "CPU exact-artifact trace only; no edit qualification or GPU inference"
+}

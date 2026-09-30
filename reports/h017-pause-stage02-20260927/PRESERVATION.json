@@ -1,0 +1,340 @@
+{
+  "beforeUtc": "2026-09-27T19:29:08.440902+00:00",
+  "afterUtc": "2026-09-27T19:29:10.111994+00:00",
+  "beforeUnits": {
+    "ai-harness.service": {
+      "MainPID": "423636",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "301728",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "afterUnits": {
+    "ai-harness.service": {
+      "MainPID": "0",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness.service",
+      "ActiveState": "inactive",
+      "SubState": "dead",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-searxng.service": {
+      "MainPID": "190181",
+      "WorkingDirectory": "!/home/user",
+      "Id": "ai-harness-searxng.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-status.service": {
+      "MainPID": "301728",
+      "WorkingDirectory": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/server",
+      "Id": "ai-harness-status.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "ai-harness-admin.service": {
+      "MainPID": "66185",
+      "WorkingDirectory": "",
+      "Id": "ai-harness-admin.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "dataBefore": {
+    "sessions": {
+      "count": 26,
+      "sha256": "19ca377e380d72c39a6b31eaec57a889801ca2dc127167b0ef49cf85b99c4508",
+      "states": [
+        [
+          "idle",
+          25
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "messages": {
+      "count": 133,
+      "sha256": "5e5b42e190814d176ebd78f2bdffc5c15499761fe8d50752a0a91549fd5c2015"
+    },
+    "files": {
+      "count": 62,
+      "sha256": "131d5f4a3e30fef0ea137a1c144a7efd40c47f4f154697a140c3e7ac02a1207d"
+    },
+    "runs": {
+      "count": 48,
+      "sha256": "3b50c72001731a0f75532bfc482d57791e04685eb565bdb5f32e539cd1719032",
+      "states": [
+        [
+          "cancelled",
+          5
+        ],
+        [
+          "completed",
+          42
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "events": {
+      "count": 25359,
+      "sha256": "8100305ce6ec9d753d9390660d8410e4029b0235e60cd92862b14be904fefd98"
+    },
+    "quarantined_workspaces": {
+      "count": 1,
+      "sha256": "5805d468bf5ed2d4c602e3643882a1f0d70cdbd6b00b9667e10b110081d2d2b0"
+    },
+    "h003_image_jobs": {
+      "count": 19,
+      "sha256": "9370dc782305a1284a4a3758470bfa6e3018aca5a009ca7a88c81a110ea67311",
+      "states": [
+        [
+          "cancelled",
+          1
+        ],
+        [
+          "completed",
+          18
+        ]
+      ]
+    },
+    "h003_image_lane": {
+      "count": 1,
+      "sha256": "e9bc3f09fe47b363172ddaef0cf510df1fbf7a40f7557f958bc51e6dfe1fa980",
+      "states": [
+        [
+          "idle",
+          1
+        ]
+      ]
+    },
+    "h005_image_ownership": {
+      "count": 1,
+      "sha256": "465d674ce6bae7911e62c34c8ec4790981ae2eb73f9db75b8f8fe54a2d2c25a1",
+      "states": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "gateway_lanes": {
+      "count": 3,
+      "sha256": "6ddd5f19b7a7c7170eb335b4df060f4a86c92989c714a887a0e9fde0a2ab749e",
+      "states": [
+        [
+          "idle",
+          3
+        ]
+      ]
+    },
+    "frontier_requests": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "states": []
+    }
+  },
+  "dataAfter": {
+    "sessions": {
+      "count": 26,
+      "sha256": "19ca377e380d72c39a6b31eaec57a889801ca2dc127167b0ef49cf85b99c4508",
+      "states": [
+        [
+          "idle",
+          25
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "messages": {
+      "count": 133,
+      "sha256": "5e5b42e190814d176ebd78f2bdffc5c15499761fe8d50752a0a91549fd5c2015"
+    },
+    "files": {
+      "count": 62,
+      "sha256": "131d5f4a3e30fef0ea137a1c144a7efd40c47f4f154697a140c3e7ac02a1207d"
+    },
+    "runs": {
+      "count": 48,
+      "sha256": "3b50c72001731a0f75532bfc482d57791e04685eb565bdb5f32e539cd1719032",
+      "states": [
+        [
+          "cancelled",
+          5
+        ],
+        [
+          "completed",
+          42
+        ],
+        [
+          "interrupted",
+          1
+        ]
+      ]
+    },
+    "events": {
+      "count": 25359,
+      "sha256": "8100305ce6ec9d753d9390660d8410e4029b0235e60cd92862b14be904fefd98"
+    },
+    "quarantined_workspaces": {
+      "count": 1,
+      "sha256": "5805d468bf5ed2d4c602e3643882a1f0d70cdbd6b00b9667e10b110081d2d2b0"
+    },
+    "h003_image_jobs": {
+      "count": 19,
+      "sha256": "9370dc782305a1284a4a3758470bfa6e3018aca5a009ca7a88c81a110ea67311",
+      "states": [
+        [
+          "cancelled",
+          1
+        ],
+        [
+          "completed",
+          18
+        ]
+      ]
+    },
+    "h003_image_lane": {
+      "count": 1,
+      "sha256": "56d994d4e38d429e78bb9c6b0b440dac01b94e17f65c791640d741d2989d0359",
+      "states": [
+        [
+          "quarantined",
+          1
+        ]
+      ]
+    },
+    "h005_image_ownership": {
+      "count": 1,
+      "sha256": "465d674ce6bae7911e62c34c8ec4790981ae2eb73f9db75b8f8fe54a2d2c25a1",
+      "states": [
+        [
+          0,
+          1
+        ]
+      ]
+    },
+    "gateway_lanes": {
+      "count": 3,
+      "sha256": "6ddd5f19b7a7c7170eb335b4df060f4a86c92989c714a887a0e9fde0a2ab749e",
+      "states": [
+        [
+          "idle",
+          3
+        ]
+      ]
+    },
+    "frontier_requests": {
+      "count": 0,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+      "states": []
+    }
+  },
+  "filesBefore": {
+    "regular_non_database_files": 17597,
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 161
+  },
+  "filesAfter": {
+    "regular_non_database_files": 17597,
+    "sha256": "1e262519cde8059973b23a2fc2a2838e2a15cb4429269fe18e57cc4adb906f51",
+    "excluded_database_and_transient_files": 160
+  },
+  "releaseFileSha256": {
+    "/home/user/.config/systemd/user/ai-harness.service": "eee8e1d7a3f370e3fcdbf5783f1b03df8672296abcf27726cdaca73c62b71b9c",
+    "/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf": "e033a07a50b8c5f9f535909e1405c87f99f932a3c1506aa36c30a4647462ac16",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/deploy/run-engine.sh": "f3385648fdb2fd41efca41509b6c2a11ad5b6098fa5ad761e98dd5b2f2d5c722",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/deploy/run-server.sh": "1e70596f578db2c5af5dd5400575f9a47607f9a16e2f820d44175169cb19309f",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/config/frontier.json": "5c099305b84baccaa2d736f90a8100953ee203001b9ad822b314aefe9cd065c3",
+    "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness/config/system-registry.json": "b9b9120afda6d9c007008a9222be375aa49f82b43faab07ba1c47f6256acd3cd"
+  },
+  "imageTag": "localhost/ai-harness-engine:0.0.2-ae65651df5f9",
+  "imageId": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "metadataUnchanged": true,
+  "protectedParents": {
+    "/home/user/.config/ai-harness": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o700"
+    },
+    "/home/user/.config": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o700"
+    },
+    "/home/user": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o750"
+    },
+    "/home": {
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755"
+    },
+    "/": {
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755"
+    },
+    "/home/user/ai-harness-build": {
+      "uid": 1000,
+      "gid": 1000,
+      "mode": "0o700"
+    },
+    "/etc/ai-harness": {
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o700"
+    },
+    "/etc/sova-qualification": {
+      "uid": 0,
+      "gid": 0,
+      "mode": "0o755"
+    }
+  },
+  "credentialContentsRead": false,
+  "ownerSqliteRead": false,
+  "privateBeforeSha256": "a99b623d0ec1f9993316e295272688e3ce9270da3c7a83d99428856bb6f87fa2",
+  "privateAfterSha256": "6217bd289471aaf4a2432709828ad0978e405f224b962b9813ec4b014d940165",
+  "mechanicalPauseCommandSha256": "bb1d85638e305eed23e25d29fe043d6bff594c166b576f5688718e76fb37b167",
+  "reusedHelperSha256": "6851fb4639c6ba00040e707cf921442f6870e5bd59c7b9e159017d2ec1d82dee",
+  "historicalRecoveryReceiptSha256": "13ae49b5a0b89cf4b55ef65d28deb144bfb3fd89e078466300a2ae487e8edc6f"
+}

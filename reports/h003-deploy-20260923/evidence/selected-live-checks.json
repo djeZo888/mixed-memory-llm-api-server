@@ -1,0 +1,161 @@
+{
+  "status": "PASS",
+  "requested": {
+    "main_generation_chats": 1,
+    "fullhd_image_generations": 1,
+    "independent_text_chats": 2,
+    "delegated_worker_requests": 0,
+    "edits": 0,
+    "warmup_inference": 0
+  },
+  "executed": {
+    "normal_chat_posts": 3,
+    "completed_acp_runs": 3,
+    "image_capabilities_mcp_calls": 1,
+    "image_generate_mcp_calls": 1,
+    "image_jobs": 1,
+    "image_upstream_dispatches": 1,
+    "image_artifacts": 1,
+    "independent_text_runs": 2,
+    "edit_calls": 0,
+    "delegated_worker_calls": 0,
+    "manual_replays": 0
+  },
+  "count_boundary": "Counts bind explicit chat submissions, persisted jobs and native tool activities. Native internal LLM requests/title housekeeping are not an exact request counter; lane transitions are sampled separately.",
+  "main": {
+    "sessionId": "0d53338d-9ee5-4c92-8ff8-1f070de1f089",
+    "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+    "jobId": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
+    "requestId": "9f76f517-bf3a-4e19-9b14-73b16e71a19b",
+    "artifactId": "303fbf98-ce8d-49b3-9028-05719e1bee8c",
+    "createdAt": "2026-09-23T12:06:05.256Z",
+    "startedAt": "2026-09-23T12:06:05.261Z",
+    "finishedAt": "2026-09-23T12:06:58.952Z",
+    "elapsedMs": 53691,
+    "model": "qwen-image-2.1",
+    "seed": 23092301,
+    "requestedSize": "1920x1080",
+    "actualSize": "1920x1080",
+    "imageEvents": [
+      {
+        "eventId": 87,
+        "eventAt": "2026-09-23T12:06:05.259Z",
+        "revision": 1,
+        "state": "queued"
+      },
+      {
+        "eventId": 88,
+        "eventAt": "2026-09-23T12:06:05.263Z",
+        "revision": 2,
+        "state": "running"
+      },
+      {
+        "eventId": 89,
+        "eventAt": "2026-09-23T12:06:05.268Z",
+        "revision": 3,
+        "state": "running"
+      },
+      {
+        "eventId": 90,
+        "eventAt": "2026-09-23T12:06:58.875Z",
+        "revision": 4,
+        "state": "saving"
+      },
+      {
+        "eventId": 93,
+        "eventAt": "2026-09-23T12:06:58.954Z",
+        "revision": 5,
+        "state": "completed"
+      }
+    ],
+    "nativeTools": [
+      {
+        "id": "tool:call_f07efa6ff5a24b5db8ba6d83",
+        "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+        "kind": "tool",
+        "name": "skill",
+        "status": "completed",
+        "summary": "skill: completed",
+        "updatedAt": "2026-09-23T12:05:56.183Z",
+        "toolCallId": "call_f07efa6ff5a24b5db8ba6d83",
+        "startedAt": "2026-09-23T12:05:56.157Z",
+        "finishedAt": "2026-09-23T12:05:56.183Z"
+      },
+      {
+        "id": "tool:call_888d45f64eba4d79bf55a686",
+        "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+        "kind": "tool",
+        "name": "mcp__image__image_capabilities",
+        "status": "completed",
+        "summary": "mcp__image__image_capabilities: completed",
+        "updatedAt": "2026-09-23T12:05:58.682Z",
+        "toolCallId": "call_888d45f64eba4d79bf55a686",
+        "startedAt": "2026-09-23T12:05:58.645Z",
+        "finishedAt": "2026-09-23T12:05:58.682Z"
+      },
+      {
+        "id": "tool:call_ed67e1a280f74d50a97f3288",
+        "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+        "kind": "tool",
+        "name": "mcp__image__image_generate",
+        "status": "completed",
+        "summary": "mcp__image__image_generate: completed",
+        "updatedAt": "2026-09-23T12:07:05.313Z",
+        "toolCallId": "call_ed67e1a280f74d50a97f3288",
+        "startedAt": "2026-09-23T12:06:05.233Z",
+        "finishedAt": "2026-09-23T12:07:05.313Z"
+      }
+    ],
+    "artifact": {
+      "id": "303fbf98-ce8d-49b3-9028-05719e1bee8c",
+      "name": "image-f6bff2d1-8269-4a20-9b09-f50a8f687de3.png",
+      "mimeType": "image/png",
+      "size": 2758770,
+      "previewUrl": "/api/files/303fbf98-ce8d-49b3-9028-05719e1bee8c/preview",
+      "downloadUrl": "/api/artifacts/303fbf98-ce8d-49b3-9028-05719e1bee8c/download",
+      "image": {
+        "width": 1920,
+        "height": 1080,
+        "jobId": "f6bff2d1-8269-4a20-9b09-f50a8f687de3",
+        "actualSize": "1920x1080",
+        "model": "qwen-image-2.1",
+        "seed": 23092301,
+        "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506"
+      },
+      "runId": "ff218982-4dd7-4d46-990c-f86d52e01ca8",
+      "messageId": "m_01664f51a37f0daa23ab2a3b2f8bb361c0490c75798554f3db1db1376f9360c2"
+    }
+  },
+  "texts": [
+    {
+      "sessionId": "212a3b39-a503-4ade-9ba7-53d846cc1329",
+      "runId": "de2573f0-af75-4448-8278-7979eb8f1f48",
+      "submittedAt": "2026-09-23T12:06:05.338673+00:00",
+      "createdAt": "2026-09-23T12:06:05.340Z",
+      "finishedAt": "2026-09-23T12:06:08.868Z",
+      "output": "TEXT_A_OK",
+      "completed_during_image": true
+    },
+    {
+      "sessionId": "f776915b-bb4e-42a3-8938-05139869b7b3",
+      "runId": "80fdfc17-1cca-45dc-9a7b-5bae6ebaf5a5",
+      "submittedAt": "2026-09-23T12:06:05.340044+00:00",
+      "createdAt": "2026-09-23T12:06:05.376Z",
+      "finishedAt": "2026-09-23T12:06:08.767Z",
+      "output": "TEXT_B_OK",
+      "completed_during_image": true
+    }
+  ],
+  "dual_lane_overlap": {
+    "observedStart": "2026-09-23T12:06:06.812794+00:00",
+    "observedEnd": "2026-09-23T12:06:08.722050+00:00",
+    "observedDurationMs": 1909.256,
+    "sampleIntervalMs": 20,
+    "both_aliases_active": true,
+    "during_image_running": true,
+    "per_request_lane_assignment": "not captured; aggregate lane states and individual durable text completions prove concurrency"
+  },
+  "artifact_http_decode": "artifacts/artifact-codec-result.json",
+  "restart_reconnect": "artifacts/restart-reconnect.json",
+  "ui_boundary": "HTTP preview/download and durable SSE reconnect verified here. Independent visible browser/worker acceptance belongs to Worker2. Main assistant supplied an absolute workspace Markdown link; existing Markdown renderer suppresses it. Artifact card/API preview/download verified; no source change to link behavior."
+}

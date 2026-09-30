@@ -1,0 +1,11 @@
+{
+  "case": "C04",
+  "authorized_by": "root",
+  "seed": 49,
+  "size": "1024x1024",
+  "references": 2,
+  "max_calls": 1,
+  "condition": "after C03 successful settled guards; reserve-only miss report first",
+  "received_utc": "2026-09-23T13:47:51.725717+00:00",
+  "note": "ROOT EXPLICIT GO C04 once AFTER C03 fully settles successfully and storage/modelhealthguards pass. Same continued controlledwindow; seed49;2refs1024x1024 and output1024x1024; fixedrecipe. Root accepts source-based C01peak39982+2048MiB extra persistentprefixKV+4096MiB uncertainty=46126used/3014free6.13%; explicitly heuristic, not measuredprofile. Actual>=5%free +rootfidelity required for finalenablement. No retry/extra case; totalcapacitybudgetmax4.\nYou MAY run C04 immediately after successful C03settlement without waiting another reply while root visuallyreviews C03. Sync C03 PNG/minimumsummary first for review; thenC04. If C03OOM, unknownsettlement/nativehealthfailure STOP. If onlyC03reservemiss but cleansettled, reportBEFOREC04 andawait root. Do not enableprofiles/API until finalrootreview. Final bounded report afterC04, not betweenC03/C04. C03explicitGO remainsactive."
+}

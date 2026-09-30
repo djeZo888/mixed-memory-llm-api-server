@@ -1,0 +1,81 @@
+{
+  "schema_version": 1,
+  "status": "RUNNING_PREFILL_CONFIRMED",
+  "observed_utc": "2026-09-27T02:37:00.093243+00:00",
+  "unit": {
+    "MainPID": "408410",
+    "Result": "success",
+    "ActiveState": "active",
+    "SubState": "running"
+  },
+  "unit_name": "h012-manual1m-02.service",
+  "job_nonce": "80f690e35a6849fe841efcc0957b9809",
+  "candidate_id": "5e4fd432cd86ddac3021f804facae4f5dbf710bcaf2873200e8834ec323977ea",
+  "request": {
+    "status": "RUNNING",
+    "phase": "awaiting_first_nonempty_delta",
+    "start_utc": "2026-09-27T02:36:10.090609+00:00",
+    "request_body_sent_utc": "2026-09-27T02:36:10.091602+00:00",
+    "request_deadline_utc": "2026-09-27T04:36:10.090598+00:00",
+    "requested_output": 1024,
+    "input_tokens": null,
+    "output_tokens": null,
+    "sse_done": false
+  },
+  "native_tokenize": {
+    "context_limit": 1048576,
+    "count": 1000000,
+    "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+  },
+  "configured_capacity": 1048576,
+  "main_native_prefill_chunks": [
+    "2026-09-27T02:36:23.035434457Z [2026-09-27 02:36:23] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, input throughput (token/s): 1.28, cuda graph: False",
+    "2026-09-27T02:36:29.938306318Z [2026-09-27 02:36:29] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.00, #running-req: 0, #queue-req: 0, input throughput (token/s): 296.69, cuda graph: False",
+    "2026-09-27T02:36:41.012322012Z [2026-09-27 02:36:41] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 184.94, cuda graph: False",
+    "2026-09-27T02:36:47.689527403Z [2026-09-27 02:36:47] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 306.71, cuda graph: False",
+    "2026-09-27T02:36:54.487898512Z [2026-09-27 02:36:54] Prefill batch, #new-seq: 1, #new-token: 2048, #cached-token: 0, token usage: 0.01, #running-req: 0, #queue-req: 0, input throughput (token/s): 301.25, cuda graph: False"
+  ],
+  "latest_telemetry": {
+    "utc": "2026-09-27T02:36:50.247099+00:00",
+    "gpu": {
+      "free_mib": "61600",
+      "temp_c": "47",
+      "total_mib": "97887",
+      "used_mib": "35650",
+      "util_pct": "97",
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    },
+    "ram": {
+      "MemAvailable": 606780485632,
+      "MemTotal": 946820972544,
+      "SwapFree": 3080712192,
+      "SwapTotal": 3157258240
+    },
+    "cgroup": {
+      "memory.current": 314557440000,
+      "memory.peak": 318037024768,
+      "memory.swap.current": 0
+    },
+    "memory.events": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0
+    },
+    "vmstat": null
+  },
+  "failure": null,
+  "one_million_pass": false,
+  "source_manifest_sha256": "f5186cd4efdd0797c126b9c979c3055017aa8047dbb807e57c0aeca7cab1daa4",
+  "candidate_archive_sha256": "180b0e9188fd41846ffe4e31d6c90aa4c973a9f9170663786ce482b871b408d5",
+  "worker_session_id": "01a0e0a0-d9d2-7903-8ea5-ac9d52b07955",
+  "paid_native_exit": "02:35:06 UTC; watchdog exit 143; independent job unaffected",
+  "sova": "paused",
+  "other_models": "loaded and idle",
+  "success_policy": "PASSED_RETAINED_PENDING_PRODUCTION_PROMOTION",
+  "failure_policy": "Exact candidate stop before original 480K recovery; quarantine uncertain ownership",
+  "status_command": "sudo python3 -I -B /data/services/h012-manual1m-02-20260927/manual.py status"
+}

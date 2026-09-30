@@ -1,0 +1,10 @@
+{
+  "result": "PASS",
+  "candidate_sha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+  "installed_manifest_sha256": "12969d9966f222217891791f0a2d6f4202ee2b0a7f83ef36f18d734a96721b07",
+  "validator_source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "generation_profiles_preserved_exactly": 6,
+  "accepted_edit_profiles": 3,
+  "C03_excluded": true,
+  "installed": false
+}

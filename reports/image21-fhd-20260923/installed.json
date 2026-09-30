@@ -1,0 +1,37 @@
+{
+  "files": {
+    "/etc/llm-server/image-api.json": "12969d9966f222217891791f0a2d6f4202ee2b0a7f83ef36f18d734a96721b07",
+    "/usr/local/lib/llm-server/image-api/examples/generate.py": "56c74620e2c9bb847b9f2923a2fb9b7da3121fed54bceb09197643e04c48469f",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/__init__.py": "9f66047f4c2cde6ab4cb85b47c97a6274903fb560b96ef1f49fd42c1e67c751c",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": "4cad82ce35d4650c7f3242bd6816769010c6a52510fae1c3c26b8789acdc0d22",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/backend.py": "64a5ceccb247e7c7ed646cc3ae9af89aeffb7aebd862c11604786a2041db9485",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protection.py": "9c8e5fad91717fa8e7665475e9cc49bb2092955439aaf3febeaf203cc7da6269",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": "35653fa23fa883f20da9c869e75e7fd613008f23fe9793f16e240852b3e40243",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/serve.py": "0d19743ab91ea4f8cafe2bf6d7ddd9d56d2248604da23c711a19f825ba4b6d2e",
+    "/usr/local/lib/llm-server/image-api/scripts/image_api/uploads.py": "23903630b94c020af05988dfc13b0f1e650b431ca9f276485873234997e3ce93"
+  },
+  "helper_output_owner": {
+    "gid": 1000,
+    "uid": 1000
+  },
+  "limits": {
+    "max_height": 1080,
+    "max_pixels": 2073600,
+    "max_width": 1920,
+    "native_max_pixels": 2088960
+  },
+  "source_commit": "36c7c2d2ee8d9ed59e9310e708eb640c5aecad5e",
+  "status": "INSTALLED_API_STOPPED",
+  "text_containers": [
+    {
+      "id": "a2afad49380a592739944f2766f5547687a5cf302badd375bda14fffdb09f75c",
+      "pid": 53058,
+      "started_at": "2026-09-23T02:05:36.354298377Z"
+    },
+    {
+      "id": "a71924b9e7fa4f72c6eeefc243731f59bdc0d951b817de1d32f32dbfd67f450e",
+      "pid": 32207,
+      "started_at": "2026-09-23T02:04:14.101319306Z"
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "retainedSnapshot": "740746982d66ab7f51244e254dc000fb25e0ebcc",
+  "reviewedUpstream": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "reviewedPatchset": "e487935b3d6efce51216b8755cbd712912c30c7d45f6a9e5e293f0f998f89a65",
+  "identitySource": "base02c24f:ai-harness/deploy/patches/identity.json",
+  "matchedPatchedFileHashes": 49,
+  "different": [],
+  "missing": [],
+  "gitAncestry": "unavailable: retained source is a standalone snapshot; upstream commit object absent",
+  "deployedImageValidation": false
+}

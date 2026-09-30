@@ -1,0 +1,45 @@
+{
+  "scope": "Offline existing saved perf only; no new profiling",
+  "source_perf_sha256": "8a9d3f87ea56fda6feea516b652f62238b6a57dc12227046866469deee0e2d69",
+  "samples": 19073,
+  "lost_samples": 0,
+  "top_rows": [
+    {
+      "reported_percent": 49.52,
+      "samples": 9444,
+      "dso": "[kernel.kallsyms]",
+      "symbol": "finish_task_switch.isra.0"
+    },
+    {
+      "reported_percent": 38.13,
+      "samples": 7272,
+      "dso": "libggml-cpu-zen4.so",
+      "symbol": "ggml_gemv_mxfp4_8x8_q8_0"
+    },
+    {
+      "reported_percent": 7.98,
+      "samples": 1522,
+      "dso": "[kernel.kallsyms]",
+      "symbol": "_raw_spin_unlock_irqrestore"
+    }
+  ],
+  "libgomp_all_sample_count": 100,
+  "libgomp_fraction_by_sample_count": 0.005243013684265716,
+  "r6_pause_spin_offsets_r7_samples": 0,
+  "perf_stat_raw": "\n Performance counter stats for process id '232672':\n\n        351,951.76 msec task-clock                       #    8.591 CPUs utilized             \n         6,618,558      context-switches                 #   18.805 K/sec                     \n         1,477,467      cpu-migrations                   #    4.198 K/sec                     \n             5,491      page-faults                      #   15.602 /sec                      \n   881,505,670,398      cycles                           #    2.505 GHz                       \n 2,233,174,392,347      instructions                     #    2.53  insn per cycle            \n    80,933,121,836      cache-references                 #  229.955 M/sec                     \n     2,709,829,770      cache-misses                     #    3.35% of all cache refs         \n\n      40.968091682 seconds time elapsed\n\n",
+  "cpu_seconds": 351.95176,
+  "wall_seconds": 40.968091682,
+  "average_cores": 8.590875131111751,
+  "ipc": 2.533363615617721,
+  "context_switches": 6618558,
+  "migrations": 1477467,
+  "context_switches_per_wall_s": 161553.97355029773,
+  "migrations_per_wall_s": 36063.84723673007,
+  "all_collectors_settled": true,
+  "limits": [
+    "CPU sample shares are not wall-time shares or directly recoverable latency.",
+    "Reported percentages rounded; all libgomp sample fraction is independently counted.",
+    "Profiling and scheduling costs are included; paired sample is not randomized.",
+    "Cache misses are not measured host DRAM bytes."
+  ]
+}

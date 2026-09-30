@@ -1,0 +1,121 @@
+{
+  "status": "PASS_SMALL_WORKFLOW_BOTH_480K_LANES_AND_CONCURRENT_OWNERSHIP",
+  "scope": "Both reviewed 480K native profiles admitted and generated normal small requests; atomic simultaneous counting ownership captured. Not a480K prefill or benchmark.",
+  "overlap": {
+    "utc": "2026-09-29T10:18:36.180681+00:00",
+    "scope": "exact two accepted workflow sessions read-only atomic ledger snapshot",
+    "requests": [
+      {
+        "id": "eb25553c-ac1f-401e-8cb7-d74783dca1f8",
+        "sessionId": "d52aa598-82fd-436d-9d7f-5b7d02f590d8",
+        "state": "counting",
+        "lane": "qwen3.8-27b-gpu0",
+        "updatedAt": "2026-09-29T10:17:58.392Z",
+        "createdAt": null
+      },
+      {
+        "id": "84c0427a-cf31-448b-a22c-9f947ba18657",
+        "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "state": "counting",
+        "lane": "qwen3.8-27b",
+        "updatedAt": "2026-09-29T10:18:11.787Z",
+        "createdAt": null
+      }
+    ],
+    "runs": [
+      {
+        "id": "0fc84d4f-9854-4514-9acf-0ffc873b9a5c",
+        "session_id": "d52aa598-82fd-436d-9d7f-5b7d02f590d8",
+        "status": "running",
+        "created_at": "2026-09-29T10:16:32.741Z",
+        "updated_at": "2026-09-29T10:16:32.747Z"
+      },
+      {
+        "id": "fc036f9e-c3b1-47a0-bbfb-e8aec899c41f",
+        "session_id": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "status": "running",
+        "created_at": "2026-09-29T10:17:49.771Z",
+        "updated_at": "2026-09-29T10:17:49.785Z"
+      }
+    ]
+  },
+  "requests": [
+    {
+      "requestId": "0bcdb92a-eb33-4ca6-a54d-73a1a0c1884f",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 2
+    },
+    {
+      "requestId": "eb25553c-ac1f-401e-8cb7-d74783dca1f8",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "eeef3e70-14cf-47e7-9732-d6fc06a629e4",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "bbe1fde2-f359-4518-a262-ebdd71279f1b",
+      "lane": "qwen3.8-27b",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "118a1411-75a0-4970-95ee-e7c241d1c877",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "48cf9f32-ba82-4729-b239-1eab52a80da5",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "940ef824-2b71-41e2-bf39-f10510dbbbe3",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "tool_calls"
+      ],
+      "providerTools": 1
+    },
+    {
+      "requestId": "5078cbc7-9fa8-4f57-b11c-c0b9a4adae67",
+      "lane": "qwen3.8-27b-gpu0",
+      "finishReasons": [
+        "stop"
+      ],
+      "providerTools": 0
+    },
+    {
+      "requestId": "84c0427a-cf31-448b-a22c-9f947ba18657",
+      "lane": "qwen3.8-27b",
+      "finishReasons": [
+        "stop"
+      ],
+      "providerTools": 0
+    }
+  ],
+  "allRequestsSettled": true,
+  "pdfFunctionalResult": "FAIL_MISSING_SUMMARY_AND_FINAL",
+  "healthyLaneFallback": "NOT_TESTED_NO_UNHEALTHY_LANE_INJECTION",
+  "sharedGatewayQueue": "NOT_TESTED_NO_THIRD_REQUEST_OCCUPANCY",
+  "rawCapturesPrivate": true
+}

@@ -1,0 +1,17 @@
+# Backend contract — retained resident; edit unqualified
+
+Native generation, transport/decode and measured resident memory margins passed. Both raw-RGBA-reference and the one authorized exact production-RGB-reference edit failed visual fidelity (partial blue color change, unwanted contrast/texture/background/lighting drift). No public API profiles are accepted; adapter is not installed. No further inference is authorized in this task.
+
+Actual image ID `sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8` derives from pinned SGLang `0cd8be351d0825488f4b81c8931167bbab618eca` plus the single reviewed seven-line UUID/NVML patch `9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e`. Exact checkpoint revision `790c92633540aa0cb11d9abf19eb46d861714758` is complete at `/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758`. Base image, all resolved Python/OS versions, source/checkpoint hashes and image identities are in the build receipts. Local image ID/observed RepoDigest do not imply registry publication.
+
+Installed config `/data/services/image21-runtime-20260923/config.json` SHA256 `4ded6e9261b512d952c5033b0634d4eaba79fa115685635c6307defe78c11d76`. Installed source `/data/services/image21-runtime-20260923/source`. `RUNTIME-CONFIG.json` contains the exact installed bytes; JSON contract includes actual full native launch argv and source closure.
+
+Fixed no-argument root helper `/usr/local/libexec/llm-image-backend-recover`: canonical lease and current registered guards; settle/remove only recorded owned backend, restart `llm-image-backend.service`, wait native health, perform one deterministic1024/40step/CFG1/seed42 generation, verify residency and sampled margins. Exit0 means native generation warm, not edit/API qualification. Total recovery bound900s; failure unready, no automatic retry. Worker2 owns exact sudo privilege allowlist. Unknown/unrecorded container creation remains fail-closed and needs root diagnosis.
+
+Backend unit is active/exited with resident Docker workload, disabled for boot, ordered after `llmctl-boot.service`. Eventual sole enabled image boot owner is `llm-image-api.service`; do not enable both independently. No SSH keeper.
+
+Host backend endpoint only `127.0.0.1:30007`; dedicated ordinary Docker bridge `llm-image-backend-private` ID `4d21a85d6dc326cc90d68e0f017d2e58fb96f5664e55384c1f3f337661d7ef80`. Exact sole publication is127.0.0.1:30007; HTTP binds0.0.0.0 only inside container. Internal30008/30009/30010 unpublished; all four ports refused external TCP from mac-worker1. Docker29.6.1 internal bridge did not support required publication in an actual GPU-free probe; root approved ordinary dedicated bridge. No custom global firewall edits.
+
+Native GET `/health`, GET `/liveness`, POST `/v1/images/generations` JSON, POST `/v1/images/edits` multipart. Worker-only direct requests were sequential; native queue is not a public concurrency boundary. `output_path` and `input_save_path` are null; exact invocation TMPDIR and observed cleanup beneath guarded work root. Before/after inference inventories showed no newly retained native request temp entries. Exact-owned reset cleans prior invocation only after settlement.
+
+Ada UUID only, CPU8-15,96GiB/no container swap, allresident nativeBF16/FP32, torch_sdpa/eager, no quantization/offload/approximatecache. Current source/model/data paths remain fixed. Higher sizes, two references, transparency, API transport/admission/fault tests, harness and Diffusers reference remain NOT_TESTED.

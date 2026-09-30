@@ -1,0 +1,26 @@
+✔ custom main and auxiliary selection has explicit native limits, without managed credentials (1.46ms)
+✔ CLI emits no environment-derived token, path or raw exception on rejection (120.752959ms)
+✔ refuses another gateway, malformed token and session ID (0.30275ms)
+✔ writes private config and refreshes ephemeral authorization without changing history (13.682792ms)
+✔ rejects a symlink at the native global instructions path (1.308ms)
+✔ rejects config symlink and a home outside the isolated profile (5.473416ms)
+✔ profile MCP uses the literal private endpoint and direct reviewed stdio adapter (0.125125ms)
+✔ seeds exactly six skills and license, validates reuse and refreshes private MCP (7.456458ms)
+✔ rejects skill roots, nested links, hardlinks, extra or changed entries on reuse (43.383ms)
+✔ rejects MCP symlinks and hardlinks without touching their destination (10.22875ms)
+✔ rejects unexpected packaged skills before publishing a profile roster (4.483958ms)
+﹣ installed CLI succeeds silently with packaged skills (0.048375ms) # SKIP
+✔ upgrades only the exact prior reviewed skills without replacing originals or history (9.961459ms)
+✔ managed frontier custom agent uses native model/limits and preserves tools/MCP inheritance (0.203375ms)
+✔ managed frontier seed preserves custom conflict and rejects symlink escapes (5.895084ms)
+✔ H013 frontier migration changes only exact protected managed 480K agent bytes (2.817125ms)
+✔ MiMo selected native profile and exact managed migration/rollback preserve Qwen/custom/history (11.349084ms)
+✔ MiMo numerical user edits never become managed prior content (2.145458ms)
+ℹ tests 18
+ℹ suites 0
+ℹ pass 17
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 1
+ℹ todo 0
+ℹ duration_ms 295.42175

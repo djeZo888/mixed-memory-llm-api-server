@@ -1,0 +1,163 @@
+{
+  "source_sha256": "3a49c39c3de62588579cfbe441ffdcdc7818cbb4d55d691517237b5eb35eb650",
+  "fixtures_sha256": "2fb663f5704a954d970a5910bcf80093db6969ed66a2807f3c54c2a8660a1ba3",
+  "full_idle_preflight_utc": "2026-09-27T01:23:59.277465+00:00",
+  "barrier_utc": "2026-09-27T01:24:00.596593+00:00",
+  "native_log_capability": {
+    "flash": "local",
+    "image": "none",
+    "qwen0": "json-file",
+    "qwen1": "json-file"
+  },
+  "query_fields": [
+    "uuid",
+    "power.draw",
+    "power.draw.average",
+    "power.draw.instant",
+    "power.limit",
+    "utilization.gpu",
+    "memory.total",
+    "memory.used",
+    "memory.free",
+    "temperature.gpu",
+    "clocks_event_reasons.active",
+    "ecc.errors.uncorrected.volatile.total",
+    "clocks_event_reasons.sw_power_cap",
+    "clocks_event_reasons.hw_slowdown",
+    "clocks_event_reasons.hw_thermal_slowdown",
+    "clocks_event_reasons.hw_power_brake_slowdown",
+    "clocks_event_reasons.sw_thermal_slowdown"
+  ],
+  "unsupported_fields": [
+    "pcie.replay_counter"
+  ],
+  "thermal_limits_c": {
+    "flash": 85,
+    "image": 85,
+    "qwen0": 85,
+    "qwen1": 85
+  },
+  "owner": {
+    "base": "5328a771596db54bee8b28e5f33b99892b3f5b7e",
+    "boot": "1c706f0b-7243-41a0-aea3-c447ef51664f",
+    "capacities": {
+      "flash": {
+        "chunked_prefill_size": 2048,
+        "context_length": 480000,
+        "disable_radix_cache": true,
+        "host": "127.0.0.1",
+        "kt_cpuinfer": 64,
+        "kt_gpu_prefill_token_threshold": 2048,
+        "kt_method": "FP8",
+        "kt_num_gpu_experts": 0,
+        "kt_numa_nodes": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          5,
+          6,
+          7
+        ],
+        "kt_threadpool_count": 8,
+        "kt_weight_path": "/models",
+        "kv_cache_dtype": "fp8_e4m3",
+        "max_running_requests": 1,
+        "max_total_num_tokens": 480000,
+        "max_total_tokens": 480000,
+        "model_path": "/models",
+        "port": 30010,
+        "served_model_name": "glm-5.3-flash"
+      },
+      "qwen0": {
+        "chunked_prefill_size": 2048,
+        "context_length": 480000,
+        "disable_radix_cache": true,
+        "host": "0.0.0.0",
+        "kt_cpuinfer": null,
+        "kt_gpu_prefill_token_threshold": null,
+        "kt_method": "AMXINT4",
+        "kt_num_gpu_experts": null,
+        "kt_numa_nodes": null,
+        "kt_threadpool_count": 2,
+        "kt_weight_path": null,
+        "kv_cache_dtype": "bfloat16",
+        "max_running_requests": 1,
+        "max_total_num_tokens": 480000,
+        "max_total_tokens": 480000,
+        "model_path": "/models",
+        "port": 30002,
+        "served_model_name": "qwen3.8-27b-gpu0"
+      },
+      "qwen1": {
+        "chunked_prefill_size": 2048,
+        "context_length": 480000,
+        "disable_radix_cache": true,
+        "host": "0.0.0.0",
+        "kt_cpuinfer": null,
+        "kt_gpu_prefill_token_threshold": null,
+        "kt_method": "AMXINT4",
+        "kt_num_gpu_experts": null,
+        "kt_numa_nodes": null,
+        "kt_threadpool_count": 2,
+        "kt_weight_path": null,
+        "kv_cache_dtype": "bfloat16",
+        "max_running_requests": 1,
+        "max_total_num_tokens": 480000,
+        "max_total_tokens": 480000,
+        "model_path": "/models",
+        "port": 30004,
+        "served_model_name": "qwen3.8-27b"
+      }
+    },
+    "containers": {
+      "flash": {
+        "Id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+        "Image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+        "StartedAt": "2026-09-27T01:20:50.979004748Z"
+      },
+      "image": {
+        "Id": "a04f14100b35e40399e9dd46ecfcd40c1a08e47445021ad3d478ac65eeffa488",
+        "Image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+        "StartedAt": "2026-09-26T21:22:28.504653577Z"
+      },
+      "qwen0": {
+        "Id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+        "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+        "StartedAt": "2026-09-26T21:17:57.468332196Z"
+      },
+      "qwen1": {
+        "Id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+        "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+        "StartedAt": "2026-09-26T21:16:38.303017095Z"
+      }
+    },
+    "quiet_sha256": "a9a1dbe47a21dfa159985598f9158f56e9230650361c7f817d01fb13f090bc07",
+    "root_contract_sha256": "0dd80ef28c300904d47b55ea06e0c3eb7408c2331e923d37169ccf30045967a4",
+    "session_id": "01a0e05f-fc9a-7823-9166-be7657008b7e",
+    "source_matches": {
+      "/data/services/flash-h008-20260926/config.json": "b81a470446ee21bea6fc926f8758c2b324a702aaae797bf37d5d06d3d72d0996",
+      "/data/services/flash-h008-20260926/source/file_auth.py": "841e7968e89504fd4f03210476423a49e2145c9d2b7cc4d7d32fc65a780405b8",
+      "/data/services/flash-h008-20260926/source/idle.py": "030037024701cacf1f0accff8edb273cd7d1c290df53f87077fb740aec38638b",
+      "/data/services/flash-h008-20260926/source/native-source-pins.json": "b5fab69c0466d61adda5ea02494e87bab61beff2bc0194f28b3ac4aa7d77f195",
+      "/data/services/flash-h008-20260926/source/numa-seccomp.json": "835759ce29944318d0a8de36cc62940e79125a15eedec3448fde1edd3fa320bf",
+      "/data/services/flash-h008-20260926/source/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+      "/data/services/flash-h008-20260926/source/tokenize_adapter.py": "31273f8be764a526f62da55e0038b87cb90fef7b05468de184e840ca4d6eec55",
+      "/data/services/flash-h008-20260926/source/tool_runtime.py": "bd44a5a2970bfe5cc4c789b526a6b8b605b7bfb0d4a650da83adc0a43ac346fa",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/file_auth.py": "841e7968e89504fd4f03210476423a49e2145c9d2b7cc4d7d32fc65a780405b8",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/idle.py": "030037024701cacf1f0accff8edb273cd7d1c290df53f87077fb740aec38638b",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/native-source-pins.json": "b5fab69c0466d61adda5ea02494e87bab61beff2bc0194f28b3ac4aa7d77f195",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/numa-seccomp.json": "835759ce29944318d0a8de36cc62940e79125a15eedec3448fde1edd3fa320bf",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/tokenize_adapter.py": "31273f8be764a526f62da55e0038b87cb90fef7b05468de184e840ca4d6eec55",
+      "/data/services/releases/h009-flash-r1-20260926/scripts/runtime/flash/tool_runtime.py": "bd44a5a2970bfe5cc4c789b526a6b8b605b7bfb0d4a650da83adc0a43ac346fa",
+      "/etc/llm-server/image-api.json": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+      "/etc/systemd/system/llmctl-boot.service": "1ce05a97e91249e9fc182d1142fdf873ba531c34d306d45d42052d80f3bdfaa6",
+      "/usr/local/lib/llm-server/control-api/scripts/runtime/flash/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/app.py": "378ee488c4f53fe318137ef52cc621cc72f23b65310ff76fac45952958c33430",
+      "/usr/local/lib/llm-server/image-api/scripts/image_api/protocol.py": "257df8ac052af14cd44aabb0daf30fa333132d9a4be8074ccab8d9e571de3b1b",
+      "/usr/local/lib/llm-server/node-api/scripts/runtime/flash/owner.py": "d4a628876b8643a01277039ab744e87a2218e3b87e2c6207e2d67816b570a4b1"
+    }
+  }
+}

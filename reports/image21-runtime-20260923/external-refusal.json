@@ -1,0 +1,36 @@
+{
+  "utc": "2026-09-23T02:59:42.870355+00:00",
+  "client": "mac-worker1",
+  "destination": "10.156.100.60",
+  "scope": "TCPconnectonly_noHTTP_noinference",
+  "results": [
+    {
+      "port": 30007,
+      "result": "refused",
+      "error_type": "ConnectionRefusedError",
+      "errno": 61,
+      "elapsed_seconds": 0.0819032919825986
+    },
+    {
+      "port": 30008,
+      "result": "refused",
+      "error_type": "ConnectionRefusedError",
+      "errno": 61,
+      "elapsed_seconds": 0.08391362498514354
+    },
+    {
+      "port": 30009,
+      "result": "refused",
+      "error_type": "ConnectionRefusedError",
+      "errno": 61,
+      "elapsed_seconds": 0.08381387498229742
+    },
+    {
+      "port": 30010,
+      "result": "refused",
+      "error_type": "ConnectionRefusedError",
+      "errno": 61,
+      "elapsed_seconds": 0.08164345903787762
+    }
+  ]
+}

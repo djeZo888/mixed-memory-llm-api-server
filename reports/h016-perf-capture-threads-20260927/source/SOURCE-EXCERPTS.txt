@@ -1,0 +1,223 @@
+
+SOURCE perf-stat-display-v6.12.107.c https://raw.githubusercontent.com/gregkh/linux/v6.12.107/tools/perf/util/stat-display.c SHA256 bb9a923afcfd3c7dcd8adb8cc37fcc7119a1eaa949af820992ca2a9c6c46055d
+74: static void print_running_std(struct perf_stat_config *config, u64 run, u64 ena)
+75: {
+76: 	if (run != ena)
+77: 		fprintf(config->output, "  (%.2f%%)", 100.0 * run / ena);
+78: }
+79:
+80: static void print_running_csv(struct perf_stat_config *config, u64 run, u64 ena)
+81: {
+82: 	double enabled_percent = 100;
+83:
+84: 	if (run != ena)
+85: 		enabled_percent = 100 * run / ena;
+86: 	fprintf(config->output, "%s%" PRIu64 "%s%.2f",
+87: 		config->csv_sep, run, config->csv_sep, enabled_percent);
+88: }
+89:
+90: static void print_running_json(struct perf_stat_config *config, u64 run, u64 ena)
+91: {
+92: 	double enabled_percent = 100;
+93:
+94: 	if (run != ena)
+95: 		enabled_percent = 100 * run / ena;
+96: 	fprintf(config->output, "\"event-runtime\" : %" PRIu64 ", \"pcnt-running\" : %.2f, ",
+97: 		run, enabled_percent);
+98: }
+99:
+100: static void print_running(struct perf_stat_config *config,
+101: 			  u64 run, u64 ena, bool before_metric)
+102: {
+103: 	if (config->json_output) {
+104: 		if (before_metric)
+105: 			print_running_json(config, run, ena);
+106: 	} else if (config->csv_output) {
+107: 		if (before_metric)
+108: 			print_running_csv(config, run, ena);
+109: 	} else {
+110: 		if (!before_metric)
+
+SOURCE perf-builtin-stat-v6.12.107.c https://raw.githubusercontent.com/gregkh/linux/v6.12.107/tools/perf/builtin-stat.c SHA256 b83a241fc998ec8e4ea5c7e429f171d489d5183242a11f45c31aa22137862c52
+345:
+346: 		if (STAT_RECORD) {
+347: 			if (evsel__write_stat_event(counter, cpu_map_idx, thread, count)) {
+348: 				pr_err("failed to write stat event\n");
+349: 				return -1;
+350: 			}
+351: 		}
+352:
+353: 		if (verbose > 1) {
+354: 			fprintf(stat_config.output,
+355: 				"%s: %d: %" PRIu64 " %" PRIu64 " %" PRIu64 "\n",
+356: 					evsel__name(counter),
+357: 					perf_cpu_map__cpu(evsel__cpus(counter),
+358: 							  cpu_map_idx).cpu,
+359: 					count->val, count->ena, count->run);
+360: 		}
+361: 	}
+438: static void process_interval(void)
+439: {
+440: 	struct timespec ts, rs;
+441:
+442: 	clock_gettime(CLOCK_MONOTONIC, &ts);
+443: 	diff_timespec(&rs, &ts, &ref_time);
+444:
+445: 	evlist__reset_aggr_stats(evsel_list);
+446:
+447: 	if (read_counters() == 0)
+448: 		process_counters();
+449:
+450: 	if (STAT_RECORD) {
+451: 		if (WRITE_STAT_ROUND_EVENT(rs.tv_sec * NSEC_PER_SEC + rs.tv_nsec, INTERVAL))
+452: 			pr_err("failed to write stat round event\n");
+453: 	}
+454:
+455: 	init_stats(&walltime_nsecs_stats);
+456: 	update_stats(&walltime_nsecs_stats, stat_config.interval * 1000000ULL);
+457: 	print_counters(&rs, 0, NULL);
+
+SOURCE perf-stat-v6.12.107.txt https://raw.githubusercontent.com/gregkh/linux/v6.12.107/tools/perf/Documentation/perf-stat.txt SHA256 7b265a2c6ced2a0abe2219a4eddd41f895519d302e96a3308fd2b15f1cf4f03f
+31: 	See STAT REPORT.
+32:
+33: -e::
+34: --event=::
+35: 	Select the PMU event. Selection can be:
+36:
+37: 	- a symbolic event name (use 'perf list' to list all events)
+38:
+39: 	- a raw PMU event in the form of rN where N is a hexadecimal value
+40: 	  that represents the raw register encoding with the layout of the
+41: 	  event control registers as described by entries in
+42: 	  /sys/bus/event_source/devices/cpu/format/*.
+43:
+44:         - a symbolic or raw PMU event followed by an optional colon
+45: 	  and a list of event modifiers, e.g., cpu-cycles:p.  See the
+46: 	  linkperf:perf-list[1] man page for details on event modifiers.
+47:
+48: 	- a symbolically formed event like 'pmu/param1=0x3,param2/' where
+49: 	  param1 and param2 are defined as formats for the PMU in
+50: 	  /sys/bus/event_source/devices/<pmu>/format/*
+51:
+52: 	  'percore' is a event qualifier that sums up the event counts for both
+53: 	  hardware threads in a core. For example:
+54: 	  perf stat -A -a -e cpu/event,percore=1/,otherevent ...
+55:
+56: 	- a symbolically formed event like 'pmu/config=M,config1=N,config2=K/'
+57: 	  where M, N, K are numbers (in decimal, hex, octal format).
+58: 	  Acceptable values for each of 'config', 'config1' and 'config2'
+59: 	  parameters are defined by corresponding entries in
+60: 	  /sys/bus/event_source/devices/<pmu>/format/*
+61:
+111: ifdef::HAVE_LIBPFM[]
+112: --pfm-events events::
+113: Select a PMU event using libpfm4 syntax (see http://perfmon2.sf.net)
+114: including support for event filters. For example '--pfm-events
+115: inst_retired:any_p:u:c=1:i'. More than one event can be passed to the
+116: option using the comma separator. Hardware events and generic hardware
+117: events cannot be mixed together. The latter must be used with the -e
+134:         -d -d:     more detailed events, dTLB and iTLB events
+135:      -d -d -d:     very detailed events, adding prefetch events
+136:
+137: -r::
+138: --repeat=<n>::
+139: 	repeat command and print average + stddev (max: 100). 0 means forever.
+140:
+141: -B::
+142: --big-num::
+143:         print large numbers with thousands' separators according to locale.
+144: 	Enabled by default. Use "--no-big-num" to disable.
+145: 	Default setting can be changed with "perf config stat.big-num=false".
+146:
+147: -C::
+148: --cpu=::
+149: Count only on the list of CPUs provided. Multiple CPUs can be provided as a
+150: comma-separated list with no space: 0,1. Ranges of CPUs are specified with -: 0-2.
+151: In per-thread mode, this option is ignored. The -a option is still necessary
+152: to activate system-wide monitoring. Default is to count on all CPUs.
+153:
+154: -A::
+155: --no-aggr::
+156: Do not aggregate counts across all monitored CPUs.
+157:
+158: -n::
+250:            \-- sleep 30 &
+251:  perf_pid=$!
+252:
+253:  sleep 5  && echo 'enable' >&${ctl_fd} && read -u ${ctl_fd_ack} e1 && echo "enabled(${e1})"
+254:  sleep 10 && echo 'disable' >&${ctl_fd} && read -u ${ctl_fd_ack} d1 && echo "disabled(${d1})"
+255:
+256:  exec {ctl_fd_ack}>&-
+257:  unlink ${ctl_ack_fifo}
+258:
+259:  exec {ctl_fd}>&-
+260:  unlink ${ctl_fifo}
+397: -i file::
+398: --input file::
+399: Input file name.
+400:
+401: --per-socket::
+402: Aggregate counts per processor socket for system-wide mode measurements.
+403:
+404: --per-die::
+405: Aggregate counts per processor die for system-wide mode measurements.
+406:
+407: --per-cluster::
+408: Aggregate counts perf processor cluster for system-wide mode measurements.
+409:
+410: --per-cache::
+411: Aggregate counts per cache instance for system-wide mode measurements.  By
+412: default, the aggregation happens for the cache level at the highest index
+413: in the system. To specify a particular level, mention the cache level
+414: alongside the option in the format [Ll][1-9][0-9]*. For example: Using
+415: option "--per-cache=l3" or "--per-cache=L3" will aggregate the
+416: information at the boundary of the level 3 cache in the system.
+417:
+418: --per-core::
+550: hardware thread. This is essentially a replacement for the any bit and
+551: convenient for post processing.
+552:
+553: --summary::
+554: Print summary for interval mode (-I).
+555:
+556: --no-csv-summary::
+557: Don't print 'summary' at the first column for CVS summary output.
+558: This option must be used with -x and --summary.
+559:
+560: This option can be enabled in perf config by setting the variable
+561: 'stat.no-csv-summary'.
+562:
+563: $ perf config stat.no-csv-summary=true
+564:
+565: --cputype::
+566: Only enable events on applying cpu with this type for hybrid platform
+567: (e.g. core or atom)"
+568:
+569: EXAMPLES
+570: --------
+
+SOURCE linux-v7.0.14-zen5-recommended.json https://raw.githubusercontent.com/gregkh/linux/v7.0.14/tools/perf/pmu-events/arch/x86/amdzen5/recommended.json SHA256 ea13f670d8461e28e7e0360207586f58b8b402abae77ffbca2baac67202979b0
+305:   {
+306:     "MetricName": "umc_mem_read_bandwidth",
+307:     "BriefDescription": "Estimated memory read bandwidth.",
+308:     "MetricExpr": "(umc_cas_cmd.rd * 64) / 1e6 / duration_time",
+309:     "MetricGroup": "memory_controller",
+310:     "PerPkg": "1",
+311:     "ScaleUnit": "1MB/s"
+312:   },
+313:   {
+314:     "MetricName": "umc_mem_write_bandwidth",
+315:     "BriefDescription": "Estimated memory write bandwidth.",
+316:     "MetricExpr": "(umc_cas_cmd.wr * 64) / 1e6 / duration_time",
+317:     "MetricGroup": "memory_controller",
+318:     "PerPkg": "1",
+319:     "ScaleUnit": "1MB/s"
+320:   },
+321:   {
+322:     "MetricName": "umc_mem_bandwidth",
+323:     "BriefDescription": "Estimated combined memory bandwidth.",
+324:     "MetricExpr": "(umc_cas_cmd.all * 64) / 1e6 / duration_time",
+325:     "MetricGroup": "memory_controller",
+326:     "PerPkg": "1",
+327:     "ScaleUnit": "1MB/s"
+328:   },

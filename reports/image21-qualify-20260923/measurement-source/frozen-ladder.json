@@ -1,0 +1,125 @@
+{
+  "campaign_id": "IMAGE21-QUALIFY-20260923",
+  "cases": [
+    {
+      "case_id": "r01-1024x576",
+      "crop_bottom": 0,
+      "delivered_height": 576,
+      "delivered_width": 1024,
+      "native_height": 576,
+      "native_width": 1024,
+      "operation": "generation",
+      "rung": 1,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r02-1216x704",
+      "crop_bottom": 0,
+      "delivered_height": 704,
+      "delivered_width": 1216,
+      "native_height": 704,
+      "native_width": 1216,
+      "operation": "generation",
+      "rung": 2,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r03-1472x832",
+      "crop_bottom": 0,
+      "delivered_height": 832,
+      "delivered_width": 1472,
+      "native_height": 832,
+      "native_width": 1472,
+      "operation": "generation",
+      "rung": 3,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r04-1760x992",
+      "crop_bottom": 0,
+      "delivered_height": 992,
+      "delivered_width": 1760,
+      "native_height": 992,
+      "native_width": 1760,
+      "operation": "generation",
+      "rung": 4,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r05-2112x1184",
+      "crop_bottom": 0,
+      "delivered_height": 1184,
+      "delivered_width": 2112,
+      "native_height": 1184,
+      "native_width": 2112,
+      "operation": "generation",
+      "rung": 5,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r06-2528x1408",
+      "crop_bottom": 0,
+      "delivered_height": 1408,
+      "delivered_width": 2528,
+      "native_height": 1408,
+      "native_width": 2528,
+      "operation": "generation",
+      "rung": 6,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r07-3040x1696",
+      "crop_bottom": 0,
+      "delivered_height": 1696,
+      "delivered_width": 3040,
+      "native_height": 1696,
+      "native_width": 3040,
+      "operation": "generation",
+      "rung": 7,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r08-3648x2048",
+      "crop_bottom": 0,
+      "delivered_height": 2048,
+      "delivered_width": 3648,
+      "native_height": 2048,
+      "native_width": 3648,
+      "operation": "generation",
+      "rung": 8,
+      "status": "NOT_TESTED"
+    },
+    {
+      "case_id": "r09-3840x2160",
+      "crop_bottom": 16,
+      "delivered_height": 2160,
+      "delivered_width": 3840,
+      "native_height": 2176,
+      "native_width": 3840,
+      "operation": "generation",
+      "rung": 9,
+      "status": "NOT_TESTED"
+    }
+  ],
+  "combined_base_commit": "43ed79f3905c769f449f48300c7087d7a432f989",
+  "dimension_rule": "start1024x576; previous dimension times1.2 rounded nearest32; cap final public3840x2160 native3840x2176",
+  "forecast_policy": {
+    "allocation_allowance_bytes": 268435456,
+    "approval": "ROOT-FORECAST-AMENDMENT.md",
+    "baseline_native_pixels": 1048576,
+    "extra25_percent_margin": false,
+    "first_estimate": "resident + baseline transient * native area ratio +256MiB",
+    "maximum_used_fraction": 0.95,
+    "observations": "actual Worker2 window resident/peak plus each passing rung, sorted by native area",
+    "refinement": "measured anchor transient plus native pixel increment times largest observed adjacent or anchor transient-per-pixel slope; extend latest positive rising secant trend only when demonstrated",
+    "resident": "maximum observed first sampled used bytes",
+    "speculative_quadratic": false
+  },
+  "schema_version": 1,
+  "separate_baseline": {
+    "action": "REUSE_ACTUAL_API_BASELINE_NO_DUPLICATE",
+    "delivered_size": "1024x1024",
+    "owner": "Worker2"
+  },
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7"
+}

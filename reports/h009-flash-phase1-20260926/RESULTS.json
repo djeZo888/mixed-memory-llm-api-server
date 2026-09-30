@@ -1,0 +1,758 @@
+{
+  "status": "PHASE1_BACKEND_COMPLETE_LANE_RELEASED_WORKER2_INTEGRATION_AND_FINAL_ADA_REBOOT_PENDING",
+  "as_of_utc": "2026-09-26T20:48:06.324368+00:00",
+  "native_cli_thread_id": "01a0df4a-f60e-73f1-8ef9-5dc100c2f127",
+  "source_commit": "1f520e95a6de1936a5de870d2a5f2b0c3cc624e9",
+  "source_base": "6ca4d3ef93dc2175573fc2c4af056e59819762a3",
+  "image_sha256": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+  "model_tokenizer_template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+  "endpoint": "10.156.100.60:30010/v1",
+  "native_endpoint": "127.0.0.1:30010",
+  "service_id": "glm-5.3-flash",
+  "endpoint_ref": "frontier-private",
+  "boot_id": "f2a01e1d-bb49-4287-8306-6df2092338b8",
+  "ecc": "THREE_BLACKWELLS_CURRENT_ENABLED_PENDING_ENABLED; ADA_CURRENT_ENABLED_PENDING_DISABLED",
+  "lane_owner": "RELEASED_TO_COORDINATOR_WORKER2_AT20:48:06; WORKER1_NO_FURTHER_INFERENCE",
+  "active_request_at_checkpoint": null,
+  "warm_models": {
+    "qwen0": "READY_HTTP200_ACTUAL_POOL480000_BF16",
+    "qwen1": "READY_HTTP200_ACTUAL_POOL480000_BF16",
+    "flash": "READY_HTTP200_ACTUAL_POOL480000_FP8",
+    "image": "READY_HTTP200_ADMITTING_WARM_WITH_GENERATION_FHD_TEMPORARILY_DISABLED"
+  },
+  "qualification": {
+    "original_placement_auto": "PASS_WEATHER_LJUBLJANA_177_INPUT_15_OUTPUT",
+    "original_placement_auto_elapsed_seconds": 35.687469268988934,
+    "original_placement_auto_ttft_seconds": 11.4300828849955,
+    "forced_grammar_offline": "PASS_EXACT_PINNED_TOKENIZER_AND_MATCHER",
+    "corrected_placement_auto": "PASS_WEATHER_LJUBLJANA_177_INPUT_15_OUTPUT",
+    "corrected_placement_forced": "PASS_WEATHER_LJUBLJANA_177_INPUT_15_OUTPUT",
+    "corrected_actual_flash_pool480000": "PASS_NATIVE_POOL480000_CONTEXT480000_TORCH_FLOAT8_E4M3FN_SM120",
+    "corrected_expert_masks_under_load": "PASS64_DISTINCT_GUEST_MASKS_8POOLS_ALL64_POSITIVE_CPU_TIME; HOST1TO1PINNING_NOT_PROVEN",
+    "discarded_4k_warm": "PASS_4096_INPUT_3_OUTPUT_ANSWER12_DISCARDED_TIMING",
+    "measured_4096": "PASS_EXACT4096_INPUT_3_OUTPUT_ANSWER12_STOP",
+    "measured_16384": "PASS_EXACT16384_INPUT_19_OUTPUT_ANSWER12_STOP",
+    "idle600_wake": "NOT_TESTED",
+    "worker2_acceptance": "PENDING",
+    "corrected_placement_tool_samples": {
+      "auto": {
+        "decode_rate_window": {
+          "end_native_tokens": 15,
+          "end_seconds": 51.357281461000014,
+          "start_native_tokens": 4,
+          "start_seconds": 18.32403649600002
+        },
+        "decode_tokens_per_second": 0.33299786356608096,
+        "elapsed_seconds": 53.36696900200002,
+        "finish_reason": "tool_calls",
+        "input_tokens": 177,
+        "output_tokens": 15,
+        "semantic_status": "PASS_WEATHER_LJUBLJANA",
+        "ttft_seconds": 18.32403649600002,
+        "rate_basis": "CLIENT_OBSERVED_NATIVE_TOKEN_WINDOW_WITH_SYNCHRONOUS_GUARDED_RECEIPT_IO"
+      },
+      "forced": {
+        "decode_rate_window": {
+          "end_native_tokens": 15,
+          "end_seconds": 52.94712206599996,
+          "start_native_tokens": 4,
+          "start_seconds": 20.022345850000022
+        },
+        "decode_tokens_per_second": 0.3340949055457665,
+        "elapsed_seconds": 54.97526009999996,
+        "finish_reason": "tool_calls",
+        "input_tokens": 177,
+        "output_tokens": 15,
+        "semantic_status": "PASS_WEATHER_LJUBLJANA",
+        "ttft_seconds": 20.022345850000022,
+        "rate_basis": "CLIENT_OBSERVED_NATIVE_TOKEN_WINDOW_WITH_SYNCHRONOUS_GUARDED_RECEIPT_IO"
+      }
+    },
+    "actual_64_output": "ORIGINAL_MAX64_CASES_ENDED3_AND19; SEPARATE_MAX128_CASE_REACHED128_AND_PROVIDES80_NATIVE_DECODE_TOKENS_IN_TWO_WINDOWS",
+    "additional_16k_longanswer_max128": "COMPLETE16384_INPUT128_OUTPUT_FINISH_LENGTH_SEMANTICS_UNPROVEN_OUTPUT_CAP",
+    "native_runtime_only_decode_rate": "RECOVERED_TWO_NATIVE_SCHEDULER40_TOKEN_WINDOWS13.42_AND13.51_TOKENS_PER_SECOND; NOT_FULL_REQUEST_OR_GPU_KERNEL_ONLY",
+    "separate_reasoning_token_count": "NOT_ESTABLISHED_NATIVE_USAGE0_DESPITE16_REASONING_DELTAS_WITH_NATIVE_COMPLETION1_TO16",
+    "cached_input_tokens": "API_NULL; NATIVE_PREFILL_LOG_CACHED0_WHERE_RECORDED; SEE_CORE_SUMMARY",
+    "measured_cases": {
+      "warm4096": {
+        "body_drained": true,
+        "cached_input_tokens": null,
+        "decode_rate_status": "INVALID_BUFFERED_OR_INSUFFICIENT_NATIVE_USAGE",
+        "decode_tokens_per_second": null,
+        "elapsed_seconds": 229.48068859700004,
+        "end_utc": "2026-09-26T20:35:04.604613+00:00",
+        "finish_reason": "stop",
+        "first_positive_native_usage_seconds": 225.39665100700006,
+        "http_status": 200,
+        "input_tokens": 4096,
+        "last_nonempty_delta_seconds": 225.39665100700006,
+        "output_cap_reached": false,
+        "output_tokens": 3,
+        "request_socket_closed": true,
+        "requested_output": 64,
+        "sample_limit": "64 output tokens; capped reasoning may prevent final answer",
+        "semantic_status": "PASS_ANSWER_12",
+        "sse_done": true,
+        "start_utc": "2026-09-26T20:31:14.829893+00:00",
+        "status": "TRANSPORT_PASS",
+        "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+        "ttft_seconds": 225.39665100700006,
+        "uncached_input_status": "NOT_REPORTED",
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 4096,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 4099
+        },
+        "rate_basis": "CLIENT_OBSERVED_NATIVE_TOKEN_WINDOW_WITH_SYNCHRONOUS_GUARDED_RECEIPT_IO"
+      },
+      "measured4096": {
+        "body_drained": true,
+        "cached_input_tokens": null,
+        "decode_rate_status": "INVALID_BUFFERED_OR_INSUFFICIENT_NATIVE_USAGE",
+        "decode_tokens_per_second": null,
+        "elapsed_seconds": 24.77055657599999,
+        "end_utc": "2026-09-26T20:35:35.258838+00:00",
+        "finish_reason": "stop",
+        "first_positive_native_usage_seconds": 20.724192947999995,
+        "http_status": 200,
+        "input_tokens": 4096,
+        "last_nonempty_delta_seconds": 20.724192947999995,
+        "output_cap_reached": false,
+        "output_tokens": 3,
+        "request_socket_closed": true,
+        "requested_output": 64,
+        "sample_limit": "64 output tokens; capped reasoning may prevent final answer",
+        "semantic_status": "PASS_ANSWER_12",
+        "sse_done": true,
+        "start_utc": "2026-09-26T20:35:09.914252+00:00",
+        "status": "TRANSPORT_PASS",
+        "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+        "ttft_seconds": 20.724192947999995,
+        "uncached_input_status": "NOT_REPORTED",
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 4096,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 4099
+        },
+        "rate_basis": "CLIENT_OBSERVED_NATIVE_TOKEN_WINDOW_WITH_SYNCHRONOUS_GUARDED_RECEIPT_IO"
+      },
+      "measured16384": {
+        "body_drained": true,
+        "cached_input_tokens": null,
+        "decode_rate_status": "NATIVE_INCREMENTAL_USAGE_OBSERVED_CLIENT_TIME_WINDOW",
+        "decode_rate_window": {
+          "end_native_tokens": 19,
+          "end_seconds": 102.51280166700008,
+          "start_native_tokens": 1,
+          "start_seconds": 84.12751654300007
+        },
+        "decode_tokens_per_second": 0.9790438319883841,
+        "elapsed_seconds": 104.53570115600007,
+        "end_utc": "2026-09-26T20:37:24.920636+00:00",
+        "finish_reason": "stop",
+        "first_positive_native_usage_seconds": 84.12751654300007,
+        "http_status": 200,
+        "input_tokens": 16384,
+        "last_nonempty_delta_seconds": 100.46057452600007,
+        "output_cap_reached": false,
+        "output_tokens": 19,
+        "request_socket_closed": true,
+        "requested_output": 64,
+        "sample_limit": "64 output tokens; capped reasoning may prevent final answer",
+        "semantic_status": "PASS_ANSWER_12",
+        "sse_done": true,
+        "start_utc": "2026-09-26T20:35:40.098567+00:00",
+        "status": "TRANSPORT_PASS",
+        "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+        "ttft_seconds": 84.12751654300007,
+        "uncached_input_status": "NOT_REPORTED",
+        "usage": {
+          "completion_tokens": 19,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16403
+        },
+        "rate_basis": "CLIENT_OBSERVED_NATIVE_TOKEN_WINDOW_WITH_SYNCHRONOUS_GUARDED_RECEIPT_IO"
+      }
+    },
+    "decode_rate_caveat": "Client decode windows include synchronous lease, guards, fsync and result rewrites, so they are receipt-IO-inclusive drain rates. Native scheduler40-token windows are independently sourced; do not interpret client rate as model slowdown.",
+    "native_scheduler_throughput": {
+      "status": "TWO_VALID_NATIVE_SCHEDULER_DECODE_WINDOWS_RECOVERED",
+      "request": "H009-MEASURED16384-long128-r1",
+      "scope": "One authorized distinct long-answer request; no retry or extra request. Native scheduler wall time, not isolated GPU-kernel time.",
+      "formula": "last_gen_throughput = num_generated_tokens / (time.perf_counter() - last_decode_stats_tic); then reset last_decode_stats_tic and num_generated_tokens",
+      "source_identity": {
+        "scheduler_metrics_mixin.py": "f03f194542c3b100cb7cac67059dc968f2e0a11acf239660bf05c37ff03b2aea",
+        "scheduler_output_processor_mixin.py": "6acc43fae32b747a6f91c37b804ac74b83bf2b1fab64e4dc1b3a00fa45787e33"
+      },
+      "source_lines": {
+        "scheduler_metrics_mixin.py:74-79": "Initialize counter and timer at scheduler init, not request begin",
+        "scheduler_metrics_mixin.py:309-313": "Compute window rate and reset counter/timer only at decode statistics log",
+        "scheduler_metrics_mixin.py:411-415": "Print native rate rounded to2decimals",
+        "scheduler_output_processor_mixin.py:446-448": "Normal decode adds number of active requests; speculative path adds accepted tokens separately",
+        "scheduler_output_processor_mixin.py:557-563": "Output processing/stream dispatch then decode counter advance; every40 decode batches calls log_decode_stats",
+        "pinned_server_args.py:719": "Default decode_log_interval40; reviewed launcher has no override"
+      },
+      "native_first_decode_log_excluded": {
+        "line": 52,
+        "raw": "2026-09-26T20:44:28.964689746Z [2026-09-26 20:44:28] Decode batch, #running-req: 1, #token: 16448, token usage: 0.03, cuda graph: True, gen throughput (token/s): 0.09, #queue-req: 0",
+        "reason": "Window includes previous request remainder, intervening idle and newprefill; timer is not reset on request admission/prefill."
+      },
+      "valid_windows": [
+        {
+          "start_log_utc": "2026-09-26T20:44:28.964689746Z",
+          "end_log_utc": "2026-09-26T20:44:31.944514394Z",
+          "native_reported_tokens_per_second": 13.42,
+          "native_generated_tokens": 40,
+          "native_perf_counter_span_approx_seconds_from_rounded_rate": 2.9806259314456036,
+          "docker_log_span_seconds": 2.979824648,
+          "approx_tokens_per_second_from_log_span": 13.423608676721035,
+          "source_log_line": 53,
+          "raw": "2026-09-26T20:44:31.944514394Z [2026-09-26 20:44:31] Decode batch, #running-req: 1, #token: 16512, token usage: 0.03, cuda graph: True, gen throughput (token/s): 13.42, #queue-req: 0"
+        },
+        {
+          "start_log_utc": "2026-09-26T20:44:31.944514394Z",
+          "end_log_utc": "2026-09-26T20:44:34.905059551Z",
+          "native_reported_tokens_per_second": 13.51,
+          "native_generated_tokens": 40,
+          "native_perf_counter_span_approx_seconds_from_rounded_rate": 2.9607698001480385,
+          "docker_log_span_seconds": 2.960545157,
+          "approx_tokens_per_second_from_log_span": 13.511025125025647,
+          "source_log_line": 54,
+          "raw": "2026-09-26T20:44:34.905059551Z [2026-09-26 20:44:34] Decode batch, #running-req: 1, #token: 16512, token usage: 0.03, cuda graph: True, gen throughput (token/s): 13.51, #queue-req: 0"
+        }
+      ],
+      "observed_single_request_no_queue": true,
+      "intervening_prefill_in_valid_windows": false,
+      "native_covered_decode_tokens": 80,
+      "approx_combined_log_timestamp_span_seconds": 5.940369805,
+      "approx_combined_log_timestamp_rate_tps": 13.467175045678827,
+      "bounds": [
+        "Two40-token windows only; no complete128-token native generation duration reconstructed.",
+        "Rates include native scheduler processing, CUDA/CPU expert work, and server streaming/output-dispatch overhead; not GPU-only kernel performance.",
+        "Printed native rates use perf_counter and2decimal rounding. Dockerlog timestamps provide independent approximate interval sanity checks.",
+        "These windows exclude the preceding prefill/idle interval and are independent of receipt client read timestamps; no claim that scheduler is globally immune to arbitrary external backpressure.",
+        "Client SSE loop performs synchronous guarded writes and reads buffered output slowly; its~0.95tok/s window is not native decode speed.",
+        "128-token length cap reached; long-answer semantics unproven. Earlier short correct12 and weather call proofs remain separate."
+      ],
+      "client_receipt": {
+        "input_tokens": 16384,
+        "output_tokens": 128,
+        "requested_output": 128,
+        "elapsed_seconds": 204.731088431,
+        "ttft_seconds": 66.89850103799995,
+        "decode_tokens_per_second": 0.9497324885863337,
+        "decode_rate_window": {
+          "end_native_tokens": 128,
+          "end_seconds": 200.62036643299984,
+          "start_native_tokens": 1,
+          "start_seconds": 66.89850103799995
+        },
+        "finish_reason": "length",
+        "semantic_status": "UNPROVEN_OUTPUT_CAP",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16512
+        }
+      },
+      "client_rate_classification": "IO_INCLUSIVE_CLIENT_DRAIN_RATE_NOT_NATIVE_GENERATION_RATE",
+      "additional_small_input_sample_needed": false,
+      "log_sha256": "032b162a7ea9b3e442a02a637e43d4f95a4d22e61a4adbfdba5d4be985699318"
+    },
+    "extra128": {
+      "scope": "Authorized distinct16K long-answer max128; transport complete, semantic result capped",
+      "source": "task evidence/MEASURED16384-long128-r1.json",
+      "request": {
+        "actual_cap_seconds": 600.0,
+        "body_drained": true,
+        "cached_input_tokens": null,
+        "decode_rate_status": "NATIVE_INCREMENTAL_USAGE_OBSERVED_CLIENT_TIME_WINDOW",
+        "decode_rate_window": {
+          "end_native_tokens": 128,
+          "end_seconds": 200.62036643299984,
+          "start_native_tokens": 1,
+          "start_seconds": 66.89850103799995
+        },
+        "decode_tokens_per_second": 0.9497324885863337,
+        "effective_input_tokens_per_second_ttft_basis": 244.90832747797288,
+        "elapsed_seconds": 204.731088431,
+        "end_utc": "2026-09-26T20:46:46.654746+00:00",
+        "finish_reason": "length",
+        "first_nonempty_delta_seconds": 66.89850103799995,
+        "first_positive_native_usage_seconds": 66.89850103799995,
+        "http_status": 200,
+        "input_tokens": 16384,
+        "last_nonempty_delta_seconds": 200.62036643299984,
+        "measured": true,
+        "native_phase_observation_limit": "no inference of compile or prefill phase from silence alone",
+        "nonempty_delta_count": 127,
+        "output_cap_reached": true,
+        "output_tokens": 128,
+        "phase": "client_closed",
+        "request_socket_closed": true,
+        "requested_output": 128,
+        "sample_limit": "128 output tokens including reasoning; distinct long-answer decode sample; correctness established by earlier short answers",
+        "semantic_status": "UNPROVEN_OUTPUT_CAP",
+        "settle_seconds": 0.25,
+        "sse_done": true,
+        "start_utc": "2026-09-26T20:43:21.348658+00:00",
+        "status": "TRANSPORT_PASS",
+        "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+        "ttft_seconds": 66.89850103799995,
+        "uncached_input_status": "NOT_REPORTED",
+        "usage": {
+          "completion_tokens": 128,
+          "prompt_tokens": 16384,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 16512
+        }
+      },
+      "fixture": {
+        "generation_prefix_included": true,
+        "known_answer": "12",
+        "native_tokenize": {
+          "context_limit": 480000,
+          "count": 16384,
+          "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+          "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+        },
+        "payload_sha256": "5d4345eb6efe44288237d7c446a23cc507a0d13052de0d6550e3f489996af765",
+        "rendered_token_ids_sha256": "ce5fd4c79855f873d597c1ea1aa3d6206501d7f033914fe16a117915a82fb280",
+        "rendered_tokens": 16384,
+        "seed": "Mountain authorized long-answer gamma record",
+        "tools": null
+      },
+      "memory_summary": {
+        "cgroup_peak_bytes": 640475009024,
+        "max_cgroup_swap_bytes": 0,
+        "max_gpu_temp_c": 48.0,
+        "min_gpu_free_mib": 65098.0,
+        "min_host_available_bytes": 604493238272,
+        "peak_gpu_used_mib": 32152.0
+      },
+      "sample_count": 106,
+      "native_allocation": {
+        "context": 480000,
+        "max_req_input_len": 479994,
+        "max_req_len": 479999,
+        "pool": 480000,
+        "resolved_cache_dtype": "torch.float8_e4m3fn",
+        "sm120_execution": "PASS"
+      },
+      "readiness_after": [
+        200,
+        {
+          "admitting": null,
+          "model_alias": "glm-5.3-flash",
+          "ready": true,
+          "schema_version": 1,
+          "state": "up"
+        }
+      ],
+      "active_request": null,
+      "container_warm_preserved": true,
+      "native_active_counter": "NOT_AVAILABLE_UNLESS_EXPLICIT_FRESH_NATIVE_READBACK",
+      "stale_hardstop_metadata": {
+        "receipt_value": "2026-09-26T20:46:00Z",
+        "executable_global_end": "2026-09-26T21:02:00Z",
+        "request_cap_seconds": 600,
+        "job_cap_seconds": 730,
+        "outcome": "Completed within effective executable limits; no job edit for report"
+      },
+      "reasoning_content_nonempty_delta_count": 59,
+      "reasoning_note": "Native usage reports reasoning_tokens0 despite59nonempty reasoning deltas;59is not asserted as native reasoning-token total"
+    }
+  },
+  "preservation": {
+    "dated_qwen_measurements_preserved": true,
+    "qwen_new_inference_benchmarks": false,
+    "guest_reboots": 1,
+    "git_push": false,
+    "image_qualification_campaign": false,
+    "image_request_scope": "Existing fixed startup warmup during recovery and one exactFHD negative HTTP400 probe occurred; no new public image qualification campaign"
+  },
+  "image_capacity_flag": "Only generation1920x1080 refs0 disabled in protected manifest; maximum1760x992; edits unchanged. Keep restriction until Ada currentDisabled and restored original capacity verified after LAST coordinated guest reboot.",
+  "next_update_required": [
+    "Worker2 owns Flash inference lane for Sova acceptance/restoration; Worker1 performs no additional request",
+    "Fresh short native phase2 after Worker2 actual request-settlement/quiet receipt: LAST coordinated second guest reboot to apply Ada pendingDisabled",
+    "Verify all threeBlackwellsECCenabled/AdaECCdisabled plus restoredVRAM; restore original FHD generation profile/remove temporary restriction and check capabilities",
+    "Final post-reboot all-model readiness/current480K pools and exact lifecycle/storage/rollback preservation; idle600/wake remains NOT_TESTED"
+  ],
+  "hardware_latch_checkpoint": "PASS_FRESH_ALL_SERVICES_AVAILABLE_READY_UNLATCHED_20:47:29",
+  "native_flash_allocation": {
+    "context": 480000,
+    "max_req_input_len": 479994,
+    "max_req_len": 479999,
+    "pool": 480000,
+    "resolved_cache_dtype": "torch.float8_e4m3fn",
+    "sm120_execution": "PASS"
+  },
+  "corrected_tool_memory_summary": {
+    "auto": {
+      "cgroup_peak_bytes": 640475009024,
+      "max_cgroup_swap_bytes": 0,
+      "max_gpu_temp_c": 42.0,
+      "min_gpu_free_mib": 73606.0,
+      "min_host_available_bytes": 604812861440,
+      "peak_gpu_used_mib": 23644.0
+    },
+    "forced": {
+      "cgroup_peak_bytes": 640475009024,
+      "max_cgroup_swap_bytes": 0,
+      "max_gpu_temp_c": 43.0,
+      "min_gpu_free_mib": 73006.0,
+      "min_host_available_bytes": 604059041792,
+      "peak_gpu_used_mib": 24244.0
+    }
+  },
+  "image_source_commit": "952f8b901575eeccaad2014d91762163f0c0a1ac",
+  "native_hardstop_utc": "2026-09-26T21:05:00Z",
+  "checkpoint_utc": "2026-09-26T20:58:00Z",
+  "memory_summary_core_qualification": {
+    "samples": 253,
+    "peak_target_gpu_used_mib": 32152.0,
+    "min_target_gpu_free_mib": 65098.0,
+    "min_target_gpu_free_fraction": 0.6650321288833042,
+    "max_target_gpu_temp_c": 53.0,
+    "min_host_available_bytes": 603415572480,
+    "min_host_available_fraction": 0.6373069382579268,
+    "cgroup_sampled_current_peak_bytes": 628393144320,
+    "cgroup_lifetime_peak_bytes": 640475009024,
+    "cgroup_anon_sampled_peak_bytes": 314822549504,
+    "cgroup_file_sampled_peak_bytes": 312204632064,
+    "process_rss_sum_sampled_peak_bytes": 329710243840,
+    "process_rss_sum_shared_pages_may_be_counted_more_than_once": true,
+    "owned_cgroup_swap_sampled_max_bytes": 0,
+    "host_swap_occupied_min_bytes": 48234496,
+    "host_swap_occupied_max_bytes": 49545216,
+    "host_pswpin_interval_pages_max": 79,
+    "host_pswpout_interval_pages_max": 315,
+    "cpu_temperature": "NOT_AVAILABLE"
+  },
+  "remaining": [
+    "Worker2 owns Flash inference lane for Sova acceptance/restoration; Worker1 performs no additional request",
+    "Fresh short native phase2 after Worker2 actual request-settlement/quiet receipt: LAST coordinated second guest reboot to apply Ada pendingDisabled",
+    "Verify all threeBlackwellsECCenabled/AdaECCdisabled plus restoredVRAM; restore original FHD generation profile/remove temporary restriction and check capabilities",
+    "Final post-reboot all-model readiness/current480K pools and exact lifecycle/storage/rollback preservation; idle600/wake remains NOT_TESTED"
+  ],
+  "last_quiet_ready_utc": "2026-09-26T20:47:29.764056+00:00",
+  "after_warm_memory": {
+    "utc": "2026-09-26T20:35:04.892033+00:00",
+    "target_gpu": {
+      "free_mib": "65100",
+      "temp_c": "44",
+      "total_mib": "97887",
+      "used_mib": "32150",
+      "util_pct": "0",
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+    },
+    "host_available_bytes": 604341211136,
+    "host_available_fraction": 0.6382845662222898,
+    "cgroup_current_bytes": 627830005760,
+    "cgroup_lifetime_peak_bytes": 640475009024,
+    "cgroup_anon_bytes": 314209902592,
+    "cgroup_file_bytes": 312100208640,
+    "process_rss_sum_bytes": 328827113472,
+    "process_rss_sum_shared_pages_may_be_counted_more_than_once": true,
+    "owned_cgroup_swap_bytes": 0,
+    "host_swap_occupied_bytes": 49545216,
+    "host_swap_interval_pages": {
+      "pswpin": 0,
+      "pswpout": 0
+    }
+  },
+  "warm_phase_interpretation": {
+    "observed": "First4K request includes lazy SharedFullContext allocation20:31:16, fallback/default Triton MoE kernel configuration20:31:27, first logged2048-token prefill completion20:34:51, second20:34:59; TTFT225.397s.",
+    "inference": "First-use setup contributed to the discardedwarm delay; no isolated compile-duration measurement. No stalled request conclusion.",
+    "after_warm_memory": {
+      "utc": "2026-09-26T20:35:04.892033+00:00",
+      "target_gpu": {
+        "free_mib": "65100",
+        "temp_c": "44",
+        "total_mib": "97887",
+        "used_mib": "32150",
+        "util_pct": "0",
+        "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      },
+      "host_available_bytes": 604341211136,
+      "host_available_fraction": 0.6382845662222898,
+      "cgroup_current_bytes": 627830005760,
+      "cgroup_lifetime_peak_bytes": 640475009024,
+      "cgroup_anon_bytes": 314209902592,
+      "cgroup_file_bytes": 312100208640,
+      "process_rss_sum_bytes": 328827113472,
+      "process_rss_sum_shared_pages_may_be_counted_more_than_once": true,
+      "owned_cgroup_swap_bytes": 0,
+      "host_swap_occupied_bytes": 49545216,
+      "host_swap_interval_pages": {
+        "pswpin": 0,
+        "pswpout": 0
+      }
+    }
+  },
+  "cpu_core_qualification": {
+    "cases": {
+      "H009-AUTO-after-r1": {
+        "expert_threads": 64,
+        "positive_cpu_tick_threads": 64,
+        "thread_cpu_seconds_min": 25.04,
+        "thread_cpu_seconds_max": 49.15,
+        "thread_cpu_seconds_sum": 1816.59,
+        "sample_window_seconds": 54.97618569100001,
+        "mean_busy_guest_cpu_equivalents": 33.043216388462334
+      },
+      "H009-FORCED-after-r1": {
+        "expert_threads": 64,
+        "positive_cpu_tick_threads": 64,
+        "thread_cpu_seconds_min": 25.8,
+        "thread_cpu_seconds_max": 51.15,
+        "thread_cpu_seconds_sum": 1860.6,
+        "sample_window_seconds": 56.50918504399999,
+        "mean_busy_guest_cpu_equivalents": 32.925620826973045
+      },
+      "H009-WARM4096": {
+        "expert_threads": 64,
+        "positive_cpu_tick_threads": 64,
+        "thread_cpu_seconds_min": 150.54,
+        "thread_cpu_seconds_max": 220.18,
+        "thread_cpu_seconds_sum": 11728.76,
+        "sample_window_seconds": 234.20446543800006,
+        "mean_busy_guest_cpu_equivalents": 50.079147628826505
+      },
+      "H009-MEASURED4096": {
+        "expert_threads": 64,
+        "positive_cpu_tick_threads": 64,
+        "thread_cpu_seconds_min": 18.31,
+        "thread_cpu_seconds_max": 18.57,
+        "thread_cpu_seconds_sum": 1186.65,
+        "sample_window_seconds": 30.10700681000003,
+        "mean_busy_guest_cpu_equivalents": 39.414412979966336
+      },
+      "H009-MEASURED16384": {
+        "expert_threads": 64,
+        "positive_cpu_tick_threads": 64,
+        "thread_cpu_seconds_min": 82.81,
+        "thread_cpu_seconds_max": 83.39,
+        "thread_cpu_seconds_sum": 5329.99,
+        "sample_window_seconds": 109.21167193200006,
+        "mean_busy_guest_cpu_equivalents": 48.80421575560791
+      }
+    },
+    "guest_masks": "0-7,16-71;8poolsx8threads",
+    "all_cases_positive_threads": 64,
+    "host_physical_pin_or_RAM_locality_proof": false,
+    "evidence": "evidence/CPU-UNDER-LOAD.json"
+  },
+  "source_checkpoint": {
+    "head": "952f8b901575eeccaad2014d91762163f0c0a1ac",
+    "base": "6ca4d3ef93dc2175573fc2c4af056e59819762a3",
+    "bundle_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H009-FLASH-PHASE1-20260926/H009-FLASH-SOURCE-952f8b9.bundle",
+    "bundle_sha256": "1004ad57373947d89c03b2a1987989a186127473b555274a3a5c58c43e642c0c",
+    "Flash_installed_commit": "1f520e95a6de1936a5de870d2a5f2b0c3cc624e9",
+    "image_app_installed_commit": "952f8b901575eeccaad2014d91762163f0c0a1ac",
+    "push_performed": false
+  },
+  "core_qualification_receipt": "evidence/FINAL-QUALIFICATION-SUMMARY.json",
+  "raw_manifest_verified_files": 31,
+  "core_lane_settlement_snapshot": {
+    "utc": "2026-09-26T20:38:48.757770+00:00",
+    "tcp30010_established_output": "",
+    "native_active_counter": "NOT_AVAILABLE",
+    "atomic_drain_proven": false
+  },
+  "image_rejection_check": {
+    "utc": "2026-09-26T20:41:37.644588+00:00",
+    "fhd_http_status": 400,
+    "error_code": "unqualified_profile",
+    "before_and_after_health": 200,
+    "maximum_supported_generation_size": "1760x992",
+    "evidence": "evidence/IMAGE-ECC-REJECTION.json"
+  },
+  "final_lane_release": {
+    "utc": "2026-09-26T20:48:06.324368+00:00",
+    "status": "RELEASED_TO_COORDINATOR_WORKER2",
+    "worker1_flash_requests": "none; no further Worker1 inference planned",
+    "endpoint": "10.156.100.60:30010/v1",
+    "serviceID": "glm-5.3-flash",
+    "endpointRef": "frontier-private",
+    "native_auth_key": "existing protected host secret, never exported",
+    "settlement_receipt": "evidence/LANE-RELEASE-FINAL.json",
+    "node_ready_receipt": "evidence/NODE-IMAGE-CURRENT.json",
+    "node_observed_utc": "2026-09-26T20:47:29.764056+00:00",
+    "all_services_available_ready_unlatched": true,
+    "atomic_drain_claim": false,
+    "image_generation_maximum": "1760x992 until final AdaECC-off reboot and verified capacity restore"
+  },
+  "final_settlement": {
+    "utc": "2026-09-26T20:48:06.324368+00:00",
+    "jobs": {
+      "h009-flash-series": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "h009-flash-load-watch": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      },
+      "h009-flash-measured16384-long128-r1": {
+        "MainPID": "0",
+        "Result": "success",
+        "ActiveState": "inactive",
+        "SubState": "dead"
+      }
+    },
+    "native_active_counter": "UNAVAILABLE_NOT_EXPOSED",
+    "atomic_drain_claim": false,
+    "connections": "",
+    "request_summary": {
+      "input_tokens": 16384,
+      "output_tokens": 128,
+      "finish_reason": "length",
+      "body_drained": true,
+      "sse_done": true,
+      "elapsed_seconds": 204.731088431,
+      "semantic_status": "UNPROVEN_OUTPUT_CAP"
+    },
+    "container_warm_preserved": true
+  },
+  "installed_identity_receipt": "evidence/INSTALLED-IDENTITY-FINAL.json",
+  "raw_total_bytes": 7778390,
+  "extra128_memory_summary": {
+    "cgroup_peak_bytes": 640475009024,
+    "max_cgroup_swap_bytes": 0,
+    "max_gpu_temp_c": 48.0,
+    "min_gpu_free_mib": 65098.0,
+    "min_host_available_bytes": 604493238272,
+    "peak_gpu_used_mib": 32152.0
+  },
+  "memory_summary_all_six_cases": {
+    "samples": 360,
+    "peak_target_gpu_used_mib": 32152.0,
+    "min_target_gpu_free_mib": 65098.0,
+    "min_target_gpu_free_fraction": 0.6650321288833042,
+    "max_target_gpu_temp_c": 53.0,
+    "min_host_available_bytes": 603415572480,
+    "min_host_available_fraction": 0.6373069382579268,
+    "cgroup_sampled_current_peak_bytes": 628393144320,
+    "cgroup_lifetime_peak_bytes": 640475009024,
+    "cgroup_anon_sampled_peak_bytes": 314822549504,
+    "cgroup_file_sampled_peak_bytes": 312204632064,
+    "process_rss_sum_sampled_peak_bytes": 329710243840,
+    "process_rss_sum_shared_pages_may_be_counted_more_than_once": true,
+    "owned_cgroup_swap_sampled_max_bytes": 0,
+    "host_swap_occupied_min_bytes": 48234496,
+    "host_swap_occupied_max_bytes": 49545216,
+    "host_pswpin_interval_pages_max": 79,
+    "host_pswpout_interval_pages_max": 315,
+    "cpu_temperature": "NOT_AVAILABLE"
+  },
+  "cpu_extra128_qualification": {
+    "sample_window_seconds": 210.7487145,
+    "expert_threads": 64,
+    "positive_cpu_tick_threads": 64,
+    "thread_cpu_seconds_min": 73.0,
+    "thread_cpu_seconds_max": 73.41,
+    "thread_cpu_seconds_sum": 4692.93,
+    "mean_busy_guest_cpu_equivalents": 22.267893833345305,
+    "after_request_guest_numa_bytes": {
+      "anon": {
+        "N0": 38824841216,
+        "N1": 38663651328,
+        "N2": 38503460864,
+        "N3": 38531932160,
+        "N4": 38499180544,
+        "N5": 38527504384,
+        "N6": 38558863360,
+        "N7": 44102021120
+      },
+      "file": {
+        "N0": 20729647104,
+        "N1": 37115105280,
+        "N2": 37620596736,
+        "N3": 37195722752,
+        "N4": 37686280192,
+        "N5": 37598380032,
+        "N6": 37641396224,
+        "N7": 66248052736
+      }
+    },
+    "pools": {
+      "0": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.46
+      },
+      "1": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.51
+      },
+      "2": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.46
+      },
+      "3": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.65
+      },
+      "4": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.77
+      },
+      "5": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.59
+      },
+      "6": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.79
+      },
+      "7": {
+        "threads": 8,
+        "positive_cpu_tick_threads": 8,
+        "cpu_seconds": 586.7
+      }
+    }
+  },
+  "load_monitor_observation_limit": {
+    "trigger": "sustained_current_host_swap_io",
+    "observed_start_utc": "2026-09-26T20:28:04.959473+00:00",
+    "observed_end_utc": "2026-09-26T20:28:16.960077+00:00",
+    "interval_pswpout_pages": [
+      1729,
+      3521,
+      2701,
+      1924,
+      1069,
+      134,
+      372
+    ],
+    "owned_flash_swap_bytes": [
+      0
+    ],
+    "min_host_available_bytes": 607211868160,
+    "recovery_observed_utc": "2026-09-26T20:28:18.960169+00:00",
+    "bug": "RESOURCE_FAILURE set before flush; LeaseBusy bypassed halt and reason capture; healthy samples never cleared stale status",
+    "current_pressure_or_halt_proven_by_status": false,
+    "local_source_fix": "../tools/load-watch-state-fix.diff"
+  },
+  "all_owned_jobs_inactive_readback": "evidence/ALL-OWNED-JOBS-INACTIVE.json"
+}

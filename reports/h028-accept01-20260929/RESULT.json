@@ -1,0 +1,86 @@
+{
+  "task": "H028-ACCEPT01-20260929",
+  "worker": "native mac-worker2",
+  "native_session_id": "01a0ea69-01ff-7eb0-8214-f1fa6bf71f45",
+  "base": "faead7be60754bbac4eb943750397750967d9889",
+  "tested_commit": "fc7c12167c01c73ca516ecd0ad0e5bc50b63856f",
+  "overall": "PASS",
+  "scope": "Bounded independent status/dedicated API acceptance plus explicitly requested one-line status UI cleanup",
+  "checkpoint_utc": "2026-09-28T23:51:59.257667+00:00",
+  "effective_wrapper_deadline_utc": "2026-09-29T00:00:45.401703Z",
+  "absolute_user_deadline_utc": "2026-09-29T00:03:00Z",
+  "checks": {
+    "status_html_system_api_app_served_js": "PASS all HTTP200 with public Host10.156.100.61",
+    "current_source_pins": "PASS exact W1 observer owner/launcher/supervisor and six updated node/control leaves",
+    "five_gpu_native_mapping_metrics": "PASS five fresh UUID/currentPCI rows match native inventory",
+    "ada_current_readiness": "PASS exact alias,200000,readytrue,currentboot/currentcontainerstart,admittingnull",
+    "immutable_profile_qualification": "PASS retained separately; old qualification start differs, not used to synthesize readiness",
+    "dedicated_lan_auth": "PASS models/readiness200; exactalias/max_model_len200000; both unauthenticated401",
+    "private_migration": "PASS read-onlyguard,currentprivatebind,old12unitbytesandreceiptpreserved,fixed7roles,recurringrearm",
+    "shared_routing": "PASS Ada absentfrom deployedmain/gateway/runconfig,existingtwo480Klaneidentities unchanged",
+    "model_status_honesty": "PASS stopped Qwen480K/image unavailable;GLMdormantunqualified;MiMounknownhardwarelatch",
+    "cha3": "PASS healthy40,fresh29C,PID1557 unchanged,CPUsourcebits0;no BMCwrite",
+    "status_ui_patch": "PASS exact1line deletion,16focusedtests,build,status-onlydeploy,servedJSproof",
+    "browser_render": "NOT_TESTED prior CUA unavailable; no browser/debug attempt in ACCEPT01",
+    "occupied_200000_context": "NOT_TESTED not authorized; configured/nativeallocated200000 only",
+    "inference_by_W2": "NOT_TESTED intentionally zero requests; W1 actual LAN short response already proves end-to-end",
+    "reboot_or_late_NIC_live_injection": "NOT_TESTED no disruptive requalification; source/fixtures/timerreadback verified"
+  },
+  "deployment": {
+    "utc": "2026-09-28T23:50:29.481511+00:00",
+    "source_commit": "fc7c12167c01c73ca516ecd0ad0e5bc50b63856f",
+    "old_component": "/opt/ai-harness/components/h028-status01-c45757d",
+    "component": "/opt/ai-harness/components/h028-accept01-fc7c121",
+    "drop_in": "/etc/systemd/system/ai-harness-status.service.d/74-h028-accept01-ui.conf",
+    "changed_files": [
+      "ai-harness/server/dist/status-ui.js"
+    ],
+    "module_sha256": "9d042fe061cece9bfb0248f1adb0036d9de67c0492731e25039983db6438c427",
+    "old_component_preserved": true,
+    "status": "MainPID=14480\nExecStart={ path=/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node ; argv[]=/home/user/.local/opt/ai-harness/node-v24.21.0/bin/node /opt/ai-harness/components/h028-accept01-fc7c121/ai-harness/server/dist/status-main.js ; ignore_errors=no ; start_time=[Tue 2026-09-29 01:50:29 CEST] ; stop_time=[n/a] ; pid=14480 ; code=(null) ; status=0/0 }\nActiveState=active\nSubState=running\n",
+    "rollback": "Remove only 74-h028-accept01-ui.conf, daemon-reload and restart status service; predecessor73 preserved."
+  },
+  "native_identity": {
+    "boot_id": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+    "container_id": "5deb31661139ce99a1556aedef7438f22f27c8578b953eda9227095df5c03ebb",
+    "containerStartedAt": "2026-09-28T23:44:52.546510973Z",
+    "w1_native_response_ids": [
+      "35be4bef32e14c5881bd495bcc9ce689"
+    ],
+    "w1_request_settled_utc": "2026-09-28T23:47:20.495155+00:00"
+  },
+  "source_commit_for_W1_final_vm": "fdb5b11e758b3814e6069726b6afdaeac91bf38d; integrated as 8f566cc; all 16 deployed source pins match",
+  "bundle": {
+    "file": "h028-accept01.bundle",
+    "prerequisite": "faead7be60754bbac4eb943750397750967d9889",
+    "verified": true,
+    "sha256": "cbb2e4b63ddb5242737322d4dbf42915b79cff24a9b589a96d1d46e0f9f689aa"
+  },
+  "raw_private_directory": "/tmp/h028-accept01-private",
+  "ai_vm_mutations": [],
+  "inference_dispatched": 0,
+  "main_app_restart": false,
+  "github_push": false,
+  "owned_pending_work": [],
+  "remaining_gaps": [
+    "Browser rendering NOT_TESTED.",
+    "200K occupied context NOT_TESTED; prior short benchmark and tool continuation are W1 qualification, not repeated.",
+    "Upper harness/gateway integration excluded by user.",
+    "Reboot/late NIC fault injection not performed.",
+    "Other model readiness remains unavailable/unknown as shown; no repairs authorized."
+  ],
+  "terminal_exit": {
+    "task": "H028-ACCEPT01",
+    "native_session_id": "01a0ea69-01ff-7eb0-8214-f1fa6bf71f45",
+    "started_at": "2026-09-28T23:45:45.401703+00:00",
+    "hard_deadline": "2026-09-29T00:00:45.401703+00:00",
+    "finished_at": "2026-09-28T23:54:36Z",
+    "exit_code": 0,
+    "source_head": "fc7c12167c01c73ca516ecd0ad0e5bc50b63856f",
+    "bundle_sha256": "cbb2e4b63ddb5242737322d4dbf42915b79cff24a9b589a96d1d46e0f9f689aa",
+    "owned_pending_work": false,
+    "w2_inference_requests": 0,
+    "w2_ai_vm_mutations": 0,
+    "final_report_sha256": "bcaaeb917cd66eb9fbec3243e0a62bce78f075ac2bce8356029861378916de44"
+  }
+}

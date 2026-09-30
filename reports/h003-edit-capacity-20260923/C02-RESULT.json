@@ -1,0 +1,67 @@
+{
+  "case": "C02",
+  "status": "PASS_ROOT_VISUAL_AND_MEMORY",
+  "api_source_commit": "f6e69d290a3cbf58dafbcfa726f9474f083a7cfd",
+  "runner_source_commit": "a5ca3e74d72af81c3bd2a58e55f2d8c066e86de3",
+  "accepted_calls": 1,
+  "budget_total_used": 2,
+  "budget_max": 4,
+  "seed": 47,
+  "steps": 40,
+  "cfg": 1,
+  "recipe": "torch_sdpa/eager/allresident",
+  "references": 1,
+  "size": "1536x864",
+  "images": {
+    "original_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/input-1.png",
+    "original_sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+    "raw_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/raw-native.png",
+    "raw_sha256": "a79e4dbb241fc7358657343e913a272908fdf2bb02ef29cddb0a346092a16924",
+    "raw_alpha_extrema": [
+      251,
+      255
+    ],
+    "delivered_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/model/delivered.png",
+    "delivered_sha256": "8d8de5dc90db97fd8b6e790b477ebf4ef3178b8b6301a35c9d0c9bf95297798c",
+    "delivered_mode": "RGB",
+    "delivered_opaque": true,
+    "dimensions": [
+      1536,
+      864
+    ],
+    "rgb_pixels_equal": true
+  },
+  "dispatch_utc": "2026-09-23T13:38:15.033367+00:00",
+  "elapsed_seconds": 36.475666003003425,
+  "minimum_ada_free_mib": 7934,
+  "minimum_ada_free_percent": 16.145706145706146,
+  "peak_ada_device_used_mib": 41206,
+  "minimum_host_available_percent": 97.23904782602672,
+  "swap_delta_pages": {
+    "pswpin": 0,
+    "pswpout": 0
+  },
+  "all_container_swap_events_unchanged": true,
+  "settlement_checks": {
+    "api_remains_stopped": true,
+    "decoded_success": true,
+    "fresh_guards_and_reserve": true,
+    "owned_probe_absent": true,
+    "same_backend_contexts": true,
+    "same_models": true,
+    "telemetry_complete": true
+  },
+  "native_operation_settled": true,
+  "qualification_memory_pass": true,
+  "admission_receipt_sha256": "0b076c4a42dc67bf8ad381fcb92754561e5bed9c2d9d71176cf023bee095adde",
+  "settled_predecessor_receipt_sha256": "a5d4ec6b6ed0e90121f77febd29b1ac1d839b2c01d6756221d7a6433fb2245c1",
+  "settled_case_receipt_sha256": "2340e3458a7b572ea305760f012fd36c31bb886025fc376916c48e4526260bae",
+  "api_intentionally_stopped": true,
+  "public_ready": false,
+  "profile_enabled": false,
+  "root_visual_review": "PASS creative/non-pixel-exact",
+  "metrics_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/metrics.json",
+  "telemetry_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C02/telemetry.jsonl",
+  "asgi_cleanup": "UNPROVEN; original failed shutdown retained",
+  "budget_total_used_at_final_checkpoint": 4
+}

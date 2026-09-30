@@ -1,0 +1,189 @@
+{
+  "assembled_utc": "2026-09-23T04:36:27.986534+00:00",
+  "backend_container": {
+    "historical_container_identity": "Preserved only in original DEPLOYMENT-RECEIPT.json; not asserted current",
+    "id": null,
+    "identity_status": "NOT_REOBSERVED_AFTER_FINAL_RECOVERY",
+    "image_id": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
+  },
+  "boot_ownership": {
+    "backend_independent_boot": "disabled",
+    "basis": "original deployment receipt; unchanged by this local closeout",
+    "helper": "/usr/local/libexec/llm-image-backend-recover",
+    "owner": "llm-image-api.service"
+  },
+  "campaign_id": "IMAGE21-QUALIFY-20260923",
+  "capabilities_canonical_sha256": "ab0e32b0babda2cc0dffb9f88fc5567c79767e4cee7ef6f6bf8a3e86d9fa6394",
+  "closeout_task_id": "IMAGE21-CLOSEOUT-20260923",
+  "combined_source_commit": "43ed79f3905c769f449f48300c7087d7a432f989",
+  "constraints": {
+    "editing": "UNSUPPORTED_FAILED_FIDELITY",
+    "higher_sizes": "UNQUALIFIED",
+    "minimum_gpu_observed_device_free_percent": 5,
+    "minimum_host_margin_percent": 15,
+    "offload": false,
+    "quantization": false,
+    "swap": false,
+    "transparency": "UNQUALIFIED",
+    "uhd": "UNTESTED"
+  },
+  "credential_source": {
+    "path": "/data/services/secrets/llm-api-key",
+    "value_disclosed": false
+  },
+  "endpoints": {
+    "adapter": "http://127.0.0.1:30006",
+    "native_worker_only": "http://127.0.0.1:30007",
+    "private": "http://10.156.100.60:30006"
+  },
+  "evidence_mode": "LOCAL_ASSEMBLY_OF_RETAINED_EVIDENCE_NO_REQUERY",
+  "lease": {
+    "basis": "retained item_235 final recovery output; not reobserved during closeout",
+    "state": "released"
+  },
+  "provenance": {
+    "final_recovery": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-CLOSEOUT-20260923/FINAL-RECOVERY-EVIDENCE.json",
+      "sha256": "daaa98483d3eec79d7049da1e64a25275ac2515f19d32e4a852207ace3879bd8"
+    },
+    "limitations": "GETs do not expose deployed source commit or backend container ID; source identity uses retained deployment receipt/root confirmation. No fresh runtime, guard, network or future boot check.",
+    "original_deployment_receipt": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/DEPLOYMENT-RECEIPT.json",
+      "sha256": "4f2a4a9e3e5ca47a63ef5524be76897d59b906e4d31f4a240ad60debb2e5ca30"
+    },
+    "original_receipt_unmodified": true
+  },
+  "publication_commit": "Recorded separately in SOURCE-HANDOFF.json; documentation/evidence only; no redeployment needed",
+  "qualification": {
+    "installed_basis": "retained item_235 publication output",
+    "local_artifact": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/repo/reports/image21-qualify-20260923/qualification.json",
+      "sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b"
+    },
+    "local_vs_worker2_capabilities": "PASS exact profiles, evidence hashes and pins",
+    "profile_count": 6,
+    "profiles": [
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "29250a7887d4bd9688a4ebd2c3f0720db1960116012f31fa553dddf37656aad4",
+        "native_size": "1024x1024",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x1024",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f4c2f070cb44477dcacd671f46646cfa39e0374e859c808ec7c78c9cc3a35af1",
+        "native_size": "1024x576",
+        "operation": "generation",
+        "references": 0,
+        "size": "1024x576",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "0c5536fb0a6ec34bb972e84ae05a1d01bcf8a96281220f3f31c9c08ddbda16ef",
+        "native_size": "1216x704",
+        "operation": "generation",
+        "references": 0,
+        "size": "1216x704",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f017918f5885133522197bb5765201788e66a1423c4303992a65887eabd520e3",
+        "native_size": "1472x832",
+        "operation": "generation",
+        "references": 0,
+        "size": "1472x832",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "f91eaca9a0d8583081ccaa9d62d48bd7511bd5b99b8193a26abd7106f27e3c83",
+        "native_size": "1760x992",
+        "operation": "generation",
+        "references": 0,
+        "size": "1760x992",
+        "transparent": false
+      },
+      {
+        "crop_bottom": 0,
+        "evidence_sha256": "cbf6b540d0d8aabe2db226228fe4ec9531c99e3abc3e8473c18a4a6a29f5153e",
+        "native_size": "1920x1088",
+        "operation": "generation",
+        "references": 0,
+        "size": "1920x1088",
+        "transparent": false
+      }
+    ],
+    "sha256": "d8d38a8212bb2f040b979f899e74564af541b36a83832b21122f280792b3ec7b"
+  },
+  "readiness": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "readiness_observed_utc": "2026-09-23T04:31:40.238013+00:00",
+  "residency": {
+    "closeout_vm_contact_count": 0,
+    "image_device": "dedicated Ada",
+    "text_containers": "both original Blackwell Qwen containers preserved per retained evidence and root handoff",
+    "text_contexts": [
+      480000,
+      480000
+    ],
+    "three_models": "warm/resident at retained final restored state; unchanged by closeout"
+  },
+  "reviewed_upstream_repair": {
+    "count": 1,
+    "file_repaired_sha256": "7686af293bc4cb31be87c8a188c10e28e49b011c3acb7bac914ca83c5b9ec9de",
+    "parent_image_id": "sha256:4029affd6e90f49e03aa0d132c077508eedbfc266cde12589584da4bbb9d6e83",
+    "patch_sha256": "9522814f5c5c1ccc0e3fc1704172b9249f2551a755a4a70f5397d7e439008c6e",
+    "reason": "NVML resolve authoritative CUDA_VISIBLE_DEVICES GPU UUID to current index"
+  },
+  "runtime_configuration": {
+    "basis": "retained original deployment receipt; no local closeout observation",
+    "checkpoint_path": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+    "network_policy": {
+      "host_publish": "127.0.0.1:30007:30007/tcp",
+      "internal": false,
+      "name": "llm-image-backend-private",
+      "native_http_bind_inside_namespace": "0.0.0.0:30007",
+      "reason": "InternalbridgepublishunsupportedonDocker29.6.1; dedicatedordinarybridgewithsoleloopbackpublication",
+      "unpublished_internal_ports": [
+        30008,
+        30009,
+        30010
+      ]
+    }
+  },
+  "runtime_pins": {
+    "model": "qwen-image-2.1",
+    "model_id": "Qwen/Qwen-Image-2.1",
+    "model_revision": "790c92633540aa0cb11d9abf19eb46d861714758",
+    "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+    "runtime_revision": "0cd8be351d0825488f4b81c8931167bbab618eca"
+  },
+  "schema_version": 1,
+  "session_id": "01a0cc8a-e51c-7eb1-b39b-775655d137ff",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "status": "FINAL_READY_SIX_OPAQUE_GENERATION_PROFILES",
+  "worker2_final": {
+    "api_call_count": 4,
+    "capabilities": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/worker2-final-evidence/FINAL-GET-CAPABILITIES.json",
+      "sha256": "44d3e771a57b667a0d06bec7d0836dafe3ecb23f611a8cc0c68d582f395399e5"
+    },
+    "post_count": 0,
+    "reconciliation": "PASS_LOCAL_WORKER1; original Worker2 pending artifact field remains historical; Worker2 independent reconciliation not implied",
+    "result": {
+      "path": "/Users/agent/CodexProjects/llm-orchestration/tasks/IMAGE21-QUALIFY-20260923/worker2-final-evidence/FINAL-GET-RESULT.json",
+      "sha256": "f9862059eb12b70cb849cf466bf9cc206c549beda02fa5eb359b1598fd1bb97b"
+    },
+    "retry_count": 0,
+    "status": "PASS"
+  }
+}

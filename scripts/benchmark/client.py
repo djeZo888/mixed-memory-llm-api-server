@@ -413,7 +413,7 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
         deadline = dispatched + timeout
         send.request_clock = {"dispatch_monotonic_s": dispatched, "deadline_monotonic_s": deadline,
                               "timeout_seconds": timeout, "basis": "HTTP_transport_dispatch",
-                              "terminal_reason": "INFLIGHT", "http_dispatched": True}
+                              "terminal_reason": "INFLIGHT", "http_dispatched": False}
         connection = http.client.HTTPConnection(url.hostname, url.port, timeout=timeout)
         response = None
         deadline_expired = threading.Event()
@@ -446,11 +446,21 @@ def http_transport(base_url, api_key, *, clock=time.monotonic, cancel_event=None
         try:
             if cancel_event is not None and cancel_event.is_set():
                 raise HarnessError("resource safety cancellation")
+            connection.connect()
+            connection.auto_open = 0
+            if cancel_event is not None and cancel_event.is_set():
+                raise HarnessError("resource safety cancellation before send")
+            if admission_deadline_epoch is not None and time.time() >= admission_deadline_epoch:
+                raise HarnessError("admission expired before send")
+            send.request_clock["http_dispatched"] = True
+            send.request_clock["send_started_monotonic_s"] = clock()
             connection.request("POST", "/v1/chat/completions", body=body,
                                headers={"Authorization": "Bearer " + api_key,
                                         "Content-Type": "application/json", "Accept": media_type,
                                         "Accept-Encoding": "identity"})
+            send.request_clock["body_sent_monotonic_s"] = clock()
             response = connection.getresponse()
+            send.request_clock.update(headers_monotonic_s=clock(), http_status=response.status)
             if response.status != 200 or response.getheader("Content-Type", "").split(";")[0] != media_type:
                 raise HarnessError("HTTP status/content type failed")
             sock = connection.sock or getattr(getattr(response.fp, "raw", None), "_sock", None)

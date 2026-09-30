@@ -1,0 +1,22 @@
+{
+  "status": "R6_STAGED_ONLY_NOT_DISPATCHED",
+  "utc": "2026-09-27T13:58:45.584128+00:00",
+  "base": "/data/build/H016-20260927/worker1-r6",
+  "log": "/data/logs/H016-20260927/worker1-r6",
+  "source_hashes": {
+    "candidate_owner.py": "af03d05a1ba66ede3d06939b62e548d4d5a76847d56c6728e92bafa379e86d5f",
+    "benchmark.py": "c61f91a72c7d147efc359f02fdeba6fff9a972a3295a71e8556f551536bd1490",
+    "inspect_gguf.py": "bc76625dc1e370db29036fc8218eac82bea414e73dce6daa2b3bd43e650acba4",
+    "private_proxy.py": "4d76bff2e2330c3ca5675f0c2c6413b9dc945d62fe11cb56e678bdb89d9c1317",
+    "launch_r6.py": "b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01",
+    "profile_perf.py": "c757707c6b6edc0208669ade5bd2edfd4b6076233041e50aeb929646a3cc60df",
+    "telemetry.py": "2c0e7483845530cf9b669d699c67b574e0f4a8cbba21dd6c511bc7ddf7f817aa",
+    "native_identity.py": "0ba1f5781585ba887bd639e950870976e0ecb159caa674cb72dfa41cc48d3518",
+    "LAUNCH.json": "b235562819a543ca77c819ba2077a2c7b688c6e79706cbdcf1590645986791ae",
+    "verify_retained.py": "738a06ba04ecc6246b793eb8d4d4d0a2ac44cb5383dfe8a1697e92809e8557fd",
+    "profile_activity.py": "908b571f49b53edd7f12bf2bf9e51078f28d6648f05cac63ab0eedaf48bb879a",
+    "numactl": "f3944bcd7848d64424f8daf27f350b03d7f3281b2fb9be5eaaba0ddd0e72efb8",
+    "libnuma.so.1.0.0": "02d7582c5d391e460e56aa67a414360e3183b968206645b9123f9dc7bff5d009",
+    "HARNESS-QUIET-01.json": "2858831152358589f305a70aab6f1bcb39a6206ccd522889188dfc0bc2112200"
+  }
+}

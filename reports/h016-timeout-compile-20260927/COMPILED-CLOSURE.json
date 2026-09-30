@@ -1,0 +1,214 @@
+{
+  "cli": {
+    "inputs": 6360,
+    "outputs": 97,
+    "changedInputOutputs": {
+      "packages/agent-core/src/pi-turn-runner/llm-retry.ts": [
+        "timeout-dist/chunks/chunk-5I3AUXVH.js"
+      ],
+      "packages/agent-core/src/pi-turn-runner/llm.ts": [
+        "timeout-dist/chunks/chunk-5I3AUXVH.js"
+      ],
+      "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts": [
+        "timeout-dist/chunks/chunk-JSRUTW5Q.js"
+      ]
+    }
+  },
+  "nativeProbe": {
+    "inputs": 5824,
+    "outputs": 1,
+    "changedInputOutputs": {
+      "packages/agent-core/src/pi-turn-runner/llm-retry.ts": [
+        "../native-probes.mjs"
+      ],
+      "packages/agent-core/src/pi-turn-runner/llm.ts": [
+        "../native-probes.mjs"
+      ],
+      "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts": [
+        "../native-probes.mjs"
+      ]
+    }
+  },
+  "entrypoints": {
+    "timeout-dist/chunks/run-exec-command-FLKZCHMV.js": "packages/tui/src/cli/run-exec-command.ts",
+    "timeout-dist/chunks/run-acp-command-SECICNDR.js": "packages/tui/src/cli/run-acp-command.ts",
+    "timeout-dist/chunks/auth-command-P7MT6D24.js": "packages/tui/src/cli/auth-command.ts",
+    "timeout-dist/chunks/update-AVPFQESR.js": "packages/tui/src/cli/update.ts",
+    "timeout-dist/chunks/provider-command-DOZYYISL.js": "packages/tui/src/cli/provider-command.ts",
+    "timeout-dist/chunks/plugin-command-IJV2ODOD.js": "packages/tui/src/cli/plugin-command.ts",
+    "timeout-dist/chunks/telemetry-command-UROBFVUH.js": "packages/tui/src/cli/telemetry-command.ts",
+    "timeout-dist/chunks/main-OSVMQ5OC.js": "packages/tui/src/cli/main.ts",
+    "timeout-dist/chunks/pdfjs-DZ2PGRGA.js": "node_modules/unpdf/dist/pdfjs.mjs",
+    "timeout-dist/chunks/dist-6WOFPJ4N.js": "node_modules/unpdf/dist/index.mjs",
+    "timeout-dist/chunks/application-PRMR6K6E.js": "packages/tui/src/update/application.ts",
+    "timeout-dist/chunks/questionnaire-bridge-BZXFEZF4.js": "packages/local-runtime/src/channels/questionnaire-bridge.ts",
+    "timeout-dist/chunks/wechat-onboard-4XE7NYS7.js": "packages/local-runtime/src/channels/adapters/wechat/wechat-onboard.ts",
+    "timeout-dist/chunks/package-contract-YOU3HUZL.js": "packages/local-runtime-v2/src/service/plugin-system/plugin/package/package-contract.ts",
+    "timeout-dist/chunks/lifecycle-Y2OERDSX.js": "packages/tui/src/runtime/lifecycle.ts",
+    "timeout-dist/chunks/launcher-6FLR7U4P.js": "packages/tui/src/tui/launcher.ts",
+    "timeout-dist/chunks/google-AQFS3MEQ.js": "third_party/pi-mono/packages/ai/src/providers/google.ts",
+    "timeout-dist/chunks/google-vertex-Z2IMSY77.js": "third_party/pi-mono/packages/ai/src/providers/google-vertex.ts",
+    "timeout-dist/chunks/otel-AP2RY7DF.js": "node_modules/@mistralai/mistralai/esm/extra/observability/otel.js",
+    "timeout-dist/chunks/telemetry-L5PV7HTI.js": "node_modules/@mistralai/mistralai/esm/extra/observability/telemetry.js",
+    "timeout-dist/chunks/mistral-64UPPRPO.js": "third_party/pi-mono/packages/ai/src/providers/mistral.ts",
+    "timeout-dist/chunks/openai-codex-responses-YEEPR7XB.js": "third_party/pi-mono/packages/ai/src/providers/openai-codex-responses.ts",
+    "timeout-dist/chunks/openai-completions-5QEH5UYZ.js": "third_party/pi-mono/packages/ai/src/providers/openai-completions.ts",
+    "timeout-dist/chunks/openai-responses-G3WSWQEM.js": "third_party/pi-mono/packages/ai/src/providers/openai-responses.ts",
+    "timeout-dist/chunks/tools-CXGD3XL7.js": "third_party/pi-mono/packages/coding-agent/src/core/tools/index.ts",
+    "timeout-dist/chunks/clipboard-image-FESPGJ37.js": "packages/tui/src/host/clipboard-image.ts",
+    "timeout-dist/chunks/openrouter-JPWMAJDU.js": "third_party/pi-mono/packages/ai/src/providers/images/openrouter.ts",
+    "timeout-dist/chunks/anthropic-R2QS7OHR.js": "third_party/pi-mono/packages/ai/src/providers/anthropic.ts",
+    "timeout-dist/chunks/azure-openai-responses-ZZMAOELS.js": "third_party/pi-mono/packages/ai/src/providers/azure-openai-responses.ts",
+    "timeout-dist/chunks/dist-2FNSAJ5N.js": "node_modules/https-proxy-agent/dist/index.js",
+    "timeout-dist/chunks/multipart-parser-66BPXRY4.js": "node_modules/node-fetch/src/utils/multipart-parser.js",
+    "timeout-dist/chunks/src-6SUVH73H.js": "node_modules/node-fetch/src/index.js",
+    "timeout-dist/cli.js": "packages/tui/src/index.ts",
+    "timeout-dist/image-preview-worker.js": "packages/tui/src/host/image-preview-worker.ts",
+    "timeout-dist/mcode-tools.js": "packages/tui/src/cli/mcode-tools-entry.ts",
+    "timeout-dist/matrix-mcp-stdio.js": "packages/agent-tools/src/desktop/matrix-mcp-stdio.ts",
+    "timeout-dist/chunks/src-VXH5DDYN.js": "packages/config/src/index.ts",
+    "timeout-dist/chunks/install-source-Q4PT5XYY.js": "packages/tui/src/update/install-source.ts",
+    "timeout-dist/chunks/data-dir-TG46ZS4H.js": "packages/tui/src/runtime/data-dir.ts",
+    "timeout-dist/chunks/photon_rs-NMBAXMIE.js": "node_modules/@silvia-odwyer/photon-node/photon_rs.js"
+  },
+  "reachableOutputs": 97,
+  "result": "PASS",
+  "baseImage": "sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022",
+  "patchedRevision": "b948889814648ad761f40a18260ddbe6351c6bbf",
+  "changedFiles": [
+    {
+      "path": "/opt/minimax/chunks/chunk-5I3AUXVH.js",
+      "oldSha256": null,
+      "sha256": "79585ef6d1d33f5686b693862ec99ef2f03573d7c57ca7fc36190323127845dc",
+      "bytes": 5265667
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-GG6JJWLK.js",
+      "oldSha256": null,
+      "sha256": "4dc53c7c03f0aa75a0310969789b8e343dbaf7db778c498cf02a60d77526139d",
+      "bytes": 4206064
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-JSRUTW5Q.js",
+      "oldSha256": null,
+      "sha256": "793a9857675d4f7ed5c0f0e0ccbcd8cb8795d1c7f9e309a62332b91cbb8005b5",
+      "bytes": 562560
+    },
+    {
+      "path": "/opt/minimax/chunks/chunk-LOUEGI5O.js",
+      "oldSha256": null,
+      "sha256": "246bf7a18423ed9184ceafa733a30b7ddfe760a91306c96c841514ead0ce3e14",
+      "bytes": 13436
+    },
+    {
+      "path": "/opt/minimax/chunks/launcher-6FLR7U4P.js",
+      "oldSha256": null,
+      "sha256": "8fe835c10bd035db65929e8fdbb48691006d174b172be2b9deda7856435bdb97",
+      "bytes": 1404541
+    },
+    {
+      "path": "/opt/minimax/chunks/lifecycle-Y2OERDSX.js",
+      "oldSha256": null,
+      "sha256": "8512cf8e1960f0641cd085934ce840eed83e613951f36c791ff7fd38d5e9d922",
+      "bytes": 1801
+    },
+    {
+      "path": "/opt/minimax/chunks/main-OSVMQ5OC.js",
+      "oldSha256": null,
+      "sha256": "64246ea6e9999592c9b7abef7a1a312f0a0551f7df4d4f2119f916e9fe1e5dda",
+      "bytes": 56169
+    },
+    {
+      "path": "/opt/minimax/chunks/openai-completions-5QEH5UYZ.js",
+      "oldSha256": null,
+      "sha256": "ef25b5bb7a1d8815c3cfe53e1026f42e29595985590682f95d14b300a9ac0d7b",
+      "bytes": 1086
+    },
+    {
+      "path": "/opt/minimax/chunks/plugin-command-IJV2ODOD.js",
+      "oldSha256": null,
+      "sha256": "ef4a6ea40a9b3612073fc8931bd6a382dff05a15c838032c31db59fc3db0eae1",
+      "bytes": 4529
+    },
+    {
+      "path": "/opt/minimax/chunks/provider-command-DOZYYISL.js",
+      "oldSha256": null,
+      "sha256": "688c5bcdef672f0e2487e4cbbc9f54b168bb414016aaaa0566d2b0ec8ec1c864",
+      "bytes": 5104
+    },
+    {
+      "path": "/opt/minimax/chunks/run-acp-command-SECICNDR.js",
+      "oldSha256": null,
+      "sha256": "a439d185528f6bc0b25d4a63147d2019a77da95e2a502c28d1b58fc9bd6391db",
+      "bytes": 606400
+    },
+    {
+      "path": "/opt/minimax/chunks/run-exec-command-FLKZCHMV.js",
+      "oldSha256": null,
+      "sha256": "b9bfb279754734040e0e342ede5c588b6a1e90f7c3f3449935ebe02bf00f53d6",
+      "bytes": 42691
+    },
+    {
+      "path": "/opt/minimax/cli.js",
+      "oldSha256": "105a3452bae59390badce8c6515576e64acf6a846ba1394200d4758da60245f1",
+      "sha256": "847f861777d64022c9720c70d18fac2b30ae6f24c8c1bbc89f236c7064e6349f",
+      "bytes": 1725
+    },
+    {
+      "path": "/opt/minimax/metafile.json",
+      "oldSha256": null,
+      "sha256": "3250b24240983cab5344f3b1c684b56236f582aedc02f07ac65d37720aeb4baf",
+      "bytes": 5947208
+    },
+    {
+      "path": "/opt/minimax/native-probes.mjs",
+      "oldSha256": "8ce558a29366e96e2fcb9ea35079f0125614b06a291830ee523df167efbeaa09",
+      "sha256": "47ece1e167da8202765b2b97ee98be3995aeceef38b0a0f226ed9908e928bee8",
+      "bytes": 29532780
+    },
+    {
+      "path": "/opt/minimax/native-probes.mjs.metafile.json",
+      "oldSha256": "7590636e00614873d2f9c1edaeb445d5e8fb4bb50d8cc433b9c035e8aab1e817",
+      "sha256": "6734eed76bea22416d486851a866ca32f89da0fee39de3fe9d7b6634b7cc404c",
+      "bytes": 5421278
+    },
+    {
+      "path": "/opt/minimax/patched-source-revision.txt",
+      "oldSha256": "325192542e1578a31b24b3c1a61e88f977f3431f7d1c278b5ac174a98261ec1b",
+      "sha256": "c12bfaf736a8753f97d01a0b50fcecf268c61a0cfc53d7d285456343cebabd96",
+      "bytes": 41
+    },
+    {
+      "path": "/opt/minimax/release.json",
+      "oldSha256": "deb244ba44e475f5c3f7f6309486cdd52206da28e107151e1000f92837937fde",
+      "sha256": "4fefcf34c3be950e81802fbdffabf31c735ec3c6be73ef450b34354231c99b75",
+      "bytes": 129
+    },
+    {
+      "path": "/opt/minimax/minimax-code-0.5.1.tar.gz.sha256",
+      "oldSha256": "ed4090eb77d192880f05489f00c104f8a17222eb05709d109c117d3c14759c4a",
+      "sha256": "873b5a3073b3bc321245035a182167793e93d6b895b32cbedfd7d9ce5a7181a8",
+      "bytes": 102
+    }
+  ],
+  "unchangedPackagedFiles": 910,
+  "immutableBaseInventoryEntries": 26011,
+  "toolsDependenciesChanged": [],
+  "archiveSha256": "d0a190884764706610f7c1124a78cd9783439f21587555155dcb58117a46f8cd",
+  "archive": "minimax-code-0.5.1-timeout14.tar.gz",
+  "metafiles": {
+    "cli": "3250b24240983cab5344f3b1c684b56236f582aedc02f07ac65d37720aeb4baf",
+    "probe": "6734eed76bea22416d486851a866ca32f89da0fee39de3fe9d7b6634b7cc404c"
+  },
+  "testBridgePrefixSha256": "47ece1e167da8202765b2b97ee98be3995aeceef38b0a0f226ed9908e928bee8",
+  "testBridgeSha256": "a3811d65a67400eb925ddd7b9edacd9422155c430d7e9823d839aff242bfcbff",
+  "finalImageBuilt": false,
+  "actualEntrypoints": [
+    "timeout-dist/cli.js",
+    "timeout-dist/image-preview-worker.js",
+    "timeout-dist/mcode-tools.js",
+    "timeout-dist/matrix-mcp-stdio.js"
+  ],
+  "cliReachableOutputs": 94,
+  "allActualEntrypointsReachAllOutputs": true
+}

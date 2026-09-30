@@ -1,0 +1,208 @@
+{
+  "schema": 1,
+  "task": "H032-ACTIVATE01-20260929",
+  "worker": "mac-worker1",
+  "nativeThreadId": "01a0ecfd-8a08-7c10-acfc-7193a7dfe8e0",
+  "writtenUtc": "2026-09-29T11:56:59.832224+00:00",
+  "observedUtc": "2026-09-29T11:54:16.423844+00:00",
+  "status": "MIMO_ADMITTED_LOADING_IMAGE_FAILED_CLOSED",
+  "noMoreLifecycleWrites": true,
+  "readiness": {
+    "mimo": "LOADING",
+    "image": "FAILED_CLOSED_API_STOPPED",
+    "threeQwens": "UNCHANGED_NATIVE_IDENTITIES"
+  },
+  "mimo": {
+    "sourceCommit": "dd848b9aa5571877e665e11659b47af3c8abaf6e",
+    "unit": {
+      "MainPID": "531588",
+      "ControlPID": "0",
+      "Result": "success",
+      "ExecMainStartTimestamp": "Tue 2026-09-29 11:50:16 UTC",
+      "ControlGroup": "/system.slice/llm-frontier-mimo.service",
+      "Id": "llm-frontier-mimo.service",
+      "ActiveState": "active",
+      "SubState": "running",
+      "ActiveEnterTimestamp": "Tue 2026-09-29 11:50:16 UTC",
+      "Job": "",
+      "InvocationID": "57777f7b609144678201b2171020b513"
+    },
+    "launchId": "e5984f1e7e08434c89a7367a07b048fa",
+    "native": {
+      "container_id": "c1254995061955ceb7bf0474602c1854a3645f42a67f22a912094f6fa6fbe162",
+      "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+      "name": "llm-frontier-mimo-production",
+      "pid": 533410,
+      "pid_start_ticks": "4680537",
+      "started_at": "2026-09-29T11:50:19.046377739Z"
+    },
+    "installedOwner": {
+      "sha256": "2406d9a0c0c00aa7d4a7212648ee22fe63a45fcff9d0a9d707b6346f13d42134",
+      "mode": "0o600",
+      "uid": 0,
+      "gid": 0,
+      "bytes": 126767,
+      "mtimeNs": 1790682615612518157
+    },
+    "installedManifest": {
+      "sha256": "059d289ee04526e793f5d75b04d5615c1f63f45b2c1e0bb4b8197c9fcc06e514",
+      "mode": "0o600",
+      "uid": 0,
+      "gid": 0,
+      "bytes": 23322,
+      "mtimeNs": 1790682615613518161
+    },
+    "selection": {
+      "sha256": "f9095bf3dc6e82022f7343df0ef183274080887668cbcfa55b389f0344b75f99",
+      "mode": "0o600",
+      "uid": 0,
+      "gid": 1001,
+      "bytes": 178,
+      "mtimeNs": 1790682616416521275
+    },
+    "amendmentSha256": "1e8beefbaa7ae97ebc7aee156ea0903cd3b4d23a77ab1c0095b7bcf76cc6ab22",
+    "consumed": {
+      "settled-source-992bf979-efae-495b-9ab2-26e75ed5c5d0-9315a02f73288d9f6041b47316008fdf7502d7755be66278fd4ce0ec0ee0a9e9-consumed.json": {
+        "sha256": "9b01b664b04a40fe156e7a90d86e4333b0755e76691b61a19b02603f60aa1d91",
+        "value": {
+          "recovery_sha256": "e84d07df857f6ff3dc09ca5267373787e774b81c7471f7b4c1ab8b9b214c2a1c",
+          "schema_version": 1,
+          "successor_launch_id": "e5984f1e7e08434c89a7367a07b048fa",
+          "supervisor": {
+            "invocation_id": "57777f7b609144678201b2171020b513",
+            "pid": 531588,
+            "unit": "llm-frontier-mimo.service"
+          }
+        }
+      }
+    },
+    "normalStartCount": 1,
+    "admissionObserved": true,
+    "earliestUsefulReadinessCheckUtc": "2026-09-29T12:02:00Z",
+    "readinessTimeIsEstimate": true
+  },
+  "image": {
+    "sourceCommit": "7a781eb12226df3e6ebb8ca3495787f578ef38ee",
+    "helperSha256": "069a6eb7c49b39b29be013c50d7c9ed245400cf41da8a1ce80e4b519a89a53df",
+    "planSha256": "d4d9a0ce01f6c7cc6ca7a950fa10232d20eadaa448f7bdfb4599c8720921d31e",
+    "attemptId": "32a3ea39cefa48a598ca64c2ef2e6427",
+    "helperExitCode": 1,
+    "failure": "registered_storage_refused",
+    "detail": "unsafe_storage_json: helper promotes mode0400 config; pinned reader requires exact0600",
+    "boundary": "reconcile_install after both source/config replacements; before handoff",
+    "installedService": {
+      "sha256": "6b7ac0a1ff946b3b7be62caf24926b33adad566f595abd5398e7db3486b88fa6",
+      "mode": "0o400",
+      "uid": 0,
+      "gid": 1001,
+      "bytes": 73110,
+      "mtimeNs": 1790682781355188879
+    },
+    "installedConfig": {
+      "sha256": "a3ca37b0deb2dcc2af5421dde3b5e204dc850ab7034665e576724eca5b1a632a",
+      "mode": "0o400",
+      "uid": 0,
+      "gid": 1001,
+      "bytes": 5533,
+      "mtimeNs": 1790682781377188972
+    },
+    "units": {
+      "llm-image-api.service": {
+        "MainPID": "0",
+        "ControlPID": "0",
+        "Result": "success",
+        "ExecMainStartTimestamp": "Tue 2026-09-29 09:55:17 UTC",
+        "ControlGroup": "",
+        "Id": "llm-image-api.service",
+        "ActiveState": "inactive",
+        "SubState": "dead",
+        "ActiveEnterTimestamp": "Tue 2026-09-29 09:55:17 UTC",
+        "Job": "",
+        "InvocationID": "32af9e02739e449a84621814de680205"
+      },
+      "llm-image-backend.service": {
+        "MainPID": "0",
+        "ControlPID": "0",
+        "Result": "exit-code",
+        "ExecMainStartTimestamp": "Tue 2026-09-29 09:55:20 UTC",
+        "ControlGroup": "",
+        "Id": "llm-image-backend.service",
+        "ActiveState": "failed",
+        "SubState": "failed",
+        "ActiveEnterTimestamp": "",
+        "Job": "",
+        "InvocationID": "6e8aa276397a451cb5a480b2c0aa90ea"
+      }
+    },
+    "recovery": {
+      "status": "active",
+      "phase": "settled_awaiting_reviewed_activation",
+      "token": "6b0b598ef83b4a39977cb1d508c7cbda",
+      "pid": 586481,
+      "config_sha256": "efdad3e7ee928651f831a21c8345b3932ff39a6b9e26ab4e0776cadc08b28bc3",
+      "reconciliation": {
+        "archive_sha256": "3b62733dde73a552ce4574728b21db082a58bed2e027a3b80a8449b8d86c6d4c",
+        "case": "h032-image-recover01",
+        "plan_sha256": "d4d9a0ce01f6c7cc6ca7a950fa10232d20eadaa448f7bdfb4599c8720921d31e"
+      }
+    },
+    "receipts": {
+      "archive-manifest.json": {
+        "sha256": "3b62733dde73a552ce4574728b21db082a58bed2e027a3b80a8449b8d86c6d4c",
+        "mode": "0o400",
+        "uid": 0,
+        "gid": 1001,
+        "bytes": 2422,
+        "mtimeNs": 1790682772000149671
+      },
+      "consumed.json": {
+        "sha256": "172aaaf597daa953ad5ce4139ee18fc37329edfde2b6d8fae7260483fce934ca",
+        "mode": "0o400",
+        "uid": 0,
+        "gid": 1001,
+        "bytes": 283,
+        "mtimeNs": 1790682772429151466
+      },
+      "settlement.json": {
+        "sha256": "49b43a55cf83539dc19137a4d22b39219d2ebb997b46695123a1c04321d0843c",
+        "mode": "0o400",
+        "uid": 0,
+        "gid": 1001,
+        "bytes": 980,
+        "mtimeNs": 1790682780854186776
+      }
+    },
+    "handoffExists": false,
+    "handoffConsumedExists": false,
+    "normalApiStartCount": 0,
+    "oldNativePhysicalAbsence": true,
+    "helperPidAbsent": true,
+    "fullSourceMapsMatch": true,
+    "newWarmAttempted": false
+  },
+  "preserved": {
+    "threeQwenIdsUnchanged": true,
+    "originalMiMoHistoryFilesMatched": 9,
+    "sourceRuntimeWeightsProfilesContextHardwareChangesOutsideReviewedLeaves": false,
+    "publicMaintenanceAndCapabilityGates": "UNCHANGED_NO_APP_CONFIG_WRITES",
+    "noAutomaticRetry": true,
+    "noBaselineRestore": true,
+    "noGitHubPush": true
+  },
+  "evidence": {
+    "finalBoundarySha256": "e09b76ed0431add10a83c48a4b754cae394adc5af5f47a22b962a57394ecc8f3",
+    "privateExactArchiveSha256": "34585550975d550d68595548974f6ca5157a4b71acc406af6a132649336f7ac3",
+    "privateArchiveFiles": 57
+  },
+  "commandCompletion": {
+    "mimoPrepare": 0,
+    "mimoInstallActivateStart": 0,
+    "imageApiPause": 0,
+    "imageStage": 0,
+    "imageHelper": 1,
+    "finalReadback": 0,
+    "privateExport": 0,
+    "sshChildren": "ALL_RETURNED",
+    "nativeWrapperExit": "OBSERVABLE_BY_COORDINATOR_AFTER_FINAL_RETURN"
+  }
+}

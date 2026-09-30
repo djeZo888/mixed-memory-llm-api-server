@@ -1,0 +1,35 @@
+{
+  "utc": "2026-09-28T01:01:23.318082+00:00",
+  "status": "INACTIVE_LAST_RETIMED_SOURCE_ONLY",
+  "old_client_sha256": "1c2b1f9dfc913bad7122d6c621e5d8dd0e14566cf2f7a68118397fb319b1a54c",
+  "new_client_sha256": "28d61829c6b28067b59db4520ef72a94d5b230cfb28058f2cfe8984525b1f63b",
+  "source_sha256": {
+    "/data/build/H018-20260928/worker1-last950k/LAST-GO.INACTIVE.json": "01143b9cb7b9730ac1d48730354201227ed8d1da5418641cc22c30cd4596560f",
+    "/data/build/H018-20260928/worker1-last950k/client.py": "28d61829c6b28067b59db4520ef72a94d5b230cfb28058f2cfe8984525b1f63b",
+    "/data/build/H018-20260928/worker1-last950k/h018-last950k.service": "a32a14454127300aa14428511b8e8ea7bc4c4868959791be453a13d9c4378a62",
+    "/data/build/H018-20260928/worker1-last950k/reader.py": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+    "/etc/systemd/system/h018-last950k.service": "a32a14454127300aa14428511b8e8ea7bc4c4868959791be453a13d9c4378a62"
+  },
+  "exact_two_clock_substitutions": true,
+  "latest_admission_utc": "2026-09-28T01:30:00Z",
+  "active_cap_seconds": 28800,
+  "unit_before": {
+    "MainPID": "0",
+    "ActiveState": "inactive",
+    "SubState": "dead",
+    "UnitFileState": "static",
+    "InvocationID": ""
+  },
+  "authority_and_attempt_absent": [
+    "/data/build/H018-20260928/worker1-last950k/ROOT-GO.json",
+    "/data/build/H018-20260928/worker1-last950k/LAST-GO.json",
+    "/data/build/H018-20260928/worker1-last950k/AUTHORITY.json",
+    "/data/logs/H018-20260928/worker1-last950k/DISPATCH-ATTEMPT.json",
+    "/data/logs/H018-20260928/worker1-last950k/DISPATCH.json",
+    "/data/logs/H018-20260928/worker1-last950k/CLIENT.json",
+    "/data/logs/H018-20260928/worker1-last950k/LAST-64K-REQUEST.json",
+    "/data/logs/H018-20260928/worker1-last950k/LAST-near950K-REQUEST.json"
+  ],
+  "manager_reload": false,
+  "dispatched": false
+}

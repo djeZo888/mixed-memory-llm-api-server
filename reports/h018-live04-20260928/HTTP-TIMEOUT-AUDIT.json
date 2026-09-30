@@ -1,0 +1,94 @@
+{
+  "status": "SOURCE_AUDIT_COMPLETE_NO_RUNTIME_CHANGE",
+  "utc": "2026-09-28T00:51:29.698528+00:00",
+  "runtime_commit": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+  "runtime_image": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+  "scope": "Pinned native source and retained proxy/client source semantics. Static source audit, not a completed long request or independent binary attestation.",
+  "native_files": {
+    "common/arg.cpp": {
+      "sha256": "25c465a79b18a360d8bbe422feafa292ebca1f570985b21d69bbdc0f3df6e1f9",
+      "working_copy_matches_pinned_blob": true
+    },
+    "common/common.h": {
+      "sha256": "292817b2482dce5f4d23cd723ee02b0a4f1325f308e88130adda365908db7465",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-context.cpp": {
+      "sha256": "fdab7f863c6724d4afcf5c254e7350c64a8f6e6b39f132f675a93b41c037045e",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-http.cpp": {
+      "sha256": "b7a60c6bb3a6dc90a0e122b7467eba674922cae369295033a03adce3db4b5b05",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-task.cpp": {
+      "sha256": "0fd5c8df2525e61214986e8abe3fc4edbb92f5dd652c9c2bfd1bc2712218a585",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-task.h": {
+      "sha256": "413733f2c47897e9a531dbc382a72e7676d46164d92996da1f008185f059bcf2",
+      "working_copy_matches_pinned_blob": true
+    },
+    "vendor/cpp-httplib/httplib.cpp": {
+      "sha256": "e5e5666fd1ec7114c726fd9e745c25d5f4fb7c9ba668bb7b2c105bf0755ee967",
+      "working_copy_matches_pinned_blob": true
+    },
+    "vendor/cpp-httplib/httplib.h": {
+      "sha256": "8d093f6568679d72e555e935ee6b7fc24ce6aa1ab4f1c6f466726151f4a02a8b",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-http.h": {
+      "sha256": "b40dfa1b416f51b5763b0473c27ffffbb118c08233dd182e78549125441ec68a",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-queue.cpp": {
+      "sha256": "0e196113d16f130230d2cc0b232915e1f5b4f1dda184790afbfdc4986dd1fd58",
+      "working_copy_matches_pinned_blob": true
+    },
+    "tools/server/server-queue.h": {
+      "sha256": "03589a5d4feaec7910f2d11a87cf86edb932cf04ff97b1bb26a2c6b8593156b3",
+      "working_copy_matches_pinned_blob": true
+    }
+  },
+  "native_findings": [
+    {
+      "source": "common/common.h:623-624; common/arg.cpp:3548-3552; tools/server/server-http.cpp:215-217",
+      "finding": "Default native read/write timeout3600 seconds; --timeout would set both; unchanged manifest supplies no timeout override."
+    },
+    {
+      "source": "vendor/cpp-httplib/httplib.cpp:1919-1932,7325-7339,7426-7434,9958-9973",
+      "finding": "Server creates SocketStream using read/write durations. Read wait uses select_read and write wait select_write. These bound individual socket readiness waits; they are not an elapsed generation timer."
+    },
+    {
+      "source": "tools/server/server-context.cpp:4380-4387,4414-4479; tools/server/server-queue.cpp:550-575; tools/server/server-http.cpp:629-649",
+      "finding": "First result waits through rd.next(connection-close predicate). Queue timeout polls stop state, then continues; subsequent result loop may send SSE ping. Chunk provider waits for next result and only then writes. No3600-second model-computation deadline appears in the inspected path."
+    },
+    {
+      "source": "tools/server/server-http.h:49-56; vendor/cpp-httplib/httplib.cpp:9758-9762; tools/server/server-queue.h:218-220",
+      "finding": "Socket liveness is the stop predicate; reader destruction asks cancellation. This does not prove native settlement; exact terminal completion/owner cleanup remains required."
+    }
+  ],
+  "transport_findings": [
+    {
+      "source": "scripts/runtime/mimo/private_proxy.py:153-155,188-243",
+      "finding": "Proxy takes a per-request absolute8h deadline.15s incoming body and5s downstream write waits are separate. Upstream reads use remaining absolute budget. Downstream detach keeps draining exact upstream; nonterminal completion quarantines. Socket closure is not successful GPU settlement."
+    },
+    {
+      "source": "scripts/h018/last950k/client.py:97-104,145-208,301-303; scripts/h018/last950k/reader.py:118-179",
+      "finding": "LAST is bounded by one8h total across64K thennear950K, not8h per rung. Reader receives the same absolute client deadline; reads use remaining budget. A15s count cap and5s full-drain boundary are separate; DONE/usage/full HTTP drain and exact settlement stay required."
+    }
+  ],
+  "decision": "No native timeout/runtime knob change justified or made. Actual near950K transport remains untested; keep finite absolute client and ownership checks.",
+  "admission_update": {
+    "authority": "Root subsequent instruction: LAST admission01:30, total8h unchanged, only inactive source/pins later",
+    "local_candidate_sha256": "28d61829c6b28067b59db4520ef72a94d5b230cfb28058f2cfe8984525b1f63b",
+    "candidate_admit_before_epoch_max": 1790559000,
+    "remote_deployed": false,
+    "remote_LAST_authority": "ABSENT_INACTIVE",
+    "deployment_requirement": "Before LAST only: publish reviewed inactive client source and corresponding fresh source pins; no unit reload. Actual native/Sova PASS plus root LAST GO still required."
+  },
+  "raw_source_receipts": {
+    "TIMEOUT-SOURCE.json": "218ba9bc55a31e6bb9449cf83c79024b55425feb0ab871732fe3e9b8bfc56269",
+    "TIMEOUT-SOURCE-EXTRA.json": "7e628f29ab78ee15d7d24f90e261c978d2bef2624daf8ad3b28fb94505bcfb73"
+  }
+}

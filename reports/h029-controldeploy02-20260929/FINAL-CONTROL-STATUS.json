@@ -1,0 +1,238 @@
+{
+  "observedUtc": "2026-09-29T02:49:49.466033+00:00",
+  "http": 200,
+  "durationSeconds": 9.27049683199948,
+  "body": {
+    "schema_version": 2,
+    "mode": "pair",
+    "slots": {
+      "glm": {
+        "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "desired": "running",
+        "observed": "ready",
+        "observed_deployment": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "container_running": true,
+        "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+        "observed_at": 1790650189.3892744,
+        "observation_available": true,
+        "storage_available": true,
+        "state_persisted": true,
+        "failure_code": null,
+        "endpoint": {
+          "base_url": "http://10.156.100.60:30002/v1",
+          "served_model": "qwen3.8-27b-gpu0",
+          "authentication_required": true,
+          "address_scope": "private_network",
+          "server_relative": false,
+          "ready": true
+        },
+        "slot": "glm",
+        "generation": 57,
+        "generation_current": true,
+        "current_operation": null,
+        "last_operation": {
+          "id": "f70b723200954ad7826269e2fa2d2e74",
+          "kind": "start",
+          "target": "qwen38-27b-q0-480000-yarn4-bf16kv",
+          "status": "succeeded",
+          "created_at": 1790647629.5946982,
+          "updated_at": 1790647713.9747257,
+          "deadline": 1790655624.1330216,
+          "completed_at": 1790647713.974726,
+          "generation": 57,
+          "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+          "failure_code": null,
+          "observed": {
+            "selected": "qwen38-27b-q0-480000-yarn4-bf16kv",
+            "desired": "running",
+            "observed": "ready",
+            "container_running": true,
+            "active_identity": "605d7f3b07937f4549ddac1fa0d63e75c0511179b91aa1476cc4b7600b36feee",
+            "generation": 57,
+            "state_persisted": true,
+            "observed_at": 1790647713.8201773
+          },
+          "state_persisted": true,
+          "poll_url": "/control/v1/operations/f70b723200954ad7826269e2fa2d2e74",
+          "slot": "glm"
+        },
+        "freshness": "fresh",
+        "switch_effect": "interrupts_target_inference",
+        "schema_version": 2,
+        "instance_id": "qwen38-27b-q0-480000-yarn4-bf16kv",
+        "placement": "gpu0",
+        "configured_context": {
+          "tokens": 480000,
+          "provenance": "declared"
+        },
+        "readiness": "ready",
+        "degraded": false,
+        "inference_busy": {
+          "status": "unknown",
+          "running_requests": null,
+          "queued_requests": null,
+          "observed_at": null,
+          "freshness": null
+        },
+        "mutation_busy": false,
+        "switch_cost": {
+          "kind": "cold_model_load",
+          "seconds": null,
+          "provenance": "unmeasured",
+          "running_target_requires_allow_interrupt": true,
+          "atomic_drain_guarantee": false,
+          "peer_preserved": true
+        }
+      },
+      "qwen": {
+        "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "desired": "running",
+        "observed": "ready",
+        "observed_deployment": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "container_running": true,
+        "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+        "observed_at": 1790650189.3893032,
+        "observation_available": true,
+        "storage_available": true,
+        "state_persisted": true,
+        "failure_code": null,
+        "endpoint": {
+          "base_url": "http://10.156.100.60:30004/v1",
+          "served_model": "qwen3.8-27b",
+          "authentication_required": true,
+          "address_scope": "private_network",
+          "server_relative": false,
+          "ready": true
+        },
+        "slot": "qwen",
+        "generation": 53,
+        "generation_current": true,
+        "current_operation": null,
+        "last_operation": {
+          "id": "6252154567174f6db786b5902a53d6d3",
+          "kind": "start",
+          "target": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+          "status": "succeeded",
+          "created_at": 1790647761.1058764,
+          "updated_at": 1790647863.5022874,
+          "deadline": 1790655751.542988,
+          "completed_at": 1790647863.5022876,
+          "generation": 53,
+          "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+          "failure_code": null,
+          "observed": {
+            "selected": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+            "desired": "running",
+            "observed": "ready",
+            "container_running": true,
+            "active_identity": "e89d15ef69c6454c5e7b14277717d47857e9dca5a4575b54532988c6649396a7",
+            "generation": 53,
+            "state_persisted": true,
+            "observed_at": 1790647863.3467112
+          },
+          "state_persisted": true,
+          "poll_url": "/control/v1/operations/6252154567174f6db786b5902a53d6d3",
+          "slot": "qwen"
+        },
+        "freshness": "fresh",
+        "switch_effect": "interrupts_target_inference",
+        "schema_version": 2,
+        "instance_id": "qwen38-27b-q1-server-480000-yarn4-bf16kv",
+        "placement": "gpu1",
+        "configured_context": {
+          "tokens": 480000,
+          "provenance": "declared"
+        },
+        "readiness": "ready",
+        "degraded": false,
+        "inference_busy": {
+          "status": "unknown",
+          "running_requests": null,
+          "queued_requests": null,
+          "observed_at": null,
+          "freshness": null
+        },
+        "mutation_busy": false,
+        "switch_cost": {
+          "kind": "cold_model_load",
+          "seconds": null,
+          "provenance": "unmeasured",
+          "running_target_requires_allow_interrupt": true,
+          "atomic_drain_guarantee": false,
+          "peer_preserved": true
+        }
+      }
+    },
+    "storage_available": true,
+    "state_persisted": true,
+    "observation_available": true,
+    "observed_at": 1790650189.3893137,
+    "failure_code": null,
+    "mutation_busy": false,
+    "default_mode": "dual-qwen",
+    "current_mode": "dual-qwen",
+    "current_mode_basis": "selected_deployments",
+    "available_modes": [
+      {
+        "id": "dual-qwen",
+        "slots": {
+          "glm": "qwen38-27b-q0-480000-yarn4-bf16kv",
+          "qwen": "qwen38-27b-q1-server-480000-yarn4-bf16kv"
+        },
+        "configured_tokens_per_slot": 480000,
+        "qwen_instances": 2,
+        "qwen_capacity": 2,
+        "performance_class": "standard",
+        "intended_use": "default",
+        "installed": null,
+        "start_revalidation_required": true,
+        "switch_cost": {
+          "kind": "cold_model_load",
+          "seconds": null,
+          "provenance": "unmeasured",
+          "running_target_requires_allow_interrupt": true,
+          "atomic_drain_guarantee": false,
+          "peer_preserved": true
+        }
+      },
+      {
+        "id": "glm-qwen",
+        "slots": {
+          "glm": "glm-5.3-ud-q4-k-xl-g1-480000",
+          "qwen": "qwen38-27b-q1-server-480000-yarn4-bf16kv"
+        },
+        "configured_tokens_per_slot": 480000,
+        "qwen_instances": 1,
+        "qwen_capacity": 1,
+        "performance_class": "slow_fallback",
+        "intended_use": "last_resort",
+        "installed": null,
+        "start_revalidation_required": true,
+        "switch_cost": {
+          "kind": "cold_model_load",
+          "seconds": null,
+          "provenance": "unmeasured",
+          "running_target_requires_allow_interrupt": true,
+          "atomic_drain_guarantee": false,
+          "peer_preserved": true
+        }
+      }
+    ],
+    "readiness": "ready",
+    "degraded": false,
+    "external_backlog": {
+      "status": "unknown",
+      "requests": null,
+      "observed_at": null,
+      "owner": "client"
+    },
+    "switch_cost": {
+      "kind": "cold_model_load",
+      "seconds": null,
+      "provenance": "unmeasured",
+      "running_target_requires_allow_interrupt": true,
+      "atomic_drain_guarantee": false,
+      "peer_preserved": true
+    }
+  }
+}

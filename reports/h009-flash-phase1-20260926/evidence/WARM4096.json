@@ -1,0 +1,112 @@
+{
+  "source": {
+    "task_relative_path": "evidence/qualification-raw/H009-WARM4096.json",
+    "sha256": "6461abf6fd58989ae22afc1bb6e0cc64611d7ca68a942f79670678a4341b0c90"
+  },
+  "status": "PASS",
+  "start_utc": "2026-09-26T20:31:10.633904+00:00",
+  "end_utc": "2026-09-26T20:35:04.938499+00:00",
+  "fixture": {
+    "generation_prefix_included": true,
+    "known_answer": "12",
+    "native_tokenize": {
+      "context_limit": 480000,
+      "count": 4096,
+      "template_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+      "tokenizer_revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a"
+    },
+    "payload_sha256": "16ad5055b2731cb972441d6880aaa701d272baf43e5bd945b7d26099f6bd11db",
+    "rendered_token_ids_sha256": "f46b23e6472040cd3ab8416a28493bfcb9074794333d34d2ffacca980c49fffb",
+    "rendered_tokens": 4096,
+    "seed": "Forest discarded warm record",
+    "tools": null
+  },
+  "native_capacity": {
+    "context_length": 480000,
+    "kt_cpuinfer": 64,
+    "kt_threadpool_count": 8,
+    "kv_cache_dtype": "fp8_e4m3",
+    "max_req_input_len": 479994,
+    "max_req_len": null,
+    "max_running_requests": 1,
+    "max_total_num_tokens": 480000,
+    "max_total_tokens": 480000
+  },
+  "native_allocation": {
+    "context": 480000,
+    "max_req_input_len": 479994,
+    "max_req_len": 479999,
+    "pool": 480000,
+    "resolved_cache_dtype": "torch.float8_e4m3fn",
+    "sm120_execution": "PASS"
+  },
+  "memory_summary": {
+    "cgroup_peak_bytes": 640475009024,
+    "max_cgroup_swap_bytes": 0,
+    "max_gpu_temp_c": 47.0,
+    "min_gpu_free_mib": 65100.0,
+    "min_host_available_bytes": 603415572480,
+    "peak_gpu_used_mib": 32150.0
+  },
+  "established_tcp30010_after_close": "",
+  "native_active_counter": "NOT_AVAILABLE_UNLESS_EXPLICIT_FRESH_NATIVE_READBACK",
+  "request": {
+    "status": "TRANSPORT_PASS",
+    "semantic_status": "PASS_ANSWER_12",
+    "http_status": 200,
+    "start_utc": "2026-09-26T20:31:14.829893+00:00",
+    "end_utc": "2026-09-26T20:35:04.604613+00:00",
+    "elapsed_seconds": 229.48068859700004,
+    "ttft_seconds": 225.39665100700006,
+    "ttft_basis": "request start to first nonempty native content, reasoning, or tool delta; transport included",
+    "first_positive_native_usage_seconds": 225.39665100700006,
+    "last_nonempty_delta_seconds": 225.39665100700006,
+    "input_tokens": 4096,
+    "output_tokens": 3,
+    "usage": {
+      "completion_tokens": 3,
+      "prompt_tokens": 4096,
+      "prompt_tokens_details": null,
+      "reasoning_tokens": 0,
+      "total_tokens": 4099
+    },
+    "finish_reason": "stop",
+    "output": "12",
+    "reasoning": "",
+    "decode_tokens_per_second": null,
+    "decode_rate_status": "INVALID_BUFFERED_OR_INSUFFICIENT_NATIVE_USAGE",
+    "decode_rate_window": null,
+    "native_usage_samples": [
+      {
+        "seconds": 225.39665100700006,
+        "usage": {
+          "completion_tokens": 2,
+          "prompt_tokens": 4096,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 4098
+        }
+      },
+      {
+        "seconds": 227.15917235200004,
+        "usage": {
+          "completion_tokens": 3,
+          "prompt_tokens": 4096,
+          "prompt_tokens_details": null,
+          "reasoning_tokens": 0,
+          "total_tokens": 4099
+        }
+      }
+    ],
+    "output_cap_reached": false,
+    "requested_output": 64,
+    "sse_done": true,
+    "body_drained": true,
+    "request_socket_closed": true,
+    "cached_input_tokens": null,
+    "uncached_input_status": "NOT_REPORTED",
+    "sample_limit": "64 output tokens; capped reasoning may prevent final answer"
+  },
+  "timing_limit": "Client-observed native-token interval includes synchronous guarded receipt overhead; no runtime-only decode throughput claim.",
+  "reasoning_limit": "Completion tokens include native generated sequence. Native reasoning_tokens field is0 even when reasoning delta is nonempty; separate reasoning token count not established."
+}

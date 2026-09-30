@@ -1,0 +1,30 @@
+{
+  "status": "QUIET_APP_STOPPED_SEARCH_STATUS_ADMIN_PRESERVED",
+  "stopped_utc": "2026-09-27T10:53:01.619684+00:00",
+  "release": "/opt/ai-harness/releases/7143c17d73173db9364b77956679c86d7026a4ae/ai-harness",
+  "image": "9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c",
+  "content_counts": {
+    "sessions": 26,
+    "messages": 133,
+    "files": 62,
+    "quarantined_workspaces": 1
+  },
+  "history_preserved": {
+    "sessions": true,
+    "messages": true,
+    "files": true,
+    "runs": true,
+    "events": true,
+    "quarantined_workspaces": true,
+    "h003_image_jobs": true,
+    "h005_image_ownership": true,
+    "frontier_requests": true
+  },
+  "regular_files_preserved": true,
+  "regular_file_count": 17597,
+  "changed_tables": [
+    "h003_image_lane"
+  ],
+  "atomic_backend_drain_claim": false,
+  "private_receipt_sha256": "2858831152358589f305a70aab6f1bcb39a6206ccd522889188dfc0bc2112200"
+}

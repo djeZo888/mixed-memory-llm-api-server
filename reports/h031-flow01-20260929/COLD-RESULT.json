@@ -1,0 +1,138 @@
+{
+  "schema": 1,
+  "task": "H031-FLOW01",
+  "case": "original cold fixture continuation",
+  "verdict": "PASS",
+  "sameThreadContinuationPass": true,
+  "newH031RestartInduced": false,
+  "newH031ColdRestartQualification": "NOT_TESTED",
+  "qualificationLimit": "PASS covers the retained same-thread continuation. FLOW01 induced no new application restart; historical H030 cold-restart context is retained without a new restart claim.",
+  "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+  "runId": "afdce22f-93fa-40d2-8451-c40562847c9b",
+  "submissionId": "087ad7eb-1003-4504-94e2-e7028fa63e7e",
+  "ticketId": "f1de972b-6bba-472e-8db4-a3b5c6871f8b",
+  "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+  "nativeTurnId": "01a0eca6-bc4b-72c0-9f5d-96551096577a",
+  "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "deploymentBindingSha256": "334f1705c88eac0f0653eb1caadc533628f8017ac93ce33ede65da12ac171ce5",
+  "runStatus": "completed",
+  "settled": true,
+  "nativeOwnership": "idle",
+  "activeTurnId": null,
+  "requestIds": [
+    "12675d64-e60a-4bde-99cc-44253812399b",
+    "b43e7a3e-2900-4703-ad92-4d008198b17f",
+    "b0a95f0b-7724-49d9-9b9e-f718d8550eb1"
+  ],
+  "lane": "qwen3.8-27b-gpu0",
+  "actualNativeTest": {
+    "toolCallId": "call_813ae02d681a4b3eb2331611",
+    "tool": "exec_command",
+    "command": "python3 test_demo.py",
+    "workingDirectory": "artifacts",
+    "exitCode": 0,
+    "stdoutLine": "ASSERTION_PASS:hello",
+    "nativeToolOutputSha256": "717ecbc5a6944992f5744c9902cf4b9a58d91772e6c5cba21bbf8718ac1e8a36"
+  },
+  "exactFollowupLine": "H029 follow-up: hello",
+  "allThreeArtifactsUnchanged": true,
+  "artifacts": [
+    {
+      "id": "920105f3-045d-4d54-a142-88e35b4b0bf0",
+      "name": "demo.py",
+      "bytes": 35,
+      "sha256": "993a39ec5e85f8f4b1e4a950ce9481fb631503e9bb47dde97e2f66bfc5299376"
+    },
+    {
+      "id": "e68b239e-e23f-476e-ace8-d6b4c4320a49",
+      "name": "test_demo.py",
+      "bytes": 108,
+      "sha256": "a48a6f55bfabdde8d5fe58a7a9a8abaadf4e4a5ea4782139ffaa8adc4e2057df"
+    },
+    {
+      "id": "f2003ccf-dd3f-4fd6-ade4-c9cc3f379fbe",
+      "name": "followup.txt",
+      "bytes": 22,
+      "sha256": "47c2f21848584be560079cc4b60e45efc525de7a39cbfcf8a4d38644dae68baa"
+    }
+  ],
+  "rawBoundaryEvidence": {
+    "captureIntegrity": "HASHES_PASS",
+    "captureClosed": true,
+    "captureLimitReached": false,
+    "captureIndexSha256": "32eb8f6c7eff7ac443f91989a5fc038fa417cf8a059301a5a1fc61978d912217",
+    "bindingSha256": "509d3640e2848fb1a2f71c60481eca9afef9ab070b35f64d476037e108523674",
+    "ownedManifestSha256": "9dd5d963b082ae48ddb622ada65275bcd5de091b1f7e5637addd46d319741942",
+    "finishReasons": [
+      "tool_calls",
+      "tool_calls",
+      "stop"
+    ],
+    "providerResponsesNativeArgumentBytesIdentical": true,
+    "nativeToolOutputHashesMatchCapture": true,
+    "actualNativeToolCalls": 2,
+    "actualNativeToolResults": 2,
+    "allResponsesTerminalsCompleted": true,
+    "continuationCarriesPriorToolResults": true
+  },
+  "nonBlockingObservations": [
+    {
+      "code": "assistant_extra_file_size_claim_incorrect",
+      "description": "Assistant final correctly reported the exact requested line but additionally described followup.txt as 18 bytes; retained bytes prove 22 bytes including its trailing newline."
+    },
+    {
+      "code": "native_final_phase_unclassified",
+      "description": "The assistant message has streamState completed and native task_complete, while app phase remains unclassified and finalMessageId is null. No unsupported final-phase metadata is inferred."
+    }
+  ],
+  "historicalFailureRetained": {
+    "runId": "c688c7bc-7ab5-45c3-9c8a-86f693870465",
+    "observedRunStatus": "interrupted",
+    "submissionId": "73223a40-af45-496f-9e12-6ac9bc2a652b"
+  },
+  "privateEvidence": [
+    {
+      "path": "private/cold-accepted.json",
+      "sha256": "fb4cf767fb6c1b840740d16608ae64aebd961125af5fb4d242ed3ae675650a27"
+    },
+    {
+      "path": "private/cold-intent.json",
+      "sha256": "ea670fa2d5e0c340a4c707ea0ae62c2327fed2239173fdc0402335b005e53fd1"
+    },
+    {
+      "path": "private/cold-before-artifacts.json",
+      "sha256": "04adfa827d78642834c9c7fe8713ee8842864f1aa531650cb65f964bc26c6eb6"
+    },
+    {
+      "path": "private/cold-final-artifacts.json",
+      "sha256": "04adfa827d78642834c9c7fe8713ee8842864f1aa531650cb65f964bc26c6eb6"
+    },
+    {
+      "path": "private/cold-final-settlement.json",
+      "sha256": "f3dc0272bcbb5c1dfba0e6dce9c288d6be8a050cb3f8d74928eabd03a054efa3"
+    },
+    {
+      "path": "private/cold-final-snapshot.json",
+      "sha256": "d512301d514b83924c5912ae582f77880486c3fa838745dd0de0e29bb314891f"
+    },
+    {
+      "path": "private/cold-boundaries-summary.json",
+      "sha256": "6a6b37c5270cdcd0fdd717cda59d04cb68a9f3d92fbd5a5c986bd5a55e42a244"
+    },
+    {
+      "path": "private/owned-cold-544a2b95-bbbf-4286-a3a5-cdbe8c220589/native-0.jsonl",
+      "sha256": "fd9685eb1127aaab77d830131f24718a1f1684db343f2a29161344429e40fbe1",
+      "toolCallLines": [
+        87,
+        92
+      ],
+      "toolOutputLines": [
+        90,
+        95
+      ],
+      "nativeTaskCompleteLine": 101
+    }
+  ],
+  "reviewedUtc": "2026-09-29T10:21:43.282530+00:00",
+  "reviewScope": "Local retained evidence only; no remote action, inference, cleanup, or global capability mutation."
+}

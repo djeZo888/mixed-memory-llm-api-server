@@ -1,0 +1,16 @@
+{
+  "operation": "generation",
+  "receipt_sha256": "20e7c561fc218a641f2ee3816d727c18fd1db2fd5a539c045babf222ceb4c6bf",
+  "request": {
+    "background": "opaque",
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "prompt": "A studio photograph of one red ceramic teapot with a curved spout and round lid, centered on a pale wooden table against a plain cream background. Soft daylight, clear silhouette, no text, no other objects.",
+    "response_format": "b64_json",
+    "seed": 20260923,
+    "size": "1024x1024"
+  },
+  "retry_authorized": false,
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "started_utc": "2026-09-23T04:09:35.588756+00:00"
+}

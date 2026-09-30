@@ -1,0 +1,24 @@
+{
+  "native_id": "01a0e32a-bcf5-79e2-b688-bcf6be3ac6c1",
+  "native_id_source": "task-root events-01.jsonl thread.started",
+  "worker": "native mac-worker2",
+  "started_utc": "2026-09-27T14:00:23Z",
+  "original_hard_deadline_utc": "2026-09-27T14:12:23.369444+00:00",
+  "user_supplied_root_window_end_utc": "2026-09-27T15:48:08Z",
+  "deadline_rule": "Original native 14:12:23.369444Z deadline controls; parent continuation does not extend it.",
+  "packaging_started_utc": "2026-09-27T14:09:47.284575+00:00",
+  "base_commit": "4a69adb8b60805cf9d691c6d850e722aa19a9281",
+  "scope": "Source/official docs and retained tool receipt; report-only",
+  "execution_limits": [
+    "No ai-vm/model/BMC/harness contact",
+    "No inference or GPU attachment/instrumentation/collector",
+    "No package/tool/driver/CUDA download or installation; documentation fetch only",
+    "No build/restart/runtime mutation",
+    "No subagents or push",
+    "No broad MiMo research or R6 wait",
+    "Sova recovery HOLD; Worker1 owns R6",
+    "Later reload command is proposal only"
+  ],
+  "exact_native_exit": "PENDING_WRAPPER_OWNED; read task-root exit-01-code and finished-01-utc after exit",
+  "tests": "No added tests; documentation/JSON/whitespace/scope/secret/bundle checks only"
+}

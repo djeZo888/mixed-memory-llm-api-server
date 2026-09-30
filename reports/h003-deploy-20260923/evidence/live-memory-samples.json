@@ -1,0 +1,968 @@
+{
+  "samples": [
+    {
+      "utc": "2026-09-23T12:07:09.730588+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 78,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9727158711721975,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:10.778643+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 80,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9727074223859258,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:11.830051+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 80,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726902522718897,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:12.877396+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 78,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726712998230128,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:13.921520+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726611855053973,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:14.966219+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726544844455227,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:16.010322+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726634437063363,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:17.053228+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726505174526855,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:18.095884+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726431328760516,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:19.139269+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726668742682991,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:20.181783+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726524901339655,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:21.223774+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726422460346867,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:22.265568+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726473161716609,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:23.307881+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726509587103402,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:24.350948+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726382703897386,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:25.394563+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726598530803221,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:26.439531+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726637984428822,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:27.482121+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726494532430475,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:28.524165+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726351339995456,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:29.566745+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726200360660646,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:30.608621+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726251667678149,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:31.650524+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726294452366437,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:32.693625+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726357785818059,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:33.745347+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726579625940954,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:34.795888+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726580837236477,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:35.848504+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726607485737979,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:36.898779+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726450190362229,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:37.950301+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726396287711464,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:39.001647+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726433015922138,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    },
+    {
+      "utc": "2026-09-23T12:07:40.051633+00:00",
+      "gpus": [
+        {
+          "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "total_mib": 97887,
+          "free_mib": 35610,
+          "utilization": 0,
+          "free_fraction": 0.36378681540960495
+        },
+        {
+          "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+          "total_mib": 97887,
+          "free_mib": 35612,
+          "utilization": 0,
+          "free_fraction": 0.363807247131897
+        },
+        {
+          "uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+          "total_mib": 49140,
+          "free_mib": 16238,
+          "utilization": 0,
+          "free_fraction": 0.33044363044363045
+        }
+      ],
+      "host_available_fraction": 0.9726260795655125,
+      "swap_used_bytes": 155189248,
+      "swap_counters": {
+        "pswpin": 303,
+        "pswpout": 5323
+      }
+    }
+  ],
+  "sampling_interval_seconds": 1,
+  "mutation": false,
+  "inference_calls": 0,
+  "scope": "Read-only post-job samples: actual UTC12:07:09.730588\u201312:07:40.051633, after image finish12:06:58.952. No peak-memory inference claim."
+}

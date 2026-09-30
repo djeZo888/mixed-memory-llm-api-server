@@ -1,0 +1,17 @@
+{
+  "nativeId": "01a0e455-5a1c-7a10-824c-79d68271740a",
+  "baseCommit": "45287e228616adfd6dbdf6104acc1244bcaadd04",
+  "branch": "worker2/h017-pause-stage02",
+  "startedUtc": "2026-09-27T19:26:33.933554+00:00",
+  "hardDeadlineUtc": "2026-09-27T19:41:33.933554+00:00",
+  "maximumSeconds": 900,
+  "workCompletedUtc": "2026-09-27T19:32:21.069183+00:00",
+  "exit": "Return immediately after packaging; actual process exit recorded by existing wrapper in task-root exit-code and finished-utc",
+  "globalEndUtc": "2026-09-27T21:07:11Z",
+  "acceptanceStopUtc": "2026-09-27T20:49:30Z",
+  "acceptanceHardSettlementUtc": "2026-09-27T20:50:00Z",
+  "acceptanceDispatched": false,
+  "paidWaiting": false,
+  "subagents": false,
+  "push": false
+}

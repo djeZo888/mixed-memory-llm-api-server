@@ -168,7 +168,7 @@ class InstallationValidationTests(unittest.TestCase):
     def test_present_q38_normal_dependencies_require_protected_files(self):
         q38_files = [relative for relative in installation.NORMAL_FILES
                      if any(name in relative for name in ('q38', 'qwen38', 'sglang38'))]
-        self.assertEqual(len(q38_files), 11)
+        self.assertEqual(len(q38_files), 16)
         for relative in q38_files:
             self.write(self.source / relative, b'# inert source closure fixture\n', mode=0o644)
         self.reader.reset_mock()
@@ -266,7 +266,7 @@ class EntrypointAndClosureTests(unittest.TestCase):
         self.assertEqual(service['Restart'], ['no'])
 
     def test_fresh_normal_closure_q38_source_proof_and_drift_checks(self):
-        """Only copied manifest files and four Q38 profile declarations exist.
+        """Only copied manifest files and the pinned Q38 declarations exist.
 
         This checks the installed layout's import/source closure. It does not
         call validate_installation, establish file protection, read a key, or
@@ -277,6 +277,7 @@ class EntrypointAndClosureTests(unittest.TestCase):
         profiles = {
             'configs/deployments/qwen38-27b-128k.json',
             'configs/deployments/qwen38-27b-256k.json',
+            'configs/deployments/qwen38-27b-1000000-yarn4-tp2-bf16kv.json',
             'configs/models/qwen38-27b-fp8.json',
             'configs/runtimes/sglang-qwen38-0.5.19.json',
         }
@@ -304,10 +305,13 @@ q = lifecycle.manager.Manager.sglang_adapter({'_runtime': {'backend': 'sglang_qw
 from runtime import qwen38_oci, sglang38_file_auth
 assert q.ROOT == root
 assert {p.name for p in (root / 'configs/models').glob('*.json')} == {'qwen38-27b-fp8.json'}
-assert {p.name for p in (root / 'configs/runtimes').glob('*.json')} == {'sglang-qwen38-0.5.19.json'}
+assert {p.name for p in (root / 'configs/runtimes').glob('*.json')} == {
+    'sglang-qwen38-0.5.19.json', 'h005-runtime-binding.json'}
 assert {p.name for p in (root / 'configs/deployments').glob('*.json')} == {
-    'qwen38-27b-128k.json', 'qwen38-27b-256k.json'}
-for identifier, context in q.VARIANTS.items():
+    'qwen38-27b-128k.json', 'qwen38-27b-256k.json', 'qwen38-27b-1000000-yarn4-tp2-bf16kv.json'}
+# This retained native auth proof has exactly the original 128K/256K contexts.
+# Pair/extension admission uses different proofs; never label these as H005 auth.
+for identifier, context in q.NATIVE_VARIANTS.items():
     declaration = q.declared_profile(identifier)
     assert declaration['launch']['context_size'] == context
     assert declaration['launch']['gpus'] == ['0']

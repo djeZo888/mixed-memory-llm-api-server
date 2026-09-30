@@ -1,0 +1,14 @@
+{
+  "base": "89cc931b69e39a4a2acd95270d3156396d0053d0",
+  "retainedSourceFiles": 446,
+  "equalCurrentCheckout": 445,
+  "differences": [
+    {
+      "path": "reports/h018-harness-prep01-20260928/REPORT.md",
+      "retained": "404b108bdd3facdcf6f9baef4de3c0531172a64e3150512aa8d8ceaab76a3044",
+      "local": "d24a71d7453df4d002249795e1fbebb07d4d32e63caa947ce469bc9f2d39b9d1"
+    }
+  ],
+  "absentFromCheckout": [],
+  "manifestSha256": "ad0a8b847a3d477907085d157eef2dbdd7df084f4d0aacb067d05834eb57c60c"
+}

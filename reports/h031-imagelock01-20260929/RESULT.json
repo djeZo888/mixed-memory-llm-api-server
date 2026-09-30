@@ -1,0 +1,27 @@
+{
+  "base": "70e3e7c1e59eb846eab65f16c11215c000f79351",
+  "baselineRegression": "EXPECTED_FAIL_REAL_COMMON_LEASE_BUSY",
+  "combinedProposalSha256": "39739da1364518880a6971abcb1305618d609e32227822f89062fc7382b7aab1",
+  "correctedRegression": "PASS",
+  "currentIdleEstablished": false,
+  "evidence": {
+    "image-protocol-after.log": "1e9d5f3450d5d1271633a60c9c7f9a691981ce5763255b57525e358a724daf42",
+    "image-protocol-before.log": "13cbc55a0e8c5b4ba78afa1fbe4d8e5255a0db9807f4da1b26a635c103ddc94b",
+    "image-protocol-lease-timing.json": "35b7219397c6432d44957abe091d43f9edba72d6f0985a87947db6d0ab807a14",
+    "image-protocol-tests.json": "85b6ad4edb276a9edaded2be055695a088ecda35008d917a007e9cc2116d2411",
+    "recovery-tests.log": "455920e63b0abfd212c4ab55f45e580ef92c694c233055ceabc737f2aaaef407"
+  },
+  "focusedTests": 83,
+  "fullStartAndFailureFixture": "PASS",
+  "historicalCompetingHolderEstablished": false,
+  "inferenceRequests": 0,
+  "inventoryUtc": "2026-09-29T08:53:18.910595+00:00",
+  "source": {
+    "path": "scripts/image_runtime/service.py",
+    "sha256": "26f7b17da42bd07806c49d6477b3169efb5d33003d551cf5b6bb972742547556"
+  },
+  "status": "SOURCE_COMPLETE_NOT_DEPLOYED",
+  "testLogSha256": "bff06ef50ba8194a5b4098b9986993f3aa384cc5ef754146d6b9de748d1b206c",
+  "vmWrites": 0,
+  "w2OwnerSha256": "206ccfe397d3b855836f28a05170ac1d5af56c7d93cb85e1bd1cb4ff6c84f5bc"
+}

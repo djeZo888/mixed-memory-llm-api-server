@@ -1,0 +1,18 @@
+{
+  "case": "C04",
+  "status": "PASS_ROOT_VISUAL_AND_MEMORY",
+  "accepted_calls": 1,
+  "budget_total_used": 4,
+  "budget_max": 4,
+  "seed": 49,
+  "references": 2,
+  "size": "1024x1024",
+  "elapsed_seconds": 31.217477444995893,
+  "settled_case_receipt_sha256": "fd743b180e244f74721f254c3cdde54883a8f47a6a7caaed1081e9f0b336879b",
+  "profile_enabled": false,
+  "api_intentionally_stopped": true,
+  "public_ready": false,
+  "root_visual_review": "PASS both refs recognizably used; coherent portrait-on-teapot",
+  "metrics_path": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/C04/metrics.json",
+  "budget_total_used_at_final_checkpoint": 4
+}

@@ -1,0 +1,96 @@
+--- a/python/sglang/srt/managers/scheduler.py
++++ b/python/sglang/srt/managers/scheduler.py
+@@ -114,6 +114,7 @@
+ from sglang.srt.managers.hisparse_coordinator import HiSparseCoordinator
+ from sglang.srt.managers.io_struct import (
+     AbortReq,
++    AdaptiveIdleDrainReq,
+     ActiveRanksOutput,
+     AddExternalCorpusReqInput,
+     AddExternalCorpusReqOutput,
+@@ -217,10 +218,7 @@
+ )
+ from sglang.srt.managers.scheduler_components.dp_attn import SchedulerDPAttnAdapter
+ from sglang.srt.managers.scheduler_components.flush_wrapper import SchedulerFlushWrapper
+-from sglang.srt.managers.scheduler_components.idle_sleeper import (
+-    IdleSleeper,
+-    RustServerIdleSleeper,
+-)
++from sglang.srt.managers.scheduler_components.adaptive_text import TextAdaptiveIdle
+ from sglang.srt.managers.scheduler_components.invariant_checker import (
+     SchedulerInvariantChecker,
+     create_scheduler_watchdog,
+@@ -819,20 +817,11 @@
+             logger.warning("load snapshot writer init failed: %s", e)
+ 
+     def init_idle_sleeper(self) -> None:
+-        if (
+-            self.ps.pp_rank == 0
+-            and self.ps.attn_tp_rank == 0
+-            and self.ps.attn_cp_rank == 0
+-            and get_device().sleep_on_idle
+-        ):
+-            self.idle_sleeper = IdleSleeper(
+-                sockets=[
+-                    self.ipc_channels.recv_from_tokenizer,
+-                    self.ipc_channels.recv_from_rpc,
+-                ],
+-            )
+-        else:
+-            self.idle_sleeper = None
++        # H005 owns idle waiting. Never instantiate upstream IdleSleeper: its
++        # timed empty_cache_interval would violate resident cache preservation.
++        if envs.SGLANG_RUST_SERVER.get():
++            raise RuntimeError("adaptive_text_rust_unsupported")
++        self.idle_sleeper = None
+ 
+     def publish_load_snapshot(self, force: bool = False):
+         """Returns the LoadSnapshot it published, or None when disabled,
+@@ -1759,6 +1748,8 @@
+         Sets up the schedule stream and dispatches to the appropriate event loop.
+         The event loop blocks until shutdown.
+         """
++        self.adaptive_idle = TextAdaptiveIdle(self, is_health_check_generate_req, AdaptiveIdleDrainReq)
++
+         # Engine init (graph capture, warmups) is done; from here on any
+         # Triton kernel device-load is a lazy first-use at serving time.
+         triton_load_watch.install()
+@@ -1811,9 +1802,18 @@
+             if self.gracefully_exit:
+                 break
+ 
++            self.adaptive_idle.maybe_wait()
++
+             # Receive requests
+             recv_reqs = self.request_receiver.recv_requests()
++            recv_reqs = self.adaptive_idle.consume_notifications(recv_reqs)
++            real_input = any(
++                not is_health_check_generate_req(req)
++                for item in recv_reqs for req in self._tokenized_requests(item)
++            )
+             self.process_input_requests(recv_reqs)
++            if real_input:
++                self.adaptive_idle.record_real_work()
+             if self._engine_paused:
+                 continue
+ 
+@@ -1829,6 +1829,10 @@
+             if batch:
+                 result = self.run_batch(batch)
+                 self.process_batch_result(batch, result)
++                # Result processing fences async copies and sends final stream
++                # output before returning. Long work gets a fresh full grace.
++                if any(not is_health_check_generate_req(req) for req in batch.reqs):
++                    self.adaptive_idle.record_real_work()
+             else:
+                 # When the server is idle, do self-check and re-init some states.
+                 self._sched_idled = True
+@@ -2162,7 +2166,7 @@
+         # drains its request ring (rust_server_mode) instead of a zmq socket.
+         self.recv_from_tokenizer = rust_server
+         # Park the idle loop on the request ring within the rank-0 rust-server
+-        self.idle_sleeper = RustServerIdleSleeper(rust_server)
++        raise RuntimeError("adaptive_text_rust_unsupported")
+ 
+     def init_request_receiver(self) -> None:
+         self.request_receiver = SchedulerRequestReceiver(

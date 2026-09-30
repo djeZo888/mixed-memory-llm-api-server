@@ -16,6 +16,17 @@ identity journal and protected boot owner remain authoritative. Persisted v3
 keys `glm` and `qwen` mean GPU0 and GPU1 respectively; the first is a historical
 key, not a restriction to a GLM model. Public `placement` and `instance_id` (equal to the deployment ID) distinguish the two Qwen copies despite their identical model ID.
 
+The IMAGE21 compatibility change permits additional well-formed GPUs and changed
+physical indices/output order. Slot GPU0 remains exactly
+`GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237`; slot GPU1 remains exactly
+`GPU-69acfa26-8b60-61b5-702d-aee252c163cc`. These labels denote fixed UUID
+placements, not current `nvidia-smi` ordinals. Each required UUID must occur once;
+all rows require unique physical indices and UUIDs. Names never select devices.
+Current memory admission follows each target/resident slot's exact UUID and its
+own accepted total/free proof. Ada memory cannot contribute to either text slot.
+See the [reviewed amendment and Worker1 handoff](qwen-image-2.1-compat-rollout.md);
+this source change alone does not amend production acceptance or restore service.
+
 | Mode / slot | Deployment | Native port / alias | CPU mask / hard host cap |
 | --- | --- | --- | --- |
 | Default GPU0 Qwen | `qwen38-27b-q0-480000-yarn4-bf16kv` | 30002 / `qwen3.8-27b-gpu0` | 0–7 / 32 GiB |

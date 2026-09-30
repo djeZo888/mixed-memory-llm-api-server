@@ -1,0 +1,23 @@
+{
+  "utc": "2026-09-23T12:07:53.976276+00:00",
+  "installed_unit_path": "/home/user/.config/systemd/user/ai-harness.service",
+  "installed_unit_sha256": "f8cf9f43a0e80ad818ee250370fb95a2693436794f55611c267c88ef21533cb5",
+  "installed_site_path": "/etc/nginx/sites-available/ai-harness.conf",
+  "installed_site_sha256": "5b7242929b16a7e1b9980b45366594496226b147dd81d15c0322a56b0bcc91d5",
+  "engine_id": "31b7a4d0aba256266e55a4aa510b0b7af484bef3502e9ffa2b333cf6c48b1428",
+  "engine_digest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+  "engine_labels": {
+    "io.buildah.version": "1.33.7",
+    "org.opencontainers.image.ai-harness.patchset": "e764cdacb97998b7e7b514e9fabb0bc5d508e1d3e1ffd0a38443812a117d3aef",
+    "org.opencontainers.image.revision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+    "org.opencontainers.image.source": "https://github.com/MiniMax-AI/minimax-code",
+    "org.opencontainers.image.title": "ai-harness local MiniMax engine",
+    "org.opencontainers.image.version": "0.0.3"
+  },
+  "final_idle_database_backup": {
+    "path": "/home/user/.local/share/ai-harness-deploy/H003-DEPLOY-20260923/rollback-20260923T120139Z/harness-final-idle.sqlite",
+    "sha256": "5cba0996da50a392afa5fa791cdc273519ec710f29417d9136b0da7b9d490b56",
+    "integrity": "ok"
+  },
+  "data_directory": "/home/user/.local/share/ai-harness"
+}

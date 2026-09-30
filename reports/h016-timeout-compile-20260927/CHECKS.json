@@ -1,0 +1,37 @@
+{
+  "result": "COMPILED_OFFLINE_PASS_FINAL_LAYER_HELD",
+  "nativeSession": "01a0e393-c2cb-7c71-8745-99619092e7f4",
+  "startedUtc": "2026-09-27T15:55:06.405170+00:00",
+  "hardDeadlineUtc": "2026-09-27T16:15:06.405170+00:00",
+  "maximumSeconds": 1200,
+  "preparedUtc": "2026-09-27T16:11:45.049045+00:00",
+  "nativeExit": "PENDING launcher writes taskroot exit-code and finished-utc after return",
+  "compile": {
+    "startedUtc": "2026-09-27T15:57:56Z",
+    "finishedUtc": "2026-09-27T15:57:58Z",
+    "exitCode": 0
+  },
+  "offlineProbe": {
+    "startedUtc": "2026-09-27T16:03:17.182837+00:00",
+    "finishedUtc": "2026-09-27T16:03:18.295110+00:00",
+    "exitCode": 0
+  },
+  "launcherContractTests": {
+    "passed": 21,
+    "failed": 0
+  },
+  "fixtureCorrections": [
+    "synthetic token length",
+    "compare serialized tool schemas across separately bundled TypeBox symbols"
+  ],
+  "syntaxChecks": "PASS",
+  "finalImageBuilt": false,
+  "servicesRestarted": false,
+  "productionDataReadOrWritten": false,
+  "actualModelRequests": 0,
+  "aiVmContact": false,
+  "bmcContact": false,
+  "subagents": false,
+  "push": false,
+  "payloadSha256": "0d34ca656248d8293ee4098ef1ba0202fc02353ac35a515870220e8fcc805d17"
+}

@@ -1,0 +1,304 @@
+{
+  "status": "TERMINAL_TIMEOUT_PARTIAL_PRESERVED",
+  "reason": "Systemd runtime limit interrupted remaining shard hash verification; durable job TimeoutError, exit 1. All expected bytes are present, but artifact verification is incomplete.",
+  "source_base": "f6b417d021437e721ad2a1bbdd3b95d4d9cab606",
+  "session": {
+    "id": "01a0e211-edfb-71a0-970f-377089d559bd",
+    "host": "mac-worker1",
+    "started_utc": "2026-09-27T08:53:40Z",
+    "hard_deadline_utc": "2026-09-27T08:59:40Z",
+    "snapshot_start_utc": "2026-09-27T08:55:27.329731+00:00",
+    "snapshot_end_utc": "2026-09-27T08:55:27.351662+00:00",
+    "collector_exit_code": 0,
+    "report_written_utc": "2026-09-27T08:57:13.242233+00:00",
+    "native_session_exit": {
+      "code": 0,
+      "finished_utc": "2026-09-27T08:58:08Z",
+      "evidence": "Root reviewed the preserved launcher exit-code and finished-utc after native exit."
+    }
+  },
+  "collection": {
+    "vm_snapshots": 1,
+    "vm_read_only": true,
+    "new_weight_hashing": false,
+    "new_model_content_read": false,
+    "restart_resume_retry": false,
+    "runtime_probe_build_load_inference": false,
+    "push": false,
+    "delegation": false
+  },
+  "unit": {
+    "RuntimeMaxUSec": "1h 30min",
+    "MainPID": "0",
+    "ControlPID": "0",
+    "Result": "timeout",
+    "ExecMainStartTimestamp": "Sun 2026-09-27 07:20:01 UTC",
+    "ExecMainExitTimestamp": "Sun 2026-09-27 08:50:03 UTC",
+    "ExecMainCode": "1",
+    "ExecMainStatus": "1",
+    "ControlGroup": "",
+    "Id": "h014-pro-download-20260927.service",
+    "LoadState": "loaded",
+    "ActiveState": "failed",
+    "SubState": "failed",
+    "ActiveEnterTimestamp": "Sun 2026-09-27 07:20:01 UTC",
+    "InactiveEnterTimestamp": "Sun 2026-09-27 08:50:03 UTC",
+    "InvocationID": "528af0f4f3eb4002b934eea0a06217b7"
+  },
+  "download_receipt": {
+    "bytes_present": 577562244896,
+    "deadline_utc": "2026-09-27T08:50:01.337914+00:00",
+    "error": "TimeoutError",
+    "error_type": "TimeoutError",
+    "exit_code": 1,
+    "finished_utc": "2026-09-27T08:50:01.322119+00:00",
+    "kind": "download",
+    "model_loaded": false,
+    "model_revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+    "pid": 1726144,
+    "ppid": 1,
+    "runtime_pin": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "session": "01a0e1b3-7ec8-7762-b133-555f2a792c11",
+    "source_sha256": "03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c",
+    "started_utc": "2026-09-27T07:20:01.337918+00:00",
+    "status": "STOPPED_PARTIAL_PRESERVED",
+    "updated_utc": "2026-09-27T08:49:54.931408+00:00",
+    "verified_shards": 12
+  },
+  "job_timing": {
+    "recorded_start_utc": "2026-09-27T07:20:01.337918+00:00",
+    "recorded_deadline_utc": "2026-09-27T08:50:01.337914+00:00",
+    "systemd_timeout_utc": "2026-09-27T08:50:01.320888+00:00",
+    "durable_finished_utc": "2026-09-27T08:50:01.322119+00:00",
+    "systemd_main_exit_utc": "2026-09-27T08:50:03.626167+00:00"
+  },
+  "progress": {
+    "files": [
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00001-of-00013.gguf",
+        "expected_bytes": 5948832,
+        "published_sha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+        "final_bytes": 5948832,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "8dfdbb3c425fe5b7d2488c113ab43400cbd5ebb8d23c2846fb5cf79cce108d6d",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 5948832
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00002-of-00013.gguf",
+        "expected_bytes": 48771368416,
+        "published_sha256": "83f2fb7024a823a3c06e80869320f22f0e1a86b9b39ae12ed42a19a94d1ac300",
+        "final_bytes": 48771368416,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "83f2fb7024a823a3c06e80869320f22f0e1a86b9b39ae12ed42a19a94d1ac300",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368416
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00003-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "fd8176686f491b3809ec4fd696fa5c6d295f123f66b8030dd762760f0e49eac2",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "fd8176686f491b3809ec4fd696fa5c6d295f123f66b8030dd762760f0e49eac2",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00004-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "a4214ed488d89b58312c0b06a5722b5996a6bc63dcd1c60d881403e5412c19d8",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "a4214ed488d89b58312c0b06a5722b5996a6bc63dcd1c60d881403e5412c19d8",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00005-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "34a0be954b0a7f252d0bedebd84ace8fa7b840bf4b878206199499559b951a99",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "34a0be954b0a7f252d0bedebd84ace8fa7b840bf4b878206199499559b951a99",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00006-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "08040c3efc402b01c91835030f429a4afd2af8f96ccf557e0090ddcc03d5c531",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "08040c3efc402b01c91835030f429a4afd2af8f96ccf557e0090ddcc03d5c531",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00007-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "92a7099339906389fe78957b6f6ba1039f667cdff38803418385ffac9e8fdab4",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "92a7099339906389fe78957b6f6ba1039f667cdff38803418385ffac9e8fdab4",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00008-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "5da24f2484be35c1ac25f989ed8924896161ac042a53acba6a66c8b72b3c6bb3",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "5da24f2484be35c1ac25f989ed8924896161ac042a53acba6a66c8b72b3c6bb3",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00009-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "06c458a70e545d16d059b7099538148aee19620dad0f164eea17f138134b7d62",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "06c458a70e545d16d059b7099538148aee19620dad0f164eea17f138134b7d62",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00010-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "d42439dd6da5dc30dc5280ecad19c2a118e294711961bc1b68e0f5c0793355b6",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "d42439dd6da5dc30dc5280ecad19c2a118e294711961bc1b68e0f5c0793355b6",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00011-of-00013.gguf",
+        "expected_bytes": 48771368448,
+        "published_sha256": "e80233937acad71ab100c04a8f34b8d9dba513d9ef682a3e1f483b8282b3048c",
+        "final_bytes": 48771368448,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "e80233937acad71ab100c04a8f34b8d9dba513d9ef682a3e1f483b8282b3048c",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 48771368448
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00012-of-00013.gguf",
+        "expected_bytes": 49382011904,
+        "published_sha256": "b48324c51d29df0a68a0c7f3a0fe9cbd10ded3a0fa109dc6cad5e42a59c1b9d3",
+        "final_bytes": 0,
+        "partial_bytes": 49382011904,
+        "existing_receipt_sha256": null,
+        "durable_status": "HASHING",
+        "durable_sha256_verified": false,
+        "receipt_matches_published": false,
+        "verified_bytes": 0
+      },
+      {
+        "file": "MXFP4/MiMo-V2.6-Pro-RL-MXFP4-00013-of-00013.gguf",
+        "expected_bytes": 40567793056,
+        "published_sha256": "1dc2bc4e2c649f3a15e8f1aa33b71abc1ac4d740b27ed438e5c9ed727079db85",
+        "final_bytes": 40567793056,
+        "partial_bytes": 0,
+        "existing_receipt_sha256": "1dc2bc4e2c649f3a15e8f1aa33b71abc1ac4d740b27ed438e5c9ed727079db85",
+        "durable_status": "VERIFIED",
+        "durable_sha256_verified": true,
+        "receipt_matches_published": true,
+        "verified_bytes": 40567793056
+      }
+    ],
+    "expected_files": 13,
+    "expected_bytes": 577669438240,
+    "final_bytes": 528287426336,
+    "partial_bytes": 49382011904,
+    "present_bytes": 577669438240,
+    "verified_bytes": 528287426336,
+    "verified_shards": 12,
+    "verification": "Existing durable job status and hash receipts compared with committed published manifest; no new hashing. Non-atomic bounded file stat observation."
+  },
+  "present_percent": 100.0,
+  "verified_percent": 91.45151039070832,
+  "settlement": {
+    "main_pid": 0,
+    "control_pid": 0,
+    "unit_cgroup_absent": true,
+    "recorded_main_and_transfer_pids_absent": true,
+    "checked_pid_count": 14,
+    "scope": "Exact unit cgroup plus recorded main/transfer PIDs; no broad host process inventory."
+  },
+  "manifest_matches_committed": true,
+  "variant": {
+    "repo": "AesSedai/MiMo-V2.6-Pro-RL-GGUF",
+    "revision": "ba4eabb78b6c51ffd873ec73b9e12b0f64aced5d",
+    "selection": "MXFP4",
+    "published_weight_precision": "Native MXFP4 experts; BF16 nonexperts; F32 small tensors. No extra Q8 attention conversion.",
+    "publisher_tensor_counts": {
+      "MXFP4": 207,
+      "BF16": 163,
+      "F32": 357
+    },
+    "evidence_boundary": "Publisher precision and retained metadata/header evidence; full loaded tensor inventory and inference quality unqualified; author conversion lineage incomplete.",
+    "retained_first_header": {
+      "architecture": "mimo2",
+      "blocks_including_mtp": 73,
+      "mtp_blocks": 3,
+      "key_head_dim": 192,
+      "value_head_dim": 128,
+      "published_context": 1048576,
+      "tensors_in_first_shard": 0
+    },
+    "runtime_pin": "7ac59a6e3ad851cd41af00f678effab0598ba9a8",
+    "cpu_expert_q8_note": "Q8 activation dot-product arithmetic, not new weight quantization."
+  },
+  "retained_build": {
+    "image_id": "sha256:cdb6efd75f53a8b453f866f30511b0f5c8d19440d3adaaf419e97bde1c2bf21e",
+    "completed_utc": "2026-09-27T07:27:53.358982+00:00",
+    "qualification": "CLI-only; MiMo not loaded. Retained checkpoint evidence; no fresh runtime probe."
+  },
+  "evidence": {
+    "snapshot_sha256": "c5c9e26ab4653aaba9e89737dbf20636432a91044a131c2bb47f95946e9c49c4",
+    "snapshot_bytes": 18306,
+    "published_manifest": "reports/h014-backend-prep-20260927/SELECTED-ARTIFACT.json",
+    "prior_checkpoint": "reports/h014-checkpoint-20260927/CHECKPOINT.md",
+    "precision_source": "reports/h014-backend-prep-20260927/RUNTIME-NOTES.md",
+    "journal_terminal_lines": [
+      "h014-pro-download-20260927.service: Service reached runtime time limit. Stopping.",
+      "h014-pro-download-20260927.service: Main process exited, code=exited, status=1/FAILURE",
+      "h014-pro-download-20260927.service: Failed with result 'timeout'.",
+      "h014-pro-download-20260927.service: Consumed 14min 30.336s CPU time, 103.1G memory peak, 0B memory swap peak."
+    ]
+  },
+  "limitations": [
+    "Size observation was bounded and non-atomic; unit was terminal and its cgroup absent.",
+    "Durable bytes_present aggregate is stale at 577562244896; current total comes from exact final and partial file stats.",
+    "Shard 12 is full expected length but lacks a successful existing hash receipt and sha256_verified flag. No completion is inferred from size.",
+    "Separate download-FINAL.json and download-ERROR.json were absent; terminal evidence is download-STATUS.json and systemd journal.",
+    "Invocation-filtered journal had no entries; exact unit journal supplied terminal evidence.",
+    "No new model qualification, health, fan, ECC, BMC, or source/guard inventory was performed."
+  ],
+  "next_action": "Preserve shard 12 partial unchanged; no automatic continuation. Further verification or model use requires a separately authorized task."
+}

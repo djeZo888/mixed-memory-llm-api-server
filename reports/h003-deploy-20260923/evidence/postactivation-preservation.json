@@ -1,0 +1,28 @@
+{
+  "utc": "2026-09-23T12:05:51.946046+00:00",
+  "all_prior_session_workspace_native_ids_statuses_preserved": true,
+  "counts_before_and_after": {
+    "sessions": 14,
+    "messages": 68,
+    "runs": 34,
+    "events": 10211,
+    "files": 30
+  },
+  "visible_sessions": 11,
+  "health80": {
+    "version": "0.0.3",
+    "environment": {
+      "timeZone": "Europe/Ljubljana",
+      "location": {
+        "city": "Ljubljana",
+        "country": "Slovenia"
+      },
+      "now": "2026-09-23T12:05:51.941Z"
+    },
+    "status": "ok",
+    "visionAvailable": true
+  },
+  "generation_profiles": 6,
+  "edit_profiles": 0,
+  "service": "MainPID=32296\nNRestarts=0\nExecMainStartTimestamp=Wed 2026-09-23 14:04:07 CEST\nActiveState=active\n"
+}

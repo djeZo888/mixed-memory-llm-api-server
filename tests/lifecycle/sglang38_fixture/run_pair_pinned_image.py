@@ -29,14 +29,15 @@ contract = load('q38pair_actual_contract', HERE / 'run_pair_fixture.py')
 
 
 class _Contract:
-    def __init__(self, slot):
+    def __init__(self, slot, adaptive=False):
         self.slot = slot
+        self.adaptive = adaptive
 
     def __getattr__(self, name):
         return getattr(contract, name)
 
     def extension_identity(self, repo, provenance=None):
-        return contract.pair_identity(repo, provenance, slot=self.slot)
+        return contract.pair_identity(repo, provenance, slot=self.slot, adaptive=self.adaptive)
 
 
 def parse_options(argv):
@@ -45,6 +46,7 @@ def parse_options(argv):
     parser.add_argument('--repo', type=Path, required=True)
     parser.add_argument('--slot', choices=tuple(contract.PROFILES), required=True)
     parser.add_argument('--context', type=int, choices=(contract.CONTEXT,), required=True)
+    parser.add_argument('--adaptive-overlay', action='store_true')
     parser.add_argument('--internal-scenario', choices=inner.SCENARIOS, default='all', help=argparse.SUPPRESS)
     return parser.parse_args(argv)
 
@@ -57,13 +59,18 @@ def main(argv=None):
         print(json.dumps({'status': 'FAIL', 'code': 'pair_fixture_arguments_invalid'}))
         return 2
     slot = options.slot
+    adaptive = options.adaptive_overlay
     variant = load('q38pair_slot_wrapper', ROOT / 'scripts/runtime/sglang38_pair_file_auth.py').SLOTS[slot]
     original_verify = inner.verify_sources
     original_discovery = inner.cuda_discovery_fixture
 
     def verify(repo):
         original_verify(repo)  # Every legacy/native source hash stays required.
-        contract.pair_identity(repo, slot=slot)
+        contract.pair_identity(repo, slot=slot, adaptive=adaptive)
+        if adaptive:
+            # The CPU-only actual-image fixture checks the same installed
+            # verifier/overlay closure as the production pair launcher.
+            load('q38pair_overlay_guard', repo / 'scripts/runtime/sglang38_pair_file_auth.py').verify_adaptive_overlay()
         return repo / 'tests/lifecycle/sglang38_fixture/pair_launcher.py'
 
     def discovery(torch, context=contract.CONTEXT):
@@ -71,14 +78,21 @@ def main(argv=None):
         return original_discovery(torch, 131072)  # Exact one-GPU discovery stub.
 
     with ExitStack() as stack:
+        if adaptive:
+            oci = contract.runtime_binding(ROOT).text_oci()
+            for name, value in {'IMAGE_ID': oci.IMAGE_ID, 'IMAGE_REFERENCE': oci.IMAGE_REFERENCE,
+                                'DRAIN_TARGET': 'text',
+                                'source_provenance': lambda repo: contract.adaptive_provenance(repo)[0]}.items():
+                stack.enter_context(patch.object(inner, name, value))
         for name, value in {
                 'EXTENSION_CONTEXT': contract.CONTEXT,
                 'ALIAS': variant['served_model_name'], 'PORT': variant['port'],
-                'FIXTURE_SLOT': slot, 'CHILD_ARGUMENTS': ('--slot', slot),
+                'FIXTURE_SLOT': slot,
+                'CHILD_ARGUMENTS': ('--slot', slot, *(['--adaptive-overlay'] if adaptive else [])),
                 'parse_options': parse_options,
                 '__file__': __file__,  # Independent abort children use this same mode.
                 'verify_sources': verify,
-                'fixture_contract': lambda repo: _Contract(slot),
+                'fixture_contract': lambda repo: _Contract(slot, adaptive),
                 'cuda_discovery_fixture': discovery}.items():
             stack.enter_context(patch.object(inner, name, value))
         arguments = sys.argv[1:] if argv is None else argv

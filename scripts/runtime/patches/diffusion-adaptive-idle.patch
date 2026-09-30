@@ -1,0 +1,62 @@
+--- a/python/sglang/multimodal_gen/runtime/managers/scheduler.py
++++ b/python/sglang/multimodal_gen/runtime/managers/scheduler.py
+@@ -38,6 +38,7 @@
+     is_local_endpoint,
+     spill_large_arrays_to_file_refs,
+ )
++from sglang.multimodal_gen.runtime.managers.adaptive_diffusion import DiffusionIdleBinding
+ from sglang.multimodal_gen.runtime.managers.cpu_worker import CPUWorker
+ from sglang.multimodal_gen.runtime.managers.dynamic_batch_admission import (
+     BatchAdmissionController,
+@@ -1242,6 +1243,8 @@
+         The main event loop that listens for ZMQ requests.
+         Handles abortion
+         """
++        # H005 overlay is bounded to the reviewed single-GPU monolithic path.
++        adaptive_idle = DiffusionIdleBinding(self, Req)
+         # Pool mode: all roles use the pool event loop
+         if self._disagg_role != RoleType.MONOLITHIC:
+             self._disagg_event_loop()
+@@ -1251,6 +1254,7 @@
+             logger.debug("Driver scheduler of dp replica %d listening", self.dp_replica)
+ 
+         while self._running:
++            adaptive_idle.maybe_wait()
+             # Update queue depth for metrics
+             if self._disagg_metrics:
+                 self._disagg_metrics.update_queue_depth(len(self.waiting_queue))
+@@ -1258,6 +1262,10 @@
+             # 1: receive requests
+             try:
+                 new_reqs = self.recv_reqs()
++                new_reqs = adaptive_idle.process_signals(
++                    new_reqs,
++                    lambda identity: self.return_result(OutputBatch(), identity),
++                )
+                 new_reqs = self.process_received_reqs_with_req_based_warmup(new_reqs)
+                 now = time.monotonic()
+                 self.waiting_queue.extend(
+@@ -1311,6 +1319,7 @@
+                         and get_first_generation_req(req) is not None
+                     ):
+                         self.metrics.observe_batch(1, "request_group")
++            adaptive_idle.begin(items)
+             try:
+                 with maybe_record_function(
+                     f"REQ {self._req_label(items)} dispatch+forward"
+@@ -1329,6 +1338,7 @@
+                 except zmq.ZMQError as e:
+                     logger.error(f"ZMQ error sending replies sequentially: {e}")
+                 finally:
++                    adaptive_idle.complete()
+                     if self.metrics is not None:
+                         for _, req in items:
+                             self.metrics.finish(id(req), error=True)
+@@ -1364,6 +1374,7 @@
+                 logger.error(f"ZMQ error sending reply: {e}")
+                 continue
+             finally:
++                adaptive_idle.complete()
+                 if self.metrics is not None:
+                     for _, req in items:
+                         self.metrics.finish(id(req), error=True)

@@ -1,0 +1,43 @@
+{
+  "status": "FAILED_CANDIDATE_STOPPED_480K_RESTORED",
+  "effective_status": "FAILED_CANDIDATE_STOPPED_480K_RESTORED",
+  "unit": {
+    "MainPID": "0",
+    "Result": "success",
+    "ActiveState": "inactive",
+    "SubState": "dead"
+  },
+  "candidate_id": "8a0bb8f7fe9c17080d2d8d1be507a4ecfda1a39ef40a158ee2d5fc13b5533824",
+  "request_phase": "client_closed",
+  "native_usage": {
+    "completion_tokens": 10,
+    "prompt_tokens": 16,
+    "prompt_tokens_details": null,
+    "reasoning_tokens": 0,
+    "total_tokens": 26
+  },
+  "ttft_seconds": 0.9381491860003734,
+  "request_kind": null,
+  "request_body_sent_utc": "2026-09-27T02:24:51.507556+00:00",
+  "request_deadline_utc": "2026-09-27T02:29:51.507223+00:00",
+  "job_hard_end_utc": "2026-09-27T05:38:18.654677+00:00",
+  "latest_sample_utc": "2026-09-27T02:25:32.273528+00:00",
+  "gpu": {
+    "free_mib": "69506",
+    "temp_c": "39",
+    "total_mib": "97887",
+    "used_mib": "27744",
+    "util_pct": "0",
+    "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+  },
+  "ram": {
+    "MemAvailable": 606375411712,
+    "MemTotal": 946820972544,
+    "SwapFree": 3089362944,
+    "SwapTotal": 3157258240
+  },
+  "retained_currently_running": null,
+  "retained_same_boot": null,
+  "owner_receipt": "/data/logs/flash-h008-20260926/H011-MANUAL1M-OWNER.json",
+  "result_receipt": "/data/logs/flash-h008-20260926/H011-MANUAL1M.json"
+}

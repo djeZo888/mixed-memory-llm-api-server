@@ -1,0 +1,116 @@
+{
+  "started_utc": "2026-09-27T13:36:34.635155+00:00",
+  "finished_utc": "2026-09-27T13:36:34.816886+00:00",
+  "warm_pid_matches": true,
+  "mapped_libraries": [
+    {
+      "path": "/opt/llama/libggml-base.so.0.25.3",
+      "sha256": "97a997e852048071aa5d9923b8a3b289033f237a5a85518b8ff084c96ae19615",
+      "bytes": 948848
+    },
+    {
+      "path": "/opt/llama/libggml-cpu-zen4.so",
+      "sha256": "0899d6e438b3773955be3f930d3c095c92a896e63bf8b6707f1d9164ae7888f2",
+      "bytes": 1674256
+    },
+    {
+      "path": "/opt/llama/libggml-cuda.so",
+      "sha256": "033b1a36a633530a3a6b9aa845e7c2fb3d9e02fd80c06a61db9fc6c58ffdd39b",
+      "bytes": 49915840
+    },
+    {
+      "path": "/opt/llama/libggml.so.0.25.3",
+      "sha256": "535cfda55b3796a0073e424654387d2293887ccd1858c35dbd058d90fa326600",
+      "bytes": 60112
+    }
+  ],
+  "thread_masks": {
+    "0-7,16-71": 13,
+    "16-23": 8,
+    "24-31": 8,
+    "32-39": 8,
+    "40-47": 8,
+    "48-55": 8,
+    "56-63": 8,
+    "64-71": 8,
+    "0-7": 7
+  },
+  "tool_versions": {
+    "perf": {
+      "path": "/usr/bin/perf",
+      "version": {
+        "code": 0,
+        "text": "perf version 6.8.12\n"
+      }
+    },
+    "ncu": {
+      "path": null,
+      "version": "UNAVAILABLE in PATH"
+    },
+    "nsys": {
+      "path": null,
+      "version": "UNAVAILABLE in PATH"
+    },
+    "dcgmi": {
+      "path": null,
+      "version": "UNAVAILABLE in PATH"
+    }
+  },
+  "cuda_tool_paths": [],
+  "source_head": {
+    "code": 0,
+    "text": "7ac59a6e3ad851cd41af00f678effab0598ba9a8\n"
+  },
+  "pmu_devices": {
+    "software": {
+      "type": "1\n",
+      "events": [],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/software/cpumask'"
+    },
+    "uprobe": {
+      "type": "9\n",
+      "events": [],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/uprobe/cpumask'"
+    },
+    "cpu": {
+      "type": "4\n",
+      "events": [
+        "branch-instructions",
+        "branch-misses",
+        "cache-misses",
+        "cache-references",
+        "cpu-cycles",
+        "instructions",
+        "stalled-cycles-frontend"
+      ],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/cpu/cpumask'"
+    },
+    "breakpoint": {
+      "type": "5\n",
+      "events": [],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/breakpoint/cpumask'"
+    },
+    "tracepoint": {
+      "type": "2\n",
+      "events": [],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/tracepoint/cpumask'"
+    },
+    "kprobe": {
+      "type": "8\n",
+      "events": [],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/kprobe/cpumask'"
+    },
+    "msr": {
+      "type": "10\n",
+      "events": [
+        "tsc"
+      ],
+      "cpumask": "UNAVAILABLE [Errno 2] No such file or directory: '/sys/bus/event_source/devices/msr/cpumask'"
+    }
+  },
+  "perf_paranoid": "4\n",
+  "private_evidence_sha256": {
+    "capabilities-raw.json": "8683c54623f0ac88a3621be83525a8f0ba3ef3c394b7b8116cc27ca293d0ed21",
+    "r5-native-full.log": "d5237749cb7885a074420bfaf9d0dd00a23ea5fd110123432425112119a0eb8a"
+  }
+}

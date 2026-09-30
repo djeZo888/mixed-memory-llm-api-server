@@ -1,0 +1,65 @@
+{
+  "status": "ACTUAL_PARENT_CHILD_REJECTION_NO_PASS",
+  "utc": "2026-09-28T03:30:39.434085+00:00",
+  "nativeParentSessionId": "mvs_ccaaa50caaa14a3da609a988bb303002",
+  "nativeChildSessionId": "mvs_5435b8b840d94142969e55291e0feec3",
+  "taskId": "bg_9f533d21-33dc-4d08-a6b8-e9f7ea77079a",
+  "parentActualTools": [
+    "glob",
+    "read",
+    "read",
+    "task"
+  ],
+  "foregroundFrontierTaskCalls": 1,
+  "childTaskResult": "task_error; run_status failed; model_verdict missing; file_change missing; final_text empty; 400 MiMo request or qualification rejected",
+  "parentBehavior": "Reported child failure honestly and did not re-invoke exactly-once child; no independent verification claim",
+  "qwenUsage": [
+    {
+      "at": "2026-09-28T03:25:39.527Z",
+      "event": "qwen-usage",
+      "sessionId": "00b09e2b-55d5-4aaa-9543-be34007bc9fd",
+      "promptTokens": 16518,
+      "completionTokens": 50,
+      "source": "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)"
+    },
+    {
+      "at": "2026-09-28T03:25:42.910Z",
+      "event": "qwen-usage",
+      "sessionId": "00b09e2b-55d5-4aaa-9543-be34007bc9fd",
+      "promptTokens": 16600,
+      "completionTokens": 52,
+      "source": "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)"
+    },
+    {
+      "at": "2026-09-28T03:25:54.811Z",
+      "event": "qwen-usage",
+      "sessionId": "00b09e2b-55d5-4aaa-9543-be34007bc9fd",
+      "promptTokens": 16871,
+      "completionTokens": 369,
+      "source": "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)"
+    },
+    {
+      "at": "2026-09-28T03:26:06.218Z",
+      "event": "qwen-usage",
+      "sessionId": "00b09e2b-55d5-4aaa-9543-be34007bc9fd",
+      "promptTokens": 17438,
+      "completionTokens": 334,
+      "source": "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)"
+    },
+    {
+      "at": "2026-09-28T03:26:07.263Z",
+      "event": "qwen-usage",
+      "sessionId": "00b09e2b-55d5-4aaa-9543-be34007bc9fd",
+      "promptTokens": 1106,
+      "completionTokens": 32,
+      "source": "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)"
+    }
+  ],
+  "frontierPayloadsPersisted": 0,
+  "frontierLedgerRequests": 0,
+  "MiMoUsageObserved": null,
+  "inputBoundScope": "16383 bound applies to MiMo; parent Qwen requests used16518..17438 tokens",
+  "rawEventsSha256": "aa02cd153d8632470124ca83ba824c8452a62f105399062e5903065ae7897105",
+  "rawLocation": "/Users/agent/CodexProjects/llm-orchestration/tasks/H019-HARNESS-ACTIVATE02-20260928/private/attempt02/events.jsonl",
+  "diagnosis": "Exact rejected child wire body was not retained by the existing hook: prepareMimo precedes payload persistence. 400 narrows to mimo_invalid_request or mimo_tool_history; exact field cannot yet be proven."
+}

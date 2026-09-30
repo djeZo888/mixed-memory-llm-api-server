@@ -1,0 +1,12 @@
+✔ full actual tools/output preserved; malformed roster and oversized input close admission (1.960375ms)
+✔ final capacity uses existing actual receipt without conflating occupied input (4.6175ms)
+✔ preflight refuses outside its independent Linux systemd owner before file or host contact (0.431209ms)
+✔ admission boundary and exact profile source pin (0.565959ms)
+ℹ tests 4
+ℹ suites 0
+ℹ pass 4
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 61.566084

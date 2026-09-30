@@ -1,0 +1,95 @@
+"""Periodic proofs use real protected I/O; Linux discovery is a local fixture."""
+import contextlib
+import datetime
+import json
+import os
+from pathlib import Path
+import unittest
+from unittest.mock import Mock, call, patch
+
+from tests.lifecycle.test_real_storage_roles import RealRoleFixture
+from tests.test_hardware_latch import BOOT
+from control.hardware_latch import empty_state
+from lifecycle import hardware_policy as hp
+
+
+class PeriodicLatchWrite(unittest.TestCase):
+    def test_all_current_gpu_proofs_keep_guards_without_recursive_root_scans(self):
+        fixture = RealRoleFixture()
+        self.addCleanup(fixture.close)
+        path = Path(fixture.binding.path('services', hp.STATE_SUFFIX))
+        path.parent.mkdir(mode=0o700)
+        path.write_text(json.dumps(empty_state()))
+        path.chmod(0o600)  # Existing, explicitly provisioned protected state.
+        wall = 1790347200.0
+        stamp = datetime.datetime.fromtimestamp(wall, datetime.timezone.utc).isoformat()
+        anchors = []
+        original_anchor = fixture.api.AnchoredRoot
+
+        def anchored(path, guard):
+            anchor = original_anchor(path, guard)
+            # Spies retain real descriptor/mount/path/private-file validation.
+            recorder = Mock()
+            for name in ('read_json', 'atomic_json', 'check'):
+                wrapped = Mock(wraps=getattr(anchor, name))
+                setattr(anchor, name, wrapped)
+                recorder.attach_mock(wrapped, name)
+            anchors.append((anchor, recorder))
+            return anchor
+
+        with fixture.lease() as lease, contextlib.ExitStack() as stack:
+            scans = stack.enter_context(patch.object(fixture.storage, 'root_payload_guard',
+                wraps=fixture.storage.root_payload_guard))
+            paths = stack.enter_context(patch.object(fixture.binding, 'validate_path',
+                wraps=fixture.binding.validate_path))
+            mounted = stack.enter_context(patch.object(fixture.binding, 'mounted_guard',
+                wraps=fixture.binding.mounted_guard))
+            leases = stack.enter_context(patch.object(hp, '_validate_borrowed_lease',
+                wraps=hp._validate_borrowed_lease))
+            latch_validation = stack.enter_context(patch.object(hp, 'HardwareLatch', wraps=hp.HardwareLatch))
+            stack.enter_context(patch.object(fixture.api, 'AnchoredRoot', side_effect=anchored))
+            store = hp.RegisteredLatchStore(fixture.binding, lease=lease, storage_io=fixture.api,
+                system_root=fixture.base, trusted_uid=os.geteuid())
+            writes = stack.enter_context(patch.object(store, 'write', wraps=store.write))
+            policy = hp.HardwarePolicy(store, lease=lease, system_root=fixture.base,
+                trusted_uid=os.geteuid(), boot=lambda: {'boot_id': BOOT, 'uptime_seconds': 150},
+                wall=lambda: wall)
+            self.assertEqual(set(hp.GPU_UUIDS), {
+                'GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237',
+                'GPU-69acfa26-8b60-61b5-702d-aee252c163cc',
+                'GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528',
+                'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23',
+                'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'})
+            proof_count = len(hp.GPU_UUIDS)
+            self.assertEqual(proof_count, 5)
+            for index, gpu in enumerate(hp.GPU_UUIDS):
+                policy.validate_required(gpu, current_boot_id=BOOT, observed_at=stamp,
+                    observation_id=f'changed-proof-{index}')
+
+            self.assertEqual(writes.call_count, proof_count)
+            # Each proof: protected read validates path twice, write validates once;
+            # policy validates its lease once, store validates before/after write.
+            self.assertEqual(paths.call_args_list, [call('services', str(path))] * (3 * proof_count))
+            self.assertEqual(mounted.call_args_list, [call(fixture.api, roles=('data',))] * proof_count)
+            self.assertEqual(leases.call_args_list, [call(lease, system_root=fixture.base,
+                trusted_uid=os.geteuid())] * (3 * proof_count))
+            self.assertEqual(latch_validation.call_count, 2 * proof_count)  # Old and proposed JSON.
+            self.assertEqual(len(anchors), proof_count)
+            for index, (anchor, recorder) in enumerate(anchors):
+                anchor.read_json.assert_called_once_with(hp.STATE_SUFFIX, max_bytes=65536)
+                anchor.atomic_json.assert_called_once()
+                state = anchor.atomic_json.call_args.args[1]
+                self.assertEqual(anchor.atomic_json.call_args.args[0], hp.STATE_SUFFIX)
+                self.assertEqual(set(state['validated']), set(hp.GPU_UUIDS[:index + 1]))
+                self.assertEqual(recorder.mock_calls[-1], call.check())  # Explicit post-write check.
+                self.assertTrue(anchor._closed)
+            self.assertTrue(all(guard._closed for guard in fixture.guards))
+            saved = json.loads(path.read_text())
+            self.assertEqual(set(saved['validated']), set(hp.GPU_UUIDS))
+            self.assertEqual(path.stat().st_mode & 0o777, 0o600)
+            self.assertEqual(path.stat().st_nlink, 1)
+            self.assertEqual(scans.call_count, 0, 'periodic proof persistence must not walk root trees')
+
+
+if __name__ == '__main__':
+    unittest.main()

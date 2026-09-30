@@ -1,0 +1,107 @@
+{
+  "checks": [
+    {
+      "at": "2026-09-23T04:08:07.343160+00:00",
+      "check": "capabilities",
+      "configured_limits": {
+        "active": 1,
+        "approved_uhd_native_pixels": 8355840,
+        "budget_seconds": 900,
+        "encoded_file_bytes": 33554432,
+        "encoded_total_bytes": 67108864,
+        "maximum_pixels_when_qualified": 8294400,
+        "n": 1,
+        "references": 2,
+        "waiting": 0
+      },
+      "defaults": {
+        "cfg": 1,
+        "generator_device": "cpu",
+        "size": "1024x1024",
+        "steps": 40
+      },
+      "elapsed_seconds": 0.016,
+      "http_status": 200,
+      "measured_profiles": [
+        {
+          "crop_bottom": 0,
+          "evidence_sha256": "3e1f682911863f191439fcb757eeec5d706ba966f6e657f8a5e40b498b4a274f",
+          "native_size": "1024x1024",
+          "operation": "generation",
+          "references": 0,
+          "size": "1024x1024",
+          "transparent": false
+        }
+      ],
+      "response_bytes": 913,
+      "retry_after_1": false,
+      "runtime_image_digest": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "service": {
+        "admitting": true,
+        "busy": false,
+        "ready": true,
+        "state": "ready"
+      },
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:08:07.359092+00:00",
+      "check": "readiness",
+      "elapsed_seconds": 0.008,
+      "http_status": 200,
+      "response_bytes": 60,
+      "retry_after_1": false,
+      "service": {
+        "admitting": true,
+        "busy": false,
+        "ready": true,
+        "state": "ready"
+      },
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:08:07.386120+00:00",
+      "check": "n_2",
+      "elapsed_seconds": 0.048,
+      "error_code": "invalid_request",
+      "http_status": 400,
+      "response_bytes": 64,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:08:07.433616+00:00",
+      "check": "runtime_field",
+      "elapsed_seconds": 0.008,
+      "error_code": "invalid_request",
+      "http_status": 400,
+      "response_bytes": 64,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:08:07.441472+00:00",
+      "check": "unsupported_size",
+      "elapsed_seconds": 0.049,
+      "error_code": "unsupported_size",
+      "http_status": 400,
+      "response_bytes": 66,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    },
+    {
+      "at": "2026-09-23T04:08:07.490187+00:00",
+      "check": "mask",
+      "elapsed_seconds": 0.049,
+      "error_code": "invalid_request",
+      "http_status": 400,
+      "response_bytes": 64,
+      "retry_after_1": false,
+      "status": "LIVE_PASS"
+    }
+  ],
+  "mode": "invalid",
+  "receipt_sha256": "20e7c561fc218a641f2ee3816d727c18fd1db2fd5a539c045babf222ceb4c6bf",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "status": "LIVE_PASS"
+}

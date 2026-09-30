@@ -1,0 +1,239 @@
+{
+  "task": "H030-FLOW03-20260929",
+  "nativeId": "01a0ec31-e7c5-7010-9173-78d1e6ea881e",
+  "startedUtc": "2026-09-29T08:04:48.021060+00:00",
+  "hardDeadlineUtc": "2026-09-29T08:43:00Z",
+  "utc": "2026-09-29T08:27:21.846838+00:00",
+  "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+  "deployment": {
+    "result": "APP_STATUS_HEALTH_PASS",
+    "completedUtc": "2026-09-29T08:15:31.958889+00:00",
+    "receiptSha256": "35bf8a872d42511f1a463bbdaeb8f3e079c9a04bbd4094ccc2ccc0dc38c80ae4",
+    "release": "/opt/ai-harness/releases/h030-flow03-2b40610e937ad6256450e055ffd1d5647997f4c5/ai-harness",
+    "appPid": 118087,
+    "statusPid": 14480,
+    "unitSha256": "2ab06d8692d44b26743420f776b05fe9c009ecb2b8ecac6f26e2d65073d9c70d",
+    "buildReceiptSha256": "c1b310c6720fefd1033176e131e1b72640d988aab07a24231dee2bffea6b7913",
+    "helperSha256": "4ee791d7f9c94d424cbbc6da606fde4821dea1e43646b3e34149e64963018ca9",
+    "archiveSha256": "0a0abf703b87c93e085a80c5a43bb82b5dc345e21980dbe5810fa7c11b15c6d6",
+    "preservation": {
+      "allOriginalApplicationRowsAndEventsPreserved": true,
+      "historicalUncertaintyPreserved": true,
+      "normalStartupEvents": 6,
+      "volatileLaneTablesSeparatelyChecked": [
+        "gateway_lanes",
+        "h003_image_lane",
+        "h005_image_ownership"
+      ]
+    },
+    "settlementBinding": {
+      "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+      "bindingSha256": "334f1705c88eac0f0653eb1caadc533628f8017ac93ce33ede65da12ac171ce5",
+      "helperSha256": "cdd4fab47e2ec787e8f21ba0ae4041957e082f0258ac5e5f0df2da8399ec90f2",
+      "helperPath": "/home/user/.cache/h030-flow03/settlement-readback.py",
+      "compiledModules": 61,
+      "semanticChange": false,
+      "nativeImageId": "d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad",
+      "unitSha256": "2ab06d8692d44b26743420f776b05fe9c009ecb2b8ecac6f26e2d65073d9c70d"
+    }
+  },
+  "checks": {
+    "combinedServerBuild": "PASS",
+    "deps": "Existingcachedserverdeps lockequal, tasksymlinkonly",
+    "web": "Exactarchive/livehashmatch reused,no rebuild",
+    "priorComponentTests": "Retained W2 35+actualmemento and W1 50/42 PASS, not rerun",
+    "nativeImage": "unchanged",
+    "config": "unchanged"
+  },
+  "cases": {
+    "compaction": {
+      "status": "PASS",
+      "oraclePass": true,
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "925ccb74-9a31-4ac9-8bf3-a1b798f9f34e",
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "actionId": "4cc0ed51-dba6-44b5-87d4-042d02e944c3",
+      "settled": true,
+      "runStatus": "completed",
+      "compactedAt": "2026-09-29T08:17:52.917Z",
+      "summarySha256": "2a9c4cdfdc3895371aaa811c736c244da1ca7c41e309f0a1122f8d3c5c8065a9",
+      "sameActionDedupe": true,
+      "artifactsUnchanged": true,
+      "newRequestIds": [
+        "132efa11-c6bc-4f3b-9a1b-51168c447ff2"
+      ],
+      "scope": "Small actual manual compaction only; recall/cold pending",
+      "summaryCaveat": "Summary says followup.txt 18 bytes, actual artifact is22 bytes; exact line and actual bytes preserved. Byte-count statement is inaccurate."
+    },
+    "recall": {
+      "status": "PASS",
+      "oraclePass": true,
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "f2f9ee4f-3916-42cb-9803-c6564b21b73c",
+      "submissionId": "5e74b712-8c37-4238-a9e0-ff4f0399586c",
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "settled": true,
+      "runStatus": "completed",
+      "sameNativeThread": true,
+      "answer": "- Original misspelling in `demo.py`: `helo`\n- Corrected greeting: `hello`\n- Unchanged Python test filename: `test_demo.py`\n- Exact line in `followup.txt`: `H029 follow-up: hello` (with a trailing newline)",
+      "toolCalls": 0,
+      "artifactsUnchanged": true,
+      "newRequestIds": [
+        "e415905b-2ca8-4a7d-b2e8-0a01e6ad250d"
+      ],
+      "completedUtc": "2026-09-29T08:20:53.759Z"
+    },
+    "cold": {
+      "phase": "cold",
+      "status": "FAIL",
+      "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "runId": "c688c7bc-7ab5-45c3-9c8a-86f693870465",
+      "submissionId": "73223a40-af45-496f-9e12-6ac9bc2a652b",
+      "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+      "sameNativeThread": true,
+      "settled": true,
+      "runStatus": "interrupted",
+      "artifactOracle": true,
+      "independentPythonAssertion": "ASSERTION_PASS:hello",
+      "cancelled": false,
+      "oraclePass": false,
+      "requiredParentReview": "Cold supervisor boundary, same native thread, actual unchanged artifacts and native Python test result",
+      "ticket": {
+        "id": "6ed3b0ef-42c8-40f6-8e06-42bffd575ed7",
+        "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+        "expiresAt": 1790671260000,
+        "image": false,
+        "frontier": false
+      },
+      "requestIds": [
+        "0893f613-127a-420d-976b-4604adea64e1",
+        "0ca24e6f-26e7-496b-9199-dc2246cf35dd",
+        "3d59d651-c56a-4b8d-ae88-e25bd04d2ab6",
+        "1b5a939c-2995-471a-8c29-51b1f3b6bca7",
+        "2a86ad82-40d2-4c6b-bee5-cc5c0e0b4450",
+        "56d31195-892d-482d-b13a-50132dfbad62",
+        "2a641d94-a37f-475e-a1bc-cb1c9b8aa5f2",
+        "35d268cd-c588-4d5b-a520-d80111d2b019",
+        "132efa11-c6bc-4f3b-9a1b-51168c447ff2",
+        "e415905b-2ca8-4a7d-b2e8-0a01e6ad250d",
+        "3a82ac8f-e46d-4b9e-871d-6d6cf0bce05f"
+      ],
+      "retries": 0,
+      "completedUtc": "2026-09-29T08:22:38.798Z",
+      "newRequestIds": [
+        "3a82ac8f-e46d-4b9e-871d-6d6cf0bce05f"
+      ],
+      "actualNativeToolCalls": 0,
+      "actualNativePythonResult": "NOT_RUN",
+      "firstFailure": {
+        "time": "2026-09-29T08:22:36.622Z",
+        "schema": 1,
+        "requestId": "3a82ac8f-e46d-4b9e-871d-6d6cf0bce05f",
+        "lane": "qwen3.8-27b-gpu0",
+        "phase": "count",
+        "step": "node_after",
+        "outcome": "reject",
+        "reason": "hardware_state",
+        "hardware": {
+          "hardwareLatched": null,
+          "gpuUuidMatch": true,
+          "expectedGpuUuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+          "requiredGpuUuids": [
+            "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+          ],
+          "nodeSchema": 1,
+          "nodeAgeMs": 4315,
+          "serviceAgeMs": 3955,
+          "serviceGeneration": 5010297804242733,
+          "bootId": "992bf979-efae-495b-9ab2-26e75ed5c5d0",
+          "hardwareValidationAgeMs": null,
+          "hardwareValidatedBootId": null,
+          "hardwareValidatedGpuUuids": null
+        },
+        "elapsedMs": 3
+      },
+      "providerGenerated": false,
+      "retry": false,
+      "localAssertionScope": "Downloaded unchanged files only, not native workflow acceptance"
+    }
+  },
+  "notTested": {
+    "image": "Root lifecycle hold; no generation/requests/jobs",
+    "handoff": "No submission; cold prerequisite failed then allnewadmissionsheld",
+    "pdf": "No demonstrated correction to prior failure; not retried",
+    "mimo": "No W2 request/configwrite; W1/root own current readiness",
+    "appColdRestart": "Only initial combinedactivation performed; later cold case used normal ephemeral native close/restart, not whole app restart"
+  },
+  "candidateProposal": {
+    "status": "LOCAL_PROPOSAL_ONLY_NOT_STAGED_NOT_APPLIED",
+    "helperSha256": "a2b5c00533a2fb3c52395056c0d44e8d2836727695761813c6dc9dd83253a3d3",
+    "source": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+    "candidateOldSha256": "2ed2decd50e4a8b83fa89cc5fe85d6d667e7fbfaa799bde1e7f2a177e3f2c1be",
+    "changes": [
+      "enabled:false->true",
+      "qualified:false->true"
+    ],
+    "currentFlags": "false/false",
+    "actualNewCandidateSha256": "NOT_STAGED",
+    "preconditions": [
+      "root exact review",
+      "actual current W1 readiness evidence",
+      "zero active runs/pending/native owners/tickets",
+      "protected current candidate exact hash; selection/evidence preserved"
+    ],
+    "notQualification": "Backend construction only; no global live specialist PASS record",
+    "syntax": "AST_PASS_ONLY",
+    "utc": "2026-09-29T08:24:54.496528+00:00"
+  },
+  "preservation": {
+    "oldFailedCompaction": {
+      "session_id": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+      "action_id": "0105579d-0c60-46e4-951c-53ad4e48405f",
+      "run_id": "75dc5ea4-f7cb-480f-9cef-f3e4b40ef03f"
+    },
+    "oldFailedRun": {
+      "id": "75dc5ea4-f7cb-480f-9cef-f3e4b40ef03f",
+      "status": "interrupted"
+    },
+    "protectedUncertainOwners": [
+      {
+        "session_id": "bd71984f-2f90-4375-bca4-6c76730ba224",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e730-9304-7872-b176-41cd004044bf"
+      },
+      {
+        "session_id": "bed0fc3c-910c-4598-bfa6-11cabf637e3f",
+        "ownership": "uncertain",
+        "active_turn_id": "01a0e756-ec6e-7080-9f9b-89768b5cc89e"
+      }
+    ],
+    "quarantines": 3,
+    "nativeTaskContainers": [],
+    "activeRuns": [],
+    "pendingGatewayRequests": [],
+    "ticketCount": 0,
+    "defaultEngine": "minimax",
+    "maintenance": {
+      "/": 503,
+      "/api/health": 503,
+      "/api/sessions/00000000-0000-0000-0000-000000000000/image-jobs/00000000-0000-0000-0000-000000000000/approval-token": 503,
+      "/status": 200,
+      "/api/admin/health": 403
+    },
+    "candidateFlags": [
+      false,
+      false
+    ]
+  },
+  "protocol": {
+    "separateInboxReadAndOutboxAckBeforeAllAdmissions": true,
+    "recallPreAdmissionGuardStop": "One root message arrived between ACK/dispatch; driver rejected beforeintent/ticket/POST; no acceptedrequest/cancel/retry",
+    "unchangedModelRetries": 0,
+    "operatorCancellations": 0,
+    "noGithubPush": true,
+    "noVmModelHardwareFanBmcActions": true
+  },
+  "wrapperExit": "PENDING actual wrapper receipt after native exits; never fabricated",
+  "privateRawRetained": true,
+  "fullyQualified": false
+}

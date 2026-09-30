@@ -1,0 +1,679 @@
+{
+  "schema": 1,
+  "auditUtc": "2026-09-29T16:04:24.090963+00:00",
+  "captureUtc": "2026-09-29T16:01:48.511176+00:00",
+  "manifestIntegrity": "PASS",
+  "manifestFileCount": 709,
+  "captureIndexIntegrity": "PASS",
+  "captureRecordCount": 700,
+  "requestCount": 19,
+  "manifestSha256": "3dd27df4c45bed724cd259aecdd5c7f84557d23f7cdaa016bcf86317d4af0cdb",
+  "sessionId": "392b6bcf-7842-4748-a856-95456634a4de",
+  "runId": "0c387d48-2ec4-4f49-9590-d96a72aa39cc",
+  "ticketId": "aa40e819-b8ce-467d-9c30-84d52dbf9619",
+  "outcome": "EDIT_ACCEPTANCE_FAILED_NO_EDIT_JOB_MODEL_SPAWNED_SECOND_CHILD",
+  "termination": "OPERATOR_STOP_NOT_NATURAL_PARENT_FAILURE",
+  "operatorStopUtc": "2026-09-29T16:01:34.172Z",
+  "stopHttpStatus": 202,
+  "parentCapabilityCallCount": 8,
+  "parentArgumentGroups": [
+    {
+      "rawArguments": "{\"prompt\": \"Check resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "count": 1
+    },
+    {
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "count": 7
+    }
+  ],
+  "parentFirstCapabilityCall": "call_9738a1a477344a2c862642f9",
+  "parentEightIdenticalThresholdReached": false,
+  "actualScopeViolation": "Two native child spawns during current edit turn despite exactly-one instruction",
+  "currentTurnChildSpawns": [
+    {
+      "callId": "call_33bdeafe22da41058cfd862d",
+      "childNativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "argumentsSha256": "447e041a1713b728c7f515531ffe23273d888316edd950db71607eef7d7bbab8",
+      "outputSha256": "ee4e9aad5fc0cbd66c54fc6c5d81f683fc0906dd06745037a7bb0ec94f00f8ed"
+    },
+    {
+      "callId": "call_5583e69879524cbcb2be1eee",
+      "childNativeThreadId": "01a0ede6-0fad-7191-9e87-bcad69beb761",
+      "argumentsSha256": "cf4d1e89ac5180ef64333750904e286cf2315b7d478efb5f17b5ee4fa5007332",
+      "outputSha256": "b089f9a4873a66744c564f37d394f553e40b33dbc7cc3b02c231bf4b4d89d771"
+    }
+  ],
+  "childTerminals": {
+    "01a0eddb-eec5-78b3-907f-d36d081a3048": [
+      {
+        "type": "task_complete",
+        "turnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+        "timestamp": "2026-09-29T15:54:00.831Z",
+        "reason": null,
+        "finalText": "The `image_capabilities` tool takes no arguments. Calling it with empty object."
+      }
+    ],
+    "01a0ede6-0fad-7191-9e87-bcad69beb761": [
+      {
+        "type": "turn_aborted",
+        "turnId": "01a0ede6-0fc5-7602-aaca-c94b841c0db7",
+        "timestamp": "2026-09-29T16:01:34.391Z",
+        "reason": "interrupted",
+        "finalText": null
+      }
+    ]
+  },
+  "imageToolCalls": [
+    {
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "callId": "call_c20b5c3a0d864dc79a73d3d4",
+      "requestId": "22d6299a-da01-4343-a087-df00b36827b4",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"action\": \"{}\"}",
+      "argumentsSha256": "6fe63beb4192fd51e3dc5419bbabf63bce3681f775b520f024da3f8325395c7c",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "647de43d-8a6a-4f0c-9a3b-d369cf4a48b7",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0031 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"action\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0031 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"action\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "callId": "call_acfddd338b6e4c078952177f",
+      "requestId": "647de43d-8a6a-4f0c-9a3b-d369cf4a48b7",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"references\": \"[]\"}",
+      "argumentsSha256": "10522e264ce40766a8aa17053c2c89d36cc3a1df800aec24da8f976ba5463f2b",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "16ccc2c1-1cb3-4fad-b185-5d03a4ff72c2",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0023 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"references\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0023 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"references\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_9738a1a477344a2c862642f9",
+      "requestId": "2ef0a51e-6dee-495a-b313-052c8d87d016",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Check resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "255eeb3fca0d0004061a3504e94cd721bb43e2436d67403877ead29212b8ef64",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "4209af58-154e-4e24-bf3d-088be0c59882",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0036 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0036 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_2c253c5e81d44cb99ce6bf34",
+      "requestId": "4209af58-154e-4e24-bf3d-088be0c59882",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "eec320ca-048e-4d34-9f9e-cb66354fabf4",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0026 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0026 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_3298209ecaf54ea7b2629258",
+      "requestId": "eec320ca-048e-4d34-9f9e-cb66354fabf4",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "c1ad520d-6f73-477b-a1ff-657b6adf8c43",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0023 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0023 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_dd0b73212f5e4d75b20ca634",
+      "requestId": "c1ad520d-6f73-477b-a1ff-657b6adf8c43",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "a01ec29a-98c9-4d79-8f4f-f306b87e748d",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0019 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0019 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_3d39f87b782b43eeb01e871a",
+      "requestId": "a01ec29a-98c9-4d79-8f4f-f306b87e748d",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "90c1bbbb-fe9e-49a6-9bdb-98c3ee4f0e43",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0022 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0022 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_e725ba5a22d44c79a0f46fcb",
+      "requestId": "90c1bbbb-fe9e-49a6-9bdb-98c3ee4f0e43",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "ae537780-034d-4f83-a3bb-5d246dab89ed",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0019 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0019 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_a9cb7c95ac174275bddf5bf4",
+      "requestId": "ae537780-034d-4f83-a3bb-5d246dab89ed",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "601ecab0-484b-47a0-856b-736298ea71f2",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0021 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0021 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    },
+    {
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "callId": "call_35cd3d3fdd314455934ac554",
+      "requestId": "601ecab0-484b-47a0-856b-736298ea71f2",
+      "tool": "image_capabilities",
+      "rawArguments": "{\"prompt\": \"Inspect resident Qwen-Image-2.1 edit capability, available sizes, and reference counts before any edit.\"}",
+      "argumentsSha256": "e8d2a696422af9fa32e0eb4a34a75d948bfe6cc58b2474a54a88acffff0519d3",
+      "schemaInvalid": true,
+      "mcpStatuses": [
+        "failed"
+      ],
+      "forwarding": {
+        "providerResponsesBytesEqual": true,
+        "providerNativeBytesEqual": true,
+        "nativeMcpArgumentsEqual": true
+      },
+      "nextSameThreadRequestId": "bb1fcd95-574e-4b5a-bbdd-dca61f0df576",
+      "nextNativeToolResult": [
+        {
+          "type": "input_text",
+          "text": "Wall time: 0.0019 seconds\nOutput:"
+        },
+        {
+          "type": "input_text",
+          "text": "MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\""
+        }
+      ],
+      "nextNormalizedToolResult": "Wall time: 0.0019 seconds\nOutput:MCP error -32602: Input validation error: Invalid arguments for tool image_capabilities: Unrecognized key: \"prompt\"",
+      "normalizedFeedbackStatus": "MATCHED_ERROR_RETAINED"
+    }
+  ],
+  "requestProvenance": [
+    {
+      "requestId": "b39860e7-a7b7-4e0f-9d9a-65bee02a35bd",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "0592bd26-01d6-4bf9-8149-fbbe3b0e45f9",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "36b7a748-9a69-4a0a-9d8f-f43e49fe2036",
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "nativeTurnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "3a5be951-4c29-4933-aa90-fab741f6e23a",
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "nativeTurnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "22d6299a-da01-4343-a087-df00b36827b4",
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "nativeTurnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": [
+        {
+          "callId": "call_054a5ec1750f46efa1072db0",
+          "sha256": "12fcc73941bb46277fa2d86042237dd279596fe367d7b8d62b0f8258fdb503e4"
+        }
+      ]
+    },
+    {
+      "requestId": "647de43d-8a6a-4f0c-9a3b-d369cf4a48b7",
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "nativeTurnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": [
+        {
+          "callId": "call_054a5ec1750f46efa1072db0",
+          "sha256": "12fcc73941bb46277fa2d86042237dd279596fe367d7b8d62b0f8258fdb503e4"
+        }
+      ]
+    },
+    {
+      "requestId": "16ccc2c1-1cb3-4fad-b185-5d03a4ff72c2",
+      "nativeThreadId": "01a0eddb-eec5-78b3-907f-d36d081a3048",
+      "nativeTurnId": "01a0eddb-eedd-7442-b485-4c4dcb987896",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": [
+        {
+          "callId": "call_054a5ec1750f46efa1072db0",
+          "sha256": "12fcc73941bb46277fa2d86042237dd279596fe367d7b8d62b0f8258fdb503e4"
+        }
+      ]
+    },
+    {
+      "requestId": "3329db68-5512-4c86-8e68-d9b9c7e0cfe0",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "2ef0a51e-6dee-495a-b313-052c8d87d016",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "4209af58-154e-4e24-bf3d-088be0c59882",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "eec320ca-048e-4d34-9f9e-cb66354fabf4",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "c1ad520d-6f73-477b-a1ff-657b6adf8c43",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "a01ec29a-98c9-4d79-8f4f-f306b87e748d",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "90c1bbbb-fe9e-49a6-9bdb-98c3ee4f0e43",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "ae537780-034d-4f83-a3bb-5d246dab89ed",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "601ecab0-484b-47a0-856b-736298ea71f2",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "bb1fcd95-574e-4b5a-bbdd-dca61f0df576",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization",
+        "normalized_request",
+        "provider_sse",
+        "responses_sse"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "041f9b08-2dc8-40e5-a3d7-20dec91c2709",
+      "nativeThreadId": "01a0edc1-1b35-7860-93a2-3d2c563d06a8",
+      "nativeTurnId": "01a0eddb-1ef0-7d60-b54c-ca9eeba1d333",
+      "phases": [
+        "pre_normalization"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    },
+    {
+      "requestId": "002f3faf-3e52-4ad7-8a28-1aace078e7be",
+      "nativeThreadId": "01a0ede6-0fad-7191-9e87-bcad69beb761",
+      "nativeTurnId": "01a0ede6-0fc5-7602-aaca-c94b841c0db7",
+      "phases": [
+        "pre_normalization"
+      ],
+      "baseInstructionsSha256": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+      "currentSkillOutputsInProviderHistory": []
+    }
+  ],
+  "nativeBaseInstructionsSha256": {
+    "01a0edc1-1b35-7860-93a2-3d2c563d06a8": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+    "01a0eddb-eec5-78b3-907f-d36d081a3048": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9",
+    "01a0ede6-0fad-7191-9e87-bcad69beb761": "2de1ae77e3f6a4786d13d3a98d35b0dcd5b8092a6438b3e97df38c27e6fa65d9"
+  },
+  "nativeCurrentSkillOutputs": {
+    "01a0edc1-1b35-7860-93a2-3d2c563d06a8": [],
+    "01a0eddb-eec5-78b3-907f-d36d081a3048": [
+      {
+        "callId": "call_054a5ec1750f46efa1072db0",
+        "sha256": "1de3a4ff77a8041a3523ba43611bc6158812dc5b13d42ab27556a24fcfefc809"
+      }
+    ],
+    "01a0ede6-0fad-7191-9e87-bcad69beb761": []
+  },
+  "finalMessageId": null,
+  "runStatus": "cancelled",
+  "subagents": {
+    "known": true,
+    "active": 0,
+    "completed": 1,
+    "failed": 0,
+    "cancelled": 1
+  },
+  "currentRunImageJobCount": 0,
+  "currentRunApprovalCardCount": 0,
+  "approvalCardEvidence": "No image job exists for current run; no broker card can be associated with this run.",
+  "historicalImageJobs": [
+    {
+      "id": "0aae2635-c9c7-4aa5-ad6e-d8b5a9aefffd",
+      "runId": "ec762194-446f-4938-b0ca-e94b50ab95fe",
+      "state": "completed"
+    }
+  ],
+  "retainedArtifact": {
+    "id": "c386922f-d6eb-4dba-beb1-e056dddd4ff0",
+    "sha256": "2b066cc3d4c03c1aebf8a7c4d2d66ede8f17a00301f904881561fb8b974b9bb7",
+    "size": 2265408,
+    "metadataMatchesPriorIndependentDownload": true,
+    "archivedFileRowUnchanged": true,
+    "postEditIndependentDownloadPerformedByThisAudit": false
+  },
+  "settlement": {
+    "sourceBoundReceiptSha256": "20ed156ab4d414b3a8facbe53e7d6627fa9974f64cb474287f5caee0bc7b5cb3",
+    "settled": true,
+    "exactSource": "aa5bdb826b422122d3497492f8f749948640d175"
+  },
+  "ticketRemoval": {
+    "utc": "2026-09-29T16:01:48.246369+00:00",
+    "remainingTicketIds": [],
+    "receiptSha256": "3e044fbe66d2aa6dee6353caf4b92a64e9083dbfc13e396fc72143a43e978026"
+  },
+  "scope": "Historical ordinary generation remains separate. No live calls; no new native inference. The partial EDIT-CHILD-PROVENANCE checkpoint remains unchanged."
+}

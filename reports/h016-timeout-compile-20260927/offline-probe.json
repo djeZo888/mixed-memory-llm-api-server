@@ -1,0 +1,50 @@
+{
+  "result": "PASS",
+  "checks": {
+    "compiledWrapper": "PASS MiMo511min; Qwen/GLM151min; explicit override",
+    "compiledFrameworkAttempts": {
+      "mimo-v2.6-pro-rl": 1,
+      "glm-5.3-flash": 3,
+      "qwen3.8-27b": 3
+    },
+    "compiledTransport": "PASS 511min inactivity, exact reviewed origin only",
+    "compiledProviderDefaults": {
+      "mimo-v2.6-pro-rl": {
+        "sdkTimeoutMs": [
+          30660000
+        ],
+        "streamDeadlineMs": [
+          30660000
+        ],
+        "calls": 1
+      },
+      "glm-5.3-flash": {
+        "sdkTimeoutMs": [
+          9060000
+        ],
+        "streamDeadlineMs": [],
+        "calls": 1
+      },
+      "qwen3.8-27b": {
+        "sdkTimeoutMs": [
+          9060000
+        ],
+        "streamDeadlineMs": [],
+        "calls": 1
+      }
+    },
+    "compiledFullStreamAbort": {
+      "calls": 1,
+      "elapsedMs": 101,
+      "stopReason": "error"
+    },
+    "compiledSdkRetryCalls": 1,
+    "profileToolsEstimator": "PASS synthetic numeric contexts; Qwen default; exact baseline tool definitions; unchanged estimator"
+  },
+  "compiledProbeSha256": "47ece1e167da8202765b2b97ee98be3995aeceef38b0a0f226ed9908e928bee8",
+  "probeSourceRevision": "b948889814648ad761f40a18260ddbe6351c6bbf",
+  "blockedMetadataFetches": 0,
+  "modelRequests": 0,
+  "toolExecutions": 0,
+  "native17Acceptance": false
+}

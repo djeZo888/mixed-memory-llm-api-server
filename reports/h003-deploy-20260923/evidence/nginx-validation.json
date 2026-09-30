@@ -1,0 +1,8 @@
+{
+  "staged_site_sha256": "5b7242929b16a7e1b9980b45366594496226b147dd81d15c0322a56b0bcc91d5",
+  "staged_config_path": "/var/backups/ai-harness-H003-DEPLOY-20260923/staged-validation/nginx.conf",
+  "nginx_test": "PASS",
+  "output": "nginx: the configuration file /var/backups/ai-harness-H003-DEPLOY-20260923/staged-validation/nginx.conf syntax is ok\nnginx: configuration file /var/backups/ai-harness-H003-DEPLOY-20260923/staged-validation/nginx.conf test is successful\n",
+  "installed_site_unchanged": true,
+  "reload_executed": false
+}

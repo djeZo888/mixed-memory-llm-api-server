@@ -1,0 +1,23 @@
+{
+  "time": "2026-09-23T11:26:13.794639+00:00",
+  "fix_base": "144b5c97fd6d3ffdebede2b0895c90227baa14db",
+  "scope": "five root-review corrections; offline affected regressions only",
+  "results": [
+    {
+      "check": "build",
+      "exit": 0
+    },
+    {
+      "check": "affected-image-store-regressions",
+      "exit": 0
+    },
+    {
+      "check": "diff-whitespace",
+      "exit": 0
+    }
+  ],
+  "candidate": "198fae25ce75dd067228c041bc24f71b0003d257",
+  "bundle_base": "e17082dfb983ba2acdd425ab9203744b4d0642d7",
+  "tests": 37,
+  "git_clean": true
+}

@@ -1,0 +1,104 @@
+{
+  "status": "PASS_OFFLINE_ONLY",
+  "checked_utc": "2026-09-27T06:56:18.850754+00:00",
+  "command": "python3 ../verify-provider-report.py",
+  "checks": [
+    {
+      "check": "JSON parse and unique keys",
+      "result": "PASS",
+      "details": 5
+    },
+    {
+      "check": "Candidate remains disabled; no capacity/ceiling qualification",
+      "result": "PASS",
+      "details": true
+    },
+    {
+      "check": "Selected shard inventory",
+      "result": "PASS",
+      "details": "13 exact names/public hashes; 577669438240 bytes. Weight bytes NOT verified."
+    },
+    {
+      "check": "Source hashes and exact numbered excerpts",
+      "result": "PASS",
+      "details": 26
+    },
+    {
+      "check": "Official embedded/standalone template equality",
+      "result": "PASS",
+      "details": "No GGUF tokenizer or runtime proof"
+    },
+    {
+      "check": "Admission proposal arithmetic against cache recurrence",
+      "result": "PASS",
+      "details": {
+        "cases": [
+          {
+            "slot": 4096,
+            "prompt": 3583,
+            "output": 512,
+            "proposal_admits": true,
+            "context_limit_trigger_in_recurrence": false
+          },
+          {
+            "slot": 4096,
+            "prompt": 3584,
+            "output": 512,
+            "proposal_admits": false,
+            "context_limit_trigger_in_recurrence": true
+          },
+          {
+            "slot": 8192,
+            "prompt": 4096,
+            "output": 512,
+            "proposal_admits": true,
+            "context_limit_trigger_in_recurrence": false
+          },
+          {
+            "slot": 8192,
+            "prompt": 8190,
+            "output": 1,
+            "proposal_admits": true,
+            "context_limit_trigger_in_recurrence": false
+          },
+          {
+            "slot": 8192,
+            "prompt": 8191,
+            "output": 1,
+            "proposal_admits": false,
+            "context_limit_trigger_in_recurrence": true
+          }
+        ],
+        "native_boundary_test": false
+      }
+    },
+    {
+      "check": "Changed-file scope",
+      "result": "PASS",
+      "details": "Only new report directory; GLM/config/profile/historical sources untouched"
+    },
+    {
+      "check": "Whitespace tracked diff",
+      "result": "PASS",
+      "details": "PASS; staged diff repeated before commit"
+    },
+    {
+      "check": "Remote hygiene",
+      "result": "PASS",
+      "details": "Existing local path only; no push"
+    },
+    {
+      "check": "Local rg secret-pattern scan",
+      "result": "PASS",
+      "details": "No private-key blocks or common credential-token patterns"
+    }
+  ],
+  "not_run": [
+    "build",
+    "inference",
+    "backend tokenization",
+    "native boundary/cancellation/allocation",
+    "application suite",
+    "private host contacts"
+  ]
+}

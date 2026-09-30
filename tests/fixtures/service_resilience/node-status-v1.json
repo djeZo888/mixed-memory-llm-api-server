@@ -1,0 +1,248 @@
+{
+  "schema_version": 1,
+  "node_id": "ai-vm",
+  "boot_id": null,
+  "generation": null,
+  "affected_services": [
+    "qwen-gpu0",
+    "qwen-gpu1",
+    "image",
+    "control"
+  ],
+  "state": "unknown",
+  "observed_at": null,
+  "age_ms": null,
+  "freshness": "unknown",
+  "reason": "not_observed",
+  "inventory": {
+    "state": "unknown",
+    "observed_at": null,
+    "age_ms": null,
+    "freshness": "unknown",
+    "reason": "not_observed",
+    "boot_id": null,
+    "complete": false,
+    "observation_id": null,
+    "gpu_uuids": [],
+    "hardware_faults": {}
+  },
+  "resources": {
+    "cpu": {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "not_observed",
+      "percent": null,
+      "logical_count": null
+    },
+    "memory": {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "not_observed",
+      "total_bytes": null,
+      "available_bytes": null,
+      "swap_total_bytes": null,
+      "swap_free_bytes": null,
+      "pressure_some_avg10": null,
+      "pressure_full_avg10": null
+    },
+    "disk": {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "not_observed",
+      "total_bytes": null,
+      "available_bytes": null,
+      "read_bytes_per_second": null,
+      "write_bytes_per_second": null,
+      "volumes": [
+        {
+          "volume_id": "root",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        },
+        {
+          "volume_id": "data",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        },
+        {
+          "volume_id": "models",
+          "mount_point": null,
+          "filesystem_uuid": null,
+          "filesystem_type": null,
+          "state": "unknown",
+          "reason": null,
+          "observed_at": null,
+          "age_ms": null,
+          "freshness": "unknown",
+          "total_bytes": null,
+          "available_bytes": null,
+          "read_bytes_per_second": null,
+          "write_bytes_per_second": null
+        }
+      ]
+    },
+    "network": {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "not_observed",
+      "rx_bytes_per_second": null,
+      "tx_bytes_per_second": null
+    }
+  },
+  "services": [
+    {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "hardware_latch_unknown",
+      "service_id": "qwen-gpu0",
+      "generation": null,
+      "affected_services": [
+        "qwen-gpu0"
+      ],
+      "installed_capabilities": [],
+      "availability": "unknown",
+      "ready": null,
+      "admitting": null,
+      "hardware_latched": null,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [
+        "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237"
+      ],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    },
+    {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "hardware_latch_unknown",
+      "service_id": "qwen-gpu1",
+      "generation": null,
+      "affected_services": [
+        "qwen-gpu1"
+      ],
+      "installed_capabilities": [],
+      "availability": "unknown",
+      "ready": null,
+      "admitting": null,
+      "hardware_latched": null,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [
+        "GPU-69acfa26-8b60-61b5-702d-aee252c163cc"
+      ],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    },
+    {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "hardware_latch_unknown",
+      "service_id": "image",
+      "generation": null,
+      "affected_services": [
+        "image"
+      ],
+      "installed_capabilities": [],
+      "availability": "unknown",
+      "ready": null,
+      "admitting": null,
+      "hardware_latched": null,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [
+        "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+      ],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    },
+    {
+      "state": "unknown",
+      "observed_at": null,
+      "age_ms": null,
+      "freshness": "unknown",
+      "reason": "observation_unavailable",
+      "service_id": "control",
+      "generation": null,
+      "affected_services": [
+        "control"
+      ],
+      "installed_capabilities": [],
+      "availability": "unknown",
+      "ready": null,
+      "admitting": null,
+      "hardware_latched": null,
+      "hardware_latched_boot_id": null,
+      "required_gpu_uuids": [],
+      "activity": "unknown",
+      "queue_depth": null,
+      "active_requests": null,
+      "deployment_id": null,
+      "model_alias": null,
+      "configured_context_tokens": null,
+      "max_output_tokens": null,
+      "operation_profiles": []
+    }
+  ],
+  "node_manager": {
+    "state": "unknown",
+    "observed_at": null,
+    "age_ms": null,
+    "freshness": "unknown",
+    "reason": "not_observed",
+    "service_id": "node",
+    "running": null,
+    "generation": null,
+    "actions": []
+  },
+  "gpus": []
+}

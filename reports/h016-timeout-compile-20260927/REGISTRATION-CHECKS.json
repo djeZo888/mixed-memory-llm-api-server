@@ -1,0 +1,8 @@
+{
+  "result": "PASS",
+  "sourceRevision": "ae65651df5f97ae1085ab4e19964f4b78c769a4e",
+  "files": 51,
+  "patches": 11,
+  "patchSetSha256": "38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf",
+  "zeroContextAppliedOnlyTo0011": true
+}

@@ -1,0 +1,14 @@
+{
+  "received_utc": "2026-09-26T21:13:36.642767+00:00",
+  "source": "Direct collaboration message from Worker2 /root/h008_worker2_harness; actual native receipt file syncing separately",
+  "native_settled_utc": "2026-09-26T21:11:41.573613Z",
+  "supervisor_exit_code": 0,
+  "supervisor_status": "COMPLETED_REVIEW_REQUIRED",
+  "owned_containers_after": [],
+  "workflow": "child bash/read, write, bashcheck succeeded; parent final return",
+  "frontier_http_requests": "all completed; live driver closed broker/gateway/app normally",
+  "uppers": "remain stopped",
+  "timeout_or_emergency_stop": false,
+  "native_atomic_drain_claim": false,
+  "root_authority": "Root directly instructed immediate final AdaECCoff reboot after actualquietreceipt; no runtime/cachemutation; no furtherbenchmark"
+}

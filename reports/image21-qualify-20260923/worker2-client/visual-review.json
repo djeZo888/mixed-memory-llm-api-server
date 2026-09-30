@@ -1,0 +1,11 @@
+{
+  "finding": "Coherent red teapot/table/soft light; window not visible.",
+  "method": "Reuse exact root visual verdict; no new image call or substituted review.",
+  "prompt_scope": "Actual Worker2 prompt requests plain cream background and does not request a window.",
+  "raw_client_visual_status_preserved": "NOT_TESTED",
+  "reviewer": "Root independent actual Worker2 PNG review",
+  "root_note": "ROOT-WORKER2-RESULT.md",
+  "root_note_sha256": "4d4cd86d7c7b31c527a20c889c50163bc34b96c7e5e22cd955618a721eb09773",
+  "sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+  "status": "PASS"
+}

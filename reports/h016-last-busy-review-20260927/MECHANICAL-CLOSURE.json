@@ -1,0 +1,32 @@
+{
+  "status": "SOURCE_CORRECTION_ACCEPTED_7_PASS",
+  "finishedUtc": "2026-09-27T17:25:20.674937+00:00",
+  "authority": "Root reviewed exact three-line fix; mechanical existing regression only, no native CLI",
+  "reviewCommit": "f8ae132e9ff6d00261ae8939d36c5f8ae12c0b0c",
+  "priorClientSha256": "4b55f870f852fc02cd601a4e8b51db3e672b78f7ddea4e1310a7d6188602bc50",
+  "correctedClientSha256": "efbd8a3f36fd480bca5ac40e47cbffb3e1896ebe72060680a7e9abede85c3f9a",
+  "patchSha256": "41e21f7da9cf71745ca07d6cd7af5a361636cdca3f84fae476b398b7c37e09ea",
+  "existingRegressionSha256": "27acbe75c42715fd3b33689bec81314bafa87122043609b0ffcbfb3abeee2d40",
+  "outputSha256": "680480ef34a9f088c2f31e13237a0072ee1ad95938795f946dd77f00ef2bc746",
+  "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "sourceFixtureClosure": "24 original reviewed entries, replacing only pinned client; verified",
+  "newW1SourceClosureSha256": "8f9d6ab0e5745b44ba842d79b419614830a271257ec0083dfa29f3faa1e28bb2",
+  "newW1ClosureDifference": [
+    {
+      "path": "scripts/h016/final13_long/test_last_ownership.py",
+      "fixtureSha256": "239371693287fb41adf8b88c325d4b96b8d344a64c1127acec52f88ba3debdea",
+      "newW1Sha256": "82b9df51b5054c52c006e4d3f894a10f5adf914a52ee6b0ed67c87a29f166de9"
+    }
+  ],
+  "newW1TestNotCopiedOrRun": true,
+  "testExitCode": 0,
+  "passed": 7,
+  "failed": 0,
+  "readerSha256": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+  "proxySha256": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52",
+  "nativeCodexSessionStarted": false,
+  "runtimeContact": false,
+  "deployment": "NOT_TESTED",
+  "actualLAST": "NOT_TESTED",
+  "packagingNote": "After successful regression, broader new W1 manifest comparison encountered expected separately-added W1 test. No rerun or new test; verified original exact fixture plus corrected client and recorded the difference."
+}

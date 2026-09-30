@@ -1,0 +1,51 @@
+{
+  "finished_utc": "2026-09-23T02:59:44.459281+00:00",
+  "http_call_count": 1,
+  "http_elapsed_seconds": 24.314615,
+  "http_status": 200,
+  "mode": "generation",
+  "native_inference_seconds": 24.182520098000168,
+  "native_peak_reserved_mib": 37570.0,
+  "native_perf": {
+    "available": true,
+    "bytes": 4654,
+    "filename": "generation-perf.json",
+    "sha256": "98df01de2251c7b56927f764516d1f2766dbd9a13295ce71dade48a3e9543961"
+  },
+  "output": {
+    "bytes": 1692710,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGBA",
+    "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+    "width": 1024
+  },
+  "request_body_bytes": 490,
+  "request_body_sha256": "af4837231d0baa30bc56f033a31e8206cc50ab5e67c8f05a28c8f50f295c0a8b",
+  "response_bytes": 2257256,
+  "run_id": "2088c347bc1e41a9a3e086b20b9be7be",
+  "schema_version": 1,
+  "scope": "native_transport_and_decode_only",
+  "settings": {
+    "enable_cache_dit": false,
+    "enable_teacache": false,
+    "generator_device": "cpu",
+    "guidance_scale": 1.0,
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "num_inference_steps": 40,
+    "output_format": "png",
+    "perf_dump_path": "/work/evidence/2088c347bc1e41a9a3e086b20b9be7be/generation-perf.json",
+    "prompt": "A red ceramic teapot on a wooden table beside a window, softly lit by daylight.",
+    "response_format": "b64_json",
+    "seed": 42,
+    "size": "1024x1024",
+    "true_cfg_scale": 1.0
+  },
+  "started_utc": "2026-09-23T02:59:20.109840+00:00",
+  "status": "pass",
+  "timeout_seconds": 840,
+  "total_elapsed_seconds": 24.349454,
+  "visual_verification": "NOT_TESTED"
+}

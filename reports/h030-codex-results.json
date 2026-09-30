@@ -1,0 +1,128 @@
+{
+  "schema": 1,
+  "task": "H030-20260929",
+  "status": "WINDOW_STOPPED_INCOMPLETE",
+  "updatedUtc": "2026-09-29T08:41:00Z",
+  "deadlineUtc": "2026-09-29T08:53:00Z",
+  "source": {
+    "controlWorker": "9be07135d4f39ec7b91d4c0c43f48ef1f2c64f86",
+    "controlIntegrated": "6d745e0",
+    "handoffWorker": "6c5d64955e5435f661bee8fe961d73ccfb95a9e4",
+    "handoffIntegrated": "64a0693",
+    "mimoOwnerWorker": "97b5daaf0b84654fd35f65bb03bdc14f1bc8a588",
+    "mimoOwnerIntegrated": "9d3fefd",
+    "compactionWorker": "4471658e10b4d53c8efdb2d138bf4ea70ab92d58",
+    "compactionIntegrated": "b021a7d",
+    "specialistIntegrated": "2b40610",
+    "hardwareDiagnosticsIntegrated": "669c9e2",
+    "hardwareRefreshWorker": "813f1248319073182a174b18fcfa940554493402",
+    "hardwareRefreshIntegrated": "5176ca4",
+    "hardwareProofMetadataWorker": "bad9bc1ec35cdf92461238e626f8cd2d5b534ee8",
+    "hardwareProofMetadataIntegrated": "831ace6"
+  },
+  "acceptance": {
+    "ordinaryCoding": "PASS",
+    "sameNativeFollowup": "PASS",
+    "activeSubmissionReplay": "PASS",
+    "completedSubmissionReplay": "PASS",
+    "payloadConflicts": "PASS",
+    "crossEngineHandoffLive": "NOT_TESTED",
+    "pdf": "FAIL_COUNT_HARDWARE_STATE",
+    "compactionRecall": "PASS_SMALL_MANUAL_WITH_FILE_SIZE_CAVEAT",
+    "imageCodex": "NOT_TESTED",
+    "mimoCodex": "NOT_TESTED",
+    "compaction": "PASS_SMALL_MANUAL",
+    "postCompactionRecall": "PASS",
+    "coldNativeResume": "FAIL_COUNT_NODE_AFTER_HARDWARE_PROOF_UNKNOWN",
+    "mimoMiniMax": "NOT_TESTED"
+  },
+  "ordinary": {
+    "firstCompletedUtc": "2026-09-29T07:14:48.540Z",
+    "firstInferenceRequests": 4,
+    "firstNativeCommands": 3,
+    "followupCompletedUtc": "2026-09-29T07:18:40.529Z",
+    "followupInferenceRequests": 3,
+    "inferenceRetries": 0,
+    "independentArtifacts": "PASS"
+  },
+  "focusedTests": {
+    "control": 21,
+    "handoffServer": 61,
+    "handoffWeb": 34,
+    "mimoOwner": 104,
+    "newMimoRecoverySubset": 25,
+    "countsOverlap": true,
+    "unrelatedBaselineProxyExpectation": "FAIL_REPRODUCED_ON_BASELINE",
+    "compactionResponses": 35,
+    "hardwareRefreshAndProjectionBeforeMetadata": 27,
+    "finalHardwareRefreshAndMetadata": 29
+  },
+  "deployment": {
+    "appSource": "2b40610e937ad6256450e055ffd1d5647997f4c5",
+    "appActivatedUtc": "2026-09-29T08:15:31.958889Z",
+    "publicMaintenance": true,
+    "historiesPreserved": true,
+    "endWindowRestore": false,
+    "appPid": 118087,
+    "statusPid": 14480,
+    "defaultEngine": "minimax",
+    "ordinaryCodexSpecialistGates": "CLOSED",
+    "candidateFlags": {
+      "enabled": false,
+      "qualified": false
+    }
+  },
+  "boundaries": {
+    "benchmarks": false,
+    "hardwarePolicyChanges": false,
+    "occupied950kTest": false,
+    "modelWeightsOrRuntimeChanges": false
+  },
+  "services": {
+    "mimo": "RUNNING_READY_950000_CURRENT_PROOF_082828_NO_INFERENCE",
+    "image": "API_READY_ADMITTING_075750",
+    "qwen": "THREE_NATIVE_INSTANCES_RETAINED"
+  },
+  "findings": {
+    "pdf": "Two native tool turns passed; third request blocked before generation at count/node_before. Exact failed node fields were not retained. Current passing readback is not historical cause evidence.",
+    "compaction": "Historical completed calls no longer require currently declared tools. Corrected actual small native compaction and four-fact recall passed on same thread; active/completed action dedupe and artifacts preserved. Summary misstated incidental file byte count18 rather than22; file bytes unchanged.",
+    "mimo": "Guard/settlement failure during image recovery preserved; exact one-stop client timeout followed later physical stop. Reviewed changed-state reconciliation used unchanged owner and no second stop. SETTLED08:14:17; normal new load started08:14:19. Exact owner/native/canonical readiness passed08:28:28. Image long canonical lease remains unresolved.",
+    "coldResume": "Actual failed request3a82ac8f at08:22:36.622 count/node_after: hardwareLatched=null, UUID exact match, nodeAge4315ms/serviceAge3955ms. Proof metadata omitted upstream. No provider generation/native tool ran. Source producer cause investigation active; no guard relaxation or unchanged retry."
+  },
+  "remaining": [
+    "Resolve intermittent Qwen hardware-proof admission failure; qualify affected cold/PDF workflows",
+    "Split image startup/warmup from global lifecycle lease while retaining per-service ownership and watchdog deadlines",
+    "Qualify Codex image generation/edit/child and MiMo child/tool continuation; qualify MiniMax MiMo delegation",
+    "Run live cross-engine handoff and remaining shared queue/lifecycle/reconnect cases",
+    "Complete reviewed provider profile configuration and release acceptance; Ada200K routing remains separate"
+  ],
+  "evidence": {
+    "flow03": "reports/h030-flow03-20260929/",
+    "frontier01": "reports/h030-frontier-20260929/",
+    "ordinary": "reports/h030-flow02-20260929/",
+    "lastWorker2ExitUtc": "2026-09-29T08:29:01Z",
+    "allWorker2WorkSettled": true,
+    "worker1FinalTask": "01a0ec44-d831-79f0-8887-06e77d54d8f0",
+    "finalHardwareSource": "reports/h030-frontieraccept02-20260929/",
+    "lastWorker1ExitUtc": "2026-09-29T08:39:18.609Z",
+    "allWorker1WorkSettled": true
+  },
+  "preparedUndeployed": {
+    "hardwareRefresh": {
+      "status": "SOURCE_REVIEWED_FIXTURE_PASS_NOT_DEPLOYED",
+      "commit": "5176ca4",
+      "baselineRegression": "FAIL_NONE_IS_NOT_FALSE",
+      "historicalColdCauseEstablished": false,
+      "guardTtlMs": 15000,
+      "existingCallbackBudgetSeconds": 2,
+      "newBodyRetries": 0
+    },
+    "projection": {
+      "status": "SOURCE_REVIEWED_FIXTURE_PASS_NOT_DEPLOYED",
+      "commit": "831ace6",
+      "behavior": "Expose bounded validated boot, UUIDs and effective proof age; current safety criteria unchanged"
+    }
+  },
+  "workerImplementationEndedUtc": "2026-09-29T08:39:18.609Z",
+  "allWorkerSessionsClosed": true
+}

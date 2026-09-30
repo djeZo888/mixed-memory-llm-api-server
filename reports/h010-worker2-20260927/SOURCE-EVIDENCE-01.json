@@ -1,0 +1,183 @@
+{
+  "retrieved_utc": "2026-09-26T23:32:51.474424+00:00",
+  "source_only": true,
+  "manifest_scope": "report-cited primary files; full 73-file source manifest retained in task upstream/",
+  "sources": [
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/linear/glm5_next_kda_backend.py",
+      "git_blob_sha1": "3bab690fd584e21f75d9f14ef0300c762776ef3e",
+      "sha256": "af09639b7f367a766a43ceb6a9489cb39c1b727b9988a3c44cac77dae65d2c79",
+      "bytes": 7688,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/linear/glm5_next_kda_backend.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda.py",
+      "git_blob_sha1": "260e8283acbdf6d78c16b4e71d8b891ea4dbdd5c",
+      "sha256": "65bbb53c264acbd8fa759b00cc8cc769fef77b5120e7eba5c7d259141735bf5e",
+      "bytes": 4152,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda_ops.py",
+      "git_blob_sha1": "a9bc57a49af1461e111449abc9bbb579f2b6e014",
+      "sha256": "f87a2858d60cedbad5ece482e02e12120d6ce212888776bc08e79817ca11689d",
+      "bytes": 17937,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/linear/kernels/glm5_next_kda_ops.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/nsa/glm5_next_sparse_attention.py",
+      "git_blob_sha1": "264b0560c16429f7753837ec10e68023e41c309c",
+      "sha256": "75027b642d5de012d61646aad03e295078e64cb9957cff24b57f08bda8c42739",
+      "bytes": 16837,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/nsa/glm5_next_sparse_attention.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/moe/kt_ep_wrapper.py",
+      "git_blob_sha1": "d262819172a73a00fcacfd11b94ea217a85e79d5",
+      "sha256": "1376e93373b9bed4f37fa0057dfda02a51c416f649c3321684ac9449a081fd3e",
+      "bytes": 261806,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/moe/kt_ep_wrapper.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/quantization/fp8.py",
+      "git_blob_sha1": "3c8a69e78e380cfe6eb3c3299cf365bd6a7ffefe",
+      "sha256": "b9fda2e76747a17940155e28c1125038ede99dc5d1c759d11cdf254b617ea777",
+      "bytes": 81297,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/quantization/fp8.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/vocab_parallel_embedding.py",
+      "git_blob_sha1": "63b376c2478719b1e78533e16020b684beeec33f",
+      "sha256": "82664ccbe0d786dbfbf3e2d52559346d2a06470b64a8f14477b0bf1852c4408a",
+      "bytes": 23154,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/vocab_parallel_embedding.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/mem_cache/glm5_next_memory_pool.py",
+      "git_blob_sha1": "f2ee82a10a69c6a34bca6fdae05de13c23ca39fd",
+      "sha256": "394724b8186eb2c95bf8195e0854d98a07ee1b20d11f9a967295dd84d23db0e3",
+      "bytes": 22063,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/mem_cache/glm5_next_memory_pool.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/models/glm5_next.py",
+      "git_blob_sha1": "d44e74c5b22902fbeb804b110194eb72395de082",
+      "sha256": "f7a7426a012ef51259d1cf2fdb18d30a9c6680744ed43738d5485281c32fbdba",
+      "bytes": 59647,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/models/glm5_next.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/server_args.py",
+      "git_blob_sha1": "4248c968d3149c3f64e5e1e78be749905620d9dc",
+      "sha256": "6de607f3c94d0bfa864ce4d33cc05cb1ea8165fb6fdede3961fe84b071739e52",
+      "bytes": 301524,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/server_args.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/ext_bindings.cpp",
+      "git_blob_sha1": "550f1fb75f559a056743c8430f6f63519a78c978",
+      "sha256": "8fcb08b19ef97c3185da0dee35599569a4c13545f868eba36dab867d9c39bc49",
+      "bytes": 59380,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/ktransformers/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/ext_bindings.cpp"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/fp8_layerwise_transport.cpp",
+      "git_blob_sha1": "6f69864b3c6b5adec0c5a8ff764ea4f9015b0351",
+      "sha256": "de0e4f9e7ddd82e38cb0c659724e8d62210219869ed131bea94c731d209d122a",
+      "bytes": 31605,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/ktransformers/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/fp8_layerwise_transport.cpp"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/layers/attention/nsa_backend.py",
+      "git_blob_sha1": "824e8c51357370aff1fda4138ec933da0d84061a",
+      "sha256": "3118ef8d8803b7db9cfada1df2c7aa47383f15cf3076f7038145aed25b7274d6",
+      "bytes": 107976,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/layers/attention/nsa_backend.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/sglang",
+      "commit": "541ddc37cbc92c60dc748db5ff1a2aad0b069a80",
+      "path": "python/sglang/srt/model_loader/loader.py",
+      "git_blob_sha1": "da5c315afb8423a58870cfb0dfb55e1891d01023",
+      "sha256": "2baff0ad285f73072261d78af534dcf0484301a53a4c786fca3f6c5f78c278fd",
+      "bytes": 109458,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/sglang/541ddc37cbc92c60dc748db5ff1a2aad0b069a80/python/sglang/srt/model_loader/loader.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/python/experts.py",
+      "git_blob_sha1": "1b9a958bbcca8dedc09308b777f0438746301548",
+      "sha256": "e75740b3ad53b85eeb4d9db97b918aebc4d2f3e86162d7e5dc153f472a23752b",
+      "bytes": 17302,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/ktransformers/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/python/experts.py"
+    },
+    {
+      "repository": "https://github.com/kvcache-ai/ktransformers",
+      "commit": "c40722bf04c494f2492b7eb9e86ef01a4ede45b3",
+      "path": "kt-kernel/python/utils/amx.py",
+      "git_blob_sha1": "eaa7354eac304091ca1613f166dcd8045951878a",
+      "sha256": "c3cadcad68c8244810f488ea9fa1285bb856d5f1957aa9c17c8b8c8ed28c182c",
+      "bytes": 48973,
+      "url": "https://raw.githubusercontent.com/kvcache-ai/ktransformers/c40722bf04c494f2492b7eb9e86ef01a4ede45b3/kt-kernel/python/utils/amx.py"
+    }
+  ],
+  "alternatives": [
+    {
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "commit": "95887577ab5fead779581a7030a83c7752ff3234",
+      "path": "src/llama-arch.cpp",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/95887577ab5fead779581a7030a83c7752ff3234/src/llama-arch.cpp",
+      "sha256": "3804ff98f8dbfaf239e1fd026b34d118d85b9761e78fa37dc91f89da8e24dba4",
+      "bytes": 83137
+    },
+    {
+      "repository": "https://github.com/ggml-org/llama.cpp",
+      "commit": "95887577ab5fead779581a7030a83c7752ff3234",
+      "path": "convert_hf_to_gguf.py",
+      "url": "https://raw.githubusercontent.com/ggml-org/llama.cpp/95887577ab5fead779581a7030a83c7752ff3234/convert_hf_to_gguf.py",
+      "sha256": "e9a1da876330bbce9687541ab31736542a01b4ac43c6686126514a50f122fb7f",
+      "bytes": 13012
+    }
+  ],
+  "model_config": {
+    "repository": "https://huggingface.co/zai-org/GLM-5.3-Flash",
+    "revision": "eb9eb208eb0d988989d07a6a12d0fdeb5f52574a",
+    "config_url": "https://huggingface.co/zai-org/GLM-5.3-Flash/raw/eb9eb208eb0d988989d07a6a12d0fdeb5f52574a/config.json",
+    "config_sha256": "bb8f01c42cb92a52ca72e65afb4d5bd8d11aef083cd210e8de25dfb904f23e9f",
+    "config_git_blob_sha1": "f93128cf7f31ca2b22e367cd63676c320c4164a7",
+    "config_matches_baseline_blob_pin": true,
+    "architecture": "Glm5NextForConditionalGeneration",
+    "model_type": "glm5_next",
+    "format": "official block E4M3 FP8",
+    "layers": 45,
+    "KDA_layers": 34,
+    "DSA_layers": 11
+  }
+}

@@ -1,0 +1,173 @@
+{
+  "provenance": {
+    "kind": "retained discovered MCP input schemas; no tool execution",
+    "nativeRevision": "9eb83dfdbd8b5b84c5ef45da6922295b9829d386",
+    "imageDigest": "sha256:617c01955ccf794ea6642af64a5ac1800df00a8be9adf0d07679b42fc4679453",
+    "source": "H003-ENGINE-BUILD native-roster.json nativeMcpCatalog"
+  },
+  "nativeMcpCatalog": [
+    {
+      "server": "searxng",
+      "name": "searxng_search",
+      "nativeName": "mcp__searxng__searxng_search",
+      "source": "configured",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "query": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 512
+          },
+          "limit": {
+            "default": 5,
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10
+          }
+        },
+        "required": [
+          "query"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "server": "image",
+      "name": "image_capabilities",
+      "nativeName": "mcp__image__image_capabilities",
+      "source": "configured",
+      "inputSchema": {
+        "type": "object",
+        "properties": {},
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "server": "image",
+      "name": "image_generate",
+      "nativeName": "mcp__image__image_generate",
+      "source": "configured",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "size": {
+            "type": "string"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "references": {
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "fileId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fileId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "workspacePath": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "workspacePath"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "prompt"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    },
+    {
+      "server": "image",
+      "name": "image_edit",
+      "nativeName": "mcp__image__image_edit",
+      "source": "configured",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 16000
+          },
+          "size": {
+            "type": "string"
+          },
+          "seed": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "references": {
+            "minItems": 1,
+            "maxItems": 16,
+            "type": "array",
+            "items": {
+              "anyOf": [
+                {
+                  "type": "object",
+                  "properties": {
+                    "fileId": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "fileId"
+                  ],
+                  "additionalProperties": false
+                },
+                {
+                  "type": "object",
+                  "properties": {
+                    "workspacePath": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "workspacePath"
+                  ],
+                  "additionalProperties": false
+                }
+              ]
+            }
+          }
+        },
+        "required": [
+          "prompt",
+          "references"
+        ],
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "additionalProperties": false
+      }
+    }
+  ]
+}

@@ -1,0 +1,92 @@
+{
+  "accepted_edit_count": 0,
+  "accepted_generation_count": 1,
+  "busy_and_text_evidence": {
+    "busy_confirmed": true,
+    "check": "concurrent_qwen",
+    "checks": [
+      {
+        "check": "concurrent_readiness",
+        "http_status": 200
+      },
+      {
+        "check": "invalid_n2_busy",
+        "healthy_busy_readiness": true,
+        "http_status": 429,
+        "retry_after_1": true
+      },
+      {
+        "characters": 2,
+        "check": "qwen3.8-27b-gpu0",
+        "context_length_from_receipt": 480000,
+        "elapsed_seconds": 0.183,
+        "http_status": 200,
+        "nonempty": true
+      },
+      {
+        "characters": 2,
+        "check": "qwen3.8-27b",
+        "context_length_from_receipt": 480000,
+        "elapsed_seconds": 0.187,
+        "http_status": 200,
+        "nonempty": true
+      }
+    ],
+    "image_window": [
+      544385.442347666,
+      544409.625449875
+    ],
+    "status": "LIVE_PASS",
+    "text_windows": [
+      [
+        544385.511832958,
+        544385.695047208
+      ],
+      [
+        544385.695090666,
+        544385.882409166
+      ]
+    ]
+  },
+  "generation_command_bounds": {
+    "command_finished_utc": "2026-09-23T04:09:59.863535+00:00",
+    "command_started_utc": "2026-09-23T04:09:35.106960+00:00",
+    "exit_code": 0,
+    "mode": "generate"
+  },
+  "generation_elapsed_seconds": 24.183,
+  "generation_end_method": "UTC start plus full-precision client monotonic request interval; not a separately sampled UTC end",
+  "generation_monotonic_bounds": [
+    544385.442347666,
+    544409.625449875
+  ],
+  "generation_request_end_utc_derived": "2026-09-23T04:09:59.772259+00:00",
+  "generation_request_start_utc": "2026-09-23T04:09:35.589157+00:00",
+  "no_further_worker2_api_calls": true,
+  "output": {
+    "alpha_qualification": "NOT_TESTED",
+    "bytes": 966533,
+    "format": "PNG",
+    "height": 1024,
+    "mode": "RGB",
+    "sha256": "876ad24718d40d31090a214ef7028a26b2e966cc14fe0f3894c20e91fe56467b",
+    "width": 1024
+  },
+  "ownership_returned": true,
+  "released_utc": "2026-09-23T04:10:55.514187+00:00",
+  "requests_in_flight": false,
+  "session_id": "01a0cc29-cf0d-7812-be6f-83899ac24917",
+  "source_commit": "f188e6de8d151a7e571c7e3b5ecb59ef63d32bb7",
+  "statuses": {
+    "concurrency": "LIVE_PASS",
+    "generation_decode": "LIVE_PASS",
+    "invalid": "LIVE_PASS",
+    "read": "LIVE_PASS",
+    "reject_edit": "LIVE_PASS",
+    "visual": "NOT_TESTED",
+    "worker1_telemetry": "PENDING_WORKER1"
+  },
+  "uncertainty": null,
+  "window_first_request_utc": "2026-09-23T04:07:53.711612+00:00",
+  "window_last_command_completed_utc": "2026-09-23T04:10:55.513499+00:00"
+}

@@ -1,0 +1,59 @@
+{
+  "finished_utc": "2026-09-23T03:00:52.930035+00:00",
+  "http_call_count": 1,
+  "http_elapsed_seconds": 28.63818,
+  "http_status": 200,
+  "input": {
+    "bytes": 1692710,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGBA",
+    "sha256": "d055af30b1aa6e3f9546a5cec1adf2be25959cd8af796f4001124c6e0024c487",
+    "width": 1024
+  },
+  "mode": "edit",
+  "native_inference_seconds": 28.27086932200018,
+  "native_peak_reserved_mib": 38336.0,
+  "native_perf": {
+    "available": true,
+    "bytes": 4651,
+    "filename": "edit-perf.json",
+    "sha256": "80efc540754e7500dca1fd7b201692533de797656b1019ab7064906e5351ba95"
+  },
+  "output": {
+    "bytes": 2165324,
+    "format": "PNG",
+    "fully_decoded": true,
+    "height": 1024,
+    "mode": "RGBA",
+    "sha256": "ed3feb60a983dbbbf38b62d24e37a9b978a04b8f01c709d025843746389b2ac1",
+    "width": 1024
+  },
+  "request_body_bytes": 1694402,
+  "request_body_sha256": "dd7abff89f28661cca08a285e735241510230e46cc0adf921200553966c4496b",
+  "response_bytes": 2887416,
+  "run_id": "2088c347bc1e41a9a3e086b20b9be7be",
+  "schema_version": 1,
+  "scope": "native_transport_and_decode_only",
+  "settings": {
+    "enable_teacache": false,
+    "generator_device": "cpu",
+    "guidance_scale": 1.0,
+    "model": "qwen-image-2.1",
+    "n": 1,
+    "num_inference_steps": 40,
+    "output_format": "png",
+    "perf_dump_path": "/work/evidence/2088c347bc1e41a9a3e086b20b9be7be/edit-perf.json",
+    "prompt": "Change the red teapot to blue, keeping its shape, table, window, and lighting unchanged.",
+    "response_format": "b64_json",
+    "seed": 42,
+    "size": "1024x1024",
+    "true_cfg_scale": 1.0
+  },
+  "started_utc": "2026-09-23T03:00:24.229099+00:00",
+  "status": "pass",
+  "timeout_seconds": 840,
+  "total_elapsed_seconds": 28.700951,
+  "visual_verification": "NOT_TESTED"
+}

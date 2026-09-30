@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "oraclePass": true,
+  "sessionId": "544a2b95-bbbf-4286-a3a5-cdbe8c220589",
+  "runId": "925ccb74-9a31-4ac9-8bf3-a1b798f9f34e",
+  "nativeThreadId": "01a0ec00-4ed3-7a51-958f-ffcfd9b5a5ff",
+  "actionId": "4cc0ed51-dba6-44b5-87d4-042d02e944c3",
+  "settled": true,
+  "runStatus": "completed",
+  "compactedAt": "2026-09-29T08:17:52.917Z",
+  "summarySha256": "2a9c4cdfdc3895371aaa811c736c244da1ca7c41e309f0a1122f8d3c5c8065a9",
+  "sameActionDedupe": true,
+  "artifactsUnchanged": true,
+  "newRequestIds": [
+    "132efa11-c6bc-4f3b-9a1b-51168c447ff2"
+  ],
+  "scope": "Small actual manual compaction only; recall/cold pending",
+  "summaryCaveat": "Summary says followup.txt 18 bytes, actual artifact is22 bytes; exact line and actual bytes preserved. Byte-count statement is inaccurate."
+}

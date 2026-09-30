@@ -1,0 +1,13 @@
+H018 LIVE03 failed native qualification; source-only repair candidate.
+
+Single dispatch at 00:15:43 UTC used exact RUNNING launch ddd222, native d7ab154/PID1830344 and native/private950000. Tiny text passed14 input/2 output with terminal usage/DONE/full drain/idle. Full17 turn1 counted9536 input, was submitted, and has no output/final/usage proof. No full17 continuation or QUALIFICATION-950K.json was produced. Historical R9 remains historical.
+
+Primary owned_gpu_latch_unproven occurred00:16:03.140247. Last good proof age10953.083ms at00:15:58 strongly supports subsequent expiry; failure-time projection was not retained. Producer needs the nonblocking canonical lease, polls5s, and retains capture timestamps. No proof identifies historical contention or producer/NVML failure. Count/request path retains no lifecycle lease. Existing node unit discards stdout/stderr and no interval journal exists.
+
+Native cancel00:16:03.656 preceded second interrupt and kernel worker segfaults00:16:05. Exact container exited139 at00:16:17. No Xid/NVRM entry in retained bounded kernel interval; suppressed callbacks limit completeness. Teardown is supported by ordering, not proven crash causality. Interrupted cleanup and command_timeout remain separate from primary failure.
+
+Exact existing-owner stop_exact under canonical lease proved native PID/cgroup/GPU release at00:21:31; exact proxy PID absent. No stop mutation was necessary. Original state bytes unchanged: HELD/request_hold=true. Failed request is physically terminated, never successful completion. MiMo unit failed/disabled; GLM inactive/enabled. No enablement, reload, retry, Sova generation or LAST.
+
+Repair: reuse existing successful exact-GPU resource sample with boot-bracketed original capture timestamp. Refresh valid expired same-boot protected proof only through existing HardwarePolicy under nonblocking canonical lease inside unchanged outer5s. Fresh-under-lease producer race succeeds without a write. Positive latches, invalid/missing/other-boot evidence, storage failure, sample/lease/deadline failures stay closed. Optional strict read_latch_status propagates owner read errors; passive default unchanged. No deployed source changed. Root/W2 review and all prospective dependency/source pins are still required.
+
+Validation: 49 tests,48 passed,1 skipped replay; exact command and hashes in PROPOSED-FIX.json. Existing hardware-policy suite could not import because fourGPU_UUIDS are unpacked into three variables; unrelated fixture unchanged. No schema validator run because actual qualification failed. No benchmark or live test of repair. Timeout audit was deferred after failure; retained pinned source remains private, no long-request readiness claim.

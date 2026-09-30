@@ -1,0 +1,35 @@
+# REVIEW TEMPLATE: substitute existing user/group and registered paths from W1 receipt.
+# Not installable until placeholders, runtime helper and qualification are reviewed.
+[Unit]
+Description=Authenticated bounded Qwen Image API
+After=network.target llmctl-boot.service
+
+[Service]
+Type=simple
+User=@EXISTING_SERVICE_USER@
+Group=@EXISTING_SERVICE_GROUP@
+WorkingDirectory=/
+RuntimeDirectory=llm-image-api
+RuntimeDirectoryMode=0700
+UMask=0077
+LoadCredential=inference-key:@REGISTERED_SERVICES@/secrets/llm-api-key
+ExecStart=@REGISTERED_SERVICES@/image-api/venv/bin/python -I -B /usr/local/lib/llm-server/image-api/scripts/image_api/serve.py
+Restart=no
+KillMode=control-group
+TimeoutStartSec=920
+TimeoutStopSec=1820
+LimitCORE=0
+# sudo requires elevation; do NOT set NoNewPrivileges, RestrictSUIDSGID,
+# PrivateUsers, capability bounding or a filesystem sandbox inherited by helper.
+NoNewPrivileges=no
+PrivateTmp=no
+ProtectHome=yes
+RestrictAddressFamilies=AF_UNIX AF_INET AF_NETLINK
+# AF_NETLINK is needed by registered storage checks inherited in root helper.
+IPAddressDeny=any
+IPAddressAllow=127.0.0.1/32
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=multi-user.target

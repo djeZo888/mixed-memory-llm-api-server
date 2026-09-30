@@ -1,0 +1,186 @@
+--- a/packages/agent-tools/src/desktop/local-browser.ts
++++ b/packages/agent-tools/src/desktop/local-browser.ts
+@@ -1212,6 +1212,11 @@
+   if (value.state === 'inProgress' || value.state === 'completed' || value.state === 'canceled') {
+     download.state = value.state;
+   }
++  // Only the harness provider's completed, contained GUID artifact is exposed.
++  if (value.state === 'completed' && typeof value.filePath === 'string' &&
++      /^downloads\/browser\/[a-zA-Z0-9._-]{1,64}-[a-f0-9]{16}\/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/u.test(value.filePath)) {
++    download.filePath = value.filePath;
++  }
+   if (value.observation === 'timeout') download.observation = 'timeout';
+   const suggestedFilename =
+     typeof value.suggestedFilename === 'string'
+--- a/packages/tui/src/runtime/browser/headless-chrome-provider.ts
++++ b/packages/tui/src/runtime/browser/headless-chrome-provider.ts
+@@ -22,6 +22,8 @@
+ } from '@mavis/browser-core';
+ import {
+   HeadlessChromeBrowser,
++  ensureWorkspaceBrowserDownloadDirectory,
++  completedWorkspaceBrowserDownloadPath,
+   type HeadlessChromeLaunchOptions,
+   type HeadlessChromePage,
+ } from './headless-chrome-transport.js';
+@@ -114,6 +116,8 @@
+     const sessionId = this.core.assertContext(ctx);
+     if (this.closed) throw new Error('Headless browser provider is closed');
+     const actionInput = normalizeHeadlessActionInput(action, input);
++    const downloadDir = join(process.cwd(), 'downloads', 'browser', safeSessionId(sessionId));
++    await ensureWorkspaceBrowserDownloadDirectory(downloadDir);
+     this.markSessionActive(sessionId);
+     let session: BrowserCoreSession | undefined;
+     try {
+@@ -125,7 +129,9 @@
+       const expectsRelatedPage =
+         action === 'click_and_wait_for_navigation' && isBlankTargetRef(session, actionInput);
+       const coreAction = expectsRelatedPage ? 'click' : action;
+-      const result = await session.execute(coreAction, actionInput, signal);
++      const result = await exposeWorkspaceBrowserDownload(
++        await session.execute(coreAction, actionInput, signal), downloadDir,
++      );
+       if (action === 'click' || action === 'double_click' || expectsRelatedPage) {
+         return this.adoptRelatedPage(sessionId, session, result, expectsRelatedPage, signal);
+       }
+@@ -674,7 +680,7 @@
+     dataDir: join(options.dataDir, 'sessions', suffix),
+     ...(options.chromePath ? { chromePath: options.chromePath } : {}),
+     ...(options.userDataDir ? { userDataDir: join(options.userDataDir, suffix) } : {}),
+-    ...(options.downloadDir ? { downloadDir: join(options.downloadDir, suffix) } : {}),
++    downloadDir: join(process.cwd(), 'downloads', 'browser', suffix),
+     ...(options.viewport ? { viewport: options.viewport } : {}),
+     ...(options.extraArgs ? { extraArgs: options.extraArgs } : {}),
+     ...(options.commandTimeoutMs !== undefined
+@@ -682,6 +688,21 @@
+       : {}),
+   };
+ }
++
++// ai-harness download result: never expose guessed or unfinished native paths.
++export async function exposeWorkspaceBrowserDownload(
++  result: unknown,
++  directory: string,
++): Promise<unknown> {
++  if (!isRecord(result) || !isRecord(result.download)) return result;
++  const download = { ...result.download };
++  delete download.filePath;
++  if (download.state === 'completed') {
++    download.filePath = await completedWorkspaceBrowserDownloadPath(directory, download.guid);
++  }
++  return { ...result, download };
++}
++// ai-harness download result end.
+ 
+ /** Remove the exact persistent roots owned by one logical Headless Browser session. */
+ export async function disposeHeadlessSessionStorage(
+@@ -692,7 +713,7 @@
+   const sessionDirectories = new Set([
+     launchOptions.dataDir,
+     ...(launchOptions.userDataDir ? [launchOptions.userDataDir] : []),
+-    ...(launchOptions.downloadDir ? [launchOptions.downloadDir] : []),
++    // Workspace downloads are user artifacts, retained after session disposal.
+   ]);
+   for (const directory of sessionDirectories) {
+     await rm(directory, { recursive: true, force: true });
+--- a/packages/tui/src/runtime/browser/headless-chrome-transport.ts
++++ b/packages/tui/src/runtime/browser/headless-chrome-transport.ts
+@@ -1,8 +1,8 @@
+ import { spawn, type ChildProcess } from 'node:child_process';
+ import { constants } from 'node:fs';
+-import { access, chmod, mkdir, readFile, rm } from 'node:fs/promises';
++import { access, chmod, lstat, mkdir, readFile, readdir, realpath, rm } from 'node:fs/promises';
+ import { platform } from 'node:os';
+-import { join, win32 } from 'node:path';
++import { join, relative, win32 } from 'node:path';
+ import { setTimeout as delay } from 'node:timers/promises';
+ 
+ import type {
+@@ -40,6 +40,57 @@
+   await mkdir(directory, { recursive: true, mode: 0o700 });
+   if (runtimePlatform !== 'win32') await chmod(directory, 0o700);
+ }
++
++// ai-harness downloads: only the canonical workspace owns browser artifacts.
++export async function ensureWorkspaceBrowserDownloadDirectory(directory: string): Promise<void> {
++  const workspace = process.cwd();
++  if (await realpath(workspace) !== workspace) throw new Error('UNSAFE_BROWSER_WORKSPACE');
++  const parts = relative(workspace, directory).split('/');
++  if (
++    parts.length !== 3 || parts[0] !== 'downloads' || parts[1] !== 'browser' ||
++    !/^[a-zA-Z0-9._-]{1,64}-[a-f0-9]{16}$/u.test(parts[2] ?? '') ||
++    directory !== join(workspace, ...parts)
++  ) throw new Error('UNSAFE_BROWSER_DOWNLOAD_DIRECTORY');
++  let current = workspace;
++  for (const part of parts) {
++    current = join(current, part);
++    await mkdir(current, { mode: 0o700 }).catch((error: NodeJS.ErrnoException) => {
++      if (error.code !== 'EEXIST') throw error;
++    });
++    const info = await lstat(current);
++    if (info.isSymbolicLink() || !info.isDirectory() || await realpath(current) !== current) {
++      throw new Error('UNSAFE_BROWSER_DOWNLOAD_DIRECTORY');
++    }
++  }
++  await chmod(directory, 0o700);
++  // Chrome chooses a GUID destination, but reject any pre-existing unsafe entry
++  // before launch and each action rather than relying on filename sanitization.
++  for (const name of await readdir(directory)) {
++    const info = await lstat(join(directory, name));
++    if (info.isSymbolicLink() || !info.isFile() || info.nlink !== 1) {
++      throw new Error('UNSAFE_BROWSER_DOWNLOAD_DESTINATION');
++    }
++  }
++}
++
++export async function completedWorkspaceBrowserDownloadPath(
++  directory: string,
++  guid: unknown,
++): Promise<string> {
++  if (typeof guid !== 'string' ||
++      !/^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/u.test(guid)) {
++    throw new Error('UNSAFE_BROWSER_DOWNLOAD_GUID');
++  }
++  await ensureWorkspaceBrowserDownloadDirectory(directory);
++  const filePath = join(directory, guid);
++  const info = await lstat(filePath);
++  if (info.isSymbolicLink() || !info.isFile() || info.nlink !== 1 ||
++      await realpath(filePath) !== filePath) {
++    throw new Error('UNSAFE_BROWSER_DOWNLOAD_DESTINATION');
++  }
++  return relative(process.cwd(), filePath);
++}
++// ai-harness downloads end.
+ 
+ /** Probe a default Chrome candidate without reading the executable into memory. */
+ export async function isChromeExecutableCandidate(
+@@ -185,7 +236,7 @@
+       options.downloadDir ?? join(options.dataDir, 'browser', 'headless', 'downloads');
+     await ensurePrivateBrowserDirectory(options.dataDir);
+     await ensurePrivateBrowserDirectory(userDataDir);
+-    await ensurePrivateBrowserDirectory(downloadDir);
++    await ensureWorkspaceBrowserDownloadDirectory(downloadDir);
+     const devToolsActivePortPath = join(userDataDir, 'DevToolsActivePort');
+     await rm(devToolsActivePortPath, { force: true });
+     const viewport = options.viewport ?? DEFAULT_VIEWPORT;
+@@ -463,14 +514,14 @@
+       if (signal?.aborted) throw error;
+     });
+     await this.send('Page.setLifecycleEventsEnabled', { enabled: true }, undefined, options);
+-    await this.send(
+-      'Page.setDownloadBehavior',
+-      { behavior: 'allow', downloadPath: this.downloadDir },
++    // GUID names avoid collisions and never use an untrusted suggested filename.
++    // Fail closed if Chrome cannot establish this browser-owned download policy.
++    await this.connection.send(
++      'Browser.setDownloadBehavior',
++      { behavior: 'allowAndName', downloadPath: this.downloadDir, eventsEnabled: true },
+       undefined,
+       options,
+-    ).catch((error) => {
+-      if (signal?.aborted) throw error;
+-    });
++    );
+   }
+ 
+   send<T = unknown>(

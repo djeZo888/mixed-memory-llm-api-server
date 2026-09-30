@@ -24,7 +24,7 @@ MAX_EVIDENCE = 8
 CAPABILITIES = ("tool_calling", "vision", "reasoning", "json_output", "streaming")
 GLM_PROFILE = 'glm-5.3-ud-q4-k-xl-g1-480000'
 QWEN0_PROFILE = 'qwen38-27b-q0-480000-yarn4-bf16kv'
-QWEN1_PROFILE = 'qwen38-27b-q1-480000-yarn4-bf16kv'
+QWEN1_PROFILE = 'qwen38-27b-q1-server-480000-yarn4-bf16kv'
 PRODUCTION_MODES = {
     'dual-qwen': {'glm': QWEN0_PROFILE, 'qwen': QWEN1_PROFILE},
     'glm-qwen': {'glm': GLM_PROFILE, 'qwen': QWEN1_PROFILE},

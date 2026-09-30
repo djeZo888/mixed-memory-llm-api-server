@@ -1,0 +1,7 @@
+Retained initial command setup failure (before tests ran):
+exec_command workdir: repo/ai-harness/server
+exit_code: 127
+zsh:1: no such file or directory: ai-harness/server/test/codex-specialist-compatibility.test.ts
+ln: ai-harness/server/node_modules: No such file or directory
+./node_modules/.bin/tsx unavailable because the relative symlink destination was incorrect.
+Corrected paths relative to server directory; linked known cached H030-FRONTIER01 dependencies. Subsequent focused-tests.txt records actual execution PASS; this initial failure is not counted as a test run.

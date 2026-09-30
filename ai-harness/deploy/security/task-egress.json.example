@@ -1,0 +1,5 @@
+{
+  "schema": "h005-task-egress-v1",
+  "uid": 1000,
+  "dns_servers": ["127.0.0.53"]
+}

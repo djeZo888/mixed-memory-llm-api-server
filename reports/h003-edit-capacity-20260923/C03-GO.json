@@ -1,0 +1,12 @@
+{
+  "case": "C03",
+  "authorized_by": "root",
+  "seed": 48,
+  "size": "1920x1080",
+  "native_size": "1920x1088",
+  "reference_count": 1,
+  "max_calls": 1,
+  "received_utc": "2026-09-23T13:44:24.675080+00:00",
+  "minimum_ada_free_fraction": 0.05163308913308913,
+  "note": "ROOT EXPLICIT GO C03 ONCE: seed48, one reference native1920x1088 with explicit8bottomrowpad and exact8rowcrop to1920x1080, fixedrecipe and continued sole-caller window/settled C02 predecessor. Root accepts source/alignment check + measured affine forecast44554.75MiB plus2048MiBuncertainty=46602.75MiB, leaves2537.25MiB/5.1633%free. This is bounded preflight estimate only, NOT measured qualification. Monitor actualreserve and qualify only actual>=5%free with fullnormalsettlement. No retry, no reset/shutdown. C04 still separate NO GO.\nRoot explicitly says consume this GO (do not preserve obsolete quadratic refusal as final decision). Read note/C03-GO before finalizing. Send minimal PNG+peak+settlement quickly, defer fullreport until finalcapacitystage. If turn ended, coordinator will resume explicitly."
+}

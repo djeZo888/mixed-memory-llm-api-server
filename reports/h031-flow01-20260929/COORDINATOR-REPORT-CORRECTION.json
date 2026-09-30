@@ -1,0 +1,10 @@
+{
+  "schema": 1,
+  "task": "H031-FLOW01",
+  "originalReportSha256": "d315113e813bfdc4c61062b5c826a0ee9e5c453100d578f74e451ae9f19baf50",
+  "correctedReportSha256": "e9c3b78c574cd7e7b79121360d58c1e981be6599c002ec6be63628c2b712b928",
+  "field": "independentRenderVisualReview",
+  "runtimeOrSourceChange": false,
+  "originalBundleRetained": true,
+  "nativeBundleMayRequirePublicationCorrection": true
+}

@@ -1,0 +1,54 @@
+{
+  "/data/build/H019-20260928/client-closure.json": {
+    "sha256": "b6204999019679bf11ae4d95a809b1758d00b89a831e227d2f4101e89e2d2fcb",
+    "source": "scripts/h019/client-closure.json"
+  },
+  "/data/build/H019-20260928/deploy.py": {
+    "sha256": "ea6525a98dfc2f59f8011ea523483e1a1b6611ccf21781cf88a4794d3599ac3a",
+    "source": "scripts/h019/deploy.py"
+  },
+  "/data/build/H019-20260928/dispatch.py": {
+    "sha256": "807c8dde46c6b581ac58b7dbd4ae84477bce1e5636d34e3e81df66fcdcb47609",
+    "source": "scripts/h019/dispatch.py"
+  },
+  "/data/build/H019-20260928/observe.py": {
+    "sha256": "61c24091e0e750988199eba2ab12a31db1b45179740d1fb877de535750cdfc97",
+    "source": "scripts/h019/observe.py"
+  },
+  "/data/build/H019-20260928/prepare_authority.py": {
+    "sha256": "db7481d44adeea6692af3d5827d2c05e869e57844d1978a1e18ccf370ea7f707",
+    "source": "scripts/h019/prepare_authority.py"
+  },
+  "/data/build/H019-20260928/worker1-final950k/final.py": {
+    "sha256": "abecd4a844a09536a20dc89c1ee73d8e82f1d354720085206950c80a65f56ca3",
+    "source": "scripts/h019/final.py"
+  },
+  "/data/build/H019-20260928/worker1-short/short.py": {
+    "sha256": "c41df72cc832672c6db0b57b63bce5766dcfd77548617e832c7431bd594b5ab6",
+    "source": "scripts/h019/short.py"
+  },
+  "/data/services/mimo-h016-20260927/manifest.json": {
+    "sha256": "743edc0f8fa343f8c05efe7a307cf5a6eb4396b09ba9ed378230fe9d62e1e0a0",
+    "source": "scripts/h019/manifest.candidate.json"
+  },
+  "/data/services/mimo-h016-20260927/source/owner.py": {
+    "sha256": "e5fda2057168c29b1fe6e53da727b337beaf5634ddbc7dbb3d4f2c46602bcd53",
+    "source": "scripts/runtime/mimo/owner.py"
+  },
+  "/etc/systemd/system/h019-final950k.service": {
+    "sha256": "863005cbaaa5ede762e1160d9ab3f1b00c5890b0027c8cdcb447697639cbb7d9",
+    "source": "scripts/h019/h019-final950k.service"
+  },
+  "/etc/systemd/system/h019-short.service": {
+    "sha256": "83a1decb920a30a69200c43edb8a8277f3a1d1677a8c9300436de665d4d04a99",
+    "source": "scripts/h019/h019-short.service"
+  },
+  "/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py": {
+    "sha256": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+    "source": "scripts/lifecycle/hardware_policy.py"
+  },
+  "/usr/local/lib/llm-server/node-api/scripts/lifecycle/hardware_policy.py": {
+    "sha256": "cf5581289148f419f7056165e244ade8d696542cbb24c045b7d3533f873c46d1",
+    "source": "scripts/lifecycle/hardware_policy.py"
+  }
+}

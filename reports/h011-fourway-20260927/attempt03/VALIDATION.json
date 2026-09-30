@@ -1,0 +1,12 @@
+{
+  "offline_fixture_and_safety_assertions": "PASS in preparation",
+  "source_compile": "PASS all archived Python files",
+  "native_fixture_parity": "PASS 1 Flash65536 +12 per Qwen262144",
+  "complete_idle_telemetry_preflight_utc": "2026-09-27T01:41:01.866228+00:00",
+  "live_thermal_guard": "STOP at85C",
+  "source_hashes_matched": 21,
+  "registered_root_guards": "PASS",
+  "ecc_error_counts_unchanged": true,
+  "end_to_end_qualification": "FAILED_THERMAL_STOP",
+  "no_extra_test_campaign": true
+}

@@ -1,0 +1,34 @@
+{
+  "status": "COUNT_ONLY_CAPTURED",
+  "nativeSessionId": "01a0ed3b-0a87-7851-b42e-d97f4f2661ba",
+  "utc": "2026-09-29T12:57:25.185518+00:00",
+  "httpStatus": 200,
+  "endpoint": "/v1/chat/completions/input_tokens",
+  "responseBodySha256": "3c9985a47794bc3743f760ace2a4ce7c3fc74bae2e03eae9ea4c99dfb978a77e",
+  "responseBytes": 55,
+  "response": {
+    "input_tokens": 11684,
+    "object": "response.input_tokens"
+  },
+  "fieldTypes": {
+    "input_tokens": "int",
+    "object": "str"
+  },
+  "canonicalRequest": {
+    "retainedSha256": "6b19b85fefda61281b2621b0a0413311a3f6d0efafa14b56546a2e49fa43863a",
+    "canonicalSha256": "4543a646801a1e7d89e63e2ea5c0efada6d0bf5fe946875cf3462750462d88ef",
+    "canonicalBytes": 49287,
+    "mimoSourceSha256": "d24e622b32816974b6bf348d59e6a9dddc1b2b6854dc45c70d958aefc1d00d92"
+  },
+  "transportProofSha256": "11e1b70fa7a53992221d2ca8aecd359a470afbd55c4702ea507fccf444e5a6e8",
+  "appProofSha256": "69ca744fccbad090096c32446556cf050a5d62f884ab116446aa4105939199fa",
+  "deployedBuildSha256": "e95c21464ec3e78c57bb645eb5a0755b05cae77c552e5165a5890d3ae726fd8d",
+  "slotsIdleAfter": true,
+  "proxyActiveAfter": 0,
+  "generationRequests": 0,
+  "countRequests": 1,
+  "historicalRawCountResponse": "NOT_CAPTURED; this is faithful current reproduction",
+  "parserPatch": "SOURCE_READY_UNDEPLOYED",
+  "tests": "31 PASS; local affected fixtures",
+  "baselineReproduction": "PASS_EXPECTED_BASELINE_MIMO_COUNT_MALFORMED"
+}

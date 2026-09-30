@@ -1,0 +1,15 @@
+# H032 COUNT-FIX03 — source ready, undeployed
+
+Fresh bounded mac-worker1 native session `01a0ed3b-0a87-7851-b42e-d97f4f2661ba`, baseline `f8af1ee2dfbf07fa4e4c522d8fba4fcfe464702b`. One authorized count-only POST completed at 2026-09-29 12:57:25 UTC after current read-only app/native checks. No generation, workflow submission, deployment, config write, lifecycle change, model/source/context/profile/hardware action or GitHub push was performed.
+
+The retained MiniMax request SHA256 `6b19b85fefda61281b2621b0a0413311a3f6d0efafa14b56546a2e49fa43863a` was processed with the unchanged `prepareMimo` implementation. Canonical body: 49287 bytes, SHA256 `4543a646801a1e7d89e63e2ea5c0efada6d0bf5fe946875cf3462750462d88ef`. Request bytes, raw transport proof/headers/body, and credential handling remain private outside this checkout. Credentials and prompt text are absent from this packet.
+
+Actual current `/v1/chat/completions/input_tokens` response: HTTP200, 55 bytes, `{"input_tokens":11684,"object":"response.input_tokens"}`, SHA256 `3c9985a47794bc3743f760ace2a4ce7c3fc74bae2e03eae9ea4c99dfb978a77e`. It agrees with the pinned native source excerpt in `reports/h014-provider-contract-20260927/SOURCE-EXCERPTS.txt` lines248–252. This is a faithful current reproduction, not a recovered historical count body. Both original specialist FAIL receipts remain unchanged; no workflow pass is claimed.
+
+Current read-only checks verified app release e9e4f71c active, deployed mimo.js SHA256 `e95c21464ec3e78c57bb645eb5a0755b05cae77c552e5165a5890d3ae726fd8d`, zero active runs/pending frontier work, fresh MiMo guard status ok and matching native owner, no quarantine, and an idle single slot. Immediately after count, slot was idle and proxy active_requests was zero. Initial proof reads failed for missing sudo and an absent deployed source path; corrected read-only proof used sudo and the deployed build hash. Neither failure sent a count request. The one diagnostic grant was consumed exactly once.
+
+The source patch permits only the validated optional object tag, with either JSON field order. Legacy one-field counts remain valid. Unknown or duplicate fields, wrong tags, strings/null/negative/fraction/exponent/unsafe integers remain rejected. The 16KiB byte bound, fatal UTF-8, deadline, identity observations, admission arithmetic and current-owner handling are unchanged.
+
+Validation: the exact captured response fails the original f8af1ee parser with `mimo_count_malformed`; the corrected source passes all31 affected local tests across mimo, integration, current-owner and Codex gateway tests. The fixture is byte-identical to the captured response. These are local fixtures, not live workflow or model generation qualification.
+
+Root/W2 review and separately authorized app-only activation remain outstanding. App source/candidate pins have not been changed here. Hard worker deadline13:07UTC; packet produced before13:02UTC. The wrapper records actual process exit only after this native session ends.

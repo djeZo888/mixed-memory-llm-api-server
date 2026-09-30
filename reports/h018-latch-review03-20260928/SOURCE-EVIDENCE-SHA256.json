@@ -1,0 +1,34 @@
+{
+  "base_commit": "5b3841755e295917b1b32bb1a66c37d68967e191",
+  "session_id": "01a0e563-64ad-7eb0-9c28-60c9b8038a0f",
+  "source_sha256": {
+    "AGENTS.md": "ce680b87e92a6da988d8b5027dfbb88858d148af1804c396ac8038a6a62df792",
+    "docs/h017-mimo-integration-results-20260927.md": "20cca76f77639847daa20f8c80122afb91f76fa6a659e39fe34fc6b126456307",
+    "docs/h018-mimo-integration-plan.md": "e2589acf85b887465c7e63b84b8b0e47e4ef41517bf25dd6639459b6967ccd48",
+    "scripts/common/lifecycle_lease.py": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0",
+    "scripts/control/hardware_latch.py": "a23e3e55453fefd3bbd5dbb6bce7d8e16da08db2f6debfcdfe01110815353685",
+    "scripts/control/node.py": "d67384fed158b8977d5e968f46bada976df5053fc31264995001765e926ed571",
+    "scripts/control/node_collectors.py": "347b4667146bd2fa6fe0e95035f59817c860528ee50575fa2d278c439ac207dd",
+    "scripts/control/node_observation.py": "da330ab85bd2beb44ab71e5996743b4519ff2958c3ac7ad8ebb0f309e4b04ee2",
+    "scripts/control/node_serve.py": "40050f7d90f2ed3ab069408b9cbe6df17a7584ceed1be1365b5de91467f26d73",
+    "scripts/control/passive.py": "f535b9a0e8c8869566a40209d78704de428e14518d1b6eebf0540589e26817a3",
+    "scripts/h016/final13_long/client.py": "efbd8a3f36fd480bca5ac40e47cbffb3e1896ebe72060680a7e9abede85c3f9a",
+    "scripts/h016/final13_long/reader.py": "3adf8f433981c97a80dc23fcc0e9ed9e256c8d48755dc9579f1efcd9033541a5",
+    "scripts/h018/short/client.py": "56a257c86ad0467715c310285745b8178d7d85fb3d920dcff0d64082fde7ee33",
+    "scripts/lifecycle/hardware_policy.py": "c779739a1776ea919f491a60a34811639e2df934a94ea909053710e4864e7229",
+    "scripts/lifecycle/storage_binding.py": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf",
+    "scripts/runtime/mimo/owner.py": "dbb54dd908a5f9d1e833d34f9cf5d72fce27583fea089c35071b46e0b91f4e05",
+    "scripts/runtime/mimo/private_proxy.py": "a77224f28c5367f26b0336722c6717bf8aa021107a7a4753705cc10a2599de52"
+  },
+  "input_sha256": {
+    "../input/CANDIDATE-SCOPE.md": "5ee9bafc1130485d1649d305f82cebe5c201eb59bfa1432307d79c75a5a84d7a",
+    "../input/FAILURE-DIAGNOSTIC.json": "3b44ab8708877a17432583a78131286ef1f61a52351d2aba92532428bb3bc2f7",
+    "../input/PREFAILURE-GUARD.json": "ea7d6975e32aabd0f42506635df6db8958d486c7e3742620232655f1b29cf951",
+    "../input/ROOT-DIAGNOSIS.json": "7db5f772b60bae740057b22b5236344379c0675140d0653913f6d87e3c721265",
+    "../input/ROOT-QUALIFICATION.json": "255176299a67c2b1286d69b57916b6f1d9069a6a9157ecee46033619695c3724",
+    "../input/ROOT-SOURCE-FOCUS.md": "47df2a9ebac6ba0503494264536ad3a417d9e2306958a4d5f139dee876091f44",
+    "../input/ROOT-UPDATE.md": "ec93edf6821d6c4c03e72e57ca05726be314c8813dad98cc611e64a535222ac9",
+    "../input/W1-NEAREST-GUARD-NOTICE.md": "eb469d5b2b26673e2987863e3ff17849e83f89ca08167b1da82676751512d265"
+  },
+  "note": "Input files remain task-private; report references retain names/hashes. No credentials or full traces copied."
+}

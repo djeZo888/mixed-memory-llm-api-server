@@ -1,0 +1,78 @@
+{
+  "utc": "2026-09-26T23:52:10.231Z",
+  "pid": 213724,
+  "services": {
+    "qwen3.8-27b-gpu0": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "qwen3.8-27b": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "glm-5.3-flash": {
+      "state": "available",
+      "dispatch": "allow"
+    },
+    "image": {
+      "state": "available",
+      "dispatch": "allow"
+    }
+  },
+  "persisted_latches": {},
+  "observed_latch_changes": [],
+  "canonical_services": [
+    {
+      "service_id": "qwen-gpu0",
+      "model_alias": "qwen3.8-27b-gpu0",
+      "ready": true,
+      "availability": "available",
+      "freshness": "fresh",
+      "hardware_latched": false,
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null
+    },
+    {
+      "service_id": "qwen-gpu1",
+      "model_alias": "qwen3.8-27b",
+      "ready": true,
+      "availability": "available",
+      "freshness": "fresh",
+      "hardware_latched": false,
+      "configured_context_tokens": 480000,
+      "max_output_tokens": null
+    },
+    {
+      "service_id": "image",
+      "model_alias": "qwen-image-2.1",
+      "ready": true,
+      "availability": "available",
+      "freshness": "fresh",
+      "hardware_latched": false,
+      "configured_context_tokens": null,
+      "max_output_tokens": null
+    },
+    {
+      "service_id": "glm-5.3-flash",
+      "model_alias": "glm-5.3-flash",
+      "ready": true,
+      "availability": "available",
+      "freshness": "fresh",
+      "hardware_latched": false,
+      "configured_context_tokens": 480000,
+      "max_output_tokens": 65536
+    },
+    {
+      "service_id": "control",
+      "model_alias": null,
+      "ready": true,
+      "availability": "available",
+      "freshness": "fresh",
+      "hardware_latched": false,
+      "configured_context_tokens": null,
+      "max_output_tokens": null
+    }
+  ],
+  "status": "PASS",
+  "inference": false
+}

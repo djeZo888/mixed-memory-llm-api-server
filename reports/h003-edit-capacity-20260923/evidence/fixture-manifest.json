@@ -1,0 +1,90 @@
+{
+  "teapot-original.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/original-rgb.png",
+    "sha256": "9756c58b989a7656162e8777bb98fcd20671c58a9c79ae4c2d1744a63fb0d575",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "known_ancestor_seeds": [
+      42
+    ]
+  },
+  "teapot-fail42.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/prior-sglang-rgb-edit.png",
+    "sha256": "a76c98a479c2e319677b931e699373b376846e3bfd2769d18ca66c74c99d706b",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "mode": "RGBA",
+    "known_ancestor_seeds": [
+      42
+    ]
+  },
+  "teapot-pass43.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/d04-delivered-rgb.png",
+    "sha256": "c718b9feb9c7825cb66b69b69be5e87829b811fb536fcc109346c73533a281bb",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "known_ancestor_seeds": [
+      42,
+      43
+    ]
+  },
+  "astronaut-1024.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/d05-fixture/astronaut-1024.png",
+    "sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+    "dimensions": [
+      1024,
+      1024
+    ],
+    "mode": "RGB",
+    "known_ancestor_seeds": []
+  },
+  "astronaut-original.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-20260923/artifacts/d05-fixture/astronaut-original.png",
+    "sha256": "88431cd9653ccd539741b555fb0a46b61558b301d4110412b5bc28b5e3ea6cb5",
+    "dimensions": [
+      512,
+      512
+    ],
+    "mode": "RGB",
+    "known_ancestor_seeds": []
+  },
+  "lake-bled-fullhd.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-DEPLOY-20260923/artifacts/lake-bled-fullhd.png",
+    "sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+    "dimensions": [
+      1920,
+      1080
+    ],
+    "mode": "RGB",
+    "known_ancestor_seeds": [
+      23092301
+    ]
+  },
+  "lake-bled-1536x864-diagnostic.png": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H003-EDIT-CAPACITY-20260923/artifacts/fixtures/lake-bled-fullhd.png",
+    "source_sha256": "262ac543e0ca4fe6031eda20e8171d65ae42e8b30f681189ec83039f30fde506",
+    "sha256": "a4bb120253fece2e5349bd9e54e9f280c5e20b18858a6f04df34063b56a31e4c",
+    "dimensions": [
+      1536,
+      864
+    ],
+    "source_dimensions": [
+      1920,
+      1080
+    ],
+    "known_ancestor_seeds": [
+      23092301
+    ],
+    "preparation": "Diagnostic-only uniform 0.8 LANCZOS resize; no crop, stretch or padding; original unchanged.",
+    "authorization": "User C02 permits an explicitly documented diagnostic working copy from main LakeBled. This is not product resize approval.",
+    "provenance": "Retained model-generated Lake Bled scene, seed23092301; native-size fixture, not a natural photograph."
+  }
+}

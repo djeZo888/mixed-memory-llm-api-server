@@ -1,0 +1,268 @@
+{
+  "task": "H025-EXEC05-20260928",
+  "executor_task": "H025-EXEC04-20260928",
+  "native_session_id": "01a0e9a5-f9b1-7b73-af31-d1c67a412b9d",
+  "status": "FAILED_CAMPAIGN_SETTLED_AND_RESTORED",
+  "reported_utc": "2026-09-28T20:58:12.383489+00:00",
+  "hard_deadline": "2026-09-28T21:00:00Z",
+  "source": {
+    "W1_commit": "2ecd1704e51f17ae33d2c2093bcb6a0a23236234",
+    "import_commit": "66fefc7",
+    "package_sha256": "01ed8314a50e2f3dea9dc14c9cd014315d689257c7238ef728d9acb26f9d9ca6",
+    "root_review": "PASS; 25 focused tests and compile18 from W1, no additional suite rerun",
+    "shared_storage_guard_changed": false
+  },
+  "pins": {
+    "manifest_raw_sha256": "46f200d1a7bd776b85be16ed28c3619efeccb574b7231f05cdf4b6df744a4c48",
+    "manifest_canonical_sha256": "cc048c2b90c7b33b4402f2ab9b369e74246ea2e15c04372b89d9e30986f0fe4a",
+    "go_raw_sha256": "6007e6688bb2a1275c4c7d7fb191c6c4052b5bbe1871a571d4e915ec1f5191e2",
+    "package_sha256": "01ed8314a50e2f3dea9dc14c9cd014315d689257c7238ef728d9acb26f9d9ca6"
+  },
+  "unit": "h025-exec05-overlap.service",
+  "invocation_id": "f290684b79e545ebb64d8c0b5ebe2ecb",
+  "restart": "no",
+  "barrier": {
+    "monotonic": 20195.836950745,
+    "utc": "2026-09-28T20:36:36.032424+00:00"
+  },
+  "admission_window_seconds": 300,
+  "admission_samples": 223,
+  "inflight_fourway_seconds": 167.13968259497778,
+  "inflight_basis": "Observed submitted HTTP transport intervals: successful EOF endpoints plus GLM timeout endpoint. GLM HTTP200 had zero response bytes/no DONE/usage/EOF. This is in-flight overlap including warming/queue, not successful four-way completion or native-processing overlap.",
+  "completed_fourway_http_seconds": 0,
+  "campaign_complete": false,
+  "first_failure": {
+    "lane": "qwen0",
+    "observed": {
+      "monotonic": 20495.920759265,
+      "utc": "2026-09-28T20:41:36.116232+00:00"
+    },
+    "reason": "Refusal: request or native proof failed"
+  },
+  "GLM": "Native counted16268; HTTP200 but0responsebytes/noDONE/noEOF/nousage; timed out after900.150458s; originalUNKNOWNpreserved",
+  "Qwen0_cutoff": "163rd prepared row counted6084; no send_started/body_sent; Refusal84ms after300s boundary; driver physically stopped owner and recordedFAILED_SETTLED. No state rewrite.",
+  "requests": {
+    "flash": {
+      "prepared": 1,
+      "body_sent": 1,
+      "full_http_completions": 0,
+      "states": {
+        "UNKNOWN_OWNED": 1
+      }
+    },
+    "qwen0": {
+      "prepared": 163,
+      "body_sent": 162,
+      "full_http_completions": 162,
+      "states": {
+        "SETTLED": 162,
+        "FAILED_SETTLED": 1
+      }
+    },
+    "qwen1": {
+      "prepared": 124,
+      "body_sent": 124,
+      "full_http_completions": 124,
+      "states": {
+        "SETTLED": 124
+      }
+    },
+    "image": {
+      "prepared": 6,
+      "body_sent": 6,
+      "full_http_completions": 6,
+      "states": {
+        "SETTLED": 6
+      }
+    }
+  },
+  "monitor_span_seconds": 1000.9539327279999,
+  "monitor_samples": 787,
+  "mirror_failure_recurrence": "No recorded monitor/fan mirror failure during corrected campaign and settlement",
+  "settlement": {
+    "original_driver_FINAL_present": false,
+    "original_unknown_retained": true,
+    "separate_genuine_owner_reconciliation": {
+      "utc": "2026-09-28T20:52:38.710657+00:00",
+      "status": "EXACT_OWNER_HALT_RECONCILED",
+      "container_id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+      "physical_stopped": true,
+      "old_native_pid_absent": true,
+      "old_cgroup_absent": true,
+      "owner_state_unchanged": true,
+      "original_driver_unknown_record_preserved": true,
+      "reconciliation_scope": "separate owner receipt; original request failed, not HTTP success"
+    },
+    "owned_client_stop": {
+      "utc": "2026-09-28T20:53:17.373493+00:00",
+      "action": "normal stop exact owned client after separate genuine GLM owner halt reconciliation and all other settlement",
+      "original_unknown_preserved": true,
+      "unit": "Restart=no\nMainPID=0\nActiveState=inactive\nSubState=dead\n"
+    },
+    "owned_bridge_stop": {
+      "pid": 17202,
+      "intent_verified": true,
+      "action": "SIGTERM owned bridge after settlement"
+    },
+    "request_retry": false,
+    "synthetic_FINAL": false
+  },
+  "restored": {
+    "native_utc": "2026-09-28T20:58:11.595159+00:00",
+    "models": {
+      "flash": {
+        "identity": {
+          "Id": "2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab",
+          "Image": "sha256:51791e17c0149019e2ddc032d8c1b2f60b86c3a6c293daff639e20053baa858a",
+          "StartedAt": "2026-09-28T20:55:14.417086606Z",
+          "Pid": 2534375,
+          "cgroup": "/system.slice/docker-2b5e5e386f70678cefebbfcb66cfdab568e9b3744abfb366f03a66ea7fdb03ab.scope",
+          "pid_start_ticks": "2131424"
+        },
+        "readiness": {
+          "schema_version": 1,
+          "model_alias": "glm-5.3-flash",
+          "ready": true,
+          "state": "up",
+          "admitting": null
+        },
+        "restoration_identity_change": true,
+        "capacity_readback": {
+          "context_length": 1048576,
+          "max_total_tokens": 1048576,
+          "max_total_num_tokens": 1048576,
+          "max_running_requests": 1,
+          "disable_radix_cache": true
+        }
+      },
+      "qwen0": {
+        "identity": {
+          "Id": "ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9",
+          "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+          "StartedAt": "2026-09-28T20:53:42.3540933Z",
+          "Pid": 2511660,
+          "cgroup": "/system.slice/docker-ae049b4eb723d7932a1dbf72e502f907faa424c83b05eb61b96afd96ca5f98f9.scope",
+          "pid_start_ticks": "2122219"
+        },
+        "readiness": {
+          "schema_version": 1,
+          "model_alias": "qwen3.8-27b-gpu0",
+          "ready": true,
+          "state": "up",
+          "admitting": null
+        },
+        "restoration_identity_change": true,
+        "capacity_readback": {
+          "context_length": 480000,
+          "max_total_tokens": 480000,
+          "max_total_num_tokens": 480000,
+          "max_running_requests": 1,
+          "disable_radix_cache": true
+        }
+      },
+      "qwen1": {
+        "identity": {
+          "Id": "3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566",
+          "Image": "sha256:0aa2afe62c04fdd4f06a38229e6941cb1e47f6b7c0863698b708f299d4f15ddf",
+          "StartedAt": "2026-09-28T20:23:33.299884201Z",
+          "Pid": 1844069,
+          "cgroup": "/system.slice/docker-3280b5d1cb3ff8e60e312eef0ca06f81f210866d10b8acfab9f6db6c1fbf5566.scope",
+          "pid_start_ticks": "1941312"
+        },
+        "readiness": {
+          "schema_version": 1,
+          "model_alias": "qwen3.8-27b",
+          "ready": true,
+          "state": "up",
+          "admitting": null
+        },
+        "restoration_identity_change": false,
+        "capacity_readback": {
+          "context_length": 480000,
+          "max_total_tokens": 480000,
+          "max_total_num_tokens": 480000,
+          "max_running_requests": 1,
+          "disable_radix_cache": true
+        }
+      },
+      "image": {
+        "identity": {
+          "Id": "8db563cf81435dbf017e5d00036e8ea51e7f0df089ab8f8e53946f4f13622d16",
+          "Image": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+          "StartedAt": "2026-09-28T20:17:29.275029796Z",
+          "Pid": 1697970,
+          "cgroup": "/system.slice/docker-8db563cf81435dbf017e5d00036e8ea51e7f0df089ab8f8e53946f4f13622d16.scope",
+          "pid_start_ticks": "1904910"
+        },
+        "readiness": {
+          "ready": true,
+          "busy": false,
+          "admitting": true,
+          "state": "ready",
+          "maximum_supported_generation_size": "1920x1080"
+        },
+        "restoration_identity_change": false,
+        "native_run_id": "fbcd13980e37407c97ec57449080d5ed",
+        "profile": "FullHD 1920x1080 retained"
+      }
+    },
+    "permanent_selection": {
+      "generation": 12,
+      "manifest_sha256": "242e81da1340c8bba0bd9689fe1f715c45018eeabe2ef0be17fdb2596d833660",
+      "schema_version": 1,
+      "selected_frontier": "mimo-v2.6-pro-rl"
+    },
+    "http": {
+      "/api/health": 200,
+      "/api/status/v1/system": 200
+    },
+    "app_status_utc": "2026-09-28T20:55:29.584952+00:00",
+    "units": "MainPID=122932\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=3dd288c78da440b7a2c3cb94fd0a99f0\n\nMainPID=1655\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=e4fc2a45082141ad971879084f29aeb1\nMainPID=122955\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=e99ad456e8024852a757f19adcb9c67a\n\nMainPID=72409\nActiveState=active\nSubState=running\nUnitFileState=enabled\nInvocationID=bfd3b8403f3c48a3991be6a02b9f852e\n",
+    "fan": {
+      "updated_at": "2026-09-28T20:58:11.764585+00:00",
+      "pid": 72409,
+      "state": "healthy",
+      "errors": [],
+      "source_sha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+      "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+      "desired_duty": 40,
+      "readback_duty": 40,
+      "actual_tach": 3600,
+      "actual_tach_units": null
+    }
+  },
+  "preservation": {
+    "native_session_bindings_identical": true,
+    "counts_before": {
+      "sessions": 51,
+      "messages": 220,
+      "files": 109,
+      "runs": 73,
+      "events": 35126,
+      "quarantined_workspaces": 3,
+      "h021_gateway_requests": 118,
+      "frontier_requests": 0,
+      "h003_image_jobs": 20
+    },
+    "counts_after": {
+      "sessions": 51,
+      "messages": 220,
+      "files": 109,
+      "runs": 73,
+      "events": 35132,
+      "quarantined_workspaces": 3,
+      "h021_gateway_requests": 118,
+      "frontier_requests": 0,
+      "h003_image_jobs": 20
+    },
+    "holds": 0,
+    "historical_engine_ownership_identical": true,
+    "manual_database_quarantine_hold_edits": false,
+    "MiMo_calls_or_restart": false,
+    "BMC_fan_latch_writes": 0,
+    "power_limit_changes": false,
+    "node_control_service_changes": false,
+    "original_EXEC04_namespace_and_failed_rows": "PRESERVED"
+  },
+  "raw_archive_sha256": "0587a653efc40457c8cfe6508f45b9f5220d3e11863a31b8aa114d85fdf4b154"
+}

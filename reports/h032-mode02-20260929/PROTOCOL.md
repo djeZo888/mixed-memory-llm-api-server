@@ -1,0 +1,15 @@
+# MODE02 exact continuation protocol (executed once)
+
+Executed once under12:10 exactGO; see REPORT.md/RESULT.json. Historical preparation protocol follows. Native actual ID01a0ed0a-4c58-7b52-893c-21f1a185a4c6. Base45e435e9. Operational helper patch only changes install staging to0600; immutable evidence remains0400. Current production service6b7ac0a1 and configa3ca37b0 bytes are unchanged.
+
+Continuation is a separate no-argument script; do NOT run original helper or modified full helper. Original helper069a6eb7 is loaded as pinned library only, never main/reconcile/install/reset_owned. Exact frozen pins come from verified saved14-export archive34585550975d550d68595548974f6ca5157a4b71acc406af6a132649336f7ac3 and13-final-boundary. Original reconciliation archive is3b62733d (different from private export archive).
+
+It validates complete source closure before loading installed service, registered storage and protected roots, currentboot, existing recovery/operation descriptors held with flock (no creation), exact retained operational/state/plan/archive/consumed/settlement/failure bytes, paused API/backend, exact dead predecessor/native absence, targetGPU idle/ports and hardware gate. A pre-mode proof context uses exact pinned config but does not call the normal JSON reader until after correction. No admission/start/native dispatch method is called on that context.
+
+Only two held operational descriptors source/service.py and config.json may receive fchmod0600, after BOTH are verified0400 UID0 GID1001; preservebytes/inode/ownership/mtime. New immutable mode02 consumption marker blocks repeats. The full normal Runtime constructor then crosses the unmodified production JSON reader. Repeat current proof; change only original recovery config digest; publish original-schema h032-image-handoff.json with exact current raw pins, original archive/plan/settlement/consumption. Reservation remainsactive, original dead pid/token/history retained. No stop/remove/rename/create/start/warm native action; no MiMo modification; no source guard relaxation.
+
+Standard hardware validation retains its existing protected validation-receipt write. It is not a globally read-only guard; all initial state/archive/file negatives occur before this guard, and both held file metadata signatures are rechecked inside it before the mode02 marker or either fchmod. No hardware policy, placement, tuning or gates are relaxed.
+
+Review candidate tests: mode regression24 + storagebinding14 PASS. Final focused59PASS including5continuation tests/17scenarios; see TESTS-MODE02.log. Exact coordinator12:10GO superseded the preparation hold and included ONE ordinary APIstart after verifiedhandoff; both executed successfully once. Never rerun this consumed continuation. Every refusal/uncertain command is final; never rerun. Record proof/result/receipt privately and release lifecycle writer promptly; no readiness waiting.
+
+Hard task cutoff12:20UTC; original activationcutoff12:45 and cleanupglobalsettle13:07 unchanged. Maintenance and capability gates remain closed. No GitHubpush.

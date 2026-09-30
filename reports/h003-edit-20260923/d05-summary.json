@@ -1,0 +1,47 @@
+{
+  "id": "D05",
+  "input_sha256": "09fc2049a0c52f366a3fa38cc6cf6e2494cdd934147fe3994192965d78d03bf5",
+  "prompt": "Change only the orange fabric of the astronaut's flight suit to dark blue. Keep her face, hair, pose, suit shape, patches, neck ring, helmet, flag, shuttle model, background, and lighting unchanged.",
+  "seed": 45,
+  "steps": 40,
+  "steps_completed": 40,
+  "outputs": [
+    {
+      "name": "raw-output.png",
+      "sha256": "c1d86070fcaaf2fed38c9e58795d8c121dd8064763f6af2e4cc346564b53901a"
+    },
+    {
+      "name": "delivered-rgb.png",
+      "sha256": "0c08d418b60c6670add4cce924e3cdce1e84064d8a8d8f9a3c14b5c52801b9f5"
+    }
+  ],
+  "latency_seconds": 27.350828332993842,
+  "native_seconds": 27.002186947000155,
+  "memory": {
+    "sampled_device_min_free_bytes": 9602531328,
+    "sampled_device_peak_used_bytes": 41924493312,
+    "host_min_available_fraction": 0.9726007159024755,
+    "host_swap_used_max": 0,
+    "cgroup_swap_used_max": 0,
+    "sampling": "200ms device / 1s host; between-sample peaks not observed"
+  },
+  "outcome": "Worker1 visual PASS guarded feasibility: orange suit fabric changed to blue, with face, hair, pose, suit geometry, patches, neck ring, helmet, flag, shuttle, background and lighting perceptually preserved. Minor texture/detail drift, no severe contrast/texture/coherence artifacts. Independent root PNG review pending. Not exact seed42 repair acceptance.",
+  "ready_after": {
+    "admitting": true,
+    "busy": false,
+    "ready": true,
+    "state": "ready"
+  },
+  "api_identity_preserved": true,
+  "gpu_processes_restored": true,
+  "native_operation_settled": true,
+  "probe_processes_absent": true,
+  "worker1_visual": "PASS",
+  "root_visual": "pending",
+  "raw_output_mode": "RGBA",
+  "raw_alpha_extrema": [
+    248,
+    255
+  ],
+  "delivery": "Opaque RGB; native RGB values preserved while alpha dropped by existing normalization."
+}

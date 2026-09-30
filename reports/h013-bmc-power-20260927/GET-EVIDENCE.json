@@ -1,0 +1,167 @@
+{
+  "task": "H013-BMC-POWER-20260927",
+  "wrapper_started_utc": "2026-09-27T06:14:11Z",
+  "wrapper_deadline_utc": "2026-09-27T06:24:11Z",
+  "probe_deadline_epoch": 1790490180.0,
+  "execution_host": "ai-harness",
+  "host": "10.156.100.40",
+  "port": 443,
+  "pin": "0f1ee547edbdbca346ea2d884d3271a8f28351d57a16baa911c388198063f7ec",
+  "requests": 2,
+  "successful_actual_socket_pin_checks": 2,
+  "finished_utc": "2026-09-27T06:16:24.703852+00:00",
+  "receipts": [
+    {
+      "method": "GET",
+      "path": "/redfish/v1/Chassis/Self",
+      "status": 200,
+      "request_started_utc": "2026-09-27T06:16:24.260433+00:00",
+      "response_received_utc": "2026-09-27T06:16:24.411365+00:00",
+      "elapsed_seconds": 0.150933,
+      "pin_verified": true,
+      "response_bytes": 2232,
+      "response_sha256": "7378a6bf8d08847fdc58d69c037c382b68520b585d5f83e65c59b3a77fc47ba4",
+      "content_type": "application/json; charset=UTF-8",
+      "http_date": "Sun, 27 Sep 2026 06:16:24 GMT",
+      "http_age": null,
+      "http_last_modified": null,
+      "top_keys": [
+        "@odata.context",
+        "@odata.etag",
+        "@odata.id",
+        "@odata.type",
+        "Actions",
+        "AssetTag",
+        "ChassisType",
+        "Description",
+        "Fru",
+        "Id",
+        "IndicatorLED",
+        "IndicatorLED@Redfish.AllowableValues",
+        "Links",
+        "LogServices",
+        "Manufacturer",
+        "MediaControllers",
+        "Model",
+        "Name",
+        "NetworkAdapters",
+        "PCIeDevices",
+        "PCIeSlots",
+        "PartNumber",
+        "Power",
+        "PowerState",
+        "SKU",
+        "Sensors",
+        "SerialNumber",
+        "Status",
+        "Thermal"
+      ],
+      "data": {
+        "@odata.id": "/redfish/v1/Chassis/Self",
+        "@odata.type": "#Chassis.v1_14_0.Chassis",
+        "Description": "Chassis Self",
+        "Id": "Self",
+        "Name": "Computer System Chassis",
+        "Power": {
+          "@odata.id": "/redfish/v1/Chassis/Self/Power"
+        },
+        "Sensors": {
+          "@odata.id": "/redfish/v1/Chassis/Self/Sensors"
+        },
+        "Status": {
+          "Health": "OK",
+          "HealthRollup": "OK",
+          "State": "Enabled"
+        }
+      }
+    },
+    {
+      "method": "GET",
+      "path": "/redfish/v1/Chassis/Self/Power",
+      "status": 200,
+      "request_started_utc": "2026-09-27T06:16:24.411582+00:00",
+      "response_received_utc": "2026-09-27T06:16:24.703684+00:00",
+      "elapsed_seconds": 0.292105,
+      "pin_verified": true,
+      "response_bytes": 27290,
+      "response_sha256": "febba20fcf101e56ce417939461de5e80623c23f489076dee420fe5047290305",
+      "content_type": "application/json; charset=UTF-8",
+      "http_date": "Sun, 27 Sep 2026 06:16:24 GMT",
+      "http_age": null,
+      "http_last_modified": null,
+      "top_keys": [
+        "@odata.context",
+        "@odata.etag",
+        "@odata.id",
+        "@odata.type",
+        "Description",
+        "Id",
+        "Name",
+        "PowerControl",
+        "PowerControl@odata.count",
+        "PowerSupplies",
+        "PowerSupplies@odata.count",
+        "Voltages",
+        "Voltages@odata.count"
+      ],
+      "data": {
+        "@odata.id": "/redfish/v1/Chassis/Self/Power",
+        "@odata.type": "#Power.v1_5_4.Power",
+        "Description": "Power sensor readings",
+        "Id": "Power",
+        "Name": "Power",
+        "PowerControl": [
+          {
+            "@odata.id": "/redfish/v1/Chassis/Self/Power#/PowerControl/0",
+            "MemberId": "0",
+            "Name": "Chassis Power Control",
+            "PhysicalContext": "Intake",
+            "PowerCapacityWatts": 0,
+            "PowerConsumedWatts": 20,
+            "PowerMetrics": {
+              "AverageConsumedWatts": 0,
+              "IntervalInMin": 0,
+              "MaxConsumedWatts": 0,
+              "MinConsumedWatts": 0
+            }
+          }
+        ],
+        "PowerControl@odata.count": 1,
+        "PowerSupplies": [
+          {
+            "@odata.id": "/redfish/v1/Chassis/Self/Power#/PowerSupplies/0",
+            "LastPowerOutputWatts": 0,
+            "LineInputVoltage": 0,
+            "LineInputVoltageType": "Unknown",
+            "MemberId": "0",
+            "Name": "Power Supply 1",
+            "PowerCapacityWatts": 0,
+            "PowerInputWatts": 0,
+            "PowerOutputWatts": 0,
+            "PowerSupplyType": "AC",
+            "Status": {
+              "State": "Absent"
+            }
+          },
+          {
+            "@odata.id": "/redfish/v1/Chassis/Self/Power#/PowerSupplies/1",
+            "LastPowerOutputWatts": 0,
+            "LineInputVoltage": 0,
+            "LineInputVoltageType": "Unknown",
+            "MemberId": "1",
+            "Name": "Power Supply 2",
+            "PowerCapacityWatts": 0,
+            "PowerInputWatts": 0,
+            "PowerOutputWatts": 0,
+            "PowerSupplyType": "AC",
+            "Status": {
+              "State": "Absent"
+            }
+          }
+        ],
+        "PowerSupplies@odata.count": 2,
+        "Voltages@odata.count": 15
+      }
+    }
+  ]
+}

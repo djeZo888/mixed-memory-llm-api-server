@@ -1,0 +1,7 @@
+FROM sha256:9ef88598cf54a03aa259c5aa2d2878b34b7473cfcec7c8c07cee6ba462c39f1c
+USER root
+COPY overlay/ /
+LABEL org.opencontainers.image.ai-harness.patchset="a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd" \
+      org.opencontainers.image.ai-harness.source="928b3b470058241f089a839367d4b30d5887a6e3" \
+      org.opencontainers.image.ai-harness.native-source="51d06736d5dd56d0e7b7e34dbb107fa015864817"
+USER 1000:1000

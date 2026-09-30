@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "scope": "Offline existing focused deterministic tests; no native binary/model/inference/VM/deployment calls",
+  "node": "v24.21.0",
+  "dependencyReuse": {
+    "source": "/Users/agent/CodexProjects/llm-orchestration/tasks/H030-FRONTIER01-20260929/repo/ai-harness/server/node_modules",
+    "packageAndLockBothByteIdentical": true,
+    "installationPerformed": false,
+    "sharedDependencyMutation": false
+  },
+  "commands": [
+    {
+      "cwd": "ai-harness/server",
+      "command": "./node_modules/.bin/tsx --test --test-timeout=15000 test/image-intent-context.test.ts test/codex-instructions.test.ts",
+      "toolChunkId": "80ffca",
+      "actualExitCode": 0,
+      "tests": 10,
+      "pass": 10,
+      "fail": 0,
+      "durationMs": 570.967583
+    },
+    {
+      "cwd": "ai-harness/server",
+      "command": "./node_modules/.bin/tsx --test --test-timeout=15000 --test-name-pattern='deferred approved edit|owned image acceptance|Codex specialist gate' test/image-integration.test.ts",
+      "toolChunkId": "a80095",
+      "actualExitCode": 0,
+      "tests": 3,
+      "pass": 3,
+      "fail": 0,
+      "durationMs": 515.456916
+    },
+    {
+      "cwd": ".",
+      "command": "./ai-harness/server/node_modules/.bin/tsx reports/h036-image-completion01/audit-retained.ts ../input/H035-FIRST/capture ../private/retest reports/h036-image-completion01/RETAINED-AUDIT.json",
+      "toolChunkId": "b9208b",
+      "actualExitCode": 0,
+      "captures": 2,
+      "verifiedFiles": 344,
+      "result": "PASS_BOUNDARY_PRESERVATION_ONLY",
+      "originalWorkflow": "FAIL_RETAINED_NOT_RETESTED"
+    }
+  ],
+  "build": "Not run; production source unchanged",
+  "fullSuite": "Not run; prior documented stale image-job expectations remain outside this focused receipt"
+}

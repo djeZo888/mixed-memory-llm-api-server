@@ -1,0 +1,15 @@
+{
+  "task": "H026-SHUTDOWN02-20260928",
+  "nativeSessionId": "01a0e9e5-5156-7632-bdb5-03eb4fcd0566",
+  "nativeExitCode": 0,
+  "finishedUtc": "2026-09-28T21:25:37Z",
+  "deadline": {
+    "startedUtc": "2026-09-28T21:21:54.617659+00:00",
+    "hardDeadlineUtc": "2026-09-28T21:29:54.617659+00:00",
+    "maximumSeconds": 480
+  },
+  "shutdownReceiptSha256": "0c6d636e53f5fad2aecab82dbfec796ac4c521056212b9e50734612883880147",
+  "syncedToCoordinatorUtc": "2026-09-28T21:27:33.206082+00:00",
+  "noFurtherHostActions": true,
+  "hostSidePowerState": "NOT_INDEPENDENTLY_QUERIED"
+}

@@ -1,0 +1,4 @@
+PASS: systemd-run outside all parent context managers at line 34
+PASS: all R6 Python syntax; native argv and mandatory guard unchanged
+launch_r6.py sha256 b6eb9a39fa12bb8aee1d0c169dd8e7ea64ee0b437a26b813ec052885d0cbac01
+staging payload sha256 6737b179fcf53c6a63bd4832c5d08b08fd1202b98a288f66899702c4ae4e2364

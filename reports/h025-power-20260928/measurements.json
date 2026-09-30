@@ -1,0 +1,89 @@
+{
+  "campaign": "H025-EXEC05-20260928",
+  "scope": "EXISTING telemetry only, sample starts in exact [barrier,barrier+300s) admission window",
+  "barrier_utc": "2026-09-28T20:36:36.032424+00:00",
+  "sample_count": 223,
+  "first_sample_utc": "2026-09-28T20:36:36.050576+00:00",
+  "last_sample_utc": "2026-09-28T20:41:35.008557+00:00",
+  "sample_interval_seconds": {
+    "mean": 1.3466575901801752,
+    "median": 1.3108498834990314,
+    "max": 2.784976158000063
+  },
+  "mean_basis": "unweighted arithmetic mean of recorded samples; not a time integral",
+  "cards": {
+    "qwen0": {
+      "gpu_uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "type": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "mean_w": 357.90094170403586,
+      "peak_w": 511.29,
+      "power_limit_w": [
+        600.0
+      ],
+      "peak_temperature_c": 72.0,
+      "throttle_active_samples": {
+        "hw_power_brake_slowdown": 0,
+        "hw_slowdown": 0,
+        "hw_thermal_slowdown": 0,
+        "sw_power_cap": 84,
+        "sw_thermal_slowdown": 0
+      },
+      "power_brake_samples": 0
+    },
+    "flash": {
+      "gpu_uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "type": "NVIDIA RTX PRO 6000 Blackwell Workstation Edition",
+      "mean_w": 87.95094170403587,
+      "peak_w": 109.59,
+      "power_limit_w": [
+        600.0
+      ],
+      "peak_temperature_c": 41.0,
+      "throttle_active_samples": {
+        "hw_power_brake_slowdown": 0,
+        "hw_slowdown": 0,
+        "hw_thermal_slowdown": 0,
+        "sw_power_cap": 0,
+        "sw_thermal_slowdown": 0
+      },
+      "power_brake_samples": 0
+    },
+    "qwen1": {
+      "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "type": "NVIDIA RTX PRO 6000 Blackwell Server Edition",
+      "mean_w": 397.8905381165919,
+      "peak_w": 619.79,
+      "power_limit_w": [
+        600.0
+      ],
+      "peak_temperature_c": 75.0,
+      "throttle_active_samples": {
+        "hw_power_brake_slowdown": 0,
+        "hw_slowdown": 0,
+        "hw_thermal_slowdown": 0,
+        "sw_power_cap": 0,
+        "sw_thermal_slowdown": 0
+      },
+      "power_brake_samples": 0
+    }
+  },
+  "same_sample_three_blackwell_sum_w": {
+    "mean": 843.7424215246637,
+    "peak": 1172.43,
+    "peak_utc": "2026-09-28T20:39:52.691890+00:00"
+  },
+  "existing_Ada_excluded": true,
+  "scope_limit": "Board power only, not measured wall or PSU input. CPU/other loads not measured here. Software campaign FAIL at admission cutoff; 300s sampled power evidence retained.",
+  "arithmetic_only_2200W_budget": {
+    "CPU_assumed_W": 400,
+    "other_assumed_W": 200,
+    "budget_after_CPU_other_W": 1600,
+    "remaining_after_BW_sample_mean_W": 756.2575784753363,
+    "remaining_after_BW_same_sample_peak_W": 427.56999999999994,
+    "additional_Ada_assumption_W": 300,
+    "additional_Ada_basis": "assumed board budget, matching existing Ada recorded power limit; not measured added-card load",
+    "remaining_with_added_300W_Ada_at_BW_mean_W": 456.25757847533635,
+    "remaining_with_added_300W_Ada_at_BW_peak_W": 127.56999999999994,
+    "limitation": "No PSU sufficiency qualification: excludes transient coincidence, conversion/cabling limits and sustained future simultaneous maximum load."
+  }
+}
