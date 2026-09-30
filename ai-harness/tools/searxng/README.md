@@ -39,10 +39,12 @@ installer; exact bytes/image identities are recorded in deployment evidence.
 
 Deployment is idempotent for identical source content. Unowned names/paths,
 unsafe ancestors, listener conflicts, incomplete releases, checksum mismatches,
-and a different existing current release fail closed. No replacement, forced
-container removal, cache pruning or secret rotation is automatic. A stopped
-owned container left after an abnormal Podman failure also prevents restart;
-inspect ownership/image before a separately reviewed recovery. A new source
+and a different existing current release fail closed. No forced container
+removal, cache pruning or secret rotation is automatic. Before each service
+start, the unit runs the existing guarded stop helper to remove only the verified
+owned, same-image container left by a prior invocation. An ownership/image
+mismatch or failed cleanup prevents startup. Direct `run.sh run` still refuses
+an existing container. A new source
 release requires stopping this service and explicitly migrating the verified
 `current` symlink; retain old releases as evidence. The helper intentionally does
 not automate upgrades or rollback.

@@ -9,6 +9,7 @@ StartLimitBurst=3
 [Service]
 Type=simple
 EnvironmentFile=%h/.config/ai-harness-searxng/service.env
+ExecStartPre=%h/.ai-harness-searxng/current/run.sh stop
 ExecStart=%h/.ai-harness-searxng/current/run.sh run
 ExecStop=%h/.ai-harness-searxng/current/run.sh stop
 Restart=on-failure
