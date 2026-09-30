@@ -669,7 +669,7 @@ ADA_AUTH_SHA256 = 'e507ed81d1e3954afea1d31eb9f0bc7ef7ab8b9a76bb571499e1a5f9c53c7
 ADA_SOURCES = {
     'ada_owner.py': '53ba6bcfb99f099809ee180356ca9e260baf3a82b6dbbe8022e39cf163180a70',
     'ada_launcher.py': '0c050ceea238d702d20c93eb082e99cce1b19ccb3712f2eb837d2ff0177fcf46',
-    'ada_supervisor.py': '271a9367575455a8f70c5d6650bc2f95b740369cafa41bcc8aea5a9a7a95685e',
+    'ada_supervisor.py': '78946c5bc2789044e38a8e180e4d4fea78aae8350c65546c3bff411313ec5105',
 }
 
 

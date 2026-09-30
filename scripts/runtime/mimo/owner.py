@@ -933,13 +933,45 @@ def source_only_amendment(old, new):
             'source_only_amendment_required')
 
 
-def old_boot_absence(old, state, boot, *, successor=None):
+INTERRUPTED_BOOT_TRANSITION = 'OLD_BOOT_INTERRUPTED_RUNNING'
+
+
+def interrupted_running_owner(old, state, proxy, guard):
+    """Recognize the interrupted one-request owner without rewriting its history."""
+    expected = state.get('proxy', {})
+    native, supervisor = state.get('native', {}), state.get('supervisor', {})
+    require(state.get('schema_version') == 2 and state.get('status') == 'RUNNING'
+            and state.get('request_hold') is False and state.get('proxy_started') is True
+            and old.get('context') == 480000 and old.get('parallel') == 1
+            and state.get('manifest_sha256') == digest(old)
+            and re.fullmatch('[0-9a-f]{32}', str(state.get('launch_id')))
+            and state.get('container_id') == native.get('container_id')
+            and HEX.fullmatch(str(native.get('container_id')))
+            and native.get('image_id') == old.get('image_id') == IMAGE
+            and native.get('name') == old.get('container_name')
+            and supervisor.get('unit') == UNIT
+            and re.fullmatch('[0-9a-f]{32}', str(supervisor.get('invocation_id')))
+            and proxy.get('schema_version') == 2
+            and all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
+            and type(expected.get('pid')) is int and expected['pid'] > 0
+            and isinstance(expected.get('pid_start_ticks'), str)
+            and expected.get('parent_pid') == state['supervisor']['pid']
+            and all(proxy.get(k) == expected[k] for k in ('pid', 'pid_start_ticks', 'parent_pid'))
+            and type(proxy.get('active_requests')) is int and proxy['active_requests'] == 1
+            and proxy.get('quarantined') is False, 'new_boot_recovery_invalid')
+    source_stop_guard(old, state, guard)
+    require(guard.get('proxy_disposition') == proxy, 'new_boot_recovery_invalid')
+
+
+def old_boot_absence(old, state, boot, *, successor=None, interrupted_running=False):
     """Physical absence only; never turns an uncertain request into success."""
     recovery_names(boot)
     recovery_names(state['boot_id'])
     require(state['boot_id'] != boot and BOOT.read_text().strip() == boot
-            and state.get('schema_version') == 2 and state.get('status') == 'HELD'
-            and state.get('request_hold') is True and state.get('manifest_sha256') == digest(old),
+            and state.get('schema_version') == 2
+            and state.get('status') == ('RUNNING' if interrupted_running else 'HELD')
+            and state.get('request_hold') is (False if interrupted_running else True)
+            and state.get('manifest_sha256') == digest(old),
             'new_boot_recovery_invalid')
     for field in ('native', 'supervisor', 'proxy'):
         value = state.get(field)
@@ -957,6 +989,8 @@ def old_boot_absence(old, state, boot, *, successor=None):
     c = exact_container(inspect(state['native']['container_id']), old, state)
     require(c['State']['Running'] is False and c['State']['Pid'] == 0
             and c['State']['Status'] == 'exited', 'new_boot_owner_present')
+    if interrupted_running:
+        require(c['State'].get('OOMKilled') is False, 'new_boot_recovery_invalid')
     cg = Path(state['native_cgroup'])
     require(str(cg) == '/sys/fs/cgroup/' + MEMORY_SLICE + '/docker-' + c['Id'] + '.scope'
             and (not cg.exists() or not (cg / 'cgroup.procs').read_text().strip()),
@@ -1846,7 +1880,8 @@ def exclusive_recovery_write(h, guard, name, value):
     require(protected(BASE / name) == raw, 'new_boot_archive_changed')
 
 
-def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifest_sha256):
+def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifest_sha256,
+                       *, interrupted_running=False):
     """Explicit source-bound action; archives history, never edits the old owner."""
     require(all(isinstance(x, str) and HEX.fullmatch(x) for x in
                 (expected_state_sha256, expected_manifest_sha256)), 'new_boot_recovery_invalid')
@@ -1875,15 +1910,19 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
         require(all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
                 and prior_guard.get('boot_id') == state['boot_id']
                 and prior_guard.get('manifest_sha256') == digest(old), 'new_boot_recovery_invalid')
+        if interrupted_running:
+            interrupted_running_owner(old, state, proxy, prior_guard)
         source_only_amendment(old, m)
         require(hashlib.sha256(files['new-boot-prior-owner.py'].encode()).hexdigest()
                 == old['source_sha256'][str(BASE / 'source/owner.py')], 'new_boot_archive_changed')
         selected = require_selected(old, state['selection'])
-        physical = old_boot_absence(old, state, expected_boot_id)
+        physical = old_boot_absence(old, state, expected_boot_id, interrupted_running=interrupted_running)
         archive_name, consumed_name = recovery_names(expected_boot_id)
         receipt_name = recovery_receipt_name(expected_boot_id)
         require(not (BASE / consumed_name).exists() and not (BASE / receipt_name).exists(),
                 'new_boot_recovery_consumed')
+        require(all(protected(BASE / input_name(name)).decode() == raw for name, raw in files.items())
+                and BOOT.read_text().strip() == expected_boot_id, 'new_boot_recovery_invalid')
         archive = {'schema_version': 1, 'files': files,
                    'sha256': {k: hashlib.sha256(v.encode()).hexdigest() for k, v in files.items()},
                    'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN'}
@@ -1896,8 +1935,11 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
                    'archive_sha256': hashlib.sha256(protected(BASE / archive_name)).hexdigest(),
                    'physical_absence': physical, 'prior_request_outcome': 'FAILED_OR_UNKNOWN',
                    'preserved_container_name': old['container_name'] + '-prior-' + state['launch_id']}
+        if interrupted_running:
+            receipt['transition'] = INTERRUPTED_BOOT_TRANSITION
         exclusive_recovery_write(h, guard, receipt_name, receipt)
-        require(read(BASE / 'state.json') == state and selection() == selected
+        require(all(protected(BASE / input_name(name)).decode() == raw for name, raw in files.items())
+                and selection() == selected
                 and BOOT.read_text().strip() == expected_boot_id, 'new_boot_recovery_invalid')
         # Source-only CAS amendment, after durable archive/receipt; no model/generation change.
         write(h, 'selection.json', amended)
@@ -1927,6 +1969,19 @@ def recovery_for_start(m, selected, previous):
             and receipt['preserved_container_name'] == old['container_name'] + '-prior-' + previous['launch_id'],
             'new_boot_archive_changed')
     source_only_amendment(old, m)
+    if previous.get('status') == 'RUNNING' or receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION:
+        require(receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION
+                and previous.get('boot_id') != boot
+                and receipt.get('physical_absence') == archive.get('physical_absence')
+                and receipt['physical_absence'].get('old_boot_id') == previous.get('boot_id')
+                and receipt['physical_absence'].get('current_boot_id') == boot
+                and receipt['physical_absence'].get('container_id') == previous['native']['container_id'],
+                'new_boot_recovery_invalid')
+        interrupted_running_owner(old, previous, json.loads(archive['files']['proxy-state.json']),
+                                  json.loads(archive['files']['guard.json']))
+        require(all(protected(BASE / name).decode() == archive['files'][name]
+                    for name in ('state.json', 'proxy-state.json', 'guard.json')),
+                'new_boot_archive_changed')
     return receipt, old
 
 
@@ -1934,6 +1989,12 @@ def assert_launch_admission(m, selected, previous, recovery=None):
     require(selected['selected_frontier'] == MODEL and selected.get('manifest_sha256') == digest(m), 'not_selected')
     if previous is not None:
         if recovery is not None:
+            if previous.get('status') == 'RUNNING':
+                require(recovery.get('status') == 'NEW_BOOT_RECONCILED'
+                        and recovery.get('transition') == INTERRUPTED_BOOT_TRANSITION
+                        and recovery.get('current_boot_id') == BOOT.read_text().strip()
+                        and previous.get('boot_id') != recovery['current_boot_id']
+                        and previous.get('request_hold') is False, 'new_boot_recovery_invalid')
             if recovery.get('status') in ('SETTLED_SOURCE_RECONCILED', CONTEXT_STATUS):
                 require(previous.get('schema_version') == 2 and previous.get('status') == 'SETTLED'
                         and previous.get('request_hold') is False
@@ -1997,7 +2058,9 @@ def supervise(dry_run=False):
     except FileNotFoundError:
         previous = None
     recovery, prior_manifest = None, m
-    if previous is not None and previous.get('status') == 'HELD':
+    if previous is not None and (previous.get('status') == 'HELD' or (
+            previous.get('status') == 'RUNNING' and previous.get('boot_id') != BOOT.read_text().strip()
+            and (BASE / recovery_receipt_name(BOOT.read_text().strip())).exists())):
         recovery, prior_manifest = recovery_for_start(m, selected, previous)
     elif previous is not None and previous.get('status') == 'SETTLED' and previous.get('manifest_sha256') != digest(m):
         recovery, prior_manifest = settled_source_for_start(m, selected, previous)
@@ -2045,7 +2108,8 @@ def supervise(dry_run=False):
                                                same_boot=recovery.get('transition') in ('SAME_BOOT_INTENTIONAL_STOP', CONTEXT_TRANSITION))
                 else:
                     recovery, prior_manifest = recovery_for_start(m, selected, previous)
-                    old_boot_absence(prior_manifest, previous, boot, successor=supervisor)
+                    old_boot_absence(prior_manifest, previous, boot, successor=supervisor,
+                                     interrupted_running=recovery.get('transition') == INTERRUPTED_BOOT_TRANSITION)
                 lease.validate()
                 state['predecessor_recovery'] = recovery
             # Competing boot intent is gated by GLM's reviewed ExecCondition.
@@ -2211,6 +2275,7 @@ def main():
     p.add_argument('--expected-state-sha256')
     p.add_argument('--expected-boot-id')
     p.add_argument('--expected-manifest-sha256')
+    p.add_argument('--interrupted-running-owner', action='store_true')
     p.add_argument('--same-boot-intentional-stop', action='store_true')
     p.add_argument('--idle-stop-timeout-settled', action='store_true')
     p.add_argument('--expected-intent-sha256')
@@ -2222,6 +2287,8 @@ def main():
     p.add_argument('--amendment-delta')
     p.add_argument('--expected-amendment-sha256')
     args = p.parse_args()
+    require(not args.interrupted_running_owner or args.action == 'reconcile-new-boot',
+            'new_boot_recovery_invalid')
     require(not args.same_boot_intentional_stop or args.action == 'reconcile-settled-source',
             'source_successor_invalid')
     require(not args.idle_stop_timeout_settled or args.action == 'reconcile-context-reduction'
@@ -2282,7 +2349,8 @@ def main():
         return 0
     if args.action == 'reconcile-new-boot':
         require(not args.dry_run, 'new_boot_recovery_invalid')
-        result = reconcile_new_boot(args.expected_state_sha256, args.expected_boot_id, args.expected_manifest_sha256)
+        result = reconcile_new_boot(args.expected_state_sha256, args.expected_boot_id, args.expected_manifest_sha256,
+                                    interrupted_running=args.interrupted_running_owner)
         print(json.dumps({'status': result['status'], 'archive_sha256': result['archive_sha256']}))
         return 0
     if args.action == 'check-selected':

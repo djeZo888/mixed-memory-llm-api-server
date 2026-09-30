@@ -98,6 +98,7 @@ class DeadlineTests(unittest.TestCase):
 class SourceClosureTests(unittest.TestCase):
     def manifest(self):
         paths = [str(o.BASE / 'source' / name) for name in ('owner.py', 'private_proxy.py', 'launch.json')]
+        paths += [str(o.MEMORY_SLICE_UNIT), '/etc/systemd/system/' + o.UNIT]
         paths += ['/usr/local/lib/llm-server/node-api/scripts/control/' + name
                   for name in ('node.py', 'node_observation.py', 'node_collectors.py', 'passive.py')]
         return {'source_sha256': {name: '0' * 64 for name in paths}, 'qualification_sha256': {}}

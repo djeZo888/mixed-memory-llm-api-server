@@ -9,10 +9,27 @@ def stop_signal(*_):
     stopping=True
 def now():return datetime.datetime.now(datetime.timezone.utc).isoformat()
 def write(path,value):
-    tmp=path.with_suffix('.new');data=(json.dumps(value,sort_keys=True)+'\n').encode()
-    fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
-    with os.fdopen(fd,'wb') as f:f.write(data);f.flush();os.fsync(f.fileno())
-    os.replace(tmp,path)
+    # Reuse the owner's protected storage and atomic I/O. Legacy *.new bytes
+    # remain evidence; unique temporaries never adopt or remove those files.
+    owner.require(path.parent == Path(owner.BASE) and path.name in ('status.json','terminal.json'),
+                  'ada_status_path_invalid')
+    s=owner.storage()
+    from common.lifecycle_lease import acquire_lease, LeaseBusy
+    from install.storage_io import MountedStorageGuard, AnchoredRoot
+    try:
+        with acquire_lease(blocking=False) as lease, MountedStorageGuard(s) as guard:
+            lease.validate();guard.check_path(owner.BASE);s.root_payload_guard()
+            with AnchoredRoot(owner.BASE,guard) as root:
+                root.atomic_json(path.name,value)
+            s.root_payload_guard();lease.validate()
+    except LeaseBusy:
+        # Telemetry contention must not trigger native cleanup. A final record
+        # that cannot be persisted is still journaled, never reported as saved.
+        print(json.dumps({'event':'ada_status_write_deferred','file':path.name,
+                          'reason':'lifecycle_busy','unsaved':value}),file=sys.stderr,flush=True)
+        if path.name == 'terminal.json':raise
+        return False
+    return True
 def qualification_matches(q, identity, boot_id, started_at):
     return (q.get("status")=="PASS" and q.get("container_id")==identity
             and q.get("context_tokens")==200000 and q.get("boot_id")==boot_id
@@ -31,7 +48,7 @@ def profile_qualified(config):
 def main():
     signal.signal(signal.SIGTERM,stop_signal);signal.signal(signal.SIGINT,stop_signal)
     base=Path(owner.BASE);log=Path(owner.LOG);config=json.loads((base/'config.json').read_text())
-    started=False;qualified=profile_qualified(config);ready_once=False;reason=None
+    started=False;qualified=profile_qualified(config);ready_once=False;reason=None;primary_error=None
     startup_deadline=time.monotonic()+600
     if not qualified:raise RuntimeError('immutable_profile_not_qualified')
     try:
@@ -64,13 +81,26 @@ def main():
                 if not ready_once and time.monotonic()>startup_deadline:raise RuntimeError('relative_warmup_deadline')
                 time.sleep(2)
     except BaseException as e:
+        primary_error=e
         reason=type(e).__name__+':'+str(e)
         raise
     finally:
+        cleanup_error=None;terminal_error=None
         saved=json.loads((base/'state.json').read_text())
         owned=saved.get('owner')==owner.OWNER and saved.get('container') is not None
         if started or owned:
             try:owner.operate('stop')
-            except BaseException as e:reason=(reason or '')+';cleanup:'+type(e).__name__+':'+str(e)
-        write(base/'terminal.json',{'utc':now(),'reason':reason,'stop_requested':stopping,'started':started,'qualified':qualified})
+            except BaseException as e:
+                cleanup_error=e;reason=(reason or '')+';cleanup:'+type(e).__name__+':'+str(e)
+        terminal={'utc':now(),'reason':reason,'stop_requested':stopping,'started':started,'qualified':qualified}
+        try:write(base/'terminal.json',terminal)
+        except BaseException as e:
+            terminal_error=e
+            print(json.dumps({'event':'ada_terminal_write_failed','error':type(e).__name__+':'+str(e),
+                              'unsaved':terminal}),file=sys.stderr,flush=True)
+        # Secondary finalization errors cannot mask the original exception.
+        # A normal stop with failed cleanup/persistence must still exit nonzero.
+        if primary_error is None:
+            if cleanup_error is not None:raise cleanup_error
+            if terminal_error is not None:raise terminal_error
 if __name__=='__main__':main()
