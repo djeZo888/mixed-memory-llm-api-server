@@ -25,8 +25,8 @@ See the [verified policy and coverage limits](docs/h007-update-policy-20260926.m
 report stays unchanged. Maintenance-window automation is future work.
 
 **September 30 recovery:** MiMo at 480K and all three Qwen instances are ready.
-The application and search cold-start repairs are deployed. Public maintenance
-remains the default while a bounded acceptance window checks chats and delegation; see the
+The application and search cold-start repairs are deployed. Public access was
+restored at 07:45 UTC after the final Codex/MiMo workflow passed; see the
 [current recovery report](reports/h036-resumed-recovery.md) and
 [compact results](reports/h036-resumed-recovery-results.json).
 MiniMax remains the default, with Codex as a per-chat preview using local Qwen.
@@ -37,9 +37,12 @@ Retained evidence covers image generation/guarded editing, coding and follow-up,
 PDF extraction/OCR, and Qwen compaction of 402,104 input tokens into a 237-token
 summary preserving four facts. The interrupted conversation was physically
 recovered without changing its original outcome, messages or files. A distinct
-follow-up remains pending because the first fresh Codex requests hit a controller
-readiness mismatch. Normal Chrome ZIP completion, integrity and saved-link reload
-now pass. MiniMax native image
+follow-up passed, reading the retained file and returning all four facts and the
+correct calculation. This does not isolate summary-only recall because the file
+also contains those facts. Normal Chrome ZIP completion, integrity and saved-link
+reload pass. The controller observation repair is deployed; a fresh Codex MiMo
+child executed a real Python tool, continued from its result and returned the
+correct final answer. Parent and child fully settled. MiniMax native image
 recognition is **PARTIAL**; Codex native vision is **UNSUPPORTED**. Document/OCR
 and specialist image generation are separate capabilities.
 
@@ -137,8 +140,8 @@ MiMo V2.6 Pro-RL is active at **480,000 configured context tokens**, with its
 protected profile delivered to both harness launch paths. Fresh native tool
 calling and actual-result continuation passed after recovery, with full HTTP
 completion and physical idle confirmed. These tiny requests establish workflow
-and allocation, **not occupied-480K performance**. Fresh delegation through both
-engines is the remaining acceptance step. Historical full-roster/schema and
+and allocation, **not occupied-480K performance**. Fresh MiniMax and Codex
+delegation both passed with actual tool calls and complete settlement. Historical full-roster/schema and
 65,536-output-ceiling support is carried forward only for the unchanged runtime;
 earlier 950K workflow results are not relabeled as 480K tests.
 

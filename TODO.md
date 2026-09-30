@@ -8,43 +8,40 @@ evidence. This list is not an implementation or deployment acceptance report.
 
 ## H036 completion gates
 
-See the [current checkpoint](reports/h036-completion-checkpoint.md) and
-[results](reports/h036-completion-results.json). MiniMax remains default;
-Codex remains a per-chat preview. Root alone finalizes publication.
+See the [current recovery report](reports/h036-resumed-recovery.md) and
+[results](reports/h036-resumed-recovery-results.json). Earlier checkpoints retain
+original failures. MiniMax remains default; Codex remains a per-chat preview.
+Root alone finalizes publication.
 
-- **BLOCKED / current state unknown:** resolve the HTTP/SSH connectivity loss
-  reported around September 29, 23:32 UTC, then record current availability and
-  owned-work settlement without replaying uncertain actions. The user reports
-  Proxmox reachable with no changes; the VM cause remains unknown. W2 CLI exit
-  at 23:40:42 UTC does not establish guest-job settlement. Recovery stays root-coordinated.
-- **PARTIAL:** native Qwen compaction completed at 23:28:57 UTC and retained
-  four facts. Automatic triggering is inferred; RAW_AUTO metadata is absent.
-  Initial paste run `d17d4942` completed. Finish final/tool continuation, reload
-  and settlement review for compaction/follow-up owner
-  `346c89f0-a3f6-4668-b3ed-e6230111cf8f` in session `f006fc27`. Missing receipts
-  do not establish a full PASS.
-- **PENDING / UNKNOWN:** MiMo 480K first-turn read passed and a second tool-result
-  turn was sent at 23:28:20 UTC; complete continuation/settlement are unknown.
-  Deploy/verify the reviewed profile fix `47d386` (root `4d927fee`) and complete
-  fresh both-engine delegation. The fix is source-ready but UNDEPLOYED.
-  Readiness at 23:07:48 passed; historical 950K qualification is separate.
-- **NOT_CONFIRMED:** completed browser ZIP save. HTTP response/CRC and 2 uploads
-  plus 2 outputs passed; the browser produced only a 1,038-byte partial file.
-- **PENDING:** root's final capability/qualification descriptors, current public
-  readiness and reviewed default-branch merge. Root verified all eight GitHub
-  checks at `92325eff` SUCCESS and subsequently all eight push/PR checks at
-  root candidate `4d927fee` SUCCESS; the profile fix is still UNDEPLOYED.
-  No result for later commits is implied. Global gates remain closed pending proof. Do not announce maintenance
-  removal or switch defaults. The last acceptance browser window was open;
-  recovery must verify maintenance rather than assume the scheduled watcher ran.
-- **PARTIAL / UNSUPPORTED:** MiniMax native image transport works but recognition
-  is partial; Codex native vision is unsupported. Keep document extraction/OCR
-  distinct. Broader media support and MiMo compaction quality remain separate work.
+- **DONE:** application/search and four text instances recovered after the host
+  reboot and user removal of the external image GPU. Image availability remains
+  false and does not block text. Original interrupted work was not replayed.
+- **DONE, with limits:** original Qwen compaction processed 402,104 tokens into a
+  237-token summary retaining four facts. Automatic triggering is inferred;
+  raw trigger metadata is absent. The original interrupted outcome is preserved.
+  A distinct follow-up read its retained file and returned four facts and
+  0.825 W. Because the file contains those facts, summary-only recall is not isolated.
+- **DONE:** protected MiMo 480K/65,536 profile delivery, fresh native tool-result
+  continuation and MiniMax child delegation. Full occupied-480K behavior and
+  MiMo-specific compaction quality remain untested.
+- **DONE:** ordinary Chrome ZIP completion, exact four entries, CRC and saved-link
+  reload. The separate in-app-browser download-event timeout remains recorded.
+- **DONE:** the observer optimization and coherent controller records are deployed.
+  Normal control observations now take about one second. The final Codex MiMo
+  child executed Python, continued from the actual tool result and returned the
+  correct answer to its parent; all seven requests settled. Earlier failures
+  retain their outcomes. Source d634207 passes all eight GitHub checks.
+- **DONE:** final protected capability qualification and public admission review.
+  Public HTTP and the normal browser passed after release at 07:45 UTC. MiniMax
+  remains the default. [PR 10](https://github.com/djeZo888/mixed-memory-llm-api-server/pull/10)
+  records publication and the main-branch merge.
+- **PARTIAL / UNSUPPORTED:** MiniMax native image recognition is partial; Codex
+  native vision is unsupported. Extraction/OCR and specialist image generation
+  remain separate capabilities.
 
-Guarded child edit, completed-image follow-up/render/download/reload, fresh
-image generation, coding/follow-up, PDF/OCR and the plain-HTTP secure UUID repair
-have passed their stated cases. Preserve earlier failures and reuse that evidence.
-This TODO does not authorize new live work or repeated benchmarks.
+Retained image, coding, document and compaction cases must not be repeated
+without a new relevant change. No new model, driver, hardware, power or cooling
+work is authorized by this recovery closeout.
 
 ## Retained H007 update policy
 
@@ -72,6 +69,9 @@ authorized windows and preserve manual operator control. Required work:
   protect secrets and their restore permissions without exposing them in reports.
   A hypervisor snapshot requires explicit integration and authority; it is not
   an implicit capability of the current VM/node API.
+- Review management/inference source coupling so a status-only upgrade need not
+  reload a resident model. Preserve explicit provenance and compatibility checks;
+  do not bypass existing owner records while that design is pending.
 - Stage and pin selected component updates, with reviewed dependency and
   configuration/data compatibility checks. Cover OS/packages, drivers, model
   runtimes and Sova components through scoped procedures, not an automatic
@@ -89,8 +89,9 @@ authorized windows and preserve manual operator control. Required work:
 
 **ACCEPTED DESIGN / GENERAL ROUTING IMPLEMENTATION PENDING.** H009 adds a fixed
 frontier lane beside the two Qwen slots. It initially served GLM-5.3-Flash;
-H036 selects native MiMo at 480K; fresh current-capacity delegation acceptance
-and MiniMax profile delivery remain pending. Qwen remains coordinator; the image path stays separate. This is
+H036 selects native MiMo at 480K. MiniMax profile delivery and fresh delegation
+and final Codex delegation passed. Qwen remains coordinator; the
+image path stays separate. This is
 selective native child delegation, not arbitrary-model selection or distributed
 capacity management.
 

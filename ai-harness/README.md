@@ -4,9 +4,11 @@ Sova's chat/task harness runs MiniMax by default, with a per-chat Codex preview
 using pinned Codex 0.158.0 and local Qwen inference. Each conversation retains
 its engine. The [September 30 recovery](../reports/h036-resumed-recovery.md)
 restored the application, search, MiMo at 480K and all three Qwen instances.
-Public maintenance remains the default, with a bounded window for final workflow
-acceptance. A controller/native Qwen readiness mismatch currently blocks Codex
-requests before generation and is under diagnosis.
+Public access was restored at 07:45 UTC after final workflow acceptance.
+The stale Qwen readiness record is corrected. A later slow controller
+observation interrupted Codex MiMo delegation; the optimization is now deployed
+and a fresh complete Codex MiMo child/tool/final workflow passed. The recovered-chat
+follow-up and MiniMax MiMo delegation also passed.
 The external image GPU is intentionally absent; its unavailable status does not
 block text services. See [compact results](../reports/h036-resumed-recovery-results.json).
 
@@ -18,8 +20,9 @@ saved-link reload now pass; a separate in-app-browser event timeout is retained.
 Qwen compaction processed 402,104 input tokens into a 237-token summary retaining
 four facts. Automatic triggering is inferred from the ordinary UI/native path;
 raw automatic-trigger metadata was absent. The later interrupted turn remains
-interrupted, with its history and files preserved; recovery allows a distinct
-new follow-up. MiniMax native image recognition is **PARTIAL**; Codex native
+interrupted, with its history and files preserved. A distinct new follow-up read
+the retained file and returned all four facts and 0.825 W; the file also contains
+the facts, so summary-only recall is not isolated. MiniMax native image recognition is **PARTIAL**; Codex native
 vision is **UNSUPPORTED**. Extraction, OCR and image generation do not establish
 native visual recognition.
 
@@ -72,7 +75,7 @@ repaired the existing temporary-path handling and CI fixtures; see the
 ## Access and everyday use
 
 The configured HTTP port 80 address is `http://10.156.100.61/`. The application
-is recovered; public maintenance remains active until final acceptance.
+is recovered and public access is open following the final September 30 acceptance.
 There are no accounts, login, settings or model selector. Everyone with access
 shares conversations and task access. The operator controls LAN access;
 HTTP provides no transport encryption.
@@ -146,8 +149,9 @@ Qwen main and child sessions have a fixed **480,000-token context**.
 Recovery confirmed a ready 480K native slot and a fresh tool call with its actual
 result continuation. The protected profile now delivers **480,000 context and
 65,536 maximum output tokens** to both launch paths. Fresh delegation through
-both engines remains pending. The tiny native requests used at most 123 input
-tokens; allocation and configured ceilings do not qualify occupied context.
+both engines passed with real tool-result continuation and complete settlement.
+The tiny native requests used at most 123 input tokens; the final Codex child
+used up to 15,322. These checks do not qualify fully occupied context.
 
 H033's successful short MiMo workflows at 950K remain historical evidence;
 they are not relabeled 480K. The [near-950K test failed](../reports/h022-950k-status.md).
@@ -165,8 +169,8 @@ coding and ordinary agents. A parent may selectively delegate an independent
 subtask to the native `frontier` child on a separate inference lane; the parent
 then reviews the returned result. The configured MiMo request policy permits
 eight hours of active inference plus a separate 30-minute queue. Current readiness
-is distinct from retained workflow acceptance; final H036 delegation acceptance
-remains pending.
+is distinct from retained workflow acceptance; final H036 delegation passed
+through both engines.
 Qwen retains its existing limits;
 historical GLM acceptance is recorded separately below.
 
@@ -204,8 +208,9 @@ reason is inferred from the ordinary UI/native source path; RAW_AUTO metadata
 is absent. The next complete request contained 92,320 input tokens.
 The browser showed Compaction → Running and context 92,544 before reload failed.
 The original interrupted turn is now physically settled with its incomplete
-outcome preserved. A distinct recovered follow-up and browser reconnect remain
-pending; MiMo-specific compaction quality remains untested. This does not claim identical summary
+outcome preserved. A distinct recovered follow-up and browser reload passed;
+the follow-up read a retained file that also contained the four facts, so it does
+not isolate summary-only recall. MiMo-specific compaction quality remains untested. This does not claim identical summary
 quality to hosted OpenAI models.
 
 ## Work supported by the approved scope

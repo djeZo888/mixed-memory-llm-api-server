@@ -4,9 +4,11 @@ Updated September 30, 2026. This report supersedes the availability and pending-
 
 ## Current result
 
-The user removed the external Core X image GPU from ai-vm passthrough and authorized software recovery. At 04:30 UTC, **MiMo and all three Qwen instances were ready**. The application and private search service were healthy by 04:43 UTC. Public maintenance remains the default, with a bounded window for final chat/delegation checks.
+The user removed the external Core X image GPU from ai-vm passthrough and authorized software recovery. At 04:30 UTC, **MiMo and all three Qwen instances were ready**. The application and private search service were healthy by 04:43 UTC. The final Codex/MiMo workflow passed at 07:39 UTC and public access was restored at 07:45 UTC. Both ordinary HTTP and the reloaded browser passed.
 
-The first fresh Codex requests at 04:56 UTC were rejected before generation: the control projection did not establish a qualified Qwen route. Later readback showed current generations but failed control readiness, while the same backends reported healthy through node/native checks. Worker1 is tracing that discrepancy; no successful recall or Codex delegation is claimed from these rejected requests. Both requests physically settled with their failed outcomes preserved.
+The first fresh Codex requests at 04:56 UTC were rejected before generation: the control projection did not establish a qualified Qwen route. The protected Qwen pair record still pinned the old status-observer source. The new observer was reviewed and deployed during recovery, but its dependent record was missed. Worker1 applied the reviewed two-file metadata correction at 05:28:52 UTC. Normal authenticated control readiness passed for both Qwens at 05:29:02 UTC. All historical measurements and native model identities remain unchanged; no service/model restart was required. No successful recall or Codex delegation is claimed from the rejected requests. Both physically settled with their failed outcomes preserved.
+
+MiniMax's separate fresh MiMo delegation passed: a native child executed one Python calculation, continued from the tool result and returned the correct answer to its parent. All six provider requests and both native sessions settled by 05:06:49 UTC. The largest MiMo request contained 11,979 input tokens; this is a workflow check, not a throughput or maximum-context benchmark.
 
 | Service | Current configuration | Observed result |
 |---|---|---|
@@ -40,9 +42,11 @@ The strict process scan initially encountered Linux `/proc` permissions. The one
 | Fresh native MiMo tool/result continuation | Passed, full HTTP drain and physical idle confirmed |
 | Selected Codex offline recovery and preservation | Passed at 04:38 UTC |
 | App/search cold start | Passed; no repeated app restart |
-| Distinct recovered-chat follow-up | First new request rejected before generation; readiness diagnosis in progress |
+| Corrected Qwen control readiness | Passed for both lanes, current generations and ready endpoints; native identities unchanged |
+| Distinct recovered-chat follow-up | Passed: actual retained-file read, four correct facts, 0.825 W and physical settlement |
 | Browser ZIP and saved-link reload | Passed in normal headless Chrome; 1,038 bytes, exact four files, CRC passed |
-| Fresh MiMo delegation through both engines | Pending final acceptance |
+| Fresh MiniMax → MiMo delegation | Passed, actual child/tool continuation/final and complete settlement |
+| Fresh Codex → MiMo delegation | Final corrected case passed: actual Python tool, continuation, child and parent finals, all seven provider requests settled |
 
 Previously passed image generation, guarded editing, saved-image follow-up, coding and PDF/OCR cases remain dated evidence. Image hardware is absent during this recovery, so no new image acceptance was attempted. MiniMax native image recognition remains partial; Codex native vision is unsupported. Neither limitation is replaced by OCR or image-generation support.
 
@@ -50,9 +54,80 @@ The Codex in-app browser's separate ZIP event wait timed out; it is not relabele
 
 The original Qwen compaction processed 402,104 input tokens into a 237-token summary retaining all four facts. Automatic triggering was inferred from the ordinary UI/native source path; raw trigger metadata was absent. Its later interrupted request remains a separate failure. The large paste and the failed near-950K MiMo benchmark were not repeated.
 
-## Runtime records and remaining release work
+After the readiness correction, a distinct resumed follow-up completed. It read the unchanged 98-byte file and returned all four facts and 0.825 W. The file also contains those facts, so this does not isolate summary-only recall. Its two requests used 93,460 and 93,654 input tokens. Both settled; no original failed outcome was relabeled.
 
-Worker1's activation session `01a0f078-e01f-7353-a6df-4e6b64270cf8` exited zero at 04:33:08 UTC after completing backend recovery. Worker2 owns final application acceptance. A fresh Worker1 task separately traces the newly observed control-readiness discrepancy, without issuing inference or changing model lifecycle state. Public admission and the main-branch merge remain held until those checks and the final candidate review pass. MiniMax remains the default; Codex remains a per-chat preview.
+The fresh Codex delegation reached an actual MiMo child. A subsequent parent count request failed because the control endpoint returned HTTP 503 `observation_unavailable` after 15,768 ms. Both lanes' initial identity/native checks had passed; this was a control transport failure, not a demonstrated model identity or allocation change. The child was cancelled before its tool call and fully settled by 05:40:15 UTC; its scoped ticket was removed. That failed case remains unchanged. A distinct final case passed after the adapter repair, as recorded below.
+
+Worker1 measured 512 repeated storage-verification calls in one status observation. The installed observation took 9,683.858 ms, including 8,769.2 ms of cumulative storage verification; native model probes took 523.09 ms. A controlled source comparison reduced the observation to 1,247.102 ms while retaining fresh path and mount checks. Its 83 focused/adjacent tests passed. This establishes substantial avoidable overhead, but does not identify the exact exception inside the historical 15,768 ms failure.
+
+That intermediate candidate was **not deployed** and its shared-module change
+was reverted. The final fix, `052994a`, places the wrapper in the adapter and
+keeps the shared storage module unchanged. It passed 91 focused/adjacent tests,
+51 existing cold-transition tests (two existing skips), and all eight GitHub
+checks. The 1,247 ms comparison above belongs to the earlier shadow candidate;
+actual final deployed observations are recorded below.
+
+Deployment preflight also found two historical differences between the control
+and node packages. The approved delivery aligns the control copies with the
+already reviewed, running node versions. This changes no additional MiMo
+manifest entries. Both packages now match the same reviewed source inventory.
+
+Two staging attempts stopped on lifecycle-lock contention before writing any
+file or changing a service. A later capture showed the ordinary node observer
+holding that lock for approximately 0.72 seconds. The holder at the first
+failure was not captured. The last bounded operational attempt waits up to ten
+seconds to acquire the same lock, with the existing ownership and source checks
+unchanged. No forced unlock or hardware action is authorized.
+
+The final delivery completed at 07:09 UTC. Both package copies now match the
+reviewed source. Normal control and node endpoints returned HTTP 200 and both
+Blackwell Qwen lanes were ready with unchanged native identities. One normal
+MiMo start created its new owned `LOADING` instance at 07:09:48; readiness passed at 07:23 UTC using the current owner, native properties and the
+sole idle 480K slot. The old container remains archived and stopped. Ordinary controller requests now
+take 0.993 and 0.959 seconds; the node request took 0.013 seconds. These are
+readiness observations, not a repeated model benchmark.
+
+Two operational sequencing defects were corrected without changing production
+ownership rules: the deployment helper now distinguishes its own held lock from
+another service's lock, and it restarts the normal hardware-status producer
+before the owner requires a fresh GPU-health proof. No latch was manually edited
+or cleared. The original refusals and intermediate states remain recorded.
+
+
+## Final Codex delegation
+
+The final application aligns its controller-version pin with the reviewed
+backend. The sole new Codex case was accepted at 07:25:46 UTC and completed with
+full physical settlement at 07:39:14 UTC. MiMo's child actually executed
+`python3 -c "print(19*23)"`, received exit status zero and output **437**, then
+completed its tool-result continuation. The parent delivered the correct final
+answer. All seven provider requests settled, no request remained pending, and
+the scoped acceptance ticket was removed at 07:39:38 UTC.
+
+MiMo's two requests used 15,130 and 15,322 counted input tokens with the normal
+65,536-token output allowance. This was an end-to-end harness workflow check,
+not a speed benchmark; the previous controller failure did not recur. Native
+engine images and the original chat/file evidence remain preserved.
+
+## Release and review
+
+The exact protected qualification was installed using the existing validator.
+The final application restart passed normal readback; public access was restored
+at 07:45:07 UTC. Ordinary root and health requests returned HTTP 200. Codex
+frontier delegation is enabled, MiniMax remains the default, and Codex remains
+a per-chat preview. Image workflow qualification is retained separately from
+its current unavailable hardware. No inference was submitted after the restart.
+
+Root independently reloaded the normal browser and opened the completed test:
+connected, ready, zero active subagents, MiMo available and idle, correct final
+answer **437**, 480,000 configured/allocated context, and the image-unavailable
+notice. Histories, files and original failed outcomes remain intact.
+
+[PR 10](https://github.com/djeZo888/mixed-memory-llm-api-server/pull/10) records
+reviewed publication and main-branch merge status. Compact results identify
+source checks separately from deployment and actual live acceptance. Both workers
+are closed; the final native and outer processes exited zero at 07:47:45 UTC,
+without deadline termination.
 
 Compact [machine-readable results](h036-resumed-recovery-results.json) identify the retained receipts. Credentials, prompts and bulky process/network traces remain private outside Git.
 
