@@ -12,7 +12,8 @@ licenses. The intended top-level Apache-2.0 text remains outstanding; see
 
 Start with the [harness user guide](ai-harness/README.md),
 [architecture and future routing design](docs/sova-architecture.md), and
-**[TODO and current H007 update policy](TODO.md)**. The
+**[TODO index and future plans](todo/README.md)**, with
+[dated completion records and current H007 update policy](TODO.md). The
 [H006 registry/configuration extension guide](ai-harness/docs/status-registry.md)
 and [H006 closeout](docs/h006-closeout-20260926.md) describe the reviewed
 observation and placement foundation. H006's naming and update-policy statements

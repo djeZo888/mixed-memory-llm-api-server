@@ -1,6 +1,12 @@
 # Sova TODO
 
-Current H036 completion gates, retained H007 update policy and future design
+The **[compact TODO index and separate plans](todo/README.md)** is the entry
+point for future work, including
+[status service improvements](todo/status-service-improvements.md) and the
+planned fan-management investigation. The records below retain their dated
+outcomes; they are not all descriptions of the current deployment.
+
+Dated H036 completion gates, retained H007 update policy and future design
 are separate below. See the
 [system overview](README.md), [architecture](docs/sova-architecture.md) and
 [H006 closeout](docs/h006-closeout-20260926.md) for current boundaries and dated
