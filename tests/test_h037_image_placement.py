@@ -231,6 +231,22 @@ class PlacementTests(unittest.TestCase):
         self.assertLessEqual(len(callbacks), 20)
         BoundedObservers(callbacks)  # Construction only, never start production I/O.
 
+    def test_same_boot_image_positive_cache_is_scoped_to_selected_uuid(self):
+        row = dict(boot_id=BOOT, running=False, imageGPU=selected(EXTERNAL),
+            hardware_latched=True, hardware_latched_boot_id=BOOT, reason='hardware_missing')
+        collector = n.PassiveServiceCollector('image', SimpleNamespace(service=lambda *_: copy.deepcopy(row)))
+        self.assertTrue(collector(2)['hardware_latched'])
+        row.update(hardware_latched=False, hardware_latched_boot_id=None, reason=None,
+            hardware_validation_age_ms=0, hardware_validated_boot_id=BOOT,
+            hardware_validated_gpu_uuids=[EXTERNAL])
+        self.assertTrue(collector(2)['hardware_latched'])  # Same UUID remains protected.
+        row.update(imageGPU=selected(INTERNAL), hardware_validated_gpu_uuids=[INTERNAL])
+        fresh = collector(2)
+        self.assertIs(fresh['hardware_latched'], False)
+        self.assertIsNone(fresh['reason'])
+        row.update(imageGPU=selected(EXTERNAL), hardware_validated_gpu_uuids=[EXTERNAL])
+        self.assertTrue(collector(2)['hardware_latched'])  # Switching does not erase old evidence.
+
     def test_source_successor_accepts_exact_seam_refuses_profile_and_unrelated_path(self):
         paths = o.source_amendment_paths()
         required = {f'/usr/local/lib/llm-server/{root}/scripts/lifecycle/{leaf}'
@@ -278,7 +294,7 @@ class RetirementTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             n.ada_retirement(self.receipt, self.container, self.unit, 'LISTEN 0 10 127.0.0.1:30014 0.0.0.0:*', BOOT)
 
-    def test_actual_collector_needs_receipt_and_current_stop_disable_proof(self):
+    def retirement_collector(self):
         fixture = ada_fixture.AdaPassiveTests(methodName='runTest'); fixture.setUp()
         self.addCleanup(fixture.doCleanups)
         fixture.cid = n.ADA_RETIRED_NATIVE
@@ -298,6 +314,10 @@ class RetirementTests(unittest.TestCase):
             self.fail('unregistered retirement command')
         fixture.reader.run = command
         collector = n.AdaPassiveCollector(fixture.reader, get=lambda *_: self.fail('stopped native probe'))
+        return fixture, collector
+
+    def test_actual_collector_needs_receipt_and_current_stop_disable_proof(self):
+        fixture, collector = self.retirement_collector()
         self.assertFalse(collector(2)['retired'])
         fixture.files[n.ADA_BASE + '/retirement.json'] = json.dumps(self.receipt).encode()
         result = collector(2)
@@ -305,6 +325,36 @@ class RetirementTests(unittest.TestCase):
         self.unit['UnitFileState'] = 'enabled'
         with self.assertRaisesRegex(ValueError, 'ada_retirement_unproven'):
             collector(2)
+
+    def test_future_boot_retains_dated_retirement_with_fresh_absence_proof(self):
+        future = 'aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee'
+        fixture, collector = self.retirement_collector()
+        fixture.reader.boot = lambda: {'boot_id': future}
+        raw = json.dumps(self.receipt).encode()
+        fixture.files[n.ADA_BASE + '/retirement.json'] = raw
+        result = collector(2)
+        self.assertEqual(result['boot_id'], future)
+        self.assertTrue(result['retired']); self.assertTrue(result['present'])
+        self.assertEqual(fixture.files[n.ADA_BASE + '/retirement.json'], raw)
+        snapshot = NodeStatus(Cached({'boot': sample({'boot_id': future}), n.ADA_SERVICE: sample(result)})).snapshot()
+        self.assertNotIn(n.ADA_SERVICE, [row['service_id'] for row in snapshot['services']])
+        self.assertTrue(snapshot['retired200K']['present'])
+        del fixture.files[n.ADA_BASE + '/retirement.json']
+        self.assertFalse(collector(2)['retired'])
+        fixture.files[n.ADA_BASE + '/retirement.json'] = raw
+        for field, value in (('ActiveState', 'active'), ('ControlPID', '123'), ('Job', '4')):
+            old = self.unit[field]; self.unit[field] = value
+            with self.subTest(field=field), self.assertRaises(ValueError): collector(2)
+            self.unit[field] = old
+        self.container['State']['Pid'] = 123
+        with self.assertRaises(ValueError): collector(2)
+        self.container['State']['Pid'] = 0
+        boots = iter((future, BOOT))
+        fixture.reader.boot = lambda: {'boot_id': next(boots)}
+        with self.assertRaisesRegex(ValueError, 'ada_identity_changed'): collector(2)
+        for boot in (None, '', 'unknown'):
+            with self.subTest(boot=boot), self.assertRaises(ValueError):
+                n.ada_retirement(self.receipt, self.container, self.unit, '', boot)
 
     def test_only_current_proven_retirement_removes_active_row_and_keeps_presence(self):
         for retired in (False, None, True):

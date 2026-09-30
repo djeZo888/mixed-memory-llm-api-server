@@ -365,13 +365,18 @@ class HardwareEvidenceCollector:
                 remaining()
                 policy.observe_inventory(inventory, boot_age_seconds=raw['boot_age_seconds'] + age_ms / 1000)
             for collector in self.gpus:
-                if collector.gpu_uuid not in GPU_UUIDS or collector.last_proof is None:
+                proof = collector.last_proof
+                if proof is None:
                     continue
-                raw, captured = collector.last_proof
+                raw, captured = proof
+                if (type(raw) is not dict or type(raw.get('gpu_uuid')) is not str
+                        or not UUID.fullmatch(raw['gpu_uuid']) or raw['gpu_uuid'] not in GPU_UUIDS):
+                    raise ValueError('hardware_proof_identity_unknown')
+                target = raw['gpu_uuid']
                 if time.monotonic() - captured > 15:
                     continue
                 remaining()
-                policy.validate_required(collector.gpu_uuid, current_boot_id=raw['boot_id'],
+                policy.validate_required(target, current_boot_id=raw['boot_id'],
                     observed_at=raw['observed_at'], observation_id=raw['observation_id'])
         return {'state': 'persisted'}
 

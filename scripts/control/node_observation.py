@@ -724,15 +724,18 @@ def ada_retirement(receipt, container, unit, listeners, boot):
     """Protected, dated retirement proof plus current retained-owner absence.
 
     The recorded GPU memory sample precedes image placement. Current image GPU
-    use cannot invalidate that dated proof; the retired native must stay stopped.
+    use and later boots cannot invalidate that durable intent; fresh current-boot
+    checks must still establish that the retained native stays stopped.
     """
     expected = {'schema_version': 1, 'kind': 'h037-ada200k-retirement',
         'service_id': ADA_SERVICE, 'unit': 'qwen-ada200k.service',
-        'gpu_uuid': ADA_GPU, 'native_id': ADA_RETIRED_NATIVE, 'boot_id': boot,
+        'gpu_uuid': ADA_GPU, 'native_id': ADA_RETIRED_NATIVE,
         'container_retained': True, 'history_retained': True,
         'listener_absent': True, 'gpu_processes': []}
-    if (type(receipt) is not dict or set(receipt) != set(expected) | {'observed_at_utc', 'gpu_used_memory_mib'}
+    if (type(boot) is not str or not BOOT.fullmatch(boot)
+            or type(receipt) is not dict or set(receipt) != set(expected) | {'boot_id', 'observed_at_utc', 'gpu_used_memory_mib'}
             or any(type(receipt[k]) is not type(v) or receipt[k] != v for k, v in expected.items())
+            or type(receipt['boot_id']) is not str or not BOOT.fullmatch(receipt['boot_id'])
             or type(receipt['observed_at_utc']) is not str
             or type(receipt['gpu_used_memory_mib']) is not int or not 0 <= receipt['gpu_used_memory_mib'] <= 2**53
             or not re.fullmatch(r'\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?(?:Z|\+00:00)', receipt['observed_at_utc'])
@@ -837,6 +840,7 @@ class PassiveServiceCollector:
         self.service_id, self.reader, self.get, self.clock = service_id, reader, get, clock
         self._control_key = control_key
         self._positive = None
+        self._positive_gpus = ()
 
     def __call__(self, seconds):
         started = self.clock()
@@ -847,9 +851,12 @@ class PassiveServiceCollector:
         if result.get('hardware_latched') is True:
             self._positive = {key: result.get(key) for key in
                 ('hardware_latched', 'hardware_latched_boot_id', 'reason')}
-        elif self._positive is not None:
+            self._positive_gpus = required
+        elif self._positive is not None and (self.service_id != 'image'
+                or required and required == self._positive_gpus):
             # A storage outage or a same-boot negative cannot erase positive
             # evidence. Only the protected owner can validate another boot.
+            # Image selection changes cannot transfer that proof to another GPU.
             if (result.get('hardware_latched') is False and result.get('boot_id') is not None
                     and result['boot_id'] != self._positive.get('hardware_latched_boot_id')):
                 self._positive = None
