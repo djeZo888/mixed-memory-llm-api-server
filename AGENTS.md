@@ -1,4 +1,4 @@
-# Sova — H037 coordination
+# Sova — H038 coordination
 
 Read the [H037 plan](reports/h037-execution-plan.md) and
 [upstream audit](reports/h037-upstream-codex-audit.md). The previous
@@ -8,12 +8,13 @@ not the current deployment state. H036 recovery and failed outcomes remain in
 
 ## Current assignment
 
-H037 began 30 September 2026 at 10:37:52 UTC; its hard deadline is 13:37:52 UTC.
-H037 is paused at its execution-window checkpoint. Reviewed source/config
-delivery and normal MiMo/image start dispatch passed; live qualification remains
-incomplete. Read reports/h037-checkpoint.md and reports/h037-results.json.
-Do not duplicate existing starts or infer readiness from dispatch. New execution
-requires a new user-authorized bounded window. Optional tools remain closed.
+The user authorized H038 on 30 September 2026, 13:45:26–16:45:26 UTC
+(15:45:26–18:45:26 Ljubljana). Read reports/h038-execution-plan.md.
+H037 source/config delivery and MiMo/image start dispatch passed; qualify the
+existing starts without replaying the migration. Read reports/h037-checkpoint.md
+and reports/h037-results.json. Optional tools stay closed until reviewed live
+qualification passes. Restore the paused collector and adopt the installed pin
+through ordinary service operations. Reserve the final 30 minutes for publication.
 
 The user retained 480,000 context, the existing 400,000 Codex compaction threshold
 and 65,536 output ceiling. No adaptive output budget is part of H037.
@@ -47,4 +48,4 @@ new native placement or workflow. Codex native vision remains unsupported;
 MiniMax recognition is partial. OCR and image generation are separate capabilities.
 
 No new models, Proxmox, drivers, fan changes, general installer or automatic
-upgrades are authorized by H037. The repository default branch is main.
+upgrades are authorized by H038. The repository default branch is main.
