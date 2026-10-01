@@ -3,6 +3,7 @@ import { createCodexTextOnlyPolicy, createCodexParentArtifactScope, type CodexTe
 import { getCodexReceiptUtf8 } from '../../../server/src/codex-receipts.js';
 import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
+import {selectPolicyFactories} from './policy-selection.js';
 import {DelegatedChildProducer} from './delegated-child.js';
 import {selectRestartCheckpoint} from './restart-selection.js';
 import { mkdir } from 'node:fs/promises';
@@ -20,7 +21,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   if (stableJson(config.bootstrap) !== stableJson(config.adapterInput?.bootstrap)) throw Error('entry_and_adapter_bootstrap_tuple_must_match');
   const qualified = await qualifyEntry(config,restart);
   const task=config.bootstrap.review.authorization.task;
-  const factory=task==='H041-COMPACTION-DELIVERY-03'?(probeApi as any).createCodexDeliveryPolicy:task==='H041-COMPACTION-CONTINUATION-02'?(probeApi as any).createCodexContinuationPolicy:createCodexTextOnlyPolicy;
+  const selected=selectPolicyFactories(probeApi,task,qualified.profile==='h041-full-retention-v1'),factory=selected.factory;
   if(typeof factory!=='function')throw Error('separately_branded_frozen_authority_policy_unavailable');
   const handoffApi=qualified.profile==='h041-full-retention-v1'?await import(new URL('../../../server/src/codex-policy-handoff.js',import.meta.url).href):undefined;
   if(handoffApi&&(!handoffApi.retainCodexPolicyHandoff||!handoffApi.adoptCodexPolicyHandoff))throw Error('actual_sealed_A_durable_handoff_exports_required');
@@ -42,7 +43,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
     adoptPolicy: async input=>{
       if(!handoffApi)throw Error('durable_policy_adoption_unavailable');
       const ownership=input.application.store.checkpoints.issueRestartOwnership({sessionId:input.sessionId,runId:input.handoff.storeRunId,checkpointId:input.handoff.checkpointId,threadId:input.nativeThreadId,purpose:input.handoff.purpose});
-      const policy=await handoffApi.adoptCodexPolicyHandoff({ownership,purpose:input.handoff.purpose,authorization:task==='H041-COMPACTION-DELIVERY-03'?'delivery03':'continuation02',path:input.handoff.path,sha256:input.handoff.sha256,keyPath:config.policyHandoffKeyPath,sessionId:input.sessionId,threadId:input.nativeThreadId,checkpointId:input.handoff.checkpointId,runId:randomUUID(),configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256,sourceClosure:config.bootstrap.review.files});policies.set(input.sessionId,policy);
+      const policy=await handoffApi.adoptCodexPolicyHandoff({ownership,purpose:input.handoff.purpose,authorization:selected.adoptionAuthorization,path:input.handoff.path,sha256:input.handoff.sha256,keyPath:config.policyHandoffKeyPath,sessionId:input.sessionId,threadId:input.nativeThreadId,checkpointId:input.handoff.checkpointId,runId:randomUUID(),configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256,sourceClosure:config.bootstrap.review.files});policies.set(input.sessionId,policy);
     },
     configureHost(base, context) {
       const extra: CodexHostQualification = {
@@ -52,7 +53,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
           const scope = context.guard.activeScope(sessionId);
           const mode = scope?.mode === 'durable-retrieval' ? 'read-original' : ['summary-only','clean-child'].includes(scope?.mode ?? '') ? 'summary-only' : qualified.profile === 'h041-full-retention-v1' ? 'parent-artifacts' : 'text-only-parent';
           const fields={sessionId,runId:scope?.mode === 'durable-retrieval' ? scope.runId : config.bootstrap.review.authorization.windowId,mode,configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256};
-          const policy=mode==='parent-artifacts'?(probeApi.createCodexRetentionParentPolicy)({...fields,collaborationVersion:config.bootstrap.review.retentionParentPolicy?.collaborationVersion}):factory(fields);
+          const policy=mode==='parent-artifacts'?selected.parentFactory!({...fields,collaborationVersion:config.bootstrap.review.retentionParentPolicy?.collaborationVersion}):factory(fields);
           policies.set(sessionId,policy); return policy;
         },
         authorizeNativeTurn: async ({policy,launchReceipt,threadId,params,method}) => {

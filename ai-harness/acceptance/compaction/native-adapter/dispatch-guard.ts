@@ -24,7 +24,7 @@ export interface RequestScope {
   manifest?: ProbeManifest;
   validateFollowup?(input: unknown): void|Promise<void>;
 }
-interface Captured { authenticationScope:RequestScope; scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown>;nativeMetadata?:Record<string,string> }
+interface Captured { authenticationScope:RequestScope; scope: RequestScope; observedAt:string; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown>;nativeMetadata?:Record<string,string> }
 function durableBytes(file: string, bytes: Buffer) {
   const fd = openSync(file, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
   try {
@@ -87,7 +87,7 @@ export class DispatchGuard {
         if (current) throw Error('duplicate_first_request_capture');
         const raw = Buffer.from(event.bytes);
         durableBytes(join(this.directory, `${event.requestId}-pre.bin`), raw);
-        this.captures.set(event.requestId, { authenticationScope:scope, scope, raw, claimed: false });
+        this.captures.set(event.requestId, { authenticationScope:scope, scope, observedAt:new Date(this.now()).toISOString(), raw, claimed: false });
       } else if (event.phase === 'normalized_request') {
         if (!current?.claimed || current.authenticationScope !== scope || !current.normalized || !current.normalized.equals(event.bytes)) throw Error('normalized_capture_mismatch');
         // Already durable before counting; this compares independent actual
@@ -174,7 +174,7 @@ export class DispatchGuard {
         if (!st.isFile() || st.nlink !== 1 || st.uid !== process.getuid?.() || st.size !== expected.length || !readFileSync(fd).equals(expected)) throw Error('retained_capture_replaced_or_changed');
       } finally { closeSync(fd); }
     }
-    return { requestId, sessionId: c.scope.sessionId, authenticationSessionId:c.authenticationScope.sessionId, actionId: c.scope.actionId, runId: c.scope.runId,
+    return { requestId, observedAt:c.observedAt, sessionId: c.scope.sessionId, authenticationSessionId:c.authenticationScope.sessionId, actionId: c.scope.actionId, runId: c.scope.runId,
       nativeThreadId: c.nativeThreadId, nativeTurnId: c.nativeTurnId,
       parentNativeThreadId: c.scope.parentNativeThreadId, contextSha256: c.scope.manifest?.contextSha256,
       firstRequestUtf8: c.raw.toString('utf8'), captureSha256: sha256(c.raw),

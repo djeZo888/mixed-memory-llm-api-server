@@ -2,6 +2,7 @@
 export const AUTHORIZATIONS = Object.freeze({
   H040: Object.freeze({ task: 'H040', startsUtc: '2026-10-01T02:26:10Z', capUtc: '2026-10-01T04:26:10Z' }),
   H041: Object.freeze({ task: 'H041', startsUtc: '2026-10-01T08:05:07Z', capUtc: '2026-10-01T10:05:07Z' }),
+  'H041-COMPACTION-DELIVERY-04': Object.freeze({ task: 'H041-COMPACTION-DELIVERY-04', startsUtc: '2026-10-01T11:26:45.729698+00:00', capUtc: '2026-10-01T15:26:45.729698+00:00' }),
   'H041-COMPACTION-DELIVERY-03': Object.freeze({ task: 'H041-COMPACTION-DELIVERY-03', startsUtc: '2026-10-01T10:07:11.972488+00:00', capUtc: '2026-10-01T13:07:11.972488+00:00' }),
   'H041-COMPACTION-CONTINUATION-02': Object.freeze({ task: 'H041-COMPACTION-CONTINUATION-02', startsUtc: '2026-10-01T09:11:06.096969+00:00', capUtc: '2026-10-01T11:11:06.096969+00:00' }),
 });

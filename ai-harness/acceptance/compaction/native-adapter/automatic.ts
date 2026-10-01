@@ -1,17 +1,20 @@
 /** Separate ordinary automatic attribution. Never changes the manual suite. */
+import {isQualifiedEntry} from './qualification.js';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import type {TemporaryHost} from './bootstrap.js';
 import type {ParentState} from './collector.js';
+import {automaticMetadata} from '../automatic-evidence.mjs';
 import {NativeCollector,nativeCompactionMetadata} from './collector.js';
 import {durableFile} from './checkpoint.js';
 import {sha256,stableJson,extractPersistedSummary} from './projection.js';
-export async function collectOrdinaryAutomatic(host:TemporaryHost,input:{sessionId:string;storeRunId:string;operationId:string;baseline:ParentState;summaryPrefix:string;counts?:{requestId:string;input:number;contextWindow:number;maxOutput:number;receiptUtf8:string}[]}) {
-  if(!host.evidence||!host.qualification)throw Error('actual_qualified_ordinary_producer_required');
+export async function collectOrdinaryAutomatic(host:TemporaryHost,input:{sessionId:string;storeRunId:string;operationId:string;baseline:ParentState;summaryPrefix:string}) {
+  if(!host.evidence||!isQualifiedEntry(host.qualification)||!host.counts)throw Error('actual_qualified_ordinary_producer_required');
   const run=host.application.store.runSnapshot(input.storeRunId),session=host.application.store.getSession(input.sessionId),op=host.observer.operation(input.sessionId);
   const actualRun=host.application.store.db.prepare('SELECT session_id FROM runs WHERE id=?').get(input.storeRunId);
   if(actualRun?.session_id!==input.sessionId||run.status!=='completed'||session.nativeSessionId!==input.baseline.nativeThreadId||op.method!=='turn/start'||op.nativeThreadId!==input.baseline.nativeThreadId)throw Error('actual_ordinary_turn_and_baseline_required');
   const frames=host.observer.frames(input.sessionId),captures=host.guard.requests(input.sessionId).filter(c=>c.runId===input.storeRunId),automatic=captures.filter(c=>{const m=nativeCompactionMetadata(JSON.parse(c.firstRequestUtf8));return m?.request_kind==='compaction'&&m.compaction?.trigger==='auto';});
+  for(const capture of automatic)automaticMetadata(JSON.parse(capture.firstRequestUtf8),op.nativeThreadId,op.nativeTurnId);
   if(!automatic.length)throw Error('genuine_automatic_metadata_not_observed_no_retry');
   const starts=frames.filter(f=>f.direction==='from-native'&&f.value.method==='item/started'&&(f.value.params as any)?.item?.type==='contextCompaction'),ends=frames.filter(f=>f.direction==='from-native'&&f.value.method==='item/completed'&&(f.value.params as any)?.item?.type==='contextCompaction');
   if(starts.length!==1||ends.length!==1)throw Error('single_actual_automatic_compaction_required');
@@ -23,8 +26,8 @@ export async function collectOrdinaryAutomatic(host:TemporaryHost,input:{session
   const ledger=host.application.store.db.prepare('SELECT id,session_id,state,record FROM h021_gateway_requests WHERE session_id=?').all(input.sessionId).filter(r=>automatic.some(c=>c.requestId===r.id));
   if(ledger.length!==automatic.length||ledger.some(r=>r.state!=='settled')||host.gateway.sessionWork(input.sessionId).length)throw Error('automatic_owned_gateway_settlement_unconfirmed');
   const producer=host.evidence.parentProducer(input.sessionId);
-  const automaticReceiptUtf8=stableJson({source:'h041-owned-ordinary-automatic-compaction',operationId:input.operationId,storeRunId:input.storeRunId,sessionId:input.sessionId,nativeThreadId:op.nativeThreadId,nativeTurnId:op.nativeTurnId,windowId:host.qualification?host.guard.activeScope(input.sessionId)?.actionId:null,
-    beforeState:input.baseline,afterState:after,selectedMessageSha256:sha256(selected.message),summaryPrefixSha256:sha256(input.summaryPrefix),requests:automatic,nativeFramesUtf8:stableJson(frames),producer,gatewayRecords:ledger.map(r=>String(r.record)),counts:input.counts??null,startedAt:start.observedAt,completedAt:op.gateway.observedAt,automaticReplay:false});
+  const automaticReceiptUtf8=stableJson({source:'h041-owned-ordinary-automatic-compaction',operationId:input.operationId,storeRunId:input.storeRunId,sessionId:input.sessionId,nativeThreadId:op.nativeThreadId,nativeTurnId:op.nativeTurnId,windowId:host.host.runtime.textOnlyPolicy?.(input.sessionId)?.runId??null,
+    beforeState:input.baseline,afterState:after,selectedMessageSha256:sha256(selected.message),summaryPrefixSha256:sha256(input.summaryPrefix),requests:automatic,nativeUsageFramesUtf8:stableJson(frames.filter(f=>f.direction==='from-native'&&f.value.method==='thread/tokenUsage/updated')),nativeOperationUtf8:stableJson(op),nativeOperationSha256:sha256(stableJson(op)),nativeFramesUtf8:stableJson(frames),producer,gatewayRecords:ledger.map(r=>String(r.record)),counts:host.counts.receipts(automatic.map(c=>c.requestId)),startedAt:start.observedAt,completedAt:op.gateway.observedAt,automaticReplay:false});
   await durableFile(join(host.layout.hostPrivate,`${randomUUID()}-ordinary-automatic.json`),automaticReceiptUtf8);
   return {automaticReceiptUtf8,automaticReceiptSha256:sha256(automaticReceiptUtf8),nativeAcceptance:'NOT_TESTED',limitation:'Collection alone does not qualify ordinary entry, trusted state, retention or admitted near-threshold counts.'};
 }

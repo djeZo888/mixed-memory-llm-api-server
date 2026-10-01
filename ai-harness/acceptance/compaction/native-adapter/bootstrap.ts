@@ -21,6 +21,7 @@ import { createLayout, durableFile, privateFile } from './checkpoint.js';
 import { sha256, stableJson, reviewSnapshot } from './projection.js';
 import { sourceClosure, collectorManifest } from './source-closure.js';
 import { ownedClose, failedBootstrap } from './owned-close.js';
+import {NativeCountObserver} from './count-observer.js';
 import { NativeObserver } from './native-observer.js';
 
 export const FIXED_POLICY = Object.freeze({ version: '0.158.0', sourceRevision: '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3',
@@ -33,7 +34,7 @@ export interface BootstrapInput {
   review: { enabled: boolean; approvedBy: string; candidateCommit: string; notAfterUtc: string; settlementReserveMs: number;
     policy: typeof FIXED_POLICY; stagePolicy: typeof STAGE_POLICY; files: Record<string, string>; productionStateReceiptSha256: string;
     projection: { format: 'h040-fresh-persisted-message-v1'; frozenPolicySha256: string; specSha256: string; collectorSourceSha256: string };
-    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03'; windowId: string; startsUtc: string; capUtc: string } };
+    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03' | 'H041-COMPACTION-DELIVERY-04'; windowId: string; startsUtc: string; capUtc: string } };
   actualCandidateCommit: string; privateBase: string; productionDataDir: string; repository: string;
   launcherPath: string; qwenReceiptPath: string; inferenceKeyPath: string; controlKeyPath: string;
   productionStateReceiptPath: string;
@@ -81,6 +82,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   await mkdir(captures, { mode: 0o700 });
   const guard = new DispatchGuard(captures);
   const observer = new NativeObserver(captures);
+  const counts=new NativeCountObserver(captures);
   if (hooks && !isQualifiedEntry(hooks.qualification)) throw Error('qualified_entry_object_required');
   const evidence = hooks ? new NativeEvidence(captures, hooks.evidence) : undefined;
   if(restart&&evidence)evidence.importClosed(restart.closed,{runId:restart.state.runId,operationWindowId:restart.state.windowId,observedSettlements:restart.state.observedSettlements,receiptSources:(review as any).receiptSources});
@@ -151,7 +153,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   try {
   const ownership = new GatewayOwnershipLedger(application.store.db).options();
   gateway = createGateway({ upstreamKey: inferenceKey, ownership, dispatchHeld: alias => held() || freeze.held(alias),
-    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: guard.wrap(host.responses!.countQwen) },
+    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: guard.wrap(counts.wrap(host.responses!.countQwen)) },
     diagnostics: { capture: guard.capture }, activeTimeoutMs: 120000, queueTimeoutMs: 120000 });
     // Fixed bind only. EADDRINUSE is retained and propagated; no fallback/sweep.
     await gateway.app.listen({ host: '127.0.0.1', port: 8081 });
@@ -160,7 +162,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
       schema: 1, candidateCommit: review.candidateCommit, policy: FIXED_POLICY, layout,
       reviewSha256: sha256(stableJson(review)), productionStateReceiptSha256: review.productionStateReceiptSha256,
       productionBrowserQualification: 'NOT_TESTED', runtimeBinaryQualification: 'NOT_TESTED' }) + '\n');
-    return { application, gateway, host, guard, observer, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
+    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
   } catch (error) {
     return failedBootstrap(error, () => durableFile(join(layout.hostPrivate, 'bootstrap-FAILED.json'), stableJson({
       outcome: 'failed', code: (error as NodeJS.ErrnoException).code === 'EADDRINUSE' ? 'EADDRINUSE' : 'bootstrap_failed', automaticRetry: false }) + '\n'), close);
