@@ -418,7 +418,9 @@
       "finishedUtc": "2026-10-01T11:24:45.186704+00:00",
       "sameSessionNativeProcessPresent": false,
       "status": "CLOSED_PARTIAL_DEADLINE_SOURCE_SEALED",
-      "nativeAcceptance": "NOT_TESTED"
+      "nativeAcceptance": "NOT_TESTED",
+      "sourceRuntimeCases": 342,
+      "sourceWebCases": 8
     },
     {
       "host": "mac-worker2",
@@ -430,13 +432,68 @@
       "finishedUtc": "2026-10-01T11:24:19.150608+00:00",
       "sameSessionNativeProcessPresent": false,
       "status": "CLOSED_CLEAN_SOURCE_ONLY",
-      "nativeAcceptance": "NOT_TESTED"
+      "nativeAcceptance": "NOT_TESTED",
+      "affectedSourceCases": 153
     }
   ],
   "preparedSource05": {
-    "status": "PREPARED_NOT_LAUNCHED",
+    "status": "RUNNING_SOURCE_ONLY",
     "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
     "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
     "liveGo": false
-  }
+  },
+  "source05Launched": [
+    {
+      "task": "A-delivery-preparation-05",
+      "host": "mac-worker1",
+      "outerPid": 34790,
+      "startedUtc": "2026-10-01T11:30:03.778474+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "02250df10a5cbb4499e3b20a15407158db083831",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-delivery-preparation-05",
+      "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-delivery-combined-05",
+      "host": "mac-worker2",
+      "outerPid": 36801,
+      "startedUtc": "2026-10-01T11:30:04.125755+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "9266b438af3de752f5db8ef0fb3b7b4fe28f3b82",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05",
+      "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source05ActualSettings": [
+    {
+      "task": "A-delivery-preparation-05",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T11:30:06.459Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-delivery-preparation-05/repo"
+        }
+      ],
+      "native-pid": 34792,
+      "wrapper-pid": 34791,
+      "outer-pid": 34790
+    },
+    {
+      "task": "E-delivery-combined-05",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T11:30:06.615Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05/repo"
+        }
+      ],
+      "native-pid": 36803,
+      "wrapper-pid": 36802,
+      "outer-pid": 36801
+    }
+  ]
 }
