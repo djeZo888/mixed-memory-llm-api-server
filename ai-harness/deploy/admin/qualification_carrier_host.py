@@ -292,39 +292,268 @@ def verify_normal_tuple(expected,actual):
  if expected['health'].get('http')!=200 or expected['health'].get('status')!='ok' or any(actual['health'].get(k)!=expected['health'].get(k) for k in ['http','status','version','host']):raise CarrierError('normal_readiness_unproved')
  return True
 
-def retained_record_snapshot(database):
- """Read-only SQLite snapshot; hash every original field without exporting chats.
+def _retained_digest(value):
+ # Include the SQLite value type: BLOB and text must never share a digest.
+ if isinstance(value,bytes):raw=b'blob\0'+value
+ else:raw=(type(value).__name__+'\0'+json.dumps(value,ensure_ascii=False,separators=(',',':'),allow_nan=False)).encode()
+ return hashlib.sha256(raw).hexdigest()
 
- The read transaction includes WAL state. It never constructs Store/migrates.
+def _retained_keys(value):
+ # JSON.parse/stringify enumerate array-index keys first, in numeric order.
+ integer=lambda k:k.isascii() and k.isdigit() and str(int(k))==k and int(k)<4294967295
+ return sorted((k for k in value if integer(k)),key=int)+[k for k in value if not integer(k)]
+
+def _retained_tree(value):
+ """Ordered JSON structure with hashed keys/scalars, never chat/body text."""
+ if isinstance(value,dict):return ['object',[[_retained_digest(k),_retained_tree(value[k])] for k in _retained_keys(value)]]
+ if isinstance(value,list):return ['array',[_retained_tree(v) for v in value]]
+ if isinstance(value,float) and value.is_integer():value=int(value)
+ return ['scalar',_retained_digest(value)]
+
+def _retained_set(tree,key,value):
+ import copy
+ result=copy.deepcopy(tree)
+ if result[0]!='object':raise CarrierError('recovery_json_object_required')
+ for pair in result[1]:
+  if pair[0]==_retained_digest(key):pair[1]=_retained_tree(value);break
+ else:result[1].append([_retained_digest(key),_retained_tree(value)])
+ return result
+
+def _retained_json(raw):
+ def unique(pairs):
+  result={}
+  for key,value in pairs:
+   if key in result:raise ValueError('duplicate_json_key')
+   result[key]=value
+  return result
+ try:return json.loads(raw,object_pairs_hook=unique,parse_constant=lambda _:(_ for _ in ()).throw(ValueError()))
+ except (TypeError,ValueError):raise CarrierError('retained_json_invalid')
+
+def _retained_source_json(value):
+ """JSON.stringify encoding for preserved JSON data; unsupported data fails closed."""
+ import math,decimal
+ if isinstance(value,dict):
+  keys=_retained_keys(value)
+  return '{'+','.join(_retained_source_json(k)+':'+_retained_source_json(value[k]) for k in keys)+'}'
+ if isinstance(value,list):return '['+','.join(_retained_source_json(v) for v in value)+']'
+ if value is None:return 'null'
+ if isinstance(value,bool):return 'true' if value else 'false'
+ if isinstance(value,str):return json.dumps(value,ensure_ascii=False,separators=(',',':'))
+ if isinstance(value,int):
+  if abs(value)>9007199254740991:raise CarrierError('unsafe_json_integer_evidence')
+  return str(value)
+ if isinstance(value,float):
+  if not math.isfinite(value):raise CarrierError('nonfinite_json_evidence')
+  if value==0:return '0'
+  text=repr(value).lower()
+  if 1e-6<=abs(value)<1e21:return format(decimal.Decimal(text),'f').rstrip('0').rstrip('.') if '.' in format(decimal.Decimal(text),'f') else format(decimal.Decimal(text),'f')
+  mantissa,exponent=text.split('e') if 'e' in text else (text,'0')
+  return mantissa.removesuffix('.0')+'e'+('+' if int(exponent)>=0 else '-')+str(abs(int(exponent)))
+ raise CarrierError('unsupported_json_evidence')
+
+def _retained_engine_readable(db,values):
+ # Store.getSession's post-ownership-update checks, without exposing native IDs.
+ import re
+ required={'session_id','engine_kind','workspace_id','event_cursor','ownership','active_turn_id'}
+ if not required<=set(values):return False
+ session=db.execute('SELECT workspace_id FROM sessions WHERE id=?',(values['session_id'],)).fetchone()
+ cursor=values['event_cursor'];turn=values['active_turn_id'];ownership=values['ownership']
+ return bool(session and values['engine_kind'] in ['minimax','codex'] and session[0]==values['workspace_id'] and type(cursor) is int and 0<=cursor<=9007199254740991 and ownership in ['idle','active','uncertain'] and (turn is None or isinstance(turn,str) and turn and not re.search(r'[\x00-\x20\x7f]',turn)) and (ownership!='idle' or turn is None))
+
+def _retained_run_projection(db,run,tables):
+ """The read-only relational projection used by Store.runSnapshot/emitRun.
+
+ Cross-run image status consumption needs a separate image qualification proof;
+ this verifier fails closed for that shape rather than trusting opaque additions.
  """
- import sqlite3
+ sid=run['session_id'];rid=run['id']
+ needed={'files','messages','h002_file_refs','h002_message_meta','h002_subagents','h036_image_status_refs'}
+ if not needed<=tables:raise CarrierError('source_run_projection_schema_required')
+ if db.execute('SELECT 1 FROM h036_image_status_refs WHERE session_id=? AND run_id=?',(sid,rid)).fetchone():
+  raise CarrierError('cross_run_image_projection_unqualified')
+ artifacts=[r[0] for r in db.execute("SELECT f.id FROM files f JOIN h002_file_refs r ON r.file_id=f.id WHERE f.session_id=? AND f.kind='artifact' AND r.run_id=? ORDER BY f.rowid",(sid,rid))]
+ requested=_retained_json(run['attachment_ids'])
+ if not isinstance(requested,list) or any(not isinstance(x,str) for x in requested):raise CarrierError('source_attachment_ids_invalid')
+ attachments=[]
+ for aid in dict.fromkeys(requested):
+  if db.execute("SELECT id FROM files WHERE id=? AND session_id=? AND kind='attachment'",(aid,sid)).fetchone():attachments.append(aid)
+ final=None
+ for mid,meta in db.execute('SELECT m.id,p.data FROM messages m LEFT JOIN h002_message_meta p ON p.message_id=m.id WHERE m.session_id=? AND m.run_id=? ORDER BY m.rowid',(sid,rid)):
+  if meta is not None and _retained_json(meta).get('phase')=='final':final=mid
+ summary=db.execute('SELECT data FROM h002_subagents WHERE run_id=?',(rid,)).fetchone()
+ result={'id':rid,'kind':run['kind'],'status':'interrupted','createdAt':run['created_at'],'updatedAt':run['updated_at'],'finalMessageId':final,'artifactIds':artifacts,'attachmentIds':attachments}
+ if len(artifacts)+len(attachments)>1 and len(attachments)==len(set(requested)):result['filesZipUrl']=f'/api/sessions/{sid}/runs/{rid}/files.zip'
+ if len(artifacts)>1:result['zipUrl']=f'/api/sessions/{sid}/runs/{rid}/artifacts.zip'
+ result['subagents']=_retained_json(summary[0]) if summary else {'known':False,'active':None,'completed':None,'failed':None,'cancelled':None}
+ return _retained_tree(result)
+
+def retained_record_snapshot(database):
+ """One consistent read-only SQLite/WAL transaction; no Store or body export.
+
+ PK identities and genuine rowids bind every prior row and its order, including
+ duplicate keyless history. JSON evidence exports structure and scalar hashes.
+ """
+ import sqlite3,datetime
  from urllib.parse import quote
+ started=datetime.datetime.now(datetime.timezone.utc).isoformat()
  db=sqlite3.connect('file:'+quote(str(database))+'?mode=ro',uri=True,timeout=.5)
  try:
   db.execute('BEGIN');result={}
-  for (table,) in db.execute("SELECT name FROM sqlite_master WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name"):
-   identifier='"'+table.replace('"','""')+'"';info=db.execute('PRAGMA table_info('+identifier+')').fetchall();columns=[r[1] for r in info];keys=[r[1] for r in sorted(info,key=lambda r:r[5]) if r[5]]
-   rows={}
-   for row in db.execute('SELECT * FROM '+identifier):
-    def digest(value):return hashlib.sha256((value if isinstance(value,bytes) else json.dumps(value,sort_keys=True,separators=(',',':')).encode())).hexdigest()
-    fields={k:digest(v) for k,v in zip(columns,row)};key=hashlib.sha256(json.dumps([fields[k] for k in keys] if keys else list(fields.values())).encode()).hexdigest()
+  schema=db.execute('SELECT type,name,tbl_name,sql FROM sqlite_master ORDER BY type,name').fetchall()
+  tables={r[1] for r in schema if r[0]=='table'}
+  json_fields={'sessions':['context'],'events':['data'],'h041_session_checkpoints':['body'],'h041_checkpoint_transitions':['body']}
+  linkage={'runs':['id','session_id','workspace_id','status','created_at','updated_at'], 'sessions':['id','workspace_id','status','updated_at'], 'h021_session_engines':['session_id','engine_kind','ownership'], 'events':['session_id','id','type','run_id','created_at'], 'quarantined_workspaces':['id','reason'], 'h041_session_checkpoints':['id','session_id','run_id','status'], 'h041_checkpoint_transitions':['session_id','run_id']}
+  for table in sorted(tables):
+   identifier='"'+table.replace('"','""')+'"'
+   info=db.execute('PRAGMA table_xinfo('+identifier+')').fetchall();columns=[r[1] for r in info];keys=[r[1] for r in sorted(info,key=lambda r:r[5]) if r[5]]
+   sql=next(r[3] for r in schema if r[0]=='table' and r[1]==table)
+   without_rowid='WITHOUT ROWID' in sql.upper()
+   if any(c.lower() in ['rowid','_rowid_','oid'] for c in columns):raise CarrierError('shadowed_sqlite_row_identity')
+   if without_rowid and not keys:raise CarrierError('genuine_row_identity_required')
+   order_sql=','.join('"'+k.replace('"','""')+'"' for k in keys) if without_rowid else '_rowid_'
+   select='SELECT '+('' if without_rowid else '_rowid_,')+'* FROM '+identifier+' ORDER BY '+order_sql
+   rows={};order=[]
+   for raw in db.execute(select):
+    rowid=None if without_rowid else raw[0];values=dict(zip(columns,raw if without_rowid else raw[1:]))
+    key=_retained_digest([values[k] for k in keys]) if keys else 'rowid:'+str(rowid)
     if key in rows:raise CarrierError('ambiguous_original_record_identity')
-    rows[key]={'fields':fields,'status':{k:v for k,v in zip(columns,row) if k in ['status','ownership','updated_at']}}
-   result[table]={'columns':columns,'primaryKey':keys,'rows':rows}
+    row={'rowid':rowid,'fields':{k:_retained_digest(v) for k,v in values.items()},'meta':{k:values[k] for k in linkage.get(table,[]) if k in values},'json':{k:_retained_tree(_retained_json(values[k])) for k in json_fields.get(table,[]) if k in values},'sourceJSON':{k:values[k]==_retained_source_json(_retained_json(values[k])) for k in json_fields.get(table,[]) if k in values}}
+    if table=='h021_session_engines' and 'sessions' in tables:row['sourceEngineReadable']=_retained_engine_readable(db,values)
+    if table=='runs' and values.get('status') in ['queued','running','cancelling'] and {'session_id','kind','attachment_ids','created_at','updated_at'}<=set(values):row['runProjection']=_retained_run_projection(db,values,tables)
+    rows[key]=row;order.append(key)
+   result[table]={'columns':columns,'primaryKey':keys,'schema':info,'sqlSHA256':_retained_digest(sql),'rows':rows,'order':order}
+  result['_snapshot']={'schemaSHA256':_retained_digest(schema),'startedAt':started,'finishedAt':datetime.datetime.now(datetime.timezone.utc).isoformat()}
   return result
  finally:db.close()
 
 def verify_retained_records(before,after):
- if set(before)!=set(after):raise CarrierError('original_table_set_changed')
- delta=[]
- for table,old in before.items():
-  new=after[table]
-  if old['columns']!=new['columns'] or old['primaryKey']!=new['primaryKey'] or set(old['rows'])!=set(new['rows']):raise CarrierError('original_record_identity_changed')
+ """Accept only the complete source-derived normal Store constructor repair."""
+ import datetime,re
+ def fail(reason):raise CarrierError(reason)
+ oldtables=set(before)-{'_snapshot'};newtables=set(after)-{'_snapshot'}
+ if oldtables!=newtables:fail('original_table_set_changed')
+ if before['_snapshot']['schemaSHA256']!=after['_snapshot']['schemaSHA256']:fail('original_schema_changed')
+ for table in oldtables:
+  for k in ['columns','primaryKey','schema','sqlSHA256']:
+   if before[table][k]!=after[table][k]:fail('original_schema_changed')
+ def rows(snapshot,table):return snapshot.get(table,{}).get('rows',{})
+ def indexed(snapshot,table,key):
+  result={}
+  for identity,row in rows(snapshot,table).items():
+   if key not in row['meta']:fail('source_recovery_schema_required')
+   value=row['meta'][key]
+   if value in result:fail('source_recovery_link_ambiguous')
+   result[value]=(identity,row)
+  return result
+ runs=indexed(before,'runs','id');sessions=indexed(before,'sessions','id');engines=indexed(before,'h021_session_engines','session_id')
+ affected_runs={rid:pair for rid,pair in runs.items() if pair[1]['meta'].get('status') in ['queued','running','cancelling']}
+ affected_sessions={r['meta'].get('session_id') for _,r in affected_runs.values()}|{sid for sid,(_,r) in engines.items() if r['meta'].get('engine_kind')=='codex' and r['meta'].get('ownership')!='idle'}
+ if affected_sessions-set(sessions):fail('source_affected_session_missing')
+ workspaces={sessions[sid][1]['meta'].get('workspace_id') for sid in affected_sessions}
+ checkpoints={key:rows(before,'h041_session_checkpoints')[key] for key in before.get('h041_session_checkpoints',{}).get('order',[]) if rows(before,'h041_session_checkpoints')[key]['meta'].get('status') in ['prepared','replacement_observed']}
+ if None in affected_sessions or None in workspaces:fail('source_recovery_schema_required')
+ delta=[];changes={};expected_events=[];expected_transitions=[]
+ lower=datetime.datetime.fromisoformat(before['_snapshot']['startedAt']);upper=datetime.datetime.fromisoformat(after['_snapshot']['finishedAt'])
+ def timestamp(value):
+  if not isinstance(value,str) or not re.fullmatch(r'\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d\.\d{3}Z',value):fail('source_recovery_timestamp_required')
+  try:time=datetime.datetime.fromisoformat(value.replace('Z','+00:00'))
+  except ValueError:fail('source_recovery_timestamp_required')
+  if not lower<=time<=upper:fail('source_recovery_timestamp_outside_snapshot')
+  return time
+ def successor(table,key):
+  if key not in rows(after,table):fail('original_record_identity_changed')
+  return rows(after,table)[key]
+ def allow(table,key,expected):changes[(table,key)]=expected
+ run_times=set()
+ # SQLite SELECT without ORDER BY scans these source run rows in rowid order.
+ for key in before.get('runs',{}).get('order',[]):
+  old=rows(before,'runs')[key];rid=old['meta'].get('id')
+  if rid not in affected_runs:continue
+  new=successor('runs',key);time=new['meta'].get('updated_at');timestamp(time);run_times.add(time)
+  if 'runProjection' not in old:fail('source_run_projection_required')
+  allow('runs',key,{'status':_retained_digest('interrupted'),'updated_at':_retained_digest(time)})
+  projection=_retained_set(old['runProjection'],'updatedAt',time)
+  expected_events.append((old['meta']['session_id'],'run',rid,['object',[[_retained_digest('run'),projection]]]))
+ if len(run_times)>1:fail('source_run_update_timestamp_mismatch')
+ for sid in sorted(affected_sessions):
+  key,old=sessions[sid];new=successor('sessions',key);time=new['meta'].get('updated_at');timestamp(time)
+  if 'context' not in old['json']:fail('source_context_required')
+  context=_retained_set(old['json']['context'],'stale',True)
+  if not new['sourceJSON'].get('context') or new['json'].get('context')!=context:fail('original_context_evidence_changed')
+  allow('sessions',key,{'status':_retained_digest('interrupted'),'updated_at':_retained_digest(time),'context':new['fields']['context']})
+  if sid not in engines:fail('source_engine_identity_required')
+  enginekey,engine=engines[sid]
+  if not successor('h021_session_engines',enginekey).get('sourceEngineReadable'):fail('source_engine_identity_unreadable')
+  if engine['meta']['engine_kind']=='codex':allow('h021_session_engines',enginekey,{'ownership':_retained_digest('uncertain')})
+  expected_events.extend([(sid,'state',None,_retained_tree({'status':'interrupted'})),(sid,'context',None,['object',[[_retained_digest('context'),context]]]),(sid,'error',None,_retained_tree({'code':'interrupted','message':'Server restarted; the run was interrupted and was not replayed'}))])
+ for key,old in checkpoints.items():
+  new=successor('h041_session_checkpoints',key)
+  if 'body' not in old['json']:fail('source_checkpoint_body_required')
+  body=_retained_set(_retained_set(old['json']['body'],'outcome','process_restart'),'status','recovery_required')
+  if not new['sourceJSON'].get('body') or new['json'].get('body')!=body:fail('original_checkpoint_evidence_changed')
+  allow('h041_session_checkpoints',key,{'status':_retained_digest('recovery_required'),'body':new['fields']['body']})
+  expected_transitions.append((old['meta']['session_id'],old['meta']['run_id'],body))
+ # Every preexisting row survives with its exact identity/order/multiplicity.
+ # Only source quarantine INSERT OR REPLACE may change rowid/order.
+ for table in oldtables:
+  old=before[table];new=after[table]
+  if table=='quarantined_workspaces':continue
+  if set(old['rows'])-set(new['rows']):fail('original_record_identity_changed')
+  if table in ['events','h041_checkpoint_transitions'] and new['order'][:len(old['order'])]!=old['order']:fail('source_history_append_order_required')
+  if [k for k in new['order'] if k in old['rows']]!=old['order']:fail('original_record_order_changed')
   for key,row in old['rows'].items():
    nextrow=new['rows'][key]
+   if row['rowid']!=nextrow['rowid']:fail('original_rowid_changed')
+   permitted=changes.get((table,key),{})
+   if set(row['fields'])!=set(nextrow['fields']):fail('original_schema_changed')
    for field,digest in row['fields'].items():
-    if nextrow['fields'][field]==digest:continue
-    permitted=(field=='status' and row['status'].get(field) in ['queued','running','cancelling'] and nextrow['status'].get(field) in ['error','failed','cancelled']) or (field=='ownership' and nextrow['status'].get(field)=='uncertain') or (field in ['error','updated_at'] and row['status'].get('status') in ['queued','running','cancelling'])
-    if field in old['primaryKey'] or not permitted:raise CarrierError('original_nonrecovery_field_changed')
-    delta.append({'table':table,'recordIdentitySHA256':key,'field':field,'beforeSHA256':digest,'afterSHA256':nextrow['fields'][field]})
+    expected=permitted.get(field,digest)
+    if nextrow['fields'][field]!=expected:fail('original_nonrecovery_field_changed')
+    if digest!=expected:delta.append({'table':table,'recordIdentitySHA256':key,'field':field,'beforeSHA256':digest,'afterSHA256':expected})
+  if table not in ['events','h041_checkpoint_transitions'] and set(new['rows'])!=set(old['rows']):fail('unexpected_original_record_added')
+ # New quarantine rows are exact source reason writes for the derived workspace set.
+ oldq=indexed(before,'quarantined_workspaces','id');newq=indexed(after,'quarantined_workspaces','id')
+ if affected_sessions and before.get('quarantined_workspaces',{}).get('columns')!=['id','reason']:fail('source_quarantine_schema_required')
+ if set(newq)!=set(oldq)|workspaces:fail('unrelated_quarantine_changed')
+ for wid,(key,row) in newq.items():
+  if wid in workspaces:
+   if row['fields']!={'id':_retained_digest(wid),'reason':_retained_digest('restart_during_run')}:fail('source_quarantine_reason_required')
+   delta.append({'table':'quarantined_workspaces','recordIdentitySHA256':key,'field':'reason','operation':'source_restart_quarantine'})
+  elif row!=oldq[wid][1]:fail('unrelated_quarantine_changed')
+ # Simulate each exact INSERT OR REPLACE, including duplicate workspace owners.
+ expected_q={wid:row['rowid'] for wid,(_,row) in oldq.items()}
+ for sid in sorted(affected_sessions):
+  wid=sessions[sid][1]['meta']['workspace_id'];nextid=max(expected_q.values(),default=0)+1;expected_q[wid]=nextid
+ if any(newq[wid][1]['rowid']!=rid for wid,rid in expected_q.items()):fail('source_quarantine_rowid_required')
+ if [rows(after,'quarantined_workspaces')[k]['meta']['id'] for k in after.get('quarantined_workspaces',{}).get('order',[])]!=sorted(expected_q,key=expected_q.get):fail('source_quarantine_order_required')
+ def appended(table):
+  added=[(k,rows(after,table)[k]) for k in after.get(table,{}).get('order',[]) if k not in rows(before,table)]
+  last=max((r['rowid'] for r in rows(before,table).values()),default=0)
+  for _,row in added:
+   last+=1
+   if row['rowid']!=last:fail('source_history_append_rowid_required')
+  return added
+ additions=appended('events')
+ if len(additions)!=len(expected_events):fail('source_recovery_event_count_mismatch')
+ cursors={};previous_time=None;session_event_times={}
+ for row in rows(before,'events').values():
+  meta=row['meta'];sid=meta['session_id'];cursors[sid]=max(cursors.get(sid,0),meta['id'])
+ for (key,event),(sid,kind,rid,data) in zip(additions,expected_events):
+  meta=event['meta'];created=meta.get('created_at');time=timestamp(created)
+  if previous_time is not None and time<previous_time:fail('source_recovery_event_time_order')
+  previous_time=time;cursors[sid]=cursors.get(sid,0)+1
+  if not event['sourceJSON'].get('data'):fail('source_event_json_encoding_required')
+  if meta!={'session_id':sid,'id':cursors[sid],'type':kind,'run_id':rid,'created_at':created} or event['json'].get('data')!=data:fail('source_recovery_event_payload_mismatch')
+  if set(event['fields'])!={'session_id','id','type','run_id','created_at','data'}:fail('source_event_schema_required')
+  if run_times and time<timestamp(next(iter(run_times))):fail('source_event_before_run_update')
+  session_event_times.setdefault(sid,{})[kind]=time
+  delta.append({'table':'events','recordIdentitySHA256':key,'operation':'source_recovery_append','type':kind})
+ for sid in affected_sessions:
+  times=session_event_times[sid];updated=timestamp(successor('sessions',sessions[sid][0])['meta']['updated_at'])
+  if not times['state']<=updated<=times['context']:fail('source_session_update_event_timestamp_mismatch')
+ transitions=appended('h041_checkpoint_transitions')
+ if len(transitions)!=len(expected_transitions):fail('source_checkpoint_transition_count_mismatch')
+ for (key,row),(sid,rid,body) in zip(transitions,expected_transitions):
+  if not row['sourceJSON'].get('body') or row['meta']!={'session_id':sid,'run_id':rid} or row['json'].get('body')!=body or set(row['fields'])!={'session_id','run_id','body'}:fail('source_checkpoint_transition_payload_mismatch')
+  delta.append({'table':'h041_checkpoint_transitions','recordIdentitySHA256':key,'operation':'source_checkpoint_append'})
  return delta

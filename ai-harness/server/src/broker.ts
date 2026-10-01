@@ -289,9 +289,9 @@ export class Broker {
       const run=this.queues.get(workspaceId)?.[0];
       if(!run||this.closing||this.active.has(workspaceId)||this.admissionPending.has(workspaceId))return;
       const abort=new AbortController();let settled:Promise<void>;
-      settled=(async()=>{try{await this.options.beforeDispatchAdmission!({sessionId:run.sessionId,requestId:run.id,phase:'queued-start'},abort.signal);
+      settled=Promise.resolve().then(async()=>{try{await this.options.beforeDispatchAdmission!({sessionId:run.sessionId,requestId:run.id,phase:'queued-start'},abort.signal);
         if(!this.closing&&!abort.signal.aborted&&this.queues.get(workspaceId)?.[0]===run&&!this.options.dispatchHeld?.())this.pump(workspaceId,run.id);
-      }catch{/* No native start; queued owner is retained until Stop or fresh reviewed admission. */}finally{this.admissionPending.delete(workspaceId);}})();
+      }catch{/* No native start; queued owner is retained until Stop or fresh reviewed admission. */}finally{this.admissionPending.delete(workspaceId);}});
       this.admissionPending.set(workspaceId,{abort,settled});return;
     }
     if (
