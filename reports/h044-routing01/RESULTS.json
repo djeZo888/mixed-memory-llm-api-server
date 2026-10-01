@@ -1,0 +1,579 @@
+{
+  "phase": "R-routing01",
+  "status": "PARTIAL_SOURCE_PREPARATION",
+  "base": "58bff2ec474fd0cf4a7ba3f71028bb2710555c88",
+  "sourceCommit": "a80d3dbaa6420c33d71a037885939af78eace7d8",
+  "authority": "SOURCE_ONLY; no live GO",
+  "sourceFiles": {
+    "ai-harness/deploy/codex/config-image-jobs.toml": "5a4f18f5f28c44fd5807dbbe9f33eca212fd714d1f9cfc9d7c9c1ab58bea9f3b",
+    "ai-harness/deploy/codex/config.toml": "5bea9924260c77c75a262dfc9c065e54263a50e6fc80a74f47b1a69b68dfe559",
+    "ai-harness/deploy/codex/skills/sova-local-tools/SKILL.md": "da363fd7c87bac313ae2d0f94b3049193af91c09a2cd18a0302e4cca954cefa6",
+    "ai-harness/deploy/engine/codex_receipts.py": "45bf47c2bd1ad9bb0f7112d7eaf78c94332d69f28cb978ba5f66bd3115b01780",
+    "ai-harness/deploy/run-codex.sh": "12c778bd380ae5f961b888a5915a9c81186a32eef61f034cdfd467f82ee83b9a",
+    "ai-harness/deploy/tests/test-codex-receipts.py": "4d541f7e0588d7c5c736ba544f6d3af0cc3dd5c562fea369fd5026b75832c374",
+    "ai-harness/deploy/tests/test-run-codex.py": "0b1c99f2458cc9c5ea2eb749df8f3f13bc651c9f853ae1b596dddec9caa9d3f5",
+    "ai-harness/server/src/broker.ts": "01bc1f1989189d190defc5ec3e56a66451592b3864c5280ae6484f00a9219674",
+    "ai-harness/server/src/codex-automatic-routing.ts": "d4e713ae4874d9477c4ca8f15bb263f82bc612747387c57215a61a8795f4e90d",
+    "ai-harness/server/src/codex-capabilities.ts": "36f33aa2559007a86959f5f2e54e70ad241035bac4d7bf874966645a5d014bf3",
+    "ai-harness/server/src/codex-children.ts": "68cbf47d02455755a6ad13b68a4ce0ff99e800bc7437874aaa5522beba5da6be",
+    "ai-harness/server/src/codex-engine.ts": "f2283ee436466a16ed2118c3acdecd892efa0f45e9a394dc9a838f6cf24d4e12",
+    "ai-harness/server/src/codex-host.ts": "94485942072255938e90a4cb3e4fc2331ec355317647098b243a29a9627d878a",
+    "ai-harness/server/src/codex-launcher.ts": "2b9f61cc68c4203242bf69c4b5f9f4a9cd5763993acf18aea552d6f71af3be30",
+    "ai-harness/server/src/codex-policy-handoff.ts": "ff48673debb5c6b3e2af6fc19150dd4f970bd1bcf6426fbb5844bae4353f474a",
+    "ai-harness/server/src/codex-probe.ts": "47b545710c0261fb4c745c3b29a2f534289506db4c690fe5cfedee877af204cb",
+    "ai-harness/server/src/codex-receipts.ts": "1cc31ee3ac95eb9701dd0f1a657e5ac32f479419e7f0c7d96c574eea77bb9408",
+    "ai-harness/server/src/codex-specialist-qualification.ts": "ac70ee7f895ce7f34763e35b19e5ff5a637e5845b9166f7c80bc003bf825e4eb",
+    "ai-harness/server/src/contracts.ts": "53ffb5f8b5068ddb20c8a14ec719a686befd248ea37093178572b428bded0e62",
+    "ai-harness/server/src/engine-router.ts": "290395f58ccb2b59494157baf76fc5dffeb4ba4ebf319a89ce557a842ba89621",
+    "ai-harness/server/src/gateway.ts": "856f2b1149459150e489dd878937a805d2b3f10bbe9e02d7a7721b093e07f1fa",
+    "ai-harness/server/src/image-broker.ts": "af87bc35bebfffdf0b7087b47985e8eb140921fda14e280a0b8af79370d27e24",
+    "ai-harness/server/src/main.ts": "510f7eff65a66e96e5d2210e3bcecbea04e31a7dd87fcf339b673ccc592e06a9",
+    "ai-harness/server/test/codex-protocol-receipts.test.ts": "18506da75aecec995cecad23037ca0d7143c2a39e8bb06864ef0cbc9668bbaef",
+    "ai-harness/server/test/codex-specialist-qualification.test.ts": "5e47f2d0835823950db7bb5b519269e28fbd1aedf5fba5da1316065f499923f3",
+    "ai-harness/server/test/h037-default.test.ts": "e9504a9d71a418ae40833cc84bceac46f6bcd221c47b78076d169aa725e581a8",
+    "ai-harness/server/test/h044-automatic-routing.test.ts": "e40f97549638e099d7fa629b5c3fb60c96775f3f7c4c3170ff95b07e10009d8f",
+    "ai-harness/server/test/h044-policy-window.test.ts": "9c690265bbe93b2b24056bfb7647588a951824d1ad04fc949502915faac4a20f",
+    "ai-harness/server/test/h044-specialist-scope.test.ts": "356dbd9a2f6b572dcbc65e374541d504a4c63eb91dad1f6ab50ef67720381685",
+    "ai-harness/server/test/image-broker.test.ts": "ba94ab76631e25d0b12e05dcf7f8b9fc3579aec7caa914715411dd37cab54e39",
+    "ai-harness/tools/technical-vision/README.md": "b3c2fa7a3502a7b11919f4c2c9d78bb8a9e72c978f883b58006f961f3a54ef04",
+    "ai-harness/tools/technical-vision/technical-vision-mcp.mjs": "e65f173e940b11171632262f9d767b44d770153e0b1cc7f2951cb36c78a116cf",
+    "ai-harness/tools/technical-vision/technical-vision.mjs": "e2b2d0e6e4685b9d8a51ac2b3ce241cfa3586cbb8fcb2e405658ac7c23bf1365",
+    "ai-harness/tools/technical-vision/test/technical-vision.test.mjs": "d8c7dcda997ee900de803781c91b801015222020d2078f66920d577b31dca826"
+  },
+  "checks": {
+    "candidate-final-build": {
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:49:31.081738+00:00",
+      "finishedUTC": "2026-10-01T23:49:32.438996+00:00",
+      "exit": 2,
+      "stdoutSHA256": "394c54174787f1ec5b336dedfc3984d263ff498fbf82e5cf74e517eca9653a5f",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "corrected-typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:31:54.591270+00:00",
+      "finishedUTC": "2026-10-01T23:31:55.640754+00:00",
+      "exit": 2,
+      "stdoutSHA256": "7a7e52d84066d9d97dc7ad86ab821a130bb3966b495ad5d57005f934380d444e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "current-qualification-final": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/codex-specialist-qualification.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:54:56.116003+00:00",
+      "finishedUTC": "2026-10-01T23:54:56.365591+00:00",
+      "exit": 0,
+      "stdoutSHA256": "363b574b5385511fb1210a65c8776d4ac1da6681a3fd9fce98e2d2ff1a29bafe",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "deploy-01": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-run-codex.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:39:36.992317+00:00",
+      "finishedUTC": "2026-10-01T23:40:13.556803+00:00",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "dfbaa1cdee8b550d300dcb2b37519d4b130a1180fd62032076924b6766a4b317"
+    },
+    "deploy-02": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-run-codex.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:46:40.180065+00:00",
+      "finishedUTC": "2026-10-01T23:47:16.898827+00:00",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "54dd46aed9bd4ba82fba1fd65480f8cce77a2a2b8e9fc0a5d87bbed6a96958b3"
+    },
+    "deploy-03": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-run-codex.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:48:20.287211+00:00",
+      "finishedUTC": "2026-10-01T23:48:43.589998+00:00",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "0724f56ece6dbb704948173429916989eae94d6a97d8f0f33c81e44595cbb13e"
+    },
+    "deploy-final": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-run-codex.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:51:22.612301+00:00",
+      "finishedUTC": "2026-10-01T23:51:45.634367+00:00",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "8c54c2f80cd5a47587d5f53b473ac86c7faad177bc1c8c3e9c186539fcea1267"
+    },
+    "diff-check": {
+      "argv": [
+        "git",
+        "diff",
+        "--check",
+        "HEAD"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:54:13.479862+00:00",
+      "finishedUTC": "2026-10-01T23:54:13.494306+00:00",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-focused-server-corrected": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/h043-policy-handoff.test.ts",
+        "test/h043-startup-policy.test.ts",
+        "test/codex-host.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-instructions.test.ts",
+        "test/codex-protocol-receipts.test.ts",
+        "test/h037-default.test.ts",
+        "test/codex-production.test.ts",
+        "test/codex-mimo-native.test.ts",
+        "test/codex-specialist-qualification.test.ts",
+        "test/codex-gateway.test.ts",
+        "test/mimo-codex-gateway.test.ts",
+        "test/mimo-current-owner.test.ts",
+        "test/image-broker.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:48:20.286502+00:00",
+      "finishedUTC": "2026-10-01T23:48:22.560091+00:00",
+      "exit": 0,
+      "stdoutSHA256": "dbe16d265bdc48279e546f7b3f637051717a550357d80d346304c3d505da8e9e",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-focused-server": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/h043-policy-handoff.test.ts",
+        "test/h043-startup-policy.test.ts",
+        "test/codex-host.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-instructions.test.ts",
+        "test/codex-protocol-receipts.test.ts",
+        "test/h037-default.test.ts",
+        "test/codex-production.test.ts",
+        "test/codex-mimo-native.test.ts",
+        "test/codex-specialist-qualification.test.ts",
+        "test/codex-gateway.test.ts",
+        "test/mimo-codex-gateway.test.ts",
+        "test/mimo-current-owner.test.ts",
+        "test/image-broker.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:46:40.179956+00:00",
+      "finishedUTC": "2026-10-01T23:46:42.567110+00:00",
+      "exit": 1,
+      "stdoutSHA256": "99bdd8eb5cbe9356d9392a6f648f9ba8fcedf939797ca70b511aed8e43be28ca",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-graph-build": {
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:55:29.294841+00:00",
+      "finishedUTC": "2026-10-01T23:55:30.553993+00:00",
+      "exit": 0,
+      "stdoutSHA256": "35089eeb4e6097bb087e8c050db80ac802cb01ecb4ba684fffcb35e57da50d91",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-graph-typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:54:56.115878+00:00",
+      "finishedUTC": "2026-10-01T23:54:57.251320+00:00",
+      "exit": 0,
+      "stdoutSHA256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "final-receipt-routing-regression": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/codex-protocol-receipts.test.ts",
+        "test/codex-host.test.ts",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-gateway.test.ts",
+        "test/mimo-codex-gateway.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:51:22.611847+00:00",
+      "finishedUTC": "2026-10-01T23:51:23.463198+00:00",
+      "exit": 0,
+      "stdoutSHA256": "448ad0a9a98ce530222c0f918e67f60efef4d00eb5208839a01608efefd2eac0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "focused-server-01": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h043-policy-handoff.test.ts",
+        "test/h043-startup-policy.test.ts",
+        "test/codex-host.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-instructions.test.ts",
+        "test/codex-protocol-receipts.test.ts",
+        "test/h037-default.test.ts",
+        "test/codex-production.test.ts",
+        "test/codex-mimo-native.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:39:36.992321+00:00",
+      "finishedUTC": "2026-10-01T23:39:38.062701+00:00",
+      "exit": 1,
+      "stdoutSHA256": "9cac80665c3c21fd373fdcf4aa459ad325bfb45a6cc8f434006108f7cfbfe3ab",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "focused-server-02": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/h043-policy-handoff.test.ts",
+        "test/h043-startup-policy.test.ts",
+        "test/codex-host.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-instructions.test.ts",
+        "test/codex-protocol-receipts.test.ts",
+        "test/h037-default.test.ts",
+        "test/codex-production.test.ts",
+        "test/codex-mimo-native.test.ts",
+        "test/codex-specialist-qualification.test.ts",
+        "test/codex-gateway.test.ts",
+        "test/mimo-codex-gateway.test.ts",
+        "test/mimo-current-owner.test.ts",
+        "test/image-broker.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:43:42.923128+00:00",
+      "finishedUTC": "2026-10-01T23:43:45.259722+00:00",
+      "exit": 0,
+      "stdoutSHA256": "9ba27f4be4dac961e46cf34b5a183b8cb55095ef291ded01a9b03ba11cabfd5d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "image-npm-ci-corrected": {
+      "argv": [
+        "npm",
+        "ci",
+        "--ignore-scripts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/tools/image",
+      "startedUTC": "2026-10-01T23:31:53.885591+00:00",
+      "finishedUTC": "2026-10-01T23:31:54.540221+00:00",
+      "exit": 0,
+      "stdoutSHA256": "adc6cf359e5efb9ef8ae2dc2e23fb3a18a85445fd8a67f92d5b45baf47521970",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "image-tools-final-corrected": {
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/tools/image",
+      "startedUTC": "2026-10-01T23:48:20.286642+00:00",
+      "finishedUTC": "2026-10-01T23:48:21.057087+00:00",
+      "exit": 0,
+      "stdoutSHA256": "b3f739ff01cb9b41c22d3b01232c4a46543834b5bd20ea403b0ef904c437ad4b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "initial-typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:28:43.534922+00:00",
+      "finishedUTC": "2026-10-01T23:28:44.624140+00:00",
+      "exit": 2,
+      "stdoutSHA256": "c1695fe92bb4f9c1052120b9c9da617743e9dba244b46d45a02d5a370b3efc4c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "interface-adoption": {
+      "argv": [
+        "git",
+        "apply",
+        "--3way",
+        "../reference-current/R-routing.full-index.diff"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:22:09.838037+00:00",
+      "finishedUTC": "2026-10-01T23:22:09.853194+00:00",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "4c36ab949226835517302d9bd82677f73de28cdde9b9b676b8239bd1942c2da9"
+    },
+    "mcp-01": {
+      "argv": [
+        "node",
+        "--test",
+        "ai-harness/tools/technical-vision/test/technical-vision.test.mjs"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:42:22.317414+00:00",
+      "finishedUTC": "2026-10-01T23:42:23.573366+00:00",
+      "exit": 0,
+      "stdoutSHA256": "cb01700e524f39455bf7289bca5673ad0ac77fec395e7e1f0b793a3dfce0afa8",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "mcp-sealed": {
+      "argv": [
+        "node",
+        "--test",
+        "ai-harness/tools/technical-vision/test/technical-vision.test.mjs"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:52:42.554880+00:00",
+      "finishedUTC": "2026-10-01T23:52:43.821461+00:00",
+      "exit": 0,
+      "stdoutSHA256": "de062bb4e81fac3db2febfd3aa1e13a9e34e8f7841cc83cc360908b979469e2a",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "npm-ci": {
+      "argv": [
+        "npm",
+        "ci",
+        "--ignore-scripts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:22:18.380278+00:00",
+      "finishedUTC": "2026-10-01T23:22:19.222493+00:00",
+      "exit": 0,
+      "stdoutSHA256": "44a81d41e595eb008411d1cc6113aa66cb7b1187fc98c6ec64799defa702a8f5",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "overlay-final-build": {
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:51:22.611858+00:00",
+      "finishedUTC": "2026-10-01T23:51:24.056557+00:00",
+      "exit": 0,
+      "stdoutSHA256": "35089eeb4e6097bb087e8c050db80ac802cb01ecb4ba684fffcb35e57da50d91",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "overlay-final-typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:49:31.081888+00:00",
+      "finishedUTC": "2026-10-01T23:49:32.288398+00:00",
+      "exit": 0,
+      "stdoutSHA256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "overlay-sealed-typecheck": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:52:42.554703+00:00",
+      "finishedUTC": "2026-10-01T23:52:44.016533+00:00",
+      "exit": 0,
+      "stdoutSHA256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "overlay-typecheck-01": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/output/closed-v02-test-graph/ai-harness/server",
+      "startedUTC": "2026-10-01T23:46:40.180007+00:00",
+      "finishedUTC": "2026-10-01T23:46:41.737337+00:00",
+      "exit": 0,
+      "stdoutSHA256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "receipt-python-01": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-codex-receipts.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:43:42.924320+00:00",
+      "finishedUTC": "2026-10-01T23:43:47.690552+00:00",
+      "exit": 1,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "8029eab8639d640d86fe3b5c914b5ec95d2b2ee7ba1ea2073ab766d68aab6fee"
+    },
+    "receipt-python-02": {
+      "argv": [
+        "python3",
+        "ai-harness/deploy/tests/test-codex-receipts.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:46:40.180062+00:00",
+      "finishedUTC": "2026-10-01T23:46:43.864080+00:00",
+      "exit": 0,
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "13dcf0815868eac9c5bfe9cfd89ec40f9fbd496dd8ff48c12b3a8fa0ce1de434"
+    },
+    "sealed-focused-server": {
+      "argv": [
+        "node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-automatic-routing.test.ts",
+        "test/h044-policy-window.test.ts",
+        "test/h044-specialist-scope.test.ts",
+        "test/h043-policy-handoff.test.ts",
+        "test/h043-startup-policy.test.ts",
+        "test/codex-host.test.ts",
+        "test/codex-engine.test.ts",
+        "test/codex-instructions.test.ts",
+        "test/codex-protocol-receipts.test.ts",
+        "test/h037-default.test.ts",
+        "test/codex-production.test.ts",
+        "test/codex-mimo-native.test.ts",
+        "test/codex-specialist-qualification.test.ts",
+        "test/codex-gateway.test.ts",
+        "test/mimo-codex-gateway.test.ts",
+        "test/mimo-current-owner.test.ts",
+        "test/image-broker.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:52:42.554814+00:00",
+      "finishedUTC": "2026-10-01T23:52:44.895860+00:00",
+      "exit": 0,
+      "stdoutSHA256": "9e9fabdcc39cb63cf8f5a64e3dd3e8ec6983acc027f03059f1f14a06ad595054",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "source-commit": {
+      "argv": [
+        "git",
+        "-c",
+        "user.name=CodexAIagent",
+        "-c",
+        "user.email=133749519+djeZo888@users.noreply.github.com",
+        "commit",
+        "-m",
+        "Prepare H044 branded policy and guarded automatic Codex routing"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo",
+      "startedUTC": "2026-10-01T23:55:29.217153+00:00",
+      "finishedUTC": "2026-10-01T23:55:29.241304+00:00",
+      "exit": 0,
+      "stdoutSHA256": "1baeae0ea0ec5599b087b338a76c04e757b324a72ba3df50703395dd43ebca3c",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "typecheck-03": {
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-routing01/repo/ai-harness/server",
+      "startedUTC": "2026-10-01T23:43:42.923116+00:00",
+      "finishedUTC": "2026-10-01T23:43:44.458207+00:00",
+      "exit": 2,
+      "stdoutSHA256": "a840b5452460f1c4bfaf5fa810d2ece767fbb2bc348b7eab4e1d9f59843545fe",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "candidateTypecheck": "FAIL_V_OWNED_INTERFACE_GAPS",
+  "candidateBuild": "FAIL_V_OWNED_INTERFACE_GAPS",
+  "overlayValidation": {
+    "label": "PASS_WITH_CLOSED_UNQUALIFIED_V02_OVERLAY",
+    "fullGraphSHA256": "b5550bf4a242c35de3afde3c0093fd11fdc0a17213fe4bc348fb1944bdd9929f",
+    "overlayManifestSHA256": "3c7eea229c1d26d14c9471859825cf7e5dcfc0af8b68475cd61d180cb4d781e1",
+    "typecheck": "PASS",
+    "build": "PASS"
+  },
+  "blockers": [
+    "Candidate alone fails typecheck/build on three V-owned interfaces: NormalTechnicalVision export, technical-vision-qualification module, and App technicalVision return. No unowned files were edited.",
+    "Final corrective V03 source/provenance/journal/atomic-claim contract is not integrated. Closed unqualified V02 overlay was used only in a private isolated validation graph.",
+    "Generation-only validation and broker operation guard are source preparation; ordinary generation-only activation/provenance wiring remains incomplete. Full imageJobs/edit/creativeChild remain closed.",
+    "Browser/UI removal of selectors is outside this source scope and not verified. Historical chats are preserved and their inactive engine cannot execute; safe continuation gives the new-chat path."
+  ],
+  "NOT_TESTED": [
+    "native MiMo Responses/tool continuation/automatic selection",
+    "native MCP and inference startup",
+    "minimal native no-generation startup/owned shutdown",
+    "manual and AUTO compaction",
+    "full 480K MiMo behavior",
+    "technical vision inference",
+    "creative image inference",
+    "browser/UI",
+    "physical hardware/concurrent six instances"
+  ],
+  "closure": "Parent CLI/wrapper/outer integer exits and process/PGID absence must be collected by coordinator after this worker returns; not yet claimable."
+}

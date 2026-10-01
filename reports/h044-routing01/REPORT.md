@@ -1,0 +1,20 @@
+# H044 routing01 source report
+
+Status: PARTIAL_SOURCE_PREPARATION. Base `58bff2ec474fd0cf4a7ba3f71028bb2710555c88`; source commit `a80d3dbaa6420c33d71a037885939af78eace7d8`. No live actions, deployment, Linux SSH, inference, downloads or fan operations were performed.
+
+The candidate adds branded H044 v1/v2 factories and h044 handoff authorization, preserving old window/factory bodies byte for byte and ordinary nonexpiring chats. Trusted automatic ordinary/deep/technical/creative intent and follow-up routing retain one canonical parent. Qwen stays the parent; deep routing requires current qualified owned Codex MiMo child completion. No MiniMax execution or fallback exists for historical chats. Native rerouted-model guards remain intact.
+
+Technical MCP uses trusted stdio, exact readonly source mounts/catalog/hash bindings and normal owned job/status/lookup/cancel. Pending/errors retain original job handles and truthful status. Technical and creative gates remain separate. Current Codex frontier requires a protected current native review bound to actual compiled source/config/catalog hashes; historical MiniMax records cannot activate it. Separate generation-only qualification cannot activate full edit/imageJobs/creative-child flags. Generation-only operation wiring remains partial.
+
+Focused source receipts: sealed server 316 passed/1 native fixture skipped (317 total); final receipt/routing regression208 passed; latest qualification38 passed; technical MCP4 passed; image tool40 passed; Python receipt19 passed; deploy21 passed. Exact argv/cwd/time/integer exits/stdout/stderr hashes and original failed runs remain in private output/commands. Initial config regressions, Bash3.2 empty-array nounset faults and stale inherited stderr expectations were corrected; their original logs were retained. Initial git identity failure was corrected by adopting base identity per command, without global configuration.
+
+Candidate-alone server typecheck and build exit2 on exactly the three V interfaces listed below. Latest isolated graph typecheck and build exit0, label `PASS_WITH_CLOSED_UNQUALIFIED_V02_OVERLAY`, graph SHA256 `b5550bf4a242c35de3afde3c0093fd11fdc0a17213fe4bc348fb1944bdd9929f`. That graph includes four closed unqualified root-hashed V02 overlay files, never edits to unowned candidate paths, and cannot qualify final V03 or native behavior.
+
+- Candidate alone fails typecheck/build on three V-owned interfaces: NormalTechnicalVision export, technical-vision-qualification module, and App technicalVision return. No unowned files were edited.
+- Final corrective V03 source/provenance/journal/atomic-claim contract is not integrated. Closed unqualified V02 overlay was used only in a private isolated validation graph.
+- Generation-only validation and broker operation guard are source preparation; ordinary generation-only activation/provenance wiring remains incomplete. Full imageJobs/edit/creativeChild remain closed.
+- Browser/UI removal of selectors is outside this source scope and not verified. Historical chats are preserved and their inactive engine cannot execute; safe continuation gives the new-chat path.
+
+Native MiMo/tool continuation/automatic selection, native MCP/inference startup, no-generation startup/shutdown, manual/AUTO compaction, full480K MiMo, technical/creative inference, browser and physical/concurrent operation are NOT_TESTED. The private H044-MIMO-ACCEPTANCE.md gives a finite source-bound acceptance procedure with the same visible Qwen parent, raw Responses and tool continuation, followed by actual automatic deep selection. It is preparation, not live permission.
+
+Runtime pins, model catalog, original histories/credentials and unrelated owners remain preserved. Root amendments01/02/03 provide the additional exact source ownership. Final source/report/bundle hashes and exact changed files are in private output/SOURCE-MANIFEST.json. Coordinator must collect actual worker wrapper/outer exits and process/PGID absence after return; this source report cannot claim them.
