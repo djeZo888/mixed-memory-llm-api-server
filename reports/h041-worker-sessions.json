@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T14:27:29.183765+00:00",
+  "updatedUtc": "2026-10-01T14:30:57.651508+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-08",
@@ -614,7 +614,7 @@
       "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
     }
   ],
-  "currentRootReviewedHead": "92dec23409cf760238729520bad11631a3545f12",
+  "currentRootReviewedHead": "69a537149c648ec41511d7332330e7177a07a0d2",
   "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
   "liveAcceptance": "NOT_TESTED",
   "closedSource06": {
@@ -842,6 +842,84 @@
       "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-08",
       "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
       "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "delivery05Authority": {
+    "id": "H041-COMPACTION-DELIVERY-05",
+    "issuedUtc": "2026-10-01T14:30:02.674394+00:00",
+    "expiresUtc": "2026-10-01T18:30:02.674394+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "distinct finite compaction completion successor after reviewed source08; unused original stage/full/ordinary budgets carry forward, no repeated qualified actions or blind retry; concrete root exact GO required before native/lifecycle/generation/production",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "priorCapsUnchanged": true,
+    "prepared": true,
+    "issuedBy": "root within explicit ongoing human compaction completion request",
+    "budgetAccounting": "No generation or manual/AUTO compaction has run; all original budgets remain unused. Earlier failed no-turn attempts remain distinct preserved attempts. No additional generation budget created."
+  },
+  "source07FinalReviewed": {
+    "aSource": "868800efa7d459499b050321d187054f29664eee",
+    "aIntegrated": "69a537149c648ec41511d7332330e7177a07a0d2",
+    "eSources": [
+      "3c28dcbe1b29a88d3dfafe1f839c86e91c7e794b",
+      "04cd5b4c13e9b8f31fa91c215958791390e40e38"
+    ],
+    "eIntegrated": [
+      "c6258a5",
+      "145d907"
+    ],
+    "activation": "disabled",
+    "nativeAcceptance": "NOT_TESTED",
+    "remainingBeforeLive": [
+      "runtime cancellation regression",
+      "current manifest protection and finite stat freshness",
+      "concrete carrier task-only admission guardian",
+      "native TRACE producer and original consumer/causal/config binding"
+    ]
+  },
+  "source08ActualSettings": [
+    {
+      "host": "mac-worker1",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "nativePid": 42263,
+      "wrapperPid": 42262,
+      "turnContextUtc": "2026-10-01T14:27:02.178Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    },
+    {
+      "host": "mac-worker2",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "nativePid": 44349,
+      "wrapperPid": 44348,
+      "turnContextUtc": "2026-10-01T14:27:02.328Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
     }
   ]
 }
