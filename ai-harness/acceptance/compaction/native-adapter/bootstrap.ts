@@ -96,6 +96,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   await privateFile(DISPATCH_STATE);
   const freezeDb = new DatabaseSync(DISPATCH_STATE, { readOnly: true });
   const freeze = { held: (alias: string) => {try{return hooks?.carrier ? hooks.carrier.held(freezeDb.prepare('SELECT key,fingerprint,action,acknowledged,scope FROM dispatch_holds').all(),alias) : DispatchFreeze.prototype.held.call({ db: freezeDb } as DispatchFreeze, alias);}catch{return true;}}, close: () => freezeDb.close() };
+  const registerTaskSession=async(sessionId:string,role:'parent'|'probe'|'child',parentSessionId?:string,signal?:AbortSignal)=>{await hooks?.carrier?.registerSession({sessionId,role,parentSessionId},signal);};
   const authorizeTaskAction=async(sessionId:string,requestId:string,signal?:AbortSignal)=>{if(hooks?.carrier)await hooks.carrier.verify(sessionId,requestId,signal,captures);};
   let gateway: Gateway | undefined, closed = false;
   const originalProbes = new Map<string,CodexReadOriginalProbe>(), originalSettlements: any[] = [], artifactSettlements: any[] = [];
@@ -158,6 +159,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   const ownership = new GatewayOwnershipLedger(application.store.db).options();
   const guardedCount=guard.wrap(counts.wrap(host.responses!.countQwen));
   gateway = createGateway({ upstreamKey: inferenceKey, ownership, dispatchHeld: alias => held() || freeze.held(alias),
+    taskAdmission: hooks?.carrier ? async(context,signal)=>{if(guard.authenticationSession(context.requestId)!==context.sessionId)throw Error('actual_carrier_authenticated_request_mismatch');await authorizeTaskAction(context.sessionId,context.requestId,signal);if(held()||freeze.held(context.lane))throw Error('shared_hold_at_gateway_'+context.phase);} : undefined,
     qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: async(body,lane,key,signal,context)=>{if(!context?.requestId)throw Error('actual_carrier_request_context_required');const sessionId=guard.authenticationSession(context.requestId);await authorizeTaskAction(sessionId,context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_before_actual_count');const result=await guardedCount(body,lane,key,signal,context);await authorizeTaskAction(sessionId,context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_after_all_count_capture_awaits');return result;} },
     diagnostics: { capture: guard.capture }, activeTimeoutMs: 120000, queueTimeoutMs: 120000 });
     // Fixed bind only. EADDRINUSE is retained and propagated; no fallback/sweep.
@@ -167,7 +169,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
       schema: 1, candidateCommit: review.candidateCommit, policy: FIXED_POLICY, layout,
       reviewSha256: sha256(stableJson(review)), productionStateReceiptSha256: review.productionStateReceiptSha256,
       productionBrowserQualification: 'NOT_TESTED', runtimeBinaryQualification: 'NOT_TESTED' }) + '\n');
-    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, authorizeTaskAction, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
+    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, authorizeTaskAction, registerTaskSession, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
   } catch (error) {
     return failedBootstrap(error, () => durableFile(join(layout.hostPrivate, 'bootstrap-FAILED.json'), stableJson({
       outcome: 'failed', code: (error as NodeJS.ErrnoException).code === 'EADDRINUSE' ? 'EADDRINUSE' : 'bootstrap_failed', automaticRetry: false }) + '\n'), close);

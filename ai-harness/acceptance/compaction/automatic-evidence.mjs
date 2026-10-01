@@ -40,7 +40,7 @@ export function automaticThreshold(r,expected,metadata){
   const capture=r.requests?.filter(c=>c.requestId===causal.requestId);if(capture?.length!==1||!equal(automaticMetadata(JSON.parse(capture[0].firstRequestUtf8),r.nativeThreadId,r.nativeTurnId),metadata))throw Error('actual_original_auto_canonical_request_required');
   const ledger=r.gatewayRecords?.map(x=>JSON.parse(x)).filter(x=>x.id===causal.requestId);if(ledger?.length!==1||ledger[0].sessionId!==r.sessionId||ledger[0].state!=='settled'||!equal(ledger[0].nativeMetadata,metadata)||ledger[0].lane!=='qwen3.8-27b')throw Error('actual_settled_canonical_gateway_record_required');
   const gateway={requestId:ledger[0].id,nativeThreadId:ledger[0].nativeMetadata.thread_id,nativeTurnId:ledger[0].nativeMetadata.turn_id,windowId:ledger[0].nativeMetadata.window_id,contextWindowId:ledger[0].nativeMetadata.context_window_id,state:ledger[0].state};
-  return verifyNativeStartedAtTraceJoin({lines:trace.lines,startFrame:lifecycle.start,producer:trace.producer,operation,metadata,gateway,resolvedConfig:config});
+  return verifyNativeStartedAtTraceJoin({lines:trace.lines,...(trace.autoCalls?.length?{autoCalls:trace.autoCalls}:{}),startFrame:lifecycle.start,producer:trace.producer,operation,metadata,gateway,resolvedConfig:config});
  }
  const bytes=r.activeContextReceiptUtf8;
  if(typeof bytes!=='string'||!expected.runtimeQualificationSha256||(!expected.activeContextReceiptSha256&&!expected.activeContextProducerPlanSha256))return {status:'NOT_TESTED',errors:['actual_resolved_config_and_native_active_context_producer_unavailable']};

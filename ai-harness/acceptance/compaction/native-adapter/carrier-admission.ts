@@ -28,6 +28,7 @@ export function carrierRowsHeld(rows:any[],binding:CarrierBinding,serviceId='har
 export class CarrierAdmission {
  private latest:any;
  constructor(private admission:QualificationTaskAdmission,private binding:CarrierBinding,private review:any){if(!isQualificationTaskAdmission(admission))throw Error('actual_A_task_admission_brand_required');}
+ async registerSession(input:{sessionId:string;role:'parent'|'probe'|'child';parentSessionId?:string},signal?:AbortSignal){ reviewedAuthorization(this.review);const received=await this.admission.registerSession(input,signal);signal?.throwIfAborted();reviewedAuthorization(this.review);return received; }
  async verify(sessionId:string,requestId:string,signal?:AbortSignal,directory?:string){
   this.latest=undefined;
   const authority=reviewedAuthorization(this.review);if(Date.now()>=authority.dispatchCutoffAt)throw Error('carrier_dispatch_cutoff');

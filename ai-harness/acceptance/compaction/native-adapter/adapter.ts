@@ -145,6 +145,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
       collector = new NativeCollector({ store: host.application.store, files: host.application.files, gateway: host.gateway,
         observer: host.observer, guard: host.guard, hostPrivate: host.layout.hostPrivate, withCaptureHold: host.withCaptureHold });
       const s = await host.application.broker.createSession(undefined, 'codex'); parentId = s.id;
+      await host.registerTaskSession?.(parentId,'parent',undefined,signal);
       const actual = await openNativeParent(host, parentId, AbortSignal.any([signal, AbortSignal.timeout(Math.max(1, Math.min(120000, host.dispatchCutoffAt - Date.now())))]));
       await durableFile(join(host.layout.hostPrivate, 'suite-owner.json'), stableJson({ source: 'owned-controller-open-and-observed-native-parent', acceptanceRunId: acceptanceOwnerRunId, ...actual, operationWindowId: input.bootstrap.review.authorization.windowId }));
       return actual;

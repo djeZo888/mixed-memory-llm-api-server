@@ -27,7 +27,7 @@ export async function sourceClosure(repository: string, launcherPath: string, qw
   await visit(join(repository, 'ai-harness/deploy/engine'), true);
   await visit(join(repository, 'ai-harness/deploy/codex'), true);
   await visit(join(repository, 'ai-harness/deploy/security'), true);
-  for(const name of ['qualification_carrier_entry.py','qualification_carrier_host.py','qualification_carrier.py','qualification_guardian.py','local_helper.py','resource_observer.py'])await visit(join(repository,'ai-harness/deploy/admin',name),true);
+  for(const name of ['qualification_task_barrier.py','qualification_carrier_entry.py','qualification_carrier_host.py','qualification_carrier.py','qualification_guardian.py','local_helper.py','resource_observer.py'])await visit(join(repository,'ai-harness/deploy/admin',name),true);
   await visit(join(repository, 'ai-harness/tools/image'), true);
   await visit(launcherPath, true); await visit(qwenReceiptPath, true);
   return files;

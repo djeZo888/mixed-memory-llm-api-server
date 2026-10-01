@@ -24,6 +24,7 @@ export async function summaryProbe(host: TemporaryHost, input: {
   const text = input.childBrief ?? summaryProbeText(input.summary, input.frozenPolicy, input.request);
   if (input.manifest.userText !== text || input.manifest.contextSha256 !== input.contextSha256) throw Error('reviewed_summary_manifest_mismatch');
   const sessionId = randomUUID();
+  if(host.registerTaskSession){const parent=host.application.store.db.prepare('SELECT id FROM sessions WHERE native_session_id=?').get(input.parentNativeThreadId);if(!parent)throw Error('actual_probe_parent_registration_mapping_required');await host.registerTaskSession(sessionId,'probe',String(parent.id),signal);}
   await host.authorizeTaskAction?.(sessionId,input.actionId,signal);
   if(host.launchHeld())throw Error('trusted_probe_launch_held_or_cancelled');
   const mounts = await emptyProbeMounts(host.layout.dataDir, [host.layout.hostPrivate]);
