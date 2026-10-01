@@ -6,6 +6,8 @@ CHA_FAN3 repair is postponed. Stop trying to operate it; preserve its existing B
 
 The proposed demonstration priorities are actual Codex context compaction; working Qwen3.5-9B+PaddleOCR-VL-1.6 image-to-text on stable Ada; Qwen-Image-2.1 text-to-image on external Ada; a clean chat UI with Codex as the sole harness and no harness names/configuration clutter; and single-PC/single-user/single-session follow-up/workflow testing. Two Blackwells run Qwen, one Blackwell runs MiMo2.6 with RAM, and the two Adas have separate reading/generation roles. All model instances must be able to remain resident and run concurrently. General-model context maximum is480K including MiMo; distinguish configured capacity from untested long-context behavior. Preserve existing runtime/output/compaction pins and histories.
 
+The human explicitly corrected the UI/routing requirement: **there is no model selector**. Sova automatically selects Qwen for ordinary tasks, MiMo for deep research/higher intelligence, image-to-text for image/drawing analysis, and Qwen-Image for generation. This stays within one chat; no model or harness choice is exposed. Include genuine intent-routing/follow-up checks in the proposed demonstration plan.
+
 After confirmation, use as many ready independent parallel subtasks on available workers as ownership and capacity allow, each with its own fresh GPT6.1SolUltra codex exec context and isolated checkout. The MNT PocketPC32GB worker is not ready; wait for the human's readiness message and then verify architecture/SSH/Codex. It may take suitable CLI/review/visual-QA work. No new worker execution is currently approved. Keep this conversation and report factual progress; no new-chat handoff.
 
 # H043 current authority — 1 October 2026
