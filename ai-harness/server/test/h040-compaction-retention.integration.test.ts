@@ -297,7 +297,7 @@ test('after-continuation cold resume binds actual application lifecycle and late
 test('accepted continuation preserves original raw bytes separately from property-order-indifferent semantic hashes', () => {
   const p = acceptedResume();
   assert.equal(verifyAcceptedContinuationResume(p.result, p.accepted, p.expected).status, 'PASS');
-  const missing = clone(p.accepted); delete missing.artifactBaseline;
+  const missing: Omit<typeof p.accepted, 'artifactBaseline'> & { artifactBaseline?: typeof p.accepted.artifactBaseline } = clone(p.accepted); delete missing.artifactBaseline;
   assert.equal(verifyAcceptedContinuationResume(p.result, missing, p.expected).status, 'NOT_TESTED');
   for (const rewrite of [(bytes: string) => JSON.stringify(JSON.parse(bytes)),
     (bytes: string) => JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(bytes)).reverse()), null, 2) + '\n']) {
@@ -310,8 +310,10 @@ test('accepted continuation preserves original raw bytes separately from propert
     changed.artifactReceiptUtf8 = JSON.stringify(capture); changed.artifactReceiptSha256 = sha256(changed.artifactReceiptUtf8);
     assert.equal(verifyAcceptedContinuationResume(changed, p.accepted, p.expected).status, 'FAIL');
   }
-  for (const key of ['artifactReceiptSha256', 'artifactReceiptBytes', 'storeRunId', 'actionId', 'nativeThreadId', 'checkpointStateSha256']) {
-    const altered = clone(p.accepted); altered.artifactBaseline[key] = key === 'artifactReceiptBytes' ? 1 : 'synthetic-substitution';
+  for (const key of ['artifactReceiptSha256', 'artifactReceiptBytes', 'storeRunId', 'actionId', 'nativeThreadId', 'checkpointStateSha256'] as const) {
+    const altered = clone(p.accepted);
+    if (key === 'artifactReceiptBytes') altered.artifactBaseline[key] = 1;
+    else altered.artifactBaseline[key] = 'synthetic-substitution';
     assert.equal(verifyAcceptedContinuationResume(p.result, altered, p.expected).status, 'FAIL', key);
   }
 });
