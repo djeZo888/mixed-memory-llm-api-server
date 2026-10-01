@@ -3,6 +3,7 @@ import test, { mock } from "node:test";
 import { readFileSync } from "node:fs";
 import { Ajv } from "ajv";
 import { createCodexReadOriginalProbe, createCodexTextOnlyPolicy, createCodexParentArtifactScope, CODEX_H041_WINDOW } from "../src/codex-probe.js";
+import {CODEX_MEMORY_CATALOG_SHA256} from "../src/codex-memory.js";
 import { receiptFixture } from "./helpers/codex-receipt-fixture.js";
 import { PassThrough } from "node:stream";
 import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
@@ -51,6 +52,8 @@ function deferred<T>() {
 function fixture(
   config: {
     nativeId?: string;
+    memory?: boolean;
+    memoryCatalog?: boolean;
     probe?: boolean;
     textOnly?: boolean;
     artifacts?: boolean;
@@ -101,12 +104,19 @@ function fixture(
     onUpdate: (update) => updates.push(update),
     onExit: () => calls.push("revoke"),
   };
+  if(config.memory) options.sessionMemory={
+    sessionId:"session-1",resolve:()=>({id:"owned",kind:"message",sourceKey:"message",sha256:"b".repeat(64),bytes:8,availability:"complete"}),
+    read:(id,offset,limit)=>{if(id!=="owned")throw Error("foreign");return {reference:{id:"owned",kind:"message",sourceKey:"message",sha256:"b".repeat(64),bytes:8,availability:"complete"},text:"retained",offset,nextOffset:8,eof:true};},
+    search:()=>({hits:[],nextAfter:0,incomplete:false,skipped:[]}),view:()=>({sessionId:"session-1",current:null,references:[],referencesOmitted:false,authority:"synthetic"}),
+    continuationText:()=>"",propose:()=>{throw Error("not needed");},assertContinuationAllowed:()=>{},catalog:()=>config.memoryCatalog?CODEX_MEMORY_CATALOG_SHA256:undefined,bindCatalog:()=>{calls.push("memory-catalog");},recordConsumption:()=>{calls.push("memory-consumed");}
+  };
   const runtime: CodexRuntime = {
     pin: CODEX_PIN,
     delegationEnabled: config.delegation,
     qualifiedChildModels: config.qualifiedChildModels,
     protocolQualified: true,
-    nativeReceiptsRequired: config.probe || config.textOnly || config.artifacts,
+    nativeReceiptsRequired: config.probe || config.textOnly || config.artifacts || config.memory,
+    ordinaryMemoryAdmission: config.memory ? async (_,signal)=>{calls.push("memory-admission");await config.originalAdmission?.(signal);} : undefined,
     textOnlyPolicy: config.probe || config.textOnly || config.artifacts ? () => createCodexTextOnlyPolicy({sessionId:"session-1",runId:"probe-run",mode:config.probe?"read-original":config.artifacts?"parent-artifacts":"text-only-parent",configSha256:"b".repeat(64),modelCatalogSha256:"b".repeat(64)}) : undefined,
     authorizeNativeTurn: config.probe || config.textOnly || config.artifacts ? async () => { calls.push("native-admission"); await config.admission?.(); } : undefined,
     authorizeOriginalRead: config.probe ? async (_, signal) => { calls.push("original-admission"); await config.originalAdmission?.(signal); } : undefined,
@@ -142,7 +152,7 @@ function fixture(
           ...(config.probe || config.textOnly || config.artifacts ? ["receiptRunId"] : []),
         ].sort(),
       );
-      const receipts = config.probe || config.textOnly || config.artifacts ? receiptFixture() : undefined;
+      const receipts = config.probe || config.textOnly || config.artifacts || config.memory ? receiptFixture() : undefined;
       return {
         stdin,
         stdout,
@@ -1507,4 +1517,33 @@ test("H041 synthetic manual compaction requires method-aware admission before RP
  const f=fixture({textOnly:true,admission:async()=>{throw Error("compaction gate rejected");}});
  await assert.rejects(f.engine.compact(),/compaction gate rejected/);
  assert.equal(f.requests.filter(x=>x.method==="thread/compact/start").length,0);await f.engine.close();
+});
+
+// New ordinary retrieval source fixtures preserve normal tools/sandbox and prove canonical consumption only.
+function memoryCall(f:ReturnType<typeof fixture>,reference="owned") {
+ const args={reference,offset:0,limit:8192};f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"inProgress"},"started");
+ f.stdout.write(JSON.stringify({id:"server-memory",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"memory-call",tool:"read_original",arguments:args}})+"\n");return args;
+}
+test("H041 ordinary synthetic retrieval preserves operational policy and counts only canonical consumption",async()=>{
+ const f=fixture({memory:true}),pending=f.engine.prompt("synthetic");await tick();const params=f.requests.find(x=>x.method==="thread/start").params;
+ assert.equal(params.sandbox,"danger-full-access");assert.equal(params.environments,undefined);assert.equal(params.config,undefined);assert.equal(params.baseInstructions,undefined);
+ assert.deepEqual(params.dynamicTools.map((t:{name:string})=>t.name),["read_original","search_originals","propose_session_state"]);
+ const args=memoryCall(f);await tick();await tick();const response=f.requests.find(x=>x.id==="server-memory").result;assert.equal(response.success,true);assert.ok(!f.calls.includes("memory-consumed"));
+ f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"completed",success:true,contentItems:response.contentItems});assert.ok(f.calls.includes("memory-consumed"));f.complete();assert.equal(await pending,"completed");
+});
+test("H041 ordinary synthetic foreign original returns unsuccessful result without accepting state",async()=>{
+ const f=fixture({memory:true}),pending=f.engine.prompt("synthetic");await tick();const args=memoryCall(f,"foreign");await tick();await tick();const response=f.requests.find(x=>x.id==="server-memory").result;assert.equal(response.success,false);assert.ok(!f.calls.includes("memory-consumed"));f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"failed",success:false,contentItems:response.contentItems});f.complete();await pending;
+});
+test("H041 old native thread without retained dynamic catalog does not silently add retrieval",async()=>{
+ const f=fixture({memory:true,nativeId:"thread-1"});await f.engine.start();const resume=f.requests.find(x=>x.method==="thread/resume");assert.equal(resume.params.dynamicTools,undefined);await f.engine.close();
+});
+test("H041 ordinary late retrieval admission cannot serialize after owned cancellation",async()=>{
+ const gate=deferred<void>(),f=fixture({memory:true,originalAdmission:()=>gate.promise}),pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();memoryCall(f);await tick();await f.engine.close();gate.resolve();await tick();await rejected;assert.equal(f.requests.filter(x=>x.id==="server-memory").length,0);assert.ok(!f.calls.includes("memory-consumed"));
+});
+test("H041 native terminal original retains all emitted output before 8192 display projection",async()=>{
+ const f=fixture(),pending=f.engine.prompt("synthetic");await tick();const output="x".repeat(20000)+"µA tail";
+ f.item("cmd","commandExecution",{command:"synthetic",cwd:"/task/workspace",processId:"p",status:"inProgress"},"started");
+ f.item("cmd","commandExecution",{command:"synthetic",cwd:"/task/workspace",processId:"p",status:"completed",aggregatedOutput:output,exitCode:0});
+ const raw=f.updates.find(u=>u.type==="tool_original");assert.ok(raw?.type==="tool_original");assert.equal(raw.outputUtf8,output);assert.equal(JSON.parse(raw.rawUtf8).aggregatedOutput,output);
+ const projection=f.updates.filter(u=>u.type==="progress"&&u.toolCallId==="cmd").at(-1);assert.ok(projection?.type==="progress");assert.ok((projection.detail?.length??0)<=8192);f.complete();await pending;
 });

@@ -218,6 +218,13 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     gateway = createGateway({
       ownership,
       responses: codexHost.responses,
+      nativeMetadataAuthority: codex.qualification?.nativeMetadataAuthority,
+      onNativeOperation: receipt => {
+        const row=application.store.db.prepare("SELECT id FROM runs WHERE session_id=? AND status='running' ORDER BY rowid DESC LIMIT 1").get(receipt.sessionId);
+        if(row){application.store.checkpoints.recordNativeEvidence(receipt.sessionId,String(row.id),"native_operation",receipt);
+          if(receipt.metadata.request_kind==="compaction")application.store.checkpoints.observeCompaction(receipt.sessionId,String(row.id),"gateway:"+receipt.requestId,receipt.phase==="uncertain"?"failed":receipt.phase==="settled"?"completed":"start");}
+        codex.qualification?.onNativeOperation?.(receipt);
+      },
       diagnostics: owned ? { capture: owned.capture, onFailure: owned.onFailure } : codex.providerDiagnostics,
       imageAcceptance: codex.qualification?.imageAcceptance,
       qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,

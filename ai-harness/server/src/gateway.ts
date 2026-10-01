@@ -3,6 +3,7 @@ import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
 import type { ProviderBoundaryCapture, ProviderFailure } from "./provider-diagnostics.js";
 import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT, type ResponsesDiagnostic } from "./codex-responses.js";
 import { GatewayOwnership, type OwnershipOptions, type SettlementQuery } from "./gateway-ownership.js";
+import { parseCodexTurnMetadata, validateCodexMetadataAuthority, type CodexMetadataAuthority, type CodexTurnMetadata, type CodexNativeOperationReceipt } from "./codex-turn-metadata.js";
 import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
 import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
 import {
@@ -44,6 +45,8 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  nativeMetadataAuthority?: (input:{requestId:string;sessionId:string;metadata:CodexTurnMetadata}) => CodexMetadataAuthority|undefined;
+  onNativeOperation?: (receipt:CodexNativeOperationReceipt) => void;
   ownership?: OwnershipOptions;
   /** Explicit host acceptance capture only; raw bytes never enter normal logs. */
   diagnostics?: {
@@ -734,6 +737,12 @@ export function createGateway(options: GatewayOptions): Gateway {
     const ownedRequest = ownership.begin(sessionId);
     const requestedModel = (request.body as any)?.model;
     const model = typeof requestedModel === "string" && [MODEL, MIMO_MODEL, FRONTIER_MODEL].includes(requestedModel) ? requestedModel : MODEL;
+    const reportedMetadata=isResponses?parseCodexTurnMetadata(request.headers["x-codex-turn-metadata"]):undefined;
+    let nativeOperation:Omit<CodexNativeOperationReceipt,"phase"|"lane">|undefined;
+    if(reportedMetadata)try{
+      const authority=options.nativeMetadataAuthority?.({requestId:ownedRequest.id,sessionId,metadata:reportedMetadata});
+      if(authority){const provenance=validateCodexMetadataAuthority(authority,sessionId,reportedMetadata);ownership.annotateNative(ownedRequest,reportedMetadata);nativeOperation={requestId:ownedRequest.id,sessionId,model,metadata:reportedMetadata,provenance,nativeSemanticAcceptance:"NOT_TESTED"};options.onNativeOperation?.({...nativeOperation,phase:"received"});}
+    }catch{/* Missing/unqualified attribution remains unknown; never inferred from prompt/body prose. */}
     const capture = (phase: ProviderBoundaryCapture["phase"], bytes: Buffer, lane?: string) => {
       try { options.diagnostics?.capture?.({ requestId: ownedRequest.id, sessionId, model, phase, bytes, lane }); } catch { /* Diagnostics cannot change ownership. */ }
     };
@@ -992,6 +1001,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       }
     }
     ownership.transition(ownedRequest, "accepted", lane.upstream.alias);
+    if(nativeOperation)try{options.onNativeOperation?.({...nativeOperation,lane:lane.upstream.alias,phase:"accepted"});}catch{/* Observer never owns settlement. */}
     lane.dispatched = true;
     lane.ownerSettled = false;
     const payload = mimoPayload ?? JSON.stringify({ ...body, model: lane.upstream.alias });
@@ -1030,7 +1040,7 @@ export function createGateway(options: GatewayOptions): Gateway {
                 ? { completionTokens }
                 : {}),
               source:
-                "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
+                nativeOperation ? `gateway.native-reported.${nativeOperation.metadata.request_kind}.prompt_tokens` : "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
             });
         } catch {
           /* A telemetry consumer must not alter inference transport. */
@@ -1054,6 +1064,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       const settle = (confirmed: boolean) => {
         if (settled) return;
         settled = true;
+        if(nativeOperation)try{options.onNativeOperation?.({...nativeOperation,lane:lane.upstream.alias,phase:confirmed?"settled":"uncertain"});}catch{/* Native operation observation is separate from semantic acceptance. */}
         clearTimeout(timeout);
         settlementAbort.abort();
         active.delete(upstream);

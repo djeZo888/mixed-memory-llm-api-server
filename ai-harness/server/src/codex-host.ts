@@ -9,6 +9,10 @@ import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwe
 import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
+  nativeMetadataAuthority?: GatewayOptions["nativeMetadataAuthority"];
+  onNativeOperation?: GatewayOptions["onNativeOperation"];
+  retentionTurnKind?:CodexRuntime["retentionTurnKind"];
+  ordinaryMemoryAdmission?: CodexRuntime["ordinaryMemoryAdmission"];
   protocolQualified: true;
   /** Disabled until root reviews actual Linux receipt-channel acceptance. */
   nativeReceiptPolicy?: CodexReceiptPolicy;
@@ -54,11 +58,17 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.outputLimit !== undefined && (!Number.isSafeInteger(qualification.outputLimit) || qualification.outputLimit < 1 || qualification.outputLimit > 65536))
     throw Error("Invalid trusted Codex output reservation");
   if (qualification?.readOriginalProbe && qualification.nativeReceiptPolicy?.linuxTransportQualified !== true) throw Error("Original probes require reviewed Linux receipt transport");
+  if (qualification?.ordinaryMemoryAdmission && !qualification.nativeReceiptPolicy) throw Error("Ordinary memory requires genuine native receipt transport");
   if (qualification?.textOnlyPolicy && (!qualification.nativeReceiptPolicy || !qualification.authorizeNativeTurn)) throw Error("Text-only policy requires receipt transport and observed native admission");
   if (qualification?.readOriginalProbe && (!qualification.textOnlyPolicy || !qualification.authorizeOriginalRead)) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
   if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
+    retentionTurnKind:qualification?.retentionTurnKind,
+    ordinaryMemoryAdmission: qualification?.ordinaryMemoryAdmission ? async (input,signal) => {
+      if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Ordinary memory lacks genuine current launch receipt");
+      await qualification.ordinaryMemoryAdmission!(input,signal);
+    } : undefined,
     pin: CODEX_PIN, protocolQualified: !!qualification,
     nativeReceiptsRequired: !!qualification?.nativeReceiptPolicy,
     parentArtifactScope: qualification?.parentArtifactScope,
@@ -85,7 +95,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
     imageToolEnabled: qualification?.imageJobsQualified === true,
     delegationEnabled: qualification?.nativeDelegationQualified === true,
-    maxChildren: 4,
+    maxChildren: qualification?.retentionTurnKind ? 1 : 4,
     qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,

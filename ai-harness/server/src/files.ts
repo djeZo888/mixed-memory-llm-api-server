@@ -151,7 +151,7 @@ export class Files {
       await pipeline(input, limit, handle.createWriteStream());
       if ((input as Readable & { truncated?: boolean }).truncated)
         throw new ApiError(413, "upload_too_large", "Upload exceeds 50 MiB");
-      return this.store.saveFile({
+      const saved = this.store.saveFile({
         id,
         sessionId,
         kind: "attachment",
@@ -160,6 +160,8 @@ export class Files {
         mimeType: mimeType.slice(0, 200),
         size,
       });
+      await this.retainOriginal(sessionId,saved.id);
+      return saved;
     } catch (e) {
       await handle.close().catch(() => {});
       await fs.rm(dest, { force: true });
@@ -170,6 +172,23 @@ export class Files {
     if (f.kind !== "attachment") return;
     await fs.rm(path.join(this.root, "uploads", f.path), { force: true });
     this.store.db.prepare("DELETE FROM files WHERE id=?").run(f.id);
+  }
+  /** Only registered immutable owned snapshots. No caller path or protected runner file reads. */
+  async retainOriginal(sessionId: string, fileId: string) {
+    this.store.getSession(requireId(sessionId)); requireId(fileId);
+    const row = this.store.db.prepare("SELECT id FROM files WHERE session_id=? AND id=?").get(sessionId,fileId);
+    if (!row) throw new ApiError(404,"original_not_found","Owned registered file not found");
+    const file = this.store.file(String(row.id));
+    const names = [file.name,file.sourcePath ?? ""].join("/");
+    if (/(?:^|[\\/])(?:\.env(?:\.[^/]*)?|auth\.json|credentials(?:\.[^/]*)?|id_(?:rsa|ed25519)|runner-config\.[^/]*|config\.toml|models\.json)(?:$|[\\/])/i.test(names))
+      return this.store.memory.retain(sessionId,"file",file.id,undefined,"protected");
+    const { handle, stat } = await this.openGuarded(path.join(this.root,file.kind === "artifact" ? "artifacts" : "uploads"),file.path);
+    try {
+      if (stat.size > 16 * 1024 * 1024) return this.store.memory.retain(sessionId,"file",file.id,undefined,"too_large");
+      const bytes = await handle.readFile(), after = await handle.stat();
+      if (bytes.length !== stat.size || after.size !== stat.size || after.mtimeMs !== stat.mtimeMs || after.ctimeMs !== stat.ctimeMs) throw new ApiError(409,"original_changed","Registered file changed during retention");
+      return this.store.memory.retain(sessionId,"file",file.id,bytes);
+    } finally { await handle.close(); }
   }
   /** Reuse immutable bytes by opaque ID, with the same workspace boundary as handoff. */
   async referenceAttachment(sessionId: string, fileId: string) {
@@ -373,7 +392,7 @@ export class Files {
         bounded,
         target.createWriteStream(),
       );
-      return this.store.saveFile({
+      const saved = this.store.saveFile({
         id,
         sessionId,
         kind: "artifact",
@@ -385,6 +404,8 @@ export class Files {
         sourcePath: relative,
         size: bytes,
       });
+      await this.retainOriginal(sessionId,saved.id);
+      return saved;
     } catch (e) {
       await fs.rm(dest, { force: true });
       throw e;

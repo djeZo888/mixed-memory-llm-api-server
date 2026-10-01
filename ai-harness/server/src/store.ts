@@ -1,4 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
+import { SessionMemory } from "./session-memory.js";
+import { SessionCheckpoint } from "./session-checkpoint.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { EventEmitter } from "node:events";
@@ -77,9 +79,11 @@ const now = () => new Date().toISOString();
 const decode = <T>(v: unknown): T => JSON.parse(String(v));
 export class Store {
   readonly db: DatabaseSync;
+  readonly memory!: SessionMemory;
+  readonly checkpoints!: SessionCheckpoint;
   readonly events = new EventEmitter();
   constructor(
-    databasePath: string,
+    readonly databasePath: string,
     private readonly workspaceRoot?: string,
     private readonly options?: { mode: "offline-recovery" },
   ) {
@@ -135,6 +139,9 @@ export class Store {
     }
     this.recoverLegacyFiles();
     this.recoverLegacyActivities();
+    this.memory = new SessionMemory(this);
+    this.checkpoints = new SessionCheckpoint(this);
+    this.checkpoints.recoverInterrupted();
     // A process restart never replays a queued prompt or a tool effect.
     this.db.exec("BEGIN IMMEDIATE");
     try {

@@ -131,6 +131,7 @@ export class Broker {
       if (existing) return existing;
     }
     const admit = (s: StoredSession) => {
+      if (s.engineKind === "codex") this.store.memory.bridge(s.id).assertContinuationAllowed();
       assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
       if (kind === "handoff")
         assertEngineAvailable(handoffEngineKind ?? s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
@@ -282,6 +283,7 @@ export class Broker {
   private async runner(
     s: StoredSession,
     onUpdate: (update: EngineUpdate) => void,
+    run: Run,
   ) {
     // Update callbacks are per turn; an existing runner reads a mutable dispatcher.
     let runner = this.runners.get(s.id) as
@@ -311,7 +313,9 @@ export class Broker {
       dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
       workspace: this.files.workspace(s.workspaceId),
+      onNativeLifecycle: e => this.store.checkpoints.recordNativeObservation(s.id,run.id,e),
       nativeSessionId: s.nativeSessionId,
+      ...(s.engineKind === "codex" ? { sessionMemory: this.store.memory.bridge(s.id) } : {}),
       launcher: this.options.launcher,
       gatewayUrl: s.engineKind === "codex" ? this.options.codexGatewayUrl ?? this.options.gatewayUrl : this.options.gatewayUrl,
       gatewayToken: token,
@@ -363,7 +367,13 @@ export class Broker {
       );
       const update = (u: EngineUpdate) => {
         if (this.active.get(s.workspaceId) !== active) return;
-        if (u.type === "text") {
+        if (u.type === "tool_original") {
+          const owner = this.store.getSession(s.id);
+          if (owner.engineKind !== "codex" || owner.nativeSessionId !== u.nativeThreadId || owner.nativeState.activeTurnId !== u.nativeTurnId)
+            throw Error("Unowned terminal original");
+          this.store.memory.retain(s.id,"tool",`${run.id}:tool:${u.nativeItemId}`,Buffer.from(u.rawUtf8),u.nativeTruncated ? "native_truncated" : "complete");
+          if (u.outputUtf8 !== undefined) this.store.memory.retain(s.id,"tool",`${run.id}:output:${u.nativeItemId}`,Buffer.from(u.outputUtf8),u.nativeTruncated ? "native_truncated" : "complete");
+        } else if (u.type === "text") {
           if (!u.text && !u.replace) return;
           const thought = u.channel === "thought";
           const id = messageId(u.nativeMessageId, thought);
@@ -465,6 +475,7 @@ export class Broker {
           if (u.kind === "compaction")
             this.store.setStatus(s.id, "compacting", run.id);
         } else if (u.type === "compaction") {
+          if (s.engineKind === "codex") this.store.checkpoints.observeCompaction(s.id,run.id,u.compactionId,u.status);
           const label =
             u.status === "start"
               ? "Compaction started"
@@ -534,7 +545,8 @@ export class Broker {
       };
       if (this.closing)
         throw new Error("Server is shutting down before engine launch");
-      const engine = await this.runner(s, update);
+      if (s.engineKind === "codex") this.store.checkpoints.prepare(s.id,run.id,run.kind,s.nativeSessionId);
+      const engine = await this.runner(s, update, run);
       const cancelBeforePrompt = async () => {
         try {
           await engine.cancel();
@@ -598,7 +610,7 @@ export class Broker {
               ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\n`
               : "";
             promptOutcome = await engine.prompt(
-              priorContext + (currentImageContext
+              (s.engineKind === "codex" ? this.store.memory.bridge(s.id).continuationText() : "") + priorContext + (currentImageContext
                 ? `${currentImageContext}\n\nCurrent user request (run ${run.id}):\n${requestText}`
                 : `${handoff ? "Current user request:\n" : ""}${requestText}`),
               attachments,
@@ -662,6 +674,10 @@ export class Broker {
         active.cancelled ? "cancelled" : "completed",
         active.cancelled ? undefined : finalCandidate,
       );
+      if (s.engineKind === "codex") {
+        this.store.memory.indexHistory(s.id);
+        this.store.checkpoints.finish(s.id,run.id,active.cancelled ? "cancelled" : "completed");
+      }
       success = true;
     } catch (error) {
       // Stop can reject the native prompt before its accepted inference drains.
@@ -750,6 +766,8 @@ export class Broker {
           run.id,
         );
     } finally {
+      if (!success && this.store.db.prepare("SELECT id FROM h041_session_checkpoints WHERE session_id=? AND run_id=?").get(run.sessionId,run.id))
+        this.store.checkpoints.finish(run.sessionId,run.id,active.cancelled ? "cancelled" : "failed");
       if (!success)
         for (const assistantId of assistantIds)
           this.store.emit(

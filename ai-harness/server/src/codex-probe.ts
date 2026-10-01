@@ -1,6 +1,7 @@
 /** Host-only immutable original scope. Never construct from a chat/request payload. */
-import { codexReceiptProvenance, isVerifiedCodexSettlementReceipt, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
+import { codexReceiptProvenance, isVerifiedCodexSettlementReceipt, isHistoricalCodexReceipt, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { createHash } from "node:crypto";
+import { assertAuthenticatedCodexHandoff, type AuthenticatedCodexHandoff } from "./codex-policy-handoff.js";
 export interface CodexReadOriginalProbe {
   readonly sessionId: string;
   readonly runId: string;
@@ -51,16 +52,27 @@ export async function readCodexOriginal(probe: CodexReadOriginalProbe, args: unk
 
 /** Trusted H041 source entry. This capability is not native qualification. */
 export const CODEX_H041_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T08:05:07Z"), expiresAtMs: Date.parse("2026-10-01T10:05:07Z"), settlementReserveMs: 120000 });
+export const CODEX_H041_CONTINUATION_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T09:11:06.096969Z"), expiresAtMs: Date.parse("2026-10-01T11:11:06.096969Z"), settlementReserveMs: 120000 });
+export const CODEX_H041_DELIVERY_WINDOW=Object.freeze({startAtMs:Date.parse("2026-10-01T10:07:11.972488Z"),expiresAtMs:Date.parse("2026-10-01T13:07:11.972488Z"),settlementReserveMs:120000});
 export interface CodexTextOnlyPolicy {
   readonly sessionId: string; readonly runId: string;
-  readonly mode: "summary-only" | "text-only-parent" | "read-original" | "parent-artifacts";
+  readonly mode: "summary-only" | "text-only-parent" | "read-original" | "parent-artifacts" | "retention-parent";
+  readonly collaborationVersion?:"v1"|"v2";
   readonly configSha256: string; readonly modelCatalogSha256: string;
   readonly window: typeof CODEX_H041_WINDOW;
 }
 const policies = new WeakSet<object>();
-export function createCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy, "window">): CodexTextOnlyPolicy {
-  if (!id(input.sessionId) || !id(input.runId) || !["summary-only", "text-only-parent", "read-original", "parent-artifacts"].includes(input.mode) || ![input.configSha256, input.modelCatalogSha256].every(v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v)) || Object.keys(input).sort().join() !== "configSha256,mode,modelCatalogSha256,runId,sessionId") throw Error("Invalid trusted text-only policy");
-  const policy = freeze({ ...input, window: CODEX_H041_WINDOW }); policies.add(policy); return policy;
+function buildCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy, "window">, authorization: typeof CODEX_H041_WINDOW,collaborationVersion?:"v1"|"v2"): CodexTextOnlyPolicy {
+  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW) throw Error("Untrusted source authorization window");
+  if (!id(input.sessionId) || !id(input.runId) || !(collaborationVersion?["retention-parent"]:["summary-only", "text-only-parent", "read-original", "parent-artifacts"]).includes(input.mode) || ![input.configSha256, input.modelCatalogSha256].every(v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v)) || Object.keys(input).sort().join() !== "configSha256,mode,modelCatalogSha256,runId,sessionId") throw Error("Invalid trusted text-only policy");
+  const policy = freeze({ ...input, window: authorization,...(collaborationVersion?{collaborationVersion}:{}) }); policies.add(policy); return policy;
+}
+export function createCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy,"window">) { return buildCodexTextOnlyPolicy(input,CODEX_H041_WINDOW); }
+export function createCodexContinuationPolicy(input: Omit<CodexTextOnlyPolicy,"window">) { return buildCodexTextOnlyPolicy(input,CODEX_H041_CONTINUATION_WINDOW); }
+export function createCodexDeliveryPolicy(input:Omit<CodexTextOnlyPolicy,"window"|"collaborationVersion">){return buildCodexTextOnlyPolicy(input,CODEX_H041_DELIVERY_WINDOW);}
+export function createCodexRetentionParentPolicy(input:Omit<CodexTextOnlyPolicy,"window"|"mode">&{collaborationVersion:"v1"|"v2"}){
+ if(input.collaborationVersion!=="v1"&&input.collaborationVersion!=="v2")throw Error("Observed native collaboration version required");
+ const {collaborationVersion,...fields}=input;return buildCodexTextOnlyPolicy({...fields,mode:"retention-parent"},CODEX_H041_DELIVERY_WINDOW,collaborationVersion);
 }
 export function assertCodexTextOnlyPolicy(policy: CodexTextOnlyPolicy, sessionId = policy.sessionId, now = Date.now(), dispatch = true): void {
   if (!policies.has(policy) || policy.sessionId !== sessionId || now < policy.window.startAtMs || now >= policy.window.expiresAtMs - (dispatch ? policy.window.settlementReserveMs : 0)) throw Error("Unowned or expired H041 text-only policy");
@@ -75,6 +87,7 @@ export function codexTextOnlyThreadParams(policy: CodexTextOnlyPolicy, method: "
   // The reviewed mounted config has exactly these three MCP servers. Its digest
   // and the model catalog digest are bound to the producer's launch closure.
   for (const name of ["search", "browser", "image"]) config["mcp_servers." + name + ".enabled"] = false;
+  if(policy.mode==="retention-parent"){config["agents.enabled"]=true;config["agents.max_depth"]=1;config["agents.max_concurrent_threads_per_session"]=1;config["features.multi_agent"]=true;config["features.multi_agent_v2"]=policy.collaborationVersion==="v2";}
   return { sandbox: "read-only", ...(method === "thread/start" ? { environments: [] } : {}), config };
 }
 
@@ -102,16 +115,41 @@ export function reserveCodexParentArtifact(scope: CodexParentArtifactScope, args
 }
 export const CODEX_PARENT_ARTIFACT_SPEC=freeze({type:"function",name:"write_checkpoint_artifact",description:"Register one of this owned checkpoint's two bounded JSON artifacts.",inputSchema:{type:"object",properties:{name:{type:"string"},json:{type:"string",description:"Complete JSON object or array encoded as UTF-8 text."}},required:["name","json"],additionalProperties:false}});
 
-const ownedThreads = new WeakMap<CodexTextOnlyPolicy, { threadId: string; launch: CodexNativeLaunchReceipt; settlement?: CodexNativeSettlementReceipt }>();
-export function recordCodexPolicyThread(policy: CodexTextOnlyPolicy, threadId: string, launch: CodexNativeLaunchReceipt) {
+export interface CodexPolicyOwner { threadId: string; launch: CodexNativeLaunchReceipt; settlement?: CodexNativeSettlementReceipt; rolloutPath?: string; settledTurnId?: string; settledCompaction?:{turnId:string;compactionIds:string[]};checkpoints: {checkpointId:string;turnId:string;callId:string;name:string;artifactId:string;sha256:string}[]; pendingFreshLaunch?: boolean }
+const ownedThreads = new WeakMap<CodexTextOnlyPolicy, CodexPolicyOwner>();
+export function codexPolicyOwner(policy: CodexTextOnlyPolicy) { const owner=ownedThreads.get(policy);return owner?freeze({...owner,checkpoints:owner.checkpoints.map(c=>({...c}))}):undefined; }
+export function recordCodexPolicyThread(policy: CodexTextOnlyPolicy, threadId: string, launch: CodexNativeLaunchReceipt, rolloutPath?:string) {
   if (!codexReceiptProvenance(launch) || launch.sessionId!==policy.sessionId || launch.runId!==policy.runId || !id(threadId)) return;
   const old=ownedThreads.get(policy); if (old && old.threadId!==threadId) throw Error("Policy changed owned native thread");
-  ownedThreads.set(policy,{threadId,launch});
+  ownedThreads.set(policy,{threadId,launch,rolloutPath:rolloutPath ?? old?.rolloutPath,checkpoints:old?.checkpoints ?? []});
+}
+/** Called only after the real canonical artifact completion and registrar digest match. */
+export function recordCodexPolicyCheckpoint(policy:CodexTextOnlyPolicy,threadId:string,input:CodexPolicyOwner["checkpoints"][number]) {
+  const owner=ownedThreads.get(policy); if (!owner || !codexReceiptProvenance(owner.launch)) return;
+  if (owner.threadId!==threadId || !["parent-artifacts","retention-parent"].includes(policy.mode)) throw Error("Unowned consumed parent checkpoint");
+  if (owner.checkpoints.some(c=>c.callId===input.callId || (c.checkpointId===input.checkpointId && c.name===input.name))) throw Error("Replayed consumed checkpoint"); owner.checkpoints.push(Object.freeze({...input}));
+}
+export function recordCodexPolicySuccessfulTurn(policy:CodexTextOnlyPolicy,turnId:string) {
+  const owner=ownedThreads.get(policy); if (owner?.settlement && owner.settlement.cleanupOk && id(turnId)) owner.settledTurnId=turnId;
+}
+export function recordCodexPolicySuccessfulCompaction(policy:CodexTextOnlyPolicy,turnId:string,compactionIds:string[]) {
+  const owner=ownedThreads.get(policy);if(owner?.settlement&&owner.settlement.cleanupOk&&id(turnId)&&compactionIds.length&&compactionIds.every(id)){owner.settledTurnId=turnId;owner.settledCompaction={turnId,compactionIds:[...compactionIds]};}
+}
+/** Host-sealed historical ownership alone never authorizes dispatch. Engine checks a NEW launch before resume. */
+export function stageCodexPolicyAdoption(policy:CodexTextOnlyPolicy,owner:CodexPolicyOwner,cap:AuthenticatedCodexHandoff) {
+  assertAuthenticatedCodexHandoff(cap,"owner",{threadId:owner.threadId,checkpoints:owner.checkpoints,settledTurnId:owner.settledTurnId,settledCompaction:owner.settledCompaction});
+  if (!policies.has(policy) || !owner.settlement || !isHistoricalCodexReceipt(owner.launch) || !codexReceiptProvenance(owner.launch) || (!owner.checkpoints.length&&!owner.settledCompaction) || owner.launch.sessionId!==policy.sessionId) throw Error("Invalid historical policy adoption");
+  ownedThreads.set(policy,{...owner,pendingFreshLaunch:true});
+}
+export function validateCodexPolicyFreshLaunch(policy:CodexTextOnlyPolicy,launch:CodexNativeLaunchReceipt) {
+  const owner=ownedThreads.get(policy); if (!owner?.pendingFreshLaunch) return;
+  if (!codexReceiptProvenance(launch) || isHistoricalCodexReceipt(launch) || launch.nonce===owner.launch.nonce || launch.sessionId!==policy.sessionId || launch.runId!==policy.runId || launch.container.profileDir!==owner.launch.container.profileDir || launch.container.workspace!==owner.launch.container.workspace || launch.sources["codex/config.toml"]!==policy.configSha256 || launch.sources["codex/models.json"]!==policy.modelCatalogSha256 || JSON.stringify(launch.sources)!==JSON.stringify(owner.launch.sources)) throw Error("Fresh adopted launch/source scope mismatch");
+  owner.pendingFreshLaunch=false;
 }
 export function recordCodexPolicySettlement(policy: CodexTextOnlyPolicy, receipt: CodexNativeSettlementReceipt) {
   const owner=ownedThreads.get(policy);
   if (owner && isVerifiedCodexSettlementReceipt(receipt) && codexReceiptProvenance(receipt) && receipt.cleanupOk && receipt.nonce===owner.launch.nonce && receipt.containerId===owner.launch.container.id) owner.settlement=receipt;
 }
 export function codexPolicyOwnsSettledThread(policy: CodexTextOnlyPolicy, threadId: string): boolean {
-  const owner=ownedThreads.get(policy); return ["text-only-parent","parent-artifacts"].includes(policy.mode) && !!owner?.settlement && owner.threadId===threadId;
+  const owner=ownedThreads.get(policy); return ["text-only-parent","parent-artifacts","retention-parent"].includes(policy.mode) && !!owner?.settlement && owner.threadId===threadId;
 }

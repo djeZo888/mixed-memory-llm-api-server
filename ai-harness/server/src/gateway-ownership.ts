@@ -9,6 +9,7 @@ export interface RequestOwnership {
     lane?: string;
     updatedAt: string;
     accounting?: { inputTokens?: number; reservedOutputTokens?: number; promptTokens?: number; completionTokens?: number };
+    nativeMetadata?: import("./codex-turn-metadata.js").CodexTurnMetadata;
 }
 export interface SettlementQuery {
     sessionId: string;
@@ -38,6 +39,7 @@ export class GatewayOwnership {
             this.records.set(r.id, { ...r, state: "uncertain" });
     } }
     registerSession(sessionId: string) { this.knownSessions.add(sessionId); }
+    annotateNative(r:RequestOwnership,metadata:import("./codex-turn-metadata.js").CodexTurnMetadata){r.nativeMetadata=metadata;this.write(r);}
     begin(sessionId: string): RequestOwnership { this.registerSession(sessionId); const r: RequestOwnership = { id: randomUUID(), sessionId, state: "queued", updatedAt: new Date().toISOString() }; this.records.set(r.id, r); this.write(r); return r; }
     transition(r: RequestOwnership, state: RequestOwnershipState, lane?: string) { r.state = state; if (lane)
         r.lane = lane; r.updatedAt = new Date().toISOString(); this.write(r); if (state === "settled")

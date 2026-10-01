@@ -2,6 +2,7 @@
 import { constants, openSync, closeSync, fstatSync, readFileSync, lstatSync, mkdirSync, mkdtempSync, writeFileSync, realpathSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
 import { join, dirname, resolve, sep } from "node:path";
+import { assertAuthenticatedCodexHandoff, type AuthenticatedCodexHandoff } from "./codex-policy-handoff.js";
 export const CODEX_RECEIPT_SOURCES = ["run-codex.sh", "engine/task-egress.py", "engine/redact-acp.py", "engine/codex_receipts.py", "security/chromium-seccomp.json", "codex/config.toml", "codex/models.json"] as const;
 export interface CodexReceiptPolicy {
   /** Root-reviewed actual Linux systemd-scope/file-channel acceptance, absent by default. */
@@ -29,6 +30,10 @@ const receiptProvenance = new WeakMap<object, Readonly<{ rawPath: string; rawSha
 export function getCodexReceiptUtf8(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt): string | undefined { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? rawReceiptBytes.get(receipt) : undefined; }
 export function codexReceiptProvenance(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt) { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? receiptProvenance.get(receipt) : undefined; }
 const verifiedLaunch = new WeakSet<object>(), verifiedSettlement = new WeakSet<object>();
+const validationRecords = new WeakMap<object, Readonly<{binding:CodexReceiptBinding;observedProducer:CodexReceiptIdentity;validatedAtMs:number}>>();
+const historicalReceipts = new WeakSet<object>();
+export function codexReceiptValidation(receipt: CodexNativeLaunchReceipt) { return validationRecords.get(receipt); }
+export function isHistoricalCodexReceipt(receipt: object) { return historicalReceipts.has(receipt); }
 export const isVerifiedCodexLaunchReceipt = (v: unknown): v is CodexNativeLaunchReceipt => !!v && typeof v === "object" && verifiedLaunch.has(v);
 export const isVerifiedCodexSettlementReceipt = (v: unknown): v is CodexNativeSettlementReceipt => !!v && typeof v === "object" && verifiedSettlement.has(v);
 const hex = (v: unknown, n = 64) => typeof v === "string" && new RegExp(`^[0-9a-f]{${n}}$`).test(v);
@@ -53,7 +58,7 @@ export function validateCodexLaunchReceipt(value: unknown, binding: CodexReceipt
   const expectedMounts = [{source:binding.profileDir,destination:binding.profileDir,rw:true,type:'bind'}, {source:binding.workspace,destination:binding.workspace,rw:true,type:'bind'}, ro(join(dirname(binding.deploymentDir),'tools/image/image-mcp.mjs'),'/opt/ai-harness/tools/image/image-mcp.mjs'),ro(join(dirname(binding.deploymentDir),'tools/image/image.mjs'),'/opt/ai-harness/tools/image/image.mjs'),ro(join(binding.deploymentDir,'codex',binding.imageJobsQualified?'config-image-jobs.toml':'config.toml'),join(binding.profileDir,'codex-home/config.toml')),ro(join(binding.deploymentDir,'codex/models.json'),'/opt/sova/codex/models.json'),ro(join(binding.deploymentDir,'codex/skills/sova-local-tools'),join(binding.profileDir,'codex-home/skills/sova-local-tools'))];
   const sortMounts = (ms: any[]) => ms.slice().sort((a,b)=>(a.source+':'+a.destination).localeCompare(b.source+':'+b.destination));
   if (JSON.stringify(sortMounts(c.mounts)) !== JSON.stringify(sortMounts(expectedMounts)) || JSON.stringify(c.securityOpt.slice().sort()) !== JSON.stringify(['no-new-privileges','seccomp='+join(binding.deploymentDir,'security/chromium-seccomp.json')].sort())) throw Error('Actual native mount/security policy mismatch');
-  freeze(value); verifiedLaunch.add(value); return value as CodexNativeLaunchReceipt;
+  freeze(value); verifiedLaunch.add(value); const validation={binding:structuredClone(binding),observedProducer:structuredClone(observedProducer),validatedAtMs:now}; freeze(validation); validationRecords.set(value,validation); return value as CodexNativeLaunchReceipt;
 }
 export function validateCodexSettlementReceipt(value: unknown, binding: CodexReceiptBinding, launch: CodexNativeLaunchReceipt, now = Date.now()): CodexNativeSettlementReceipt {
   if (!object(value) || !isVerifiedCodexLaunchReceipt(launch) || !exact(value, ["schema","nonce","runId","sessionId","checkedAtMs","producer","containerName","containerId","engineExitStatus","requestedStop","cliReaped","rmExit","existsExit","pipesJoined","cleanupOk"]) || value.schema !== 'codex-settlement-v1' || !common(value,binding,now) || value.checkedAtMs < launch.checkedAtMs || JSON.stringify(value.producer) !== JSON.stringify(launch.producer) || value.containerName !== launch.container.name || value.containerId !== launch.container.id || !(value.engineExitStatus === null || Number.isSafeInteger(value.engineExitStatus)) || ['requestedStop','cliReaped','pipesJoined','cleanupOk'].some(k => typeof value[k] !== 'boolean') || ['rmExit','existsExit'].some(k => !(value[k] === null || Number.isSafeInteger(value[k]))) || value.cleanupOk !== (value.cliReaped && value.rmExit === 0 && value.existsExit === 1 && value.pipesJoined)) throw Error("Untrusted native settlement receipt");
@@ -76,6 +81,20 @@ export function observeCodexProducer(pid: number, childPid: number, uid: number)
   const before = stat(pid); const status = readFileSync(`/proc/${pid}/status`,'utf8'); const ids = status.match(/^Uid:\s+(\d+)\s+(\d+)/m); if (!ids || Number(ids[1]) !== uid || Number(ids[2]) !== uid) throw Error('Receipt producer UID mismatch');
   const cg = readFileSync(`/proc/${pid}/cgroup`,'utf8').trim(); if (!cg.startsWith('0::/') || cg.includes('\n') || stat(pid).start !== before.start) throw Error('Receipt producer identity changed');
   return { pid, startTicks: before.start, uid, bootId, cgroupPath: cg.slice(3) };
+}
+/** Historical only. Caller must first authenticate the host-sealed handoff; never a current PID proof. */
+export function revalidateRetainedCodexReceipts(input: {
+  launchPath:string;settlementPath:string;launchSha256:string;settlementSha256:string;
+  binding:CodexReceiptBinding;observedProducer:CodexReceiptIdentity;originalValidatedAtMs:number;
+},cap:AuthenticatedCodexHandoff) {
+  assertAuthenticatedCodexHandoff(cap,"receipts",input);
+  const launchValue=readCodexReceiptFile(input.launchPath,input.binding.uid), settlementValue=readCodexReceiptFile(input.settlementPath,input.binding.uid);
+  if (!object(launchValue) || !object(settlementValue) || receiptProvenance.get(launchValue)?.rawSha256!==input.launchSha256 || receiptProvenance.get(settlementValue)?.rawSha256!==input.settlementSha256 || !Number.isSafeInteger(input.originalValidatedAtMs) || input.originalValidatedAtMs < launchValue.checkedAtMs || input.originalValidatedAtMs > launchValue.checkedAtMs+15000) throw Error("Changed original native receipt or validation chronology");
+  const launch=validateCodexLaunchReceipt(launchValue,input.binding,input.observedProducer,input.originalValidatedAtMs);
+  const settlement=validateCodexSettlementReceipt(settlementValue,input.binding,launch,settlementValue.checkedAtMs);
+  if (!settlement.cleanupOk) throw Error("Historical native parent did not settle");
+  transportReadObjects.add(launch);transportReadObjects.add(settlement);historicalReceipts.add(launch);historicalReceipts.add(settlement);
+  return {launch,settlement};
 }
 export function createCodexReceiptChannel(input: { sessionId: string; runId: string; profileDir: string; workspace: string; launcherPath: string; imageJobsQualified?: boolean }, policy: CodexReceiptPolicy) {
   const uid = process.getuid?.(); if (process.platform !== 'linux' || !uid || policy.linuxTransportQualified !== true) throw Error('Native receipt transport unqualified');
