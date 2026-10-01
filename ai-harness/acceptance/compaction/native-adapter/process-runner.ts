@@ -25,10 +25,11 @@ export async function observeApplicationIdentity(pid:number):Promise<Application
   throw Error('application_process_identity_unavailable');
 }
 const id = (p:ApplicationIdentity) => `${p.bootId}:${p.pid}:${p.startTicks}`;
-export async function bounded<T>(operation:Promise<T>,milliseconds:number,code:string):Promise<T> {
+export async function bounded<T>(operation:Promise<T>,milliseconds:number,code:string,signal?:AbortSignal):Promise<T> {
   let timer:ReturnType<typeof setTimeout>|undefined;
-  try{return await Promise.race([operation,new Promise<T>((_,reject)=>{timer=setTimeout(()=>reject(Error(code)),Math.max(1,milliseconds));})]);}
-  finally{if(timer)clearTimeout(timer);}
+  let aborted:(()=>void)|undefined;
+  try{return await Promise.race([operation,new Promise<T>((_,reject)=>{aborted=()=>reject(Error(code+'_cancelled'));signal?.addEventListener('abort',aborted,{once:true});timer=setTimeout(()=>reject(Error(code)),Math.max(1,milliseconds));if(signal?.aborted)aborted();})]);}
+  finally{if(timer)clearTimeout(timer);if(aborted)signal?.removeEventListener('abort',aborted);}
 }
 /** Exact acquired process owner. Failure closes dispatch, never cleanup. */
 export class OwnedApplicationRunner {
@@ -39,6 +40,7 @@ export class OwnedApplicationRunner {
     if(input.operationTimeoutMs!==undefined&&(!Number.isInteger(input.operationTimeoutMs)||input.operationTimeoutMs<1||input.operationTimeoutMs>120000))throw Error('bounded_reviewed_runner_timeout_required');
   }
   identitySnapshot(){if(!this.identity)throw Error('actual_application_identity_absent');return {...this.identity,applicationProcessId:id(this.identity)};}
+  hasAcquiredProcess(){return this.child!==undefined;}
   private cutoff(cleanup=false){const a=reviewedAuthorization(this.input.review);return cleanup?a.expiresAt:a.dispatchCutoffAt;}
   async start(signal?:AbortSignal) {
     if(signal?.aborted)throw Error('owned_application_start_cancelled');
@@ -48,7 +50,7 @@ export class OwnedApplicationRunner {
     if(signal?.aborted)throw Error('owned_application_start_cancelled');
     const child=fork(this.input.workerPath,[this.input.configPath],{execArgv:[],stdio:['ignore','ignore','ignore','ipc'],env:{PATH:'/usr/bin:/bin',HOME:process.env.HOME,USER:process.env.USER,LOGNAME:process.env.LOGNAME}});
     this.child=child; // Ownership before all awaits.
-    this.exits.set(child,new Promise(resolve=>child.once('exit',(code,signal)=>{for(const p of this.pending.values())p.reject(Error('owned_application_exited_no_replay'));this.pending.clear();resolve({code,signal});})));
+    this.exits.set(child,new Promise(resolve=>{child.once('exit',()=>{for(const p of this.pending.values())p.reject(Error('owned_application_exited_no_replay'));this.pending.clear();});child.once('close',(code,signal)=>resolve({code,signal}));})); // close follows exit and owned stdio/IPC closure.
     let readyResolve!:(v:any)=>void,readyReject!:(e:Error)=>void;
     const ready=new Promise<any>((r,j)=>{readyResolve=r;readyReject=j;});void ready.catch(()=>undefined);
     child.on('message',(message:any)=>{
@@ -59,11 +61,11 @@ export class OwnedApplicationRunner {
     child.once('exit',()=>readyReject(Error('owned_application_exited_before_ready')));
     try {
       if(!child.pid)throw Error('owned_application_pid_absent');this.identity=await observeApplicationIdentity(child.pid);
-      const ack=await bounded(ready,Math.min(this.input.operationTimeoutMs??120000,cutoff-Date.now()),'owned_worker_start_deadline');
+      const ack=await bounded(ready,Math.min(this.input.operationTimeoutMs??120000,cutoff-Date.now()),'owned_worker_start_deadline',signal);
       if(ack.protocol!=='h041-owned-application-ipc-v1'||ack.configSha256!==this.input.configSha256)throw Error('actual_worker_ready_config_mismatch');
       if(signal?.aborted)throw Error('owned_application_ready_cancelled');
       await durableFile(join(this.input.hostPrivate,`${child.pid}-${sha256(id(this.identity))}-runner-start.json`),stableJson({...this.identity,source:'owned-application-os-identity',identitySource:this.identity.source,workerSha256:this.input.workerSha256,configSha256:this.input.configSha256,ready:ack}));
-    } catch(error){this.failed=true;await this.shutdownAndConfirm().catch(()=>undefined);throw error;}
+    } catch(error){this.failed=true;try{await this.shutdownAndConfirm();}catch(cleanup){throw new AggregateError([error,cleanup],'owned_start_and_cleanup_failed');}throw error;}
   }
   async call(method:string,args:any={},signal?:AbortSignal) {
     const cleanup=['close','shutdown'].includes(method);

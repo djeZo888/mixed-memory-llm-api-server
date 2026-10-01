@@ -17,7 +17,7 @@ export async function summaryProbe(host: TemporaryHost, input: {
   request: unknown; manifest: ProbeManifest; childBrief?:string; actionId: string; runId: string; signal: AbortSignal;
 }) {
   requireIdentity(input.parentNativeThreadId);
-  if (host.closing || !input.summary.trim() || !/^[a-f0-9]{64}$/.test(input.contextSha256) || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
+  if (host.closing || (!host.authorizeTaskAction&&host.launchHeld()) || !input.summary.trim() || !/^[a-f0-9]{64}$/.test(input.contextSha256) || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
   const ownedAbort = new AbortController();
   const totalDeadlineMs = Math.max(1, Math.min(120000, host.dispatchCutoffAt - Date.now()));
   const signal = AbortSignal.any([input.signal, ownedAbort.signal, AbortSignal.timeout(totalDeadlineMs)]);

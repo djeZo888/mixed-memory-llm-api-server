@@ -156,8 +156,9 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   });
   try {
   const ownership = new GatewayOwnershipLedger(application.store.db).options();
+  const guardedCount=guard.wrap(counts.wrap(host.responses!.countQwen));
   gateway = createGateway({ upstreamKey: inferenceKey, ownership, dispatchHeld: alias => held() || freeze.held(alias),
-    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: guard.wrap(counts.wrap(async(body,lane,key,signal,context)=>{if(!context?.requestId)throw Error('actual_carrier_request_context_required');await authorizeTaskAction(guard.authenticationSession(context.requestId),context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_before_actual_count');const result=await host.responses!.countQwen(body,lane,key,signal,context);await authorizeTaskAction(guard.authenticationSession(context.requestId),context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_after_actual_count');return result;})) },
+    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: async(body,lane,key,signal,context)=>{if(!context?.requestId)throw Error('actual_carrier_request_context_required');const sessionId=guard.authenticationSession(context.requestId);await authorizeTaskAction(sessionId,context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_before_actual_count');const result=await guardedCount(body,lane,key,signal,context);await authorizeTaskAction(sessionId,context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_after_all_count_capture_awaits');return result;} },
     diagnostics: { capture: guard.capture }, activeTimeoutMs: 120000, queueTimeoutMs: 120000 });
     // Fixed bind only. EADDRINUSE is retained and propagated; no fallback/sweep.
     await gateway.app.listen({ host: '127.0.0.1', port: 8081 });

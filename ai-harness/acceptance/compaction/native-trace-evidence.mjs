@@ -3,8 +3,59 @@
 import {createHash} from 'node:crypto';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const integer=v=>Number.isSafeInteger(v)&&v>=0;
+const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
+const equal=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
 const option=(v,name)=>{if(v==='None')return null;const m=typeof v==='string'&&/^Some\((\d+)\)$/.exec(v);if(!m||!integer(Number(m[1])))throw Error('native_trace_exact_debug_option_'+name);return Number(m[1]);};
 const date=v=>{const n=typeof v==='string'?Date.parse(v):NaN;if(!Number.isFinite(n))throw Error('native_trace_finite_timestamp_required');return n;};
+/** Native JSON preserves fractional UTC precision. Do not round two source
+ * events into one millisecond or fill a native i64 with fractional host time. */
+export function nativeTimestampNs(value){
+ const m=typeof value==='string'&&/^(\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d)(?:\.(\d{1,9}))?Z$/.exec(value);
+ if(!m)throw Error('original_native_UTC_precision_required');const whole=Date.parse(m[1]+'Z');
+ if(!Number.isSafeInteger(whole)||whole<0||new Date(whole).toISOString().slice(0,19)!==m[1])throw Error('invalid_native_UTC_date');
+ return BigInt(whole)*1000000n+BigInt((m[2]??'').padEnd(9,'0')||'0');
+}
+/** Original V2 native integer epoch-ms, source-copied before compact request.
+ * Its host observedAt and pipe-arrival order provide no native timestamp. */
+export function nativeCompactionStart(frame,threadId,turnId){
+ const p=frame?.value?.params;if(frame?.direction!=='from-native'||frame.value?.method!=='item/started'||p?.item?.type!=='contextCompaction'||p.threadId!==threadId||p.turnId!==turnId||typeof p.item.id!=='string'||!Number.isSafeInteger(p.startedAtMs)||p.startedAtMs<0||typeof frame.bytesUtf8!=='string'||sha(frame.bytesUtf8)!==frame.sha256||!equal(JSON.parse(frame.bytesUtf8),frame.value))throw Error('actual_original_native_contextCompaction_startedAtMs_required');
+ return {itemId:p.item.id,startedAtMs:p.startedAtMs,nativeNs:BigInt(p.startedAtMs)*1000000n,frameSha256:frame.sha256};
+}
+function originalTraceLine(lineUtf8){if(typeof lineUtf8!=='string'||!lineUtf8.endsWith('\n')||lineUtf8.slice(0,-1).includes('\n')||Buffer.from(lineUtf8).toString('utf8')!==lineUtf8)throw Error('original_single_utf8_trace_line_required');return JSON.parse(lineUtf8);}
+function nativeTaskIdentity(raw){
+ const spans=[...(Array.isArray(raw.spans)?raw.spans:[]),...(raw.span?[raw.span]:[])],tasks=spans.filter(s=>s?.name==='turn'&&typeof s['thread.id']==='string'&&typeof s['turn.id']==='string');
+ if(!tasks.length||tasks.some(s=>s['thread.id']!==tasks[0]['thread.id']||s['turn.id']!==tasks[0]['turn.id'])||!tasks[0]['thread.id']||!tasks[0]['turn.id'])throw Error('actual_parent_task_span_thread_and_turn_required');
+ return {nativeThreadId:tasks[0]['thread.id'],nativeTurnId:tasks[0]['turn.id']};
+}
+/** Source-reviewed proposed JSON selector. Actual installed formatter readiness
+ * must freeze these exact carriers before this can contribute native evidence. */
+export function parseAutoCallTrace(lineUtf8){
+ const raw=originalTraceLine(lineUtf8),span=raw.span,identity=nativeTaskIdentity(raw);
+ if(raw.target!=='codex_core::session::turn'||raw.level!=='TRACE'||raw.fields?.message!=='new'||span?.name!=='run_auto_compact'||span.reason!=='ContextLimit'||span.phase!=='MidTurn')throw Error('actual_pinned_ContextLimit_MidTurn_auto_call_NEW_required');
+ nativeTimestampNs(raw.timestamp);return {raw,lineUtf8,lineSha256:sha(lineUtf8),...identity,autoCallNativeUtc:raw.timestamp};
+}
+/** Native timestamp-only route is deliberately strict. Same-ms ordering needs
+ * the actual source-reviewed run_auto_compact span from the same stderr stream;
+ * it cannot be resolved by host arrival or a fabricated clock wrapper. */
+export function verifyNativeStartedAtTraceJoin({lines,autoCalls,startFrame,metadata,operation,gateway,producer,resolvedConfig}){
+ if(!producer?.launchNonce||!producer.processId||metadata?.compaction?.trigger!=='auto'||metadata.compaction.reason!=='context_limit'||metadata.compaction.implementation!=='responses'||metadata.compaction.phase!=='mid_turn'||metadata.request_kind!=='compaction'||metadata.thread_id!==operation?.nativeThreadId||metadata.turn_id!==operation.nativeTurnId||metadata.window_id!==`${metadata.thread_id}:${metadata.window_number}`)throw Error('native_trace_canonical_owned_auto_identity');
+ if(operation.method!=='turn/start'||operation.request?.value?.method!=='turn/start'||operation.request.value.params?.threadId!==operation.nativeThreadId||operation.ack?.value?.result?.turn?.id!==operation.nativeTurnId||operation.completed?.value?.params?.turn?.status!=='completed'||!operation.cleanup?.confirmed||!operation.gateway?.confirmed||operation.gateway.nativeThreadId!==operation.nativeThreadId||operation.gateway.nativeTurnId!==operation.nativeTurnId||gateway?.nativeThreadId!==operation.nativeThreadId||gateway.nativeTurnId!==operation.nativeTurnId||gateway.windowId!==metadata.window_id||gateway.contextWindowId!==metadata.context_window_id||gateway.state!=='settled'||typeof gateway.requestId!=='string'||!gateway.requestId)throw Error('actual_owned_RPC_gateway_and_cleanup_required');
+ if(resolvedConfig?.contextWindow!==480000||resolvedConfig.autoCompactTokenLimit!==400000||resolvedConfig.maxOutputTokens!==65536||resolvedConfig.effectiveScope!=='total'||resolvedConfig.tokenBudgetEnabled!==false||resolvedConfig.fallbackBufferTokens!==0||resolvedConfig.postTurnPercent!==0)throw Error('independent_protected_effective_native_config_required');
+ const start=nativeCompactionStart(startFrame,operation.nativeThreadId,operation.nativeTurnId),all=lines.map(x=>({...parsePostSamplingTrace(x.lineUtf8),sequence:x.stderrSequence})).filter(x=>x.nativeTurnId===operation.nativeTurnId);
+ if(autoCalls){
+  const calls=autoCalls.map(x=>({...parseAutoCallTrace(x.lineUtf8),sequence:x.stderrSequence})).filter(x=>x.nativeThreadId===operation.nativeThreadId&&x.nativeTurnId===operation.nativeTurnId);
+  if(calls.length!==1||!integer(calls[0].sequence)||calls[0].sequence<1||!all.length)throw Error('unique_actual_same_owned_AUTO_call_required');
+  const call=calls[0],ordered=[...all,...calls].sort((a,b)=>a.sequence-b.sequence);let sequence=0,at=-1n;
+  for(const event of ordered){const timestamp=nativeTimestampNs(event.raw.timestamp);if(!integer(event.sequence)||event.sequence<=sequence||timestamp<at)throw Error('same_stderr_sequence_and_native_clock_nonregression');const identity=nativeTaskIdentity(event.raw);if(identity.nativeThreadId!==operation.nativeThreadId||identity.nativeTurnId!==operation.nativeTurnId||event.nativeTurnId!==operation.nativeTurnId)throw Error('actual_same_parent_task_ancestry_required');sequence=event.sequence;at=timestamp;}
+  const before=all.filter(x=>x.sequence<call.sequence).sort((a,b)=>a.sequence-b.sequence);if(!before.length)throw Error('actual_success_gate_before_AUTO_call_required');const gate=verifyPostSamplingGate(before.at(-1).lineUtf8),callNs=nativeTimestampNs(call.autoCallNativeUtc);
+  if(callNs>=start.nativeNs+1000000n)throw Error('AUTO_call_after_actual_native_item_bucket');
+  return {status:'SOURCE_VALID',nativeAcceptance:'NOT_TESTED',lineSha256:gate.lineSha256,totalUsageTokens:gate.totalUsageTokens,phase:'mid_turn',autoCallNativeUtc:call.autoCallNativeUtc,autoCallSha256:call.lineSha256,startedAtMs:start.startedAtMs,startFrameSha256:start.frameSha256};
+ }
+ if(all.length!==1||!integer(all[0].sequence)||all[0].sequence<1)throw Error('single_actual_same_owned_turn_gate_required');
+ const gate=verifyPostSamplingGate(all[0].lineUtf8),traceNs=nativeTimestampNs(gate.raw.timestamp);
+ if(traceNs>=start.nativeNs)throw Error('same_ms_or_after_native_start_requires_actual_auto_call_span');
+ return {status:'SOURCE_VALID',nativeAcceptance:'NOT_TESTED',lineSha256:gate.lineSha256,totalUsageTokens:gate.totalUsageTokens,phase:'mid_turn',startedAtMs:start.startedAtMs,startFrameSha256:start.frameSha256};
+}
 export function parsePostSamplingTrace(lineUtf8){
  if(typeof lineUtf8!=='string'||!lineUtf8.endsWith('\n')||lineUtf8.slice(0,-1).includes('\n')||Buffer.from(lineUtf8).toString('utf8')!==lineUtf8)throw Error('original_single_utf8_trace_line_required');
  const raw=JSON.parse(lineUtf8),f=raw.fields;

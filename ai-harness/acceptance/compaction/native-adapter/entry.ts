@@ -100,8 +100,10 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   };
   return createQualifiedNativeAdapter(reviewSnapshot(config.adapterInput as AdapterInput),hooks);
 }
-export async function loadReviewedEntry(configPath:string) {
+export async function loadReviewedEntry(configPath:string,signal?:AbortSignal) {
+  signal?.throwIfAborted();
   const config=JSON.parse((await privateFile(configPath)).toString('utf8')),qualification=await qualifyEntry(config);
+  signal?.throwIfAborted();
   const {canonicalDirectory}=await import('./checkpoint.js');await canonicalDirectory(config.runnerPrivate);
   const workerPath=new URL('./application-worker.js',import.meta.url).pathname;
   const {readFile}=await import('node:fs/promises'),{applicationProxy}=await import('./application-proxy.js');
@@ -109,16 +111,16 @@ export async function loadReviewedEntry(configPath:string) {
   const expected=manifest.runtimeFiles['ai-harness/acceptance/compaction/native-adapter/application-worker.js'];
   if(!expected||sha256(await readFile(workerPath))!==expected)throw Error('actual_reviewed_application_worker_build_required');
   const proxy=applicationProxy({workerPath,workerSha256:expected,configPath,configSha256:sha256(await privateFile(configPath)),hostPrivate:config.runnerPrivate,review:config.bootstrap.review},qualification);
-  return qualifyOwnedEntry(proxy);
+  return qualifyOwnedEntry(proxy,signal);
 }
-export async function qualifyOwnedEntry<T extends {qualifyWorker():Promise<unknown>;shutdown():Promise<unknown>}>(proxy:T):Promise<T>{
-  try{await proxy.qualifyWorker();return proxy;}catch(failure){try{await proxy.shutdown();}catch(cleanup){throw new AggregateError([failure,cleanup],'entry_qualification_and_owned_cleanup_failed');}throw failure;}
+export async function qualifyOwnedEntry<T extends {qualifyWorker(signal?:AbortSignal):Promise<unknown>;shutdown():Promise<unknown>}>(proxy:T,signal?:AbortSignal):Promise<T>{
+  try{signal?.throwIfAborted();await proxy.qualifyWorker(signal);signal?.throwIfAborted();return proxy;}catch(failure){try{await proxy.shutdown();}catch(cleanup){throw new AggregateError([failure,cleanup],'entry_qualification_and_owned_cleanup_failed');}throw failure;}
 }
 /** The brand is checked in this process; the application worker independently
  * reloads the same protected packet. No secret or boolean crosses IPC. */
-export async function loadReviewedCarrierEntry(configPath:string,admission:QualificationTaskAdmission) {
+export async function loadReviewedCarrierEntry(configPath:string,admission:QualificationTaskAdmission,signal?:AbortSignal) {
   if(!isQualificationTaskAdmission(admission))throw Error('actual_A_carrier_admission_required');
-  await carrierForConfig(configPath,admission);
-  return loadReviewedEntry(configPath);
+  await carrierForConfig(configPath,admission,signal);
+  return loadReviewedEntry(configPath,signal);
 }
 export default createNativeAdapter();

@@ -39,9 +39,10 @@ export class CarrierAdmission {
  }
  held(rows:any[],serviceId:string){try{const at=this.latest?.observedAtMs,now=Date.now();if(!Number.isFinite(at)||now<at||now-at>1500||now>=reviewedAuthorization(this.review).dispatchCutoffAt)return true;return carrierRowsHeld(rows,this.binding,serviceId);}catch{return true;}}
 }
-export async function carrierForConfig(configPath:string,provided?:QualificationTaskAdmission){
+export async function carrierForConfig(configPath:string,provided?:QualificationTaskAdmission,signal?:AbortSignal){
+ signal?.throwIfAborted();
  const config=JSON.parse((await privateFile(configPath)).toString('utf8')),binding=validateCarrierBinding(config);
  const admission=provided??loadQualificationTaskAdmission(binding.admissionPath);
  const gate=new CarrierAdmission(admission,binding,config.bootstrap.review);
- await gate.verify(binding.sessionId,'carrier-entry');return gate;
+ await gate.verify(binding.sessionId,'carrier-entry',signal);signal?.throwIfAborted();return gate;
 }

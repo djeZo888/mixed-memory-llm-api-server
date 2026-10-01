@@ -25,6 +25,7 @@ async function domain(path,files,copy=false) {
  else if(s.isFile()){const rel=relative(repo,path),b=await readFile(path);files[rel]=hash(b);if(copy){const target=join(out,rel);await mkdir(dirname(target),{recursive:true,mode:0o700});await copyFile(path,target);}}
 }
 for(const path of ['ai-harness/deploy/engine','ai-harness/deploy/codex','ai-harness/deploy/security','ai-harness/deploy/run-codex.sh'])await domain(join(repo,path),helperFiles,true);
+for(const name of ['qualification_carrier_entry.py','qualification_carrier_host.py','qualification_carrier.py','qualification_guardian.py','local_helper.py','resource_observer.py'])await domain(join(repo,'ai-harness/deploy/admin',name),helperFiles,true);
 // The supplied top-level dependency symlink is retained as an installation
 // input, never committed/copied. Every actual regular dependency byte is pinned.
 const dependencyRoot=join(repo,'ai-harness/server/node_modules');

@@ -9,7 +9,7 @@ import { isQualifiedEntry,STAGE_CAPABILITIES,FULL_CAPABILITIES,type EntryQualifi
 export function applicationProxy(input:RunnerInput,qualification:EntryQualification) {
   const runner=new OwnedApplicationRunner(input),observedSettlements:any[]=[];
   let shutdownResult:Promise<any>|undefined;
-  const shutdown=()=>shutdownResult??=(async()=>{const exit=await runner.shutdownAndConfirm();if(exit.code!==0||exit.signal!==null)throw Error('actual_owned_application_exit_failed');return exit;})();
+  const shutdown=()=>shutdownResult??=(async()=>{if(!runner.hasAcquiredProcess())return {acquired:false,exit:null};const exit=await runner.shutdownAndConfirm();if(exit.code!==0||exit.signal!==null)throw Error('actual_owned_application_exit_failed');return exit;})();
   let ready=false,started=false,runId:string|undefined,session:any;
   const invoke=async(method:string,args:any={})=>{
     if(!ready)throw Error('actual_worker_capability_qualification_required');
@@ -37,12 +37,12 @@ export function applicationProxy(input:RunnerInput,qualification:EntryQualificat
   };
   const approvedCapabilities=[...(qualification.profile==='h041-full-retention-v1'?FULL_CAPABILITIES:STAGE_CAPABILITIES)];
   return {interfaceVersion:'h039-compaction-adapter-v1',kind:'native',get enabled(){return ready;},get capabilities(){return ready?[...approvedCapabilities]:[];},
-    qualifyWorker:async()=>{
+    qualifyWorker:async(signal?:AbortSignal)=>{
       if(!isQualifiedEntry(qualification))throw Error('genuine_entry_qualification_required');
       if(ready||started)throw Error('owned_worker_qualification_duplicate');
-      try{await runner.start();started=true;const actual=await runner.call('qualification');
+      try{await runner.start(signal);started=true;const actual=await runner.call('qualification',{},signal);
         if(actual?.enabled!==true||actual.profile!==qualification.profile||actual.qualificationSha256!==qualification.qualificationSha256||stableJson(actual.capabilities)!==stableJson(approvedCapabilities))throw Error('actual_supported_worker_capabilities_required');
-        ready=true;
+        signal?.throwIfAborted();ready=true;
       }catch(error){try{await shutdown();}catch(cleanup){throw new AggregateError([error,cleanup],'worker_qualification_and_owned_cleanup_failed');}throw error;}
     },
     runtime:async()=>({name:'codex',...qualification.runtime,promptRevision:'kpm-technical-v1'}),

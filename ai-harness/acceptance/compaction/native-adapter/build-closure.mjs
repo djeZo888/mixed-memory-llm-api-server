@@ -32,6 +32,7 @@ export async function verifyInstalledBuild(repository,manifest) {
     if(!path.startsWith('ai-harness/')||path.split('/').includes('..')||typeof digest!=='string'||!/^[a-f0-9]{64}$/.test(digest)||sha(await readFile(join(repository,path)))!==digest)throw Error('installed_source_build_dependency_or_helper_mismatch');
   }
   for(const suffix of ['run-codex.sh','redact-acp.py','task-egress.py','codex_receipts.py','codex/config.toml','codex/models.json','security/task-egress-policy.py'])if(!Object.keys(manifest.helperFiles).some(p=>p.endsWith(suffix)))throw Error('protected_required_helper_omitted');
+  if(manifest.runtimeFiles['ai-harness/acceptance/compaction/native-adapter/carrier-admission.js'])for(const name of ['qualification_carrier_entry.py','qualification_carrier_host.py','qualification_carrier.py','qualification_guardian.py','local_helper.py','resource_observer.py'])if(!manifest.helperFiles['ai-harness/deploy/admin/'+name])throw Error('actual_privileged_carrier_helper_omitted');
   const graph=await executedImportGraph(repository,manifest.runtimeFiles);
   if(graph.unavailableImports.length||JSON.stringify(graph)!==JSON.stringify(manifest.importGraph)||!manifest.dependencyFiles['ai-harness/server/node_modules/.package-lock.json']||manifest.platform!==process.platform)throw Error('executed_import_dependency_platform_closure_mismatch');
   return graph;
