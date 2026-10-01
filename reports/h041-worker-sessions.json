@@ -210,28 +210,28 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T14:20:32.156438+00:00",
+  "updatedUtc": "2026-10-01T14:27:29.183765+00:00",
   "activePhases": [
     {
-      "task": "A-compaction-completion-07",
+      "task": "A-compaction-completion-08",
       "host": "mac-worker1",
-      "outerPid": 39742,
-      "startedUtc": "2026-10-01T13:12:09.469119+00:00",
+      "outerPid": 42261,
+      "startedUtc": "2026-10-01T14:26:59.851434+00:00",
       "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
-      "candidate": "cfa58e8b067fa6f723d0d651dada78dacef307da",
-      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-07",
-      "hardDeadlineUtc": "2026-10-01T14:15:00+00:00",
+      "candidate": "4baa8b5b40fd615b54639fae9667980e8df2f768",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
       "authority": "SOURCE_ONLY_NO_LIVE_GO"
     },
     {
-      "task": "E-compaction-completion-07",
+      "task": "E-compaction-completion-08",
       "host": "mac-worker2",
-      "outerPid": 41838,
-      "startedUtc": "2026-10-01T13:12:09.806169+00:00",
+      "outerPid": 44347,
+      "startedUtc": "2026-10-01T14:27:00.361852+00:00",
       "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
-      "candidate": "42c603b9683e666ed5aa8a83aed5405031d57b71",
-      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-07",
-      "hardDeadlineUtc": "2026-10-01T14:15:00+00:00",
+      "candidate": "e6b82d52e1187a46bc40a4c1345ab76a38d4af6d",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
       "authority": "SOURCE_ONLY_NO_LIVE_GO"
     }
   ],
@@ -614,7 +614,7 @@
       "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
     }
   ],
-  "currentRootReviewedHead": "67ec0419152f145dcc55219f2ff0025230003686",
+  "currentRootReviewedHead": "92dec23409cf760238729520bad11631a3545f12",
   "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
   "liveAcceptance": "NOT_TESTED",
   "closedSource06": {
@@ -809,5 +809,39 @@
     "workspaceMembersFound": 0,
     "readbackIsNativeSettlement": false,
     "blindRetryAllowed": false
-  }
+  },
+  "source08Authority": {
+    "id": "H041-COMPACTION-COMPLETION-08",
+    "issuedUtc": "2026-10-01T14:26:57.602860+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+    "sourceExportTargetUtc": "2026-10-01T15:20:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "reviewedCombinedHead": "92dec23409cf760238729520bad11631a3545f12",
+    "combinedBundleSha256": "29dc57c6292d249b83bda1f1f2c9097658ac610fe828ee1822e68fd642ff8b63",
+    "liveGo": false
+  },
+  "source08Launched": [
+    {
+      "task": "A-compaction-completion-08",
+      "host": "mac-worker1",
+      "outerPid": 42261,
+      "startedUtc": "2026-10-01T14:26:59.851434+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "4baa8b5b40fd615b54639fae9667980e8df2f768",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-compaction-completion-08",
+      "host": "mac-worker2",
+      "outerPid": 44347,
+      "startedUtc": "2026-10-01T14:27:00.361852+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "e6b82d52e1187a46bc40a4c1345ab76a38d4af6d",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ]
 }
