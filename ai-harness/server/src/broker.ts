@@ -1,3 +1,4 @@
+import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
 import { createHash, randomUUID } from "node:crypto";
 import type { Store, Run, StoredSession } from "./store.js";
@@ -17,7 +18,7 @@ import { assertEngineAvailable, createEngineRouter, type EnginePolicy } from "./
 import { ApiError } from "./errors.js";
 export interface NativeReplacementCommitInput {readonly sessionId:string;readonly runId:string;readonly checkpoint:Readonly<import("./session-checkpoint.js").SessionCheckpointRecord>}
 export type NativeReplacementCommitVerifier=(input:NativeReplacementCommitInput)=>Promise<void>;
-export interface BrokerOptions {
+export interface BrokerOptions extends CodexRecoveryObservers {
   /** Trusted host source seam only, absent by default; never accepted from API/model input. */
   beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
   store: Store;
@@ -108,7 +109,16 @@ export class Broker {
     const abort=new AbortController();let finished!:()=>void;const settled=new Promise<void>(r=>{finished=r;});this.recoveries.set(reservation.id,{abort,settled});
     try {
       const evidence=await host({sessionId,checkpointId,memory:this.store.memory.bridge(sessionId),reservation,signal:abort.signal});
-      abort.signal.throwIfAborted();
+      const assertCommitOwner=()=>{
+        abort.signal.throwIfAborted();
+        const current=this.store.getSession(sessionId);
+        this.store.assertWorkspaceRecovery(reservation,sessionId,checkpointId);
+        if(this.closing||this.options.dispatchHeld?.()||this.store.isQuarantined(current.workspaceId)||current.nativeState.ownership!=="idle"||current.nativeState.activeTurnId!==null||this.active.has(current.workspaceId)||this.queues.get(current.workspaceId)?.length||this.store.db.prepare("SELECT id FROM runs WHERE workspace_id=? AND status IN ('queued','running','cancelling') LIMIT 1").get(current.workspaceId))throw Error("Recovery commit owner unavailable");
+      };
+      assertCommitOwner();
+      if(this.options.beforeNativeRecovery)await boundedRecoveryObservation(abort.signal,signal=>this.options.beforeNativeRecovery!(Object.freeze({sessionId,checkpointId,stage:"before-commit"}),signal));
+      // No await between final exact ownership recheck and synchronous Store CAS.
+      assertCommitOwner();
       const result=this.store.checkpoints.recoverWithFreshParent(sessionId,checkpointId,evidence);
       verified=true; return result;
     } finally {

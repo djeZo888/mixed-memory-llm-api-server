@@ -1,7 +1,8 @@
+import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 /** Ordinary host recovery composition. No generation, prompt replay, or default activation. */
 import {CodexEngine,CODEX_PIN,type CodexRuntime} from "./codex-engine.js";
 import type {Store} from "./store.js";import type {Files} from "./files.js";import type {Gateway} from "./gateway.js";import type {AppOptions} from "./app.js";import type {FreshParentRecoveryEvidence} from "./session-checkpoint.js";
-export function createCodexRecoveryHost(host:{store:Store;files:Files;runtime:CodexRuntime;gateway:()=>Pick<Gateway,"issueToken"|"revokeToken"|"observeNoGeneration">|undefined;launcher:string;dispatchHeld:()=>boolean}):NonNullable<AppOptions["memoryRecoveryHost"]>{
+export function createCodexRecoveryHost(host:{store:Store;files:Files;runtime:CodexRuntime;gateway:()=>Pick<Gateway,"issueToken"|"revokeToken"|"observeNoGeneration">|undefined;launcher:string;dispatchHeld:()=>boolean;observers?:CodexRecoveryObservers}):NonNullable<AppOptions["memoryRecoveryHost"]>{
  return async input=>{
   input.signal.throwIfAborted();
   const {store,files,runtime}=host,session=store.getSession(input.sessionId),g=host.gateway();
@@ -15,10 +16,17 @@ export function createCodexRecoveryHost(host:{store:Store;files:Files;runtime:Co
     // Construction belongs inside token lifetime: even a constructor fault revokes it.
     const engine=new CodexEngine({sessionId:input.sessionId,engineKind:session.engineKind,engineVersion:session.engineVersion,modelPolicyVersion:session.modelPolicyVersion,nativeState:structuredClone(session.nativeState),profileDir:files.profile(input.sessionId),workspace:files.workspace(session.workspaceId),launcher:host.launcher,gatewayUrl:runtime.gatewayUrl,gatewayToken:token!,stderrPath:files.log(input.sessionId),sessionMemory:input.memory,dispatchHeld:host.dispatchHeld,onNativeSessionId:()=>{},onNativeState:state=>store.setNativeState(input.sessionId,"codex",state),onUpdate:()=>{},onNativeLifecycle:event=>{if(["launch","thread","settlement","gateway_settled"].includes(event.kind))Object.assign(observed,{[event.kind==="gateway_settled"?"gateway":event.kind]:event});}},runtime);
     const abort=()=>{void engine.close().catch(()=>store.quarantine(session.workspaceId,"Recovery abort cleanup unknown"));};input.signal.addEventListener("abort",abort,{once:true});
-    try{input.signal.throwIfAborted();await engine.start();input.signal.throwIfAborted();await engine.close();}catch(error){try{await engine.close();}catch{store.quarantine(session.workspaceId,"Fresh recovery cleanup unknown");}throw error;}finally{input.signal.removeEventListener("abort",abort);}return observed;
+    try{
+     if(host.observers?.beforeNativeRecovery)await boundedRecoveryObservation(input.signal,signal=>host.observers?.beforeNativeRecovery!(Object.freeze({sessionId:input.sessionId,checkpointId:input.checkpointId,stage:"before-launch"}),signal));
+     input.signal.throwIfAborted();store.assertWorkspaceRecovery(input.reservation,input.sessionId,input.checkpointId);
+     const current=store.getSession(input.sessionId);
+     if(host.dispatchHeld()||store.isQuarantined(current.workspaceId)||current.nativeState.ownership!=="idle"||current.nativeState.activeTurnId!==null||store.db.prepare("SELECT id FROM runs WHERE workspace_id=? AND status IN ('queued','running','cancelling') LIMIT 1").get(current.workspaceId))throw Error("Recovery launch owner unavailable");
+     await engine.start();input.signal.throwIfAborted();await engine.close();}catch(error){try{await engine.close();}catch{store.quarantine(session.workspaceId,"Fresh recovery cleanup unknown");}throw error;}finally{input.signal.removeEventListener("abort",abort);}return observed;
    });
-   if(!result.value.launch||!result.value.thread||!result.value.settlement||!result.value.gateway)throw Error("Fresh recovery lifecycle observations incomplete");
-   return {...result.value,noGeneration:result.proof} as FreshParentRecoveryEvidence;
+   if(!result.value.launch||!result.value.thread||!result.value.settlement||!result.value.gateway)throw Error("Fresh recovery lifecycle observations incomplete: "+["launch","thread","settlement","gateway"].filter(k=>!result.value[k as keyof typeof result.value]).join(","));
+   const evidence=Object.freeze({...result.value,noGeneration:result.proof}) as Readonly<FreshParentRecoveryEvidence>;
+   if(host.observers?.onNativeRecoveryObserved)await boundedRecoveryObservation(input.signal,signal=>host.observers!.onNativeRecoveryObserved!(Object.freeze({sessionId:input.sessionId,checkpointId:input.checkpointId,evidence}),signal));
+   input.signal.throwIfAborted();return evidence;
   }finally{if(token!==undefined)g.revokeToken(token);}
  };
 }

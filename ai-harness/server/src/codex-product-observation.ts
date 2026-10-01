@@ -1,8 +1,9 @@
 /** Trusted normal-entry observer composition; cannot replace policy/counter/launcher. */
 import type {CodexHostQualification} from "./codex-host.js";
 import type {CodexOrdinaryEntry} from "./codex-ordinary-entry.js";
+import type {CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import type {NativeReplacementCommitVerifier} from "./broker.js";
-export interface CodexProductObservers extends Pick<CodexHostQualification,"observations"|"onNativeLaunchReceipt"|"onNativeSettlementReceipt"|"onNativeThread"|"beforeNativeAction"|"onNativeChildObserved"|"onNativeOperation"> {
+export interface CodexProductObservers extends CodexRecoveryObservers, Pick<CodexHostQualification,"observations"|"onNativeLaunchReceipt"|"onNativeSettlementReceipt"|"onNativeThread"|"beforeNativeAction"|"onNativeChildObserved"|"onNativeOperation"> {
  beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
 }
 export function composeCodexProductObservers(base:CodexHostQualification,ordinary:CodexOrdinaryEntry|undefined,observer:CodexProductObservers={}):CodexHostQualification {

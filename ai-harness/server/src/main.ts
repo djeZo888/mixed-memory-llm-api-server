@@ -70,9 +70,9 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
   const ordinary=qualification?loadCodexOrdinaryEntry(process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE||undefined,process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE||undefined,{serverDir:path.dirname(path.dirname(fileURLToPath(import.meta.url))),deploymentDir:path.dirname(required("AI_HARNESS_ENGINE_LAUNCHER"))}):undefined;
   if(qualification)qualification=composeCodexProductObservers(qualification,ordinary,trustedObservers);
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified\n");
-  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary,beforeNativeReplacementCommit:trustedObservers?.beforeNativeReplacementCommit });
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary,beforeNativeReplacementCommit:trustedObservers?.beforeNativeReplacementCommit,beforeNativeRecovery:trustedObservers?.beforeNativeRecovery,onNativeRecoveryObserved:trustedObservers?.onNativeRecoveryObserved });
 }
-export async function start(codex: { beforeNativeReplacementCommit?:import("./broker.js").NativeReplacementCommitVerifier; enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
+export async function start(codex: import("./codex-recovery-observation.js").CodexRecoveryObservers & { beforeNativeReplacementCommit?:import("./broker.js").NativeReplacementCommitVerifier; enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
   const newChatEngine = loadNewChatEngine();
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
@@ -118,11 +118,12 @@ export async function start(codex: { beforeNativeReplacementCommit?:import("./br
   const application = await createApp({
     newChatEngine,
     beforeNativeReplacementCommit:codex.beforeNativeReplacementCommit,
+    beforeNativeRecovery:codex.beforeNativeRecovery,onNativeRecoveryObserved:codex.onNativeRecoveryObserved,
     dataDir,
     launcher,
     engineFactory: createEngine,
     ...codexOptions,
-    memoryRecoveryHost:codex.ordinary?input=>(recoveryHost??=createCodexRecoveryHost({store:application.store,files:application.files,runtime:codexHost.runtime,gateway:()=>gateway,launcher,dispatchHeld:()=>freeze.held("harness")}))(input):undefined,
+    memoryRecoveryHost:codex.ordinary?input=>(recoveryHost??=createCodexRecoveryHost({store:application.store,files:application.files,runtime:codexHost.runtime,gateway:()=>gateway,launcher,dispatchHeld:()=>freeze.held("harness"),observers:codex}))(input):undefined,
     imageAcceptance: codex.qualification?.imageAcceptance,
     imageReferenceAcceptance: owned?.imageReference,
     onRunAccepted: owned?.onRunAccepted,
