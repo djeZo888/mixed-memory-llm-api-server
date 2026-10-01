@@ -302,6 +302,81 @@
         "scope": "synthetic-source-only"
       },
       "exportCompletion": "partial; bundle+committedreports exist, no postcommit OUTBOX/RESULTS"
+    },
+    {
+      "task": "A-coherent-source-validation",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "status": "closed actualnative0/outer0;260runtimePASS,strict2errorsFAIL retained; narrow same-session correction separately adopted",
+      "sourceCandidate": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation",
+      "outerPid": 23923,
+      "startedUtc": "2026-10-01T04:06:20.025967+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation",
+      "hardDeadlineUtc": "2026-10-01T04:17:00+00:00",
+      "nativePid": 23925,
+      "wrapperPid": 23924,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "cliVersion": "0.159.2",
+      "settingsEvidence": "persisted same-session turn_context2026-10-01T04:06:22.912Z",
+      "sourceCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reportSuccessor": "07b66b5795f10e32eca79b7bb3d6a34badf8f1c0",
+      "bundleSha256": "2be488e7eb89da2d9c240d9a17ba6b029bada30d5850512b78ea6be008ba32b3",
+      "nativeTerminal": {
+        "nativePid": 23925,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T04:16:30.076164+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 23924,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T04:16:30.085685+00:00"
+      }
+    },
+    {
+      "task": "A-final-fixture-types",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "status": "closed actualnative0/outer0; finalsourcePASS, strict0/260runtimePASS, reused21Pythoncases/build/adapter/syntax0; nativeNOT_TESTED",
+      "sourceCandidate": "07b66b5795f10e32eca79b7bb3d6a34badf8f1c0",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-final-fixture-types",
+      "outerPid": 25301,
+      "startedUtc": "2026-10-01T04:19:09.905794+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "07b66b5795f10e32eca79b7bb3d6a34badf8f1c0",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-final-fixture-types",
+      "hardDeadlineUtc": "2026-10-01T04:24:00+00:00",
+      "nativePid": 25303,
+      "wrapperPid": 25302,
+      "cliVersion": "codex-cli 0.159.2",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T04:19:12.173Z",
+      "nativeTerminal": {
+        "nativePid": 25303,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T04:23:17.663645+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 25302,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T04:23:17.672210+00:00"
+      },
+      "sourceCommit": "31e46f7a8be002e700e3cefb9d65ba8657eb4c07",
+      "reportSuccessor": "c0d0d937200fbb6250f34ba297ad2b224174ff6b",
+      "bundleSha256": "d8368ab760ce53fe2b3fe6d481a624c52daa13f8d428d628fc47970e057d3daf",
+      "sourceDisposition": "ACCEPT_DISABLED_SOURCE_INTEGRATION",
+      "sourceTests": {
+        "passed": 281,
+        "failed": 0,
+        "runtimeSkipped": 0,
+        "scope": "synthetic-source-only;21Pythonreusedunchangedinputs"
+      }
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -315,7 +390,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T04:06:08.913546+00:00",
+  "observedUtc": "2026-10-01T04:23:17.663645+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
@@ -341,7 +416,7 @@
     "latestAuthority": "Specific human CHA_FAN3 clarification supersedes blanket70C interpretation for that external fan only"
   },
   "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors",
-  "currentLifecycleOwner": "bounded artifactjob holds canonicallease; no model transitions",
+  "currentLifecycleOwner": "none; completedartifactdownload, no newVMtransition",
   "artifactDispatcher": {
     "phase": "C-artifact-lease-handoff-01",
     "owner": "root coordinator executes sealed C artifact runner outside paid native CLI",
@@ -392,7 +467,29 @@
     "automaticRetry": false,
     "restart": "no",
     "canonicalLeaseHeldWholeDownload": true,
-    "paidCli": "none"
+    "paidCli": "none",
+    "terminalStatus": "VERIFIED",
+    "finishedUtc": "2026-10-01T04:15:45.526977+00:00",
+    "terminalStatusSha256": "fc402ef550e5b2723480823592915556aa88c73ce7e1d9a7572bdd6f28afc75f",
+    "finalObservedUtc": "2026-10-01T04:19:23.368618+00:00",
+    "finalMainPid": 0,
+    "finalActiveState": "inactive",
+    "finalSubState": "dead",
+    "finalizerExitStatus": "0",
+    "finalizerServiceResult": "success",
+    "finalVerifiedFiles": 36,
+    "finalVerifiedWeightFiles": 5,
+    "finalExpectedBytes": 21259856084,
+    "partialFiles": 0
   },
-  "artifactStatus": "adopt exact active h040-recovery-01, no new job or retry; originalroot preserved"
+  "artifactStatus": "VERIFIED; exact adopted recovery closedsuccess0,36files/5weights; reuseoriginalroot, no newdownload/retry",
+  "paidWorkers": "allH040 phasesclosed; BfinalclosurePARTIAL actualnative-15/outer143 preserved, no active paidnativeCLI",
+  "finalSourceValidation": {
+    "status": "PASS",
+    "candidateCommit": "31e46f7a8be002e700e3cefb9d65ba8657eb4c07",
+    "reportCommit": "c0d0d937200fbb6250f34ba297ad2b224174ff6b",
+    "sourceCases": 281,
+    "nativeAcceptance": "NOT_TESTED",
+    "activation": "DISABLED"
+  }
 }

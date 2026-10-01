@@ -1,0 +1,37 @@
+{
+  "task": "H040-20261001",
+  "sourceValidation": "PASS",
+  "sourceCandidate": "31e46f7a8be002e700e3cefb9d65ba8657eb4c07",
+  "sourceCases": 281,
+  "runtimeCases": 260,
+  "pythonCases": 21,
+  "unchangedFanArtifactSourceCases": 136,
+  "nativeCompactionAcceptance": "NOT_TESTED",
+  "nativeActivation": "DISABLED",
+  "workers": "allH040 phasesclosed",
+  "partialWorker": {
+    "phase": "B-qualification-closure",
+    "nativeExit": -15,
+    "outerExit": 143,
+    "status": "PARTIAL",
+    "sourceIntegratedAndCoherentlyValidated": true
+  },
+  "artifact": {
+    "status": "VERIFIED",
+    "files": 36,
+    "weights": 5,
+    "finishedUtc": "2026-10-01T04:15:45.526977+00:00",
+    "originalRootAndFailureReceiptsPreserved": true,
+    "automaticRetry": false
+  },
+  "thermal": {
+    "integratedAvailableFans": "100% at>=70C",
+    "CHA_FAN3": "minimum80% at>=70C;100% strictly>80C;hold100untilfresh<=65C30continuousseconds then40",
+    "configuredLifecycle": "PASS",
+    "nativeHotThreshold": "NOT_TESTED"
+  },
+  "gpuPhysicalMapping": "BW880/BW69 physicalGen5slot2/5 unknown; no newplacement",
+  "aiVmRemainingAssignedH040Jobs": 0,
+  "upstreamRuntimePinsAndContexts": "unchanged",
+  "publication": "root exactbranchreadback/newheadCI receipts outsideGit; draftPR11 remainsunmerged"
+}

@@ -30,7 +30,7 @@ qualify untested capabilities.
 **Current continuation:** [H040 handoff](reports/h040-handoff.md),
 [execution plan](reports/h040-execution-plan.md) and [actual adopted roster](reports/h040-worker-sessions.json)
 record resumed work after the second Ada installation, compaction reliability,
-latest GPU placement and thermal authority, and the exact active download.
+latest GPU placement and thermal authority, and the completed verified artifact job.
 Read these before dispatching work; [H039](reports/h039-handoff.md) remains history.
 
 The manual-update policy now supersedes H006's package-installation-enabled
@@ -59,7 +59,7 @@ The [earlier recovery report](reports/h036-resumed-recovery.md) and
 [compact results](reports/h036-resumed-recovery-results.json) preserve the
 07:45 UTC checkpoint, when MiniMax was the default, three Qwens were ready and
 the external image GPU was intentionally absent. These are historical results.
-The external Core X Ada remains intentionally excluded from passthrough.
+At that historical checkpoint the external Core X Ada was excluded from passthrough; current Ada roles are recorded in the H040 handoff.
 
 Retained evidence covers image generation/guarded editing, coding and follow-up,
 PDF extraction/OCR, and Qwen compaction of 402,104 input tokens into a 237-token
