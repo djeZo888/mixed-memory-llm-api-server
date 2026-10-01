@@ -4,6 +4,13 @@
 Implementation follows the compaction priority. Creative image generation
 acceptance is deferred; understanding drawings is a separate capability.
 
+**H039 authorization:** the user selected Qwen3.5-9B BF16 plus
+PaddleOCR-VL-1.6 as the first dedicated-Ada pair and authorized parallel download
+and runtime/tool preparation. This supersedes the research order below that
+first considered the existing Qwen. The smaller Ada Qwen may be retired and
+Sova downtime is permitted. Actual placement, combined memory fit and live
+technical accuracy remain unqualified. See [H039](../reports/h039-execution-plan.md).
+
 ## Goal
 
 Feed an image or rendered document to a locally served vision specialist and

@@ -1,4 +1,19 @@
-# Sova — H038 coordination
+# Sova — H039 coordination
+
+## Current authorization — 1 October 2026
+
+Read [H039 plan](reports/h039-execution-plan.md) and
+[handoff](reports/h039-handoff.md), adopting existing worker sessions first.
+The user authorized parallel compaction implementation/retention fixtures and
+Qwen3.5-9B BF16 plus PaddleOCR-VL-1.6 artifact/runtime/vision-tool preparation.
+Sova may remain offline; smaller Ada Qwen retirement is permitted. H039 initial
+window closes 02:25 UTC on 1 October. Creative image acceptance, driver/fan/
+Proxmox work and upstream Codex upgrade remain outside this window. A/B/D own
+isolated source only; C is the sole ai-vm artifact-storage writer. Shared live
+deployment follows root candidate review. Latest user authority supersedes the
+older H038 no-new-model rule for these two approved artifacts only.
+
+The H038 text below is retained deployment evidence, not current task authority.
 
 Read the [H037 plan](reports/h037-execution-plan.md) and
 [upstream audit](reports/h037-upstream-codex-audit.md). The previous

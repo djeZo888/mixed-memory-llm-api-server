@@ -1,4 +1,12 @@
-# ai-harness — H038
+# ai-harness — H039
+
+Read root [current H039 plan](../reports/h039-execution-plan.md) and
+[handoff](../reports/h039-handoff.md). Task A owns narrow native-compaction
+lifecycle source, B isolated retention acceptance, D new technical-vision
+contract/tool files. Do not cross-edit other owners' files or deploy while source
+tasks run. Root coordinates integration. Older H038 deployment evidence below
+does not prohibit the user's newly authorized H039 preparation. Compaction is
+the first priority; creative image acceptance is deferred.
 
 Read root [AGENTS](../AGENTS.md), the [current plan](../reports/h038-execution-plan.md)
 and [Codex upstream audit](../reports/h037-upstream-codex-audit.md). Previous

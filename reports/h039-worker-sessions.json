@@ -1,0 +1,10 @@
+{
+  "task": "H039-20261001",
+  "phase": "dispatch_prepared",
+  "baseCommit": "c73a853abbf46ecede65d0dae04dd2e5ac8e5c37",
+  "globalDeadlineUtc": "2026-10-01T02:25:00Z",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "sessions": [],
+  "note": "Root will replace this roster with actual launch receipts. Empty sessions do not establish dispatch."
+}
