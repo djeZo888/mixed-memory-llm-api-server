@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T09:15:23.114747+00:00",
+  "updatedUtc": "2026-10-01T10:32:36.666974+00:00",
   "activePhases": [
     {
       "task": "A-production-compaction",
@@ -250,5 +250,126 @@
       "nativeExit": null,
       "outerExit": null
     }
+  ],
+  "delivery03Authority": {
+    "id": "H041-COMPACTION-DELIVERY-03",
+    "issuedUtc": "2026-10-01T10:07:11.972488+00:00",
+    "expiresUtc": "2026-10-01T13:07:11.972488+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "finish source/integration and prepare finite reviewed Linux/native compaction delivery; actual phase-specific source/config/actor GO still required",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge"
+  },
+  "delivery03SourcePhases": [
+    {
+      "task": "A-production-entry-03",
+      "host": "mac-worker1",
+      "outerPid": 32130,
+      "startedUtc": "2026-10-01T10:30:20.083940+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "5c6dd26edff337dfd43173adc2cd30b5eedc2159",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-production-entry-03",
+      "hardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-full-retention-03",
+      "host": "mac-worker2",
+      "outerPid": 34288,
+      "startedUtc": "2026-10-01T10:30:20.567746+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "3e04f536b0d7bcde1a6657e974254213ecd72b29",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-full-retention-03",
+      "hardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "delivery03SourceSettings": [
+    {
+      "task": "A-production-entry-03",
+      "contexts": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-production-entry-03/repo",
+          "timestamp": "2026-10-01T10:30:22.612Z"
+        }
+      ],
+      "native-pid": 32132,
+      "wrapper-pid": 32131,
+      "outer-pid": 32130
+    },
+    {
+      "task": "E-full-retention-03",
+      "contexts": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-full-retention-03/repo",
+          "timestamp": "2026-10-01T10:30:22.956Z"
+        }
+      ],
+      "native-pid": 34290,
+      "wrapper-pid": 34289,
+      "outer-pid": 34288
+    }
+  ],
+  "continuation02ActualClosures": [
+    {
+      "task": "A-production-compaction",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T10:29:45.057331+00:00",
+      "sourceCommit": "578b429ec36bcbcc269c8a7f201263ad6d0fbcd9",
+      "reportCommit": "5c6dd26edff337dfd43173adc2cd30b5eedc2159",
+      "status": "PARTIAL_SOURCE_DEADLINE",
+      "sourceCases": 322,
+      "buildStrictExit": 0,
+      "nativeAcceptance": "NOT_TESTED"
+    },
+    {
+      "task": "E-compaction-completion",
+      "nativeExit": 0,
+      "outerExit": 0,
+      "finishedUtc": "2026-10-01T10:21:52.162444+00:00",
+      "sourceCommit": "2d4a36b434f21c4e704f24cf79a07b5f2cda1840",
+      "reportCommit": "3e04f536b0d7bcde1a6657e974254213ecd72b29",
+      "status": "PARTIAL_SOURCE_INTEGRATION",
+      "affectedCases": 130,
+      "ordinarySourceCases": 3,
+      "buildStrictExit": 0,
+      "nativeAcceptance": "NOT_TESTED"
+    }
+  ],
+  "liveGo": false,
+  "remainingCurrent": [
+    "protected ordinary startup/recovery qualification and usable controls",
+    "full baseline and artifact restart purposes plus genuine same-parent child",
+    "combined source/build and actual Linux zero-generation qualification",
+    "manual stage, full retention, ordinary production/reconnect/recovery and genuine auto400k"
   ]
 }
