@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T16:42:14.559533+00:00",
+  "updatedUtc": "2026-10-01T16:49:38.416645+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-10",
@@ -614,7 +614,7 @@
       "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
     }
   ],
-  "currentRootReviewedHead": "e2ba9b9d",
+  "currentRootReviewedHead": "aeb3fcdc010226811c246f92d2f86f1e99d0ffef",
   "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
   "liveAcceptance": "NOT_TESTED",
   "closedSource06": {
@@ -1266,7 +1266,7 @@
   "source09ReviewedLatest": {
     "A8a": "8a1428ab8c60102d7e8863f8cbb5b886eed20cd6",
     "integrated": "e2ba9b9d",
-    "E5d": "UNDER_REVIEW",
+    "E5d": "5d836b7e31ba10fc64268ad414dc8a5d9fd60cb2",
     "A_combined_full": {
       "total": 1410,
       "pass": 1405,
@@ -1283,7 +1283,8 @@
       "partialExportManifestPreserved": true
     },
     "activation": "DEFAULT_DISABLED",
-    "nativeAcceptance": "NOT_TESTED"
+    "nativeAcceptance": "NOT_TESTED",
+    "E_integrated": "aeb3fcdc"
   },
   "scopedNoTurnGo09d": {
     "status": "ISSUED_SCOPED_ONE_NO_TURN_INVOCATION",
@@ -1301,6 +1302,13 @@
       "root-review-runtime/source09d-no-turn-packet/REVIEW.json": "2f3d8b75c30ebb4f8b08d4cf2b46e40075facd47dca63a3892c21e5549db40e4"
     },
     "priorFailuresAndBlocked08bPreserved": true,
-    "actualResult": "PENDING"
+    "actualResult": "PREENTRY_REJECTED_NO_NATIVE_LAUNCH_NO_RETRY_EXPIRED",
+    "actualStartedUtc": "2026-10-01T16:44:02.565829+00:00",
+    "actualFinishedUtc": "2026-10-01T16:44:02.979162+00:00",
+    "actualWrapperExit": 1,
+    "rejection": "Node ancestor /home/user/.local mode0775 group-writable",
+    "sourceSHA256": "763e9af291b94398b8dd2d7f434adc04345d555a7ede3fee41d2b15f6dc09ead",
+    "sourceCallerExecuted": false,
+    "next": "Distinct09e protected exact-byte Node copy + corrected wrapper tuple; new review/fresh GO only"
   }
 }
