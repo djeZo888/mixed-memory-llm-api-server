@@ -371,5 +371,72 @@
     "full baseline and artifact restart purposes plus genuine same-parent child",
     "combined source/build and actual Linux zero-generation qualification",
     "manual stage, full retention, ordinary production/reconnect/recovery and genuine auto400k"
-  ]
+  ],
+  "delivery04Authority": {
+    "id": "H041-COMPACTION-DELIVERY-04",
+    "issuedUtc": "2026-10-01T11:26:45.729698+00:00",
+    "expiresUtc": "2026-10-01T15:26:45.729698+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "finish reviewed source and combined checks; prepare exact preserved-state Linux zero-generation packet; subsequent concrete actor/source/config GO required for native execution",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-DELIVERY-03",
+    "priorCapsUnchanged": true
+  },
+  "closedSource04": [
+    {
+      "host": "mac-worker1",
+      "task": "A-production-linux-preflight-04",
+      "sourceCommit": "3130aa6e6afb7bc660d3c14ea9a9fe1995555027",
+      "reportCommit": "02250df10a5cbb4499e3b20a15407158db083831",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T11:24:45.186704+00:00",
+      "sameSessionNativeProcessPresent": false,
+      "status": "CLOSED_PARTIAL_DEADLINE_SOURCE_SEALED",
+      "nativeAcceptance": "NOT_TESTED"
+    },
+    {
+      "host": "mac-worker2",
+      "task": "E-full-producer-04",
+      "sourceCommit": "78ccaa95581ca8751c4549788972c59c73bf5f5e",
+      "reportCommit": "9266b438af3de752f5db8ef0fb3b7b4fe28f3b82",
+      "nativeExit": 0,
+      "outerExit": 0,
+      "finishedUtc": "2026-10-01T11:24:19.150608+00:00",
+      "sameSessionNativeProcessPresent": false,
+      "status": "CLOSED_CLEAN_SOURCE_ONLY",
+      "nativeAcceptance": "NOT_TESTED"
+    }
+  ],
+  "preparedSource05": {
+    "status": "PREPARED_NOT_LAUNCHED",
+    "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "liveGo": false
+  }
 }
