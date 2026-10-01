@@ -140,6 +140,7 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
     approvalProxyKey,
     availability,
     dispatchHeld: () => held("harness"),
+    ...(task?{onNewOwnedSession:async(input)=>{await task.registerSession({sessionId:input.sessionId,role:'parent'});},beforeDispatchAdmission:async(input,signal)=>{await task.verify({...input,lane:"qwen3.8-27b"},signal);}}:{}),
     availabilitySummary: () =>
       nodeAvailability?.states() ?? {
         qwenGpu0: "unknown",

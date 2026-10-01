@@ -439,6 +439,7 @@ export async function createApp(options: AppOptions): Promise<{
           throw error;
         }
       }
+      await broker.admitEnqueue(id(req),String(req.id));
       const runId = broker.enqueue(
         id(req),
         "message",
@@ -459,6 +460,7 @@ export async function createApp(options: AppOptions): Promise<{
       const body = object(req.body);
       only(body, ["actionId"]);
       const actionId = requireId(body.actionId);
+      await broker.admitEnqueue(id(req),String(req.id));
       return reply.code(202).send({
         runId: broker.enqueue(id(req), "compact", "", [], [], actionId),
       });

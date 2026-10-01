@@ -4,7 +4,7 @@ import {readFile,lstat,realpath,writeFile} from 'node:fs/promises';import {resol
 export async function withOwnedQualification(acquire,work,signal){
  let adapter,result,workError,cleanupError;
  try{signal.throwIfAborted();adapter=await acquire(signal);if(typeof adapter.close!=='function')throw Error('owned_adapter_close_required');const original=adapter.close.bind(adapter);let closing;adapter.close=(...args)=>closing??=(async()=>original(...args))();signal.throwIfAborted();result=await work(adapter,signal);}catch(error){workError=error;}
- finally{if(adapter){try{await adapter.close({});}catch(error){cleanupError=error;}}}
+ finally{if(adapter){try{if(typeof adapter.shutdown==='function')await adapter.shutdown();else await adapter.close({});}catch(error){cleanupError=error;}}}
  if(workError&&cleanupError)throw new AggregateError([workError,cleanupError],'qualification_work_and_owned_cleanup_failed');if(workError)throw workError;if(cleanupError)throw cleanupError;return result;
 }
 export async function runCarrierTask(configPath,admissionPath){

@@ -38,3 +38,23 @@ class BarrierFixtures(unittest.TestCase):
   for key,value in [('pid',101),('startTicks','201'),('bootId','other')]:
    self.assertFalse(barrier.acknowledged({'transactionId':'owned','task':{**owner,key:value}},owner,carrier))
   self.assertFalse(barrier.acknowledged({'transactionId':'foreign','task':owner},owner,carrier))
+
+class NormalTupleFixtures(unittest.TestCase):
+ def test_exact_release_config_data_fd_and_readiness_required(self):
+  import copy
+  expected={'process':{'cmdlineSHA256':'source','exe':'/node','cwd':'/release/server','cgroup':'user-unit','mountNamespace':1,'bootId':'boot'},'paths':{'AI_HARNESS_DATA_DIR':'/original'},'files':{'/release/code':{'sha256':'a','uid':1000,'mode':'0o444','nlink':1,'resolved':'/release/code'}},'database':{'path':'/original/harness.sqlite','dev':2,'ino':3,'ownedFDs':['24']},'health':{'http':200,'status':'ok','version':'0.0.3','host':'localhost:8080'}}
+  self.assertTrue(host.verify_normal_tuple(expected,copy.deepcopy(expected)))
+  for branch,key,value in [('process','cwd','/other'),('process','cmdlineSHA256','other'),('database','ino',4),('database','ownedFDs',[]),('health','http',403),('paths','AI_HARNESS_DATA_DIR','/alternate')]:
+   after=copy.deepcopy(expected);after[branch][key]=value
+   with self.assertRaises(host.CarrierError):host.verify_normal_tuple(expected,after)
+  after=copy.deepcopy(expected);after['files']['/release/code']['sha256']='other'
+  with self.assertRaises(host.CarrierError):host.verify_normal_tuple(expected,after)
+
+class ReadoptionFixtures(unittest.TestCase):
+ def test_original_worker_must_be_independently_gone_or_pid_reused(self):
+  original={'pid':123,'startTicks':'42','bootId':'boot'}
+  with mock.patch.object(host,'process_identity',return_value=original):self.assertFalse(host.previous_worker_gone(original))
+  with mock.patch.object(host,'process_identity',side_effect=FileNotFoundError):self.assertTrue(host.previous_worker_gone(original))
+  with mock.patch.object(host,'process_identity',return_value={**original,'startTicks':'43'}):self.assertTrue(host.previous_worker_gone(original))
+  with mock.patch.object(host,'process_identity',side_effect=PermissionError):
+   with self.assertRaises(PermissionError):host.previous_worker_gone(original)

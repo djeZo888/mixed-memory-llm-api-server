@@ -2214,3 +2214,7 @@ test("whole-app freeze rejects new work, retains queued follow-up, and never exp
   await until(() => e.calls.length === 2);
   assert.ok(queued); e.calls[1].resolve(); await f.broker.idle();
 });
+
+test('SOURCE actual product enqueue refreshes stale child admission; queued start rechecks and foreign hold denies',async t=>{
+ let held=true,foreign=false;const phases:string[]=[];const h=await setup(t,engines(),{dispatchHeld:()=>held||foreign,beforeDispatchAdmission:async input=>{phases.push(input.phase);assert.ok(input.sessionId);assert.ok(input.requestId);held=false;}});const s=await h.session();const accepted=await inject(h.app,{method:'POST',url:`/api/sessions/${s.id}/messages`,payload:{text:'synthetic owned continuation'}});assert.equal(accepted.statusCode,202,accepted.body);await h.broker.idle();assert.deepEqual(phases,['enqueue','queued-start']);assert.equal(h.fixture.calls.length,1);held=true;foreign=true;const denied=await inject(h.app,{method:'POST',url:`/api/sessions/${s.id}/messages`,payload:{text:'must stay undispatched'}});assert.equal(denied.statusCode,503,denied.body);assert.equal(h.fixture.calls.length,1);
+});

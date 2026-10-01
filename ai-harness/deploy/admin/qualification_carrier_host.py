@@ -27,6 +27,11 @@ def signed_packet(input_path,approval_path,key_path):
 def process_identity(pid):
  root=Path('/proc')/str(pid);raw=(root/'stat').read_text();return {'pid':pid,'startTicks':raw.rsplit(')',1)[1].split()[19],'bootId':Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
 
+def previous_worker_gone(previous):
+ try:return process_identity(previous['pid'])!=previous
+ except (FileNotFoundError,ProcessLookupError):return True
+
+
 def object_scope(roots):
  """STAT-only actual original objects plus canonical ancestor identities."""
  result={'roots':[],'objects':set(),'ancestors':set()}
@@ -53,11 +58,11 @@ def mount_overlaps(source,scope):
 
 def physical_scope(roots,uid,ports=(8080,8081,18081)):
  """Kernel FD dev/inode + namespace + bidirectional mount closure; unknown aborts."""
- scope=object_scope(roots);targets=[Path(r['path']) for r in scope['roots']];writers=[];listeners=[];inodes=set();observed=0
+ scope=object_scope(roots);targets=[Path(r['path']) for r in scope['roots']];writers=[];listeners=[];inodes={};observed=0
  for table in ['/proc/net/tcp','/proc/net/tcp6']:
   for line in Path(table).read_text().splitlines()[1:]:
    parts=line.split()
-   if int(parts[1].split(':')[1],16) in ports and parts[3]=='0A':inodes.add(parts[9])
+   if int(parts[1].split(':')[1],16) in ports and parts[3]=='0A':inodes[parts[9]]=int(parts[1].split(':')[1],16)
  for proc in Path('/proc').iterdir():
   if not proc.name.isdigit():continue
   try:
@@ -67,7 +72,7 @@ def physical_scope(roots,uid,ports=(8080,8081,18081)):
     except FileNotFoundError:continue
     observed+=1
     if observed>1000000:raise CarrierError('kernel_fd_bound')
-    if link.startswith('socket:[') and link[8:-1] in inodes:listeners.append({**identity,'socketInode':link[8:-1],'mountNamespace':namespace})
+    if link.startswith('socket:[') and link[8:-1] in inodes:listeners.append({**identity,'socketInode':link[8:-1],'port':inodes[link[8:-1]],'mountNamespace':namespace})
     clean=link.removesuffix(' (deleted)')
     if (st.st_dev,st.st_ino) in scope['objects'] or any(clean==str(p) or clean.startswith(str(p)+'/') for p in targets):writers.append({**identity,'fd':fd.name,'objectDev':st.st_dev,'objectIno':st.st_ino,'mountNamespace':namespace,'mountInfoSHA256':mountsha})
    if process_identity(int(proc.name))!=identity:raise CarrierError('kernel_process_changed')
@@ -110,7 +115,9 @@ class LinuxCarrierHost:
   if process_identity(os.getpid())['bootId']!=plan.boot_id:raise CarrierError('boot_changed')
   self.freeze(plan.stop_request)
   observed=self.owner.observe_service('harness')
-  if stage=='before-stop' and observed!=self.packet['normalService']:raise CarrierError('normal_owner_changed')
+  if stage=='before-stop':
+   if observed!=self.packet['normalService']:raise CarrierError('normal_owner_changed')
+   verify_normal_tuple(self.packet['normalTuple'],observe_normal_tuple(self.packet,observed['main_pid']))
   if stage!='before-stop' and (observed['active']!='inactive' or observed['sub']!='dead' or observed['main_pid'] or observed['control_pid'] or observed['job_pending']):raise CarrierError('normal_service_not_stopped')
   if stage=='before-task' and time.time()>=plan.dispatch_cutoff:raise CarrierError('carrier_dispatch_expired')
  def assert_stopped_writers(self,plan,lease):
@@ -155,17 +162,23 @@ class LinuxCarrierHost:
      request=json.loads(raw);body=request['body'];v=json.loads(body)
      operation=v.get('operation');allowed={'challenge','transactionId','sessionId','requestId','lane','operation'}
      if operation=='register':allowed|={'role','parentSessionId'} if 'parentSessionId' in v else {'role'}
-     if not hmac.compare_digest(request['mac'],hmac.new(self.key,body.encode(),hashlib.sha256).hexdigest()) or set(v)!=allowed or v['transactionId']!=plan.transaction_id or v['lane']!='qwen3.8-27b' or time.time()>=plan.dispatch_cutoff or operation not in ['register','admit']:raise CarrierError('foreign_expired_task_challenge')
+     if operation=='adopt':allowed|={'role','previousWorker'}
+     if not hmac.compare_digest(request['mac'],hmac.new(self.key,body.encode(),hashlib.sha256).hexdigest()) or set(v)!=allowed or v['transactionId']!=plan.transaction_id or v['lane']!='qwen3.8-27b' or time.time()>=plan.dispatch_cutoff or operation not in ['register','admit','adopt']:raise CarrierError('foreign_expired_task_challenge')
      if operation=='register':
       import re
       if not re.fullmatch('[A-Za-z0-9._:-]{1,128}',v['sessionId']) or v['role'] not in ['parent','probe','child'] or v['sessionId'] in sessions or len(sessions)>=65 or (v['role']!='parent' and v.get('parentSessionId') not in sessions):raise CarrierError('unowned_session_registration')
+     elif operation=='adopt':
+      prior=sessions.get(v['sessionId'])
+      if not prior or prior.get('role')!='parent' or v['role']!='parent' or v['previousWorker']!=prior.get('worker') or peer==v['previousWorker']['pid']:raise CarrierError('foreign_parent_readoption')
+      if not previous_worker_gone(v['previousWorker']):raise CarrierError('prior_worker_exit_unproved')
      elif v['sessionId'] not in sessions:raise CarrierError('unregistered_task_session')
      # Same-process capability cannot be borrowed by another thread. Its owner
      # is the carrier main thread/process; validate is PID-based, no FD minting.
-     lease.validate();self.sources();self._foreign_holds()
+     lease.validate();self.sources();self.freeze(plan.stop_request);self._foreign_holds()
      if self.task is None or self.task.poll() is not None:raise CarrierError('task_owner_lost')
-     if operation=='register':sessions[v['sessionId']]={'role':v['role'],'parentSessionId':v.get('parentSessionId')}
-     response=json.dumps({**v,'status':'registered' if operation=='register' else 'admit','observedAtMs':int(time.time()*1000),'ownerStartTicks':packet['carrier']['startTicks'],'ownHoldKey':self.packet['ownHoldKey']},separators=(',',':'));c.sendall(json.dumps({'body':response,'mac':hmac.new(self.key,response.encode(),hashlib.sha256).hexdigest()}).encode()+b'\n')
+     if operation=='register':sessions[v['sessionId']]={'role':v['role'],'parentSessionId':v.get('parentSessionId'),'worker':process_identity(peer)}
+     if operation=='adopt':sessions[v['sessionId']]={**sessions[v['sessionId']],'worker':process_identity(peer)}
+     response=json.dumps({**v,'status':'registered' if operation=='register' else 'adopted' if operation=='adopt' else 'admit','worker':process_identity(peer),'observedAtMs':int(time.time()*1000),'ownerStartTicks':packet['carrier']['startTicks'],'ownHoldKey':self.packet['ownHoldKey']},separators=(',',':'));c.sendall(json.dumps({'body':response,'mac':hmac.new(self.key,response.encode(),hashlib.sha256).hexdigest()}).encode()+b'\n')
     except Exception:
      try:c.sendall(b'{"status":"reject"}\n')
      except OSError:pass
@@ -224,15 +237,60 @@ class LinuxCarrierHost:
   lease.validate();self.sources();current=self.owner.observe_service('harness')
   if current['active']!='active' or current['sub']!='running' or current['main_pid']==0 or current['invocation']==self.packet['normalService']['invocation']:raise CarrierError('normal_restoration_identity_unproved')
   roots=[str(p) for p in plan.source_roots];v=physical_scope(roots,self.packet['user']);pid=current['main_pid']
-  if not v['listeners'] or any(x['pid']!=pid for x in v['listeners']) or not any(x['pid']==pid for x in v['writers']):raise CarrierError('restored_listener_db_owner_unproved')
+  if {x['port'] for x in v['listeners']}!={8080,8081} or any(x['pid']!=pid for x in v['listeners']):raise CarrierError('restored_listener_owner_unproved')
+  actual_tuple=observe_normal_tuple(self.packet,pid);verify_normal_tuple(self.packet['normalTuple'],actual_tuple)
+  if not any(x['pid']==pid and (x['objectDev'],x['objectIno'])==(actual_tuple['database']['dev'],actual_tuple['database']['ino']) for x in v['writers']):raise CarrierError('restored_exact_db_fd_unproved')
   # Never claim restored bytes identical after genuine original-release recovery.
-  result={'normalService':current,'physical':v,'recoveryDelta':verify_retained_records(self.original_records,retained_record_snapshot(self.packet['normalDatabase'])),'oldOwnersReconciled':False}
+  result={'normalService':current,'normalTuple':actual_tuple,'physical':v,'recoveryDelta':verify_retained_records(self.original_records,retained_record_snapshot(self.packet['normalDatabase'])),'oldOwnersReconciled':False}
   self._release_guardian(plan)
   return result
  def retain_restore_needed(self,plan,reason):
   p=Path(self.packet['evidenceRoot'])/'RESTORE-NEEDED.json';fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
   try:os.write(fd,json.dumps({'transactionId':plan.transaction_id,'reason':reason,'noReplay':True,'identity':process_identity(os.getpid())}).encode());os.fsync(fd)
   finally:os.close(fd)
+
+def observe_normal_tuple(packet,pid):
+ """Actual process/source/data/readiness, no environment/config/log bodies."""
+ import http.client
+ proc=Path('/proc')/str(pid);owner=process_identity(pid);expected=packet['normalTuple'];files={}
+ for path,pin in expected['files'].items():
+  raw=checked_bytes(path,uid=pin['uid'],bound=512*1024*1024);st=Path(path).lstat();files[path]={'sha256':hashlib.sha256(raw).hexdigest(),'uid':st.st_uid,'mode':oct(stat.S_IMODE(st.st_mode)),'nlink':st.st_nlink,'resolved':str(Path(path).resolve())}
+ db=Path(packet['normalDatabase']);st=db.lstat()
+ if db.resolve()!=db or not stat.S_ISREG(st.st_mode) or st.st_nlink!=1:raise CarrierError('normal_database_alias')
+ fds=[]
+ for fd in (proc/'fd').iterdir():
+  try:f=fd.stat()
+  except FileNotFoundError:continue
+  if (f.st_dev,f.st_ino)==(st.st_dev,st.st_ino):fds.append(fd.name)
+ safe={};raw=(proc/'environ').read_bytes()
+ for item in raw.split(b'\0'):
+  if b'=' not in item:continue
+  key,value=item.split(b'=',1)
+  if key.decode() in ['NODE_OPTIONS','NODE_PATH','LD_PRELOAD','LD_LIBRARY_PATH'] and value:raise CarrierError('normal_process_preload')
+  if key.decode() in expected['paths']:safe[key.decode()]=value.decode('utf8')
+ # Fixed read-only application health; frozen Host is source-reviewed, no URL oracle.
+ host=expected['health'].get('host')
+ if host not in ['localhost:8080','sova.lan','sova.local']:raise CarrierError('frozen_normal_health_host_required')
+ connection=http.client.HTTPConnection('127.0.0.1',8080,timeout=3)
+ try:
+  connection.request('GET','/api/health',headers={'Host':host});response=connection.getresponse();raw=response.read(4097)
+  if len(raw)>4096:raise CarrierError('health_bound')
+  body=json.loads(raw);health={'http':response.status,'status':body.get('status'),'version':body.get('version'),'host':host}
+ finally:connection.close()
+ result={'process':{**owner,'cmdlineSHA256':hashlib.sha256((proc/'cmdline').read_bytes()).hexdigest(),'exe':str((proc/'exe').resolve()),'cwd':str((proc/'cwd').resolve()),'cgroup':(proc/'cgroup').read_text().strip(),'mountNamespace':(proc/'ns/mnt').stat().st_ino},'paths':safe,'files':files,'database':{'path':str(db),'dev':st.st_dev,'ino':st.st_ino,'ownedFDs':fds},'health':health}
+ if process_identity(pid)!=owner:raise CarrierError('normal_process_changed')
+ return result
+
+def verify_normal_tuple(expected,actual):
+ for key in ['cmdlineSHA256','exe','cwd','cgroup','mountNamespace','bootId']:
+  if actual['process'][key]!=expected['process'][key]:raise CarrierError('normal_release_process_tuple_changed')
+ if actual['paths']!=expected['paths']:raise CarrierError('normal_paths_or_config_changed')
+ if set(actual['files'])!=set(expected['files']):raise CarrierError('normal_source_closure_changed')
+ for path,old in expected['files'].items():
+  if any(actual['files'][path].get(k)!=old.get(k) for k in ['sha256','uid','mode','nlink','resolved']):raise CarrierError('normal_source_or_credential_changed')
+ if any(actual['database'].get(k)!=expected['database'].get(k) for k in ['path','dev','ino']) or not actual['database']['ownedFDs']:raise CarrierError('normal_data_fd_changed')
+ if expected['health'].get('http')!=200 or expected['health'].get('status')!='ok' or any(actual['health'].get(k)!=expected['health'].get(k) for k in ['http','status','version','host']):raise CarrierError('normal_readiness_unproved')
+ return True
 
 def retained_record_snapshot(database):
  """Read-only SQLite snapshot; hash every original field without exporting chats.

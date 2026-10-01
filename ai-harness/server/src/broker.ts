@@ -34,6 +34,9 @@ export interface BrokerOptions extends CodexRecoveryObservers {
   maxQueued?: number;
   /** Protected durable host gate; never supplied by browser/task requests. */
   dispatchHeld?: () => boolean;
+  /** Awaited protected task challenge in the actual product process. */
+  onNewOwnedSession?: (input:{sessionId:string;workspaceId:string;engineKind:EngineKind})=>Promise<void>;
+  beforeDispatchAdmission?: (input:{sessionId:string;requestId:string;phase:'enqueue'|'queued-start'},signal:AbortSignal)=>Promise<void>;
   cancelImages?: (sessionId: string) => void;
   /** Read-only app state, refreshed immediately before a user-requested turn. */
   imageContext?: (sessionId: string, currentRunId: string) => string;
@@ -78,6 +81,7 @@ export class Broker {
   private runners = new Map<string, Runner>();
   private closing = false;
   private recoveries = new Map<string,{abort:AbortController;settled:Promise<void>}>();
+  private admissionPending = new Map<string,{abort:AbortController;settled:Promise<void>}>();
   constructor(readonly options: BrokerOptions) {
     this.store = options.store;
     this.files = options.files;
@@ -87,6 +91,14 @@ export class Broker {
       active: this.active.size,
       queued: [...this.queues.values()].reduce((n, q) => n + q.length, 0),
     };
+  }
+  async admitEnqueue(sessionId:string,requestId:string){
+    if(this.closing)throw new ApiError(503,'shutting_down','Server is shutting down');
+    this.store.getSession(sessionId); // Ownership lookup before challenge.
+    const abort=new AbortController(),key='enqueue:'+requestId;
+    const settled=Promise.resolve().then(()=>this.options.beforeDispatchAdmission?.({sessionId,requestId,phase:'enqueue'},abort.signal));
+    this.admissionPending.set(key,{abort,settled});try{await settled;}finally{this.admissionPending.delete(key);}
+    if(this.closing||this.options.dispatchHeld?.())throw new ApiError(503,'dispatch_frozen','Protected dispatch is held');
   }
   notifyDispatchChanged() {
     if (!this.options.dispatchHeld?.())
@@ -138,6 +150,7 @@ export class Broker {
     assertEngineAvailable(engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
     const s = this.store.createSession(workspaceId, engineKind, engineKind === "codex" ? this.options.enginePolicy!.codex : {});
     await this.files.prepare(s.id, s.workspaceId);
+    await this.options.onNewOwnedSession?.({sessionId:s.id,workspaceId:s.workspaceId,engineKind:s.engineKind});
     return this.store.publicSession(s);
   }
   enqueue(
@@ -271,7 +284,16 @@ export class Broker {
     try { this.options.onRunAccepted?.(s.id, run.id); } catch { /* Optional acceptance must fail closed without cancelling ordinary work. */ }
     queueMicrotask(() => this.pump(s.workspaceId));
   }
-  private pump(workspaceId: string) {
+  private pump(workspaceId: string, admittedRun?:string) {
+    if(this.options.beforeDispatchAdmission&&!admittedRun){
+      const run=this.queues.get(workspaceId)?.[0];
+      if(!run||this.closing||this.active.has(workspaceId)||this.admissionPending.has(workspaceId))return;
+      const abort=new AbortController();let settled:Promise<void>;
+      settled=(async()=>{try{await this.options.beforeDispatchAdmission!({sessionId:run.sessionId,requestId:run.id,phase:'queued-start'},abort.signal);
+        if(!this.closing&&!abort.signal.aborted&&this.queues.get(workspaceId)?.[0]===run&&!this.options.dispatchHeld?.())this.pump(workspaceId,run.id);
+      }catch{/* No native start; queued owner is retained until Stop or fresh reviewed admission. */}finally{this.admissionPending.delete(workspaceId);}})();
+      this.admissionPending.set(workspaceId,{abort,settled});return;
+    }
     if (
       this.closing ||
       this.options.dispatchHeld?.() ||
@@ -953,6 +975,7 @@ export class Broker {
   }
   private async shutdown() {
     this.closing = true;
+    const admissions=[...this.admissionPending.values()];for(const a of admissions)a.abort.abort(new Error("Admission cancelled by shutdown"));
     const recoveries=[...this.recoveries.values()];for(const r of recoveries)r.abort.abort(new Error("Recovery cancelled by shutdown"));
     const active = [...this.active.values()];
     const cancellations = active.map((a) => this.cancel(a.run.sessionId));
@@ -969,6 +992,6 @@ export class Broker {
         }
       });
     // Begin Stop for every owner before waiting on any slow recovery/runner.
-    await Promise.all([...recoveries.map(r=>r.settled), ...cancellations, ...runnerClosures, ...active.map(a=>a.settled)]);
+    await Promise.all([...recoveries.map(r=>r.settled),...admissions.map(a=>a.settled.catch(()=>undefined)), ...cancellations, ...runnerClosures, ...active.map(a=>a.settled)]);
   }
 }
