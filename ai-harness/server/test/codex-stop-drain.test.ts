@@ -37,13 +37,13 @@ async function fixture(t: TestContext, interrupt: "interrupted" | "failed" = "in
   // Read actual trusted resume policy; launchRootless below still replaces all native execution.
   const host = composeCodexHost(fileURLToPath(new URL("../../deploy/run-codex.sh", import.meta.url)), () => ({
     revokeSession() {},
-    observeSettlement(query, signal) {
+    observeSettlement(query: Parameters<Gateway["observeSettlement"]>[0], signal: Parameters<Gateway["observeSettlement"]>[1]) {
       observations++;
       const result = owners.waitForSettlement(query, signal);
       observing.resolve();
       return result;
     },
-  } as Gateway), {
+  } as unknown as Gateway), {
     protocolQualified: true, rootlessQualified: true,
     verifyLane: async () => { throw Error("No live verification in fixture"); },
   });
@@ -144,7 +144,8 @@ test("shutdown abort before broker.close ends pending and future observation fal
   assert.ok(startupFailure.includes("codexHost.stopSettlementObservation();"));
   assert.ok(startupFailure.indexOf("codexHost.stopSettlementObservation();") < startupFailure.indexOf("await application.app.close();"));
   const shutdown = main.slice(main.indexOf("const close = async"));
-  assert.ok(shutdown.indexOf("codexHost.stopSettlementObservation();") < shutdown.indexOf("application.broker.close(),"));
+  assert.ok(shutdown.indexOf("codexHost.stopSettlementObservation();") > shutdown.indexOf("application.broker.close(),"));
+  assert.ok(shutdown.indexOf("codexHost.stopSettlementObservation();") < shutdown.indexOf("gateway!.close();"));
 });
 
 for (const nativeProof of [false, "reject"] as const)
@@ -155,7 +156,8 @@ test(`native cleanup ${nativeProof} fails promptly without entering gateway obse
   assert.equal(f.observations, 0);
   assert.equal(f.owners.snapshot(f.session.id)[0]!.state, "draining");
   assert.equal(f.store.isQuarantined(f.store.getSession(f.session.id).workspaceId), true);
-  assert.throws(() => f.broker.enqueue(f.session.id, "message", "blocked"), /settlement review/);
+  assert.equal(f.store.checkpoints.status(f.session.id)[0]!.status, "recovery_required");
+  assert.throws(() => f.broker.enqueue(f.session.id, "message", "blocked"), /preserved originals and checkpoint/);
   assert.equal(f.store.allEvents(f.session.id).find(e => e.type === "error" && e.data.code === "engine_cleanup_unknown")?.data.cleanupFailure, "native_cleanup_unconfirmed");
   assert.doesNotMatch(JSON.stringify(f.store.allEvents(f.session.id)), /private launcher detail/);
 });
@@ -187,7 +189,7 @@ test(`Codex Stop ${failure} fails closed and cannot admit a followup or become s
   } else f.owners.transition(f.owned, "uncertain");
   await f.broker.idle();
   assert.equal(f.store.isQuarantined(f.store.getSession(f.session.id).workspaceId), true);
-  assert.throws(() => f.broker.enqueue(f.session.id, "message", "blocked"), /settlement review/);
+  assert.throws(() => f.broker.enqueue(f.session.id, "message", "blocked"), /preserved originals and checkpoint/);
   assert.ok(["failed", "interrupted"].includes(f.store.runs(f.session.id)[0]!.status));
   assert.equal(f.store.allEvents(f.session.id).find(e => e.type === "error" && e.data.code === "engine_cleanup_unknown")?.data.cleanupFailure, "gateway_settlement_unconfirmed");
   if (failure === "uncertain") f.owners.transition(f.owned, "settled");

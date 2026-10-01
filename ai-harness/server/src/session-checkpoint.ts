@@ -103,7 +103,10 @@ export class SessionCheckpoint {
       const prior=this.store.db.prepare("SELECT body FROM h041_memory_versions WHERE session_id=? AND id=?").get(sessionId,r.acceptedVersionId);
       const retainedState=r.acceptedVersionId===null||!!prior&&createHash("sha256").update(String(prior.body)).digest("hex")===r.acceptedStateSha256;
       const retainedInventory=JSON.stringify(this.store.memory.inventory(sessionId,r.originalInventory.through))===JSON.stringify(r.originalInventory);
-      r.status = r.status === "recovery_required" || outcome !== "completed" || !retainedState || !retainedInventory ? "recovery_required" : "settled";
+      const session=this.store.getSession(sessionId);
+      const settledOrdinaryStop=outcome==="cancelled"&&r.kind!=="compact"&&r.compactions.length===0&&
+        session.nativeState.ownership==="idle"&&session.nativeState.activeTurnId===null&&!this.store.isQuarantined(session.workspaceId);
+      r.status = r.status === "recovery_required" || (outcome !== "completed"&&!settledOrdinaryStop) || !retainedState || !retainedInventory ? "recovery_required" : "settled";
     });
   }
   recordNativeEvidence(sessionId:string,runId:string,kind:string,body:unknown) {
