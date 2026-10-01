@@ -3,8 +3,10 @@ import type {CodexHostQualification} from "./codex-host.js";
 import type {CodexOrdinaryEntry} from "./codex-ordinary-entry.js";
 import type {CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import type {NativeReplacementCommitVerifier} from "./broker.js";
+import type {QualificationTaskAdmission} from './qualification-task-admission.js';
 export interface CodexProductObservers extends CodexRecoveryObservers, Pick<CodexHostQualification,"observations"|"onNativeLaunchReceipt"|"onNativeSettlementReceipt"|"onNativeThread"|"beforeNativeAction"|"onNativeChildObserved"|"onNativeOperation"|"nativeTraceMode"|"onNativeTraceReceipt"> {
  beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
+ taskAdmission?:QualificationTaskAdmission;
 }
 export function composeCodexProductObservers(base:CodexHostQualification,ordinary:CodexOrdinaryEntry|undefined,observer:CodexProductObservers={}):CodexHostQualification {
  const result={...base,...(ordinary?{nativeReceiptPolicy:ordinary.nativeReceiptPolicy,...ordinary.hooks}:{})};

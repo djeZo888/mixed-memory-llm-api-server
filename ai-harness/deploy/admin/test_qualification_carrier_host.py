@@ -20,9 +20,21 @@ class Fixtures(unittest.TestCase):
   with self.assertRaises(host.CarrierError):host.checked_bytes(q,uid=os.getuid())
   q.unlink();os.link(p,q)
   with self.assertRaises(host.CarrierError):host.checked_bytes(p,uid=os.getuid())
+ def test_parent_bind_and_hardlink_alias_original_object_cannot_escape_scope(self):
+  original=self.root/'original';original.mkdir();file=original/'retained';file.write_text('original');scope=host.object_scope([original]);self.assertTrue(host.mount_overlaps(self.root,scope));alias=self.root/'outside-hardlink';os.link(file,alias);self.assertTrue(host.mount_overlaps(alias,scope));other=self.root/'disjoint';other.mkdir();self.assertFalse(host.mount_overlaps(other,scope));link=self.root/'link';link.symlink_to(original)
+  with self.assertRaises(host.CarrierError):host.mount_overlaps(link,scope)
  def test_exact_hmac_rejects_tamper_and_wrong_phase_budget(self):
   value={'schema':'h041-qualification-carrier-v1','actor':'worker1','phase':'stage','nativeActionLimit':9,'settlementReserveMs':120000};raw=json.dumps(value).encode();key=b'k'*32;approved=json.dumps({'inputSHA256':hashlib.sha256(raw).hexdigest(),'mac':hmac.new(key,raw,hashlib.sha256).hexdigest()}).encode()
   with mock.patch.object(host,'checked_bytes',side_effect=[raw,approved,key]):self.assertEqual(host.signed_packet('i','a','k'),value)
   with mock.patch.object(host,'checked_bytes',side_effect=[raw,approved,b'x'*32]):
    with self.assertRaises(host.CarrierError):host.signed_packet('i','a','k')
 if __name__=='__main__':unittest.main()
+
+class BarrierFixtures(unittest.TestCase):
+ def test_exact_preexec_ack_rejects_pid_start_boot_or_transaction_substitution(self):
+  import qualification_task_barrier as barrier
+  owner={'pid':100,'startTicks':'200','bootId':'actual-boot'};carrier={'transactionId':'owned'}
+  self.assertTrue(barrier.acknowledged({'transactionId':'owned','task':owner},owner,carrier))
+  for key,value in [('pid',101),('startTicks','201'),('bootId','other')]:
+   self.assertFalse(barrier.acknowledged({'transactionId':'owned','task':{**owner,key:value}},owner,carrier))
+  self.assertFalse(barrier.acknowledged({'transactionId':'foreign','task':owner},owner,carrier))

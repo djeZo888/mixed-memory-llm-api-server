@@ -46,6 +46,8 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  /** Trusted host-only carrier challenge; never derived from a request body. */
+  taskAdmission?: (input:{sessionId:string;requestId:string;lane:string;phase:'pre-hold'|'pre-dispatch'},signal:AbortSignal)=>Promise<void>;
   nativeMetadataAuthority?: (input:{requestId:string;sessionId:string;metadata:CodexTurnMetadata}) => CodexMetadataAuthority|undefined;
   onNativeOperation?: (receipt:CodexNativeOperationReceipt) => void;
   ownership?: OwnershipOptions;
@@ -906,6 +908,8 @@ export function createGateway(options: GatewayOptions): Gateway {
       reply.raw.removeListener("close", disconnect);
       throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
     }
+    try { await options.taskAdmission?.({sessionId,requestId:ownedRequest.id,lane:lane.upstream.alias,phase:'pre-hold'},cancelled.signal); }
+    catch(error){settleLane(lane,true);recordState('rejected');reply.raw.removeListener('close',disconnect);throw error;}
     while (
       options.dispatchHeld?.(lane.upstream.alias) &&
       !disconnected &&
@@ -1002,6 +1006,14 @@ export function createGateway(options: GatewayOptions): Gateway {
         throw error;
       }
     }
+    // Counting and durable capture can yield long enough to expire the carrier.
+    // Rechallenge immediately before acceptance; every foreign hold still wins.
+    if(options.taskAdmission)try{
+      await options.taskAdmission({sessionId,requestId:ownedRequest.id,lane:lane.upstream.alias,phase:'pre-dispatch'},cancelled.signal);
+      if(cancelled.signal.aborted||tokens.get(token)!==sessionId)throw new ApiError(499,'cancelled','Request cancelled before dispatch');
+      if(options.dispatchHeld?.(lane.upstream.alias)||options.dispatchHeld?.('harness'))throw new ApiError(503,'task_dispatch_held','Task dispatch is held');
+      if(selectedAdmission.available(lane).dispatch!=='allow')throw new ApiError(503,'lane_unavailable','Lane unavailable before dispatch');
+    }catch(error){settleLane(lane,true);recordState('rejected');reply.raw.removeListener('close',disconnect);throw error;}
     ownership.transition(ownedRequest, "accepted", lane.upstream.alias);
     if(nativeOperation)try{options.onNativeOperation?.({...nativeOperation,lane:lane.upstream.alias,phase:"accepted"});}catch{/* Observer never owns settlement. */}
     lane.dispatched = true;

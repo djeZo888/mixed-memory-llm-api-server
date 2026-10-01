@@ -56,6 +56,8 @@ class Fixtures(unittest.TestCase):
  def host(self,mode='pass'):
   fixture=self
   class Host:
+   def begin_guardian(self,p,l):fixture.calls.append('guardian-ready');l.validate()
+   def release_unmutated_guardian(self,p,l):fixture.calls.append('guardian-release-unmutated');l.validate()
    def assert_current(self,p,l,stage):fixture.assertIs(l,fixture.lease);l.validate();fixture.calls.append(stage)
    def assert_stopped_writers(self,p,l):fixture.assertEqual(fixture.state['active'],'inactive');l.validate()
    def run_owned_task(self,p,l):fixture.calls.append('task');l.validate();
@@ -68,7 +70,7 @@ class Fixtures(unittest.TestCase):
   if mode=='failed':host.run_owned_task=lambda p,l:(_ for _ in ()).throw(Exception('workload failed'))
   return host
  def test_one_lease_spans_real_stop_backup_task_cleanup_actual_restore(self):
-  plan=self.plan();r=QualificationCarrier(self.ops,self.host(),clock=lambda:200).run(plan);self.assertEqual(r['status'],'settled');self.assertEqual(self.acquires,1);self.assertEqual(self.calls,['before-stop','service.stop','before-task','task','cleanup','before-restore','service.start']);self.assertTrue(plan.backup_root.exists())
+  plan=self.plan();r=QualificationCarrier(self.ops,self.host(),clock=lambda:200).run(plan);self.assertEqual(r['status'],'settled');self.assertEqual(self.acquires,1);self.assertEqual(self.calls,['guardian-ready','before-stop','service.stop','before-task','task','cleanup','before-restore','service.start']);self.assertTrue(plan.backup_root.exists())
  def test_failed_workload_restores_only_after_proved_cleanup_and_never_replays(self):
   plan=self.plan()
   with self.assertRaisesRegex(Exception,'workload failed'):QualificationCarrier(self.ops,self.host('failed'),clock=lambda:200).run(plan)

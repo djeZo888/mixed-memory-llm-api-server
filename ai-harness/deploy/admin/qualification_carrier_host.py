@@ -27,9 +27,33 @@ def signed_packet(input_path,approval_path,key_path):
 def process_identity(pid):
  root=Path('/proc')/str(pid);raw=(root/'stat').read_text();return {'pid':pid,'startTicks':raw.rsplit(')',1)[1].split()[19],'bootId':Path('/proc/sys/kernel/random/boot_id').read_text().strip()}
 
+def object_scope(roots):
+ """STAT-only actual original objects plus canonical ancestor identities."""
+ result={'roots':[],'objects':set(),'ancestors':set()}
+ for raw in roots:
+  root=Path(raw)
+  if root.resolve()!=root or not root.is_dir():raise CarrierError('physical_root_not_canonical')
+  st=root.lstat();result['roots'].append({'path':str(root),'dev':st.st_dev,'ino':st.st_ino})
+  for p in [root,*root.rglob('*')]:
+   st=p.lstat()
+   if p.is_symlink():raise CarrierError('physical_original_alias')
+   result['objects'].add((st.st_dev,st.st_ino))
+   if len(result['objects'])>250000:raise CarrierError('physical_scope_bound')
+  for parent in [root,*root.parents]:
+   st=parent.stat();result['ancestors'].add((st.st_dev,st.st_ino))
+ return result
+
+def mount_overlaps(source,scope):
+ p=Path(source)
+ if not p.is_absolute() or p.resolve()!=p:raise CarrierError('mount_source_unknown_alias')
+ st=p.stat();key=(st.st_dev,st.st_ino)
+ # Parent binds expose original subroots; child/alias binds share an object.
+ if key in scope['ancestors'] or key in scope['objects']:return True
+ return any(p==Path(r['path']) or p in Path(r['path']).parents or Path(r['path']) in p.parents for r in scope['roots'])
+
 def physical_scope(roots,uid,ports=(8080,8081,18081)):
- """Complete root FD census, model mount census and listener proof; unknown aborts."""
- targets=[Path(p) for p in roots];writers=[];listeners=[];inodes=set()
+ """Kernel FD dev/inode + namespace + bidirectional mount closure; unknown aborts."""
+ scope=object_scope(roots);targets=[Path(r['path']) for r in scope['roots']];writers=[];listeners=[];inodes=set();observed=0
  for table in ['/proc/net/tcp','/proc/net/tcp6']:
   for line in Path(table).read_text().splitlines()[1:]:
    parts=line.split()
@@ -37,32 +61,52 @@ def physical_scope(roots,uid,ports=(8080,8081,18081)):
  for proc in Path('/proc').iterdir():
   if not proc.name.isdigit():continue
   try:
+   identity=process_identity(int(proc.name));namespace=(proc/'ns/mnt').stat().st_ino;mountsha=hashlib.sha256((proc/'mountinfo').read_bytes()).hexdigest()
    for fd in (proc/'fd').iterdir():
-    try:link=os.readlink(fd)
+    try:link=os.readlink(fd);st=fd.stat()
     except FileNotFoundError:continue
-    if link.startswith('socket:[') and link[8:-1] in inodes:listeners.append({'pid':int(proc.name),'socketInode':link[8:-1]})
+    observed+=1
+    if observed>1000000:raise CarrierError('kernel_fd_bound')
+    if link.startswith('socket:[') and link[8:-1] in inodes:listeners.append({**identity,'socketInode':link[8:-1],'mountNamespace':namespace})
     clean=link.removesuffix(' (deleted)')
-    if any(clean==str(p) or clean.startswith(str(p)+'/') for p in targets):writers.append({'pid':int(proc.name),'fd':fd.name,'path':clean})
-  except FileNotFoundError:continue
+    if (st.st_dev,st.st_ino) in scope['objects'] or any(clean==str(p) or clean.startswith(str(p)+'/') for p in targets):writers.append({**identity,'fd':fd.name,'objectDev':st.st_dev,'objectIno':st.st_ino,'mountNamespace':namespace,'mountInfoSHA256':mountsha})
+   if process_identity(int(proc.name))!=identity:raise CarrierError('kernel_process_changed')
+  except (FileNotFoundError,ProcessLookupError):continue
   except PermissionError:raise CarrierError('incomplete_kernel_fd_observation')
- command=['/usr/sbin/runuser','--user',uid['name'],'--','/usr/bin/env','-i','PATH=/usr/bin:/bin','HOME='+uid['home'],'XDG_RUNTIME_DIR=/run/user/'+str(uid['uid']),'/usr/bin/podman','--remote=false']
- containers=[]
+ command=['/usr/sbin/runuser','--user',uid['name'],'--','/usr/bin/env','-i','PATH=/usr/bin:/bin','HOME='+uid['home'],'XDG_RUNTIME_DIR=/run/user/'+str(uid['uid']),'/usr/bin/podman','--remote=false'];containers=[]
  result=subprocess.run(command+['ps','-a','--format','json'],capture_output=True,timeout=8,check=True)
  for row in json.loads(result.stdout):
-  cid=row.get('Id',row.get('ID'));result=subprocess.run(command+['inspect',cid],capture_output=True,timeout=8,check=True);v=json.loads(result.stdout)[0]
-  if any(any(m.get('Source')==str(p) or str(m.get('Source','')).startswith(str(p)+'/') for p in targets) for m in v.get('Mounts',[])):containers.append({'id':cid,'running':v['State']['Running'],'pid':v['State']['Pid']})
- return {'writers':writers,'listeners':listeners,'containers':containers}
+  cid=row.get('Id',row.get('ID'));result=subprocess.run(command+['inspect',cid],capture_output=True,timeout=8,check=True);v=json.loads(result.stdout)[0];matches=[]
+  for m in v.get('Mounts',[]):
+   source=m.get('Source')
+   if source and mount_overlaps(source,scope):matches.append({'sourceDev':Path(source).stat().st_dev,'sourceIno':Path(source).stat().st_ino,'type':m.get('Type'),'rw':m.get('RW'),'destination':m.get('Destination')})
+  if matches:containers.append({'id':cid,'running':v['State']['Running'],'pid':v['State']['Pid'],'overlappingMounts':matches})
+ return {'roots':scope['roots'],'objectCount':len(scope['objects']),'observedFDCount':observed,'writers':writers,'listeners':listeners,'containers':containers}
 
 class LinuxCarrierHost:
  def __init__(self,packet,owner,freeze,lease_module):
-  self.packet,self.owner,self.freeze,self.lease_module=packet,owner,freeze,lease_module;self.task=None;self.task_identity=None;self.server=None;self.channel=None;self.guardian=None;self.original_records=None;self.key=os.urandom(32);self.dead=False
+  self.packet,self.owner,self.freeze,self.lease_module=packet,owner,freeze,lease_module;self.task=None;self.task_identity=None;self.server=None;self.channel=None;self.guardian=None;self.original_records=None;self.guardian_identity=None;self.key=os.urandom(32);self.dead=False
  def sources(self):
   for p,digest in self.packet['privilegedSourceHashes'].items():
    if hashlib.sha256(checked_bytes(p)).hexdigest()!=digest:raise CarrierError('privileged_source_changed')
   for p,digest in self.packet['taskSourceHashes'].items():
    if hashlib.sha256(checked_bytes(p,uid=self.packet['user']['uid'],bound=512*1024*1024)).hexdigest()!=digest:raise CarrierError('task_source_changed')
+ def begin_guardian(self,plan,lease):
+  lease.validate();self.sources();self._start_guardian(plan,lease)
+ def _guardian_current(self):
+  if not self.guardian or self.guardian.poll() is not None or process_identity(self.guardian.pid)!=self.guardian_identity:raise CarrierError('spanning_guardian_lost')
+ def release_unmutated_guardian(self,plan,lease):
+  lease.validate()
+  if self.task is not None or self.owner.observe_service('harness')!=self.packet['normalService']:raise CarrierError('unmutated_guardian_release_unproved')
+  if self.guardian:self._release_guardian(plan)
+ def _release_guardian(self,plan):
+  self._guardian_current();p=Path(self.packet['evidenceRoot'])/'guardian.release';fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  try:os.write(fd,json.dumps({'carrier':process_identity(os.getpid()),'transactionId':plan.transaction_id}).encode());os.fsync(fd)
+  finally:os.close(fd)
+  self.guardian.wait(timeout=3)
+  if self.guardian.returncode:raise CarrierError('guardian_release_unproved')
  def assert_current(self,plan,lease,stage):
-  lease.validate();self.sources()
+  lease.validate();self.sources();self._guardian_current()
   if process_identity(os.getpid())['bootId']!=plan.boot_id:raise CarrierError('boot_changed')
   self.freeze(plan.stop_request)
   observed=self.owner.observe_service('harness')
@@ -84,10 +128,11 @@ class LinuxCarrierHost:
  def _admission(self,plan,lease):
   directory=Path('/run/ai-harness-qualification')/plan.transaction_id
   directory.mkdir(mode=0o710,parents=False);os.chown(directory,0,self.packet['user']['gid']);path=directory/'admission.sock';server=socket.socket(socket.AF_UNIX);server.bind(str(path));os.chmod(path,0o660);os.chown(path,0,self.packet['user']['gid']);server.listen(4);server.settimeout(.2);self.server=server;self.channel=directory
-  packet={'schema':'qualification-task-admission-v1','transactionId':plan.transaction_id,'carrier':process_identity(os.getpid()),'socketPath':str(path),'key':self.key.hex(),'sessionId':self.packet['sessionId'],'lane':'qwen3.8-27b','ownHoldKey':self.packet['ownHoldKey'],'dispatchCutoffMs':int(plan.dispatch_cutoff*1000),'expiresAtMs':int(plan.expires_at*1000)}
+  packet={'schema':'qualification-task-admission-v1','transactionId':plan.transaction_id,'carrier':process_identity(os.getpid()),'socketPath':str(path),'key':self.key.hex(),'sessionId':self.packet['sessionId'],'lane':'qwen3.8-27b','maxOwnedSessions':64,'ownHoldKey':self.packet['ownHoldKey'],'dispatchCutoffMs':int(plan.dispatch_cutoff*1000),'expiresAtMs':int(plan.expires_at*1000)}
   fd=os.open(directory/'admission.json',os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o640)
   try:os.write(fd,json.dumps(packet).encode());os.fchown(fd,0,self.packet['user']['gid']);os.fchmod(fd,0o640);os.fsync(fd)
   finally:os.close(fd)
+  sessions={self.packet['sessionId']:{'role':'carrier'}}
   def serve():
    while not self.dead:
     try:c,_=server.accept()
@@ -108,12 +153,19 @@ class LinuxCarrierHost:
       if not chunk:raise CarrierError('incomplete_task_challenge')
       raw+=chunk
      request=json.loads(raw);body=request['body'];v=json.loads(body)
-     if not hmac.compare_digest(request['mac'],hmac.new(self.key,body.encode(),hashlib.sha256).hexdigest()) or set(v)!={'challenge','transactionId','sessionId','requestId','lane'} or v['transactionId']!=plan.transaction_id or v['sessionId']!=self.packet['sessionId'] or v['lane']!='qwen3.8-27b' or time.time()>=plan.dispatch_cutoff:raise CarrierError('foreign_expired_task_challenge')
+     operation=v.get('operation');allowed={'challenge','transactionId','sessionId','requestId','lane','operation'}
+     if operation=='register':allowed|={'role','parentSessionId'} if 'parentSessionId' in v else {'role'}
+     if not hmac.compare_digest(request['mac'],hmac.new(self.key,body.encode(),hashlib.sha256).hexdigest()) or set(v)!=allowed or v['transactionId']!=plan.transaction_id or v['lane']!='qwen3.8-27b' or time.time()>=plan.dispatch_cutoff or operation not in ['register','admit']:raise CarrierError('foreign_expired_task_challenge')
+     if operation=='register':
+      import re
+      if not re.fullmatch('[A-Za-z0-9._:-]{1,128}',v['sessionId']) or v['role'] not in ['parent','probe','child'] or v['sessionId'] in sessions or len(sessions)>=65 or (v['role']!='parent' and v.get('parentSessionId') not in sessions):raise CarrierError('unowned_session_registration')
+     elif v['sessionId'] not in sessions:raise CarrierError('unregistered_task_session')
      # Same-process capability cannot be borrowed by another thread. Its owner
      # is the carrier main thread/process; validate is PID-based, no FD minting.
      lease.validate();self.sources();self._foreign_holds()
      if self.task is None or self.task.poll() is not None:raise CarrierError('task_owner_lost')
-     response=json.dumps({**v,'status':'admit','observedAtMs':int(time.time()*1000),'ownerStartTicks':packet['carrier']['startTicks'],'ownHoldKey':self.packet['ownHoldKey']},separators=(',',':'));c.sendall(json.dumps({'body':response,'mac':hmac.new(self.key,response.encode(),hashlib.sha256).hexdigest()}).encode()+b'\n')
+     if operation=='register':sessions[v['sessionId']]={'role':v['role'],'parentSessionId':v.get('parentSessionId')}
+     response=json.dumps({**v,'status':'registered' if operation=='register' else 'admit','observedAtMs':int(time.time()*1000),'ownerStartTicks':packet['carrier']['startTicks'],'ownHoldKey':self.packet['ownHoldKey']},separators=(',',':'));c.sendall(json.dumps({'body':response,'mac':hmac.new(self.key,response.encode(),hashlib.sha256).hexdigest()}).encode()+b'\n')
     except Exception:
      try:c.sendall(b'{"status":"reject"}\n')
      except OSError:pass
@@ -124,7 +176,12 @@ class LinuxCarrierHost:
   if not entry.endswith('/ai-harness/deploy/engine/qualification-task.mjs') or not node.endswith('/bin/node') or entry not in self.packet['taskSourceHashes'] or node not in self.packet['taskSourceHashes']:raise CarrierError('fixed_task_entry_required')
   argv=['/usr/sbin/runuser','--user',user['name'],'--','/usr/bin/env','-i','PATH=/usr/bin:/bin','HOME='+user['home'],'USER='+user['name'],'LOGNAME='+user['name'],'XDG_RUNTIME_DIR=/run/user/'+str(user['uid']),'DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/'+str(user['uid'])+'/bus',node,entry,self.packet['taskConfigPath'],str(admission)]
   out=Path(self.packet['evidenceRoot']);stdout=open(out/'task.stdout.private','xb');stderr=open(out/'task.stderr.private','xb');os.chmod(stdout.name,0o600);os.chmod(stderr.name,0o600)
-  try:self.task=subprocess.Popen(argv,stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr,start_new_session=True);self.task_identity=process_identity(self.task.pid);self._start_guardian(plan,lease);code=self.task.wait(timeout=max(.1,plan.dispatch_cutoff-time.time()))
+  barrier=Path(__file__).with_name('qualification_task_barrier.py')
+  if str(barrier) not in self.packet['privilegedSourceHashes']:raise CarrierError('reviewed_preexec_barrier_required')
+  config=out/'task-preexec.json';fd=os.open(config,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  try:os.write(fd,json.dumps({'transactionId':plan.transaction_id,'carrier':process_identity(os.getpid()),'user':user['name'],'argv':argv,'ack':str(out/'guardian.task-ready')}).encode());os.fsync(fd)
+  finally:os.close(fd)
+  try:self.task=subprocess.Popen(['/usr/bin/python3','-I','-S','-B',str(barrier),str(config)],stdin=subprocess.DEVNULL,stdout=stdout,stderr=stderr,start_new_session=True);self.task_identity=process_identity(self.task.pid);self._register_task(plan);code=self.task.wait(timeout=max(.1,plan.dispatch_cutoff-time.time()))
   finally:stdout.close();stderr.close()
   if code:raise CarrierError('task_actual_exit_nonzero')
   return {'exit':code,'identity':self.task_identity,'argv':argv}
@@ -132,13 +189,23 @@ class LinuxCarrierHost:
   import local_helper
   fd=local_helper._lease_module._export_package_watcher_fd(lease)
   try:
-   config=Path(self.packet['evidenceRoot'])/'guardian.json';value={'transactionId':plan.transaction_id,'carrier':process_identity(os.getpid()),'task':self.task_identity,'roots':[str(p) for p in plan.source_roots]+self.packet['taskRoots'],'user':self.packet['user'],'leaseFD':fd,'leaseStat':{'dev':os.fstat(fd).st_dev,'ino':os.fstat(fd).st_ino},'evidenceRoot':self.packet['evidenceRoot']};config.write_text(json.dumps(value));config.chmod(0o600)
+   config=Path(self.packet['evidenceRoot'])/'guardian.json';value={'transactionId':plan.transaction_id,'carrier':process_identity(os.getpid()),'taskRecordPath':str(Path(self.packet['evidenceRoot'])/'guardian.task-owner.json'),'roots':[str(p) for p in plan.source_roots]+self.packet['taskRoots'],'user':self.packet['user'],'leaseFD':fd,'leaseStat':{'dev':os.fstat(fd).st_dev,'ino':os.fstat(fd).st_ino},'evidenceRoot':self.packet['evidenceRoot']};config.write_text(json.dumps(value));config.chmod(0o600)
    guardian=Path(__file__).with_name('qualification_guardian.py');self.guardian=subprocess.Popen(['/usr/bin/python3','-I','-S','-B',str(guardian),str(config)],pass_fds=(fd,),stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,start_new_session=True)
+   self.guardian_identity=process_identity(self.guardian.pid)
    until=time.monotonic()+3
    while not (Path(self.packet['evidenceRoot'])/'guardian.ready').exists():
     if self.guardian.poll() is not None or time.monotonic()>until:raise CarrierError('guardian_readiness_unproved')
     time.sleep(.02)
   finally:os.close(fd)
+ def _register_task(self,plan):
+  self._guardian_current();root=Path(self.packet['evidenceRoot']);p=root/'guardian.task-owner.json';fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
+  try:os.write(fd,json.dumps({'transactionId':plan.transaction_id,'task':self.task_identity}).encode());os.fsync(fd)
+  finally:os.close(fd)
+  until=time.monotonic()+3
+  while not (root/'guardian.task-ready').exists():
+   self._guardian_current()
+   if time.monotonic()>until:raise CarrierError('task_guardian_registration_unproved')
+   time.sleep(.01)
  def settle_owned_task(self,plan,lease):
   lease.validate()
   if self.task and self.task.poll() is None:
@@ -160,9 +227,7 @@ class LinuxCarrierHost:
   if not v['listeners'] or any(x['pid']!=pid for x in v['listeners']) or not any(x['pid']==pid for x in v['writers']):raise CarrierError('restored_listener_db_owner_unproved')
   # Never claim restored bytes identical after genuine original-release recovery.
   result={'normalService':current,'physical':v,'recoveryDelta':verify_retained_records(self.original_records,retained_record_snapshot(self.packet['normalDatabase'])),'oldOwnersReconciled':False}
-  if self.guardian:
-   Path(self.packet['evidenceRoot'],'guardian.release').write_text(json.dumps({'carrier':process_identity(os.getpid()),'transactionId':plan.transaction_id}));self.guardian.wait(timeout=3)
-   if self.guardian.returncode:raise CarrierError('guardian_release_unproved')
+  self._release_guardian(plan)
   return result
  def retain_restore_needed(self,plan,reason):
   p=Path(self.packet['evidenceRoot'])/'RESTORE-NEEDED.json';fd=os.open(p,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)

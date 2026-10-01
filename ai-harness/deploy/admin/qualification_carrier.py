@@ -36,6 +36,8 @@ class CarrierPlan:
 
 class CarrierHost(Protocol):
     # Methods are trusted host producers, never results supplied by a task/model.
+    def begin_guardian(self, plan: CarrierPlan, lease) -> None: ...
+    def release_unmutated_guardian(self, plan: CarrierPlan, lease) -> None: ...
     def assert_current(self, plan: CarrierPlan, lease, stage: str) -> None: ...
     def assert_stopped_writers(self, plan: CarrierPlan, lease) -> None: ...
     def run_owned_task(self, plan: CarrierPlan, lease) -> object: ...
@@ -217,6 +219,7 @@ class QualificationCarrier:
         try:
             lease = context.__enter__()
             lease.validate()
+            self.host.begin_guardian(plan, lease)
             self.host.assert_current(plan, lease, "before-stop")
             dispatch()
             stop_attempted = True
@@ -294,5 +297,7 @@ class QualificationCarrier:
             raise
         finally:
             if lease is not None and not keep_owned:
+                if not stop_attempted:
+                    self.host.release_unmutated_guardian(plan,lease)
                 context.__exit__(None, None, None)
             os.close(fd)
