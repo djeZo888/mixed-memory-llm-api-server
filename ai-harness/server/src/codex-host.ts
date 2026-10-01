@@ -1,6 +1,6 @@
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
-import type { CodexReceiptPolicy } from "./codex-receipts.js";
-import type { CodexReadOriginalProbe } from "./codex-probe.js";
+import { codexReceiptProvenance, type CodexReceiptPolicy } from "./codex-receipts.js";
+import type { CodexReadOriginalProbe, CodexTextOnlyPolicy } from "./codex-probe.js";
 import { admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { CODEX_PIN, type CodexRuntime } from "./codex-engine.js";
 import { loadCodexResumeInstructions } from "./codex-instructions.js";
@@ -12,6 +12,13 @@ export interface CodexHostQualification {
   protocolQualified: true;
   /** Disabled until root reviews actual Linux receipt-channel acceptance. */
   nativeReceiptPolicy?: CodexReceiptPolicy;
+  parentArtifactScope?: CodexRuntime["parentArtifactScope"];
+  registerCheckpointArtifact?: CodexRuntime["registerCheckpointArtifact"];
+  onCheckpointArtifactSettled?: CodexRuntime["onCheckpointArtifactSettled"];
+  textOnlyPolicy?: (sessionId: string) => CodexTextOnlyPolicy | undefined;
+  authorizeNativeTurn?: CodexRuntime["authorizeNativeTurn"];
+  authorizeOriginalRead?: CodexRuntime["authorizeOriginalRead"];
+  onNativeThreadPolicy?: CodexRuntime["onNativeThreadPolicy"];
   readOriginalProbe?: (sessionId: string) => CodexReadOriginalProbe | undefined;
   onNativeLaunchReceipt?: CodexRuntime["onNativeLaunchReceipt"];
   onNativeSettlementReceipt?: CodexRuntime["onNativeSettlementReceipt"];
@@ -47,14 +54,29 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.outputLimit !== undefined && (!Number.isSafeInteger(qualification.outputLimit) || qualification.outputLimit < 1 || qualification.outputLimit > 65536))
     throw Error("Invalid trusted Codex output reservation");
   if (qualification?.readOriginalProbe && qualification.nativeReceiptPolicy?.linuxTransportQualified !== true) throw Error("Original probes require reviewed Linux receipt transport");
-  // Physical container/cleanup evidence cannot attest the model-facing tool
-  // envelope or deny reads of mounted histories. A separate observed native +
-  // gateway scope proof is not available yet; never admit on caller booleans.
-  if (qualification?.readOriginalProbe) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
+  if (qualification?.textOnlyPolicy && (!qualification.nativeReceiptPolicy || !qualification.authorizeNativeTurn)) throw Error("Text-only policy requires receipt transport and observed native admission");
+  if (qualification?.readOriginalProbe && (!qualification.textOnlyPolicy || !qualification.authorizeOriginalRead)) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
+  if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
     pin: CODEX_PIN, protocolQualified: !!qualification,
     nativeReceiptsRequired: !!qualification?.nativeReceiptPolicy,
+    parentArtifactScope: qualification?.parentArtifactScope,
+    registerCheckpointArtifact: qualification?.registerCheckpointArtifact ? async (input, signal) => {
+      if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Artifact scope lacks genuine transport receipt");
+      return qualification.registerCheckpointArtifact!(input, signal);
+    } : undefined,
+    onCheckpointArtifactSettled: qualification?.onCheckpointArtifactSettled,
+    textOnlyPolicy: qualification?.textOnlyPolicy,
+    authorizeNativeTurn: qualification?.authorizeNativeTurn ? async input => {
+      if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Native turn lacks genuine transport receipt");
+      await qualification.authorizeNativeTurn!(input);
+    } : undefined,
+    authorizeOriginalRead: qualification?.authorizeOriginalRead ? async (input, signal) => {
+      if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Original scope lacks genuine transport receipt");
+      await qualification.authorizeOriginalRead!(input, signal);
+    } : undefined,
+    onNativeThreadPolicy: qualification?.onNativeThreadPolicy,
     readOriginalProbe: qualification?.readOriginalProbe,
     onNativeLaunchReceipt: qualification?.onNativeLaunchReceipt,
     onNativeSettlementReceipt: qualification?.onNativeSettlementReceipt,

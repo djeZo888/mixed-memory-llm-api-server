@@ -1,4 +1,4 @@
-import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe } from "./codex-probe.js";
+import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe, type CodexTextOnlyPolicy, assertCodexTextOnlyPolicy, codexTextOnlyThreadParams, type CodexParentArtifactScope, CODEX_PARENT_ARTIFACT_SPEC, claimCodexParentArtifactScope, reserveCodexParentArtifact, recordCodexPolicyThread, recordCodexPolicySettlement, codexPolicyOwnsSettledThread } from "./codex-probe.js";
 import { isVerifiedCodexLaunchReceipt, isVerifiedCodexSettlementReceipt, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { completedImageStatus } from "./image-status-consumption.js";
 import type { CodexCapabilities } from "./codex-capabilities.js";
@@ -43,6 +43,13 @@ export interface CodexRuntime {
   readonly protocolQualified: boolean;
   /** Trusted host-only opt-in; absent retains existing production chat behavior. */
   readonly nativeReceiptsRequired?: boolean;
+  parentArtifactScope?(sessionId: string): CodexParentArtifactScope | undefined;
+  registerCheckpointArtifact?(input: { scope: CodexParentArtifactScope; launchReceipt: CodexNativeLaunchReceipt; threadId: string; turnId: string; callId: string; name: string; jsonUtf8: string; sha256: string }, signal: AbortSignal): Promise<{ artifactId: string; sha256: string }>;
+  onCheckpointArtifactSettled?(input: { runId: string; checkpointId: string; threadId: string; turnId: string; callId: string; name: string; artifactId: string; sha256: string; responseSha256: string }): void;
+  textOnlyPolicy?(sessionId: string): CodexTextOnlyPolicy | undefined;
+  authorizeNativeTurn?(input: { policy: CodexTextOnlyPolicy; launchReceipt: CodexNativeLaunchReceipt; threadId: string; params: Readonly<Record<string, unknown>>; method: "turn/start" | "thread/compact/start" }): Promise<void>;
+  authorizeOriginalRead?(input: { policy: CodexTextOnlyPolicy; probe: CodexReadOriginalProbe; launchReceipt: CodexNativeLaunchReceipt; threadId: string; turnId: string; callId: string }, signal: AbortSignal): Promise<void>;
+  onNativeThreadPolicy?(input: { policy: CodexTextOnlyPolicy; launchReceipt: CodexNativeLaunchReceipt; threadId: string; sandbox: Readonly<Record<string, unknown>>; requestedSettings: Readonly<Record<string, unknown>>; observedSettings: Readonly<Record<string, unknown>>; method: "thread/start" | "thread/resume" }): void;
   readOriginalProbe?(sessionId: string): CodexReadOriginalProbe | undefined;
   onNativeLaunchReceipt?(receipt: CodexNativeLaunchReceipt): void;
   onNativeSettlementReceipt?(receipt: CodexNativeSettlementReceipt): void;
@@ -107,11 +114,14 @@ function fault(message: string, cleanupFailure?: "native_cleanup_unconfirmed" | 
  */
 export class CodexEngine implements Engine {
   private child?: RootlessCodexProcess;
+  private scopeStopTimer?: ReturnType<typeof setTimeout>;
+  private textPolicy?: CodexTextOnlyPolicy;
+  private artifactScope?: CodexParentArtifactScope;
   private probe?: CodexReadOriginalProbe;
   private launchReceipt?: CodexNativeLaunchReceipt;
   private probeReads = 0;
   private probeBytes = 0;
-  private probeCalls = new Map<string, { startSnapshot: string; snapshot: string; arguments: Record<string, unknown>; requestKey?: string; response?: Record<string, unknown>; serialized: boolean }>();
+  private probeCalls = new Map<string, { startSnapshot: string; snapshot: string; arguments: Record<string, unknown>; requestKey?: string; response?: Record<string, unknown>; artifact?: { name: string; artifactId: string; sha256: string }; serialized: boolean }>();
   private children: CodexChildren;
   private compacting = new Set<string>();
   private compactRequested = false;
@@ -161,9 +171,27 @@ export class CodexEngine implements Engine {
     );
     this.nativeId = options.nativeSessionId;
     this.cursor = options.nativeState?.eventCursor ?? 0;
+    const policy = runtime.textOnlyPolicy?.(options.sessionId);
+    if (policy) {
+      assertCodexTextOnlyPolicy(policy, options.sessionId);
+      if (!runtime.nativeReceiptsRequired || (this.nativeId && !codexPolicyOwnsSettledThread(policy, this.nativeId)) || runtime.delegationEnabled || runtime.imageToolEnabled || !runtime.authorizeNativeTurn) fault("Text-only policy requires fresh receipt-qualified ownership and admission hook");
+      this.textPolicy = policy;
+      this.scopeStopTimer = setTimeout(() => {
+        this.fail(new CodexProtocolError("H041 dispatch window expired; exact cleanup required"));
+        void this.close().catch(() => undefined);
+      }, policy.window.expiresAtMs - policy.window.settlementReserveMs - Date.now());
+      this.scopeStopTimer.unref();
+    }
+    const artifactScope = runtime.parentArtifactScope?.(options.sessionId);
+    if (artifactScope) {
+      if (!policy || policy.mode !== "parent-artifacts" || artifactScope.runId !== policy.runId || !runtime.registerCheckpointArtifact || (this.nativeId && !codexPolicyOwnsSettledThread(policy, this.nativeId))) fault("Parent artifact scope requires fresh reviewed owned policy");
+      claimCodexParentArtifactScope(artifactScope, options.sessionId); this.artifactScope=artifactScope;
+    }
+    if (policy?.mode === "parent-artifacts" && !artifactScope) fault("Parent artifact policy lacks bounded scope");
     const probe = runtime.readOriginalProbe?.(options.sessionId);
     if (probe) {
       if (!runtime.nativeReceiptsRequired || this.nativeId || runtime.delegationEnabled || runtime.imageToolEnabled) fault("Isolated original probe requires fresh receipt-qualified text-only ownership");
+      if (!policy || policy.mode !== "read-original" || policy.runId !== probe.runId || !runtime.authorizeOriginalRead) fault("Original probe requires reviewed text-only scope admission");
       claimCodexReadOriginalProbe(probe, options.sessionId); this.probe = probe;
     }
     if (
@@ -235,6 +263,7 @@ export class CodexEngine implements Engine {
   private async launch() {
     const o = this.options,
       r = this.runtime;
+    if (this.textPolicy) assertCodexTextOnlyPolicy(this.textPolicy, o.sessionId);
     if (o.dispatchHeld?.()) fault("Codex launch blocked by dispatch freeze");
     const codexHome = join(resolve(o.profileDir), "codex-home");
     this.launchAttempted = true;
@@ -246,12 +275,12 @@ export class CodexEngine implements Engine {
       gatewayUrl: o.gatewayUrl,
       gatewayToken: o.gatewayToken,
       modelPolicyVersion: r.modelPolicyVersion,
-      ...(this.probe ? { receiptRunId: this.probe.runId } : {}),
+      ...(this.textPolicy ? { receiptRunId: this.textPolicy.runId } : {}),
     });
     if (this.closing) fault("Codex closed during launch");
     if (r.nativeReceiptsRequired) {
       const receipt = await this.child.launchReceipt;
-      if (!isVerifiedCodexLaunchReceipt(receipt) || receipt.sessionId !== o.sessionId || receipt.container.profileDir !== o.profileDir || receipt.container.workspace !== o.workspace || (this.probe && receipt.runId !== this.probe.runId)) fault("Trusted native launch receipt unavailable");
+      if (!isVerifiedCodexLaunchReceipt(receipt) || receipt.sessionId !== o.sessionId || receipt.container.profileDir !== o.profileDir || receipt.container.workspace !== o.workspace || (this.textPolicy && (receipt.runId !== this.textPolicy.runId || receipt.sources["codex/config.toml"] !== this.textPolicy.configSha256 || receipt.sources["codex/models.json"] !== this.textPolicy.modelCatalogSha256))) fault("Trusted native launch receipt unavailable");
       if (this.closing || this.failed) fault("Codex closed during receipt validation");
       this.launchReceipt = receipt; r.onNativeLaunchReceipt?.(receipt);
     }
@@ -261,7 +290,7 @@ export class CodexEngine implements Engine {
       (method, params) => this.notification(method, params),
       (error) => this.fail(error),
       r.requestTimeoutMs,
-      this.probe ? (request, signal) => this.originalRequest(request, signal) : undefined,
+      this.probe || this.artifactScope ? (request, signal) => this.artifactScope ? this.artifactRequest(request, signal) : this.originalRequest(request, signal) : undefined,
     );
     void this.child.exited.then(
       () =>
@@ -277,7 +306,7 @@ export class CodexEngine implements Engine {
     );
     const initialized = await this.connection.request("initialize", {
       clientInfo: { name: "sova", title: "Sova", version: "0.0.3" },
-      capabilities: { experimentalApi: !!this.probe, requestAttestation: false },
+      capabilities: { experimentalApi: !!this.textPolicy, requestAttestation: false },
     });
     if (
       !isRecord(initialized) ||
@@ -299,17 +328,19 @@ export class CodexEngine implements Engine {
       // Read-only is a bounded probe setting, not proof of empty native read
       // roots or disabled tools. Host admission remains disabled pending scope.
       sandbox: this.probe ? "read-only" : "danger-full-access",
+      ...(this.textPolicy ? codexTextOnlyThreadParams(this.textPolicy, this.nativeId ? "thread/resume" : "thread/start") : {}),
     };
-    const resumeInstructions = this.nativeId && r.loadResumeInstructions
+    const resumeInstructions = !this.textPolicy && this.nativeId && r.loadResumeInstructions
       ? validateCodexResumeInstructions(await r.loadResumeInstructions())
       : undefined;
+    const optionsNativeId = this.nativeId;
     const result = await this.connection.request(
       this.nativeId ? "thread/resume" : "thread/start",
       this.nativeId
         // Native resume still restores persisted context; its response need not
         // rehydrate the entire transcript already retained in Sova's store.
         ? { ...params, threadId: this.nativeId, excludeTurns: true, ...(resumeInstructions ? { baseInstructions: resumeInstructions.text } : {}) }
-        : { ...params, ephemeral: !!this.probe, ...(this.probe ? { baseInstructions: this.probe.baseInstructions, dynamicTools: [CODEX_READ_ORIGINAL_SPEC] } : {}) },
+        : { ...params, ephemeral: !!this.textPolicy && !["text-only-parent", "parent-artifacts"].includes(this.textPolicy.mode), ...(this.probe ? { baseInstructions: this.probe.baseInstructions, dynamicTools: [CODEX_READ_ORIGINAL_SPEC] } : this.artifactScope ? {dynamicTools:[CODEX_PARENT_ARTIFACT_SPEC]} : {}) },
     );
     if (
       !isRecord(result) ||
@@ -319,12 +350,17 @@ export class CodexEngine implements Engine {
       result.modelProvider !== r.provider ||
       result.cwd !== o.workspace ||
       result.approvalPolicy !== "never" ||
-      (this.probe && (!isRecord(result.sandbox) || result.sandbox.type !== "readOnly")) ||
+      (this.textPolicy && (!isRecord(result.sandbox) || result.sandbox.type !== "readOnly")) ||
       (this.nativeId && result.thread.id !== this.nativeId)
     )
       fault("Native thread identity or trusted model policy mismatch");
     // History returned by resume is never appended to Sova's original message store.
     this.nativeId = result.thread.id;
+    if (this.textPolicy) {
+      recordCodexPolicyThread(this.textPolicy, this.nativeId, this.launchReceipt!);
+      assertCodexTextOnlyPolicy(this.textPolicy, o.sessionId);
+      r.onNativeThreadPolicy?.({ policy: this.textPolicy, launchReceipt: this.launchReceipt!, threadId: this.nativeId, sandbox: Object.freeze(structuredClone(result.sandbox as Record<string, unknown>)), requestedSettings: Object.freeze(structuredClone(params)), observedSettings: Object.freeze({model:result.model, modelProvider:result.modelProvider,cwd:result.cwd,approvalPolicy:result.approvalPolicy,activePermissionProfile:structuredClone(result.activePermissionProfile ?? null)}), method: this.nativeId === optionsNativeId ? "thread/resume" : "thread/start" });
+    }
     o.onNativeSessionId(this.nativeId);
     if (resumeInstructions) o.onUpdate({
       type: "progress",
@@ -340,6 +376,7 @@ export class CodexEngine implements Engine {
     text: string,
     attachments: { path: string; mimeType: string; name: string }[] = [],
   ): Promise<"completed" | "cancelled"> {
+    if (this.textPolicy && attachments.length) fault("Text-only policy cannot accept attachments");
     const input = await codexInput(text, this.options.workspace, attachments);
     if (this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
@@ -362,10 +399,18 @@ export class CodexEngine implements Engine {
     void promise.catch(() => undefined);
     this.terminal = { promise, resolve: yes, reject: no };
     try {
-      const result = await this.connection!.request("turn/start", {
+      const turnParams = {
         threadId: this.nativeId,
         input,
-      });
+        ...(this.textPolicy ? { environments: [] } : {}),
+      };
+      if (this.textPolicy) {
+        assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
+        await this.runtime.authorizeNativeTurn!({ policy: this.textPolicy, launchReceipt: this.launchReceipt!, threadId: this.nativeId!, params: Object.freeze(structuredClone(turnParams)), method:"turn/start" });
+        assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
+        if (this.closing || this.cancelRequested || this.failed) fault("Scoped turn cancelled before native dispatch");
+      }
+      const result = await this.connection!.request("turn/start", turnParams);
       if (!isRecord(result) || !isRecord(result.turn))
         fault("Invalid turn/start result");
       this.adoptTurn(result.turn.id);
@@ -434,9 +479,14 @@ export class CodexEngine implements Engine {
     this.terminal!.promise = promise;
     void promise.catch(() => undefined);
     try {
-      await this.connection!.request("thread/compact/start", {
-        threadId: this.nativeId,
-      });
+      const compactParams={threadId:this.nativeId};
+      if (this.textPolicy) {
+        assertCodexTextOnlyPolicy(this.textPolicy,this.options.sessionId);
+        await this.runtime.authorizeNativeTurn!({policy:this.textPolicy,launchReceipt:this.launchReceipt!,threadId:this.nativeId!,params:Object.freeze(compactParams),method:"thread/compact/start"});
+        assertCodexTextOnlyPolicy(this.textPolicy,this.options.sessionId);
+        if (this.closing || this.cancelRequested || this.failed) fault("Scoped compaction cancelled before dispatch");
+      }
+      await this.connection!.request("thread/compact/start", compactParams);
       const result = await promise;
       if (this.failed) throw this.failed;
       await this.cleanup();
@@ -537,6 +587,7 @@ export class CodexEngine implements Engine {
   private cleanup() {
     if (this.cleanupPromise) return this.cleanupPromise;
     this.cleanupPromise = (async () => {
+      clearTimeout(this.scopeStopTimer);
       this.stopping = true;
       this.connection?.cancelServerRequests();
       this.state("uncertain");
@@ -550,7 +601,7 @@ export class CodexEngine implements Engine {
       if (this.runtime.nativeReceiptsRequired && this.child && nativeSettled) {
         const receipt = await this.child.settlementReceipt;
         if (!isVerifiedCodexSettlementReceipt(receipt) || !this.launchReceipt || receipt.nonce !== this.launchReceipt.nonce || receipt.containerId !== this.launchReceipt.container.id || !receipt.cleanupOk) nativeSettled = false;
-        else this.runtime.onNativeSettlementReceipt?.(receipt);
+        else { if (this.textPolicy) recordCodexPolicySettlement(this.textPolicy, receipt); this.runtime.onNativeSettlementReceipt?.(receipt); }
       }
       // Stop producers, revoke this runner capability, then prove all retained lineage drained.
       if (nativeSettled) this.children.interruptedAfterCleanup();
@@ -573,6 +624,20 @@ export class CodexEngine implements Engine {
     })();
     return this.cleanupPromise;
   }
+  private async artifactRequest(request: import("./codex-connection.js").CodexServerRequest, signal: AbortSignal): Promise<Record<string, unknown>> {
+    const p=request.params, scope=this.artifactScope, policy=this.textPolicy;
+    if (!scope || !policy || !this.launchReceipt || !this.runtime.registerCheckpointArtifact || !this.active || this.closing || this.stopping || this.cancelRequested || this.completedTurn || signal.aborted || !["arguments,callId,namespace,threadId,tool,turnId","arguments,callId,threadId,tool,turnId"].includes(Object.keys(p).sort().join()) || p.threadId!==this.nativeId || p.turnId!==this.turnId || p.namespace!=null || p.tool!=="write_checkpoint_artifact" || !identifier(p.callId)) fault("Unowned native artifact request");
+    const call=this.probeCalls.get(p.callId); if (!call || call.requestKey || call.snapshot!==JSON.stringify(p.arguments)) fault("Artifact request lacks canonical owned start");
+    call.requestKey=typeof request.id+":"+request.id;
+    assertCodexTextOnlyPolicy(policy,this.options.sessionId);
+    const artifact=reserveCodexParentArtifact(scope,p.arguments);
+    const registered=await this.runtime.registerCheckpointArtifact({scope,launchReceipt:this.launchReceipt,threadId:this.nativeId!,turnId:this.turnId!,callId:p.callId,...artifact},signal);
+    assertCodexTextOnlyPolicy(policy,this.options.sessionId);
+    if (signal.aborted || this.closing || this.stopping || this.cancelRequested || this.completedTurn) throw Error("Artifact registration cancelled");
+    if (!registered || Object.keys(registered).sort().join()!=="artifactId,sha256" || !identifier(registered.artifactId) || registered.sha256!==artifact.sha256) fault("Artifact registration lacks actual matching file digest");
+    call.artifact={name:artifact.name,artifactId:registered.artifactId,sha256:artifact.sha256};
+    const response={contentItems:[{type:"inputText",text:JSON.stringify(call.artifact)}],success:true};call.response=response;return response;
+  }
   private async originalRequest(request: import("./codex-connection.js").CodexServerRequest, signal: AbortSignal): Promise<Record<string, unknown>> {
     const p = request.params;
     if (!this.probe || !this.active || this.closing || this.stopping || this.cancelRequested || this.completedTurn || signal.aborted || !["arguments,callId,namespace,threadId,tool,turnId", "arguments,callId,threadId,tool,turnId"].includes(Object.keys(p).sort().join()) || p.threadId !== this.nativeId || p.turnId !== this.turnId || p.namespace != null || p.tool !== "read_original" || !identifier(p.callId)) fault("Unowned native original request");
@@ -580,8 +645,14 @@ export class CodexEngine implements Engine {
     if (!call || call.requestKey || call.snapshot !== JSON.stringify(p.arguments) || ++this.probeReads > 16) fault("Original request lacks owned canonical start");
     call.requestKey = typeof request.id + ":" + request.id;
     let text: string, success = true;
+    if (!this.textPolicy || !this.launchReceipt || !this.runtime.authorizeOriginalRead) fault("Original admission unavailable");
+    assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
+    await this.runtime.authorizeOriginalRead({ policy: this.textPolicy, probe: this.probe, launchReceipt: this.launchReceipt, threadId: this.nativeId!, turnId: this.turnId!, callId: p.callId }, signal);
+    assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
+    if (signal.aborted || this.closing || this.stopping || this.cancelRequested || this.completedTurn) throw Error("Original admission cancelled");
     try { text = await readCodexOriginal(this.probe, p.arguments, signal); }
     catch { if (signal.aborted) throw new Error("Original read cancelled"); text = "Original excerpt unavailable within this frozen scope"; success = false; }
+    assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
     if (signal.aborted || this.closing || this.stopping || this.cancelRequested || this.completedTurn) throw new Error("Original result cancelled");
     if ((this.probeBytes += Buffer.byteLength(text)) > 65536) fault("Original read budget exceeded");
     const response = { contentItems: [{ type: "inputText", text }], success }; call.response = response; return response;
@@ -798,6 +869,7 @@ export class CodexEngine implements Engine {
       typeof value.type !== "string"
     )
       fault("Invalid native item");
+    if (this.textPolicy && !["userMessage", "agentMessage", "reasoning", "contextCompaction", ...(this.probe || this.artifactScope ? ["dynamicToolCall"] : [])].includes(value.type)) fault("Observed tool violates trusted text-only policy");
     const complete = method === "item/completed",
       previous = this.items.get(value.id);
     if (previous?.type !== undefined && previous.type !== value.type)
@@ -808,7 +880,7 @@ export class CodexEngine implements Engine {
       return;
     }
     if (!complete && previous) {
-      if (value.type === "dynamicToolCall" && (this.probeCalls.get(value.id)?.startSnapshot !== JSON.stringify(value) || value.namespace != null || value.tool !== "read_original" || value.status !== "inProgress")) fault("Conflicting dynamic tool start");
+      if (value.type === "dynamicToolCall" && (this.probeCalls.get(value.id)?.startSnapshot !== JSON.stringify(value) || value.namespace != null || value.tool !== (this.probe ? "read_original" : "write_checkpoint_artifact") || value.status !== "inProgress")) fault("Conflicting dynamic tool start");
       return;
     }
     if (complete && !previous) fault("Native item completed before start");
@@ -879,14 +951,15 @@ export class CodexEngine implements Engine {
         fault("Native delegation unavailable");
       this.children.activity(value);
     } else if (value.type === "dynamicToolCall") {
-      if (!this.probe || value.tool !== "read_original" || value.namespace != null || !isRecord(value.arguments)) fault("Unowned canonical dynamic tool");
+      if ((!this.probe && !this.artifactScope) || value.tool !== (this.probe ? "read_original" : "write_checkpoint_artifact") || value.namespace != null || !isRecord(value.arguments)) fault("Unowned canonical dynamic tool");
       const call = this.probeCalls.get(value.id);
       if (!complete) {
         if (value.status !== "inProgress" || call) fault("Invalid dynamic tool start");
         this.probeCalls.set(value.id, { startSnapshot: JSON.stringify(value), snapshot: JSON.stringify(value.arguments), arguments: structuredClone(value.arguments), serialized: false });
       } else {
         if (!call?.serialized || !call.response || call.snapshot !== JSON.stringify(value.arguments) || value.success !== call.response.success || value.status !== (value.success ? "completed" : "failed") || JSON.stringify(value.contentItems) !== JSON.stringify(call.response.contentItems)) fault("Dynamic tool completion lacks actual owned response");
-        this.runtime.onOriginalReadSettled?.({ checkpointId: this.probe.checkpointId, runId: this.probe.runId, threadId: this.nativeId!, turnId: this.turnId!, callId: value.id, arguments: call.arguments, success: value.success as boolean, responseSha256: createHash("sha256").update(JSON.stringify(call.response)).digest("hex") });
+        if (this.probe) this.runtime.onOriginalReadSettled?.({ checkpointId: this.probe.checkpointId, runId: this.probe.runId, threadId: this.nativeId!, turnId: this.turnId!, callId: value.id, arguments: call.arguments, success: value.success as boolean, responseSha256: createHash("sha256").update(JSON.stringify(call.response)).digest("hex") });
+        else if (this.artifactScope && call.artifact && value.success) this.runtime.onCheckpointArtifactSettled?.({runId:this.artifactScope.runId,checkpointId:this.artifactScope.checkpointId,threadId:this.nativeId!,turnId:this.turnId!,callId:value.id,...call.artifact,responseSha256:createHash("sha256").update(JSON.stringify(call.response)).digest("hex")});
       }
     } else if (value.type === "contextCompaction") {
       this.compactObserved = true;

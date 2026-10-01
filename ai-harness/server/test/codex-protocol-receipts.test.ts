@@ -91,3 +91,17 @@ for(const mode of ['missing','rejected'] as const) test('missing launch proof re
  const lifecycle=createCodexReceiptLifecycle({launchReceipt:mode==='missing'?Promise.resolve(undefined):Promise.reject(Error('synthetic loss')),exited,hasExited:()=>false,terminate:()=>{stops++;},lookup:async()=>{lookups++;return undefined;},cleanupBudgetMs:100});
  const a=lifecycle.confirm(),b=lifecycle.confirm();assert.equal(a,b);let resolved=false;void a.then(()=>resolved=true);await new Promise(r=>setTimeout(r,15));assert.equal(resolved,false,'receipt loss must not bypass existing supervisor cleanup/reap wait');assert.equal(stops,1);exit();assert.equal(await a,false);assert.equal(lookups,0);
 });
+
+test("H041 protected raw receipt parse is immutable before validator can brand it",()=>{
+ const f=receiptFixture(),dir=mkdtempSync(join(tmpdir(),"h041-raw-")),path=join(dir,"launch.json");
+ try {
+  const raw=JSON.stringify(f.rawLaunch);writeFileSync(path,raw,{mode:0o600,flag:"wx"});
+  const parsed=readCodexReceiptFile(path,process.getuid!()) as typeof f.rawLaunch;
+  assert.ok(Object.isFrozen(parsed));assert.ok(Object.isFrozen(parsed.sources));assert.ok(Object.isFrozen(parsed.container.mounts[0]));
+  assert.throws(()=>{parsed.sources["codex/config.toml"]="a".repeat(64);});
+  assert.throws(()=>{parsed.container.mounts[0]!.rw=false;});
+  assert.equal(JSON.stringify(parsed),raw);
+  const verified=validateCodexLaunchReceipt(parsed,f.binding,f.rawLaunch.producer,f.now);
+  assert.equal(verified,parsed);
+ } finally {rmSync(dir,{recursive:true,force:true});}
+});

@@ -10,7 +10,8 @@ import subprocess
 import time
 
 SOURCES = ('run-codex.sh', 'engine/task-egress.py', 'engine/redact-acp.py',
-           'engine/codex_receipts.py', 'security/chromium-seccomp.json')
+           'engine/codex_receipts.py', 'security/chromium-seccomp.json',
+           'codex/config.toml', 'codex/models.json')
 MAX_BYTES = 32768
 
 

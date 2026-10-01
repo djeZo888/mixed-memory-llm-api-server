@@ -55,7 +55,7 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
             } catch { return undefined; }
         })() : undefined;
         const lifecycle = channel && launchReceipt ? createCodexReceiptLifecycle({
-            launchReceipt, exited, hasExited: ended,
+            launchReceipt, exited, hasExited: ended, cleanupBudgetMs: 120000,
             terminate: () => { child.kill("SIGTERM"); },
             async lookup(launch) { const value = await channel.wait("settlement", 500, () => false); return validateCodexSettlementReceipt(value, channel.binding, launch); },
         }) : undefined;

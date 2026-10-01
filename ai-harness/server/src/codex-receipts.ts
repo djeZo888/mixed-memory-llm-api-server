@@ -2,7 +2,7 @@
 import { constants, openSync, closeSync, fstatSync, readFileSync, lstatSync, mkdirSync, mkdtempSync, writeFileSync, realpathSync } from "node:fs";
 import { createHash, randomBytes } from "node:crypto";
 import { join, dirname, resolve, sep } from "node:path";
-export const CODEX_RECEIPT_SOURCES = ["run-codex.sh", "engine/task-egress.py", "engine/redact-acp.py", "engine/codex_receipts.py", "security/chromium-seccomp.json"] as const;
+export const CODEX_RECEIPT_SOURCES = ["run-codex.sh", "engine/task-egress.py", "engine/redact-acp.py", "engine/codex_receipts.py", "security/chromium-seccomp.json", "codex/config.toml", "codex/models.json"] as const;
 export interface CodexReceiptPolicy {
   /** Root-reviewed actual Linux systemd-scope/file-channel acceptance, absent by default. */
   readonly linuxTransportQualified: true;
@@ -22,6 +22,12 @@ export interface CodexNativeSettlementReceipt {
   engineExitStatus: number | null; requestedStop: boolean; cliReaped: boolean;
   rmExit: number | null; existsExit: number | null; pipesJoined: boolean; cleanupOk: boolean;
 }
+const transportReadObjects = new WeakSet<object>();
+const rawReceiptBytes = new WeakMap<object, string>();
+const receiptProvenance = new WeakMap<object, Readonly<{ rawPath: string; rawSha256: string }>>();
+/** Exact protected OOB bytes. Synthetic validator objects never have transport provenance. */
+export function getCodexReceiptUtf8(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt): string | undefined { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? rawReceiptBytes.get(receipt) : undefined; }
+export function codexReceiptProvenance(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt) { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? receiptProvenance.get(receipt) : undefined; }
 const verifiedLaunch = new WeakSet<object>(), verifiedSettlement = new WeakSet<object>();
 export const isVerifiedCodexLaunchReceipt = (v: unknown): v is CodexNativeLaunchReceipt => !!v && typeof v === "object" && verifiedLaunch.has(v);
 export const isVerifiedCodexSettlementReceipt = (v: unknown): v is CodexNativeSettlementReceipt => !!v && typeof v === "object" && verifiedSettlement.has(v);
@@ -59,7 +65,7 @@ function protectedDirectory(path: string, uid: number) {
 }
 export function readCodexReceiptFile(path: string, uid: number): unknown {
   const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try { const s = fstatSync(fd); if (!s.isFile() || s.uid !== uid || (s.mode & 0o777) !== 0o600 || s.nlink !== 1 || s.size < 2 || s.size > 32768) throw Error("Unsafe native receipt file"); const b = readFileSync(fd); if (b.length !== s.size) throw Error("Changing native receipt file"); return JSON.parse(b.toString('utf8')); } finally { closeSync(fd); }
+  try { const s = fstatSync(fd); if (!s.isFile() || s.uid !== uid || (s.mode & 0o777) !== 0o600 || s.nlink !== 1 || s.size < 2 || s.size > 32768) throw Error("Unsafe native receipt file"); const b = readFileSync(fd); if (b.length !== s.size) throw Error("Changing native receipt file"); const raw = new TextDecoder("utf-8", { fatal: true }).decode(b); const parsed: unknown = JSON.parse(raw); freeze(parsed); if (object(parsed)) { rawReceiptBytes.set(parsed, raw); receiptProvenance.set(parsed, Object.freeze({ rawPath: path, rawSha256: digest(b) })); } return parsed; } finally { closeSync(fd); }
 }
 export function observeCodexProducer(pid: number, childPid: number, uid: number): CodexReceiptIdentity {
   const bootId = readFileSync('/proc/sys/kernel/random/boot_id','utf8').trim();
@@ -83,7 +89,7 @@ export function createCodexReceiptChannel(input: { sessionId: string; runId: str
   writeFileSync(join(directory,'request.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
   return { directory, binding, async wait(name: 'launch'|'settlement', timeoutMs: number, ended: ()=>boolean): Promise<unknown|undefined> {
     const deadline=Date.now()+timeoutMs;
-    while (Date.now()<deadline) { try { protectedDirectory(directory,uid); const ready=lstatSync(join(directory,name+'.ready')); if (!ready.isFile() || ready.isSymbolicLink() || ready.uid!==uid || (ready.mode&0o777)!==0o600 || ready.nlink!==1 || ready.size!==0) return undefined; return readCodexReceiptFile(join(directory,name+'.json'),uid); } catch(e) { if ((e as NodeJS.ErrnoException).code!=='ENOENT') return undefined; } if (ended()) return undefined; await new Promise<void>(r=>{const t=setTimeout(r,25);t.unref();}); } return undefined;
+    while (Date.now()<deadline) { try { protectedDirectory(directory,uid); const ready=lstatSync(join(directory,name+'.ready')); if (!ready.isFile() || ready.isSymbolicLink() || ready.uid!==uid || (ready.mode&0o777)!==0o600 || ready.nlink!==1 || ready.size!==0) return undefined; const value = readCodexReceiptFile(join(directory,name+'.json'),uid); if (object(value)) transportReadObjects.add(value); return value; } catch(e) { if ((e as NodeJS.ErrnoException).code!=='ENOENT') return undefined; } if (ended()) return undefined; await new Promise<void>(r=>{const t=setTimeout(r,25);t.unref();}); } return undefined;
   } };
 }
 

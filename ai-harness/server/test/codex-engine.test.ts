@@ -1,8 +1,8 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { mock } from "node:test";
 import { readFileSync } from "node:fs";
-import Ajv from "ajv";
-import { createCodexReadOriginalProbe } from "../src/codex-probe.js";
+import { Ajv } from "ajv";
+import { createCodexReadOriginalProbe, createCodexTextOnlyPolicy, createCodexParentArtifactScope, CODEX_H041_WINDOW } from "../src/codex-probe.js";
 import { receiptFixture } from "./helpers/codex-receipt-fixture.js";
 import { PassThrough } from "node:stream";
 import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
@@ -16,6 +16,8 @@ import type {
   EngineUpdate,
   NativeEngineState,
 } from "../src/contracts.js";
+// Synthetic H041 authorization clock; never a native window acceptance.
+mock.timers.enable({ apis: ["Date"], now: CODEX_H041_WINDOW.startAtMs + 60000 });
 const schemaNames = {
   initialize: "InitializeParams",
   "thread/start": "ThreadStartParams",
@@ -50,6 +52,11 @@ function fixture(
   config: {
     nativeId?: string;
     probe?: boolean;
+    textOnly?: boolean;
+    artifacts?: boolean;
+    registerArtifact?: CodexRuntime["registerCheckpointArtifact"];
+    admission?: () => Promise<void>;
+    originalAdmission?: (signal: AbortSignal) => Promise<void>;
     receipts?: "valid" | "missing" | "tampered";
     probeSandboxMismatch?: boolean;
     delegation?: boolean;
@@ -99,7 +106,14 @@ function fixture(
     delegationEnabled: config.delegation,
     qualifiedChildModels: config.qualifiedChildModels,
     protocolQualified: true,
-    nativeReceiptsRequired: config.probe,
+    nativeReceiptsRequired: config.probe || config.textOnly || config.artifacts,
+    textOnlyPolicy: config.probe || config.textOnly || config.artifacts ? () => createCodexTextOnlyPolicy({sessionId:"session-1",runId:"probe-run",mode:config.probe?"read-original":config.artifacts?"parent-artifacts":"text-only-parent",configSha256:"b".repeat(64),modelCatalogSha256:"b".repeat(64)}) : undefined,
+    authorizeNativeTurn: config.probe || config.textOnly || config.artifacts ? async () => { calls.push("native-admission"); await config.admission?.(); } : undefined,
+    authorizeOriginalRead: config.probe ? async (_, signal) => { calls.push("original-admission"); await config.originalAdmission?.(signal); } : undefined,
+    onNativeThreadPolicy: config.probe || config.textOnly || config.artifacts ? () => { calls.push("thread-policy"); } : undefined,
+    parentArtifactScope: config.artifacts ? () => createCodexParentArtifactScope({sessionId:"session-1",runId:"probe-run",checkpointId:"cp",names:["recall.json","state.json"],maxBytes:4096}) : undefined,
+    registerCheckpointArtifact: config.artifacts ? config.registerArtifact ?? (async input => {calls.push("artifact-registered");return {artifactId:"actual-synthetic-file-id",sha256:input.sha256};}) : undefined,
+    onCheckpointArtifactSettled: config.artifacts ? () => { calls.push("artifact-consumed"); } : undefined,
     readOriginalProbe: config.probe ? () => createCodexReadOriginalProbe({sessionId: "session-1", runId: "probe-run", checkpointId: "frozen-cp", baseInstructions: "Host-authored isolated recovery probe", originals: [{reference: "old-1", bytes: Buffer.from("retained original requirement")}]}) : undefined,
     onNativeLaunchReceipt: config.probe ? () => { calls.push("launch-receipt"); } : undefined,
     onNativeSettlementReceipt: config.probe ? () => { calls.push("settlement-receipt"); } : undefined,
@@ -125,10 +139,10 @@ function fixture(
           "gatewayUrl",
           "gatewayToken",
           "modelPolicyVersion",
-          ...(config.probe ? ["receiptRunId"] : []),
+          ...(config.probe || config.textOnly || config.artifacts ? ["receiptRunId"] : []),
         ].sort(),
       );
-      const receipts = config.probe ? receiptFixture() : undefined;
+      const receipts = config.probe || config.textOnly || config.artifacts ? receiptFixture() : undefined;
       return {
         stdin,
         stdout,
@@ -182,7 +196,7 @@ function fixture(
         modelProvider: runtime.provider,
         cwd: options.workspace,
         approvalPolicy: "never",
-        ...(config.probe ? { sandbox: { type: config.probeSandboxMismatch ? "dangerFullAccess" : "readOnly" } } : {}),
+        ...(config.probe || config.textOnly || config.artifacts ? { sandbox: { type: config.probeSandboxMismatch ? "dangerFullAccess" : "readOnly" } } : {}),
       });
     if (req.method === "thread/compact/start") {
       if (config.compactStart !== "ack-only")
@@ -336,7 +350,7 @@ test("latest request estimates retained context and compaction invalidate contex
   );
   assert.equal(
     f.updates
-      .filter((v) => v.type === "context" && v.used !== null)
+      .filter((v): v is Extract<EngineUpdate, {type:"context"}> => v.type === "context" && v.used !== null)
       .every(
         (v) => v.estimated && v.source === "codex.latest-request.totalTokens",
       ),
@@ -604,7 +618,7 @@ test("actual pinned native delegation event replay preserves child terminal befo
   }
   assert.equal(await pending, "completed");
   const summaries = f.updates
-    .filter((u) => u.type === "progress" && u.subagents)
+    .filter((u): u is Extract<EngineUpdate, {type:"progress"}> => u.type === "progress" && !!u.subagents)
     .map((u) => u.subagents!);
   assert.ok(summaries.some((s) => s.active === 1));
   assert.equal(summaries.at(-1)?.completed, 1);
@@ -673,7 +687,7 @@ test("historical close failure allows new owned work after cold resume without i
   f.complete();
   assert.equal(await pending, "completed");
   assert.ok(f.requests.some(r => r.method === "thread/resume"));
-  const children = f.updates.filter(u => u.type === "progress" && u.kind === "subagent");
+  const children = f.updates.filter((u): u is Extract<EngineUpdate, {type:"progress"}> => u.type === "progress" && u.kind === "subagent");
   assert.ok(children.length > 0);
   assert.ok(children.every(u => u.subagentId === "fresh-child"));
   assert.equal(children.at(-1)?.subagents?.completed, 1);
@@ -1438,4 +1452,58 @@ test('pinned optional namespace can be omitted; conflicting namespace stays reje
   if(namespace){await rejection;assert.equal(f.requests.find(x=>x.id==='optional-ns'),undefined);await f.engine.close();}
   else {const response=f.requests.find(x=>x.id==='optional-ns').result;f.item('original-call','dynamicToolCall',{tool:'read_original',arguments:args,status:'completed',contentItems:response.contentItems,success:true});f.complete();assert.equal(await pending,'completed');}
  }
+});
+
+test("H041 synthetic text-only parent sends consumed native config without changing ordinary defaults", async () => {
+  const f = fixture({textOnly:true}); await f.engine.start();
+  const start = f.requests.find(x => x.method === "thread/start").params;
+  assert.equal(start.sandbox, "read-only"); assert.equal(start.ephemeral, false);
+  assert.deepEqual(start.environments, []); assert.equal(start.config["features.shell_tool"], false);
+  assert.equal(start.config["tools.experimental_request_user_input.enabled"], false);
+  assert.equal(start.config["mcp_servers.search.enabled"], false);
+  assert.equal(start.dynamicTools, undefined); assert.ok(f.calls.includes("thread-policy"));
+  await assert.rejects(f.engine.prompt("synthetic", [{path:"/arbitrary",mimeType:"image/png",name:"x"}]), /attachments/);
+  await f.engine.close();
+});
+test("H041 synthetic rejected admission never dispatches a native turn", async () => {
+  const f=fixture({textOnly:true,admission:async()=>{throw Error("observed tools gate rejected");}});
+  await assert.rejects(f.engine.prompt("synthetic"), /gate rejected/);
+  assert.equal(f.requests.filter(x=>x.method==="turn/start").length,0); await f.engine.close();
+});
+test("H041 synthetic late original admission cannot publish after close", async () => {
+  const gate=deferred<void>(); const f=fixture({probe:true,originalAdmission:()=>gate.promise});
+  const pending=f.engine.prompt("synthetic"); const rejected=assert.rejects(pending); await tick();
+  originalCall(f); await tick(); await f.engine.close(); gate.resolve(); await tick(); await rejected;
+  assert.equal(f.requests.filter(x=>x.id==="server-original-call").length,0); assert.ok(!f.calls.includes("read-consumed"));
+});
+
+test("H041 synthetic bounded artifact registration needs canonical native consumption",async()=>{
+  const f=fixture({artifacts:true});const pending=f.engine.prompt("synthetic");await tick();
+  const params=f.requests.find(x=>x.method==="thread/start").params;
+  assert.equal(params.sandbox,"read-only");assert.deepEqual(params.environments,[]);
+  assert.deepEqual(params.dynamicTools.map((x:{name:string})=>x.name),["write_checkpoint_artifact"]);
+  const args={name:"recall.json",json:'{"retained":true}'};
+  f.item("artifact-call","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"inProgress"},"started");
+  f.stdout.write(JSON.stringify({id:"server-artifact",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"artifact-call",tool:"write_checkpoint_artifact",arguments:args}})+"\n");await tick();await tick();
+  const response=f.requests.find(x=>x.id==="server-artifact").result;
+  assert.equal(response.success,true);assert.ok(f.calls.includes("artifact-registered"));assert.ok(!f.calls.includes("artifact-consumed"));
+  f.item("artifact-call","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"completed",contentItems:response.contentItems,success:true});
+  assert.ok(f.calls.includes("artifact-consumed"));f.complete();assert.equal(await pending,"completed");
+});
+test("H041 synthetic artifact registrar cannot claim a different byte digest",async()=>{
+  const f=fixture({artifacts:true,registerArtifact:async()=>({artifactId:"fixture",sha256:"wrong"})});
+  const pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();
+  const args={name:"state.json",json:"{}"};f.item("a","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"inProgress"},"started");
+  f.stdout.write(JSON.stringify({id:"server-a",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"a",tool:"write_checkpoint_artifact",arguments:args}})+"\n");
+  await rejected;assert.ok(!f.calls.includes("artifact-consumed"));await f.engine.close();
+});
+test("H041 synthetic observed builtin tool violates text-only parent policy",async()=>{
+  const f=fixture({textOnly:true});const pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();
+  f.item("shell","commandExecution",{command:"synthetic"},"started");await rejected;await f.engine.close();
+});
+
+test("H041 synthetic manual compaction requires method-aware admission before RPC",async()=>{
+ const f=fixture({textOnly:true,admission:async()=>{throw Error("compaction gate rejected");}});
+ await assert.rejects(f.engine.compact(),/compaction gate rejected/);
+ assert.equal(f.requests.filter(x=>x.method==="thread/compact/start").length,0);await f.engine.close();
 });
