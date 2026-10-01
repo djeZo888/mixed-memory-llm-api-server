@@ -83,6 +83,7 @@ export class OwnedApplicationRunner {
   async shutdownAndConfirm() {
     const child=this.child;if(!child)throw Error('actual_owned_application_exit_absent');
     const identity=this.identity;
+    if(child.exitCode!==null||child.signalCode!==null)return await this.exits.get(child)!;
     // Shutdown remains reachable after an operation timeout or transport fault.
     try{await this.call('shutdown');}catch{/* explicit quarantine below */}
     try{return await bounded(this.exits.get(child)!,Math.min(15000,Math.max(1,this.cutoff(true)-Date.now())),'owned_application_exit_timeout');}

@@ -8,6 +8,8 @@ import { isQualifiedEntry,STAGE_CAPABILITIES,FULL_CAPABILITIES,type EntryQualifi
  * Accepted artifact baselines never come from after-restart bytes. */
 export function applicationProxy(input:RunnerInput,qualification:EntryQualification) {
   const runner=new OwnedApplicationRunner(input),observedSettlements:any[]=[];
+  let shutdownResult:Promise<any>|undefined;
+  const shutdown=()=>shutdownResult??=(async()=>{const exit=await runner.shutdownAndConfirm();if(exit.code!==0||exit.signal!==null)throw Error('actual_owned_application_exit_failed');return exit;})();
   let ready=false,started=false,runId:string|undefined,session:any;
   const invoke=async(method:string,args:any={})=>{
     if(!ready)throw Error('actual_worker_capability_qualification_required');
@@ -57,6 +59,7 @@ export function applicationProxy(input:RunnerInput,qualification:EntryQualificat
       await durableFile(join(input.hostPrivate,`${randomUUID()}-restart-duration.json`),durationReceiptUtf8);
       return {outcome:'completed',durationMs:{state:'measured',value:Date.parse(JSON.parse(durationReceiptUtf8).completedAt)-Date.parse(startedAt),source:'host-application-restart-operation-observation',receiptSha256:sha256(durationReceiptUtf8),reason:null},actionId:args.actionId,nativeThreadId:checkpoint.nativeThreadId,nativeTurnId:null,restartEvidence,artifacts:capture.artifacts,artifactReceiptUtf8,artifactReceiptSha256:sha256(artifactReceiptUtf8),parentState:capture.parentState,settlement:{state:'released',receiptSha256:restartEvidence.receiptSha256,automaticReplay:false}};
     },
-    close:async(args:any)=>{if(!started)throw Error('actual_owned_application_absent');try{return await invoke('close',args);}finally{const exit=await runner.shutdownAndConfirm();if(exit.code!==0||exit.signal!==null)throw Error('actual_owned_application_exit_failed');}}
+    shutdown,
+    close:async(args:any)=>{if(!started)throw Error('actual_owned_application_absent');try{return await invoke('close',args);}finally{await shutdown();}}
   };
 }

@@ -23,12 +23,12 @@ export async function verifyManualCallerFiles(config:any,repository:string){
  if(config.phase==='full')requireStageReceipt((await privateFile(config.stageReceiptPath)).toString('utf8'),config.review.stageReceiptSha256);
  return {controller,adapter};
 }
+export async function withOwnedManualRunner<T>(adapter:{shutdown():Promise<unknown>},work:()=>Promise<T>):Promise<T>{let failure:unknown;try{return await work();}catch(error){failure=error;throw error;}finally{try{await adapter.shutdown();}catch(cleanup){if(failure)throw new AggregateError([failure,cleanup],'manual_operation_and_owned_cleanup_failed');throw cleanup;}}}
 export async function runReviewedManualEntry(path:string,signal:AbortSignal){
  const config=reviewSnapshot(JSON.parse((await privateFile(path)).toString('utf8'))),repository=resolve(fileURLToPath(new URL('../../../..',import.meta.url))),{controller}=await verifyManualCallerFiles(config,repository);signal.throwIfAborted();
  const packet=await fixture();packet.config=controller;packet.sourceHashes.config=sha256(await privateFile(config.controllerConfigPath));const out=await privateDirectory(config.outputPath);
- const adapter=await loadReviewedEntry(config.adapterConfigPath);let completed=false;
- try{signal.throwIfAborted();const result=await runAcceptance({packet,adapter,qualification:'native',signal,normalizeResponses:translateResponses,sink:{private:(name:string,value:any)=>durableFile(join(out,`private-${name}.json`),stableJson(value)),record:(value:any)=>durableFile(join(out,`${value.cycle}-${value.mode}-${crypto.randomUUID()}.evidence.json`),stableJson(value))}});completed=true;await durableFile(join(out,'RESULTS.json'),stableJson(result));if(config.phase==='stage'?result.observedStatus!=='PASS':result.status!=='PASS')throw Error('native_manual_qualification_failed_no_retry');return result;}
- finally{if(!completed)await adapter.close({}).catch(()=>undefined);}
+ const adapter=await loadReviewedEntry(config.adapterConfigPath);
+ return withOwnedManualRunner(adapter,async()=>{signal.throwIfAborted();const result=await runAcceptance({packet,adapter,qualification:'native',signal,normalizeResponses:translateResponses,sink:{private:(name:string,value:any)=>durableFile(join(out,`private-${name}.json`),stableJson(value)),record:(value:any)=>durableFile(join(out,`${value.cycle}-${value.mode}-${crypto.randomUUID()}.evidence.json`),stableJson(value))}});await durableFile(join(out,'RESULTS.json'),stableJson(result));if(config.phase==='stage'?result.observedStatus!=='PASS':result.status!=='PASS')throw Error('native_manual_qualification_failed_no_retry');return result;});
 }
 if(process.argv[1]&&resolve(process.argv[1])===fileURLToPath(import.meta.url)){if(process.argv.length!==3)throw Error('exact_private_manual_config_argument_required');const abort=new AbortController();process.once('SIGTERM',()=>abort.abort());process.once('SIGINT',()=>abort.abort());await runReviewedManualEntry(process.argv[2],abort.signal);}
 export default Object.freeze({enabled:false,capabilities:[],nativeAcceptance:'NOT_TESTED'});
