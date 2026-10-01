@@ -1,0 +1,201 @@
+{
+  "task": "H042 E-cold-adopt02",
+  "scope": "SOURCE_ONLY",
+  "base": "46dcd16424a5f0f69c17b71bdc6007205220aed1",
+  "inputBundleSHA256": "4521a2a1ec7b45d315a888f73693271ff91530b8ff49ebe0cf556c09f8fd830c",
+  "sourceCommit": "b1354bd33fd5f456c0fbd8dd77f5bf808f2d0d24",
+  "sourceOutcome": "PASS",
+  "newDistinctSourceTests": 15,
+  "existingDistinctAffectedTests": 85,
+  "totalDistinctSourceTests": 100,
+  "originalFailures": [
+    {
+      "check": "cold-adopt-tests",
+      "exit": 1,
+      "cause": "SOURCE carrier proc-stat fixture ended field 19 with a newline; independent current identity rejected the fixture. Fourteen other focused tests passed. Original log retained."
+    },
+    {
+      "check": "cold-adopt-carrier-retry",
+      "exit": 1,
+      "cause": "Expected abort closed the source Unix socket before the fixture server reply; unhandled fixture EPIPE. Original log and private partial protocol evidence retained."
+    }
+  ],
+  "checks": {
+    "adapter-build": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/build.tsconfig.json",
+        "--outDir",
+        "../output/adapter-build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:24:51.884180+00:00",
+      "endedUtc": "2026-10-01T18:24:54.052170+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/adapter-build.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "adapter-typecheck": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:24:06.900480+00:00",
+      "endedUtc": "2026-10-01T18:24:08.773313+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/adapter-typecheck.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "affected-existing-tests": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/tsx/dist/cli.mjs",
+        "--test",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h041-compaction-completion08.test.ts",
+        "ai-harness/server/test/h041-compaction-completion09.test.ts",
+        "ai-harness/server/test/h041-native-adapter-completion.test.ts",
+        "ai-harness/server/test/h041-native-adapter-integration.test.ts",
+        "ai-harness/server/test/h041-native-adapter-source06.test.ts",
+        "ai-harness/server/test/h040-compaction-retention.integration.test.ts",
+        "ai-harness/server/test/h040-compaction-retention.controller.test.ts",
+        "ai-harness/server/test/h040-native-adapter-lifecycle.test.ts",
+        "ai-harness/server/test/h042-adapter-cleanup01.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:23:45.371817+00:00",
+      "endedUtc": "2026-10-01T18:23:49.124372+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/affected-existing-tests.log",
+      "logSHA256": "450b258ab8bf4e8f5ba750a9034520f0fd8877eb36737ce67b0b16bc0f113190",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "cold-adopt-carrier-retry": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/tsx/dist/cli.mjs",
+        "--test",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h042-cold-adopt02-carrier.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:23:36.005574+00:00",
+      "endedUtc": "2026-10-01T18:23:36.459162+00:00",
+      "exit": 1,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/cold-adopt-carrier-retry.log",
+      "logSHA256": "1b79f1e4be0da5f2cac4ffa44c9eb9382712e6ea47cb94d3291900b6e06576b0",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "cold-adopt-carrier-retry2": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/tsx/dist/cli.mjs",
+        "--test",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h042-cold-adopt02-carrier.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:24:06.386298+00:00",
+      "endedUtc": "2026-10-01T18:24:06.853262+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/cold-adopt-carrier-retry2.log",
+      "logSHA256": "d59c782f8f5d605b277b614bf676cfdb106a1a76f6a0e71d9009f6e647c1ac63",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "cold-adopt-tests": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/tsx/dist/cli.mjs",
+        "--test",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h042-cold-adopt02-carrier.test.ts",
+        "ai-harness/server/test/h042-cold-adopt02-ipc.test.ts",
+        "ai-harness/server/test/h042-cold-adopt02-restart.test.ts",
+        "ai-harness/server/test/h042-cold-adopt02-ticket.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:22:50.931128+00:00",
+      "endedUtc": "2026-10-01T18:22:51.808237+00:00",
+      "exit": 1,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/cold-adopt-tests.log",
+      "logSHA256": "1e44da98aa321e1a69b32841540623dcb666c252a99ee97471d8ad9cec7b2cd6",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "server-build": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "-p",
+        "ai-harness/server/tsconfig.json",
+        "--outDir",
+        "../output/server-build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:24:51.884184+00:00",
+      "endedUtc": "2026-10-01T18:24:54.002486+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/server-build.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    },
+    "server-typecheck": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "-p",
+        "ai-harness/server/tsconfig.json"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/repo",
+      "startedUtc": "2026-10-01T18:24:06.900478+00:00",
+      "endedUtc": "2026-10-01T18:24:08.704204+00:00",
+      "exit": 0,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cold-adopt02/output/logs/server-typecheck.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "nodePath": "/opt/homebrew/opt/node@24/bin/node",
+      "scope": "SOURCE_ONLY"
+    }
+  },
+  "native": "NOT_TESTED",
+  "linux": "NOT_TESTED",
+  "runtime": "NOT_TESTED",
+  "deployment": "NOT_TESTED",
+  "inference": "NOT_TESTED",
+  "generation": "NOT_TESTED",
+  "AUTO": "NOT_TESTED",
+  "limits": [
+    "Native/Linux bootstrap, application-worker adoption, SAMEparent native restart, accepted artifacts and runtime/deployment/inference/generation/AUTO remain NOT_TESTED. No operational GO or push.",
+    "Unix-socket/HMAC source test used an actual owned old Mac Node process and actual exit0/OS death, then a genuine A admission brand in the distinct test process. Its protected Linux filesystem/proc observations and carrier policy/registry are explicitly typed SOURCE fixtures. Old registration client is a raw SOURCE protocol client; production old register/adopt integration is not qualified.",
+    "Captured adoption bytes are JSON.stringify of the actual authenticated parsed A response, not the original wire envelope/body. Expected worker fields are never filled into received evidence.",
+    "Inherited A carrier rejects same-PID adoption even when the birth changes. E strict absence accepts exact later PID-birth reuse, but native same-PID carrier adoption remains unqualified.",
+    "Current H042 fixed factory/authorization/full-profile gates were not broadened. Stage/full defaults remain disabled. Root must separately review exact source/build/config/admission and supply any future finite operational GO.",
+    "Genuine Store ownership/HMAC policy bridge, receipt evidence, native linux-proc guards, pins and source-policy selection remain unchanged; SOURCE fixture successes do not authenticate a synthetic policy or native receipt."
+  ],
+  "pins": {
+    "SovaRuntime": "0.158.0",
+    "upstream": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "autoCompact": 400000,
+    "output": 65536,
+    "MacCLISeparate": "0.159.2"
+  },
+  "launchUtc": "2026-10-01T18:12:36.432507+00:00",
+  "exportDeadlineUtc": "2026-10-01T18:47:36.432507+00:00",
+  "hardEndUtc": "2026-10-01T18:52:36.432507+00:00",
+  "dependencyTree": "Preexisting ai-harness/server/node_modules symlink reused immutably; no installs or linked-tree writes."
+}
