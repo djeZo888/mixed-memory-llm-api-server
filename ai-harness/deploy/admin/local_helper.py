@@ -7,6 +7,7 @@ requires protected durable admission evidence under the canonical lifecycle leas
 from __future__ import annotations
 
 import argparse
+from contextlib import nullcontext
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import hashlib
@@ -269,6 +270,13 @@ def canonical_lease() -> ContextManager:
     return _lease_module.acquire_lease(blocking=False)
 
 
+def validate_borrowed_canonical_lease(lease) -> None:
+    """Private same-process carrier seam; JSON/FD/caller flags cannot mint it."""
+    if _lease_module is None:
+        raise Rejected("canonical_lease_unavailable", 503)
+    _lease_module._validate_borrowed_lease(lease)
+
+
 _lease_module = None
 
 
@@ -473,6 +481,19 @@ class Operations:
         return value.copy()
 
     def submit(self, value: object) -> dict:
+        return self._submit(value)
+
+    def submit_under_lease(self, value: object, lease) -> dict:
+        """Finite trusted carrier only. Public HTTP still calls submit(value)."""
+        validate_borrowed_canonical_lease(lease)
+        request = validate_request(value)
+        if request.get("service_id") != "harness" or request["action"] not in {"service.stop", "service.start"}:
+            raise Rejected("carrier_action_not_allowed")
+        if not self.refresh("harness"):
+            raise Rejected("dispatch_observation_unavailable", 503)
+        return self._submit(request, lease)
+
+    def _submit(self, value: object, borrowed_lease=None) -> dict:
         request = validate_request(value)
         fingerprint = hashlib.sha256(canonical(request).encode()).hexdigest()
         with self.lock:
@@ -498,13 +519,19 @@ class Operations:
                 self.db.execute("INSERT INTO operations VALUES(?,?,?,?)", (op["operation_id"], request["idempotency_key"], fingerprint, canonical(op)))
                 self._write(op)
             self.busy = True
-            threading.Thread(target=self._run, args=(op["operation_id"], request), daemon=True).start()
-            return op.copy()
+            if borrowed_lease is None:
+                threading.Thread(target=self._run, args=(op["operation_id"], request), daemon=True).start()
+                return op.copy()
+        # Same process/thread retains the live capability; never nested POST/acquire.
+        self._run(op["operation_id"], request, borrowed_lease)
+        return self.get(op["operation_id"])
 
-    def _run(self, operation_id: str, request: dict) -> None:
+    def _run(self, operation_id: str, request: dict, borrowed_lease=None) -> None:
         dispatched = False
         try:
-            with self.lease() as lease:
+            if borrowed_lease is not None:
+                validate_borrowed_canonical_lease(borrowed_lease)
+            with (self.lease() if borrowed_lease is None else nullcontext(borrowed_lease)) as lease:
                 lease.validate()
                 # Observe and recheck only after canonical ownership is held.
                 for service in SERVICES if request["action"] == "node.reboot" else [request["service_id"]]:
