@@ -11,7 +11,7 @@ export const H041_SETTLEMENT_RESERVE_MS = 120000;
 export function reviewedAuthorization(review, now = Date.now()) {
   const a = review?.authorization, frozen = AUTHORIZATIONS[a?.task];
   const expiry = Date.parse(review?.notAfterUtc), reserve = review?.settlementReserveMs ?? review?.nativeSettlementReserveMs;
-  if (!frozen || a.startsUtc !== frozen.startsUtc || a.capUtc !== frozen.capUtc ||
+  if (!Number.isFinite(now) || !frozen || a.startsUtc !== frozen.startsUtc || a.capUtc !== frozen.capUtc ||
       typeof a.windowId !== 'string' || !/^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$/.test(a.windowId) ||
       !Number.isSafeInteger(reserve) || (a.task !== 'H040' ? reserve !== H041_SETTLEMENT_RESERVE_MS : reserve < 75000 || reserve > 300000) ||
       now < Date.parse(frozen.startsUtc) || !Number.isFinite(expiry) || expiry <= now || expiry > Date.parse(frozen.capUtc))

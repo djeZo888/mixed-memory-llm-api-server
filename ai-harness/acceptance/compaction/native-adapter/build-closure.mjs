@@ -23,7 +23,7 @@ export async function executedImportGraph(root,runtimeFiles) {
     }
     imports[path]=[...new Set(edges)].sort();
   }
-  const entrypoints=[ENTRY_PATH,WORKER_PATH];for(const p of ['normal-entry.js','normal-worker.js']){const path='ai-harness/acceptance/compaction/native-adapter/'+p;if(runtimeFiles[path])entrypoints.push(path);}for(const path of entrypoints)await visit(path);
+  const entrypoints=[ENTRY_PATH,WORKER_PATH];for(const p of ['normal-entry.js','normal-worker.js','manual-entry.js']){const path='ai-harness/acceptance/compaction/native-adapter/'+p;if(runtimeFiles[path])entrypoints.push(path);}for(const path of entrypoints)await visit(path);
   return {entrypoints,imports,externalPackages:[...external].sort(),unavailableImports};
 }
 export async function verifyInstalledBuild(repository,manifest) {

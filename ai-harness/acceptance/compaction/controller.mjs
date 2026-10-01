@@ -83,7 +83,7 @@ function freezeConfig(value) {
   return value;
 }
 export function settlementReserve(config, qualification) {
-  if (qualification === 'native' && config.review?.authorization?.task === 'H041' && config.review.nativeSettlementReserveMs !== H041_SETTLEMENT_RESERVE_MS) throw new Error('H041 common settlement reserve required');
+  if (qualification === 'native' && config.review?.authorization && config.review.nativeSettlementReserveMs !== H041_SETTLEMENT_RESERVE_MS) throw new Error('H041 common settlement reserve required');
   const reserve = qualification === 'native' ? config.review?.nativeSettlementReserveMs ?? 75000 : config.syntheticSettlementReserveMs ?? 5000;
   if (!Number.isInteger(reserve) || reserve < (qualification === 'native' ? 75000 : 1) || reserve > 120000 ||
     (qualification === 'native' && config.nativeSettlementReserveMs !== undefined && config.nativeSettlementReserveMs !== reserve))
@@ -251,17 +251,18 @@ function reviewGate(packet, adapter, qualification, normalizeResponses) {
 
 // Adapter implementations are an integration-owner task. No HTTP, RPC, VM or model
 // connection is constructed by this module. Tests use an explicitly synthetic adapter.
-export async function runAcceptance({ packet, adapter, qualification = 'native', sink, runId = randomUUID(), normalizeResponses }) {
+export async function runAcceptance({ packet, adapter, qualification = 'native', sink, runId = randomUUID(), normalizeResponses, signal: externalSignal }) {
   packet = { ...packet, config: freezeConfig(structuredClone(packet.config)) };
   reviewGate(packet, adapter, qualification, normalizeResponses);
   const stage = ['h040-summary-stage-v1', 'h041-summary-stage-v1'].includes(packet.config.profile);
-  const authorizationDeadline = packet.config.review?.notAfterUtc ? Date.parse(packet.config.review.notAfterUtc) : null;
+  const authorizationDeadline = qualification === 'native' && packet.config.review?.authorization ? reviewedAuthorization(packet.config.review).expiresAt : packet.config.review?.notAfterUtc ? Date.parse(packet.config.review.notAfterUtc) : null;
   const cleanupReserveMs = settlementReserve(packet.config, qualification);
   let count = 0, session, opened = false, currentCycle = 1, acceptedContinuation;
   const records = [];
   const probeThreads = new Set();
   const outstanding = new Set(), observedSettlements = [];
   const call = async (method, args = {}) => {
+    if (method !== 'close' && externalSignal?.aborted) throw new Error('Controller caller cancelled; owned cleanup reserved');
     if (count >= packet.config.maximumNativeActions - (method === 'close' ? 0 : 1)) throw new Error('Action budget exhausted; cleanup action reserved');
     let timeoutMs = packet.config.deadlineMs;
     if (authorizationDeadline !== null) {
@@ -270,7 +271,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       timeoutMs = Math.floor(Math.min(timeoutMs, remaining - (method === 'close' ? 0 : cleanupReserveMs)));
     }
     count++;
-    const controller = new AbortController(), signal = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs)]);
+    const controller = new AbortController(), signal = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs), ...(method !== 'close' && externalSignal ? [externalSignal] : [])]);
     const owned = { method, controller }; outstanding.add(owned);
     const operation = Promise.resolve().then(() => adapter[method]({ ...args, signal })).then((result) => {
       if (method !== 'close' && result?.settlement?.state === 'released' && hashPattern.test(result.settlement.receiptSha256 ?? '') &&
@@ -323,7 +324,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       windowId: packet.config.review?.windowId ?? runId, settlementReceiptSha256: result.settlement?.receiptSha256,
       checkpointValidation: { status: fresh?.status ?? extraction.status, errors: fresh?.errors ?? extraction.errors },
       freshProjection: fresh?.freshProjection, envelope, toolDefinitions,
-      allowedTools: mode === 'durable-retrieval' ? (packet.config.review?.authorization?.task === 'H041' ? ['read_original'] : ['scoped.read_original_records']) : [],
+      allowedTools: mode === 'durable-retrieval' ? (packet.config.review?.authorization ? ['read_original'] : ['scoped.read_original_records']) : [],
       scopePolicy: packet.config.review?.scopePolicies?.[mode === 'durable-retrieval' ? 'read-original' : 'summary-only'] };
   };
   const uniqueProbe = (result, isolation) => {
