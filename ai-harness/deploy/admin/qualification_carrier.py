@@ -144,6 +144,9 @@ def preserve_stopped_roots(roots: tuple[Path, ...], destination: Path):
     return receipts
 
 
+_retained_carriers = {}  # Same-process strong owner retention; NOT a process-death watcher.
+
+
 class QualificationCarrier:
     def __init__(self, operations, host: CarrierHost, *, clock=time.time):
         self.operations, self.host, self.clock = operations, host, clock
@@ -172,10 +175,13 @@ class QualificationCarrier:
         delta = self.host.assert_restored(plan, lease, {"stop": stop, "start": start, "preservation": preservation})
         lease.validate()
         del self._pending[transaction_id]
+        _retained_carriers.pop(transaction_id, None)
         context.__exit__(None, None, None)
         return {"status": "restored_no_replay", "start": start, "recoveryDelta": delta}
 
     def run(self, plan: CarrierPlan):
+        if plan.transaction_id in _retained_carriers:
+            raise CarrierError("carrier_unsettled_owner_retained")
         # Explicit plan supplied by a reviewed protected entry, no window override.
         if (not plan.transaction_id or plan.issued_at > self.clock() or
                 not plan.issued_at < plan.dispatch_cutoff < plan.expires_at or
@@ -259,6 +265,7 @@ class QualificationCarrier:
                 # Do not let a failed cleanup release the lock and race normal restoration.
                 keep_owned = True
                 self._pending[plan.transaction_id] = (plan, context, lease, stop, preservation)
+                _retained_carriers[plan.transaction_id] = self
                 self.host.retain_restore_needed(plan, "owned_settlement_or_restore_unproved")
             event("failed", stopAttempted=stop_attempted, stopped=stopped, taskStarted=task_started, restored=restored, noReplay=True)
             raise
