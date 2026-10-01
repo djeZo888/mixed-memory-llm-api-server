@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import { TechnicalVisionError, technicalVisionInputSchema } from "../src/technical-vision-contracts.js";
-import { validateTechnicalVisionInput, validateTechnicalVisionIdentity, validateTechnicalVisionResult, validateTechnicalVisionJob } from "../src/technical-vision-validation.js";
+import { validateTechnicalVisionInput, validateTechnicalVisionIdentity, validateTechnicalVisionManifest, validateTechnicalVisionResult, validateTechnicalVisionJob } from "../src/technical-vision-validation.js";
 import { resultFixture, input, service, owner } from "./technical-vision-fixtures.js";
 import Fastify from "fastify";
 import { technicalVisionResultSchema, technicalVisionJobSchema } from "../src/technical-vision-schema.js";
@@ -18,6 +18,19 @@ test("generation0 pins the approved tandem names; mock is not a loaded revision 
   assert.throws(() => validateTechnicalVisionIdentity({ ...service, mode: "live" }));
   assert.throws(() => validateTechnicalVisionIdentity({ ...service, interpreter: { ...service.interpreter, precision: "FP8" } }));
   assert.throws(() => validateTechnicalVisionIdentity({ ...service, parser: { ...service.parser, model: "other" } }));
+});
+test("runtime enum admission rejects array coercion for every helper path, including live identity and terminal states", () => {
+  for (const mode of [["mock"], ["live"]]) assert.throws(() => validateTechnicalVisionIdentity({ ...service, mode }), { code: "invalid_response" });
+  for (const mediaType of [["image/png"], ["image/jpeg"], ["application/pdf"]]) assert.throws(() => validateTechnicalVisionManifest({ ...resultFixture.source, mediaType }), { code: "invalid_response" });
+  const base = { schemaVersion: 1, jobId: "job1", requestId: "request1", owner, service, source: resultFixture.source, state: "queued", settled: false, cancelRequested: false };
+  for (const state of ["queued", "running", "cancelling", "completed", "failed", "cancelled", "interrupted"]) assert.throws(() => validateTechnicalVisionJob({ ...base, state: [state] }, owner, service), { code: "invalid_response" });
+  for (const code of ["analysis_failed", "cancelled", "interrupted", "source_invalid"]) assert.throws(() => validateTechnicalVisionJob({ ...base, state: "failed", settled: true, error: { code: [code], message: "fixture" } }, owner, service), { code: "invalid_response" });
+  for (const kind of ["label", "reference_designator", "value", "unit", "pin", "dimension", "text"]) {
+    const r = structuredClone(resultFixture); r.extraction.text[0].kind = [kind]; assert.throws(() => validateTechnicalVisionResult(r, resultFixture.source, service), { code: "invalid_evidence" });
+  }
+  for (const kind of ["spatial", "visible_connection", "crossing", "junction", "other"]) {
+    const r = structuredClone(resultFixture); r.observations.relationships[0].kind = [kind]; assert.throws(() => validateTechnicalVisionResult(r, resultFixture.source, service), { code: "invalid_evidence" });
+  }
 });
 test("literal labels/values/units/tables/formulas preserve exact text with evidence and separate derivation", () => {
   const r = validateTechnicalVisionResult(resultFixture, resultFixture.source, service);

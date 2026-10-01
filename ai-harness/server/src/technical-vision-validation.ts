@@ -21,7 +21,7 @@ function id(v: unknown): string { if (typeof v !== "string" || !/^[a-zA-Z0-9_-]{
 function integer(v: unknown, min = 0, max = Number.MAX_SAFE_INTEGER): number { if (!Number.isSafeInteger(v) || Number(v) < min || Number(v) > max) fail(); return Number(v); }
 function list(v: unknown, max: number = L.records): any[] { if (!Array.isArray(v) || v.length > max) fail(); return v; }
 function ids(v: unknown, minimum = 0): string[] { const a = list(v).map(id); if (a.length < minimum || new Set(a).size !== a.length) fail(); return a; }
-function enumeration(v: unknown, choices: readonly string[]) { if (!choices.includes(String(v))) fail(); }
+function enumeration(v: unknown, choices: readonly string[]) { if (typeof v !== "string" || !choices.includes(v)) fail(); }
 export function technicalVisionEqual(a: unknown, b: unknown): boolean {
   if (a === b) return true;
   if (!a || !b || typeof a !== "object" || typeof b !== "object") return false;

@@ -80,3 +80,11 @@ test("auth callbacks are bounded and never exposed; bad snapshot integrity rejec
   const p = await prepared(); p.images[0].sha256 = "0".repeat(64);
   await assert.rejects(f.client.submit(owner, input, p, signal()), { code: "invalid_source" }); assert.equal(requests, 0);
 });
+test("HTTP job responses cannot use array-valued failed state to bypass settlement validation", async t => {
+  const p = await prepared();
+  const f = await httpFixture(t, (_req, res) => {
+    res.writeHead(200, { "content-type": "application/json" });
+    res.end(JSON.stringify({ schemaVersion: 1, jobId: "job1", requestId: input.requestId, owner, service, source: p.manifest, state: ["failed"], settled: false, cancelRequested: false }));
+  });
+  await assert.rejects(f.client.status(owner, "job1", signal()), { code: "invalid_response" });
+});
