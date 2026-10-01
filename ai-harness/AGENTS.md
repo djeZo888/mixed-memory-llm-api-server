@@ -1,3 +1,7 @@
+# Latest human steering
+
+Read the GPU placement and thermal authority in [H040 plan](../reports/h040-execution-plan.md). At >=70 C, every available NVIDIA GPU fan must run at100%; this specifically supersedes the earlier no-fan-change restriction. Slot2/slot5 UUID mapping is pending; no new GPU starts until verified. Stable Ada is visual-to-text, returned Ada is image gen/edit.
+
 # Current H040 continuation
 
 The user resumed planned work after ai-vm restart/second Ada installation. Read root [H040 plan](../reports/h040-execution-plan.md) and current [worker roster](../reports/h040-worker-sessions.json). Earlier H039 hold/deadlines are historical. E owns native-adapter source, B owns the sibling verifier/controller; no cross-owner edits. Root reviews one coherent candidate before live deployment/inference. Preserve pinned0.158.0 and Qwen/MiMo routing/480K/400K/65536.

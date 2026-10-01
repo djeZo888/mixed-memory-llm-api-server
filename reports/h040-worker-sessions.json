@@ -99,5 +99,21 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T02:32:16.358683+00:00"
+  "observedUtc": "2026-10-01T02:48:35.409567+00:00",
+  "latestHumanGpuPlacement": {
+    "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+    "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+    "qwen480k": [
+      "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "physical Gen5 slot5: UUID pending"
+    ],
+    "mimo26": "system RAM plus physical Gen5 slot2: UUID pending"
+  },
+  "fanRule": {
+    "allNvidiaGpus": true,
+    "thresholdC": 70,
+    "minimumAtOrAboveThresholdPercent": 100,
+    "liveCoverage": "NOT_TESTED"
+  },
+  "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors"
 }

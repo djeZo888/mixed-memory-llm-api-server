@@ -1,6 +1,10 @@
+# Latest human steering
+
+Read the GPU placement and thermal authority in [H040 plan](reports/h040-execution-plan.md). At >=70 C, every available NVIDIA GPU fan must run at100%; this specifically supersedes the earlier no-fan-change restriction. Slot2/slot5 UUID mapping is pending; no new GPU starts until verified. Stable Ada is visual-to-text, returned Ada is image gen/edit.
+
 # Current H040 authority — 1 October 2026
 
-The user confirmed ai-vm is back up with the second Ada and authorized resuming planned work. The H039 hardware hold and expired initial deadline are superseded by [H040 plan](reports/h040-execution-plan.md), 02:26:10–04:26:10 UTC / 04:26:10–06:26:10 Ljubljana. Adopt existing closed sessions/failed download state. Compaction reliability stays first; preserve existing runtime/routing/context and all original histories/credentials. Root reviews concrete candidates before live work. A is initial sole backend lifecycle owner; C is sole artifact writer and waits for A/root handoff. E/B implement isolated source. No driver/fan/Proxmox changes, creative-image acceptance, upstream upgrade or PR merge. Earlier H039/H038 sections below are retained history.
+The user confirmed ai-vm is back up with the second Ada and authorized resuming planned work. The H039 hardware hold and expired initial deadline are superseded by [H040 plan](reports/h040-execution-plan.md), 02:26:10–04:26:10 UTC / 04:26:10–06:26:10 Ljubljana. Adopt existing closed sessions/failed download state. Compaction reliability stays first; preserve existing runtime/routing/context and all original histories/credentials. Root reviews concrete candidates before live work. A is initial sole backend lifecycle owner; C is sole artifact writer and waits for A/root handoff. E/B implement isolated source. No driver/Proxmox changes, creative-image acceptance, upstream upgrade or PR merge. Earlier H039/H038 sections below are retained history.
 
 # Sova — H039 coordination
 
