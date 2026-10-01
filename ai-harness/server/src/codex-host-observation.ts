@@ -41,7 +41,7 @@ export function observeOwnedCodexProcess(process:OwnedCodexProcess,input:Pick<Co
   if(failure)throw failure;
   if(direction==="output"&&!Buffer.isBuffer(chunk))throw fail();
   const raw=typeof chunk==="string"?Buffer.from(chunk,encoding):Buffer.isBuffer(chunk)||chunk instanceof Uint8Array?Buffer.from(chunk):undefined;
-  if(!raw||raw.length>1024*1024||(bytes+=raw.length)>max)throw fail();
+  if(!raw||raw.length>(direction==="input"?16*1024*1024:4*1024*1024)||(bytes+=raw.length)>max)throw fail();
   synchronous(()=>observer.onRawNative?.(Object.freeze({sessionId:input.sessionId,process,direction,sequence:++sequence,bytes:raw,sha256:digest(raw)})));
  };
  // Intercept actual writes/raw pushes without a data listener: no early flow or lost ACK bytes.
