@@ -27,20 +27,24 @@ export function automaticFrames(frames,threadId,turnId){
  * configuration + pinned native active-context producer bytes. A new prompt's
  * gateway count alone cannot substitute for the pre-turn native baseline. */
 export function automaticThreshold(r,expected,metadata){
+ if(expected.nativeTraceProof?.mode==='post-sampling-token-usage-v2'&&!r.nativeTracePacketUtf8)return {status:'NOT_TESTED',nativeAcceptance:'NOT_TESTED',schema:'codex-native-trace-v2',mode:'post-sampling-token-usage-v2',errors:['actual_original_V2_trace_packet_unavailable']};
  if(r.nativeTracePacketUtf8){
   if(sha(r.nativeTracePacketUtf8)!==r.nativeTracePacketSha256)throw Error('actual_original_auto_trace_packet_changed');
   if(!expected.nativeTraceProof||!r.nativeTraceCausalProofUtf8||!r.nativeResolvedConfigProofUtf8)return {status:'NOT_TESTED',errors:['actual_original_TRACE_present_but_independent_protected_config_and_causal_join_unavailable']};
   const packet=JSON.parse(r.nativeTracePacketUtf8),trace=verifyRetainedTrace(packet,expected.nativeTraceProof);
+  // Bind the retained stderr source to the actual ordinary operation producer.
+  for(const key of ['launchReceipt','settlementReceipt'])if(typeof r.producer?.[key+'Utf8']!=='string'||r.producer[key+'Utf8']!==packet[key+'Utf8']||r.producer[key+'Sha256']!==packet[key+'Sha256'])throw Error('actual_same_owned_trace_and_operation_producer_required');
   if(sha(r.nativeTraceCausalProofUtf8)!==expected.nativeTraceCausalProofSha256||sha(r.nativeResolvedConfigProofUtf8)!==expected.nativeResolvedConfigProofSha256||sha(r.nativeOperationUtf8)!==r.nativeOperationSha256)throw Error('independent_actual_trace_cause_config_operation_bytes');
-  const frames=JSON.parse(r.nativeFramesUtf8),operation=JSON.parse(r.nativeOperationUtf8),lifecycle=automaticFrames(frames,r.nativeThreadId,r.nativeTurnId);if(!['request','ack','started','completed'].every(k=>frames.some(f=>equal(f,operation[k]))))throw Error('trace_actual_owned_operation_frames_required');
+  const frames=JSON.parse(r.nativeFramesUtf8),operation=JSON.parse(r.nativeOperationUtf8),lifecycle=automaticFrames(frames,r.nativeThreadId,r.nativeTurnId);if(operation.sessionId!==r.sessionId||r.sessionId!==expected.nativeTraceProof.sessionId||!['request','ack','started','completed'].every(k=>frames.some(f=>equal(f,operation[k]))))throw Error('trace_actual_owned_operation_frames_required');
   const causal=JSON.parse(r.nativeTraceCausalProofUtf8),config=JSON.parse(r.nativeResolvedConfigProofUtf8);
   // Actual native V2 start bytes replace an unimplemented timestamp wrapper.
   // Historical synthetic clock fixtures remain parser-only, never a native gate.
   if(causal.source!=='native-v2-item-started-timestamp-v1')return {status:'NOT_TESTED',errors:['actual_native_V2_startedAtMs_causal_proof_required']};
+  if(trace.schema==='codex-native-trace-v2'&&(causal.launchNonce!==trace.producer.launchNonce||causal.processId!==trace.producer.processId))throw Error('actual_same_owned_V2_causal_nonce_process_required');
   const capture=r.requests?.filter(c=>c.requestId===causal.requestId);if(capture?.length!==1||!equal(automaticMetadata(JSON.parse(capture[0].firstRequestUtf8),r.nativeThreadId,r.nativeTurnId),metadata))throw Error('actual_original_auto_canonical_request_required');
   const ledger=r.gatewayRecords?.map(x=>JSON.parse(x)).filter(x=>x.id===causal.requestId);if(ledger?.length!==1||ledger[0].sessionId!==r.sessionId||ledger[0].state!=='settled'||!equal(ledger[0].nativeMetadata,metadata)||ledger[0].lane!=='qwen3.8-27b')throw Error('actual_settled_canonical_gateway_record_required');
   const gateway={requestId:ledger[0].id,nativeThreadId:ledger[0].nativeMetadata.thread_id,nativeTurnId:ledger[0].nativeMetadata.turn_id,windowId:ledger[0].nativeMetadata.window_id,contextWindowId:ledger[0].nativeMetadata.context_window_id,state:ledger[0].state};
-  return verifyNativeStartedAtTraceJoin({lines:trace.lines,...(trace.autoCalls?.length?{autoCalls:trace.autoCalls}:{}),startFrame:lifecycle.start,producer:trace.producer,operation,metadata,gateway,resolvedConfig:config});
+  return verifyNativeStartedAtTraceJoin({schema:trace.schema,mode:trace.mode,lines:trace.lines,autoCalls:trace.autoCalls,startFrame:lifecycle.start,producer:trace.producer,operation,metadata,gateway,resolvedConfig:config});
  }
  const bytes=r.activeContextReceiptUtf8;
  if(typeof bytes!=='string'||!expected.runtimeQualificationSha256||(!expected.activeContextReceiptSha256&&!expected.activeContextProducerPlanSha256))return {status:'NOT_TESTED',errors:['actual_resolved_config_and_native_active_context_producer_unavailable']};

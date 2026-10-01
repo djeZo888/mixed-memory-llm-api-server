@@ -7,7 +7,7 @@ import {loadCodexOrdinaryEntry} from '../../../server/src/codex-ordinary-entry.j
 import {createProductionQwenVerifier,loadQwenReceipt} from '../../../server/src/codex-production.js';
 import {readProtectedCredential} from '../../../server/src/protected-credential.js';
 import * as traceApi from '../../../server/src/codex-receipts.js';
-import {parsePostSamplingTrace,parseAutoCallTrace} from '../native-trace-evidence.mjs';
+import {parsePostSamplingTrace,verifyTraceSchemaMode,traceSchemaForMode,type NativeTraceMode} from '../native-trace-evidence.mjs';
 import {getCodexReceiptUtf8} from '../../../server/src/codex-receipts.js';
 import {translateResponses} from '../../../server/src/codex-responses.js';
 import type {CodexHostQualification} from '../../../server/src/codex-host.js';
@@ -23,6 +23,17 @@ import {lstat,readFile} from 'node:fs/promises';import {join,dirname} from 'node
 import {assertNormalRestartConfig} from './normal-restart-ticket.js';
 import {collectOrdinaryAutomatic} from './automatic.js';
 import {bounded} from './process-runner.js';
+/** Selection is root configuration only. Current external producer graph accepts
+ * V1; V2 remains an explicit readiness error until A supplies the exact API. */
+export function normalProductTraceMode(review:any):NativeTraceMode{
+ const mode=review.nativeTrace===undefined?'off':review.nativeTrace?.mode;
+ traceSchemaForMode(mode);return mode;
+}
+export function assertNormalProductTraceReady(mode:NativeTraceMode){
+ traceSchemaForMode(mode);
+ if(mode==='post-sampling-token-usage-v2')throw Error('actual_reviewed_A_V2_trace_producer_API_not_ready:codex-receipts/codex-host/codex-engine/codex-launcher/codex-product-observation');
+ if(mode!=='off'&&(typeof traceApi.getCodexTraceEvents!=='function'||typeof traceApi.getCodexTraceUtf8!=='function'||typeof traceApi.isVerifiedCodexTraceReceipt!=='function'))throw Error('actual_reviewed_A_trace_producer_API_unavailable');
+}
 export async function kernelProcessReceipt(pid=process.pid){if(process.platform!=='linux')throw Error('native_normal_process_requires_linux_kernel');const procStatUtf8=await readFile(`/proc/${pid}/stat`,'utf8'),bootIdUtf8=await readFile('/proc/sys/kernel/random/boot_id','utf8'),fields=procStatUtf8.slice(procStatUtf8.lastIndexOf(') ')+2).trim().split(/\s+/);return {source:'linux-proc-process-observation',pid,startTicks:fields[19],bootId:bootIdUtf8.trim(),procStatUtf8,bootIdUtf8};}
 export class NormalProductProducer {
  readonly observer:NativeObserver;readonly counts:NativeCountObserver;
@@ -34,9 +45,27 @@ export class NormalProductProducer {
  private raw(r:any){const bytes=getCodexReceiptUtf8(r);if(!bytes)throw Error('actual_current_transport_receipt_required');return bytes;}
  capture:NonNullable<GatewayOptions['diagnostics']>['capture']=event=>{if(event.sessionId!==this.config.sessionId)return;try{if(this.captureFailure)throw this.captureFailure;if(event.phase==='pre_normalization'){if(this.captures.has(event.requestId))throw Error('normal_capture_duplicate');const bytes=Buffer.from(event.bytes),raw=bytes.toString('utf8');if(!Buffer.from(raw).equals(bytes))throw Error('normal_capture_invalid_utf8');this.captures.set(event.requestId,{requestId:event.requestId,sessionId:event.sessionId,firstRequestUtf8:raw,captureSha256:sha256(raw),observedAt:new Date().toISOString()});}else if(event.phase==='normalized_request'){const c=this.captures.get(event.requestId);if(!c?.normalizedRequestUtf8||c.normalizedRequestUtf8!==Buffer.from(event.bytes).toString('utf8'))throw Error('normal_actual_gateway_normalization_changed');}}catch(error){this.captureFailure=error instanceof Error?error:Error('normal_capture_failed');throw this.captureFailure;}};
 
+ private traceHooks():Pick<CodexHostQualification,'nativeTraceMode'|'onNativeTraceReceipt'>{
+  const selectedMode=normalProductTraceMode(this.config.review);assertNormalProductTraceReady(selectedMode);
+  if(selectedMode==='off')return {nativeTraceMode:undefined,onNativeTraceReceipt:undefined};
+  // Narrow without a cast: V2 cannot reach the V1-only producer graph.
+  if(selectedMode!=='post-sampling-token-usage-v1')throw Error('actual_reviewed_A_V2_trace_producer_API_not_ready');
+  return {nativeTraceMode:selectedMode,onNativeTraceReceipt:r=>{try{
+   if(this.traceFailure)throw this.traceFailure;
+   if(!traceApi.isVerifiedCodexTraceReceipt(r))throw Error('actual_owned_current_A_trace_receipt_required');
+   const raw=traceApi.getCodexTraceUtf8(r),events=traceApi.getCodexTraceEvents(r);
+   if(!raw||!events||r.sessionId!==this.config.sessionId||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');
+   const producer=this.producers.get(r.nonce);if(!producer?.settlementReceiptUtf8)throw Error('actual_trace_after_owned_settlement_required');
+   verifyTraceSchemaMode(r.schema,selectedMode);
+   const packet={...producer,selectedMode,traceReceiptUtf8:raw,traceReceiptSha256:sha256(raw),events:events.map(e=>{const lineUtf8=e.bytes.toString('utf8');if(!Buffer.from(lineUtf8).equals(e.bytes))throw Error('original_trace_invalid_utf8');parsePostSamplingTrace(lineUtf8);return {lineUtf8};})};
+   this.traceCaptures.set(r.nonce,packet);
+  }catch(e){this.traceFailure=e instanceof Error?e:Error('actual_trace_capture_failed');throw this.traceFailure;}}};
+ }
  hooks(base:CodexHostQualification):CodexHostQualification{
+  const traceHooks=this.traceHooks();
+  if(normalProductTraceMode(this.config.review)==='off'&&(base.nativeTraceMode!==undefined||base.onNativeTraceReceipt!==undefined))throw Error('explicit_off_cannot_inherit_native_trace_configuration');
   return {...base,
-   ...(this.config.review.nativeTrace?.mode==='post-sampling-token-usage-v1'?{nativeTraceMode:'post-sampling-token-usage-v1',onNativeTraceReceipt:(r:any)=>{try{const api=traceApi as any,raw=api.getCodexTraceUtf8?.(r),events=api.getCodexTraceEvents?.(r);if(!api.isVerifiedCodexTraceReceipt?.(r)||!raw||!events||r.sessionId!==this.config.sessionId||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');const producer=this.producers.get(r.nonce);if(!producer?.settlementReceiptUtf8)throw Error('actual_trace_after_owned_settlement_required');const packet={...producer,traceReceiptUtf8:raw,traceReceiptSha256:sha256(raw),events:events.map((e:any,index:number)=>{const lineUtf8=e.bytes.toString('utf8');if(!Buffer.from(lineUtf8).equals(e.bytes))throw Error('original_trace_invalid_utf8');if(r.schema==='codex-native-trace-v2'){const kind=r.events[index]?.kind;if(kind==='autoCompactNew')parseAutoCallTrace(lineUtf8);else if(kind==='postSampling')parsePostSamplingTrace(lineUtf8);else throw Error('actual_original_V2_kind_required');}else parsePostSamplingTrace(lineUtf8);return {lineUtf8};})};this.traceCaptures.set(r.nonce,packet);}catch(e){this.traceFailure=e instanceof Error?e:Error('actual_trace_capture_failed');throw this.traceFailure;}}}:{}),
+   ...traceHooks,
    observations:{onNativeProcess:(event:any)=>{if(event.sessionId===this.config.sessionId){if(this.holding)throw Error('normal_owned_capture_blocks_new_launch');this.currentProcess=event.process;this.observer.registerObserved(event.sessionId,event.process);}},onRawNative:(event:any)=>{if(event.sessionId===this.config.sessionId)this.observer.ingestObserved(event);},onVerifiedCount:async(event:any,signal:AbortSignal)=>{
     const c=this.captures.get(event.context?.requestId);if(this.captureFailure)throw this.captureFailure;if(!c)throw Error('normal_owned_count_raw_capture_missing');this.active(signal);const app=this.owned(c.sessionId),runs=app.store.db.prepare("SELECT id,kind FROM runs WHERE session_id=? AND status='running'").all(c.sessionId);if(this.holding||runs.length!==1)throw Error('actual_unique_normal_store_run_required');const raw=JSON.parse(c.firstRequestUtf8),m=JSON.parse(raw.client_metadata?.['x-codex-turn-metadata']??'null'),translated={...translateResponses(raw).body,model:event.lane};if(!m||m.thread_id!==app.store.getSession(c.sessionId).nativeSessionId||typeof m.turn_id!=='string'||stableJson(translated)!==stableJson(event.body)||sha256(JSON.stringify(event.body))!==event.bodySha256)throw Error('normal_compiled_request_actual_owner_translation');const policy=this.config.review.normalToolPolicies?.[m.request_kind==='compaction'?'compaction':'parent'];if(!policy||sha256(stableJson(raw.tools))!==policy.rawToolsSha256||sha256(stableJson(event.body.tools))!==policy.translatedToolsSha256)throw Error('normal_reviewed_distinct_tool_policy_before_dispatch');Object.assign(c,{runId:String(runs[0].id),nativeThreadId:m.thread_id,nativeTurnId:m.turn_id,normalizedRequestUtf8:JSON.stringify(event.body),normalizedSha256:event.bodySha256});await durableFile(join(this.config.hostPrivate,`${c.requestId}-normal-provider-capture.json`),stableJson(c));await this.counts.retainVerifiedEvent(event,signal);this.active(signal);
    }},
@@ -77,7 +106,7 @@ export async function startNormalProduct(configPath:string,restart?:import('./no
  const qualification=await qualifyEntry(config.qualificationConfig,restart);if(!isQualifiedEntry(qualification))throw Error('actual_current_native_qualification_required');
  const ordinary=loadCodexOrdinaryEntry(config.ordinaryEntryPath,config.ordinaryEntryKeyPath,{serverDir:config.serverDir,deploymentDir:config.deploymentDir});if(!ordinary)throw Error('genuine_protected_normal_data_entry_required');
  const receipt=await loadQwenReceipt(config.qwenReceiptPath),inferenceKey=await readProtectedCredential(config.inferenceKeyPath),controlKey=await readProtectedCredential(config.controlKeyPath),verifyLane=createProductionQwenVerifier(receipt,{inferenceKey,controlKey});
- if(config.review.nativeTrace&&(config.review.nativeTrace.mode!=='post-sampling-token-usage-v1'||typeof (traceApi as any).getCodexTraceEvents!=='function'||typeof (traceApi as any).getCodexTraceUtf8!=='function'))throw Error('actual_reviewed_A_trace_producer_API_unavailable');
+ assertNormalProductTraceReady(normalProductTraceMode(config.review));
  const base:CodexHostQualification={protocolQualified:true,rootlessQualified:true,verifyLane,qualifiedAliases:Object.keys(receipt.lanes),outputLimit:65536,nativeReceiptPolicy:ordinary.nativeReceiptPolicy};
  const taskAdmission=config.carrier?loadQualificationTaskAdmission(validateCarrierBinding({...config,bootstrap:{review:config.review}}).admissionPath):undefined;
  if(taskAdmission){await taskAdmission.registerSession({sessionId:config.sessionId,role:'parent'});await taskAdmission.verify({sessionId:config.sessionId,requestId:'normal-product-open',lane:'qwen3.8-27b'});}

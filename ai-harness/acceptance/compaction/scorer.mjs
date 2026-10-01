@@ -1,3 +1,4 @@
+import {automaticThreshold} from './automatic-evidence.mjs';
 import {verifyChildLineage,bindChildEnvelope,childRequestMetadata} from './child-lineage.mjs';
 import { verifyObservedModelScope,verifyObservedDelegatedScope } from './model-scope.mjs';
 import { createHash } from 'node:crypto';
@@ -590,4 +591,10 @@ export function scoreContinuation(truth, cycle, artifacts) {
   }
   if (calculation?.adcWithinLimit !== (adc <= number('adc_limit'))) errors.push('adc-limit');
   return { status: errors.length ? 'FAIL' : 'PASS', errors, cycle, mode: 'continuation' };
+}
+
+/** Exact consumer/scorer boundary. SOURCE_VALID is never native acceptance. */
+export function scoreAutomaticTrace(receipt,expected,metadata){
+ try { return automaticThreshold(receipt,expected,metadata); }
+ catch(error){return {status:'FAIL',nativeAcceptance:'NOT_TESTED',errors:[error instanceof Error?error.message:'actual_automatic_trace_invalid']};}
 }
