@@ -1,0 +1,494 @@
+{
+  "schema": "h043-fan-diagnostic01-progress-v1",
+  "reportedUtc": "2026-10-01T21:56:07.707839+00:00",
+  "phase": "E-fan-diagnostic01",
+  "sessionId": "01a0f95f-9a65-7d22-920e-4b0461aeca29",
+  "host": "mac-worker2",
+  "baseCommit": "4f1a060ae4cc682244d1be40c4c5f5fd2919a7fa",
+  "disposition": "SOURCE_READY_READ_ONLY_LIVE_NOT_TESTED",
+  "conversationPreserved": true,
+  "live": {
+    "diagnosticStaging": 0,
+    "credentialValueReads": 0,
+    "BMCLogins": 0,
+    "BMCLogouts": 0,
+    "BMCGETs": 0,
+    "NodeGETs": 0,
+    "fanPUTs": 0,
+    "serviceStartStop": 0,
+    "install": 0,
+    "latchClear": 0,
+    "recovery": 0,
+    "SELclear": 0,
+    "joinedBaseline": "NOT_TESTED",
+    "rawSELRecords": "NOT_OBTAINED",
+    "physicalFanRepair": "UNRESOLVED"
+  },
+  "source": {
+    "controllerPolicyTestsDoc": "UNCHANGED; exact Fan05 equality verified",
+    "finalFan05BundleSHA256": "0c1033b0dd7ccda1bc586f4d47dd6c264668a29a864ab1d4f4377d79bf8bc8b6",
+    "rootBundleSHA256": "c0ede0c5de47b7e8c4b548407acfa0ddeb286b70e9ff81139884caaea75128d5",
+    "allAdoptedPrivateHashesVerified": true,
+    "sourceHistory": "both bundles verified and fetched to separate private refs; no duplicates applied",
+    "graph": {
+      "bridgeHelperSha256": "f4417c84666031266e22ca254df59be0efabb38d57f7d41c80d6e15307b582ad",
+      "exportTestSha256": "50fc557fd5d95b9c5f1f3d80e7c23e2b619c55c9466852083615669b33fd006f",
+      "helperSha256": "6485dfff84ade606924164ff964c775422f14ca0f936193ef9df30b866dcb649",
+      "installedSourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+      "passiveSha256": "6d21a1c303b3e0b376ef1bf1dfc531d78053b670cc848efd55a8bdab7ffa0147",
+      "policySha256": "a67ec7a2bcd45dc4b0b7ad0b593cfe3b72f9c7c24a6b2d387d62007901aebb13",
+      "stagingHelperSha256": "ea2ed7727d32f4b0cdbf71122232dda46cdce0f2f012f3280991cfc79c9b8061",
+      "testSha256": "0e3faaacd230b134e690305fbef16f10873ebea389a4d3ad9cd87bfab94c6ebf",
+      "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b"
+    },
+    "configSha256": "ec1679171ecb9c7d87b7a876b8c7be4879ebcfefbb41b5101d699a2d07d20d11",
+    "newDiagnosticTests": 48,
+    "newExportTests": "see retained diagnostic-export-tests log",
+    "unchanged70Plus82Replayed": false
+  },
+  "currentPassiveAsOf": "2026-10-01T21:45:36.610845+00:00",
+  "passive": {
+    "host": {
+      "bootId": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+      "fqdn": "aiharness",
+      "hostname": "aiharness",
+      "machineIdSha256": "967ffd72f0b36ac4ce53d247250e300d4317732365dc7a1dda5a17e2fd2144b3",
+      "mountNamespace": "mnt:[4026531841]",
+      "uid": 0
+    },
+    "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+    "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+    "unitTuple": {
+      "ActiveState": "failed",
+      "ControlGroup": "",
+      "ExecMainExitTimestampMonotonic": "133864841333",
+      "ExecMainPID": "259107",
+      "ExecMainStartTimestampMonotonic": "93618566045",
+      "ExecMainStatus": "78",
+      "FragmentPath": "/etc/systemd/system/sova-cha-fan3.service",
+      "Group": "user",
+      "Id": "sova-cha-fan3.service",
+      "InvocationID": "dd60d67cafee4be1813e0172e32446c0",
+      "LoadState": "loaded",
+      "MainPID": "0",
+      "NRestarts": "0",
+      "Restart": "on-failure",
+      "RestartUSec": "30s",
+      "Result": "exit-code",
+      "SubState": "failed",
+      "User": "user"
+    },
+    "matchingControllerProcesses": 0,
+    "cgroupProcs": null,
+    "originalStateFileCount": 25,
+    "twoCredentialOriginals": "UID/GID1000 mode0600 single-link; only metadata read",
+    "originalStateSourceUnitProtectedMetadataStableAcrossTwoSnapshots": true,
+    "ownerAttribution": "observed systemd unit/process/lock only; other BMC writers UNKNOWN"
+  },
+  "rootDecision": {
+    "admissionFailure": "source_feedback_NONE_no_dependent_action",
+    "at": "2026-10-01T21:55:59.247090+00:00",
+    "authority": "NONE",
+    "blockers": [
+      "Current pointer is NONE: no staging/auth/invocation under prior GO. Changed graph cannot reuse approved prior hashes."
+    ],
+    "checkpoint": "final-disposition",
+    "dependentActionAllowed": false,
+    "metadata": {
+      "st_ctime_ns": 1790891699111939928,
+      "st_dev": 16777231,
+      "st_gid": 20,
+      "st_ino": 4701198,
+      "st_mode": 33152,
+      "st_mtime_ns": 1790891699111791635,
+      "st_nlink": 1,
+      "st_size": 1559,
+      "st_uid": 502
+    },
+    "originalPath": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/ROOT-FAN-DIAGNOSTIC-GO.json",
+    "readinessRequired": [
+      "Mirror new complete helper/reader/stager/bridge/config/tests/export checks and genuine receipts/logs promptly.",
+      "Root will review the three corrections and may issue a separate fresh finite GO if coherent.",
+      "Audit this exact withdrawal through documented boundary before any staging/auth; actual consumption evidence required."
+    ],
+    "schema": "h043-root-decision-audit-v1",
+    "sha256": "e029b0adc690ea94ffc1abc5cd6c9f8a183aaa2ed16fb5cc39966e4be064f9c7",
+    "sourceReview": {
+      "notes": [
+        "Root explicitly WITHDRAWS GO01 now because private stager/bridge/test/config graph changed after review.",
+        "Preserve GO01 exact issued bytes, deliveryreceipt and every changed graph original. Never execute changed graph or retry under GO01.",
+        "Same diagnostic outcome: source-check three narrow export corrections, emit coherent tested complete graph/check receipts immediately."
+      ]
+    }
+  },
+  "privateReadiness": {
+    "path": "../output/REVIEW-READY-DIAGNOSTIC.json",
+    "routes": {
+      "DELETE /api/session": 1,
+      "GET /api/fanctrl/PWM": 25,
+      "GET /api/fanctrl/last_source": 25,
+      "GET /api/fanctrl/mode": 25,
+      "GET /api/fanctrl/source": 25,
+      "GET /redfish/v1/Chassis/Self/LogServices": 1,
+      "GET /redfish/v1/Chassis/Self/Thermal": 25,
+      "GET http://10.156.100.60:30008/control/v1/node/status": 25,
+      "POST /api/session": 1
+    },
+    "sessionPlan": {
+      "login": "ONE POST /api/session",
+      "logout": "at most ONE own DELETE /api/session after complete success",
+      "node": "original Bearer on fixed Node GET",
+      "redfish": "original Basic on exact reviewed GETs after TLS pin; no extra session"
+    },
+    "actionLimits": {
+      "SELclear": 0,
+      "baselineOwnerCheckpointsMaximum": 27,
+      "evidenceWritesMaximum": 1,
+      "exportBytesMaximum": 268435456,
+      "helperInvocations": 1,
+      "logins": 1,
+      "logoutsMaximum": 1,
+      "ownerCheckpointsMaximum": 256,
+      "puts": 0,
+      "refresh": 0,
+      "responseBytes": 262144,
+      "serviceActions": 0,
+      "stagingDirectoriesMaximum": 2,
+      "stagingFiles": 3
+    },
+    "stagingPaths": [
+      "/run/sova-fan-diagnostic",
+      "/run/sova-fan-diagnostic/h043-e-fan-diagnostic01",
+      "/run/sova-fan-diagnostic/h043-e-fan-diagnostic01/fan_diagnostic.py",
+      "/run/sova-fan-diagnostic/h043-e-fan-diagnostic01/config.json",
+      "/run/sova-fan-diagnostic/h043-e-fan-diagnostic01/ROOT-FAN-DIAGNOSTIC-GO.json",
+      "/run/sova-fan-diagnostic/h043-e-fan-diagnostic01/evidence.json"
+    ],
+    "readinessRequired": [
+      "root reviews exact helper/test/stager/bridge/config bytes and graph",
+      "root approves exact fixed discovery routes/counts and Basic Redfish auth scheme",
+      "fresh frozen host/owner/state/protected metadata rejoin must pass before staging and every route",
+      "exact current ROOT-FAN-DIAGNOSTIC-GO.json protected owner0600 single-link canonical strict finite JSON; NONE is source feedback only",
+      "Node boot cannot be known passively: first exact serverGPU fresh Node GET establishes boot, later reads must match",
+      "live BMC session QSESSIONID+CSRF shape is NOT_TESTED; partial/uncertain login fails closed without logout/retry",
+      "if SEL collection supplies links only, raw records/trigger/direction remain UNAVAILABLE; no following unreviewed links"
+    ]
+  },
+  "limits": [
+    "Linux auth/TLS/session-cookie/endpoint operation and baseline cadence NOT_TESTED",
+    "Only historical Chassis LogServices discovery admitted; no guessed Entries or automatic links. Raw trigger/direction/threshold fields unavailable unless literally returned.",
+    "Node boot is bound by first actual fresh exact serverGPU GET; not inferred from passive host boot.",
+    "Configured-duty differs from measured PWM; unsupported tach units remain raw signal and RPM NOT_TESTED.",
+    "Configuration snapshots are time-sampled with explicit perroute intervals/gaps; continuous stability NOT_TESTED.",
+    "Intermediate subagent test failures have original conversation tool output pointers but no standalone original log files; explicit absence recorded privately.",
+    "Actual native/wrapper/outer exits and process/PGID absence remain root post-exit verification; not prospective worker claims."
+  ],
+  "commandReceipts": {
+    "fetch-fan05-history.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "fetch",
+        "../fan05-final.bundle",
+        "refs/heads/work/h042-fan05:refs/private/h043/fan05-adopted"
+      ],
+      "startedUtc": "2026-10-01T21:31:56.183625+00:00",
+      "finishedUtc": "2026-10-01T21:31:56.196421+00:00",
+      "exitCode": 128,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "2edd9a2bd753dc56787c847968e1ca2cfddf5413340335abf7ed04ff860cabf5"
+    },
+    "passive-inventory-corrected.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "ai-harness",
+        "sudo",
+        "-n",
+        "python3",
+        "-"
+      ],
+      "startedUtc": "2026-10-01T21:45:36.244520+00:00",
+      "finishedUtc": "2026-10-01T21:45:36.610845+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": "../output/passive-inventory.py",
+      "inputSha256": "4c3c2301e89215713448f04d665c2558c2f305ed383b5437e62a545d4d651da9",
+      "stdoutSha256": "6d21a1c303b3e0b376ef1bf1dfc531d78053b670cc848efd55a8bdab7ffa0147",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepare-review-final.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/prepare_review.py"
+      ],
+      "startedUtc": "2026-10-01T21:48:24.418145+00:00",
+      "finishedUtc": "2026-10-01T21:48:24.472779+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e48295025a08ade034660a85f202299d8224379459e6b3561cc6d036683ab5ab",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "diagnostic-tests-final.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/test_fan_diagnostic.py"
+      ],
+      "startedUtc": "2026-10-01T21:48:24.200707+00:00",
+      "finishedUtc": "2026-10-01T21:48:24.356581+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "87dc1f3f48649c730bfe3c1252233446a04c6a4019ba1e705b9ac5752f5506d1"
+    },
+    "fetch-fan05-history-corrected.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "fetch",
+        "../fan05-final.bundle",
+        "HEAD:refs/private/h043/fan05-adopted"
+      ],
+      "startedUtc": "2026-10-01T21:32:43.373814+00:00",
+      "finishedUtc": "2026-10-01T21:32:43.398440+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "257a695f158063aaf0454458f39900254dba120ffdfa10534deddd288963f2fc"
+    },
+    "diagnostic-tests-coherent-final.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/test_fan_diagnostic.py"
+      ],
+      "startedUtc": "2026-10-01T21:55:52.000697+00:00",
+      "finishedUtc": "2026-10-01T21:55:52.154529+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "1c5b5d0cea7f592291c6372624f1ec6751687d6705dc636015aff39a691ffcd4"
+    },
+    "verify-root-bundle.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "bundle",
+        "verify",
+        "../candidate.bundle"
+      ],
+      "startedUtc": "2026-10-01T21:31:36.379341+00:00",
+      "finishedUtc": "2026-10-01T21:31:36.390154+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "6e007af9f47dea969bca7f62645a3ae3faa45880828b1b2dcd2f125fdb4ec580",
+      "stderrSha256": "8b9da015b0a0d0e2db42a262f85b36ee0782d384105b0f57fba9b1e6ada5422e"
+    },
+    "passive-inventory.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "ai-harness",
+        "sudo",
+        "-n",
+        "python3",
+        "-"
+      ],
+      "startedUtc": "2026-10-01T21:31:36.570139+00:00",
+      "finishedUtc": "2026-10-01T21:31:36.943674+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": "../output/passive-inventory.py",
+      "inputSha256": "180ee227cd5abbfa354cb9d2973613cbd9086997ee3c37196fe1f51fcf925c92",
+      "stdoutSha256": "9be8b19bc8ffce06e0b07d10f8233b34c438aae347138334fc466c11dc0c9645",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "prepare-review-coherent-final.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/prepare_review.py"
+      ],
+      "startedUtc": "2026-10-01T21:55:52.389138+00:00",
+      "finishedUtc": "2026-10-01T21:55:52.443408+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "8cc88ea7253070197cf1600a09465c0c81840e0aab0123af5b4c30effe118199",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "root-final-disposition.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/audit_root_decision.py",
+        "final-disposition"
+      ],
+      "startedUtc": "2026-10-01T21:55:59.206285+00:00",
+      "finishedUtc": "2026-10-01T21:55:59.252793+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "3e6c80b452cf1eaf4278fb0cd105bc2e8ac8ead61fd2618b1f3f111218b2bad0",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "diagnostic-tests-01.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/test_fan_diagnostic.py"
+      ],
+      "startedUtc": "2026-10-01T21:44:18.706863+00:00",
+      "finishedUtc": "2026-10-01T21:44:18.814967+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "1a78f19c4e1baf70e196bc5de633d5d537d30b9c0101aa0cd6f278612b5b843d"
+    },
+    "verify-fan05-bundle.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "bundle",
+        "verify",
+        "../fan05-final.bundle"
+      ],
+      "startedUtc": "2026-10-01T21:31:36.472008+00:00",
+      "finishedUtc": "2026-10-01T21:31:36.489325+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "3f1838259ed0a182178d64f94b89bb5631b0f7b4bb20e867b72d0d4f99828cb9",
+      "stderrSha256": "b1f635d79dbbb73985e9d4a08ed84ffcee09abc234de85f563877d949c57bbb8"
+    },
+    "fan05-policy-equality.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "diff",
+        "refs/private/h043/fan05-adopted",
+        "HEAD",
+        "--",
+        "scripts/thermal/cha_fan3.py",
+        "scripts/thermal/test_cha_fan3.py",
+        "docs/h013-fan-control.md"
+      ],
+      "startedUtc": "2026-10-01T21:32:43.589727+00:00",
+      "finishedUtc": "2026-10-01T21:32:43.601404+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "diagnostic-export-tests.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/test_diagnostic_export.py"
+      ],
+      "startedUtc": "2026-10-01T21:55:52.214186+00:00",
+      "finishedUtc": "2026-10-01T21:55:52.306701+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "e3ebe59234fd855249d7ee14dea06e6beb294502794593cf9d75d750a920fc72"
+    },
+    "diagnostic-tests-coherent-02.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/test_fan_diagnostic.py"
+      ],
+      "startedUtc": "2026-10-01T21:53:23.290433+00:00",
+      "finishedUtc": "2026-10-01T21:53:23.444131+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "cfb915bff3d5c9ffae556b95be972c8089bc45df0e07bd797e79464942fdeda1"
+    },
+    "root-after-source.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "python3",
+        "../output/audit_root_decision.py",
+        "after-source"
+      ],
+      "startedUtc": "2026-10-01T21:49:18.005216+00:00",
+      "finishedUtc": "2026-10-01T21:49:18.051933+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "0cd95e05e6a1fede77fa8e127a5683a864ab5ab33df618f98acfc8bcfd69087c",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "fetch-root-history.receipt.json": {
+      "host": "mac-worker2.local",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/E-fan-diagnostic01/repo",
+      "argv": [
+        "git",
+        "fetch",
+        "../candidate.bundle",
+        "HEAD:refs/private/h043/root-base-adopted"
+      ],
+      "startedUtc": "2026-10-01T21:32:43.480675+00:00",
+      "finishedUtc": "2026-10-01T21:32:43.506870+00:00",
+      "exitCode": 0,
+      "timeout": false,
+      "inputPath": null,
+      "inputSha256": null,
+      "stdoutSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSha256": "61ca92fad899adf7f377526272442a826f763b39c99e5fabcefcbde89cbff794"
+    }
+  }
+}
