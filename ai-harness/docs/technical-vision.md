@@ -1,3 +1,85 @@
+# H043 normal technical vision wiring — source readiness
+
+The normal `main.ts` entrypoint now constructs the genuine `TechnicalVisionClient`
+only from a valid fixed root-owned `/etc/sova-qualification/technical-vision.json`
+record and `/etc/sova/technical-vision.key`. It passes the same durable host to the
+application, Broker and authenticated gateway. This candidate remains **live
+unqualified**: no Linux calls, model loads, ingress changes or acceptance installs
+were performed by V-wiring02. Native MCP adapter/catalog/policy/launcher ownership
+remains A-exclusive; this phase adds no native MCP registration.
+
+Production gating verifies root-only protected ancestry, exact service generation,
+Qwen/Paddle revisions, five hashed live acceptance references, expiry and hashes
+of every local executing module in the named graph. A bool, config echo, arbitrary
+receipt, generation0 model or source fixture cannot open production. The acceptance
+reader never issues a grant. Root must independently qualify the runtime, actual
+weights/source, original process owners and authenticated private ingress before
+installing evidence. The fixed service origin is `http://10.156.100.60:18193`.
+
+`NormalTechnicalVision` composes public Store SQLite/addMessage/event APIs.
+Admission commits the original authenticated workspace/session/running **message**
+run/request/input claim before readiness, source preparation or POST. The same
+claim is never submitted again; an ambiguous POST, failed preparation or restart
+uses exact original-request lookup. Source manifests and normalized PNG hashes
+are retained before dispatch. The source resolver preserves the original bytes,
+no-follow stable descriptors and immutable source snapshot checks. Tool arguments
+cannot choose an owner, endpoint or credential. Same-workspace sibling sessions
+are refused; exact retained session/run ownership survives an ended original run.
+Native child scope is not inferred: only existing authenticated session scope is
+accepted; native MCP transfer is separate.
+
+Terminal jobs create an immutable durable outbox ID. Delivery updates the original
+service message, inserts its replayable event and unique delivery row in one
+`BEGIN IMMEDIATE` transaction. Notifications occur after COMMIT; a lost sink
+acknowledgement retries the same ID. A changed terminal result fails closed.
+Reopen marks unfinished observation interrupted/unsettled, preserves original
+failure and never replays inference. The bounded background observer only calls
+status/lookup; explicit Stop/cancel alone requests remote cancellation. Closing
+host/client observation does not settle or stop remote execution.
+
+Normal technical uploads use `attachmentIds`, separately from creative edit
+`imageReferences`. Broker supplies specialist text and removes those pixels from
+Codex's unsupported native-media input. The creative image profile/reference,
+canvas/approval/job guards remain intact. Public upload/send/admission guards and
+runtime/context pins remain intact. Authenticated bearer gateway routes are:
+
+- `GET /v1/technical-vision-capabilities`
+- `POST /v1/technical-vision-jobs` (strict existing tool input; no owner fields)
+- `POST /v1/technical-vision-jobs/:handle/{status,lookup,cancel}` (empty object)
+
+Public app routes expose separate capabilities, saved owned jobs and explicit
+status/lookup/cancel through the existing same-origin application surface. Mutating
+controls require the existing separate protected human-proxy capability header;
+untrusted direct/loopback calls fail closed. The unowned nginx source currently
+strips that header on these new paths. Root must review/install a narrow actual-peer
+proxy successor for technical controls before browser status/cancel activation;
+this is an explicit missing ingress seam, not permission inferred from Host/Origin.
+Read-only snapshots use the ordinary existing browser surface. These routes never accept a
+bearer credential or let a body select another session. Invocation is Broker-owned
+or via the authenticated internal gateway. Web reads canonical Store messages and
+SSE replay, showing original source links, description, exact OCR whitespace,
+uncertainties and separately labelled derived conclusions. Pending/cancelling/
+interrupted records remain visibly unsettled after the text turn ends.
+
+The current candidate cap is **one page / 2,097,152 pixels / 4096 per edge /
+eight crops / 25 MiB original source**. Larger pages fail; no silent downscale.
+PNG/JPEG uploads are inspected from owned bytes before acceptance and checked again
+on host preparation. PDF specialist analysis requires exactly one explicit page
+and a root-reviewed sandbox renderer; production has no such adapter installed,
+so PDF specialist availability is explicitly unsupported. Existing PDF/text
+attachment and creative image capabilities remain separate. The wider H039 limits
+in the historical section below do not apply to the H043 normal candidate.
+
+Development fixtures inject an explicit IPv4 loopback generation0 HTTP client and
+are labelled `fixture_only`. They exercise real normal host plumbing and durable
+Store transactions but do not qualify GPU accuracy, native Codex/MCP workflows,
+model residency, VRAM, USB4 stability or live runtime settlement.
+
+---
+
+The following retained H039/V01 design notes are historical source evidence;
+claims that normal routes are not wired refer to those earlier revisions.
+
 # Technical vision candidate — H039
 
 This is fixture-backed source preparation for `technical_image_analyze`. Nothing
@@ -314,3 +396,13 @@ Source tests include real Python service + concrete backend + fake local model
 HTTP + existing TS client + host, literal OCR/crop hashes, durable replay and
 cancel/restart failures. They do not establish model accuracy, native PDF,
 container compatibility, GPU/USB4 stability, VRAM fit or ordinary Codex workflow.
+
+## H044 source-only journal and ingress successor
+
+The normal host uses `application.technicalVision` (`NormalTechnicalVisionHostContract`), never a private journal or raw service client. `invoke(sessionId, input, originalOwner?, signal?)` creates one original run/request binding. `followup(sessionId, handle, "status" | "lookup" | "cancel", signal?)` reconciles that same binding after the originating run ends. `journalStatus(sessionId, handle)` is a read-only authorized durable view with `originalRunId`, `revision`, `state`, `settled`, `terminalDelivered`, optional `originalFailure`, and optional text-only `response`. Pending metadata is not an OCR result. Native tool consumers must use bounded follow-up/polling and preserve the original run; R owns native MCP registration and routing.
+
+SQLite admission acquires `BEGIN IMMEDIATE` before owner/request SELECT and record-cap COUNT, then uses a unique INSERT. An independently opened connection returns false only for an exactly verified existing owner/service/request/input binding; busy and unknown outcomes propagate. Every snapshot observation requires `visionHostExpectation(record)` captured before the network call. Its revision, original binding, source/page-image hashes, previous snapshot, immutable terminal and job ID must still match. Updates compare the full previous serialized record; stale replies, changed sources/jobs, cancelled-state regression and terminal mutation are refused. Terminal projection, message, event and delivery key commit together; lost acknowledgment retries the original delivery key. Neither pending claims nor restart recovery resubmit inference. Independent SQLite connections also claim cancel dispatch once.
+
+The nginx template grants the protected human proxy header only on exact safe-ID POST status/lookup/cancel routes (1 KiB body, 5-second body timeout). It references the existing root-only secret include and the installed actual-peer deny inventory. Loopback and the task host remain denied; forwarded headers cannot determine the peer. Generic/status paths strip the capability. Capability/list GETs retain normal same-origin application/session scope and reject raw bearer authentication. The source validator resolves only public source includes; its negative tests cover path, method, body, peer, auth setter and generic stripping. Installed current peer inventory, nginx syntax/access behavior and live browser requests require root review and finite GO.
+
+This successor remains SOURCE_ONLY. The 0.158.0/064c/480000/400000/65536 pins and Store base are unchanged. Qualification still requires genuine current root-installed runtime/source/owner/ingress/OCR originals. Generation0 fixtures grant no live readiness, OCR accuracy, native pixels, GPU placement or six-instance concurrency. No nginx installation, credentials, Linux action, model load, fan action or web change occurred.

@@ -9,6 +9,8 @@ import { timingSafeEqual } from "node:crypto";
 import { DatabaseSync } from "node:sqlite";
 import { ApiError, requireId } from "./errors.js";
 import { Store } from "./store.js";
+import { NormalTechnicalVision, type NormalTechnicalVisionOptions } from "./technical-vision-host.js";
+import { TechnicalVisionError } from "./technical-vision-contracts.js";
 import { Files, MAX_UPLOAD } from "./files.js";
 import { ImageBroker } from "./image-broker.js";
 import type { ImageBackend } from "./image-contracts.js";
@@ -40,6 +42,7 @@ export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   memoryRecoveryHost?: (input:{sessionId:string;checkpointId:string;signal:AbortSignal;reservation:import("./store.js").WorkspaceRecoveryReservation;memory:import("./session-memory.js").SessionMemoryBridge}) => Promise<import("./session-checkpoint.js").FreshParentRecoveryEvidence>;
   /** Trusted host/fixture configuration only; existing session identity is separate. */
   newChatEngine?: "codex" | "minimax";
+  technicalVision?: Omit<NormalTechnicalVisionOptions, "store" | "files" | "currentRun" | "dispatchHeld">;
   dataDir: string;
   allowedOrigins?: string[];
   webDist?: string;
@@ -70,6 +73,7 @@ export async function createApp(options: AppOptions): Promise<{
   files: Files;
   broker: Broker;
   images?: ImageBroker;
+  technicalVision: NormalTechnicalVision;
 }> {
   const newChatEngine = options.newChatEngine ?? loadNewChatEngine();
   const origins = new Set(
@@ -140,6 +144,7 @@ export async function createApp(options: AppOptions): Promise<{
   }
   let cleanupResources = () => owner.close();
   let images: ImageBroker | undefined;
+  let technicalVision!: NormalTechnicalVision;
   try {
     const store = new Store(
       path.join(temporary.root, "harness.sqlite"),
@@ -164,10 +169,14 @@ export async function createApp(options: AppOptions): Promise<{
       ...options,
       store,
       files,
+      technicalVisionAvailable: () => technicalVision?.configured() === true,
+      technicalVisionContext: (sessionId, runId, fileIds) => technicalVision.analyzeAttachments(sessionId, runId, fileIds),
       cancelImages: (id) => images?.cancelSession(id),
+      cancelTechnicalVision: id => technicalVision.cancelSession(id),
       imageContext: (id, runId) => images?.context(id, runId) ?? "",
       validateCodexImageReferences: (sessionId, count) => assertCodexImageReferences(sessionId, count),
     });
+    technicalVision = new NormalTechnicalVision({ ...options.technicalVision, store, files, currentRun: id => broker.currentTechnicalVisionRun(id), dispatchHeld: options.dispatchHeld });
     if (options.imageBackend)
       images = new ImageBroker({
         store,
@@ -238,6 +247,7 @@ export async function createApp(options: AppOptions): Promise<{
       );
     });
     app.setErrorHandler((error, _req, reply) => {
+      if (error instanceof TechnicalVisionError) return reply.code(error.code === "not_found" ? 404 : error.code === "unavailable" ? 503 : 400).send({ error: { code: error.code, message: error.message } });
       if (error instanceof ApiError)
         return reply
           .code(error.statusCode)
@@ -262,7 +272,9 @@ export async function createApp(options: AppOptions): Promise<{
       limits: { fileSize: MAX_UPLOAD, files: 1, fields: 0, parts: 1 },
       throwFileSizeLimit: true,
     });
-    app.get("/api/health", async () => ({
+    app.get("/api/health", async () => {
+      const technical = await technicalVision.capabilities();
+      return { ...(options.technicalVision ? { technicalVision: technical } : {}),
       version: "0.0.3",
       environment: environment(),
       status: "ok",
@@ -280,10 +292,10 @@ export async function createApp(options: AppOptions): Promise<{
         readiness: codexAvailable(options.enginePolicy, options.codexEngineFactory) ? "not-probed" : "disabled",
         protocolQualified: options.enginePolicy?.codex?.protocolQualified === true,
         capabilities: { text: true, media: false, steering: false, delegation: options.enginePolicy?.codex?.delegationEnabled === true, frontier: codexAvailable(options.enginePolicy, options.codexEngineFactory) && codexCapabilities(options.enginePolicy?.codex?.capabilities, options.enginePolicy?.codex).frontier.supported === true, reasoning: false },
-        capabilityDetails: codexCapabilities(options.enginePolicy?.codex?.capabilities, options.enginePolicy?.codex),
+        capabilityDetails: codexCapabilities(options.enginePolicy?.codex?.capabilities, { ...options.enginePolicy?.codex, technicalVisionAvailable: technical.available, technicalVisionFixture: !!options.technicalVision?.fixture }),
       } },
       ...(options.availabilitySummary ? { availability: options.availabilitySummary() } : {}),
-    }));
+    }; });
     app.get("/api/sessions", async () => ({ sessions: store.listSessions() }));
     app.post("/api/sessions", async (req) => {
       const body = object(req.body);
@@ -291,6 +303,14 @@ export async function createApp(options: AppOptions): Promise<{
       const engineKind = body.engineKind ?? newChatEngine;
       assertEngineAvailable(engineKind, options.enginePolicy, options.codexEngineFactory);
       return { session: await broker.createSession(undefined, engineKind) };
+    });
+    app.get("/api/technical-vision-capabilities", async (req) => { only(object(req.query), []); return technicalVision.capabilities(); });
+    app.get("/api/sessions/:id/technical-vision-jobs", async req => { only(object(req.query), []); return { jobs: technicalVision.list(id(req)) }; });
+    for (const action of ["status", "lookup", "cancel"] as const) app.post(`/api/sessions/:id/technical-vision-jobs/:handle/${action}`, { bodyLimit: 1024 }, async req => {
+      const received = req.headers["x-ai-harness-approval-proxy"], expected = options.approvalProxyKey;
+      if (!expected || typeof received !== "string" || Buffer.byteLength(received) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(received), Buffer.from(expected))) throw new ApiError(403, "technical_vision_owner_forbidden", "Technical vision controls require the trusted human browser proxy");
+      only(object(req.body), []); only(object(req.query), []);
+      return technicalVision.followup(id(req), requireId((req.params as {handle:unknown}).handle), action);
     });
     app.get("/api/image-capabilities", async () =>
       imageBroker().capabilities(),
@@ -439,6 +459,10 @@ export async function createApp(options: AppOptions): Promise<{
           throw error;
         }
       }
+      for (const fileId of attachmentIds) {
+        const file = store.file(fileId);
+        if (["image/png", "image/jpeg"].includes(file.mimeType) && technicalVision.configured()) await technicalVision.validateUpload(id(req), fileId);
+      }
       await broker.admitEnqueue(id(req),String(req.id));
       const runId = broker.enqueue(
         id(req),
@@ -521,6 +545,7 @@ export async function createApp(options: AppOptions): Promise<{
       const sessionId = id(req);
       const uploadSession = store.getSession(sessionId);
       let specialistUpload = false;
+      let technicalUpload = false;
       let uploaded: import("./store.js").FileRecord | undefined;
       try {
         for await (const part of req.parts()) {
@@ -535,11 +560,11 @@ export async function createApp(options: AppOptions): Promise<{
             if (!["image/png","image/jpeg"].includes(part.mimetype)) {
               part.file.resume(); throw new ApiError(415,"codex_media_unsupported","Specialist references require PNG or JPEG");
             }
-            try { await assertCodexImageReferences(sessionId, 1, { upload: true, beforeEnqueue: true }); } catch (error) { part.file.resume(); throw error; }
-            specialistUpload = true;
+            if ((await technicalVision.capabilities()).available) technicalUpload = true;
+            else { try { await assertCodexImageReferences(sessionId, 1, { upload: true, beforeEnqueue: true }); } catch (error) { part.file.resume(); throw error; } specialistUpload = true; }
           }
           if (
-            !specialistUpload && options.visionAvailable !== true &&
+            !specialistUpload && !technicalUpload && options.visionAvailable !== true &&
             (part.mimetype.startsWith("image/") ||
               /\.(png|jpe?g|webp|gif|bmp|tiff?|svg|heic)$/i.test(part.filename))
           ) {
@@ -563,6 +588,7 @@ export async function createApp(options: AppOptions): Promise<{
             "missing_file",
             "Expected one multipart file",
           );
+        if (technicalUpload) await technicalVision.validateUpload(sessionId, uploaded.id);
         if (specialistUpload) await files.validateImageReference(sessionId, uploaded.id, true);
         return reply.code(201).send({ attachment: store.publicFile(uploaded) });
       } catch (error) {
@@ -789,13 +815,14 @@ export async function createApp(options: AppOptions): Promise<{
         .send({ error: { code: "not_found", message: "Route not found" } }),
     );
     app.addHook("onClose", async () => {
-      await Promise.all([broker.close(), images?.close()]);
+      await Promise.all([broker.close(), images?.close(), technicalVision.close()]);
       cleanupResources();
     });
     await app.ready();
-    return { app, store, files, broker, images };
+    return { app, store, files, broker, images, technicalVision };
   } catch (error) {
     await images?.close();
+    await technicalVision?.close();
     cleanupResources();
     throw error;
   }

@@ -97,3 +97,30 @@ test("real Python service/backend + fake model HTTP + existing TS client + host 
     console.log(JSON.stringify({ fixture: "real Python service/backend + TS client + host; fake model HTTP only", ledger, tmpdir: tmpdir(), uid: process.getuid?.(), mode: (await stat(dir)).mode & 0o777, servicePort: ready.port, rawPngBytes: p.images[0].png.length }));
   } finally { await journal.close(); child.stdin.write("stop\n"); child.stdin.end(); assert.equal(await exit, 0, stderr); }
 });
+
+
+test("H043 one-page/two-megapixel host cap rejects before any backend POST and retains original claim", async () => {
+  const dir = await privateDir(), journal = await PrivateTechnicalVisionHostJournal.open(dir), p = await prepared(), f = fakeBackend(p);
+  const oversized = { ...p, manifest: { ...p.manifest, pages: [{ ...p.manifest.pages[0], width: 2048, height: 1025, originalWidth: 2048, originalHeight: 1025 }] } };
+  const host = createTechnicalVisionHost({ backend: f.backend, service, journal, enabled: true, owner: () => owner, authorize: () => true, prepare: async () => oversized });
+  try {
+    const result = await host.invoke(input, signal());
+    assert.equal(JSON.parse(result.response.content[0].text).error.code, "source_too_large");
+    assert.equal(f.counters().submits, 0); assert.equal((await journal.read(result.handle))?.admission, "claimed");
+    await host.invoke(input, signal()); assert.equal(f.counters().submits, 0); assert.equal(f.counters().lookups, 1);
+  } finally { await journal.close(); await rm(dir, { recursive: true }); }
+});
+
+
+test("explicit Stop during preparation durably records intent and prevents the initial POST", async () => {
+  const dir = await privateDir(), journal = await PrivateTechnicalVisionHostJournal.open(dir), p = await prepared(), f = fakeBackend(p);
+  let release!: () => void, started!: () => void; const begun = new Promise<void>(r => { started = r; }), wait = new Promise<void>(r => { release = r; });
+  const host = createTechnicalVisionHost({ backend: f.backend, service, journal, enabled: true, owner: () => owner, authorize: () => true, prepare: async () => { started(); await wait; return p; } });
+  try {
+    const invocation = host.invoke(input, signal()); await begun;
+    const files = (await readdir(dir)).filter(f => f.startsWith("vision-")); const handle = files[0].replace(/\.json$/, "");
+    await host.cancel(handle, signal()); release(); const result = await invocation;
+    assert.equal(f.counters().submits, 0); assert.equal((await journal.read(handle))?.cancelIntent, true);
+    assert.equal(JSON.parse(result.response.content[0].text).error.code, "observation_cancelled");
+  } finally { release(); await journal.close(); await rm(dir, { recursive: true }); }
+});
