@@ -1,6 +1,6 @@
 import {verifyManifestSourceIdentity} from './model-artifact-identity.mjs';
 import schema from './evidence.schema.json' with { type: 'json' };
-import { actionIdFor } from './scorer.mjs';
+import { actionIdFor, stableJson } from './scorer.mjs';
 
 export const absent = (reason) => ({ value: null, reason });
 export const metadata = (value) => ({ value, reason: null });
@@ -78,7 +78,15 @@ export function validateRecord(record) {
         (record.nativeThreadId.value !== record.isolation.nativeThreadId || record.nativeTurnId.value !== record.isolation.nativeTurnId || record.nativeThreadId.value === record.compactionNativeThreadId.value || record.isolation.parentNativeThreadId !== record.compactionNativeThreadId.value || record.actionId.value !== record.isolation.actionId)) errors.push('native-probe-identity-binding');
       if (['summary-only', 'durable-retrieval', 'cold-resume', 'child-context'].includes(record.mode) && (!record.isolation.firstRequestSha256 || !record.isolation.inputManifestSha256 || !record.isolation.scopeReceiptSha256 || record.isolation.firstRequestSha256 !== record.isolation.receiptSha256)) errors.push('native-first-request-proof-absent');
       if (record.actionId.value !== actionIdFor(record.runId, record.cycle, record.mode)) errors.push('native-action-identity-binding');
-      for (const [key, value] of Object.entries(record.runtime)) if (typeof value === 'object' && value.value === null) {const typed=['modelRevision','tokenizerRevision'].includes(key)&&value.identity?.kind==='MANIFEST_SOURCE_REVISION'&&value.artifactEvidence&&verifyManifestSourceIdentity(value.artifactEvidence.receipt,value.artifactEvidence.expected).status==='SOURCE_VALID'&&JSON.stringify(value.identity)===JSON.stringify(verifyManifestSourceIdentity(value.artifactEvidence.receipt,value.artifactEvidence.expected).identity);if(!typed)errors.push(`native-pass-unpinned:${key}`);}
+      for (const [key, value] of Object.entries(record.runtime)) {
+        if (typeof value !== 'object' || value.value !== null) continue;
+        const verification = ['modelRevision','tokenizerRevision'].includes(key) && value.artifactEvidence
+          ? verifyManifestSourceIdentity(value.artifactEvidence.receipt,value.artifactEvidence.expected) : undefined;
+        const typed = value.identity?.kind === 'MANIFEST_SOURCE_REVISION' && verification?.status === 'SOURCE_VALID' && ['separate-raw-files-v2','retained-linux-files-v1'].includes(verification.proofVersion) &&
+          stableJson(value.identity) === stableJson(verification.identity);
+        if (!typed) errors.push(`native-pass-unpinned:${key}`);
+      }
+
       if(record.mode==='cold-resume-after-continuation'&&record.nativeTurnId.value===null&&(!record.processRestart||record.processRestart.beforeProcessId===record.processRestart.afterProcessId||record.processRestart.nativeThreadId!==record.nativeThreadId.value))errors.push('actual-no-generation-application-restart-unproven');
       for (const key of (record.mode==='cold-resume-after-continuation'&&record.processRestart?['actionId','nativeThreadId']:['actionId', 'nativeThreadId', 'nativeTurnId'])) if (record[key].value === null) errors.push(`native-pass-unidentified:${key}`);
       if (record.runtime.version.value !== '0.158.0' || record.runtime.sourceRevision.value !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3') errors.push('native-runtime-pin-mismatch');
