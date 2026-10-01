@@ -20,6 +20,8 @@ export const isRecord = (v: unknown): v is Record<string, unknown> =>
 export class CodexProtocolError extends Error {
   readonly code = "engine_settlement_unknown";
 }
+export interface CodexServerRequest { id: number | string; method: "item/tool/call"; params: Record<string, unknown> }
+export type CodexServerRequestHandler = (request: CodexServerRequest, signal: AbortSignal) => Promise<Record<string, unknown>>;
 interface Pending {
   resolve: (result: unknown) => void;
   reject: (error: Error) => void;
@@ -33,6 +35,7 @@ export class CodexConnection {
   private pending = new Map<number, Pending>();
   private responses = new Map<number, string>();
   private failure?: Error;
+  private inbound = new Map<string, { snapshot: string; abort: AbortController; timer?: ReturnType<typeof setTimeout>; settled: boolean }>();
   constructor(
     private readonly input: Readable,
     private readonly output: Writable,
@@ -42,6 +45,7 @@ export class CodexConnection {
     ) => void,
     private readonly failed: (error: Error) => void,
     private readonly timeoutMs = 15000,
+    private readonly serverRequest?: CodexServerRequestHandler,
   ) {
     input.setEncoding("utf8");
     input.on("data", (chunk: string) => this.receive(chunk));
@@ -96,7 +100,30 @@ export class CodexConnection {
       p.reject(error);
     }
     this.pending.clear();
+    this.cancelServerRequests();
     this.failed(error);
+  }
+  cancelServerRequests() {
+    for (const request of this.inbound.values()) { request.abort.abort(); clearTimeout(request.timer); request.settled = true; }
+  }
+  private acceptServerRequest(value: Record<string, unknown>) {
+    const id = value.id;
+    if (!(typeof id === "string" && id.length > 0 && id.length <= 128 && !/[\x00-\x20\x7f]/.test(id)) && !(typeof id === "number" && Number.isSafeInteger(id) && id >= 0)) throw new Error("Invalid server request ID");
+    if (value.method !== "item/tool/call" || !this.serverRequest || !isRecord(value.params)) throw new Error("Unsupported server request");
+    const key = typeof id + ":" + id, snapshot = JSON.stringify(value);
+    const old = this.inbound.get(key);
+    if (old) { if (old.snapshot !== snapshot) throw new Error("Conflicting server request"); return; }
+    if (this.inbound.size >= 64 || [...this.inbound.values()].filter(x => !x.settled).length >= 4) throw new Error("Server request count exceeds limit");
+    const state = { snapshot, abort: new AbortController(), settled: false, timer: undefined as ReturnType<typeof setTimeout> | undefined };
+    this.inbound.set(key, state);
+    state.timer = setTimeout(() => this.fail(new CodexProtocolError("Owned server request timed out; no replay")), this.timeoutMs);
+    void Promise.resolve().then(() => this.serverRequest!({ id: id as number | string, method: "item/tool/call", params: value.params as Record<string, unknown> }, state.abort.signal)).then(result => {
+      if (this.failure || state.abort.signal.aborted || state.settled) return;
+      if (!isRecord(result) || Object.keys(result).sort().join() !== "contentItems,success" || typeof result.success !== "boolean" || !Array.isArray(result.contentItems) || result.contentItems.length !== 1 || !isRecord(result.contentItems[0]) || Object.keys(result.contentItems[0]).sort().join() !== "text,type" || result.contentItems[0].type !== "inputText" || typeof result.contentItems[0].text !== "string" || Buffer.byteLength(JSON.stringify(result)) > 65536) throw new Error("Invalid bounded server response");
+      clearTimeout(state.timer); state.settled = true;
+      this.write({ id, result });
+      if (!this.failure) this.notification("sova/serverResponseWritten", { requestKey: key });
+    }).catch(() => { if (!this.failure && !state.abort.signal.aborted) this.fail(new CodexProtocolError("Owned server request failed; no replay")); });
   }
   private write(message: unknown) {
     if (this.failure) return;
@@ -137,7 +164,10 @@ export class CodexConnection {
   private message(value: unknown) {
     if (!isRecord(value)) throw new Error("Invalid frame");
     if (typeof value.method === "string") {
+      // Internal transport observations are never accepted from native stdio.
+      if (value.method.startsWith("sova/")) throw new Error("Reserved host notification");
       if ("id" in value) {
+        if (this.serverRequest && value.method === "item/tool/call") { this.acceptServerRequest(value); return; }
         if (typeof value.id !== "number" && typeof value.id !== "string")
           throw new Error("Invalid request ID");
         // Requests for approvals, user input, elicitation, auth or dynamic tools are

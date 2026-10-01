@@ -1,4 +1,6 @@
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
+import type { CodexReceiptPolicy } from "./codex-receipts.js";
+import type { CodexReadOriginalProbe } from "./codex-probe.js";
 import { admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { CODEX_PIN, type CodexRuntime } from "./codex-engine.js";
 import { loadCodexResumeInstructions } from "./codex-instructions.js";
@@ -8,6 +10,12 @@ import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
   protocolQualified: true;
+  /** Disabled until root reviews actual Linux receipt-channel acceptance. */
+  nativeReceiptPolicy?: CodexReceiptPolicy;
+  readOriginalProbe?: (sessionId: string) => CodexReadOriginalProbe | undefined;
+  onNativeLaunchReceipt?: CodexRuntime["onNativeLaunchReceipt"];
+  onNativeSettlementReceipt?: CodexRuntime["onNativeSettlementReceipt"];
+  onOriginalReadSettled?: CodexRuntime["onOriginalReadSettled"];
   rootlessQualified: true;
   /** Revalidates deployed model/runtime/template/allocation and current instance each call. */
   verifyLane(alias: string, context?: QwenAdmissionContext): Promise<QwenCountQualification>;
@@ -27,15 +35,30 @@ export interface CodexHostQualification {
   onResponsesError?: NonNullable<GatewayOptions["responses"]>["onError"];
   capabilities?: CodexRuntime['capabilities'];
 }
+/** Trusted receipt-run forces text-only even when an ordinary session has image acceptance. */
+export function imageGateForCodexLaunch(input: {sessionId: string; receiptRunId?: string}, qualification?: CodexHostQualification): boolean {
+  if (input.receiptRunId) return false;
+  return qualification?.imageJobsQualified === true || qualification?.imageAcceptance?.(input.sessionId) === true;
+}
 export function composeCodexHost(launcherPath: string, gateway: () => Gateway | undefined,
   qualification?: CodexHostQualification) {
   if (qualification && (qualification.protocolQualified !== true || qualification.rootlessQualified !== true || typeof qualification.verifyLane !== "function"))
     throw Error("Codex requires reviewed protocol/rootless/current-instance qualification");
   if (qualification?.outputLimit !== undefined && (!Number.isSafeInteger(qualification.outputLimit) || qualification.outputLimit < 1 || qualification.outputLimit > 65536))
     throw Error("Invalid trusted Codex output reservation");
+  if (qualification?.readOriginalProbe && qualification.nativeReceiptPolicy?.linuxTransportQualified !== true) throw Error("Original probes require reviewed Linux receipt transport");
+  // Physical container/cleanup evidence cannot attest the model-facing tool
+  // envelope or deny reads of mounted histories. A separate observed native +
+  // gateway scope proof is not available yet; never admit on caller booleans.
+  if (qualification?.readOriginalProbe) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
     pin: CODEX_PIN, protocolQualified: !!qualification,
+    nativeReceiptsRequired: !!qualification?.nativeReceiptPolicy,
+    readOriginalProbe: qualification?.readOriginalProbe,
+    onNativeLaunchReceipt: qualification?.onNativeLaunchReceipt,
+    onNativeSettlementReceipt: qualification?.onNativeSettlementReceipt,
+    onOriginalReadSettled: qualification?.onOriginalReadSettled,
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
     imageToolEnabled: qualification?.imageJobsQualified === true,
@@ -44,7 +67,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,
-    launchRootless: input => createRootlessCodexLauncher(launcherPath)({ ...input, imageJobsQualified: qualification?.imageJobsQualified === true || qualification?.imageAcceptance?.(input.sessionId) === true }),
+    launchRootless: input => createRootlessCodexLauncher(launcherPath, qualification?.nativeReceiptPolicy)({ ...input, imageJobsQualified: imageGateForCodexLaunch(input, qualification) }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.
     // Observe the durable session ledger; this never releases native/image ownership.

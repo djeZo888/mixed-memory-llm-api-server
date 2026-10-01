@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { composeCodexHost } from '../src/codex-host.js';
+import { composeCodexHost, imageGateForCodexLaunch } from '../src/codex-host.js';
 import { createGateway } from '../src/gateway.js';
 
 test('host remains disabled without trusted runtime proof and settlement fails closed', async () => {
@@ -42,4 +42,15 @@ test('private image scope is evaluated for each launch without advertising globa
  assert.equal(host.runtime.imageToolEnabled,false);assert.deepEqual(seen,[]);
  for(const sessionId of ['owned','unrelated']) await assert.rejects(host.runtime.launchRootless({sessionId,profileDir:'/fixture',workspace:'/fixture/work',codexHome:'/fixture/codex-home',gatewayUrl:'http://invalid',gatewayToken:'fixture',modelPolicyVersion:'invalid'}),/Unqualified Codex rootless policy/);
  assert.deepEqual(seen,['owned','unrelated']);assert.equal(host.runtime.imageToolEnabled,false);
+});
+
+test('isolated receipt-run cannot bypass text-only policy through per-session image acceptance',()=>{
+ const host=composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,imageAcceptance:()=>true,verifyLane:async()=>{throw Error('unused');}});
+ // Actual launch cannot run on Mac; source composition must put the probe gate before acceptance.
+ let calls=0;const gate={protocolQualified:true as const,rootlessQualified:true as const,imageAcceptance:()=>{calls++;return true;},verifyLane:async()=>{throw Error('unused');}};
+ assert.equal(imageGateForCodexLaunch({sessionId:'s',receiptRunId:'probe'},gate),false);assert.equal(calls,0);assert.equal(imageGateForCodexLaunch({sessionId:'s'},gate),true);assert.equal(calls,1);
+ assert.equal(imageGateForCodexLaunch({sessionId:'s',receiptRunId:'probe'},{...gate,imageJobsQualified:true}),false);
+ assert.equal(host.runtime.imageToolEnabled,false);
+ assert.throws(()=>composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,readOriginalProbe:()=>undefined,verifyLane:async()=>{throw Error('unused');}}),/receipt transport/);
+ assert.throws(()=>composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeReceiptPolicy:{linuxTransportQualified:true,sourceSha256:{}},readOriginalProbe:()=>undefined,verifyLane:async()=>{throw Error('unused');}}),/model tool\/sandbox scope is unqualified/);
 });

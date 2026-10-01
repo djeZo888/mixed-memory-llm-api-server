@@ -81,13 +81,24 @@ def main():
     cleanup_ok = True
     engine_exited = False
     requested_stop = False
+    receipt_config = receipts = producer = native_id = None
+    rm_exit = exists_exit = None
     try:
+        if os.environ.get('AI_HARNESS_CODEX_RECEIPT_DIR') or os.environ.get('AI_HARNESS_CODEX_RECEIPT_NONCE'):
+            import runpy
+            from pathlib import Path
+            receipts = runpy.run_path(str(Path(__file__).resolve().with_name('codex_receipts.py')))
+            receipt_config = receipts['channel']()
+            producer = receipts['process_identity']()
         process = subprocess.Popen(args, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True)
         for source, destination in ((process.stdout, 1), (process.stderr, 2)):
             worker = threading.Thread(target=copy_stream, args=(source, destination), daemon=True)
             worker.start()
             filters.append(worker)
+        if receipt_config is not None:
+            launch = receipts['inspect_launch'](podman, container, args, receipt_config)
+            native_id = launch['container']['id']
         while not stopped.is_set():
             try:
                 code = process.wait(timeout=0.1)
@@ -100,7 +111,7 @@ def main():
         # A requested stop is acknowledged only after verified settlement below.
         # An already observed engine failure is never normalized by a signal.
         requested_stop = bool(received_signal[0]) and not engine_exited
-    except (OSError, ValueError):
+    except (OSError, ValueError, TypeError, KeyError, IndexError, subprocess.TimeoutExpired):
         os.write(2, b"run-engine: ACP process start failed\n")
     finally:
         # A second TERM must not interrupt cleanup and strand the container.
@@ -132,6 +143,7 @@ def main():
             result = subprocess.run([podman, "--remote=false", "rm", "--force", "--time", "20", "--ignore", container],
                                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                     timeout=28, env=cleanup_env, check=False)
+            rm_exit = result.returncode
             cleanup_ok = cleanup_ok and result.returncode == 0
         except (OSError, subprocess.TimeoutExpired):
             cleanup_ok = False
@@ -142,6 +154,7 @@ def main():
             result = subprocess.run([podman, "--remote=false", "container", "exists", container],
                                     stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
                                     timeout=2, env=cleanup_env, check=False)
+            exists_exit = result.returncode
             cleanup_ok = cleanup_ok and result.returncode == 1
         except (OSError, subprocess.TimeoutExpired):
             cleanup_ok = False
@@ -149,6 +162,14 @@ def main():
             worker.join(timeout=2)
         if any(worker.is_alive() for worker in filters) or pipe_failed.is_set():
             cleanup_ok = False
+        if receipt_config is not None:
+            try:
+                receipts['publish_settlement'](receipt_config, producer, container, native_id,
+                    process.returncode if process is not None else None, requested_stop,
+                    process is not None and process.poll() is not None, rm_exit, exists_exit,
+                    not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
+            except (ValueError, OSError, TypeError):
+                cleanup_ok = False
         if not cleanup_ok:
             # Fixed text only; stderr may be closed after the server cancels.
             try:

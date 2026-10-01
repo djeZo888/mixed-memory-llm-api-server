@@ -1,9 +1,12 @@
+import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe } from "./codex-probe.js";
+import { isVerifiedCodexLaunchReceipt, isVerifiedCodexSettlementReceipt, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { completedImageStatus } from "./image-status-consumption.js";
 import type { CodexCapabilities } from "./codex-capabilities.js";
 import { CodexChildren } from "./codex-children.js";
 import { CodexSchemaErrorGuard, type CodexSchemaErrorFailure } from "./codex-schema-errors.js";
 import { validateCodexResumeInstructions, type CodexResumeInstructions } from "./codex-instructions.js";
 import { codexInput } from "./codex-input.js";
+import { createHash } from "node:crypto";
 import { join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
 import type {
@@ -30,12 +33,20 @@ export interface RootlessCodexProcess {
   readonly stdin: Writable;
   readonly stdout: Readable;
   readonly exited: Promise<void>;
+  readonly launchReceipt?: Promise<CodexNativeLaunchReceipt | undefined>;
+  readonly settlementReceipt?: Promise<CodexNativeSettlementReceipt | undefined>;
   /** Must verify the exact owned container and all descendants are gone. PID exit is insufficient. */
   terminateAndConfirm(): Promise<boolean>;
 }
 export interface CodexRuntime {
   readonly pin: typeof CODEX_PIN;
   readonly protocolQualified: boolean;
+  /** Trusted host-only opt-in; absent retains existing production chat behavior. */
+  readonly nativeReceiptsRequired?: boolean;
+  readOriginalProbe?(sessionId: string): CodexReadOriginalProbe | undefined;
+  onNativeLaunchReceipt?(receipt: CodexNativeLaunchReceipt): void;
+  onNativeSettlementReceipt?(receipt: CodexNativeSettlementReceipt): void;
+  onOriginalReadSettled?(receipt: { checkpointId: string; runId: string; threadId: string; turnId: string; callId: string; arguments: Record<string, unknown>; success: boolean; responseSha256: string }): void;
   readonly capabilities?: Partial<CodexCapabilities>;
   readonly modelPolicyVersion: string;
   readonly model: string;
@@ -64,6 +75,7 @@ export interface CodexRuntime {
     gatewayUrl: string;
     gatewayToken: string;
     modelPolicyVersion: string;
+    receiptRunId?: string;
   }): Promise<RootlessCodexProcess>;
   /** Revoke every scoped token belonging to this session before final settlement proof. */
   revokeGatewaySession(sessionId: string): void;
@@ -95,6 +107,11 @@ function fault(message: string, cleanupFailure?: "native_cleanup_unconfirmed" | 
  */
 export class CodexEngine implements Engine {
   private child?: RootlessCodexProcess;
+  private probe?: CodexReadOriginalProbe;
+  private launchReceipt?: CodexNativeLaunchReceipt;
+  private probeReads = 0;
+  private probeBytes = 0;
+  private probeCalls = new Map<string, { startSnapshot: string; snapshot: string; arguments: Record<string, unknown>; requestKey?: string; response?: Record<string, unknown>; serialized: boolean }>();
   private children: CodexChildren;
   private compacting = new Set<string>();
   private compactRequested = false;
@@ -144,6 +161,11 @@ export class CodexEngine implements Engine {
     );
     this.nativeId = options.nativeSessionId;
     this.cursor = options.nativeState?.eventCursor ?? 0;
+    const probe = runtime.readOriginalProbe?.(options.sessionId);
+    if (probe) {
+      if (!runtime.nativeReceiptsRequired || this.nativeId || runtime.delegationEnabled || runtime.imageToolEnabled) fault("Isolated original probe requires fresh receipt-qualified text-only ownership");
+      claimCodexReadOriginalProbe(probe, options.sessionId); this.probe = probe;
+    }
     if (
       options.engineKind !== "codex" ||
       options.engineVersion !== CODEX_PIN.version ||
@@ -224,14 +246,22 @@ export class CodexEngine implements Engine {
       gatewayUrl: o.gatewayUrl,
       gatewayToken: o.gatewayToken,
       modelPolicyVersion: r.modelPolicyVersion,
+      ...(this.probe ? { receiptRunId: this.probe.runId } : {}),
     });
     if (this.closing) fault("Codex closed during launch");
+    if (r.nativeReceiptsRequired) {
+      const receipt = await this.child.launchReceipt;
+      if (!isVerifiedCodexLaunchReceipt(receipt) || receipt.sessionId !== o.sessionId || receipt.container.profileDir !== o.profileDir || receipt.container.workspace !== o.workspace || (this.probe && receipt.runId !== this.probe.runId)) fault("Trusted native launch receipt unavailable");
+      if (this.closing || this.failed) fault("Codex closed during receipt validation");
+      this.launchReceipt = receipt; r.onNativeLaunchReceipt?.(receipt);
+    }
     this.connection = new CodexConnection(
       this.child.stdout,
       this.child.stdin,
       (method, params) => this.notification(method, params),
       (error) => this.fail(error),
       r.requestTimeoutMs,
+      this.probe ? (request, signal) => this.originalRequest(request, signal) : undefined,
     );
     void this.child.exited.then(
       () =>
@@ -247,7 +277,7 @@ export class CodexEngine implements Engine {
     );
     const initialized = await this.connection.request("initialize", {
       clientInfo: { name: "sova", title: "Sova", version: "0.0.3" },
-      capabilities: { experimentalApi: false, requestAttestation: false },
+      capabilities: { experimentalApi: !!this.probe, requestAttestation: false },
     });
     if (
       !isRecord(initialized) ||
@@ -266,7 +296,9 @@ export class CodexEngine implements Engine {
       modelProvider: r.provider,
       cwd: o.workspace,
       approvalPolicy: "never",
-      sandbox: "danger-full-access",
+      // Read-only is a bounded probe setting, not proof of empty native read
+      // roots or disabled tools. Host admission remains disabled pending scope.
+      sandbox: this.probe ? "read-only" : "danger-full-access",
     };
     const resumeInstructions = this.nativeId && r.loadResumeInstructions
       ? validateCodexResumeInstructions(await r.loadResumeInstructions())
@@ -277,7 +309,7 @@ export class CodexEngine implements Engine {
         // Native resume still restores persisted context; its response need not
         // rehydrate the entire transcript already retained in Sova's store.
         ? { ...params, threadId: this.nativeId, excludeTurns: true, ...(resumeInstructions ? { baseInstructions: resumeInstructions.text } : {}) }
-        : { ...params, ephemeral: false },
+        : { ...params, ephemeral: !!this.probe, ...(this.probe ? { baseInstructions: this.probe.baseInstructions, dynamicTools: [CODEX_READ_ORIGINAL_SPEC] } : {}) },
     );
     if (
       !isRecord(result) ||
@@ -287,6 +319,7 @@ export class CodexEngine implements Engine {
       result.modelProvider !== r.provider ||
       result.cwd !== o.workspace ||
       result.approvalPolicy !== "never" ||
+      (this.probe && (!isRecord(result.sandbox) || result.sandbox.type !== "readOnly")) ||
       (this.nativeId && result.thread.id !== this.nativeId)
     )
       fault("Native thread identity or trusted model policy mismatch");
@@ -505,6 +538,7 @@ export class CodexEngine implements Engine {
     if (this.cleanupPromise) return this.cleanupPromise;
     this.cleanupPromise = (async () => {
       this.stopping = true;
+      this.connection?.cancelServerRequests();
       this.state("uncertain");
       // A rejected launcher can have created a container before losing its handle.
       // Absence of a returned process is not a no-process attestation.
@@ -512,6 +546,11 @@ export class CodexEngine implements Engine {
       if (this.child) {
         try { nativeSettled = await this.child.terminateAndConfirm(); }
         catch { nativeSettled = false; }
+      }
+      if (this.runtime.nativeReceiptsRequired && this.child && nativeSettled) {
+        const receipt = await this.child.settlementReceipt;
+        if (!isVerifiedCodexSettlementReceipt(receipt) || !this.launchReceipt || receipt.nonce !== this.launchReceipt.nonce || receipt.containerId !== this.launchReceipt.container.id || !receipt.cleanupOk) nativeSettled = false;
+        else this.runtime.onNativeSettlementReceipt?.(receipt);
       }
       // Stop producers, revoke this runner capability, then prove all retained lineage drained.
       if (nativeSettled) this.children.interruptedAfterCleanup();
@@ -534,8 +573,25 @@ export class CodexEngine implements Engine {
     })();
     return this.cleanupPromise;
   }
+  private async originalRequest(request: import("./codex-connection.js").CodexServerRequest, signal: AbortSignal): Promise<Record<string, unknown>> {
+    const p = request.params;
+    if (!this.probe || !this.active || this.closing || this.stopping || this.cancelRequested || this.completedTurn || signal.aborted || !["arguments,callId,namespace,threadId,tool,turnId", "arguments,callId,threadId,tool,turnId"].includes(Object.keys(p).sort().join()) || p.threadId !== this.nativeId || p.turnId !== this.turnId || p.namespace != null || p.tool !== "read_original" || !identifier(p.callId)) fault("Unowned native original request");
+    const call = this.probeCalls.get(p.callId);
+    if (!call || call.requestKey || call.snapshot !== JSON.stringify(p.arguments) || ++this.probeReads > 16) fault("Original request lacks owned canonical start");
+    call.requestKey = typeof request.id + ":" + request.id;
+    let text: string, success = true;
+    try { text = await readCodexOriginal(this.probe, p.arguments, signal); }
+    catch { if (signal.aborted) throw new Error("Original read cancelled"); text = "Original excerpt unavailable within this frozen scope"; success = false; }
+    if (signal.aborted || this.closing || this.stopping || this.cancelRequested || this.completedTurn) throw new Error("Original result cancelled");
+    if ((this.probeBytes += Buffer.byteLength(text)) > 65536) fault("Original read budget exceeded");
+    const response = { contentItems: [{ type: "inputText", text }], success }; call.response = response; return response;
+  }
   private notification(method: string, p: Record<string, unknown>) {
     if (this.stopping) return;
+    if (method === "sova/serverResponseWritten") {
+      const call = [...this.probeCalls.values()].find(c => c.requestKey === p.requestKey);
+      if (!call?.response) fault("Unowned dynamic response serialization"); call.serialized = true; return;
+    }
     if (method === "sova/unsupportedRequest") {
       this.options.onUpdate({
         type: "progress",
@@ -751,7 +807,10 @@ export class CodexEngine implements Engine {
         fault("Conflicting duplicate item");
       return;
     }
-    if (!complete && previous) return;
+    if (!complete && previous) {
+      if (value.type === "dynamicToolCall" && (this.probeCalls.get(value.id)?.startSnapshot !== JSON.stringify(value) || value.namespace != null || value.tool !== "read_original" || value.status !== "inProgress")) fault("Conflicting dynamic tool start");
+      return;
+    }
     if (complete && !previous) fault("Native item completed before start");
     if (!previous && this.items.size >= 10000)
       fault("Native item count exceeds preview limit");
@@ -819,6 +878,16 @@ export class CodexEngine implements Engine {
       if (!this.runtime.delegationEnabled)
         fault("Native delegation unavailable");
       this.children.activity(value);
+    } else if (value.type === "dynamicToolCall") {
+      if (!this.probe || value.tool !== "read_original" || value.namespace != null || !isRecord(value.arguments)) fault("Unowned canonical dynamic tool");
+      const call = this.probeCalls.get(value.id);
+      if (!complete) {
+        if (value.status !== "inProgress" || call) fault("Invalid dynamic tool start");
+        this.probeCalls.set(value.id, { startSnapshot: JSON.stringify(value), snapshot: JSON.stringify(value.arguments), arguments: structuredClone(value.arguments), serialized: false });
+      } else {
+        if (!call?.serialized || !call.response || call.snapshot !== JSON.stringify(value.arguments) || value.success !== call.response.success || value.status !== (value.success ? "completed" : "failed") || JSON.stringify(value.contentItems) !== JSON.stringify(call.response.contentItems)) fault("Dynamic tool completion lacks actual owned response");
+        this.runtime.onOriginalReadSettled?.({ checkpointId: this.probe.checkpointId, runId: this.probe.runId, threadId: this.nativeId!, turnId: this.turnId!, callId: value.id, arguments: call.arguments, success: value.success as boolean, responseSha256: createHash("sha256").update(JSON.stringify(call.response)).digest("hex") });
+      }
     } else if (value.type === "contextCompaction") {
       this.compactObserved = true;
       if (complete) this.compacting.delete(value.id);

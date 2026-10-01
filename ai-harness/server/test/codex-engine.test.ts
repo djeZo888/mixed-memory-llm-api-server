@@ -2,6 +2,8 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { readFileSync } from "node:fs";
 import Ajv from "ajv";
+import { createCodexReadOriginalProbe } from "../src/codex-probe.js";
+import { receiptFixture } from "./helpers/codex-receipt-fixture.js";
 import { PassThrough } from "node:stream";
 import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
 import {
@@ -47,6 +49,9 @@ function deferred<T>() {
 function fixture(
   config: {
     nativeId?: string;
+    probe?: boolean;
+    receipts?: "valid" | "missing" | "tampered";
+    probeSandboxMismatch?: boolean;
     delegation?: boolean;
     qualifiedChildModels?: readonly string[];
     gateway?: () => Promise<boolean>;
@@ -94,6 +99,11 @@ function fixture(
     delegationEnabled: config.delegation,
     qualifiedChildModels: config.qualifiedChildModels,
     protocolQualified: true,
+    nativeReceiptsRequired: config.probe,
+    readOriginalProbe: config.probe ? () => createCodexReadOriginalProbe({sessionId: "session-1", runId: "probe-run", checkpointId: "frozen-cp", baseInstructions: "Host-authored isolated recovery probe", originals: [{reference: "old-1", bytes: Buffer.from("retained original requirement")}]}) : undefined,
+    onNativeLaunchReceipt: config.probe ? () => { calls.push("launch-receipt"); } : undefined,
+    onNativeSettlementReceipt: config.probe ? () => { calls.push("settlement-receipt"); } : undefined,
+    onOriginalReadSettled: config.probe ? () => { calls.push("read-consumed"); } : undefined,
     modelPolicyVersion: "fixture-policy",
     model: "qwen3.8-27b",
     provider: "sova",
@@ -115,12 +125,16 @@ function fixture(
           "gatewayUrl",
           "gatewayToken",
           "modelPolicyVersion",
+          ...(config.probe ? ["receiptRunId"] : []),
         ].sort(),
       );
+      const receipts = config.probe ? receiptFixture() : undefined;
       return {
         stdin,
         stdout,
         exited: exit.promise,
+        launchReceipt: receipts ? Promise.resolve(config.receipts === "missing" ? undefined : config.receipts === "tampered" ? structuredClone(receipts.launch) : receipts.launch) : undefined,
+        settlementReceipt: receipts ? Promise.resolve(receipts.settlement) : undefined,
         async terminateAndConfirm() {
           calls.push("terminate");
           return config.terminate ? config.terminate() : true;
@@ -168,6 +182,7 @@ function fixture(
         modelProvider: runtime.provider,
         cwd: options.workspace,
         approvalPolicy: "never",
+        ...(config.probe ? { sandbox: { type: config.probeSandboxMismatch ? "dangerFullAccess" : "readOnly" } } : {}),
       });
     if (req.method === "thread/compact/start") {
       if (config.compactStart !== "ack-only")
@@ -1368,4 +1383,59 @@ test('successful native image_status completion emits a typed consumption signal
   f.complete();await pending;
   assert.deepEqual(f.updates.filter(u=>u.type==='image_status_result'),[{type:'image_status_result',toolCallId:'call_a166a1a2f52e487780836616',jobId:'job-one',artifactId:'artifact-one'}]);
   await f.engine.close();
+});
+
+// H040 source fixtures only: no native process, provider request or Linux attestation.
+function originalCall(f: ReturnType<typeof fixture>, args: Record<string, unknown> = {reference:'old-1',offset:0,limit:8192}, callId='original-call') {
+ f.item(callId,'dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'inProgress',contentItems:null,success:null},'started');
+ f.stdout.write(JSON.stringify({id:'server-'+callId,method:'item/tool/call',params:{threadId:'thread-1',turnId:'turn-1',callId,namespace:null,tool:'read_original',arguments:args}})+'\n');
+}
+test('isolated probe registers only on a fresh receipt-qualified ephemeral thread; actual read needs canonical item consumption',async()=>{
+ const f=fixture({probe:true});await f.engine.start();
+ assert.equal(f.requests.find(x=>x.method==='initialize').params.capabilities.experimentalApi,true);
+ const thread=f.requests.find(x=>x.method==='thread/start');assert.equal(thread.params.ephemeral,true);assert.equal(thread.params.sandbox,'read-only');assert.equal(thread.params.dynamicTools[0].name,'read_original');assert.equal(thread.params.baseInstructions,'Host-authored isolated recovery probe');
+ const pending=f.engine.prompt('host-approved question');await tick();originalCall(f);await tick();await tick();
+ const response=f.requests.find(x=>x.id==='server-original-call');assert.equal(response.result.success,true);assert.equal(response.result.contentItems[0].text,'retained original requirement');assert.ok(!f.calls.includes('read-consumed'));
+ f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{reference:'old-1',offset:0,limit:8192},status:'completed',contentItems:response.result.contentItems,success:true});assert.ok(f.calls.includes('read-consumed'));
+ f.complete();assert.equal(await pending,'completed');assert.ok(f.calls.includes('settlement-receipt'));assert.ok(f.calls.includes('gateway-proof'));
+ assert.ok(f.updates.filter(x=>x.type==='context').every(x=>x.type!=='context'||x.used===null));
+});
+for(const receipts of ['missing','tampered'] as const) test('probe refuses '+receipts+' host launch receipt before initialization',async()=>{
+ const f=fixture({probe:true,receipts});await assert.rejects(f.engine.start(),/receipt unavailable/);assert.equal(f.requests.length,0);await f.engine.close().catch(()=>undefined);
+});
+test('probe cannot activate saved tools on an existing native thread or enable delegation',()=>{
+ assert.throws(()=>fixture({probe:true,nativeId:'old-native'}),/fresh receipt/);assert.throws(()=>fixture({probe:true,delegation:true}),/fresh receipt/);
+});
+test('probe rejects observed native sandbox mismatch while model scope remains separately unqualified',async()=>{
+ const f=fixture({probe:true,probeSandboxMismatch:true});await assert.rejects(f.engine.start(),/trusted model policy mismatch/);await f.engine.close();
+});
+test('ordinary production chat has no dynamic registration or experimental opt-in',async()=>{
+ const f=fixture();await f.engine.start();assert.equal(f.requests.find(x=>x.method==='initialize').params.capabilities.experimentalApi,false);assert.equal(f.requests.find(x=>x.method==='thread/start').params.dynamicTools,undefined);await f.engine.close();
+});
+test('unknown original reference returns bounded failure, consumed only by canonical failed item',async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');await tick();originalCall(f,{reference:'file:///host/oracle',offset:0,limit:1});await tick();await tick();
+ const response=f.requests.find(x=>x.id==='server-original-call');assert.equal(response.result.success,false);assert.equal(response.result.contentItems[0].text,'Original excerpt unavailable within this frozen scope');
+ f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{reference:'file:///host/oracle',offset:0,limit:1},status:'failed',contentItems:response.result.contentItems,success:false});f.complete();assert.equal(await pending,'completed');
+});
+for(const mode of ['wrong-thread','no-start','early-completion','changed-completion','duplicate-start'] as const) test('probe rejects unowned or unsettled dynamic lifecycle '+mode,async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejected=assert.rejects(pending);await tick();
+ const args={reference:'old-1',offset:0,limit:8};
+ if(mode==='wrong-thread'||mode==='no-start') f.stdout.write(JSON.stringify({id:'call',method:'item/tool/call',params:{threadId:mode==='wrong-thread'?'unowned':'thread-1',turnId:'turn-1',callId:'original-call',namespace:null,tool:'read_original',arguments:args}})+'\n');
+ else if(mode==='early-completion') {f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'inProgress'},'started');f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'completed',contentItems:[{type:'inputText',text:'fabricated'}],success:true});}
+ else if(mode==='duplicate-start'){originalCall(f,args);f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{...args,offset:1},status:'inProgress'},'started');}
+ else {originalCall(f,args);await tick();await tick();f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'completed',contentItems:[{type:'inputText',text:'fabricated'}],success:true});}
+ await rejected;assert.ok(!f.calls.includes('read-consumed'));await f.engine.close();assert.ok(f.calls.includes('terminate'));
+});
+test('turn completion cannot substitute for an unfinished dynamic read',async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejected=assert.rejects(pending);await tick();originalCall(f);await tick();f.complete();await rejected;assert.ok(!f.calls.includes('read-consumed'));
+});
+
+test('pinned optional namespace can be omitted; conflicting namespace stays rejected',async()=>{
+ for (const namespace of [undefined,'oracle']) {
+  const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejection=namespace ? assert.rejects(pending) : undefined;await tick();
+  const args={reference:'old-1',offset:0,limit:8};f.item('original-call','dynamicToolCall',{tool:'read_original',arguments:args,status:'inProgress'},'started');
+  f.stdout.write(JSON.stringify({id:'optional-ns',method:'item/tool/call',params:{threadId:'thread-1',turnId:'turn-1',callId:'original-call',...(namespace?{namespace}:{}),tool:'read_original',arguments:args}})+'\n');await tick();await tick();
+  if(namespace){await rejection;assert.equal(f.requests.find(x=>x.id==='optional-ns'),undefined);await f.engine.close();}
+  else {const response=f.requests.find(x=>x.id==='optional-ns').result;f.item('original-call','dynamicToolCall',{tool:'read_original',arguments:args,status:'completed',contentItems:response.contentItems,success:true});f.complete();assert.equal(await pending,'completed');}
+ }
 });

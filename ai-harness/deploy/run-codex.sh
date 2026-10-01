@@ -88,6 +88,9 @@ validate_directory "$workspace" workspace
 gateway_url=${AI_HARNESS_GATEWAY_URL:-http://10.0.2.2:8081/v1}
 gateway_token=${AI_HARNESS_GATEWAY_TOKEN:-}
 session_id=${AI_HARNESS_SESSION_ID:-}
+receipt_dir=${AI_HARNESS_CODEX_RECEIPT_DIR:-}
+receipt_nonce=${AI_HARNESS_CODEX_RECEIPT_NONCE:-}
+[[ -z "$receipt_dir" && -z "$receipt_nonce" || -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'incomplete private receipt channel'
 [[ "$gateway_url" = http://10.0.2.2:8081/v1 ]] || die 'gateway URL must be the reviewed rootless host-loopback endpoint'
 [[ ${#gateway_token} -ge 16 && ${#gateway_token} -le 4096 && ! "$gateway_token" =~ [[:cntrl:]] ]] || die 'an ephemeral gateway token of 16..4096 characters without control characters is required'
 [[ "$session_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && ${#session_id} -le 128 ]] || die 'a valid session identifier is required'
@@ -110,6 +113,10 @@ export AI_HARNESS_GATEWAY_URL="$gateway_url"
 export AI_HARNESS_GATEWAY_TOKEN="$gateway_token"
 export AI_HARNESS_SESSION_ID="$session_id"
 unset gateway_token
+if [[ -n "$receipt_dir" ]]; then
+  export AI_HARNESS_CODEX_RECEIPT_DIR="$receipt_dir" AI_HARNESS_CODEX_RECEIPT_NONCE="$receipt_nonce"
+fi
+unset receipt_dir receipt_nonce
 
 # Pin the validator before executing source-controlled overlay checks.
 "$python_bin" - "$launcher_dir/engine/validate-image-overlays.py" <<'PY_OVERLAY' || die 'reviewed overlay validator identity mismatch'
