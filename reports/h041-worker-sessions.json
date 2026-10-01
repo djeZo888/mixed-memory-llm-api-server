@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T13:33:29.206944+00:00",
+  "updatedUtc": "2026-10-01T13:43:58.940509+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-07",
@@ -716,5 +716,27 @@
     "lifecycleGo": false,
     "withdrawnUtc": "2026-10-01T13:30:40.668262+00:00",
     "successor": "task-private identical dependencycopy and narrow primarynotification handling reviewedbefore any new GO"
+  },
+  "source07EManualEarly": {
+    "sourceCommit": "87445e6816142d7dd3ca4a990c197c1a4aaa5bcd",
+    "integratedCommit": "242edba9766d0e0b3b6d3460e36ba97047e7b252",
+    "sourceCases": 47,
+    "sourceStrict": "PASS",
+    "nativeAcceptance": "NOT_TESTED",
+    "remainingGate": "fresh same-route owner/manifest/native-NULL/74 file STAT correlation to retained71+3 content proof"
+  },
+  "source07ANoTurnSuccessor": {
+    "status": "PREPARED_UNDER_REVIEW_NO_GO",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "bf0d54fe53009a2301a06e6b427716a16d6eaa34222aa8f511e8ea9d48ac9019",
+    "copiedDependencies": 4036,
+    "originalUnchanged": true,
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source07ARecoveryEarly": {
+    "sourceCommit": "75645df0ea95a7b1028cf97ea54c2813848036ad",
+    "sourceCases": 19,
+    "review": "RUNNING",
+    "nativeAcceptance": "NOT_TESTED"
   }
 }
