@@ -1,5 +1,7 @@
+import {verifyFreshArtifactOwner} from '../artifact-source-proof.mjs';
 import {verifyManifestSourceIdentity} from '../model-artifact-identity.mjs';
 import { verifyInstalledBuild } from './build-closure.mjs';
+import {isNormalRestartTicket,type NormalRestartTicket} from './normal-restart-ticket.js';
 import { isRestartTicket,type RestartTicket } from './restart.js';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -18,8 +20,8 @@ export interface EntryQualification {
 }
 /** Only a private root-reviewed Linux producer packet can open the entry. All
  * six runtime pins are captured before open; default exports have no packet. */
-export async function qualifyEntry(config: any,restart?:RestartTicket): Promise<EntryQualification> {
-  if(restart&&!isRestartTicket(restart))throw Error('verified_restart_qualification_reuse_required');
+export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRestartTicket): Promise<EntryQualification> {
+  if(restart&&!isRestartTicket(restart)&&!isNormalRestartTicket(restart))throw Error('verified_restart_qualification_reuse_required');
   if (process.platform !== 'linux' || !process.getuid?.()) throw Error('actual_rootless_linux_entry_qualification_required');
   reviewedAuthorization(config?.bootstrap?.review);
   const review = config.bootstrap.review;
@@ -30,6 +32,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket): Promise<
   if (packet.source !== 'root-owned-linux-no-generation-qualification' || packet.candidateCommit !== review.candidateCommit || packet.windowId !== review.authorization.windowId ||
       packet.route?.alias !== 'qwen3.8-27b' || packet.route?.service !== 'qwen-gpu1' || packet.route?.controlSlot !== 'qwen' || packet.route?.endpoint !== 'http://10.156.100.60:30004/v1' ||
       typeof packet.route.instanceId!=='string'||!packet.route.instanceId||!packet.route.operationId || !packet.route.identitySha256 || !Number.isFinite(Date.parse(packet.observedAt)) || Date.now() - Date.parse(packet.observedAt) < 0 || (!restart&&Date.now() - Date.parse(packet.observedAt) > 60000)) throw Error('fresh_current_linux_route_qualification_required');
+  if(!restart&&review.artifactIdentityExpected?.proofVersion==='retained-linux-files-v1')verifyFreshArtifactOwner(packet.artifactIdentity,review.artifactIdentityExpected,review.freshArtifactOwnerExpected,packet.route);
   const keys = ['version','sourceRevision','binarySha256','model','modelRevision','tokenizerRevision'];
   const runtime: EntryQualification['runtime'] = {};
   for (const key of keys) {

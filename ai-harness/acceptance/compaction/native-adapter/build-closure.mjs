@@ -23,8 +23,8 @@ export async function executedImportGraph(root,runtimeFiles) {
     }
     imports[path]=[...new Set(edges)].sort();
   }
-  await visit(ENTRY_PATH);await visit(WORKER_PATH);
-  return {entrypoints:[ENTRY_PATH,WORKER_PATH],imports,externalPackages:[...external].sort(),unavailableImports};
+  const entrypoints=[ENTRY_PATH,WORKER_PATH];for(const p of ['normal-entry.js','normal-worker.js']){const path='ai-harness/acceptance/compaction/native-adapter/'+p;if(runtimeFiles[path])entrypoints.push(path);}for(const path of entrypoints)await visit(path);
+  return {entrypoints,imports,externalPackages:[...external].sort(),unavailableImports};
 }
 export async function verifyInstalledBuild(repository,manifest) {
   if(manifest?.format!=='h041-source-build-v2'||!manifest.sourceFiles||!manifest.runtimeFiles||!manifest.helperFiles||!manifest.dependencyFiles||!manifest.importGraph||manifest.compilerExit!==0||manifest.nodeVersion!==process.version)throw Error('complete_executed_build_closure_required');
