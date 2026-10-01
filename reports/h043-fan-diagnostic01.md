@@ -8,7 +8,7 @@ Fresh native session `01a0f95f-9a65-7d22-920e-4b0461aeca29` on mac-worker2 began
 
 - Final Fan05 bundle `0c1033b0dd7ccda1bc586f4d47dd6c264668a29a864ab1d4f4377d79bf8bc8b6` and all six adoption private hashes match. Root bundle `c0ede0c5de47b7e8c4b548407acfa0ddeb286b70e9ff81139884caaea75128d5` matches. Both bundles passed `git bundle verify`; source history was fetched to separate private refs. Initial wrong assumed Fan05 ref failed exit128; original receipt/stderr retained, then actual advertised HEAD fetched successfully.
 - Integrated controller, its tests and policy doc are byte-identical to final Fan05. No duplicate policy patch applied; unchanged70+82 checks were not replayed. Only this report pair changes Git.
-- **48 new fake-only diagnostic checks pass**, actual exit0; focused export/process checks also pass. Logs and exact command receipts remain in `../output`. No source test authenticates or reaches live endpoints. Intermediate subagent failures retain original tool-output pointers; standalone original log files were not created and are explicitly marked absent.
+- **48 new fake-only diagnostic checks pass**, actual exit0; five focused export/process checks also pass. Logs and exact command receipts remain in `../output`. No source test authenticates or reaches live endpoints. Intermediate subagent failures retain original tool-output pointers; standalone original log files were not created and are explicitly marked absent.
 - Passive sudo-n SSH reads at 21:31:36Z and 21:45:36Z agree on host, source, unit, all25 original state files and protected original/parent metadata. Credential values and their digests were never read/exported. The corrected process scan treats unknown visibility as a failure.
 
 ## Fresh observed owner/state

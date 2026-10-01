@@ -43,7 +43,7 @@
     },
     "configSha256": "ec1679171ecb9c7d87b7a876b8c7be4879ebcfefbb41b5101d699a2d07d20d11",
     "newDiagnosticTests": 48,
-    "newExportTests": "see retained diagnostic-export-tests log",
+    "newExportTests": 5,
     "unchanged70Plus82Replayed": false
   },
   "currentPassiveAsOf": "2026-10-01T21:45:36.610845+00:00",
