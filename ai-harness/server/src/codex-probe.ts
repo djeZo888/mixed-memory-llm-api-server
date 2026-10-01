@@ -71,7 +71,7 @@ export function assertCodexTextOnlyPolicy(policy: CodexTextOnlyPolicy, sessionId
 export function codexTextOnlyThreadParams(policy: CodexTextOnlyPolicy, method: "thread/start" | "thread/resume" = "thread/start") {
   assertCodexTextOnlyPolicy(policy);
   const config: Record<string, unknown> = { "agents.enabled": false, "tools.update_plan.enabled": false, "tools.experimental_request_user_input.enabled": false, "web_search": "disabled" };
-  for (const key of ["shell_tool", "view_image", "sleep_tool", "apps", "plugins", "tool_suggest", "tool_search", "code_mode", "code_mode_only", "multi_agent", "multi_agent_v2", "request_permissions_tool", "current_time_reminder", "token_budget", "deferred_executor", "send_message_to_user_async", "goals", "memories", "context_management", "image_generation", "standalone_web_search", "enable_mcp_apps"]) config["features." + key] = false;
+  for (const key of ["shell_tool", "view_image", "sleep_tool", "apps", "plugins", "tool_suggest", "code_mode", "code_mode_only", "multi_agent", "multi_agent_v2", "request_permissions_tool", "current_time_reminder", "token_budget", "deferred_executor", "send_message_to_user_async", "goals", "memories", "context_management", "image_generation", "standalone_web_search", "enable_mcp_apps"]) config["features." + key] = false;
   // The reviewed mounted config has exactly these three MCP servers. Its digest
   // and the model catalog digest are bound to the producer's launch closure.
   for (const name of ["search", "browser", "image"]) config["mcp_servers." + name + ".enabled"] = false;

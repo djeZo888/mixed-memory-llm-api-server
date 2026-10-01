@@ -184,6 +184,7 @@ function fixture(
       response(req.id, {
         thread: {
           id: "thread-1",
+          ...(config.probe || config.textOnly || config.artifacts ? {environments:[]} : {}),
           turns: req.params.excludeTurns ? [] : [
             {
               items: [

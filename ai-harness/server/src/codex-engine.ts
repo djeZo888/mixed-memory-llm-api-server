@@ -351,7 +351,8 @@ export class CodexEngine implements Engine {
       result.cwd !== o.workspace ||
       result.approvalPolicy !== "never" ||
       (this.textPolicy && (!isRecord(result.sandbox) || result.sandbox.type !== "readOnly")) ||
-      (this.nativeId && result.thread.id !== this.nativeId)
+      (this.nativeId && result.thread.id !== this.nativeId) ||
+      (this.textPolicy && !optionsNativeId && (!Array.isArray(result.thread.environments) || result.thread.environments.length !== 0))
     )
       fault("Native thread identity or trusted model policy mismatch");
     // History returned by resume is never appended to Sova's original message store.
@@ -359,7 +360,7 @@ export class CodexEngine implements Engine {
     if (this.textPolicy) {
       recordCodexPolicyThread(this.textPolicy, this.nativeId, this.launchReceipt!);
       assertCodexTextOnlyPolicy(this.textPolicy, o.sessionId);
-      r.onNativeThreadPolicy?.({ policy: this.textPolicy, launchReceipt: this.launchReceipt!, threadId: this.nativeId, sandbox: Object.freeze(structuredClone(result.sandbox as Record<string, unknown>)), requestedSettings: Object.freeze(structuredClone(params)), observedSettings: Object.freeze({model:result.model, modelProvider:result.modelProvider,cwd:result.cwd,approvalPolicy:result.approvalPolicy,activePermissionProfile:structuredClone(result.activePermissionProfile ?? null)}), method: this.nativeId === optionsNativeId ? "thread/resume" : "thread/start" });
+      r.onNativeThreadPolicy?.({ policy: this.textPolicy, launchReceipt: this.launchReceipt!, threadId: this.nativeId, sandbox: Object.freeze(structuredClone(result.sandbox as Record<string, unknown>)), requestedSettings: Object.freeze(structuredClone(params)), observedSettings: Object.freeze({model:result.model, modelProvider:result.modelProvider,cwd:result.cwd,approvalPolicy:result.approvalPolicy,activePermissionProfile:structuredClone(result.activePermissionProfile ?? null),environments:structuredClone(result.thread.environments ?? null)}), method: this.nativeId === optionsNativeId ? "thread/resume" : "thread/start" });
     }
     o.onNativeSessionId(this.nativeId);
     if (resumeInstructions) o.onUpdate({
