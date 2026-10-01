@@ -369,6 +369,53 @@
       "exit": 0,
       "log": "logs/wider-affected-adapter.log",
       "logSHA256": "68f01dfbc25f5962e682c795a242d18c7f55417a6bca1a05255625840b0de2b6"
+    },
+    {
+      "name": "bundle-create",
+      "argv": [
+        "git",
+        "bundle",
+        "create",
+        "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/output/candidate.bundle",
+        "b5b7b894a50481661ade7623ce23c94b86e02dcd..c6a06156b92ca022c85d8acfd67e974c37b2a237"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/repo",
+      "start": "2026-10-01T18:03:44.492703+00:00",
+      "end": "2026-10-01T18:03:44.504305+00:00",
+      "exit": 128,
+      "log": "logs/bundle-create.log",
+      "logSHA256": "e10b60ffe1b96e56da335725e21f1dab3e0d5f291d6ecd18383ec3c7ccce80ac"
+    },
+    {
+      "name": "bundle-create-corrected-initial",
+      "argv": [
+        "git",
+        "bundle",
+        "create",
+        "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/output/candidate-pre-report-correction.bundle",
+        "b5b7b894a50481661ade7623ce23c94b86e02dcd..HEAD"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/repo",
+      "start": "2026-10-01T18:04:41.027808+00:00",
+      "end": "2026-10-01T18:04:41.050082+00:00",
+      "exit": 0,
+      "log": "logs/bundle-create-corrected-initial.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "bundle-verify-corrected-initial",
+      "argv": [
+        "git",
+        "bundle",
+        "verify",
+        "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/output/candidate-pre-report-correction.bundle"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-cleanup01/repo",
+      "start": "2026-10-01T18:04:41.084239+00:00",
+      "end": "2026-10-01T18:04:41.101181+00:00",
+      "exit": 0,
+      "log": "logs/bundle-verify-corrected-initial.log",
+      "logSHA256": "18c9e6436f0c4b29803bb3fa9b2bd6af6e710d5439fee38cb0024863992c886b"
     }
   ],
   "ownedFixtureReadbacks": [
@@ -505,6 +552,15 @@
       "exit": 1,
       "classification": "EXPECTED_ALREADY_INTEGRATED_PATCH",
       "retained": true
+    },
+    {
+      "check": "bundle-create",
+      "exit": 128,
+      "classification": "CORRECTED_EXPORT_COMMAND_UNNAMED_COMMIT_TIP",
+      "retained": true,
+      "correctedCheck": "bundle-create-corrected-initial",
+      "correctedExit": 0,
+      "correction": "Use exact base..HEAD so Git has a named positive ref."
     }
   ],
   "blockers": [],
@@ -515,5 +571,6 @@
   ],
   "environmentEvidence": "../output/ENVIRONMENT.json",
   "buildEvidence": "../output/BUILD-output-sha256.json",
-  "reportedAtUtc": "2026-10-01T18:01:58.123462+00:00"
+  "reportedAtUtc": "2026-10-01T18:01:58.123462+00:00",
+  "reportAddendumUtc": "2026-10-01T18:04:41.104629+00:00"
 }
