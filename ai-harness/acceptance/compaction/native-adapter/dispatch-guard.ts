@@ -1,3 +1,4 @@
+import {verifyChildLineage,childRequestMetadata} from '../child-lineage.mjs';
 import { closeSync, constants, fsyncSync, openSync, writeSync, readFileSync, fstatSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { GatewayOptions } from '../../../server/src/gateway.js';
@@ -16,14 +17,14 @@ export interface ProbeManifest {
 }
 export interface RequestScope {
   sessionId: string; actionId: string; runId: string; mode: 'main' | 'summary-only' | 'durable-retrieval' | 'clean-child' | 'parent-artifacts';
-  purpose?: 'append' | 'continuation' | 'compaction';
+  purpose?: 'append' | 'continuation' | 'compaction' | 'child';
   toolPolicy?: { rawTools: unknown[]; normalizedTools: unknown[]; envelope: Record<string,unknown> };
-  parentNativeThreadId?: string; expiresAt: number; signal: AbortSignal;
+  parentNativeThreadId?: string; nativeRootTurnId?:string; expiresAt: number; signal: AbortSignal;
   identity(): { nativeThreadId?: string; nativeTurnId?: string; activeRunId?: string };
   manifest?: ProbeManifest;
   validateFollowup?(input: unknown): void;
 }
-interface Captured { scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown> }
+interface Captured { scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown>;nativeMetadata?:Record<string,string> }
 function durableBytes(file: string, bytes: Buffer) {
   const fd = openSync(file, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
   try {
@@ -39,6 +40,12 @@ function durableBytes(file: string, bytes: Buffer) {
  */
 export class DispatchGuard {
   private scopes = new Map<string, RequestScope>();
+  private delegated=new Map<string,{parentNativeThreadId:string;readAndScope(childId:string):Promise<{lineage:any;scope:RequestScope}>}>();
+  /** Arm on the live parent BEFORE spawn/turn dispatch. The resolver must use
+   * A's owned live connection; returned scope identity must be independently observed. */
+  armDelegatedChild(parentSessionId:string,input:{parentNativeThreadId:string;readAndScope(childId:string):Promise<{lineage:any;scope:RequestScope}>}){
+    const parent=this.scopes.get(parentSessionId);if(!parent||parent.purpose!=='child'||this.delegated.has(parentSessionId)||parent.identity().nativeThreadId!==input.parentNativeThreadId)throw Error('prearmed_actual_parent_child_scope_required');this.active(parent);this.delegated.set(parentSessionId,input);
+  }
   private captures = new Map<string, Captured>();
   private failures = new Set<string>();
   private bytes = 0;
@@ -64,7 +71,7 @@ export class DispatchGuard {
     // Defensive snapshots: the controller cannot mutate a manifest after review.
     this.scopes.set(scope.sessionId, { ...scope, manifest: scope.manifest ? structuredClone(scope.manifest) : undefined, toolPolicy: scope.toolPolicy ? structuredClone(scope.toolPolicy) : undefined });
   }
-  retire(sessionId: string) { this.scopes.delete(sessionId); }
+  retire(sessionId: string) { this.scopes.delete(sessionId); this.delegated.delete(sessionId); }
   private active(scope: RequestScope) {
     if (this.scopes.get(scope.sessionId) !== scope || scope.signal.aborted || this.now() >= scope.expiresAt || this.failures.has(scope.sessionId)) throw Error('scope_closed_expired_or_capture_failed');
   }
@@ -92,15 +99,22 @@ export class DispatchGuard {
     return async (body, lane, key, signal, context) => {
       const requestId = context?.requestId, capture = requestId ? this.captures.get(requestId) : undefined;
       if (!capture || capture.claimed) throw Error('request_capture_missing_or_duplicate');
-      const scope = capture.scope;
+      let scope = capture.scope;
       this.active(scope);
+      const pendingRaw=JSON.parse(capture.raw.toString('utf8')),armed=this.delegated.get(scope.sessionId);
+      if(armed&&pendingRaw.client_metadata?.thread_id!==armed.parentNativeThreadId){
+        const metadata=childRequestMetadata(pendingRaw,armed.parentNativeThreadId,scope.identity().nativeTurnId!),childId=metadata.thread_id;if(!identifier(childId))throw Error('actual_child_identity_absent');
+        const actual=await armed.readAndScope(childId),lineage=verifyChildLineage(actual.lineage,{parentId:armed.parentNativeThreadId,childId,firstDispatchAt:new Date(this.now()).toISOString()});
+        if(lineage.status!=='PASS'||actual.scope.mode!=='clean-child'||actual.scope.parentNativeThreadId!==armed.parentNativeThreadId||actual.scope.identity().nativeThreadId!==childId||actual.scope.identity().nativeTurnId!==pendingRaw.client_metadata?.turn_id)throw Error('awaited_actual_child_read_and_turn_scope_required');
+        this.register(actual.scope);scope=this.scopes.get(actual.scope.sessionId)!;capture.scope=scope;capture.nativeMetadata=metadata;
+      }
       if (signal.aborted) throw Error('dispatch_cancelled');
       const raw = JSON.parse(capture.raw.toString('utf8'));
-      const native = scope.identity();
+      const native = scope.identity(),nativeMetadata=capture.nativeMetadata??raw.client_metadata;
       if (['main','parent-artifacts'].includes(scope.mode) && native.activeRunId !== scope.runId) throw Error('actual_active_run_identity_mismatch');
       if (!identifier(native.nativeThreadId) || !identifier(native.nativeTurnId) ||
-          raw.client_metadata?.thread_id !== native.nativeThreadId || raw.client_metadata?.turn_id !== native.nativeTurnId ||
-          (raw.client_metadata.root_turn_id !== undefined && raw.client_metadata.root_turn_id !== native.nativeTurnId)) throw Error('first_request_native_identity_mismatch');
+          nativeMetadata?.thread_id !== native.nativeThreadId || nativeMetadata?.turn_id !== native.nativeTurnId ||
+          (nativeMetadata.root_turn_id !== undefined && nativeMetadata.root_turn_id !== (scope.nativeRootTurnId??native.nativeTurnId))) throw Error('first_request_native_identity_mismatch');
       if (['main','parent-artifacts'].includes(scope.mode) && scope.manifest) {
         const m=scope.manifest;
         const earlier=[...this.captures.values()].some(c=>c!==capture&&c.scope===scope&&c.claimed);

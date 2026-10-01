@@ -1,0 +1,45 @@
+// SOURCE fixtures only; no native process/provider or native PASS.
+import test from 'node:test';import assert from 'node:assert/strict';
+import {mkdtempSync,realpathSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {Store} from '../src/store.js';import {selectRestartCheckpoint} from '../../acceptance/compaction/native-adapter/restart-selection.js';
+import {verifyChildLineage,childRequestMetadata} from '../../acceptance/compaction/child-lineage.mjs';import {sha256} from '../../acceptance/compaction/native-adapter/projection.js';
+import {createCodexRetentionParentPolicy,codexTextOnlyThreadParams,CODEX_H041_DELIVERY_WINDOW} from '../src/codex-probe.js';
+function fixture(t:any){const root=realpathSync(mkdtempSync(join(tmpdir(),'h041-source03-'))),store=new Store(join(root,'db')),session=store.createSession(undefined,'codex');t.after(()=>{store.close();rmSync(root,{recursive:true,force:true});});store.setNative(session.id,'SOURCE-native','codex');return {store,session};}
+test('SOURCE real Store selector binds latest settled compaction before artifacts; proof JSON still rejected',t=>{
+ const {store,session}=fixture(t),run=store.createRun(session,'compact','',[]),cp=store.checkpoints.prepare(session.id,run.id,'compact','SOURCE-native');store.checkpoints.observeCompaction(session.id,run.id,'SOURCE-compaction','start');store.checkpoints.observeCompaction(session.id,run.id,'SOURCE-compaction','completed');store.checkpoints.finish(session.id,run.id,'completed');store.updateRun(run.id,'completed');
+ const stateUtf8='SOURCE state\n',stateSha256=sha256(stateUtf8),settledOperationUtf8=JSON.stringify({nativeThreadId:'SOURCE-native',status:'completed',settlement:'released',postStateSha256:stateSha256,compactionId:'SOURCE-compaction'}),checkpoint={nativeThreadId:'SOURCE-native',stateUtf8,stateSha256,settledOperationUtf8,settledOperationSha256:sha256(settledOperationUtf8)};
+ assert.deepEqual(selectRestartCheckpoint(store,session.id,'SOURCE-native',checkpoint),{purpose:'settled-compaction',storeRunId:run.id,checkpointId:cp.id});
+ assert.throws(()=>store.checkpoints.issueRestartOwnership({sessionId:session.id,runId:run.id,checkpointId:cp.id,threadId:'SOURCE-native',purpose:'settled-compaction'}));
+ assert.throws(()=>selectRestartCheckpoint(store,session.id,'FOREIGN',checkpoint));
+ const later=store.createRun(session,'message','SOURCE later',[]);store.checkpoints.prepare(session.id,later.id,'message','SOURCE-native');store.checkpoints.finish(session.id,later.id,'completed');store.updateRun(later.id,'completed');assert.throws(()=>selectRestartCheckpoint(store,session.id,'SOURCE-native',checkpoint),/before_artifacts/);
+ const accepted={checkpoint,artifactBaseline:{nativeThreadId:'SOURCE-native',storeRunId:later.id}};assert.equal(selectRestartCheckpoint(store,session.id,'SOURCE-native',checkpoint,accepted).purpose,'accepted-continuation');accepted.artifactBaseline.storeRunId=run.id;assert.throws(()=>selectRestartCheckpoint(store,session.id,'SOURCE-native',checkpoint,accepted),/latest_accepted/);
+});
+function lineage(){const requestUtf8=JSON.stringify({id:9,method:'thread/read',params:{threadId:'SOURCE-child',includeTurns:false}}),responseUtf8=JSON.stringify({id:9,result:{thread:{id:'SOURCE-child',parentThreadId:'SOURCE-parent',forkedFromId:null,modelProvider:'sova',model:'qwen3.8-27b',environments:[],source:{subAgent:{thread_spawn:{parent_thread_id:'SOURCE-parent',depth:1}}}}}});return {requestUtf8,responseUtf8,requestSha256:sha256(requestUtf8),responseSha256:sha256(responseUtf8),requestSequence:1,responseSequence:2,observedAt:'2026-10-01T10:40:00Z'};}
+test('SOURCE pinned raw child read binds native ancestry before first dispatch; IDs/analytics alone fail',()=>{
+ const p=lineage(),expected={childId:'SOURCE-child',parentId:'SOURCE-parent',firstDispatchAt:'2026-10-01T10:40:01Z'};assert.equal(verifyChildLineage(p,expected).status,'PASS');assert.equal(verifyChildLineage(undefined,expected).status,'NOT_TESTED');
+ for(const change of [(x:any)=>x.result.thread.parentThreadId='FOREIGN',(x:any)=>x.result.thread.forkedFromId='SOURCE-parent',(x:any)=>x.result.thread.source={threadSource:'subagent'},(x:any)=>x.result.thread.environments=['HOST'],(x:any)=>x.result.thread.source.subAgent.thread_spawn.depth=2]){const value=JSON.parse(p.responseUtf8);change(value);const responseUtf8=JSON.stringify(value);assert.equal(verifyChildLineage({...p,responseUtf8,responseSha256:sha256(responseUtf8)},expected).status,'FAIL');}
+ assert.equal(verifyChildLineage({...p,observedAt:'2026-10-01T10:40:02Z'},expected).status,'FAIL');assert.equal(verifyChildLineage({...p,requestSequence:2},expected).status,'FAIL');
+});
+test('SOURCE new initial retention closure keeps depth one and distinguishes V1/V2; no native qualification',()=>{
+ for(const collaborationVersion of ['v1','v2'] as const){const p=createCodexRetentionParentPolicy({sessionId:'SOURCE-session',runId:'SOURCE-run',configSha256:'a'.repeat(64),modelCatalogSha256:'b'.repeat(64),collaborationVersion});assert.equal(p.window,CODEX_H041_DELIVERY_WINDOW);assert.equal(p.mode,'retention-parent');const config=codexTextOnlyThreadParams(p).config;assert.equal(config['agents.max_depth'],1);assert.equal(config['features.multi_agent_v2'],collaborationVersion==='v2');assert.equal(config['features.shell_tool'],false);}
+});
+
+test('SOURCE native child metadata requires actual turn and consistent ancestry; no thread-header fallback',()=>{
+ const ids={request_kind:'turn',thread_id:'SOURCE-child',turn_id:'SOURCE-child-turn',parent_thread_id:'SOURCE-parent',parent_turn_id:'SOURCE-parent-turn',root_turn_id:'SOURCE-parent-turn'},body={client_metadata:{'x-codex-turn-metadata':JSON.stringify(ids)}};
+ assert.equal(childRequestMetadata(body,'SOURCE-parent','SOURCE-parent-turn').turn_id,'SOURCE-child-turn');
+ assert.throws(()=>childRequestMetadata({client_metadata:{thread_id:'SOURCE-child','x-client-request-id':'SOURCE-child'}},'SOURCE-parent','SOURCE-parent-turn'));
+ for(const change of [{...ids,request_kind:'model'},{...ids,parent_thread_id:'FOREIGN'},{...ids,turn_id:undefined}])assert.throws(()=>childRequestMetadata({client_metadata:{'x-codex-turn-metadata':JSON.stringify(change)}},'SOURCE-parent','SOURCE-parent-turn'));
+ assert.throws(()=>childRequestMetadata({client_metadata:{'x-codex-turn-metadata':JSON.stringify(ids),turn_id:'CONFLICT'}},'SOURCE-parent','SOURCE-parent-turn'));
+});
+import {readFileSync} from 'node:fs';import {DispatchGuard} from '../../acceptance/compaction/native-adapter/dispatch-guard.js';import {translateResponses} from '../src/codex-responses.js';
+test('SOURCE awaited prearmed child read precedes actual translated count gate; bad lineage never counts',async t=>{
+ for(const valid of [true,false]){
+  const root=realpathSync(mkdtempSync(join(tmpdir(),'h041-source-child-gate-')));t.after(()=>rmSync(root,{recursive:true,force:true}));const at=Date.parse('2026-10-01T10:40:01Z'),guard=new DispatchGuard(root,()=>at),signal=new AbortController().signal;
+  guard.register({sessionId:'SOURCE-auth-parent',actionId:'SOURCE-action',runId:'SOURCE-run',mode:'parent-artifacts',purpose:'child',expiresAt:at+1000,signal,identity:()=>({nativeThreadId:'SOURCE-parent',nativeTurnId:'SOURCE-parent-turn',activeRunId:'SOURCE-run'})});
+  const raw:any=JSON.parse(readFileSync(new URL('./fixtures/codex/native-requests.json',import.meta.url),'utf8'))[0].body;raw.instructions='SOURCE frozen brief policy';raw.tools=[];raw.input=[{type:'message',role:'user',content:[{type:'input_text',text:'SOURCE minimal brief'}]}];raw.client_metadata={request_kind:'turn',thread_id:'SOURCE-child',turn_id:'SOURCE-child-turn',parent_thread_id:'SOURCE-parent',parent_turn_id:'SOURCE-parent-turn',root_turn_id:'SOURCE-parent-turn'};
+  const envelope=Object.fromEntries(Object.entries(raw).filter(([k])=>!['input','tools'].includes(k)));let read=false,counts=0;
+  guard.armDelegatedChild('SOURCE-auth-parent',{parentNativeThreadId:'SOURCE-parent',readAndScope:async()=>{read=true;const proof=lineage();if(!valid)proof.responseSha256='0'.repeat(64);return {lineage:proof,scope:{sessionId:'SOURCE-child-scope',actionId:'SOURCE-action',runId:'SOURCE-run',mode:'clean-child',nativeRootTurnId:'SOURCE-parent-turn',parentNativeThreadId:'SOURCE-parent',expiresAt:at+1000,signal,identity:()=>({nativeThreadId:'SOURCE-child',nativeTurnId:'SOURCE-child-turn'}),manifest:{input:raw.input,instructions:raw.instructions,userText:'SOURCE minimal brief',contextSha256:sha256('SOURCE parent'),envelope}}};}});
+  guard.capture({sessionId:'SOURCE-auth-parent',requestId:'SOURCE-request',model:'qwen3.8-27b',phase:'pre_normalization',bytes:Buffer.from(JSON.stringify(raw))});const count=guard.wrap((async()=>{assert.equal(read,true);counts++;return 7;}) as any),body={...translateResponses(raw).body,model:'qwen3.8-27b'};
+  const invoke=count!(body,{alias:'qwen3.8-27b'} as any,'SOURCE',signal,{requestId:'SOURCE-request'} as any);if(valid)await invoke;else await assert.rejects(invoke,/actual_child_read/);assert.equal(counts,valid?1:0);
+ }
+});

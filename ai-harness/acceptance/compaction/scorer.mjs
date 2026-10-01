@@ -1,3 +1,4 @@
+import {verifyChildLineage} from './child-lineage.mjs';
 import { verifyObservedModelScope } from './model-scope.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
@@ -421,6 +422,7 @@ export function verifyDurableHoldout(truth, cycle, evidence, expected) {
 export function verifyCleanChild(probe, approved = {}) {
   if (!probe || !Array.isArray(probe.compiledMessages)) return { status: 'NOT_TESTED', errors: ['child-first-request-capture-absent'] };
   if (!Array.isArray(approved.messageHashes) || !approved.messageHashes.length || !approved.parentCanary || !approved.childNonce) return { status: 'NOT_TESTED', errors: ['independent-minimal-brief-manifest-absent'] };
+  if(approved.requireNativeDelegation){const lineage=verifyChildLineage(probe.nativeLineage,{parentId:approved.parentThreadId,childId:probe.childId,firstDispatchAt:probe.firstDispatchAt});if(lineage.status!=='PASS')return lineage;}
   const placement = probe.parentPlacement;
   if (!placement || typeof placement.stateUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['parent-canary-placement-not-captured'] };
   if (typeof probe.firstRequestUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['child-provider-request-bytes-absent'] };

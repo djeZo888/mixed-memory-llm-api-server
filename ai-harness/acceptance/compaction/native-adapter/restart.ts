@@ -13,6 +13,8 @@ export async function qualifyRestart(input:any,config:any):Promise<RestartTicket
   if(sha256(bytes)!==input.stateSha256)throw Error('restart_handoff_bytes_changed');
   const state=JSON.parse(bytes.toString('utf8'));
   if(state.source!=='owned-application-restart-handoff'||state.candidateCommit!==config.bootstrap.review.candidateCommit||state.windowId!==config.bootstrap.review.authorization.windowId||state.runId!==input.runId||state.parentNativeThreadId!==input.checkpoint?.nativeThreadId||stableJson(state.checkpoint)!==stableJson(input.checkpoint)||stableJson(state.acceptedContinuation)!==stableJson(input.acceptedContinuation??null)||state.checkpoint.stateSha256!==sha256(state.checkpoint.stateUtf8))throw Error('exact_restart_checkpoint_or_accepted_baseline_changed');
+  const purpose=state.acceptedContinuation?'accepted-continuation':'settled-compaction';
+  if(state.policyHandoff?.purpose!==purpose)throw Error('retained_restart_handoff_purpose_changed');
   for(const p of [state.layout.root,state.layout.dataDir,state.layout.hostPrivate])await canonicalDirectory(p);
   if(!within(config.bootstrap.privateBase,state.layout.root)||!within(state.layout.root,state.layout.dataDir)||!within(state.layout.root,state.layout.hostPrivate)||within(state.layout.dataDir,state.layout.hostPrivate)||!within(state.layout.hostPrivate,input.statePath))throw Error('restart_layout_outside_owned_private_scope');
   const proof=verifyObservedOwnedClose(input.closed,{runId:state.runId,operationWindowId:state.windowId,observedSettlements:state.observedSettlements,receiptSources:config.bootstrap.review.receiptSources});

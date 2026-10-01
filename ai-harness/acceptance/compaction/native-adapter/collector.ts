@@ -111,6 +111,7 @@ export class NativeCollector {
     this.preflightOriginals(sessionId, records);
     const messages = this.host.store.messages(sessionId).filter(m => m.runId === runId && m.role === 'user');
     if (messages.length !== 1 || messages[0].content !== records.map(r => r.content).join('\n\n')) throw Error('original_message_bytes_not_observed');
+    (this.host.store as any).memory?.indexHistory(sessionId);
     const refs = this.originalRefs.get(sessionId) ?? [], previous = new Set(refs.map(r => r.recordId));
     let offset = 0;
     for (const record of records) {

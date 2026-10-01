@@ -40,7 +40,7 @@ export async function retrievalProbe(h: TemporaryHost, input: {parentNativeThrea
     h.guard.register({sessionId,runId:input.runId,actionId:input.actionId,mode:'durable-retrieval',parentNativeThreadId:input.parentNativeThreadId,manifest:input.manifest,validateFollowup:body=>validateOriginalFollowup(body,input.manifest.input,h.observer.frames(sessionId),h.originalSettlements),toolPolicy:{rawTools:p.rawTools,normalizedTools:p.normalizedTools,envelope:input.manifest.envelope},signal,expiresAt:Math.min(h.dispatchCutoffAt,Date.now()+120000),identity:()=>({nativeThreadId:threadId,nativeTurnId:turnId})});
     engine = new CodexEngine({sessionId,engineKind:'codex',engineVersion:'0.158.0',modelPolicyVersion:h.host.runtime.modelPolicyVersion,nativeState:{ownership:'idle',activeTurnId:null,eventCursor:0},
       profileDir:mounts.profileDir,workspace:mounts.workspace,launcher:h.launcherPath,gatewayUrl:h.host.runtime.gatewayUrl,gatewayToken:token,stderrPath:join(mounts.profileDir,'stderr.log'),
-      dispatchHeld:()=>signal.aborted || h.launchHeld(),onNativeSessionId:id=>{threadId=id;},onNativeState:state=>{turnId=state.activeTurnId ?? turnId;},onUpdate:()=>{}},h.host.runtime);
+      dispatchHeld:()=>signal.aborted || h.launchHeld(),onNativeSessionId:id=>{threadId=id;},onNativeState:state=>{turnId=state.activeTurnId ?? turnId;},onUpdate:()=>{}},{...h.host.runtime,delegationEnabled:false});
     outcome = await engine.prompt(input.manifest.userText);
   } catch (error) { failure=error; }
   finally {

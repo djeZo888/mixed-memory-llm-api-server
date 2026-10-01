@@ -3,6 +3,7 @@ import { createCodexTextOnlyPolicy, createCodexParentArtifactScope, type CodexTe
 import { getCodexReceiptUtf8 } from '../../../server/src/codex-receipts.js';
 import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
+import {selectRestartCheckpoint} from './restart-selection.js';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
 import { randomUUID,randomBytes } from 'node:crypto';
@@ -30,16 +31,15 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
     retainPolicy: async input=>{
       if(!handoffApi)throw Error('durable_policy_handoff_unavailable');
       const keyPath=config.policyHandoffKeyPath,directory=join(input.hostPrivate,`policy-handoff-${randomUUID()}`);if(typeof keyPath!=='string')throw Error('root_provisioned_private_handoff_key_required');await mkdir(directory,{mode:0o700});
-      const store=input.application.store,run=store.runs(input.sessionId).filter((r:any)=>r.status==='completed').at(-1),checkpoint=store.checkpoints?.status(input.sessionId).filter((c:any)=>c.runId===run?.id).at(-1);
-      if(!run||!checkpoint?.id)throw Error('actual_completed_store_checkpoint_required');
-      const checkpointId=checkpoint.id,ownership=store.checkpoints.issueRestartOwnership({sessionId:input.sessionId,runId:run.id,checkpointId,threadId:input.nativeThreadId});
-      const handoff=await handoffApi.retainCodexPolicyHandoff({policy:policies.get(input.sessionId),checkpointId,directory,keyPath,sourceClosure:config.bootstrap.review.files,ownership});
-      return {...handoff,storeRunId:run.id};
+      const store=input.application.store,selected=selectRestartCheckpoint(store,input.sessionId,input.nativeThreadId,input.expectedCheckpoint,input.acceptedContinuation);
+      const {checkpointId,purpose,storeRunId}=selected,ownership=store.checkpoints.issueRestartOwnership({sessionId:input.sessionId,runId:storeRunId,checkpointId,threadId:input.nativeThreadId,purpose});
+      const handoff=await handoffApi.retainCodexPolicyHandoff({policy:policies.get(input.sessionId),checkpointId,directory,keyPath,sourceClosure:config.bootstrap.review.files,ownership,purpose});
+      return {...handoff,storeRunId,purpose};
     },
     adoptPolicy: async input=>{
       if(!handoffApi)throw Error('durable_policy_adoption_unavailable');
-      const ownership=input.application.store.checkpoints.issueRestartOwnership({sessionId:input.sessionId,runId:input.handoff.storeRunId,checkpointId:input.handoff.checkpointId,threadId:input.nativeThreadId});
-      const policy=await handoffApi.adoptCodexPolicyHandoff({ownership,path:input.handoff.path,sha256:input.handoff.sha256,keyPath:config.policyHandoffKeyPath,sessionId:input.sessionId,threadId:input.nativeThreadId,checkpointId:input.handoff.checkpointId,runId:randomUUID(),configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256,sourceClosure:config.bootstrap.review.files});policies.set(input.sessionId,policy);
+      const ownership=input.application.store.checkpoints.issueRestartOwnership({sessionId:input.sessionId,runId:input.handoff.storeRunId,checkpointId:input.handoff.checkpointId,threadId:input.nativeThreadId,purpose:input.handoff.purpose});
+      const policy=await handoffApi.adoptCodexPolicyHandoff({ownership,purpose:input.handoff.purpose,authorization:task==='H041-COMPACTION-DELIVERY-03'?'delivery03':'continuation02',path:input.handoff.path,sha256:input.handoff.sha256,keyPath:config.policyHandoffKeyPath,sessionId:input.sessionId,threadId:input.nativeThreadId,checkpointId:input.handoff.checkpointId,runId:randomUUID(),configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256,sourceClosure:config.bootstrap.review.files});policies.set(input.sessionId,policy);
     },
     configureHost(base, context) {
       const extra: CodexHostQualification = {
@@ -48,7 +48,8 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
           if (policies.has(sessionId)) return policies.get(sessionId);
           const scope = context.guard.activeScope(sessionId);
           const mode = scope?.mode === 'durable-retrieval' ? 'read-original' : ['summary-only','clean-child'].includes(scope?.mode ?? '') ? 'summary-only' : qualified.profile === 'h041-full-retention-v1' ? 'parent-artifacts' : 'text-only-parent';
-          const policy = factory({sessionId,runId:scope?.mode === 'durable-retrieval' ? scope.runId : config.bootstrap.review.authorization.windowId,mode,configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256});
+          const fields={sessionId,runId:scope?.mode === 'durable-retrieval' ? scope.runId : config.bootstrap.review.authorization.windowId,mode,configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256};
+          const policy=mode==='parent-artifacts'?(probeApi.createCodexRetentionParentPolicy)({...fields,collaborationVersion:config.bootstrap.review.retentionParentPolicy?.collaborationVersion}):factory(fields);
           policies.set(sessionId,policy); return policy;
         },
         authorizeNativeTurn: async ({policy,launchReceipt,threadId,params,method}) => {
@@ -57,8 +58,10 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
               (method === 'thread/compact/start' ? Object.keys(params).join() !== 'threadId' : typeof (params.input as any)?.[0]?.text !== 'string')) throw Error('actual_native_turn_scope_required');
         },
         ...(qualified.profile === 'h041-full-retention-v1' ? {
+          nativeDelegationQualified:true,
+          retentionTurnKind:sessionId=>{const scope=context.guard.activeScope(sessionId);if(!scope)return 'summary';return scope.purpose==='child'?'child':scope.purpose==='continuation'?'artifacts':'summary';},
           parentArtifactScope: (sessionId: string) => {
-            if (context.guard.activeScope(sessionId)?.mode === 'durable-retrieval') return undefined;
+            if(!['parent-artifacts','retention-parent'].includes(policies.get(sessionId)?.mode??''))return undefined;
             const actual=context.application(),active=context.guard.activeScope(sessionId);
             const checkpoint=active&&actual&&(actual.store as any).checkpoints?.status(sessionId).filter((c:any)=>c.runId===active.runId).at(-1);
             if(active&&!checkpoint?.id)throw Error('actual_parent_artifact_store_checkpoint_required');
