@@ -78,7 +78,8 @@ export function validateRecord(record) {
       if (['summary-only', 'durable-retrieval', 'cold-resume', 'child-context'].includes(record.mode) && (!record.isolation.firstRequestSha256 || !record.isolation.inputManifestSha256 || !record.isolation.scopeReceiptSha256 || record.isolation.firstRequestSha256 !== record.isolation.receiptSha256)) errors.push('native-first-request-proof-absent');
       if (record.actionId.value !== actionIdFor(record.runId, record.cycle, record.mode)) errors.push('native-action-identity-binding');
       for (const [key, value] of Object.entries(record.runtime)) if (typeof value === 'object' && value.value === null) errors.push(`native-pass-unpinned:${key}`);
-      for (const key of ['actionId', 'nativeThreadId', 'nativeTurnId']) if (record[key].value === null) errors.push(`native-pass-unidentified:${key}`);
+      if(record.mode==='cold-resume-after-continuation'&&record.nativeTurnId.value===null&&(!record.processRestart||record.processRestart.beforeProcessId===record.processRestart.afterProcessId||record.processRestart.nativeThreadId!==record.nativeThreadId.value))errors.push('actual-no-generation-application-restart-unproven');
+      for (const key of (record.mode==='cold-resume-after-continuation'&&record.processRestart?['actionId','nativeThreadId']:['actionId', 'nativeThreadId', 'nativeTurnId'])) if (record[key].value === null) errors.push(`native-pass-unidentified:${key}`);
       if (record.runtime.version.value !== '0.158.0' || record.runtime.sourceRevision.value !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3') errors.push('native-runtime-pin-mismatch');
       if (record.durationMs.state !== 'measured') errors.push('native-duration-absent');
     }

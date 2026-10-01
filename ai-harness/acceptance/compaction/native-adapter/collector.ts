@@ -1,3 +1,4 @@
+import { bindOriginalAliases } from '../ordinary.mjs';
 import { constants } from 'node:fs';
 import { lstat, open, readdir, realpath } from 'node:fs/promises';
 import { join, relative } from 'node:path';
@@ -18,7 +19,7 @@ export interface CollectorHost {
   store: Store; files: Files; gateway: Gateway; guard: DispatchGuard; observer: NativeObserver;
   hostPrivate: string; withCaptureHold<T>(operation: () => Promise<T>): Promise<T>;
 }
-interface OriginalRef { recordId: string; messageId: string; runId: string; offset: number; length: number; contentSha256: string }
+interface OriginalRef { productionSource?:any; recordId: string; messageId: string; runId: string; offset: number; length: number; contentSha256: string }
 export interface FullCheckpoint extends ParentState {
   compactedRecordUtf8: string; compactedRecordSha256: string;
   bindingReceiptUtf8: string; bindingReceiptSha256: string;
@@ -115,7 +116,10 @@ export class NativeCollector {
     for (const record of records) {
       if (previous.has(record.id)) throw Error('original_record_duplicate');
       const length = Buffer.byteLength(record.content);
-      refs.push({ recordId: record.id, messageId: messages[0].id, runId, offset, length, contentSha256: sha256(record.content) });
+      const memory=(this.host.store as any).memory?.bridge(sessionId);
+      let productionSource:any;
+      if(memory){const matches=memory.view().references.filter((r:any)=>r.kind==='message'&&r.availability==='complete'&&r.sha256===sha256(messages[0].content)&&r.bytes===Buffer.byteLength(messages[0].content));if(matches.length!==1)throw Error('genuine_production_message_source_missing_or_ambiguous');productionSource=bindOriginalAliases(memory,[{alias:record.id,sourceId:matches[0].id,offset,bytes:length,sha256:sha256(record.content)}])[0];}
+      refs.push({ ...(productionSource?{productionSource}:{}),recordId: record.id, messageId: messages[0].id, runId, offset, length, contentSha256: sha256(record.content) });
       previous.add(record.id); offset += length + 2;
     }
     this.originalRefs.set(sessionId, refs);
@@ -129,6 +133,7 @@ export class NativeCollector {
         if (!m) throw Error('original_message_missing_or_foreign');
         const content = Buffer.from(m.content).subarray(ref.offset, ref.offset + ref.length);
         if (sha256(content) !== ref.contentSha256) throw Error('original_message_content_changed');
+        if(ref.productionSource){const memory=(this.host.store as any).memory?.bridge(sessionId);if(!memory||stableJson(bindOriginalAliases(memory,[ref.productionSource])[0])!==stableJson(ref.productionSource))throw Error('production_original_alias_changed');}
         recordHashes[ref.recordId] = sha256(content);
       }
       const receiptUtf8 = JSON.stringify({ source: 'owned-store-original-messages', sessionId, nativeThreadId: parentState.nativeThreadId,
@@ -155,6 +160,16 @@ export class NativeCollector {
       await durableFile(join(this.host.hostPrivate, `${checkpointId}-original-scope.json`), receiptUtf8);
       return { checkpointId, parentState, originals, receiptUtf8, receiptSha256: sha256(receiptUtf8), nativeRetrieval: 'NOT_TESTED' };
     });
+  }
+  exportReferences(sessionId:string) { return structuredClone(this.originalRefs.get(sessionId)??[]); }
+  async adoptReferences(sessionId:string,refs:OriginalRef[],checkpoint:ParentState) {
+    if(this.originalRefs.has(sessionId)||!Array.isArray(refs)||!refs.length||new Set(refs.map(r=>r.recordId)).size!==refs.length)throw Error('owned_original_alias_handoff_invalid');
+    const current=await this.captureState(sessionId,'restart-original-alias-independent-state');
+    if(current.nativeThreadId!==checkpoint.nativeThreadId||current.stateSha256!==checkpoint.stateSha256||current.stateUtf8!==checkpoint.stateUtf8)throw Error('restart_parent_state_changed');
+    const messages=this.host.store.messages(sessionId);
+    for(const ref of refs){const m=messages.find(m=>m.id===ref.messageId&&m.runId===ref.runId&&m.role==='user');if(!m||!identifier(ref.recordId)||!Number.isSafeInteger(ref.offset)||!Number.isSafeInteger(ref.length)||ref.offset<0||ref.length<1||ref.offset+ref.length>Buffer.byteLength(m.content)||sha256(Buffer.from(m.content).subarray(ref.offset,ref.offset+ref.length))!==ref.contentSha256)throw Error('genuine_original_alias_bytes_not_preserved');}
+    for(const ref of refs)if(ref.productionSource){const memory=(this.host.store as any).memory?.bridge(sessionId);if(!memory||stableJson(bindOriginalAliases(memory,[ref.productionSource])[0])!==stableJson(ref.productionSource))throw Error('production_original_alias_not_preserved_after_restart');}
+    this.originalRefs.set(sessionId,reviewSnapshot(refs));
   }
   async compaction(sessionId: string, input: { actionId: string; runId: string; windowId: string; baseline: ParentState;
     summaryPrefix: string; summaryRole?: 'system' | 'developer' | 'user' | 'assistant' }): Promise<FullCheckpoint> {

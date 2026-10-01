@@ -69,7 +69,7 @@ test('SYNTHETIC continuation reads actual immutable registered files and rejects
   const root = await realpath(await mkdtemp(join(tmpdir(), 'h040-native-adapter-artifacts-'))), privateDir = join(root, 'private'); await mkdir(privateDir, { mode: 0o700 });
   const store = new Store(join(root, 'store.sqlite')), files = new Files(join(root, 'app'), store); await files.init(); const s = store.createSession(); await files.prepare(s.id, s.workspaceId);
   t.after(async () => { store.close(); await rm(root, { recursive: true, force: true }); });
-  const run = store.createRun(s, 'message', 'synthetic continuation', []); store.updateRun(run.id, 'completed');
+  const run = store.createRun(s, 'message', 'synthetic continuation', []); store.updateRun(run.id, 'completed'); store.addMessage(s.id, 'assistant', 'SOURCE peer completed artifacts', run.id, [], undefined, { phase: 'final', streamState: 'completed' } as any);
   for (const name of ['sensor-policy.json', 'engineering-calculation.json']) { await writeFile(join(files.workspace(s.workspaceId), name), JSON.stringify({ actualOutput: name }), { mode: 0o600 }); await files.registerArtifact(s.id, name, name, 'application/json', run.id); }
   const actual = await collectContinuationArtifacts(store, files, privateDir, s.id, run.id); assert.deepEqual(actual.artifacts['sensor-policy.json'], { actualOutput: 'sensor-policy.json' });
   assert.equal(actual.artifactReceiptSha256, sha256(actual.artifactReceiptUtf8)); const foreign = store.createSession(); await assert.rejects(collectContinuationArtifacts(store, files, privateDir, foreign.id, run.id));

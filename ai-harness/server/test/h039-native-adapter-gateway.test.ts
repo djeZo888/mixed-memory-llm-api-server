@@ -27,24 +27,25 @@ async function fixture(t: any, { expire = false, brokenCapture = false, afterCou
   });
   await new Promise<void>(r => backend.listen(0, '127.0.0.1', r));
   const port = (backend.address() as any).port;
+  let gateway: ReturnType<typeof createGateway> | undefined;
+  t.after(async () => { backend.closeAllConnections(); await gateway?.close(); await new Promise(r => backend.close(r)); store.close(); await rm(directory,{recursive:true,force:true}); });
   const guard = new DispatchGuard(brokenCapture ? join(directory, 'absent') : directory, () => clock);
   const request = clean();
   guard.register({ sessionId: 'owned-source-fixture', actionId: 'action-source-fixture', runId: 'run-source-fixture',
     parentNativeThreadId: 'parent-fixture', mode: 'summary-only', expiresAt: 1000, signal: new AbortController().signal,
     identity: () => ({ nativeThreadId: 'fresh-fixture', nativeTurnId: 'probe-fixture' }),
-    manifest: { input: request.input, instructions: request.instructions, userText: 'summary fixture and questions', contextSha256: sha256('summary fixture') } });
+    manifest: { envelope: Object.fromEntries(Object.entries(request).filter(([k]) => !['input','tools'].includes(k))), input: request.input, instructions: request.instructions, userText: 'summary fixture and questions', contextSha256: sha256('summary fixture') } });
   if (expire) clock = 1001;
-  const gateway = createGateway({ upstreamKey: 'source-fixture-key', ownership: new GatewayOwnershipLedger(store.db).options(),
+  gateway = createGateway({ upstreamKey: 'source-fixture-key', ownership: new GatewayOwnershipLedger(store.db).options(),
     upstreams: [{ alias: 'qwen3.8-27b-gpu0', url: `http://127.0.0.1:${port}/v1` }, { alias: 'qwen3.8-27b', url: `http://127.0.0.1:${port}/v1` }],
     responses: { enabled: true, countQwen: guard.wrap(async () => { counts++; if (afterCount) clock = 1001; return { inputTokens: 7, contextWindow: 480000 }; }) },
     diagnostics: { capture: guard.capture } });
   const url = await gateway.app.listen({ port: 0, host: '127.0.0.1' });
-  const token = gateway.issueToken('owned-source-fixture', 'codex');
-  t.after(async () => { backend.closeAllConnections(); await gateway.close(); await new Promise(r => backend.close(r)); store.close(); await rm(directory, { recursive: true, force: true }); });
-  return { gateway, guard, directory, seen, counts: () => counts, request,
+  const token = gateway!.issueToken('owned-source-fixture', 'codex');
+  return { gateway: gateway!, guard, directory, seen, counts: () => counts, request,
     send: (body = request, authorization = token) => fetch(url + '/v1/responses', { method: 'POST', headers: { authorization: `Bearer ${authorization}`, 'content-type': 'application/json' }, body: JSON.stringify(body) }) };
 }
-test('real gateway parser/count path captures both inputs and owns settlement independently', async t => {
+test('SYNTHETIC real gateway parser/count path captures both inputs and owns settlement independently', async t => {
   const f = await fixture(t);
   const response = await f.send(); assert.equal(response.status, 200); assert.match(await response.text(), /response.completed/);
   assert.equal(f.seen.length, 1); assert.equal(f.counts(), 1);
@@ -56,7 +57,7 @@ test('real gateway parser/count path captures both inputs and owns settlement in
   assert.equal(await f.gateway.confirmSettlement({ sessionId: 'owned-source-fixture' }), true);
   const second = await f.send(); assert.notEqual(second.status, 200); assert.equal(f.seen.length, 1);
 });
-test('tools, old tool history, extra original input and foreign native IDs never dispatch', async t => {
+test('SYNTHETIC tools, old tool history, extra original input and foreign native IDs never dispatch', async t => {
   const mutations = [
     (r: any) => { r.tools = [{ type: 'function', name: 'exec_command', parameters: { type: 'object', properties: {} }, strict: false }]; },
     (r: any) => { r.input.push({ type: 'function_call', name: 'exec_command', call_id: 'old', arguments: '{}' }); },
@@ -71,15 +72,15 @@ test('tools, old tool history, extra original input and foreign native IDs never
     assert.equal(await f.gateway.confirmSettlement({ sessionId: 'owned-source-fixture' }), true);
   }
 });
-test('expired scopes, swallowed capture errors and expiry after counter all reject', async t => {
+test('SYNTHETIC expired scopes, swallowed capture errors and expiry after counter all reject', async t => {
   for (const options of [{ expire: true }, { brokenCapture: true }, { afterCount: true }]) {
     const f = await fixture(t, options); assert.notEqual((await f.send()).status, 200);
     assert.equal(f.seen.length, 0); assert.equal(f.counts(), options.afterCount ? 1 : 0);
     assert.equal(await f.gateway.confirmSettlement({ sessionId: 'owned-source-fixture' }), true);
   }
 });
-test('unregistered authenticated owners cannot bypass the temporary counter guard', async t => {
-  const f = await fixture(t); const other = f.gateway.issueToken('unrelated-fixture', 'codex');
+test('SYNTHETIC unregistered authenticated owners cannot bypass the temporary counter guard', async t => {
+  const f = await fixture(t); const other = f.gateway!.issueToken('unrelated-fixture', 'codex');
   assert.notEqual((await f.send(f.request, other)).status, 200);
   assert.equal(f.seen.length, 0); assert.equal(f.counts(), 0);
 });

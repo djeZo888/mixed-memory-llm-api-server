@@ -88,6 +88,12 @@ export class NativeObserver {
     handle.gateway = { nativeThreadId, nativeTurnId, confirmed, observedAt: new Date().toISOString() };
     try { writePrivate(join(this.directory, `${handle.handleId}-gateway-${randomUUID()}.json`), stableJson(handle.gateway)); } catch (error) { handle.failed = true; throw error; }
   }
+  frames(sessionId: string) {
+    const handle = this.handles.findLast(h => h.sessionId === sessionId);
+    if (!handle || handle.failed) throw Error('native_frames_missing_or_failed');
+    return structuredClone(handle.frames);
+  }
+  sessions() { return [...new Set(this.handles.map(h => h.sessionId))]; }
   settled(sessionId: string) { return this.handles.some(h => h.sessionId === sessionId) && this.handles.filter(h => h.sessionId === sessionId).every(h => !h.failed && h.cleanup?.confirmed && h.gateway?.confirmed); }
   operation(sessionId: string): ObservedOperation {
     const handle = this.handles.findLast(h => h.sessionId === sessionId);

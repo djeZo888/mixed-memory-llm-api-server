@@ -15,12 +15,15 @@ export interface ProbeManifest {
   envelope: Record<string, unknown>;
 }
 export interface RequestScope {
-  sessionId: string; actionId: string; runId: string; mode: 'main' | 'summary-only';
+  sessionId: string; actionId: string; runId: string; mode: 'main' | 'summary-only' | 'durable-retrieval' | 'clean-child' | 'parent-artifacts';
+  purpose?: 'append' | 'continuation' | 'compaction';
+  toolPolicy?: { rawTools: unknown[]; normalizedTools: unknown[]; envelope: Record<string,unknown> };
   parentNativeThreadId?: string; expiresAt: number; signal: AbortSignal;
   identity(): { nativeThreadId?: string; nativeTurnId?: string; activeRunId?: string };
   manifest?: ProbeManifest;
+  validateFollowup?(input: unknown): void;
 }
-interface Captured { scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string }
+interface Captured { scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown> }
 function durableBytes(file: string, bytes: Buffer) {
   const fd = openSync(file, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
   try {
@@ -40,11 +43,13 @@ export class DispatchGuard {
   private failures = new Set<string>();
   private bytes = 0;
   constructor(private directory: string, private now: () => number = Date.now, private maxBytes = 64 * 1024 * 1024) {}
+  beforeDispatch?: (scope: RequestScope, capture: {firstRequestUtf8:string;normalizedRequestUtf8:string;nativeThreadId:string;nativeTurnId:string}) => Promise<Record<string,unknown>>;
+  activeScope(sessionId: string) { return this.scopes.get(sessionId); }
   register(scope: RequestScope) {
     if (this.scopes.has(scope.sessionId) || !identifier(scope.sessionId) || !identifier(scope.actionId) ||
         !identifier(scope.runId) || !Number.isFinite(scope.expiresAt) || scope.expiresAt <= this.now() ||
         scope.expiresAt - this.now() > 120000 || scope.signal.aborted) throw Error('scope_invalid_or_duplicate');
-    if (scope.mode === 'summary-only') {
+    if (['summary-only','durable-retrieval','clean-child'].includes(scope.mode)) {
       const m = scope.manifest;
       if (!m || !m.envelope || typeof m.envelope !== 'object' || Array.isArray(m.envelope) || m.envelope.instructions !== m.instructions ||
           Object.hasOwn(m.envelope, 'input') || Object.hasOwn(m.envelope, 'tools') || !Array.isArray(m.input) || !m.input.length || typeof m.instructions !== 'string' ||
@@ -57,7 +62,7 @@ export class DispatchGuard {
             !Array.isArray(x.content) || x.content.some((c: any) => c?.type !== 'input_text' || typeof c.text !== 'string'))) throw Error('manifest_contains_history_or_nontext');
     }
     // Defensive snapshots: the controller cannot mutate a manifest after review.
-    this.scopes.set(scope.sessionId, { ...scope, manifest: scope.manifest ? structuredClone(scope.manifest) : undefined });
+    this.scopes.set(scope.sessionId, { ...scope, manifest: scope.manifest ? structuredClone(scope.manifest) : undefined, toolPolicy: scope.toolPolicy ? structuredClone(scope.toolPolicy) : undefined });
   }
   retire(sessionId: string) { this.scopes.delete(sessionId); }
   private active(scope: RequestScope) {
@@ -92,16 +97,28 @@ export class DispatchGuard {
       if (signal.aborted) throw Error('dispatch_cancelled');
       const raw = JSON.parse(capture.raw.toString('utf8'));
       const native = scope.identity();
-      if (scope.mode === 'main' && native.activeRunId !== scope.runId) throw Error('actual_active_run_identity_mismatch');
+      if (['main','parent-artifacts'].includes(scope.mode) && native.activeRunId !== scope.runId) throw Error('actual_active_run_identity_mismatch');
       if (!identifier(native.nativeThreadId) || !identifier(native.nativeTurnId) ||
           raw.client_metadata?.thread_id !== native.nativeThreadId || raw.client_metadata?.turn_id !== native.nativeTurnId ||
           (raw.client_metadata.root_turn_id !== undefined && raw.client_metadata.root_turn_id !== native.nativeTurnId)) throw Error('first_request_native_identity_mismatch');
-      if (stableJson(body.tools) !== '[]' || stableJson(raw.tools) !== '[]') throw Error('stage_actual_tools_must_be_empty_before_dispatch');
-      if (scope.mode === 'summary-only') {
+      if (['main','parent-artifacts'].includes(scope.mode) && scope.manifest) {
+        const m=scope.manifest;
+        const earlier=[...this.captures.values()].some(c=>c!==capture&&c.scope===scope&&c.claimed);
+        if(earlier&&scope.mode==='parent-artifacts'){if(!scope.validateFollowup)throw Error('unqualified_parent_artifact_followup');scope.validateFollowup(raw.input);}
+        if((!(earlier&&scope.mode==='parent-artifacts')&&stableJson(raw.input)!==stableJson(m.input))||stableJson(Object.fromEntries(Object.entries(raw).filter(([k])=>!['input','tools'].includes(k))))!==stableJson(bindReviewedEnvelope(m.envelope,native.nativeThreadId,native.nativeTurnId)))throw Error('parent_independently_frozen_complete_input_required');
+      }
+      if (scope.mode === 'parent-artifacts' || scope.mode === 'durable-retrieval') {
+        const policy = scope.toolPolicy;
+        if (!policy || stableJson(raw.tools) !== stableJson(policy.rawTools) || stableJson(body.tools) !== stableJson(policy.normalizedTools) ||
+            (scope.mode === 'parent-artifacts' && stableJson(Object.fromEntries(Object.entries(raw).filter(([k]) => !['input','tools'].includes(k)))) !== stableJson(bindReviewedEnvelope(policy.envelope,native.nativeThreadId,native.nativeTurnId)))) throw Error('distinct_frozen_tool_policy_required_before_dispatch');
+      } else if (stableJson(body.tools) !== '[]' || stableJson(raw.tools) !== '[]') throw Error('stage_actual_tools_must_be_empty_before_dispatch');
+      if (['summary-only','durable-retrieval','clean-child'].includes(scope.mode)) {
         const m = scope.manifest!;
-        if (native.nativeThreadId === scope.parentNativeThreadId || [...this.captures.values()].some(c => c !== capture && c.scope.sessionId === scope.sessionId)) throw Error('probe_identity_or_extra_request');
-        if (stableJson(body.tools) !== '[]' || stableJson(raw.tools) !== '[]' ||
-            stableJson(raw.input) !== stableJson(m.input) || (raw.instructions ?? '') !== m.instructions ||
+        const earlier = [...this.captures.values()].filter(c => c !== capture && c.scope.sessionId === scope.sessionId && c.claimed);
+        if (native.nativeThreadId === scope.parentNativeThreadId || (scope.mode !== 'durable-retrieval' && earlier.length)) throw Error('probe_identity_or_extra_request');
+        if (earlier.length) { if (!scope.validateFollowup) throw Error('unqualified_retrieval_followup'); scope.validateFollowup(raw.input); }
+        if ((scope.mode !== 'durable-retrieval' && (stableJson(body.tools) !== '[]' || stableJson(raw.tools) !== '[]')) ||
+            (earlier.length === 0 && stableJson(raw.input) !== stableJson(m.input)) || (raw.instructions ?? '') !== m.instructions ||
             stableJson(Object.fromEntries(Object.entries(raw).filter(([k]) => !['input', 'tools'].includes(k)))) !==
             stableJson(bindReviewedEnvelope(m.envelope, native.nativeThreadId, native.nativeTurnId))) throw Error('summary_input_or_actual_tools_mismatch');
       }
@@ -113,6 +130,7 @@ export class DispatchGuard {
       capture.nativeThreadId = native.nativeThreadId; capture.nativeTurnId = native.nativeTurnId;
       capture.normalized = Buffer.from(JSON.stringify(body));
       durableBytes(join(this.directory, `${requestId}-normalized.bin`), capture.normalized);
+      if (this.beforeDispatch) capture.scopeEvidence = await this.beforeDispatch(scope,{firstRequestUtf8:capture.raw.toString('utf8'),normalizedRequestUtf8:capture.normalized.toString('utf8'),nativeThreadId:native.nativeThreadId,nativeTurnId:native.nativeTurnId});
       const count = await counter(body, lane, key, signal, context);
       this.active(scope);
       if (signal.aborted) throw Error('dispatch_cancelled_after_count');
@@ -123,6 +141,10 @@ export class DispatchGuard {
     const entries = [...this.captures.entries()].filter(([, c]) => c.scope.sessionId === sessionId);
     if (entries.length !== 1 || !entries[0][1].claimed || this.failures.has(sessionId)) throw Error('probe_capture_unavailable');
     return this.entryReceipt(entries[0]);
+  }
+  firstReceipt(sessionId: string) {
+    const entry=[...this.captures.entries()].find(([,c])=>c.scope.sessionId===sessionId&&c.claimed);
+    if(!entry||this.failures.has(sessionId))throw Error('first_capture_absent');return this.entryReceipt(entry);
   }
   requests(sessionId: string) {
     if (this.failures.has(sessionId)) throw Error('request_capture_failed');
@@ -142,7 +164,7 @@ export class DispatchGuard {
       parentNativeThreadId: c.scope.parentNativeThreadId, contextSha256: c.scope.manifest?.contextSha256,
       firstRequestUtf8: c.raw.toString('utf8'), captureSha256: sha256(c.raw),
       normalizedRequestUtf8: c.normalized!.toString('utf8'), normalizedSha256: sha256(c.normalized!),
-      capturedBy: 'host', actualTools: JSON.parse(c.normalized!.toString('utf8')).tools };
+      ...c.scopeEvidence, capturedBy: 'host', actualTools: JSON.parse(c.normalized!.toString('utf8')).tools };
   }
 }
 

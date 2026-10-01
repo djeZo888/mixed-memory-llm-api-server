@@ -1,0 +1,1 @@
+export function verifyObservedModelScope(probe: any, expected: any): { status: string; errors: string[]; scopeReceiptSha256?: string; observedModelScope?: boolean; network?: string; physicalMounts?: unknown[]; modelFileTools?: never[]; originalReader?: string | null };

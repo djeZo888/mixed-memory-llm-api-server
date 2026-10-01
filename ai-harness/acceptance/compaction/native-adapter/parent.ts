@@ -9,13 +9,13 @@ import { stableJson } from './projection.js';
 /** Initialization only, with the same launch gate and owned close registry as
  * probes. No prompt is sent to obtain an ID. Callbacks come from the native engine.
  */
-export async function openNativeParent(h: TemporaryHost, sessionId: string, callerSignal: AbortSignal) {
+export async function openNativeParent(h: TemporaryHost, sessionId: string, callerSignal: AbortSignal, expectedResumeThreadId?:string) {
   if (h.closing || h.launchHeld() || callerSignal.aborted) throw Error('trusted_parent_launch_held_or_aborted');
   const ownedAbort = new AbortController(), signal = AbortSignal.any([callerSignal, ownedAbort.signal]);
   let finish!: () => void;
   const finished = new Promise<void>(resolve => { finish = resolve; });
   const s = h.application.store.getSession(sessionId);
-  if (s.nativeSessionId || s.engineKind !== 'codex') throw Error('fresh_parent_required');
+  if(s.engineKind!=='codex'||(expectedResumeThreadId ? s.nativeSessionId!==expectedResumeThreadId : !!s.nativeSessionId))throw Error('fresh_or_exact_adopted_parent_required');
   let engine: CodexEngine | undefined, token: string | undefined, cancellation: Promise<void> | undefined, failure: unknown;
   const events: ({ type: 'state'; state: NativeEngineState } | { type: 'native-id'; id: string } | { type: 'update'; update: EngineUpdate })[] = [];
   const abort = () => { ownedAbort.abort(); h.gateway.revokeSession(s.id); if (engine) { cancellation ??= engine.close(); void cancellation.catch(() => undefined); } };
@@ -28,7 +28,7 @@ export async function openNativeParent(h: TemporaryHost, sessionId: string, call
     if (signal.aborted || h.launchHeld()) throw Error('trusted_parent_launch_held_or_aborted');
     token = h.gateway.issueToken(s.id, 'codex');
     engine = new CodexEngine({ sessionId: s.id, engineKind: s.engineKind, engineVersion: s.engineVersion,
-      modelPolicyVersion: s.modelPolicyVersion, nativeState: s.nativeState,
+      modelPolicyVersion: s.modelPolicyVersion, nativeState: s.nativeState,nativeSessionId:expectedResumeThreadId,
       onNativeState: state => { h.application.store.setNativeState(s.id, 'codex', state); events.push({ type: 'state', state }); },
       onNativeSessionId: id => { h.application.store.setNative(s.id, id, 'codex'); events.push({ type: 'native-id', id }); },
       onUpdate: update => { events.push({ type: 'update', update }); },

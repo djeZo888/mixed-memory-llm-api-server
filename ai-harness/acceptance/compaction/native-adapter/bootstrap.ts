@@ -1,8 +1,14 @@
+import { isRestartTicket,type RestartTicket } from './restart.js';
+import { randomUUID } from 'node:crypto';
+import { reviewedAuthorization } from '../authorization.mjs';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
 import { createApp } from '../../../server/src/app.js';
-import { composeCodexHost } from '../../../server/src/codex-host.js';
+import type { CodexReadOriginalProbe } from '../../../server/src/codex-probe.js';
+import { NativeEvidence, type EvidenceHooks } from './native-evidence.js';
+import { isQualifiedEntry, type EntryQualification } from './qualification.js';
+import { composeCodexHost, type CodexHostQualification } from '../../../server/src/codex-host.js';
 import { codexDeployment } from '../../../server/src/codex-deployment.js';
 import { createProductionQwenVerifier, loadQwenReceipt } from '../../../server/src/codex-production.js';
 import { readProtectedCredential } from '../../../server/src/protected-credential.js';
@@ -20,14 +26,14 @@ import { NativeObserver } from './native-observer.js';
 export const FIXED_POLICY = Object.freeze({ version: '0.158.0', sourceRevision: '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3',
   gatewayUrl: 'http://10.0.2.2:8081/v1', gatewayHost: '127.0.0.1', gatewayPort: 8081,
   frontendHost: '127.0.0.1', frontendPort: 18081, contextWindow: 480000, autoCompactTokenLimit: 400000, maxOutputTokens: 65536 });
-export const RECOMMENDED_SETTLEMENT_RESERVE_MS = 180000;
+export const RECOMMENDED_SETTLEMENT_RESERVE_MS = 120000;
 export const STAGE_POLICY = Object.freeze({ profile: 'h040-summary-stage-v1', qualifiedAliases: Object.freeze(['qwen3.8-27b']),
   nativeDelegationQualified: false, imageJobsQualified: false, providerTools: 'empty-only' });
 export interface BootstrapInput {
   review: { enabled: boolean; approvedBy: string; candidateCommit: string; notAfterUtc: string; settlementReserveMs: number;
     policy: typeof FIXED_POLICY; stagePolicy: typeof STAGE_POLICY; files: Record<string, string>; productionStateReceiptSha256: string;
     projection: { format: 'h040-fresh-persisted-message-v1'; frozenPolicySha256: string; specSha256: string; collectorSourceSha256: string };
-    authorization: { task: 'H040'; windowId: string; startsUtc: string; capUtc: string } };
+    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02'; windowId: string; startsUtc: string; capUtc: string } };
   actualCandidateCommit: string; privateBase: string; productionDataDir: string; repository: string;
   launcherPath: string; qwenReceiptPath: string; inferenceKeyPath: string; controlKeyPath: string;
   productionStateReceiptPath: string;
@@ -37,15 +43,11 @@ export interface BootstrapInput {
  * This helper neither stops production nor sweeps/kills/changes ports.
  */
 export function reviewedExpiry(review: BootstrapInput['review'], now = Date.now()) {
-  const expiry = Date.parse(review?.notAfterUtc);
-  if (review?.authorization?.task !== 'H040' || review.authorization.startsUtc !== '2026-10-01T02:26:10Z' ||
-      review.authorization.capUtc !== '2026-10-01T04:26:10Z' || !review.authorization.windowId ||
-      !Number.isSafeInteger(review.settlementReserveMs) || review.settlementReserveMs < 75000 || review.settlementReserveMs > 300000 ||
-      now < Date.parse(review.authorization.startsUtc) || !Number.isFinite(expiry) || expiry <= now || expiry > Date.parse(review.authorization.capUtc))
-    throw Error('root_h040_explicit_window_required_or_expired');
-  return expiry;
+  return reviewedAuthorization(review, now).expiresAt;
 }
-export async function bootstrap(input: BootstrapInput) {
+export interface BootstrapHooks { qualification: EntryQualification; evidence: EvidenceHooks; applicationRestart?(method:'coldResume'|'resumeAcceptedContinuation',input:any):Promise<any>; delegatedChild?(input:any):Promise<any>; retainPolicy?(input:any):Promise<any>; adoptPolicy?(input:any):Promise<void>; configureHost(base: CodexHostQualification, context: { guard: DispatchGuard; observer: NativeObserver; layout: Awaited<ReturnType<typeof createLayout>>; application(): Awaited<ReturnType<typeof createApp>> | undefined; originalProbes: Map<string,CodexReadOriginalProbe>; originalSettlements: any[]; artifactSettlements: any[] }): CodexHostQualification; }
+export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,restart?:RestartTicket) {
+  if(restart&&!isRestartTicket(restart))throw Error('owned_qualified_restart_required');
   input = reviewSnapshot(input);
   const review = input.review, expiry = Date.parse(review?.notAfterUtc);
   if (review?.enabled !== true || review.approvedBy !== 'root' || !/^[a-f0-9]{40}$/.test(review.candidateCommit) ||
@@ -71,30 +73,36 @@ export async function bootstrap(input: BootstrapInput) {
       production.noWriters !== true || production.nativeSettled !== true || production.gatewaySettled !== true ||
       !/^[a-f0-9]{64}$/.test(production.preservedStateSha256 ?? '') ||
       !Number.isFinite(Date.parse(production.observedAt)) || Date.now() - Date.parse(production.observedAt) < 0 ||
-      Date.now() - Date.parse(production.observedAt) > 60000) throw Error('fresh_preserved_production_quiescence_unavailable');
-  const layout = await createLayout(input.privateBase, [input.productionDataDir, input.repository,
+      (!restart&&Date.now() - Date.parse(production.observedAt) > 60000)) throw Error('fresh_preserved_production_quiescence_unavailable');
+  const layout = restart ? restart.state.layout as Awaited<ReturnType<typeof createLayout>> : await createLayout(input.privateBase, [input.productionDataDir, input.repository,
     input.inferenceKeyPath, input.controlKeyPath, input.productionStateReceiptPath]);
-  const captures = join(layout.hostPrivate, 'captures');
+  const captures = join(layout.hostPrivate, `captures-${randomUUID()}`);
   const { mkdir } = await import('node:fs/promises');
   await mkdir(captures, { mode: 0o700 });
   const guard = new DispatchGuard(captures);
   const observer = new NativeObserver(captures);
+  if (hooks && !isQualifiedEntry(hooks.qualification)) throw Error('qualified_entry_object_required');
+  const evidence = hooks ? new NativeEvidence(captures, hooks.evidence) : undefined;
+  if(restart&&evidence)evidence.importClosed(restart.closed,{runId:restart.state.runId,operationWindowId:restart.state.windowId,observedSettlements:restart.state.observedSettlements,receiptSources:(review as any).receiptSources});
   const receipt = await loadQwenReceipt(input.qwenReceiptPath);
   const inferenceKey = await readProtectedCredential(input.inferenceKeyPath);
   const controlKey = await readProtectedCredential(input.controlKeyPath);
   const verifyLane = createProductionQwenVerifier(receipt, { inferenceKey, controlKey });
+  if(hooks){const current=await verifyLane('qwen3.8-27b');if(current.instanceId!==hooks.qualification.routeInstanceId)throw Error('current_qwen_operation_identity_changed');}
   // Reuse the existing fail-closed held() semantics with a read-only connection.
   // Opening the normal owner would create/chmod shared production gate state.
   await privateFile(DISPATCH_STATE);
   const freezeDb = new DatabaseSync(DISPATCH_STATE, { readOnly: true });
   const freeze = { held: (alias: string) => DispatchFreeze.prototype.held.call({ db: freezeDb } as DispatchFreeze, alias), close: () => freezeDb.close() };
   let gateway: Gateway | undefined, closed = false;
-  const host = composeCodexHost(input.launcherPath, () => gateway, { protocolQualified: true, rootlessQualified: true,
-    verifyLane, outputLimit: 65536, qualifiedAliases: STAGE_POLICY.qualifiedAliases });
+  const originalProbes = new Map<string,CodexReadOriginalProbe>(), originalSettlements: any[] = [], artifactSettlements: any[] = [];
+  const baseQualification: CodexHostQualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit: 65536, qualifiedAliases: STAGE_POLICY.qualifiedAliases };
+  const host = composeCodexHost(input.launcherPath, () => gateway, hooks ? hooks.configureHost(baseQualification,{guard,observer,layout,application:() => application,originalProbes,originalSettlements,artifactSettlements}) : baseQualification);
+  if (hooks && (!host.runtime.nativeReceiptsRequired || typeof (host.runtime as unknown as Record<string,unknown>).textOnlyPolicy !== 'function')) throw Error('actual_receipt_and_thread_policy_consumer_required');
   const originalLaunch = host.runtime.launchRootless, originalSettlement = host.runtime.confirmGatewaySettlement;
   host.runtime.launchRootless = async params => {
     if (launchHeld()) throw Error('trusted_shared_native_launch_held');
-    const process = await originalLaunch(params);
+    const process = evidence ? await evidence.launch(params.sessionId,params,() => originalLaunch(params)) : await originalLaunch(params);
     // A hold arriving during launch blocks all subsequent request admission.
     return observer.wrap(params.sessionId, process);
   };
@@ -116,6 +124,15 @@ export async function bootstrap(input: BootstrapInput) {
     engineFactory: () => { throw Error('minimax_outside_adapter_scope'); },
     gatewayUrl: FIXED_POLICY.gatewayUrl, dispatchHeld: held,
     issueToken: id => gateway!.issueToken(id, 'codex'), revokeToken: token => gateway!.revokeToken(token), visionAvailable: false });
+  if (evidence && hooks) guard.beforeDispatch = async (scope, capture) => {
+    evidence.expectAction(scope.actionId);
+    if (!['summary-only','durable-retrieval','clean-child'].includes(scope.mode)) return {};
+    const parent = application.store.db.prepare('SELECT id FROM sessions WHERE native_session_id=?').get(scope.parentNativeThreadId!);
+    if (!parent) throw Error('observed_parent_session_mapping_required');
+    const mode = scope.mode === 'durable-retrieval' ? 'read-original' : scope.mode === 'clean-child' ? 'clean-child' : 'summary-only';
+    return evidence.scope({sessionId:scope.sessionId,parentSessionId:String(parent.id),runId:scope.runId,actionId:scope.actionId,windowId:review.authorization.windowId,
+      ...capture,policy:hooks.qualification.scopePolicies[mode],observer});
+  };
   const directProbes = new Map<string, { abort(): void; finished: Promise<void> }>();
   const close = ownedClose(async () => {
     closed = true;
@@ -138,11 +155,11 @@ export async function bootstrap(input: BootstrapInput) {
     // Fixed bind only. EADDRINUSE is retained and propagated; no fallback/sweep.
     await gateway.app.listen({ host: '127.0.0.1', port: 8081 });
     await application.app.listen({ host: '127.0.0.1', port: 18081 });
-    await durableFile(join(layout.hostPrivate, 'bootstrap-receipt.json'), stableJson({
+    await durableFile(join(layout.hostPrivate, `bootstrap-${randomUUID()}-receipt.json`), stableJson({
       schema: 1, candidateCommit: review.candidateCommit, policy: FIXED_POLICY, layout,
       reviewSha256: sha256(stableJson(review)), productionStateReceiptSha256: review.productionStateReceiptSha256,
       productionBrowserQualification: 'NOT_TESTED', runtimeBinaryQualification: 'NOT_TESTED' }) + '\n');
-    return { application, gateway, host, guard, observer, launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
+    return { application, gateway, host, guard, observer, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
   } catch (error) {
     return failedBootstrap(error, () => durableFile(join(layout.hostPrivate, 'bootstrap-FAILED.json'), stableJson({
       outcome: 'failed', code: (error as NodeJS.ErrnoException).code === 'EADDRINUSE' ? 'EADDRINUSE' : 'bootstrap_failed', automaticRetry: false }) + '\n'), close);

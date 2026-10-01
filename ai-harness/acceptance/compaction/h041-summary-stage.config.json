@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "suiteId": "h039-technical-retention-v1",
+  "profile": "h041-summary-stage-v1",
+  "enabled": false,
+  "qualification": "source-preparation-only",
+  "runtime": {
+    "name": "codex",
+    "version": "0.158.0",
+    "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "mainModel": "root-reviewed-current-Qwen",
+    "modelRevision": null,
+    "contextWindow": 480000,
+    "autoCompactTokenLimit": 400000,
+    "maxOutputTokens": 65536
+  },
+  "cycles": [
+    1
+  ],
+  "trigger": "manual",
+  "deadlineMs": 120000,
+  "maximumNativeActions": 9,
+  "nativeSettlementReserveMs": 120000,
+  "requiredCapabilities": [
+    "qualified-fresh-persisted-message-projection",
+    "host-captured-probe-input",
+    "tools-and-files-denied-for-summary",
+    "settlement-receipts"
+  ],
+  "automaticCase": {
+    "enabled": false
+  },
+  "review": null
+}

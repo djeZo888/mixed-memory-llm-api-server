@@ -3,107 +3,723 @@
   "$id": "urn:sova:h040:compaction-evidence:2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "logicalManifestFormat", "operationWindowId", "nativeCompactionWindowId", "suiteId", "runId", "qualification", "status", "mode", "cycle", "runtime", "sourceHashes", "actionId", "nativeThreadId", "nativeTurnId", "compactionActionId", "compactionNativeThreadId", "compactionTokens", "compactionDurationMs", "trigger", "tokens", "durationMs", "nativeOutcome", "scores", "checks", "artifactHashes", "retrieval", "isolation", "originals", "settlement", "failure", "limitations"],
+  "required": [
+    "schemaVersion",
+    "logicalManifestFormat",
+    "operationWindowId",
+    "nativeCompactionWindowId",
+    "suiteId",
+    "runId",
+    "qualification",
+    "status",
+    "mode",
+    "cycle",
+    "runtime",
+    "sourceHashes",
+    "actionId",
+    "nativeThreadId",
+    "nativeTurnId",
+    "compactionActionId",
+    "compactionNativeThreadId",
+    "compactionTokens",
+    "compactionDurationMs",
+    "trigger",
+    "tokens",
+    "durationMs",
+    "nativeOutcome",
+    "scores",
+    "checks",
+    "artifactHashes",
+    "retrieval",
+    "isolation",
+    "originals",
+    "settlement",
+    "failure",
+    "limitations"
+  ],
   "properties": {
-    "schemaVersion": {"const": 2},
-    "logicalManifestFormat": {"const": "h040-sorted-json-v1"},
-    "operationWindowId": {"$ref": "#/$defs/metadata"},
-    "nativeCompactionWindowId": {"$ref": "#/$defs/metadata"},
-    "suiteId": {"const": "h039-technical-retention-v1"},
-    "runId": {"type": "string", "minLength": 1},
-    "qualification": {"enum": ["synthetic", "native"]},
-    "status": {"enum": ["PASS", "FAIL", "NOT_TESTED"]},
-    "mode": {"enum": ["summary-only", "durable-retrieval", "continuation", "fault", "child-context", "cold-resume", "cold-resume-after-continuation"]},
-    "cycle": {"type": "integer", "minimum": 1, "maximum": 3},
+    "schemaVersion": {
+      "const": 2
+    },
+    "logicalManifestFormat": {
+      "const": "h040-sorted-json-v1"
+    },
+    "operationWindowId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "nativeCompactionWindowId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "suiteId": {
+      "const": "h039-technical-retention-v1"
+    },
+    "runId": {
+      "type": "string",
+      "minLength": 1
+    },
+    "qualification": {
+      "enum": [
+        "synthetic",
+        "native"
+      ]
+    },
+    "status": {
+      "enum": [
+        "PASS",
+        "FAIL",
+        "NOT_TESTED"
+      ]
+    },
+    "mode": {
+      "enum": [
+        "summary-only",
+        "durable-retrieval",
+        "continuation",
+        "fault",
+        "child-context",
+        "cold-resume",
+        "cold-resume-after-continuation"
+      ]
+    },
+    "cycle": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 3
+    },
     "runtime": {
-      "type": "object", "additionalProperties": false,
-      "required": ["name", "version", "sourceRevision", "binarySha256", "model", "modelRevision", "tokenizerRevision", "promptRevision"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "name",
+        "version",
+        "sourceRevision",
+        "binarySha256",
+        "model",
+        "modelRevision",
+        "tokenizerRevision",
+        "promptRevision"
+      ],
       "properties": {
-        "name": {"const": "codex"},
-        "version": {"$ref": "#/$defs/metadata"},
-        "sourceRevision": {"$ref": "#/$defs/metadata"},
-        "binarySha256": {"$ref": "#/$defs/metadata"},
-        "model": {"$ref": "#/$defs/metadata"},
-        "modelRevision": {"$ref": "#/$defs/metadata"},
-        "tokenizerRevision": {"$ref": "#/$defs/metadata"},
-        "promptRevision": {"const": "kpm-technical-v1"}
+        "name": {
+          "const": "codex"
+        },
+        "version": {
+          "$ref": "#/$defs/metadata"
+        },
+        "sourceRevision": {
+          "$ref": "#/$defs/metadata"
+        },
+        "binarySha256": {
+          "$ref": "#/$defs/metadata"
+        },
+        "model": {
+          "$ref": "#/$defs/metadata"
+        },
+        "modelRevision": {
+          "$ref": "#/$defs/metadata"
+        },
+        "tokenizerRevision": {
+          "$ref": "#/$defs/metadata"
+        },
+        "promptRevision": {
+          "const": "kpm-technical-v1"
+        }
       }
     },
     "sourceHashes": {
-      "type": "object", "additionalProperties": false, "required": ["corpus", "truth", "controller", "scorer", "evidence", "schema", "config", "qualification", "qualificationSchema"],
-      "properties": {"corpus": {"$ref": "#/$defs/hash"}, "truth": {"$ref": "#/$defs/hash"}, "controller": {"$ref": "#/$defs/hash"}, "scorer": {"$ref": "#/$defs/hash"}, "evidence": {"$ref": "#/$defs/hash"}, "schema": {"$ref": "#/$defs/hash"}, "config": {"$ref": "#/$defs/hash"}, "qualification": {"$ref": "#/$defs/hash"}, "qualificationSchema": {"$ref": "#/$defs/hash"}}
-    },
-    "actionId": {"$ref": "#/$defs/metadata"},
-    "nativeThreadId": {"$ref": "#/$defs/metadata"},
-    "nativeTurnId": {"$ref": "#/$defs/metadata"},
-    "compactionActionId": {"$ref": "#/$defs/metadata"},
-    "compactionNativeThreadId": {"$ref": "#/$defs/metadata"},
-    "compactionTokens": {"$ref": "#/$defs/tokens"},
-    "compactionDurationMs": {"$ref": "#/$defs/measurement"},
-    "trigger": {
-      "type": "object", "additionalProperties": false, "required": ["type", "evidence"],
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "corpus",
+        "truth",
+        "controller",
+        "scorer",
+        "evidence",
+        "schema",
+        "config",
+        "qualification",
+        "qualificationSchema"
+      ],
       "properties": {
-        "type": {"enum": ["manual", "auto", "unknown"]},
-        "evidence": {"type": "array", "items": {
-          "type": "object", "additionalProperties": false, "required": ["kind", "ref", "sha256"],
-          "properties": {"kind": {"enum": ["manual-action", "native-request-metadata", "native-event", "synthetic"]}, "ref": {"type": "string", "minLength": 1}, "sha256": {"$ref": "#/$defs/hash"}, "nativeRequestKind": {"enum": ["compaction"]}, "nativeTrigger": {"enum": ["auto", "manual"]}, "actionId": {"type": "string"}, "nativeThreadId": {"type": "string"}, "runId": {"type": "string"}}
-        }}
+        "corpus": {
+          "$ref": "#/$defs/hash"
+        },
+        "truth": {
+          "$ref": "#/$defs/hash"
+        },
+        "controller": {
+          "$ref": "#/$defs/hash"
+        },
+        "scorer": {
+          "$ref": "#/$defs/hash"
+        },
+        "evidence": {
+          "$ref": "#/$defs/hash"
+        },
+        "schema": {
+          "$ref": "#/$defs/hash"
+        },
+        "config": {
+          "$ref": "#/$defs/hash"
+        },
+        "qualification": {
+          "$ref": "#/$defs/hash"
+        },
+        "qualificationSchema": {
+          "$ref": "#/$defs/hash"
+        }
       }
     },
-    "tokens": {"$ref": "#/$defs/tokens"},
-    "durationMs": {"$ref": "#/$defs/measurement"},
-    "nativeOutcome": {"enum": ["completed", "failed", "cancelled", "interrupted", "unknown"]},
+    "actionId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "nativeThreadId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "nativeTurnId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "compactionActionId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "compactionNativeThreadId": {
+      "$ref": "#/$defs/metadata"
+    },
+    "compactionTokens": {
+      "$ref": "#/$defs/tokens"
+    },
+    "compactionDurationMs": {
+      "$ref": "#/$defs/measurement"
+    },
+    "trigger": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "type",
+        "evidence"
+      ],
+      "properties": {
+        "type": {
+          "enum": [
+            "manual",
+            "auto",
+            "unknown"
+          ]
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "kind",
+              "ref",
+              "sha256"
+            ],
+            "properties": {
+              "kind": {
+                "enum": [
+                  "manual-action",
+                  "native-request-metadata",
+                  "native-event",
+                  "synthetic"
+                ]
+              },
+              "ref": {
+                "type": "string",
+                "minLength": 1
+              },
+              "sha256": {
+                "$ref": "#/$defs/hash"
+              },
+              "nativeRequestKind": {
+                "enum": [
+                  "compaction"
+                ]
+              },
+              "nativeTrigger": {
+                "enum": [
+                  "auto",
+                  "manual"
+                ]
+              },
+              "actionId": {
+                "type": "string"
+              },
+              "nativeThreadId": {
+                "type": "string"
+              },
+              "runId": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      }
+    },
+    "tokens": {
+      "$ref": "#/$defs/tokens"
+    },
+    "durationMs": {
+      "$ref": "#/$defs/measurement"
+    },
+    "nativeOutcome": {
+      "enum": [
+        "completed",
+        "failed",
+        "cancelled",
+        "interrupted",
+        "unknown"
+      ]
+    },
     "scores": {
       "oneOf": [
-        {"type": "null"},
-        {"type": "object", "additionalProperties": false, "required": ["critical", "noncritical", "failures"],
-          "properties": {"critical": {"$ref": "#/$defs/score"}, "noncritical": {"$ref": "#/$defs/score"}, "failures": {"type": "array", "items": {"type": "string"}}}}
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "critical",
+            "noncritical",
+            "failures"
+          ],
+          "properties": {
+            "critical": {
+              "$ref": "#/$defs/score"
+            },
+            "noncritical": {
+              "$ref": "#/$defs/score"
+            },
+            "failures": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
       ]
     },
     "checks": {
-      "type": "object", "additionalProperties": false, "required": ["status", "errors"],
-      "properties": {"status": {"enum": ["PASS", "FAIL", "NOT_TESTED"]}, "errors": {"type": "array", "items": {"type": "string"}}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "errors"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_TESTED"
+          ]
+        },
+        "errors": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
     },
     "artifactHashes": {
-      "type": "object", "additionalProperties": false,
-      "properties": {"sensor-policy.json": {"$ref": "#/$defs/hash"}, "engineering-calculation.json": {"$ref": "#/$defs/hash"}}
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "sensor-policy.json": {
+          "$ref": "#/$defs/hash"
+        },
+        "engineering-calculation.json": {
+          "$ref": "#/$defs/hash"
+        }
+      }
     },
     "retrieval": {
-      "type": "object", "additionalProperties": false, "required": ["used", "callIds", "sourceIds", "traceSha256"],
-      "properties": {"used": {"type": ["boolean", "null"]}, "callIds": {"type": "array", "items": {"type": "string"}}, "sourceIds": {"type": "array", "items": {"type": "string"}}, "traceSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "used",
+        "callIds",
+        "sourceIds",
+        "traceSha256"
+      ],
+      "properties": {
+        "used": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "callIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "sourceIds": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "traceSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     },
     "isolation": {
-      "type": "object", "additionalProperties": false, "required": ["status", "receiptSha256", "firstRequestSha256", "inputManifestSha256", "scopeReceiptSha256", "nativeThreadId", "nativeTurnId", "parentNativeThreadId", "actionId"],
-      "properties": {"status": {"enum": ["PASS", "FAIL", "NOT_TESTED", "NOT_APPLICABLE"]}, "receiptSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "firstRequestSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "inputManifestSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "scopeReceiptSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "nativeThreadId": {"type": ["string", "null"]}, "nativeTurnId": {"type": ["string", "null"]}, "parentNativeThreadId": {"type": ["string", "null"]}, "actionId": {"type": ["string", "null"]}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "status",
+        "receiptSha256",
+        "firstRequestSha256",
+        "inputManifestSha256",
+        "scopeReceiptSha256",
+        "nativeThreadId",
+        "nativeTurnId",
+        "parentNativeThreadId",
+        "actionId"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "PASS",
+            "FAIL",
+            "NOT_TESTED",
+            "NOT_APPLICABLE"
+          ]
+        },
+        "receiptSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "firstRequestSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "inputManifestSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "scopeReceiptSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "nativeThreadId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "nativeTurnId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "parentNativeThreadId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "actionId": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     },
     "originals": {
-      "type": "object", "additionalProperties": false, "required": ["beforeSha256", "afterSha256", "recoverable", "receiptSha256"],
-      "properties": {"beforeSha256": {"$ref": "#/$defs/hash"}, "afterSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "recoverable": {"type": ["boolean", "null"]}, "receiptSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "beforeSha256",
+        "afterSha256",
+        "recoverable",
+        "receiptSha256"
+      ],
+      "properties": {
+        "beforeSha256": {
+          "$ref": "#/$defs/hash"
+        },
+        "afterSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "recoverable": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "receiptSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        }
+      }
     },
     "settlement": {
-      "type": "object", "additionalProperties": false, "required": ["state", "receiptSha256", "automaticReplay"],
-      "properties": {"state": {"enum": ["released", "quarantined", "unknown"]}, "receiptSha256": {"type": ["string", "null"], "pattern": "^[a-f0-9]{64}$"}, "automaticReplay": {"type": "boolean"}}
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "state",
+        "receiptSha256",
+        "automaticReplay"
+      ],
+      "properties": {
+        "state": {
+          "enum": [
+            "released",
+            "quarantined",
+            "unknown"
+          ]
+        },
+        "receiptSha256": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "automaticReplay": {
+          "type": "boolean"
+        }
+      }
     },
     "failure": {
-      "oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false, "required": ["code", "originalOutcomeRetained"], "properties": {"code": {"type": "string", "minLength": 1}, "originalOutcomeRetained": {"const": true}}}]
+      "oneOf": [
+        {
+          "type": "null"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "code",
+            "originalOutcomeRetained"
+          ],
+          "properties": {
+            "code": {
+              "type": "string",
+              "minLength": 1
+            },
+            "originalOutcomeRetained": {
+              "const": true
+            }
+          }
+        }
+      ]
     },
-    "limitations": {"type": "array", "items": {"type": "string", "minLength": 1}}
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
+    },
+    "processRestart": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "receiptSha256",
+        "beforeProcessId",
+        "afterProcessId",
+        "nativeThreadId"
+      ],
+      "properties": {
+        "receiptSha256": {
+          "type": "string",
+          "pattern": "^[a-f0-9]{64}$"
+        },
+        "beforeProcessId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "afterProcessId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "nativeThreadId": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
   },
   "$defs": {
-    "tokens": {"type": "object", "additionalProperties": false, "required": ["input", "summary", "contextAfter"], "properties": {"input": {"$ref": "#/$defs/measurement"}, "summary": {"$ref": "#/$defs/measurement"}, "contextAfter": {"$ref": "#/$defs/measurement"}}},
-    "hash": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "tokens": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "input",
+        "summary",
+        "contextAfter"
+      ],
+      "properties": {
+        "input": {
+          "$ref": "#/$defs/measurement"
+        },
+        "summary": {
+          "$ref": "#/$defs/measurement"
+        },
+        "contextAfter": {
+          "$ref": "#/$defs/measurement"
+        }
+      }
+    },
+    "hash": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
     "metadata": {
       "oneOf": [
-        {"type": "object", "additionalProperties": false, "required": ["value", "reason"], "properties": {"value": {"type": "string", "minLength": 1}, "reason": {"type": "null"}}},
-        {"type": "object", "additionalProperties": false, "required": ["value", "reason"], "properties": {"value": {"type": "null"}, "reason": {"type": "string", "minLength": 1}}}
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "reason"
+          ],
+          "properties": {
+            "value": {
+              "type": "string",
+              "minLength": 1
+            },
+            "reason": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "reason"
+          ],
+          "properties": {
+            "value": {
+              "type": "null"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
       ]
     },
     "measurement": {
       "oneOf": [
-        {"type": "object", "additionalProperties": false, "required": ["state", "value", "source", "receiptSha256", "reason"], "properties": {"state": {"const": "measured"}, "value": {"type": "integer", "minimum": 0}, "source": {"type": "string", "minLength": 1}, "receiptSha256": {"$ref": "#/$defs/hash"}, "reason": {"type": "null"}}},
-        {"type": "object", "additionalProperties": false, "required": ["state", "value", "source", "receiptSha256", "reason"], "properties": {"state": {"enum": ["unknown", "absent"]}, "value": {"type": "null"}, "source": {"type": "null"}, "receiptSha256": {"type": "null"}, "reason": {"type": "string", "minLength": 1}}}
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "value",
+            "source",
+            "receiptSha256",
+            "reason"
+          ],
+          "properties": {
+            "state": {
+              "const": "measured"
+            },
+            "value": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "source": {
+              "type": "string",
+              "minLength": 1
+            },
+            "receiptSha256": {
+              "$ref": "#/$defs/hash"
+            },
+            "reason": {
+              "type": "null"
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "state",
+            "value",
+            "source",
+            "receiptSha256",
+            "reason"
+          ],
+          "properties": {
+            "state": {
+              "enum": [
+                "unknown",
+                "absent"
+              ]
+            },
+            "value": {
+              "type": "null"
+            },
+            "source": {
+              "type": "null"
+            },
+            "receiptSha256": {
+              "type": "null"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        }
       ]
     },
-    "score": {"type": "object", "additionalProperties": false, "required": ["correct", "total"], "properties": {"correct": {"type": "integer", "minimum": 0}, "total": {"type": "integer", "minimum": 0}}}
+    "score": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "correct",
+        "total"
+      ],
+      "properties": {
+        "correct": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "total": {
+          "type": "integer",
+          "minimum": 0
+        }
+      }
+    }
   }
 }

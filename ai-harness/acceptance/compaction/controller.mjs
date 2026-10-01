@@ -1,3 +1,5 @@
+import { verifyObservedOwnedClose } from './owned-close-verifier.mjs';
+import { reviewedAuthorization, H041_SETTLEMENT_RESERVE_MS } from './authorization.mjs';
 import { mkdir, writeFile, chmod, readFile, realpath, stat, readdir } from 'node:fs/promises';
 import { dirname, resolve, join, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
@@ -38,7 +40,7 @@ export function recallRequest(truth, cycle, mode) {
 }
 
 export function actionPlan(config) {
-  if (config.profile === 'h040-summary-stage-v1') return { schemaVersion: 1, enabled: config.enabled, profile: config.profile,
+  if (['h040-summary-stage-v1', 'h041-summary-stage-v1'].includes(config.profile)) return { schemaVersion: 1, enabled: config.enabled, profile: config.profile,
     runtime: config.runtime, maximumNativeActions: 9,
     steps: ['runtime', 'open', 'append-cycle-one', 'independent-originals-and-baseline', 'one-manual-compact', 'originals', 'isolated-summary-only', 'originals', 'close'],
     facts: 56, critical: 49, noncritical: 7, fullNativeAcceptance: 'NOT_TESTED',
@@ -81,6 +83,7 @@ function freezeConfig(value) {
   return value;
 }
 export function settlementReserve(config, qualification) {
+  if (qualification === 'native' && config.review?.authorization?.task === 'H041' && config.review.nativeSettlementReserveMs !== H041_SETTLEMENT_RESERVE_MS) throw new Error('H041 common settlement reserve required');
   const reserve = qualification === 'native' ? config.review?.nativeSettlementReserveMs ?? 75000 : config.syntheticSettlementReserveMs ?? 5000;
   if (!Number.isInteger(reserve) || reserve < (qualification === 'native' ? 75000 : 1) || reserve > 120000 ||
     (qualification === 'native' && config.nativeSettlementReserveMs !== undefined && config.nativeSettlementReserveMs !== reserve))
@@ -91,6 +94,9 @@ export function settlementReserve(config, qualification) {
 // Consistency over actual retained close bytes from the trusted owner. It does
 // not turn a producer's declared fields into native host attestation.
 export function verifyOwnedClose(result, expected) {
+  if (typeof result?.closeReceiptUtf8 === 'string') {
+    try { if (JSON.parse(result.closeReceiptUtf8).format === 'h041-owned-close-v1') return verifyObservedOwnedClose(result, expected); } catch {}
+  }
   if (![expected?.runId, expected?.operationWindowId].every((v) => typeof v === 'string' && v.length > 0) || !Array.isArray(expected.observedSettlements))
     return { status: 'NOT_TESTED', errors: ['independent-owned-run-close-bindings-absent'] };
   if (typeof result?.closeReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['actual-owned-run-close-receipt-absent'] };
@@ -194,6 +200,7 @@ export function makeRecord({ packet, runId, cycle, mode, qualification, runtime,
       scopeReceiptSha256: isolation?.scopeReceiptSha256 ?? null,
       nativeThreadId: observation.isolation?.nativeThreadId ?? null, nativeTurnId: observation.isolation?.nativeTurnId ?? null,
       parentNativeThreadId: observation.isolation?.parentNativeThreadId ?? null, actionId: observation.isolation?.actionId ?? null },
+    ...(observation.restartEvidence?.restartReceiptUtf8?{processRestart:{receiptSha256:observation.restartEvidence.restartReceiptSha256,beforeProcessId:observation.restartEvidence.beforeProcessId,afterProcessId:observation.restartEvidence.afterProcessId,nativeThreadId:observation.restartEvidence.nativeThreadId}}:{}),
     originals, settlement: observation.settlement ?? { state: 'unknown', receiptSha256: null, automaticReplay: false },
     failure: observation.failure ? { code: observation.failure, originalOutcomeRetained: true } : null, limitations,
   };
@@ -210,13 +217,16 @@ export function makeRecord({ packet, runId, cycle, mode, qualification, runtime,
 function reviewGate(packet, adapter, qualification, normalizeResponses) {
   const config = packet.config;
   settlementReserve(config, qualification);
-  const stage = config.profile === 'h040-summary-stage-v1';
+  const stage = ['h040-summary-stage-v1', 'h041-summary-stage-v1'].includes(config.profile);
   const fresh = !!config.review?.freshProjectionSpec;
   if (!config.enabled) throw new Error('Native controller disabled; preparation is not live authorization');
   if (adapter.interfaceVersion !== 'h039-compaction-adapter-v1' || adapter.kind !== qualification) throw new Error('Adapter identity mismatch');
   if (qualification === 'native') {
     if (!config.review || config.review.approvedBy !== 'root' || !/^[a-f0-9]{40}$/.test(config.review.candidateCommit ?? '') || !hashPattern.test(config.review.adapterSha256 ?? '')) throw new Error('Root-reviewed candidate/adapter required');
-    if (!Number.isFinite(Date.parse(config.review.notAfterUtc)) || Date.now() >= Date.parse(config.review.notAfterUtc) || Date.parse(config.review.notAfterUtc) > Date.parse('2026-10-01T04:26:10Z')) throw new Error('Reviewed H040 execution window absent, expired or exceeds authority');
+    if (config.review.authorization) {
+      reviewedAuthorization(config.review);
+      if (config.review.windowId !== config.review.authorization.windowId) throw new Error('Host window binding mismatch');
+    } else if (!Number.isFinite(Date.parse(config.review.notAfterUtc)) || Date.now() >= Date.parse(config.review.notAfterUtc) || Date.parse(config.review.notAfterUtc) > Date.parse('2026-10-01T04:26:10Z')) throw new Error('Reviewed H040 execution window absent, expired or exceeds authority');
     for (const key of Object.keys(packet.sourceHashes).filter((k) => k !== 'config')) if (config.review.sourceHashes?.[key] !== packet.sourceHashes[key]) throw new Error('Reviewed source hashes mismatch');
     if (!stage && (!Array.isArray(config.review.childSystemMessageHashes) || config.review.childSystemMessageHashes.some((h) => !hashPattern.test(h)))) throw new Error('Reviewed child system-message manifest absent');
     if (!config.review.responseEnvelope || typeof config.review.responseEnvelope.instructions !== 'string' ||
@@ -229,8 +239,8 @@ function reviewGate(packet, adapter, qualification, normalizeResponses) {
       sha256(config.review.freshProjectionSpec.collectorManifestUtf8) !== config.review.freshProjectionSpec.collectorSourceSha256 ||
       projectionTranslatorFiles.some((file) => !hashPattern.test(config.review.translatorHashes?.[file] ?? '')))) throw new Error('Fresh projection source/translator unqualified');
   }
-  if (config.profile && !stage && !['h039-full-retention-v1', 'h040-full-retention-v1'].includes(config.profile)) throw new Error('Unreviewed acceptance profile');
-  if (qualification === 'native' && !stage && (config.profile !== 'h040-full-retention-v1' || config.maximumNativeActions !== 39)) throw new Error('H040 full native profile and bounded 39-call budget required');
+  if (config.profile && !stage && !['h039-full-retention-v1', 'h040-full-retention-v1', 'h041-full-retention-v1'].includes(config.profile)) throw new Error('Unreviewed acceptance profile');
+  if (qualification === 'native' && !stage && (!['h040-full-retention-v1','h041-full-retention-v1'].includes(config.profile) || config.maximumNativeActions !== 39)) throw new Error('H040 full native profile and bounded 39-call budget required');
   if (qualification === 'native' && stage && config.maximumNativeActions !== 9) throw new Error('Bounded 9-call native stage budget required');
   if (config.runtime.version !== '0.158.0' || config.runtime.sourceRevision !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' || config.runtime.contextWindow !== 480000 || config.runtime.autoCompactTokenLimit !== 400000 || config.runtime.maxOutputTokens !== 65536 || stableJson(config.cycles) !== (stage ? '[1]' : '[1,2,3]') || config.trigger !== 'manual' || config.automaticCase.enabled) throw new Error('Unreviewed runtime/policy change');
   const capabilities = [fresh ? 'qualified-fresh-persisted-message-projection' : 'qualified-summary-fork', 'host-captured-probe-input', 'tools-and-files-denied-for-summary', 'settlement-receipts',
@@ -244,7 +254,7 @@ function reviewGate(packet, adapter, qualification, normalizeResponses) {
 export async function runAcceptance({ packet, adapter, qualification = 'native', sink, runId = randomUUID(), normalizeResponses }) {
   packet = { ...packet, config: freezeConfig(structuredClone(packet.config)) };
   reviewGate(packet, adapter, qualification, normalizeResponses);
-  const stage = packet.config.profile === 'h040-summary-stage-v1';
+  const stage = ['h040-summary-stage-v1', 'h041-summary-stage-v1'].includes(packet.config.profile);
   const authorizationDeadline = packet.config.review?.notAfterUtc ? Date.parse(packet.config.review.notAfterUtc) : null;
   const cleanupReserveMs = settlementReserve(packet.config, qualification);
   let count = 0, session, opened = false, currentCycle = 1, acceptedContinuation;
@@ -266,6 +276,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       if (method !== 'close' && result?.settlement?.state === 'released' && hashPattern.test(result.settlement.receiptSha256 ?? '') &&
         result.actionId && result.nativeThreadId && result.nativeTurnId) observedSettlements.push({ actionId: result.actionId, nativeThreadId: result.nativeThreadId,
         nativeTurnId: result.nativeTurnId, settlementReceiptSha256: result.settlement.receiptSha256 });
+      if(method==='childContext'&&Array.isArray(result?.ownedSettlements))for(const receipt of result.ownedSettlements){if(!receipt.actionId||receipt.actionId===result.actionId||observedSettlements.some(x=>x.actionId===receipt.actionId)||!hashPattern.test(receipt.settlementReceiptSha256??''))throw Error('duplicate_or_invalid_owned_child_placement_settlement');observedSettlements.push(structuredClone(receipt));}
       return result;
     }).finally(() => outstanding.delete(owned));
     // The adapter must settle/quarantine its owned work after signal abort; no retry.
@@ -312,7 +323,8 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       windowId: packet.config.review?.windowId ?? runId, settlementReceiptSha256: result.settlement?.receiptSha256,
       checkpointValidation: { status: fresh?.status ?? extraction.status, errors: fresh?.errors ?? extraction.errors },
       freshProjection: fresh?.freshProjection, envelope, toolDefinitions,
-      allowedTools: mode === 'durable-retrieval' ? ['scoped.read_original_records'] : [] };
+      allowedTools: mode === 'durable-retrieval' ? (packet.config.review?.authorization?.task === 'H041' ? ['read_original'] : ['scoped.read_original_records']) : [],
+      scopePolicy: packet.config.review?.scopePolicies?.[mode === 'durable-retrieval' ? 'read-original' : 'summary-only'] };
   };
   const uniqueProbe = (result, isolation) => {
     if (result.nativeThreadId && probeThreads.has(result.nativeThreadId)) return { status: 'FAIL', errors: [...isolation.errors, 'probe-thread-reused'] };
@@ -364,7 +376,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
           const result = await call('coldResume', { session, cycle: 3, mode: 'summary-only', request, actionId, checkpoint: compact.checkpoint });
           await sink.private('cold-resume', result);
           let isolation = uniqueProbe(result, verifySummaryIsolation(result.isolation, expectedProbe(result, request, 'summary-only', actionId, compact, 3)));
-          const restart = verifyColdResume(result.restartEvidence, compact.checkpoint, { requireHostRestart: qualification === 'native', runId, actionId, windowId: packet.config.review?.windowId ?? runId });
+          const restart = verifyColdResume(result.restartEvidence, compact.checkpoint, { requireHostRestart: qualification === 'native', requireActualProcess:qualification==='native'&&!!packet.config.review?.authorization, runId, actionId, windowId: packet.config.review?.windowId ?? runId });
           let grade = scoreRecall(packet.truth, 3, result.answer);
           if (restart.status !== 'PASS') grade = { ...grade, status: grade.status === 'FAIL' ? 'FAIL' : restart.status, errors: [...grade.errors, ...restart.errors] };
           after = await call('originals', { session, cycle: 3 });
@@ -378,13 +390,13 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
         const result = mode === 'continuation'
           ? await call('continue', { session, cycle, request, actionId })
           : await call('probe', { session, cycle, mode, actionId, runId, parentThreadId: compact.nativeThreadId, checkpoint: compact.checkpoint,
-              contextSha256: compact.contextSha256, request, allowedTools: mode === 'summary-only' ? [] : ['scoped.read_original_records'],
+              contextSha256: compact.contextSha256, request, scopeId: packet.corpus.scopeId, allowedTools: mode === 'summary-only' ? [] : ['scoped.read_original_records'],
               hostOnlyHoldouts: mode === 'durable-retrieval' ? durableHoldouts(packet.truth, cycle) : [] });
         await sink.private(`${cycle}-${mode}`, result);
         let grade = mode === 'continuation' ? scoreContinuation(packet.truth, cycle, result.artifacts) : scoreRecall(packet.truth, cycle, result.answer, mode);
-        let isolation;
+        let isolation, probeExpectation;
         if (mode !== 'continuation') {
-          const expected = expectedProbe(result, request, mode, actionId, compact, cycle);
+          const expected = probeExpectation = expectedProbe(result, request, mode, actionId, compact, cycle);
           isolation = uniqueProbe(result, mode === 'summary-only' ? verifySummaryIsolation(result.isolation, expected) : verifyProbeSeparation(result.isolation, expected));
         }
         if (result.actionId !== actionId) grade = { ...grade, status: 'FAIL', errors: [...grade.errors, 'action-identity-mismatch'] };
@@ -392,7 +404,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
         if (mode === 'summary-only' && result.retrieval?.calls?.length) isolation = { status: 'FAIL', errors: [...isolation.errors, 'summary-retrieval-observed'] };
         let retrieval;
         if (mode === 'durable-retrieval') {
-          const holdout = verifyDurableHoldout(packet.truth, cycle, result.retrievalContext);
+          const holdout = verifyDurableHoldout(packet.truth, cycle, result.retrievalContext, probeExpectation);
           if (holdout.status !== 'PASS' || isolation.status !== 'PASS') grade = { ...grade,
             status: grade.status === 'FAIL' || holdout.status === 'FAIL' || isolation.status === 'FAIL' ? 'FAIL' : 'NOT_TESTED',
             errors: [...grade.errors, ...holdout.errors, ...isolation.errors] };
@@ -423,7 +435,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
         checkpoint: structuredClone(acceptedContinuation?.checkpoint), acceptedContinuation: acceptedContinuation ? structuredClone({ actionId: acceptedContinuation.actionId,
           artifactHashes: acceptedContinuation.artifactHashes, artifactBaseline: acceptedContinuation.artifactBaseline }) : undefined });
       await sink.private('cold-resume-after-continuation', result);
-      let grade = verifyAcceptedContinuationResume(result, acceptedContinuation, { runId, actionId, windowId: packet.config.review?.windowId ?? runId });
+      let grade = verifyAcceptedContinuationResume(result, acceptedContinuation, { requireActualProcess:qualification==='native'&&!!packet.config.review?.authorization,runId, actionId, windowId: packet.config.review?.windowId ?? runId });
       if (grade.status === 'PASS') grade = scoreContinuation(packet.truth, 3, result.artifacts);
       if (result.actionId !== actionId || result.nativeThreadId !== compact.nativeThreadId) grade = { status: 'FAIL', errors: [...grade.errors, 'accepted-continuation-resume-identity'] };
       after = await call('originals', { session, cycle: 3 });
@@ -440,6 +452,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       const parentCanary = `KPM_PARENT_ONLY_${randomUUID()}`;
       const approved = { parentCanary, childNonce, parentThreadId: compact.nativeThreadId,
         envelope: packet.config.review?.responseEnvelope ?? (qualification === 'synthetic' ? {} : undefined),
+        scopePolicy: packet.config.review?.scopePolicies?.['clean-child'], runId, windowId: packet.config.review?.windowId ?? runId,
         messageHashes: [...(packet.config.review?.childSystemMessageHashes ?? []), sha256(stableJson({ role: 'user', content: childBrief }))] };
       const actionId = actionIdFor(runId, 3, 'child-context');
       const child = await call('childContext', { session, cycle: 3, actionId, brief: childBrief, hostOnlyParentCanary: parentCanary, childNonce });
@@ -468,7 +481,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
         const closed = await call('close', { session, runId, observedSettlements: structuredClone(observedSettlements) });
         if (qualification === 'native') {
           await sink.private('owned-close', closed ?? { observation: 'absent' });
-          const proof = verifyOwnedClose(closed, { runId, operationWindowId: packet.config.review?.windowId ?? runId, observedSettlements });
+          const proof = verifyOwnedClose(closed, { runId, operationWindowId: packet.config.review?.windowId ?? runId, observedSettlements, receiptSources: packet.config.review?.receiptSources });
           if (proof.status === 'NOT_TESTED') {
             await emit(makeRecord({ packet, runId, cycle: currentCycle, mode: 'fault', qualification, runtime,
               observation: { outcome: 'unknown', failure: 'cleanup-receipt-unqualified', settlement: { state: 'unknown', receiptSha256: null, automaticReplay: false } },

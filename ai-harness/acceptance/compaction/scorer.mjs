@@ -1,3 +1,4 @@
+import { verifyObservedModelScope } from './model-scope.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
@@ -222,6 +223,14 @@ export function verifyRetrieval(corpus, truth, cycle, answer, trace) {
     if (call.tool !== 'scoped.read_original_records' || call.scopeId !== corpus.scopeId || !Array.isArray(call.records) || !call.records.length) {
       errors.push('retrieval-scope-or-tool'); continue;
     }
+    if (trace.format === 'h041-consumed-originals-v1') {
+      try {
+        const req=JSON.parse(call.serverCallUtf8), res=JSON.parse(call.responseUtf8), done=JSON.parse(call.completedItemUtf8), source=records.get(call.arguments?.reference);
+        if (req.method!=='item/tool/call'||req.params.tool!=='read_original'||req.params.callId!==call.id||req.params.threadId!==call.threadId||req.params.turnId!==call.turnId||
+            !same(req.params.arguments,call.arguments)||res.id!==req.id||res.result.success!==true||sha256(JSON.stringify(res.result))!==call.responseSha256||done.method!=='item/completed'||done.params.item.id!==call.id||done.params.item.success!==true||
+            !source||call.arguments.offset!==0||call.arguments.limit<Buffer.byteLength(source.content)||res.result.contentItems.map(p=>p.text).join('')!==source.content) errors.push('native-original-consumption-raw-proof');
+      } catch {errors.push('native-original-consumption-raw-proof');}
+    }
     for (const proof of call.records) {
       const source = records.get(proof.sourceId);
       if (!source || proof.sha256 !== sha256(source.content)) errors.push('retrieval-source-hash');
@@ -235,7 +244,10 @@ export function verifyRetrieval(corpus, truth, cycle, answer, trace) {
   return errors;
 }
 
-function scopeProof(probe, threadId, turnId, actionId, tools) {
+function scopeProof(probe, threadId, turnId, actionId, tools, expected = {}) {
+  if (typeof probe?.scopeReceiptUtf8 === 'string') {
+    try { if (JSON.parse(probe.scopeReceiptUtf8).source === 'h041-observed-model-scope') return verifyObservedModelScope(probe, { ...expected, probeThreadId: threadId, probeTurnId: turnId, actionId }); } catch {}
+  }
   if (typeof probe.scopeReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['effective-native-scope-receipt-absent'] };
   let scope;
   try { scope = JSON.parse(probe.scopeReceiptUtf8); } catch { return { status: 'FAIL', errors: ['invalid-scope-receipt'] }; }
@@ -325,7 +337,7 @@ export function verifyProbeSeparation(probe, expected = {}) {
     probe.actionId !== expected.actionId || probe.runId !== expected.runId) errors.push('probe-identity-binding');
   if (typeof probe.firstRequestUtf8 !== 'string' || !Array.isArray(expected.inputMessageHashes)) return {
     status: errors.length ? 'FAIL' : 'NOT_TESTED', errors: [...errors, 'independent-first-request-bytes-or-manifest-absent'] };
-  const scope = scopeProof(probe, expected.probeThreadId, expected.probeTurnId, expected.actionId, expected.allowedTools ?? []);
+  const scope = scopeProof(probe, expected.probeThreadId, expected.probeTurnId, expected.actionId, expected.allowedTools ?? [], expected);
   if (scope.status !== 'PASS') return { ...scope, status: errors.length ? 'FAIL' : scope.status, errors: [...errors, ...scope.errors] };
   const parent = probe.parentStateAfter;
   if (!parent || typeof parent.stateUtf8 !== 'string' || !expected.parentStateSha256) return { status: errors.length ? 'FAIL' : 'NOT_TESTED', errors: [...errors, 'post-probe-parent-checkpoint-capture-absent'] };
@@ -351,8 +363,8 @@ export function verifyProbeSeparation(probe, expected = {}) {
   if (!same(request?.tools, expected.toolDefinitions)) errors.push('unapproved-tool-definition');
   const tools = Array.isArray(request?.tools) ? request.tools.map((t) => t?.name ?? t?.function?.name) : null;
   if (!same(tools, expected.allowedTools ?? [])) errors.push('unexpected-probe-tools');
-  if (probe.filesDenied !== true || probe.networkDenied !== true ||
-    !Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length ||
+  if (scope.observedModelScope ? probe.networkPolicy !== 'gateway-only' || !same(probe.modelFileTools, []) :
+    probe.filesDenied !== true || probe.networkDenied !== true || !Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length ||
     probe.answerKeyExposed !== false || probe.parentHistoryExposed !== false) errors.push('probe-source-contamination');
   if (probe.capturedBy !== 'host' || !/^[a-f0-9]{64}$/.test(probe.captureSha256 ?? '') ||
     probe.contextSha256 !== expected.contextSha256) errors.push('unqualified-summary-context');
@@ -368,11 +380,12 @@ export function verifySummaryIsolation(probe, expected) {
   const separation = verifyProbeSeparation(probe, expected);
   if (separation.status !== 'PASS') return separation;
   const errors = [];
-  if (probe.toolsDenied !== true || probe.filesDenied !== true || probe.networkDenied !== true ||
+  const observedScope = (() => { try { return JSON.parse(probe.scopeReceiptUtf8).source === 'h041-observed-model-scope'; } catch { return false; } })();
+  if (probe.toolsDenied !== true || (!observedScope && (probe.filesDenied !== true || probe.networkDenied !== true)) ||
     !Array.isArray(probe.toolCalls) || probe.toolCalls.length ||
-    !Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length ||
+    (!observedScope && (!Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length)) ||
     !Array.isArray(probe.originalRecordIds) || probe.originalRecordIds.length ||
-    probe.answerKeyExposed !== false || probe.parentHistoryExposed !== false) errors.push('summary-contamination');
+    (!observedScope && (probe.answerKeyExposed !== false || probe.parentHistoryExposed !== false))) errors.push('summary-contamination');
   if (probe.inputReceiptSha256 !== sha256(probe.firstRequestUtf8)) errors.push('probe-input-receipt-mismatch');
   return { ...separation, status: errors.length ? 'FAIL' : 'PASS', errors };
 }
@@ -385,7 +398,12 @@ export function durableHoldouts(truth, cycle) {
 // This is a separate qualified probe branch, leaving the original continuing
 // thread and the summary-only probe unchanged. These fields are host evidence,
 // never model-produced assertions or answer-file duplicates.
-export function verifyDurableHoldout(truth, cycle, evidence) {
+export function verifyDurableHoldout(truth, cycle, evidence, expected) {
+  const observed = typeof evidence?.scopeReceiptUtf8 === 'string' && (()=>{try{return JSON.parse(evidence.scopeReceiptUtf8).source==='h041-observed-model-scope';}catch{return false;}})();
+  if (observed) {
+    const scope=verifyObservedModelScope(evidence,expected);if(scope.status!=='PASS')return scope;
+    try {if(evidence.compiledContextText!==stableJson(JSON.parse(evidence.firstRequestUtf8)))return {status:'FAIL',errors:['whole_holdout_request_not_bound']};}catch{return {status:'FAIL',errors:['holdout_raw_request_invalid']};}
+  }
   if (!evidence) return { status: 'NOT_TESTED', errors: ['durable-holdout-context-capture-absent'] };
   const errors = [];
   const holdouts = durableHoldouts(truth, cycle);
@@ -394,8 +412,8 @@ export function verifyDurableHoldout(truth, cycle, evidence) {
     !/^[a-f0-9]{64}$/.test(evidence.qualifiedProjectionReceiptSha256 ?? '')) errors.push('unqualified-holdout-context');
   if (!same(evidence.omittedFactIds, holdouts.map((f) => f.id)) ||
     holdouts.some((f) => typeof evidence.compiledContextText === 'string' && evidence.compiledContextText.includes(f.value))) errors.push('holdout-value-present');
-  if (evidence.answerKeyExposed !== false || evidence.parentHistoryExposed !== false ||
-    !Array.isArray(evidence.accessiblePaths) || evidence.accessiblePaths.length) errors.push('holdout-source-contamination');
+  if (!observed && (evidence.answerKeyExposed !== false || evidence.parentHistoryExposed !== false ||
+    !Array.isArray(evidence.accessiblePaths) || evidence.accessiblePaths.length)) errors.push('holdout-source-contamination');
   return { status: errors.length ? 'FAIL' : 'PASS', errors };
 }
 
@@ -406,7 +424,7 @@ export function verifyCleanChild(probe, approved = {}) {
   const placement = probe.parentPlacement;
   if (!placement || typeof placement.stateUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['parent-canary-placement-not-captured'] };
   if (typeof probe.firstRequestUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['child-provider-request-bytes-absent'] };
-  const scope = scopeProof(probe, probe.childId, probe.nativeTurnId, probe.actionId, []);
+  const scope = scopeProof(probe, probe.childId, probe.nativeTurnId, probe.actionId, [], { ...approved, probeThreadId: probe.childId, probeTurnId: probe.nativeTurnId, actionId: probe.actionId });
   if (scope.status !== 'PASS') return scope;
   const errors = [];
   let wire;
@@ -426,7 +444,7 @@ export function verifyCleanChild(probe, approved = {}) {
   const hashes = probe.compiledMessages.map((m) => sha256(stableJson(m)));
   if (!same(hashes, approved.messageHashes)) errors.push('unexpected-child-context');
   if (probe.compiledMessages.some((m) => stableJson(m).includes(approved.parentCanary)) || stableJson(probe.reply).includes(approved.parentCanary)) errors.push('parent-canary-leak');
-  if (!Array.isArray(probe.tools) || probe.tools.length || !Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length) errors.push('child-retrieval-leak');
+  if (!Array.isArray(probe.tools) || probe.tools.length || (!scope.observedModelScope && (!Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length))) errors.push('child-retrieval-leak');
   if (!exactKeys(probe.reply, ['childNonce', 'parentCanary']) || probe.reply.childNonce !== approved.childNonce || probe.reply.parentCanary !== 'UNKNOWN') errors.push('child-negative-control');
   return { status: errors.length ? 'FAIL' : 'PASS', errors, firstRequestMessageHashes: hashes,
     firstRequestSha256: sha256(probe.firstRequestUtf8), inputManifestSha256: sha256(stableJson(approved.messageHashes)), scopeReceiptSha256: scope.scopeReceiptSha256 };
@@ -447,6 +465,14 @@ export function verifyColdResume(evidence, checkpoint, expected = {}) {
     if (typeof evidence.restartReceiptUtf8 !== 'string') return { status: errors.length ? 'FAIL' : 'NOT_TESTED', errors: [...errors, 'actual-owned-application-restart-receipt-absent'] };
     try {
       const r = JSON.parse(evidence.restartReceiptUtf8);
+      if(expected.requireActualProcess&&r.format!=='h041-actual-process-restart-v1')errors.push('actual-os-process-restart-format-required');
+      if(r.format==='h041-actual-process-restart-v1') {
+        const process=JSON.parse(r.processRestartReceiptUtf8),state=JSON.parse(r.afterParentStateReceiptUtf8);
+        const identity=p=>`${p.bootId}:${p.pid}:${p.startTicks}`;
+        if(sha256(r.processRestartReceiptUtf8)!==r.processRestartReceiptSha256||sha256(r.afterParentStateReceiptUtf8)!==r.afterParentStateReceiptSha256||process.source!=='owned-application-process-restart'||process.runId!==expected.runId||process.actionId!==expected.actionId||process.windowId!==expected.windowId||process.oldExit?.code!==0||process.oldExit?.signal!==null||process.before?.source!=='linux-proc'||process.after?.source!=='linux-proc'||identity(process.before)!==evidence.beforeProcessId||identity(process.after)!==evidence.afterProcessId||state.source!=='owned-native-persisted-state'||state.nativeThreadId!==checkpoint.nativeThreadId||state.stateSha256!==checkpoint.stateSha256||process.checkpointStateSha256!==checkpoint.stateSha256)errors.push('actual-process-and-after-state-producer-binding');
+        const oldClose=JSON.parse(process.oldCloseReceiptUtf8);
+        if(oldClose.source!=='native-acceptance-run-close'||oldClose.status!=='released'||oldClose.runId!==expected.runId||oldClose.operationWindowId!==expected.windowId||oldClose.outstandingOwnedActions?.length!==0||oldClose.unconfirmedOwnedActions?.length!==0||!oldClose.producers?.length)errors.push('actual-old-producer-settlement-absent');
+      }
       if (r.source !== 'native-owned-host-cold-resume' || r.runId !== expected.runId || r.actionId !== expected.actionId || r.windowId !== expected.windowId ||
         r.nativeThreadId !== checkpoint.nativeThreadId || r.checkpointStateSha256 !== checkpoint.stateSha256 ||
         !r.beforeHostId || !r.afterHostId || r.beforeHostId === r.afterHostId ||

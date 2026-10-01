@@ -14,7 +14,7 @@ export async function sourceClosure(repository: string, launcherPath: string, qw
     const stat = await lstat(path);
     if (++count > 8192 || stat.isSymbolicLink()) throw Error('source_closure_unsafe_or_limit');
     if (stat.isDirectory()) { for (const name of (await readdir(path)).sort()) await visit(join(path, name), all); }
-    else if (stat.isFile() && (all || /\.(?:ts|json|mjs)$/.test(path))) {
+    else if (stat.isFile() && (all || /\.(?:ts|js|json|mjs|mts)$/.test(path))) {
       if (stat.size > 4 * 1024 * 1024 || stat.nlink !== 1) throw Error('source_closure_file_unsafe');
       files[path] = sha256(await readFile(path));
     }
