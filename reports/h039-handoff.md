@@ -149,3 +149,6 @@ GitHub helper from an isolated repository; credentials are not copied to root.
 ## New-chat starting brief
 
 > Continue Sova from reports/h039-handoff.md and reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image. First adopt the recorded sessions, actual terminal receipts and preserved download state. The user requested ai-vm shutdown for a second Ada 48 GB installation; leave the guest down until they confirm completion. Mac source preparation can finish. Compaction reliability remains priority one. Review and qualify the coherent source candidate before live work. Preserve chats, files, credentials, partial artifacts and failed evidence. Root coordinates and publishes; actual native Mac workers implement with GPT 6.1 Sol Ultra. Creative image acceptance and upstream Codex upgrades remain deferred. PR #11 remains draft and unmerged.
+
+
+The worker's [shutdown receipt](h039-ai-vm-shutdown.json) records accepted guest poweroff at **01:33:22 UTC / 03:33 Ljubljana**, command exit 0, fsynced guarded receipt and two subsequent SSH connection-closed probes. Independent hypervisor/physical stopped state was not checked. Leave ai-vm down for the user's hardware installation; no automatic restart or further VM work before their confirmation.

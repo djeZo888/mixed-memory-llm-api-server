@@ -25,3 +25,6 @@ The user requested ai-vm shutdown after assigned work so a second Ada 48 GB can 
 ## Publication and remaining gates
 
 At published PR head `86cf570`, installer fixtures, worker regressions and client checks passed; repository-sanity failed on encoded-space local documentation links. Root corrected seven active links; the local link checker and four provenance/archive tests passed. Source integration needs coherent candidate validation and new published CI. [PR #11](https://github.com/djeZo888/mixed-memory-llm-api-server/pull/11) stays draft and unmerged. The initial H039 window ends 02:25 UTC / 04:25 Ljubljana.
+
+
+The worker's [shutdown receipt](h039-ai-vm-shutdown.json) records accepted guest poweroff at **01:33:22 UTC / 03:33 Ljubljana**, command exit 0, fsynced guarded receipt and two subsequent SSH connection-closed probes. Independent hypervisor/physical stopped state was not checked. Leave ai-vm down for the user's hardware installation; no automatic restart or further VM work before their confirmation.

@@ -1,7 +1,7 @@
 # Context compaction reliability
 
 **Priority: first. Plan and source audit recorded on 1 October 2026.**
-No live compaction tests or deployments were performed in this audit.
+H039 source preparation is underway; no fresh native retention or deployment acceptance is implied. ai-vm is held for user-authorized shutdown and installation of a second Ada 48 GB. Mac source work can finish; live checks wait until the user confirms the hardware is ready.
 Image generation qualification is deferred by the user.
 
 ## Objective and current evidence
@@ -27,11 +27,14 @@ entire admission calculation.
 | H036 resumed follow-up | Returned the facts and correct calculation after reading a file that also contained those facts. Summary-only recall is not isolated. |
 | H038 MiMo workflows | Child tool execution, continuation and handoff passed. MiMo-specific summarization quality was not tested. |
 | Existing source fixtures | Cover history retention, duplicate/restart/failure handling and settlement. They do not establish semantic fidelity or native atomic replacement under every fault. |
+| H039 native audit and lifecycle fixes | Exact 0.158.0 source audit; 95 focused and 1,008 broader source tests passed, four optional native tests skipped. Metadata-only resume, startup ownership, scoped retry and per-frame bounds are corrected. Native replacement-before-persistence and flush-warning limits remain; no atomic rollback claim. |
 
 Sources:
 [H030 summary](../reports/h030-flow03-20260929/SUMMARY.md),
 [H036 results](../reports/h036-resumed-recovery-results.json),
-[H038 checkpoint](../reports/h038-checkpoint.md).
+[H038 checkpoint](../reports/h038-checkpoint.md),
+[H039 native audit](../reports/h039-compaction-native.md),
+[H039 current checkpoint](../reports/h039-adoption-checkpoint.md).
 Retain original failed and partial outcomes.
 
 ## Two distinct acceptance requirements
@@ -51,9 +54,7 @@ retrieval. The target is dependable continuation, not an unsupported universal
 
 Audit the exact Codex 0.158.0 source and protocol used in Sova, including native
 summary generation, context replacement, persistence and error handling.
-The raw source cache referenced by the earlier H036 audit was absent during
-this local inspection; do not substitute a current upstream-main implementation
-and claim it describes the installed binary.
+H039 subsequently recovered and audited the immutable source archive for upstream `064c6b8c737f5b41d171fdda80bd9ef10ad06eb3`. Per-file digests and exact protocol/persistence findings are recorded in the linked H039 report. The installed Linux binary remains separately unqualified by these source checks; do not substitute current upstream main.
 
 Verify pre-turn and mid-turn automatic triggering, compaction request metadata,
 handling of ContextWindowExceeded, retry/trimming behavior and the order in which

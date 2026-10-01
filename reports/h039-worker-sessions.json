@@ -1,6 +1,6 @@
 {
   "task": "H039-20261001",
-  "phase": "ai_vm_shutdown_requested_mac_source_work_only",
+  "phase": "ai_vm_poweroff_accepted_mac_source_finalization",
   "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
   "globalDeadlineUtc": "2026-10-01T02:25:00Z",
   "model": "gpt-6.1-sol",
@@ -105,8 +105,8 @@
       },
       "startedUtc": "2026-10-01T00:23:52.694982+00:00",
       "hardDeadlineUtc": "2026-10-01T01:08:52.694982+00:00",
-      "observedUtc": "2026-10-01T01:18:49.300631+00:00",
-      "statusAtObservation": "original download failed; recovery source reviewed; launch-only staging failed; same session resumed for user-authorized shutdown",
+      "observedUtc": "2026-10-01T01:33:22.600988+00:00",
+      "statusAtObservation": "poweroff accepted; SSH unavailable; leave guest down for hardware installation",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts/repo",
       "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/C-vision-artifacts/LAUNCH-RECEIPT.json",
@@ -178,7 +178,78 @@
         "verifiedModel": "gpt-6.1-sol",
         "verifiedReasoningEffort": "ultra",
         "settingsEvidence": "persisted native turn_context at 01:17:21.612Z",
-        "result": "pending actual shutdown receipt"
+        "result": "BLOCKED_NATIVE_RUN_OWNERSHIP_UNCONFIRMED; no poweroff issued",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "finishedUtc": "2026-10-01T01:23:10Z",
+        "poweroffIssued": false,
+        "preservedAsHistorical": true
+      },
+      "shutdownOwnershipResolution": {
+        "peerIp": "10.156.100.108",
+        "peerHost": "mac-orchestrator",
+        "localSshPid": 5256,
+        "localSshParentPid": 90924,
+        "localSshParentExecutable": "/Applications/ChatGPT.app/Contents/MacOS/ChatGPT",
+        "appInventory": "ChatGPT chats idle; only coordinator Codex chat active on Mac; no active ai-vm task in available inventory",
+        "result": "root resolved retained desktop app-server transports; normal guest shutdown allowed by direct user instruction"
+      },
+      "shutdownCompletionPhase": {
+        "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-shutdown-04",
+        "sameSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+        "outerPid": 18067,
+        "wrapperPid": 18072,
+        "nativePid": 18073,
+        "startedUtc": "2026-10-01T01:24:32Z",
+        "hardDeadlineUtc": "2026-10-01T01:32:00Z",
+        "verifiedModel": "gpt-6.1-sol",
+        "verifiedReasoningEffort": "ultra",
+        "settingsEvidence": "persisted native turn_context 01:24:34.609Z",
+        "result": "BLOCKED_CANONICAL_LEASE_BUSY",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "finishedUtc": "2026-10-01T01:30:29Z",
+        "poweroffIssued": false,
+        "coordinatorActualExitCode": 1,
+        "coordinatorFailedUtc": "2026-10-01T01:27:54Z",
+        "guestRemainedReachable": true,
+        "preservedAsHistorical": true
+      },
+      "canonicalLeaseDiagnostic": {
+        "observedUtc": "2026-10-01T01:31:41Z",
+        "path": "/run/llmctl/lifecycle.lock",
+        "device": 26,
+        "inode": 1845,
+        "locks": [],
+        "openers": [],
+        "installedTransitionInProgress": false,
+        "actualNonblockingAcquisition": "ACQUIRED_AND_RELEASED_NO_MUTATION",
+        "previousLeaseBusyCause": "unattributed; do not infer permanent holder"
+      },
+      "shutdownFinalAttempt": {
+        "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-shutdown-05",
+        "sameSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+        "outerPid": 18296,
+        "startedUtc": "2026-10-01T01:32:50.276735+00:00",
+        "hardDeadlineUtc": "2026-10-01T01:39:00Z",
+        "coordinatorSha256": "5462d878f00d9cccd0172c2a349560cb9b802b5fc304a581365a635d62669ede",
+        "canonicalAcquisitionMaximumSeconds": 5,
+        "automaticRetries": 0,
+        "result": "GUEST_POWEROFF_ACCEPTED_SSH_UNAVAILABLE",
+        "nativePid": 18302,
+        "settingsEvidence": "persisted native turn_context 01:32:52.295Z",
+        "verifiedModel": "gpt-6.1-sol",
+        "verifiedReasoningEffort": "ultra",
+        "poweroffIssued": true,
+        "poweroffInvokedUtc": "2026-10-01T01:33:22.596746+00:00",
+        "poweroffCommandExitCode": 0,
+        "coordinatorSshExitCode": 0,
+        "postShutdownSshUnavailable": true,
+        "hypervisorStoppedConfirmation": "NOT_TESTED_NO_HOST_ACCESS",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "finishedUtc": "2026-10-01T01:35:08.030741+00:00",
+        "deadlineTermination": false
       }
     },
     {
@@ -244,8 +315,8 @@
       "hardDeadlineUtc": "2026-10-01T01:35:00Z",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/E-compaction-adapter",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/E-compaction-adapter/repo",
-      "statusAtObservation": "source-only adapter scaffold preparation in progress; no shared deployment or live inference GO; ai-vm work frozen",
-      "observedUtc": "2026-10-01T01:17:00Z",
+      "statusAtObservation": "closed native/outer exit0; reviewed disabled source integrated",
+      "observedUtc": "2026-10-01T01:32:21Z",
       "backgroundJob": null,
       "collectFiles": [
         "OUTBOX.md",
@@ -253,19 +324,34 @@
         "LAST_MESSAGE.md",
         "WRAPPER-TERMINAL.json",
         "OUTER-TERMINAL.json"
-      ]
+      ],
+      "result": {
+        "sourceCommit": "04425d41ecc75098c8923490dbf55960e9335106",
+        "finalCommit": "62ef34069113bdb5d30ccae54b393c3c01d30b41",
+        "integrationCommit": "6aa96ba",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "strictAdapterTypecheck": "PASS",
+        "sourceTestsPass": 27,
+        "nativeTestsSkipped": 1,
+        "enabled": false,
+        "capabilities": [],
+        "nativeAcceptance": "NOT_TESTED"
+      }
     }
   ],
   "adoptionRule": "Collect actual current PID/session terminal and OUTBOX before new dispatch. A launch receipt is not task completion. Preserve any bounded download job; do not duplicate it.",
   "adoptedUtc": "2026-10-01T00:53:28.798170+00:00",
   "adoptionEvidence": "Fresh SSH PID checks and terminal/OUTBOX receipts; root private ADOPTION-INITIAL.json and read-only reviews",
-  "currentObservedUtc": "2026-10-01T01:18:49.300631+00:00",
+  "currentObservedUtc": "2026-10-01T01:33:34.722470+00:00",
   "aiVmHold": {
     "reason": "direct user instruction: second Ada 48 GB installation",
     "requestedUtc": "2026-10-01T01:17:19Z",
     "shutdownOwner": "C-vision-artifacts / same native session",
     "newDownloadsDeploymentsInferenceAllowed": false,
     "automaticRestartAllowed": false,
-    "result": "shutdown phase in progress"
+    "result": "GUEST_POWEROFF_ACCEPTED_SSH_UNAVAILABLE",
+    "shutdownReceipt": "reports/h039-ai-vm-shutdown.json",
+    "poweroffInvokedUtc": "2026-10-01T01:33:22.596746+00:00"
   }
 }

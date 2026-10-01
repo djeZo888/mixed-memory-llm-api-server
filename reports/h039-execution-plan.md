@@ -108,3 +108,6 @@ See the [handoff](h039-handoff.md),
 [compaction plan](../todo/context-compaction-reliability.md),
 [vision plan](../todo/technical-image-understanding.md), and
 [future vision](<../docs/Vision for future regarding this project.md>).
+
+
+The worker's [shutdown receipt](h039-ai-vm-shutdown.json) records accepted guest poweroff at **01:33:22 UTC / 03:33 Ljubljana**, command exit 0, fsynced guarded receipt and two subsequent SSH connection-closed probes. Independent hypervisor/physical stopped state was not checked. Leave ai-vm down for the user's hardware installation; no automatic restart or further VM work before their confirmation.
