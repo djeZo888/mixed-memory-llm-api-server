@@ -6,6 +6,7 @@ Output is outside Git. A failed launch is preserved and never silently repeated.
 """
 import argparse
 import datetime
+import hashlib
 import json
 import math
 from pathlib import Path
@@ -15,6 +16,9 @@ import subprocess
 
 GUARDS = "/data/services/releases/h005-boot-restore-20260925/scripts"
 RECOVERY_CUTOFF = datetime.datetime(2026, 10, 1, 2, 25, tzinfo=datetime.timezone.utc).timestamp()
+H040_WINDOW = "h040-20261001"
+H040_START = datetime.datetime(2026, 10, 1, 2, 26, 10, tzinfo=datetime.timezone.utc).timestamp()
+H040_CUTOFF = datetime.datetime(2026, 10, 1, 4, 26, 10, tzinfo=datetime.timezone.utc).timestamp()
 
 
 def remote(command):
@@ -30,6 +34,9 @@ def main():
     parser.add_argument("--network-timeout-seconds", type=float, default=180)
     parser.add_argument("--expected-root-device", type=int)
     parser.add_argument("--expected-root-inode", type=int)
+    parser.add_argument("--reviewed-window", help="explicit reviewed H040 continuation, never a general deadline override")
+    parser.add_argument("--expected-original-status-sha256")
+    parser.add_argument("--expected-original-manifest-sha256")
     parser.add_argument("--prepare-only", action="store_true")
     parser.add_argument("--reviewed-retry", action="store_true", help="explicit operator gate after root GO through INBOX")
     parser.add_argument("--receipt", type=Path, required=True)
@@ -44,6 +51,18 @@ def main():
             raise ValueError("distinct_attempt_deadline_and_root_identity_required")
         if not args.prepare_only and not args.reviewed_retry:
             raise ValueError("root_review_required")
+    cutoff = RECOVERY_CUTOFF
+    if args.reviewed_window is not None:
+        if args.reviewed_window != H040_WINDOW:
+            raise ValueError("unknown_reviewed_window")
+        if not args.attempt or not attempt.startswith(args.job + "-h040-"):
+            raise ValueError("h040_requires_distinct_tied_attempt")
+        for value in (args.expected_original_status_sha256, args.expected_original_manifest_sha256):
+            if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+                raise ValueError("reviewed_original_receipt_hashes_required")
+        if not math.isfinite(args.network_timeout_seconds) or not 1 <= args.network_timeout_seconds <= 180:
+            raise ValueError("h040_network_timeout_must_be_1_to_180_seconds")
+        cutoff = H040_CUTOFF
     if not math.isfinite(args.network_timeout_seconds) or not 1 <= args.network_timeout_seconds <= 600:
         raise ValueError("invalid_bounded_network_timeout")
     if args.receipt.exists():
@@ -53,8 +72,10 @@ def main():
     if clock.returncode:
         raise RuntimeError("vm_clock_unavailable")
     launch_epoch = int(clock.stdout.strip())
+    if args.reviewed_window and launch_epoch < H040_START:
+        raise ValueError("reviewed_window_not_open")
     deadline = int(datetime.datetime.fromisoformat(args.deadline_utc.replace("Z", "+00:00")).timestamp()) if args.deadline_utc else launch_epoch + 7200
-    if not 0 < deadline - launch_epoch <= 7200 or (args.attempt and deadline > RECOVERY_CUTOFF):
+    if not 0 < deadline - launch_epoch <= 7200 or deadline > cutoff:
         raise ValueError("deadline_outside_reviewed_recovery_window")
     maximum_seconds = deadline - launch_epoch
     unit = attempt + ".service"
@@ -66,6 +87,10 @@ def main():
                "--network-timeout-seconds", str(args.network_timeout_seconds)]
     if args.attempt:
         command += ["--attempt", attempt, "--expected-root-device", str(args.expected_root_device), "--expected-root-inode", str(args.expected_root_inode)]
+    if args.reviewed_window:
+        command += ["--reviewed-window", args.reviewed_window,
+                    "--expected-original-status-sha256", args.expected_original_status_sha256,
+                    "--expected-original-manifest-sha256", args.expected_original_manifest_sha256]
     properties = ["Type=exec", "Restart=no", "RuntimeMaxSec=" + str(maximum_seconds) + "s", "TimeoutStopSec=15s", "KillMode=control-group",
                   "MemoryMax=1G", "Nice=10", "IOWeight=20", "NoNewPrivileges=yes",
                   "ProtectHome=yes", "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectControlGroups=yes",
@@ -81,6 +106,7 @@ def main():
                "deadlineUtc": datetime.datetime.fromtimestamp(deadline, datetime.timezone.utc).isoformat(),
                "maximumWorkSeconds": maximum_seconds, "supervisorStopGraceSeconds": 15, "automaticRetries": 0,
                "networkTimeoutSeconds": args.network_timeout_seconds, "expectedRootDevice": args.expected_root_device,
+               "reviewedWindow": {"id": args.reviewed_window or "h039-expired-default", "cutoffEpoch": cutoff},
                "expectedRootInode": args.expected_root_inode, "sourceBuildRoot": build,
                "manifestPath": build + "/artifacts.lock.json", "statusPath": logs + "/status.json",
                "receiptManifestPath": logs + "/manifest.json", "artifactRoot": models,
@@ -93,6 +119,8 @@ def main():
         return 0
     started = remote(argv)
     receipt.update(launchExit=started.returncode, status="STARTED_NOT_VERIFIED" if started.returncode == 0 else "LAUNCH_FAILED")
+    receipt["privateStderrDigest"] = {"sha256": hashlib.sha256(started.stderr.encode()).hexdigest(),
+                                      "bytes": len(started.stderr.encode()), "exitCode": started.returncode}
     # Never expose manager/HTTP raw logs or environment in the compact receipt.
     if started.returncode == 0:
         observed = remote(["sudo", "-n", "systemctl", "show", unit, "--no-pager", "-p", "Id", "-p", "MainPID",

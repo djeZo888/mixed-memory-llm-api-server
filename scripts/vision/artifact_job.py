@@ -25,6 +25,9 @@ APPROVED = {"Qwen/Qwen3.5-9B", "PaddlePaddle/PaddleOCR-VL-1.6"}
 CHUNK = 1024 * 1024
 RESERVE_BYTES = 64 * 1024**3
 RECOVERY_CUTOFF = datetime.datetime(2026, 10, 1, 2, 25, tzinfo=datetime.timezone.utc).timestamp()
+H040_WINDOW = "h040-20261001"
+H040_START = datetime.datetime(2026, 10, 1, 2, 26, 10, tzinfo=datetime.timezone.utc).timestamp()
+H040_CUTOFF = datetime.datetime(2026, 10, 1, 4, 26, 10, tzinfo=datetime.timezone.utc).timestamp()
 
 
 class JobFailure(Exception):
@@ -68,6 +71,46 @@ def bounded_network_timeout(value, deadline):
         raise JobFailure("network_timeout_must_be_1_to_600_seconds")
     check_deadline(deadline)
     return min(value, deadline - time.time())
+
+
+def reviewed_window(args, attempt):
+    """Only this explicitly reviewed continuation can extend the old cutoff.
+
+    Finalization may settle its own receipt after expiry, but cannot acquire
+    authority for a different window, root, attempt or deadline.
+    """
+    window = args.reviewed_window
+    cutoff = RECOVERY_CUTOFF
+    if window is not None:
+        if window != H040_WINDOW:
+            raise JobFailure("unknown_reviewed_window")
+        if not args.attempt or not attempt.startswith(args.job + "-h040-"):
+            raise JobFailure("h040_requires_distinct_tied_attempt")
+        if not args.finalize and time.time() < H040_START:
+            raise JobFailure("reviewed_window_not_open")
+        if not math.isfinite(args.network_timeout_seconds) or not 1 <= args.network_timeout_seconds <= 180:
+            raise JobFailure("h040_network_timeout_must_be_1_to_180_seconds")
+        for value in (args.expected_original_status_sha256, args.expected_original_manifest_sha256):
+            if not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value):
+                raise JobFailure("reviewed_original_receipt_hashes_required")
+        cutoff = H040_CUTOFF
+    if not math.isfinite(args.deadline_epoch) or args.deadline_epoch > cutoff:
+        raise JobFailure("deadline_outside_reviewed_recovery_window")
+    return {"id": window or "h039-expired-default", "cutoffEpoch": cutoff}
+
+
+def verify_original_receipts(original, args, manifest, deadline):
+    # Hash the preserved receipt bytes, not a re-serialization. No old writes.
+    for name, expected in (("status.json", args.expected_original_status_sha256),
+                           ("manifest.json", args.expected_original_manifest_sha256)):
+        if expected is not None:
+            with original.open(name) as stream:
+                if digest(stream, deadline) != expected:
+                    raise JobFailure("original_receipt_hash_changed")
+    if original.read_json("manifest.json") != manifest:
+        raise JobFailure("original_manifest_must_match_exactly")
+    if original.read_json("status.json")["status"] not in ("FAILED", "TIMED_OUT", "STOPPED"):
+        raise JobFailure("original_attempt_must_be_failed_or_stopped")
 
 
 def digest(stream, deadline):
@@ -159,6 +202,9 @@ def main():
     parser.add_argument("--network-timeout-seconds", type=float, default=180)
     parser.add_argument("--expected-root-device", type=int)
     parser.add_argument("--expected-root-inode", type=int)
+    parser.add_argument("--reviewed-window", help="explicit root-reviewed continuation ID; no arbitrary cutoff")
+    parser.add_argument("--expected-original-status-sha256")
+    parser.add_argument("--expected-original-manifest-sha256")
     parser.add_argument("--deadline-epoch", type=float, required=True)
     parser.add_argument("--finalize", action="store_true")
     args = parser.parse_args()
@@ -167,8 +213,9 @@ def main():
     attempt = args.attempt or args.job
     if not re.fullmatch(r"h039-vision-[a-z0-9-]{1,70}", attempt):
         raise JobFailure("invalid_attempt_name")
-    if args.attempt and (attempt == args.job or args.deadline_epoch > RECOVERY_CUTOFF):
-        raise JobFailure("recovery_requires_distinct_attempt_and_0225_cutoff")
+    if args.attempt and attempt == args.job:
+        raise JobFailure("recovery_requires_distinct_attempt")
+    authority = reviewed_window(args, attempt)
     if args.attempt and (args.expected_root_device is None or args.expected_root_inode is None):
         raise JobFailure("reviewed_original_root_identity_required")
     if not args.finalize and not 0 < args.deadline_epoch - time.time() <= 7200:
@@ -195,6 +242,8 @@ def main():
                     # A rejected duplicate launch cannot alter the settled
                     # receipt of a different invocation of this attempt name.
                     return 0
+                if args.reviewed_window and status.get("reviewedWindow") != authority:
+                    raise JobFailure("finalizer_reviewed_window_mismatch")
                 status["supervisor"] = {k: os.environ.get(k) for k in ("SERVICE_RESULT", "EXIT_CODE", "EXIT_STATUS")}
                 if status["status"] == "PLANNED":
                     status.update(status="FAILED", failureCode="failed_before_running_receipt", finishedUtc=timestamp())
@@ -210,10 +259,7 @@ def main():
                 # claiming a new receipt namespace. Never write old receipts.
                 models.stat(args.job)
                 with logs.directory(args.job) as original:
-                    if original.read_json("manifest.json") != manifest:
-                        raise JobFailure("original_manifest_must_match_exactly")
-                    if original.read_json("status.json")["status"] not in ("FAILED", "TIMED_OUT", "STOPPED"):
-                        raise JobFailure("original_attempt_must_be_failed_or_stopped")
+                    verify_original_receipts(original, args, manifest, args.deadline_epoch)
             else:
                 models.mkdir(args.job)
             destination = stack.enter_context(models.directory(args.job))
@@ -222,7 +268,8 @@ def main():
                 raise JobFailure("original_artifact_root_identity_changed")
             # One launch per attempt, even after successful unit collection.
             with receipts.open("attempt.claim.json", os.O_CREAT | os.O_EXCL | os.O_WRONLY) as claim:
-                claim.write(json.dumps({"job": args.job, "attempt": attempt, "pid": os.getpid()}).encode())
+                claim.write(json.dumps({"job": args.job, "attempt": attempt, "pid": os.getpid(),
+                                        "reviewedWindow": authority}).encode())
                 claim.fsync()
             total = sum(f["size"] for m in manifest["models"] for f in m["files"])
             if binding.verify()["capacity"]["model_available_bytes"] < total + RESERVE_BYTES:
@@ -232,6 +279,7 @@ def main():
                      "pid": os.getpid(), "startedUtc": timestamp(), "deadlineEpoch": args.deadline_epoch,
                      "expectedBytes": total, "verifiedFiles": 0, "verifiedWeightFiles": 0,
                      "artifacts": [], "networkTimeoutSeconds": args.network_timeout_seconds,
+                     "reviewedWindow": authority,
                      "terminalReceipt": str(Path(binding.path("logs"))/attempt/"status.json")}
             receipts.atomic_json("manifest.json", manifest)
             receipts.atomic_json("status.json", state)
