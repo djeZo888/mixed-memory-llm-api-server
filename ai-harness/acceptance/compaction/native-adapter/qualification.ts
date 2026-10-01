@@ -7,7 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { privateFile } from './checkpoint.js';
 import { sha256, stableJson, reviewSnapshot } from './projection.js';
-import {FULL_RETENTION_TASKS} from './policy-selection.js';
+import {FULL_RETENTION_TASKS,assertH044ProducerSourceActivation} from './policy-selection.js';
 import { reviewedAuthorization } from '../authorization.mjs';
 const qualified = new WeakSet<object>();
 export const isQualifiedEntry = (value: unknown): value is EntryQualification => !!value && typeof value === 'object' && qualified.has(value);
@@ -27,6 +27,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRest
   if (process.platform !== 'linux' || !process.getuid?.()) throw Error('actual_rootless_linux_entry_qualification_required');
   reviewedAuthorization(config?.bootstrap?.review);
   const review = config.bootstrap.review;
+  assertH044ProducerSourceActivation(review.authorization.task);
   if (!config.enabled || review.approvedBy !== 'root' || !['h041-summary-stage-v1','h041-full-retention-v1'].includes(config.profile) || !/^[a-f0-9]{64}$/.test(config.qualificationSha256 ?? '')) throw Error('concrete_qualified_entry_disabled');
   const bytes = await privateFile(config.qualificationPath);
   if (sha256(bytes) !== config.qualificationSha256 || review.qualificationSha256 !== sha256(bytes)) throw Error('reviewed_actual_entry_producer_packet_required');

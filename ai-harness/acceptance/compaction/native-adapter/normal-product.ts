@@ -7,7 +7,8 @@ import {loadCodexOrdinaryEntry} from '../../../server/src/codex-ordinary-entry.j
 import {createProductionQwenVerifier,loadQwenReceipt} from '../../../server/src/codex-production.js';
 import {readProtectedCredential} from '../../../server/src/protected-credential.js';
 import * as traceApi from '../../../server/src/codex-receipts.js';
-import {parsePostSamplingTrace,verifyRetainedTrace,verifyTraceSchemaMode,traceSchemaForMode,type NativeTraceMode} from '../native-trace-evidence.mjs';
+import {parsePostSamplingTrace,parseAutoCallTrace,verifyRetainedTrace,verifyTraceSchemaMode,traceSchemaForMode,type NativeTraceMode} from '../native-trace-evidence.mjs';
+import {assertH044ProducerSourceActivation} from './policy-selection.js';
 import {getCodexReceiptUtf8} from '../../../server/src/codex-receipts.js';
 import {translateResponses} from '../../../server/src/codex-responses.js';
 import type {CodexHostQualification} from '../../../server/src/codex-host.js';
@@ -23,16 +24,34 @@ import {lstat,readFile} from 'node:fs/promises';import {join,dirname} from 'node
 import {assertNormalRestartConfig} from './normal-restart-ticket.js';
 import {collectOrdinaryAutomatic} from './automatic.js';
 import {bounded} from './process-runner.js';
-/** Selection is root configuration only. Current external producer graph accepts
- * V1; V2 remains an explicit readiness error until A supplies the exact API. */
+/** Selection is root configuration only. V2 projection is aligned below; source
+ * activation awaits root's final exact R producer/declaration/formatter review. */
 export function normalProductTraceMode(review:any):NativeTraceMode{
  const mode=review.nativeTrace===undefined?'off':review.nativeTrace?.mode;
  traceSchemaForMode(mode);return mode;
 }
 export function assertNormalProductTraceReady(mode:NativeTraceMode){
  traceSchemaForMode(mode);
- if(mode==='post-sampling-token-usage-v2')throw Error('actual_reviewed_A_V2_trace_producer_API_not_ready:codex-receipts/codex-host/codex-engine/codex-launcher/codex-product-observation');
+ if(mode==='post-sampling-token-usage-v2')throw Error('actual_reviewed_A_V2_trace_producer_API_not_ready:pending_exact_root_reviewed_R_declaration_implementation_formatter_graph');
  if(mode!=='off'&&(typeof traceApi.getCodexTraceEvents!=='function'||typeof traceApi.getCodexTraceUtf8!=='function'||typeof traceApi.isVerifiedCodexTraceReceipt!=='function'))throw Error('actual_reviewed_A_trace_producer_API_unavailable');
+}
+/** Source projection only: authentic transport brands and the independent full
+ * carrier verifier remain mandatory. No formatter/native acceptance is granted.
+ * Preserve all original event bytes; numeric and AUTO NEW streams stay separate. */
+export function projectNormalProductTrace(r:traceApi.CodexNativeTraceReceipt,selectedMode:Exclude<NativeTraceMode,'off'>,producer:any,expected:any){
+ if(!traceApi.isVerifiedCodexTraceReceipt(r)||r.mode!==selectedMode)throw Error('actual_owned_current_A_trace_receipt_required');
+ const retained=traceApi.getCodexRetainedTraceEvidence(r,selectedMode),raw=traceApi.getCodexTraceUtf8(r),events=traceApi.getCodexTraceEvents(r);
+ if(!raw||!events||retained.schema!==traceSchemaForMode(selectedMode)||retained.selectedMode!==selectedMode||!Array.isArray(retained.lines)||!Array.isArray(retained.autoCalls))throw Error('actual_discriminated_A_retained_trace_projection_required');
+ const packet={...producer,selectedMode,traceReceiptUtf8:raw,traceReceiptSha256:sha256(raw),events:events.map(e=>{
+  const lineUtf8=e.bytes.toString('utf8');if(!Buffer.from(lineUtf8).equals(e.bytes))throw Error('original_trace_invalid_utf8');
+  const parsed=e.kind==='autoCompactNew'?parseAutoCallTrace(lineUtf8):parsePostSamplingTrace(lineUtf8);
+  if(parsed.lineSha256!==e.lineSha256)throw Error('original_trace_projection_digest');
+  return {lineUtf8,lineSha256:e.lineSha256,stderrSequence:e.stderrSequence,kind:e.kind};
+ })};
+ const verified=verifyRetainedTrace(packet,{...expected,mode:selectedMode,traceReceiptSha256:packet.traceReceiptSha256,launchReceiptSha256:packet.launchReceiptSha256,settlementReceiptSha256:packet.settlementReceiptSha256});
+ const original=(e:any)=>({lineUtf8:e.lineUtf8,stderrSequence:e.stderrSequence,lineSha256:e.lineSha256});
+ if(stableJson(retained.lines)!==stableJson(verified.lines.map(original))||stableJson(retained.autoCalls)!==stableJson(verified.autoCalls.map(original))||stableJson(retained.producer)!==stableJson(verified.producer)||retained.receiptSha256!==packet.traceReceiptSha256)throw Error('actual_A_retained_projection_original_carrier_mismatch');
+ return {...packet,retainedTrace:retained};
 }
 export async function kernelProcessReceipt(pid=process.pid){if(process.platform!=='linux')throw Error('native_normal_process_requires_linux_kernel');const procStatUtf8=await readFile(`/proc/${pid}/stat`,'utf8'),bootIdUtf8=await readFile('/proc/sys/kernel/random/boot_id','utf8'),fields=procStatUtf8.slice(procStatUtf8.lastIndexOf(') ')+2).trim().split(/\s+/);return {source:'linux-proc-process-observation',pid,startTicks:fields[19],bootId:bootIdUtf8.trim(),procStatUtf8,bootIdUtf8};}
 export class NormalProductProducer {
@@ -48,21 +67,17 @@ export class NormalProductProducer {
  private traceHooks():Pick<CodexHostQualification,'nativeTraceMode'|'onNativeTraceReceipt'>{
   const selectedMode=normalProductTraceMode(this.config.review);assertNormalProductTraceReady(selectedMode);
   if(selectedMode==='off')return {nativeTraceMode:undefined,onNativeTraceReceipt:undefined};
-  // Narrow without a cast: V2 cannot reach the V1-only producer graph.
-  if(selectedMode!=='post-sampling-token-usage-v1')throw Error('actual_reviewed_A_V2_trace_producer_API_not_ready');
   return {nativeTraceMode:selectedMode,onNativeTraceReceipt:r=>{try{
    if(this.traceFailure)throw this.traceFailure;
    if(!traceApi.isVerifiedCodexTraceReceipt(r))throw Error('actual_owned_current_A_trace_receipt_required');
-   const raw=traceApi.getCodexTraceUtf8(r),events=traceApi.getCodexTraceEvents(r);
-   if(!raw||!events||r.sessionId!==this.config.sessionId||r.mode!==selectedMode||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');
+   if(r.sessionId!==this.config.sessionId||r.mode!==selectedMode||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');
    const producer=this.producers.get(r.nonce);if(!producer?.settlementReceiptUtf8)throw Error('actual_trace_after_owned_settlement_required');
    // Settled evidence is accepted through expiry; the reserve forbids new
    // dispatch, not collection of the already owned operation's originals.
    reviewedAuthorization(this.config.review);verifyTraceSchemaMode(r.schema,selectedMode);
-   const packet={...producer,selectedMode,traceReceiptUtf8:raw,traceReceiptSha256:sha256(raw),events:events.map(e=>{const lineUtf8=e.bytes.toString('utf8');if(!Buffer.from(lineUtf8).equals(e.bytes))throw Error('original_trace_invalid_utf8');parsePostSamplingTrace(lineUtf8);return {lineUtf8};})};
-   // Recheck the complete original carrier before selecting any records. The
-   // branded A callback remains mandatory; a valid JSON packet cannot create it.
-   verifyRetainedTrace(packet,{mode:selectedMode,sessionId:this.config.sessionId,receiptSources:this.qualification.receiptSources,traceReceiptSha256:packet.traceReceiptSha256,launchReceiptSha256:packet.launchReceiptSha256,settlementReceiptSha256:packet.settlementReceiptSha256});
+   const packet=projectNormalProductTrace(r,selectedMode,producer,{sessionId:this.config.sessionId,receiptSources:this.qualification.receiptSources});
+   // Projection rechecks the complete original carrier. The branded callback
+   // remains mandatory; a valid JSON packet cannot create it.
    this.traceCaptures.set(r.nonce,packet);
   }catch(e){this.traceFailure=e instanceof Error?e:Error('actual_trace_capture_failed');throw this.traceFailure;}}};
  }
@@ -108,6 +123,7 @@ export class NormalProductProducer {
 export async function startNormalProduct(configPath:string,restart?:import('./normal-restart-ticket.js').NormalRestartTicket){
  const configBytes=await privateFile(configPath),config=reviewSnapshot(JSON.parse(configBytes.toString('utf8'))),a=reviewedAuthorization(config.review);if(restart)assertNormalRestartConfig(restart,config,configBytes);if(process.platform!=='linux'||!process.getuid?.()||config.review.approvedBy!=='root'||config.review.actor!=='worker1'||!identifier(config.sessionId)||Date.now()>=a.dispatchCutoffAt)throw Error('reviewed_actual_normal_product_entry_required');
 
+ assertH044ProducerSourceActivation(config.review.authorization.task);
  const qualification=await qualifyEntry(config.qualificationConfig,restart);if(!isQualifiedEntry(qualification))throw Error('actual_current_native_qualification_required');
  const ordinary=loadCodexOrdinaryEntry(config.ordinaryEntryPath,config.ordinaryEntryKeyPath,{serverDir:config.serverDir,deploymentDir:config.deploymentDir});if(!ordinary)throw Error('genuine_protected_normal_data_entry_required');
  const receipt=await loadQwenReceipt(config.qwenReceiptPath),inferenceKey=await readProtectedCredential(config.inferenceKeyPath),controlKey=await readProtectedCredential(config.controlKeyPath),verifyLane=createProductionQwenVerifier(receipt,{inferenceKey,controlKey});

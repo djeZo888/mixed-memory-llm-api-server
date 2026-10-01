@@ -1,6 +1,7 @@
 import { assertRestartBootstrap,isRestartTicket,type RestartTicket } from './restart.js';
 import { randomUUID } from 'node:crypto';
 import { reviewedAuthorization } from '../authorization.mjs';
+import { assertH044ProducerSourceActivation } from './policy-selection.js';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join, resolve } from 'node:path';
@@ -34,7 +35,7 @@ export interface BootstrapInput {
   review: { enabled: boolean; approvedBy: string; candidateCommit: string; notAfterUtc: string; settlementReserveMs: number;
     policy: typeof FIXED_POLICY; stagePolicy: typeof STAGE_POLICY; files: Record<string, string>; productionStateReceiptSha256: string;
     projection: { format: 'h040-fresh-persisted-message-v1'; frozenPolicySha256: string; specSha256: string; collectorSourceSha256: string };
-    authorization: { task: 'H040' | 'H041' | 'H043' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03' | 'H041-COMPACTION-DELIVERY-04' | 'H041-COMPACTION-DELIVERY-05'; windowId: string; startsUtc: string; capUtc: string } };
+    authorization: { task: 'H040' | 'H041' | 'H043' | 'H044' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03' | 'H041-COMPACTION-DELIVERY-04' | 'H041-COMPACTION-DELIVERY-05'; windowId: string; startsUtc: string; capUtc: string } };
   actualCandidateCommit: string; privateBase: string; productionDataDir: string; repository: string;
   launcherPath: string; qwenReceiptPath: string; inferenceKeyPath: string; controlKeyPath: string;
   productionStateReceiptPath: string;
@@ -55,6 +56,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
       input.actualCandidateCommit !== review.candidateCommit || !Number.isFinite(expiry) || expiry <= Date.now() ||
       stableJson(review.policy) !== stableJson(FIXED_POLICY) || stableJson(review.stagePolicy) !== stableJson(STAGE_POLICY)) throw Error('root_concrete_review_required_or_expired');
   reviewedExpiry(review);
+  assertH044ProducerSourceActivation(review.authorization.task);
   const dispatchCutoffAt = expiry - review.settlementReserveMs;
   if (Date.now() >= dispatchCutoffAt) throw Error('native_settlement_reserve_no_new_bootstrap');
   if (process.platform !== 'linux' || process.getuid?.() === 0) throw Error('reviewed_linux_rootless_host_required');

@@ -3,7 +3,7 @@ import { createCodexTextOnlyPolicy, createCodexParentArtifactScope, type CodexTe
 import { getCodexReceiptUtf8 } from '../../../server/src/codex-receipts.js';
 import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
-import {selectPolicyFactories,createSelectedRetentionParentPolicy} from './policy-selection.js';
+import {selectPolicyFactories,createSelectedRetentionParentPolicy,assertH044ProducerSourceActivation} from './policy-selection.js';
 import {DelegatedChildProducer} from './delegated-child.js';
 import {carrierForConfig} from './carrier-admission.js';
 import {isQualificationTaskAdmission,type QualificationTaskAdmission} from '../../../server/src/qualification-task-admission.js';
@@ -21,6 +21,7 @@ import { createArtifactSink } from './artifact-sink.js';
 export async function loadReviewedLocalEntry(configPath: string,restart?:import('./restart.js').RestartTicket,signal?:AbortSignal) {
   signal?.throwIfAborted();
   const config = JSON.parse((await privateFile(configPath)).toString('utf8'));
+  assertH044ProducerSourceActivation(config.bootstrap?.review?.authorization?.task);
   if (stableJson(config.bootstrap) !== stableJson(config.adapterInput?.bootstrap)) throw Error('entry_and_adapter_bootstrap_tuple_must_match');
   const qualified = await qualifyEntry(config,restart);
   const carrier=config.carrier?await carrierForConfig(configPath,undefined,signal):undefined;

@@ -1,5 +1,6 @@
 /** Root-frozen authorization, never derived from a model/request deadline. */
 export const AUTHORIZATIONS = Object.freeze({
+  H044: Object.freeze({ task: 'H044', startsUtc: '2026-10-01T23:14:41Z', capUtc: '2026-10-02T07:45:00Z' }),
   H043: Object.freeze({ task: 'H043', startsUtc: '2026-10-01T21:19:33Z', capUtc: '2026-10-02T00:04:33Z' }),
   H040: Object.freeze({ task: 'H040', startsUtc: '2026-10-01T02:26:10Z', capUtc: '2026-10-01T04:26:10Z' }),
   H041: Object.freeze({ task: 'H041', startsUtc: '2026-10-01T08:05:07Z', capUtc: '2026-10-01T10:05:07Z' }),
