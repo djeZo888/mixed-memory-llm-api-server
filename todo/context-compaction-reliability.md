@@ -1,7 +1,7 @@
 # Context compaction reliability
 
 **Priority: first. Plan and source audit recorded on 1 October 2026.**
-Reviewed H039 source preparation passed combined build/compile and 1,091 server fixtures with four optional native skips. All native workers closed. No fresh native retention or deployment acceptance is implied. ai-vm accepted poweroff at 01:33:22 UTC for installation of a second Ada 48 GB; live checks wait until the user confirms the hardware is ready.
+Reviewed H039 source preparation passed combined build/compile and 1,091 server fixtures with four optional native skips. All native workers closed. No fresh native retention or deployment acceptance is implied. The user confirmed the second Ada is installed and ai-vm is back up; H040 resumes under its finite window. H040 adds bounded full-state/native-record collection, immutable first-request guards, host-only receipt preparation and independent retention evidence. Default native acceptance remains disabled until actual Linux/model-facing scope and owned cleanup qualify. Read [current H040 handoff](../reports/h040-handoff.md) and adopt its exact active workers/download before dispatch.
 Image generation qualification is deferred by the user.
 
 ## Objective and current evidence

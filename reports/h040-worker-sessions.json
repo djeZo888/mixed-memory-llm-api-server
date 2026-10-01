@@ -234,7 +234,7 @@
       "task": "E-compaction-portability",
       "host": "mac-worker2",
       "actualSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0; seven reviewed portable test/report paths integrated; combined32 checks deferred to coherentphase",
       "sourceCandidate": "112a4d93b001762c8b6582d995c529036257efc6",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/E-compaction-portability",
       "outerPid": 27348,
@@ -248,7 +248,20 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "cliVersion": "0.159.2",
-      "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:46:50.800Z"
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:46:50.800Z",
+      "nativeTerminal": {
+        "nativePid": 27351,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:52:51.444929+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 27350,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:52:51.461476+00:00"
+      },
+      "sourceCommit": "d810de4f97f056319681c7402fecb8136bbaca40",
+      "reportSuccessor": "a55812d545c87327d625030ebcf1b840bb14938a"
     },
     {
       "task": "B-qualification-closure",
@@ -283,7 +296,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T03:53:06.043601+00:00",
+  "observedUtc": "2026-10-01T03:57:38.165596+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
@@ -309,7 +322,7 @@
     "latestAuthority": "Specific human CHA_FAN3 clarification supersedes blanket70C interpretation for that external fan only"
   },
   "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors",
-  "currentLifecycleOwner": "none; model transitions held pending physical slot mapping; A-protocol-receipts source only",
+  "currentLifecycleOwner": "bounded artifactjob holds canonicallease; no model transitions",
   "artifactDispatcher": {
     "phase": "C-artifact-lease-handoff-01",
     "owner": "root coordinator executes sealed C artifact runner outside paid native CLI",
@@ -338,5 +351,29 @@
     "automaticRetry": false,
     "finishedUtc": "2026-10-01T03:51:27.008147+00:00",
     "originalEvidence": "preserved"
-  }
+  },
+  "artifactKnownOwnerRelease": {
+    "phase": "C-artifact-known-owner-release-03",
+    "runnerSha256": "968ab7fbd386359459f5d5b374d4ba6f1a3c4cfab9ed7143f648b250b52801cc",
+    "actualStageInvocations": 1,
+    "actualStageExit": 0,
+    "actualStageStatus": "STAGED_NOT_STARTED",
+    "actualLaunchInvocations": 1,
+    "actualLaunchExit": 0,
+    "actualLaunchStatus": "STARTED_NOT_VERIFIED",
+    "launchUtc": "2026-10-01T03:56:46Z",
+    "deadlineUtc": "2026-10-01T04:26:10Z",
+    "unit": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01.service",
+    "mainPid": 2153402,
+    "immediateObservedUtc": "2026-10-01T03:57:17.967672+00:00",
+    "immediateStatus": "RUNNING",
+    "verifiedFiles": 13,
+    "verifiedWeightFiles": 1,
+    "originalReceiptHashesUnchanged": true,
+    "automaticRetry": false,
+    "restart": "no",
+    "canonicalLeaseHeldWholeDownload": true,
+    "paidCli": "none"
+  },
+  "artifactStatus": "adopt exact active h040-recovery-01, no new job or retry; originalroot preserved"
 }

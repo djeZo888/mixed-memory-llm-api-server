@@ -27,10 +27,11 @@ Project mode, organization-owned work, headless Linux workers and AI-authored
 first-party development. These plans do not change the deployed model roster or
 qualify untested capabilities.
 
-**Current continuation:** [H039 handoff](reports/h039-handoff.md) and
-[parallel task plan](reports/h039-execution-plan.md) preserve the Codex completion
-gaps, compaction priority, approved technical-vision preparation and actual
-worker-session roster. Read these before continuing work in a new chat.
+**Current continuation:** [H040 handoff](reports/h040-handoff.md),
+[execution plan](reports/h040-execution-plan.md) and [actual adopted roster](reports/h040-worker-sessions.json)
+record resumed work after the second Ada installation, compaction reliability,
+latest GPU placement and thermal authority, and the exact active download.
+Read these before dispatching work; [H039](reports/h039-handoff.md) remains history.
 
 The manual-update policy now supersedes H006's package-installation-enabled
 policy. Automatic APT updates and the discovered refresh/update timers are

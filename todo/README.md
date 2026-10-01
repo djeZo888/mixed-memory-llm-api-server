@@ -19,7 +19,7 @@ Current release evidence remains in the [project README](../README.md).
   readable tabs and tables, configurable multi-host sensors, encrypted BMC
   credentials, and a system-wide inference pause that preserves running services
   and resident models.
-- **improve fan management service** — investigation and detailed plan pending;
+- **improve fan management service** — [H040 narrow GPU thermal policy](../reports/h040-fan-artifact-live.md) has configured lifecycle readback; hot thresholds remain untested. Broader investigation and detailed plan pending;
   separate monitoring credentials from fan-control authority, and support
   qualified GPU, chassis, CPU and pump controls across providers.
 - **critical handling and system notifications** — detailed plan pending;
