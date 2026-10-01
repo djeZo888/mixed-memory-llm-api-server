@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T15:59:54.560166+00:00",
+  "updatedUtc": "2026-10-01T16:09:07.017388+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-09",
@@ -1154,6 +1154,22 @@
     "sourceFixOwner": "worker2, separate narrow fan-source commit",
     "rootReviewOnly": "no live fan install/unit/latch/actuator changes",
     "nativeCompaction": "NOT_TESTED",
-    "privateEvidence": "H041 task root-fan-live09/passive.receipt.json"
+    "privateEvidence": "H041 task root-fan-live09/passive.receipt.json",
+    "freshGetUtc": "2026-10-01T16:00:56/16:01:04Z",
+    "currentConfiguredDuty": 100,
+    "currentTargetInvariant": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+    "matchingFreshGpu93TemperatureC": 34,
+    "actualTachReadings": [
+      4560,
+      5040,
+      2760
+    ],
+    "tachUnits": null,
+    "physicalCyclingCause": "UNKNOWN",
+    "sourceFix": "ac46fb0785dc791e47117cdab5ff9736f4b14841",
+    "rootIntegration": "add32dc88483b1645538853e70a790b6401f5115",
+    "sourceCases": 72,
+    "liveInstall": "NOT_EXECUTED",
+    "packetOwner": "worker2 source/private recovery packet; worker1 sole later live executor"
   }
 }
