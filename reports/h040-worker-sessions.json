@@ -158,6 +158,26 @@
         "finishedUtc": "2026-10-01T03:12:58.492469+00:00"
       },
       "sourceChecks": "25 integrated +69 CHA_FAN3 +42 artifact synthetic PASS; pycompile/diff PASS"
+    },
+    {
+      "task": "C-fan-artifact-live",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+      "status": "resumed same adopted session; sole bounded fan deployment and artifactretry owner; actualclosurepending",
+      "sourceCandidate": "469f3815cadac4fa696a8dbeba1b805905173f60",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan-artifact-live",
+      "outerPid": 22195,
+      "startedUtc": "2026-10-01T03:17:06.859028+00:00",
+      "sessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+      "candidate": "469f3815cadac4fa696a8dbeba1b805905173f60",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan-artifact-live",
+      "hardDeadlineUtc": "2026-10-01T03:40:00+00:00",
+      "nativePid": 22197,
+      "wrapperPid": 22196,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted adopted-session turn_context 2026-10-01T03:17:08.723Z",
+      "cliVersion": "0.159.2"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
