@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T14:30:57.651508+00:00",
+  "updatedUtc": "2026-10-01T14:56:28.385576+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-08",
@@ -614,7 +614,7 @@
       "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
     }
   ],
-  "currentRootReviewedHead": "69a537149c648ec41511d7332330e7177a07a0d2",
+  "currentRootReviewedHead": "d32199a977e19053a13a3a92f8eee554169182d3",
   "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
   "liveAcceptance": "NOT_TESTED",
   "closedSource06": {
@@ -921,5 +921,17 @@
       "model": "gpt-6.1-sol",
       "effort": "ultra"
     }
-  ]
+  ],
+  "source08ATraceEarly": {
+    "source": "37865992bf259f4bf2ea7d720387348151b38e73",
+    "integrated": "d32199a977e19053a13a3a92f8eee554169182d3",
+    "activation": "default disabled",
+    "sourceChecks": "50 TS +8 trace capture +12 supervisor +1 initialization barrier; build/shell0",
+    "nativeAvailability": "NOT_TESTED",
+    "beforeTraceUse": [
+      "trace failure must preserve independent factual settlement",
+      "actual normal trustedObservers fixed-mode/callback bridge"
+    ],
+    "updatedHelperSources": 8
+  }
 }
