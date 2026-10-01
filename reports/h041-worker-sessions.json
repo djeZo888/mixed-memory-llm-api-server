@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T10:32:36.666974+00:00",
+  "updatedUtc": "2026-10-01T11:57:30.086644+00:00",
   "activePhases": [
     {
       "task": "A-production-compaction",
@@ -367,10 +367,12 @@
   ],
   "liveGo": false,
   "remainingCurrent": [
-    "protected ordinary startup/recovery qualification and usable controls",
-    "full baseline and artifact restart purposes plus genuine same-parent child",
-    "combined source/build and actual Linux zero-generation qualification",
-    "manual stage, full retention, ordinary production/reconnect/recovery and genuine auto400k"
+    "E concrete normal-session qualification producer/runner and browser/restart/recovery proof binding",
+    "AUTO complete canonical metadata and actual native usage/effective400000 threshold plus ordinary count bridge",
+    "final exact combined worker checks and Linux build/complete closure",
+    "current Linux owner/preservation/stop-restore/fixed8081 plan and actual zero-generation qualification",
+    "9-action stage then39-action full retention then ordinary and one genuine400000 AUTO qualification",
+    "new-head draftPR CI; no merge"
   ],
   "delivery04Authority": {
     "id": "H041-COMPACTION-DELIVERY-04",
@@ -495,5 +497,24 @@
       "wrapper-pid": 36802,
       "outer-pid": 36801
     }
-  ]
+  ],
+  "source05ReviewedIntegrated": {
+    "interfaceActualCommit": "d5eda2b25cbef6e965e2e26c117dc03a54c00747",
+    "interfaceRootCommit": "aa7995d78617cbe43ced6e3610161c65fb7b6a7a",
+    "runtimeActualCommit": "86bebb212ce1a5f6d0a9e74c9d5a638413182ac5",
+    "runtimeRootCommit": "cd4f5f51da56eb2cfec80cea51c4a29bb04346ff",
+    "decision": "SAFE_DISABLED_SOURCE_INTEGRATION",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "readbackSource05": {
+    "modelFilesMatched": 71,
+    "weightsMatched": 66,
+    "localContentSha256": "aed9192933cbf04db119b8442e78ef0aead5244d9377331426f1e6d8d8c88312",
+    "hubRevision": null,
+    "tokenizerRevision": null,
+    "nativeAcceptance": "NOT_TESTED",
+    "historicalNativeUncertain": 2,
+    "gatewayAcceptedUnresolved": 1,
+    "productionLifecycle": "NOT_RUN"
+  }
 }
