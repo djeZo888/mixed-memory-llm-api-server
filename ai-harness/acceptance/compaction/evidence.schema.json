@@ -116,10 +116,10 @@
           "$ref": "#/$defs/metadata"
         },
         "modelRevision": {
-          "$ref": "#/$defs/metadata"
+          "$ref": "#/$defs/artifactRevisionMetadata"
         },
         "tokenizerRevision": {
-          "$ref": "#/$defs/metadata"
+          "$ref": "#/$defs/artifactRevisionMetadata"
         },
         "promptRevision": {
           "const": "kpm-technical-v1"
@@ -720,6 +720,82 @@
           "minimum": 0
         }
       }
+    },
+    "artifactRevisionMetadata": {
+      "oneOf": [
+        {
+          "$ref": "#/$defs/metadata"
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "value",
+            "reason",
+            "identity",
+            "artifactEvidence"
+          ],
+          "properties": {
+            "value": {
+              "type": "null"
+            },
+            "reason": {
+              "type": "string",
+              "minLength": 1
+            },
+            "identity": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "kind",
+                "repoId",
+                "revision",
+                "manifestSha256",
+                "artifactInventorySha256",
+                "producerReceiptSha256"
+              ],
+              "properties": {
+                "kind": {
+                  "const": "MANIFEST_SOURCE_REVISION"
+                },
+                "repoId": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "revision": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{40}$"
+                },
+                "manifestSha256": {
+                  "$ref": "#/$defs/hash"
+                },
+                "artifactInventorySha256": {
+                  "$ref": "#/$defs/hash"
+                },
+                "producerReceiptSha256": {
+                  "$ref": "#/$defs/hash"
+                }
+              }
+            },
+            "artifactEvidence": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "receipt",
+                "expected"
+              ],
+              "properties": {
+                "receipt": {
+                  "type": "object"
+                },
+                "expected": {
+                  "type": "object"
+                }
+              }
+            }
+          }
+        }
+      ]
     }
   }
 }

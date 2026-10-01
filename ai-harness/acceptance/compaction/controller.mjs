@@ -337,7 +337,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
     if (qualification === 'native') {
       // Refuse a mismatched or unidentified runner before opening an inference thread.
       const pins = packet.config.review.runtimePins;
-      if (!pins || ['version', 'sourceRevision', 'binarySha256', 'model', 'modelRevision', 'tokenizerRevision'].some((k) => !pins[k] || runtime?.[k]?.value !== pins[k]) || pins.version !== packet.config.runtime.version || pins.sourceRevision !== packet.config.runtime.sourceRevision) throw new Error('Actual runtime/model pins do not match reviewed candidate');
+      if (!pins || ['version', 'sourceRevision', 'binarySha256', 'model', 'modelRevision', 'tokenizerRevision'].some((k) => !pins[k] || (typeof pins[k]==='string'?runtime?.[k]?.value!==pins[k]:runtime?.[k]?.value!==null||stableJson(runtime?.[k]?.identity)!==stableJson(pins[k]))) || pins.version !== packet.config.runtime.version || pins.sourceRevision !== packet.config.runtime.sourceRevision) throw new Error('Actual runtime/model pins do not match reviewed candidate');
     }
     opened = true;
     session = await call('open', { runId, config: structuredClone(packet.config) });

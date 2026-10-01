@@ -1,3 +1,4 @@
+import {verifyManifestSourceIdentity} from '../model-artifact-identity.mjs';
 import { verifyInstalledBuild } from './build-closure.mjs';
 import { isRestartTicket,type RestartTicket } from './restart.js';
 import { readFile } from 'node:fs/promises';
@@ -10,7 +11,7 @@ export const isQualifiedEntry = (value: unknown): value is EntryQualification =>
 export const STAGE_CAPABILITIES = Object.freeze(['qualified-fresh-persisted-message-projection','host-captured-probe-input','tools-and-files-denied-for-summary','settlement-receipts']);
 export const FULL_CAPABILITIES = Object.freeze([...STAGE_CAPABILITIES,'scoped-original-record-retrieval','qualified-durable-holdout-projection','cold-resume','cold-resume-after-continuation','clean-child-context']);
 export interface EntryQualification {
-  runtime: Record<string,{value:string;reason:null}>;
+  runtime: Record<string,{value:string|null;reason:string|null;identity?:any;artifactEvidence?:any}>;
   profile: 'h041-summary-stage-v1' | 'h041-full-retention-v1';
   receiptSources: Record<string,string>; scopePolicies: Record<string,any>;
   qualificationSha256: string; sourceBuildManifestSha256: string;routeInstanceId:string;
@@ -33,6 +34,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket): Promise<
   const runtime: EntryQualification['runtime'] = {};
   for (const key of keys) {
     const evidence = packet.pins?.[key];
+    if(['modelRevision','tokenizerRevision'].includes(key)&&evidence?.value===null&&review.runtimePins?.[key]?.kind==='MANIFEST_SOURCE_REVISION'){const expected=review.artifactIdentityExpected;if(!expected||typeof evidence.rawUtf8!=='string'||sha256(evidence.rawUtf8)!==evidence.rawSha256||!Array.isArray(evidence.jsonPath)||evidence.exitCode!==0||evidence.capturedBy!=='root-owned-linux-readback'||evidence.jsonPath.reduce((v:any,k:string)=>v?.[k],JSON.parse(evidence.rawUtf8))!==null)throw Error('actual_native_revision_null_capture_required');const verification=verifyManifestSourceIdentity(packet.artifactIdentity,expected);if(verification.status!=='SOURCE_VALID'||stableJson(verification.identity)!==stableJson(review.runtimePins[key]))throw Error('actual_typed_current_artifact_source_identity_required');runtime[key]={value:null,reason:'Native revision unreported; immutable artifact source independently bound',identity:verification.identity,artifactEvidence:{receipt:packet.artifactIdentity,expected}};continue;}
     if (!evidence || typeof evidence.value !== 'string' || !evidence.value || typeof evidence.rawUtf8 !== 'string' || sha256(evidence.rawUtf8) !== evidence.rawSha256 ||
         !Array.isArray(evidence.argv) || !evidence.argv.length || evidence.exitCode !== 0 || evidence.capturedBy !== 'root-owned-linux-readback' || review.runtimePins?.[key] !== evidence.value) throw Error('actual_six_runtime_pin_captures_required');
     // Each pin is extracted from captured producer bytes by its independently
@@ -41,7 +43,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket): Promise<
     if (extracted !== evidence.value) throw Error('runtime_pin_not_in_actual_capture');
     runtime[key] = {value:evidence.value,reason:null};
   }
-  if (runtime.version.value !== '0.158.0' || runtime.sourceRevision.value !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' || runtime.model.value !== 'qwen3.8-27b' || !/^[a-f0-9]{64}$/.test(runtime.binarySha256.value)) throw Error('retained_runtime_pin_mismatch');
+  if (runtime.version.value !== '0.158.0' || runtime.sourceRevision.value !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' || runtime.model.value !== 'qwen3.8-27b' || !/^[a-f0-9]{64}$/.test(runtime.binarySha256.value??'')) throw Error('retained_runtime_pin_mismatch');
   const manifestBytes = await privateFile(config.sourceBuildManifestPath);
   if (sha256(manifestBytes) !== review.sourceBuildManifestSha256) throw Error('reviewed_source_and_executed_build_required');
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
