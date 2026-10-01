@@ -11,7 +11,7 @@
       "task": "A-backend-resume",
       "host": "mac-worker1",
       "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0",
       "sourceCandidate": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-backend-resume",
       "outerPid": 19616,
@@ -25,13 +25,21 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context at 2026-10-01T02:30:43.971Z",
-      "cliVersion": "0.159.2"
+      "cliVersion": "0.159.2",
+      "nativeTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T02:49:15.568929+00:00"
+      },
+      "outerTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T02:49:15.576463+00:00"
+      }
     },
     {
       "task": "C-artifact-recovery",
       "host": "mac-worker1",
       "actualSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
-      "status": "resumed; actual closure pending",
+      "status": "closed actualnative0/outer0; sealed source337a requires stagerdirectoryfsync correction beforeGO",
       "sourceCandidate": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-artifact-recovery",
       "outerPid": 19715,
@@ -45,7 +53,17 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context at 2026-10-01T02:30:45.535Z",
-      "cliVersion": "0.159.2"
+      "cliVersion": "0.159.2",
+      "nativeTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T02:53:29.042395+00:00"
+      },
+      "outerTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T02:53:29.051183+00:00"
+      },
+      "sourceCommit": "337a92c41cc79659221c59a52c6016aeab47f4c1",
+      "checks": "41syntheticartifactPASS; Linuxstage/downloadNOT_TESTED"
     },
     {
       "task": "E-native-collector",
@@ -86,6 +104,40 @@
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context at 2026-10-01T02:30:49.876Z",
       "cliVersion": "0.159.2"
+    },
+    {
+      "task": "A-protocol-receipts",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "status": "resumed; actual closure pending",
+      "sourceCandidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-protocol-receipts",
+      "outerPid": 20701,
+      "startedUtc": "2026-10-01T02:50:55.421917+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-protocol-receipts",
+      "hardDeadlineUtc": "2026-10-01T03:55:00+00:00",
+      "nativePid": 20703,
+      "wrapperPid": 20702,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted same-session turn_context2026-10-01T02:50:57.030Z",
+      "cliVersion": "0.159.2"
+    },
+    {
+      "task": "C-fan100-source",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+      "status": "resumed; actual closure pending",
+      "sourceCandidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan100-source",
+      "outerPid": 20973,
+      "startedUtc": "2026-10-01T02:55:09.749964+00:00",
+      "sessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+      "candidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan100-source",
+      "hardDeadlineUtc": "2026-10-01T03:15:00+00:00"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -99,7 +151,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T02:48:35.409567+00:00",
+  "observedUtc": "2026-10-01T02:58:02.430905+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
@@ -110,10 +162,20 @@
     "mimo26": "system RAM plus physical Gen5 slot2: UUID pending"
   },
   "fanRule": {
-    "allNvidiaGpus": true,
-    "thresholdC": 70,
-    "minimumAtOrAboveThresholdPercent": 100,
-    "liveCoverage": "NOT_TESTED"
+    "integratedNvidiaGpus": {
+      "thresholdC": 70,
+      "comparison": ">=",
+      "fanPercent": 100
+    },
+    "serverBlackwellChaFan3": {
+      "minimumAt70C": 80,
+      "thresholdC": 80,
+      "comparison": ">",
+      "fanPercent": 100
+    },
+    "liveSuccessorCoverage": "NOT_TESTED",
+    "latestAuthority": "Specific human CHA_FAN3 clarification supersedes blanket70C interpretation for that external fan only"
   },
-  "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors"
+  "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors",
+  "currentLifecycleOwner": "none; model transitions held pending physical slot mapping; A-protocol-receipts source only"
 }

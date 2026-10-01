@@ -1,6 +1,6 @@
 # Latest human steering
 
-Read the GPU placement and thermal authority in [H040 plan](reports/h040-execution-plan.md). At >=70 C, every available NVIDIA GPU fan must run at100%; this specifically supersedes the earlier no-fan-change restriction. Slot2/slot5 UUID mapping is pending; no new GPU starts until verified. Stable Ada is visual-to-text, returned Ada is image gen/edit.
+Read the GPU placement and thermal authority in [H040 plan](reports/h040-execution-plan.md). At >=70 C, the four integrated GPU cards command100%; the latest CHA_FAN3 exception commands80% at70 C and100% strictly above80 C; this specifically supersedes the earlier no-fan-change restriction. Slot2/slot5 UUID mapping is pending; no new GPU starts until verified. Stable Ada is visual-to-text, returned Ada is image gen/edit.
 
 # Current H040 authority — 1 October 2026
 
