@@ -3,7 +3,7 @@ import {codexReceiptProvenance,getCodexReceiptUtf8,isHistoricalCodexReceipt,type
 export type CodexLifecycleEvent =
  {kind:"launch";receipt:CodexNativeLaunchReceipt}|{kind:"settlement";receipt:CodexNativeSettlementReceipt}|
  {kind:"thread";threadId:string;rolloutPath:string|null;method:"thread/start"|"thread/resume"}|
- {kind:"gateway_settled";threadId:string|null;activeTurnId:string|null}|
+ {kind:"gateway_settled";threadId:string|null;activeTurnId:string|null;lastSettledTurnId?:string|null}|
  {kind:"compaction";threadId:string;turnId:string;compactionId:string;status:"start"|"completed"|"failed"}|
  {kind:"checkpoint_artifact";checkpointId:string;threadId:string;turnId:string;callId:string;name:string;artifactId:string;sha256:string};
 export type CodexNativeObservation=CodexLifecycleEvent & {readonly observation:"genuine-host-observation"};

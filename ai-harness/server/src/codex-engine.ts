@@ -639,7 +639,7 @@ export class CodexEngine implements Engine {
       });
       if (!gatewaySettled)
         fault("Owned gateway settlement is unconfirmed", "gateway_settlement_unconfirmed");
-      this.observeLifecycle({kind:"gateway_settled",threadId:this.nativeId??null,activeTurnId:this.turnId});
+      this.observeLifecycle({kind:"gateway_settled",threadId:this.nativeId??null,activeTurnId:null,lastSettledTurnId:this.turnId});
       this.stopped = true;
       this.turnId = null;
       this.state("idle", null);
