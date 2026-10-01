@@ -1,0 +1,286 @@
+{
+  "schema": "h039-vision-runtime-v1",
+  "task": "C-vision-artifacts",
+  "phase": "SOURCE_PREPARATION_ONLY",
+  "sourcePreparation": "PASS",
+  "branch": "h039/c-vision-artifacts",
+  "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
+  "commitReceipt": "../output/RESULTS.json",
+  "nativeSession": {
+    "id": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+    "host": "mac-worker1",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "cliVersion": "0.159.2",
+    "nativePid": 14493,
+    "settingsEvidence": "nativePersistedTurnContextSettings in ../LAUNCH-RECEIPT.json",
+    "startedUtc": "2026-10-01T00:23:52.694982+00:00",
+    "hardDeadlineUtc": "2026-10-01T01:08:52.694982+00:00",
+    "otherPaidSubagents": 0
+  },
+  "gpuIdentityObservedUtc": "2026-10-01T00:24:33Z",
+  "pcieLinksObservedUtc": "2026-10-01T00:37:37Z",
+  "gpus": [
+    {
+      "uuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+      "pciBusId": "00000000:01:00.0",
+      "name": "RTX 6000 Ada Generation",
+      "sm": "8.9",
+      "memoryMiB": 49140,
+      "observedUsedMiB": 32238,
+      "nativePid": 1028911,
+      "nativeProcess": "sgl_diffusion::scheduler",
+      "container": "llm-image-backend",
+      "owner": "IMAGE21-RUNTIME-20260923",
+      "maxGen": 4,
+      "currentGen": 1,
+      "maxWidth": 16,
+      "currentWidth": 16
+    },
+    {
+      "uuid": "GPU-88058d9d-08e5-cb1e-a77a-04cbc1488237",
+      "pciBusId": "00000000:02:00.0",
+      "name": "RTX PRO 6000 Blackwell Workstation",
+      "sm": "12.0",
+      "memoryMiB": 97887,
+      "observedUsedMiB": 61016,
+      "nativePid": 74251,
+      "nativeProcess": "sglang::scheduler",
+      "container": "llmctl-qwen38-27b-q0-480000-yarn4-bf16kv",
+      "owner": "mixed-memory-llm-api-server",
+      "role": "Qwen3.8-27B FP8 480K q0",
+      "maxGen": 5,
+      "currentGen": 1,
+      "maxWidth": 16,
+      "currentWidth": 16
+    },
+    {
+      "uuid": "GPU-69acfa26-8b60-61b5-702d-aee252c163cc",
+      "pciBusId": "00000000:03:00.0",
+      "name": "RTX PRO 6000 Blackwell Workstation",
+      "sm": "12.0",
+      "memoryMiB": 97887,
+      "observedUsedMiB": 63860,
+      "nativePid": 778307,
+      "nativeProcess": "llama-server",
+      "container": "llm-frontier-mimo-production",
+      "owner": "H016-MIMO-PERSISTENT-20260927",
+      "role": "MiMo production RAM plus Blackwell",
+      "maxGen": 5,
+      "currentGen": 1,
+      "maxWidth": 16,
+      "currentWidth": 16
+    },
+    {
+      "uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "pciBusId": "00000000:05:00.0",
+      "name": "RTX PRO 6000 Blackwell Server",
+      "sm": "12.0",
+      "memoryMiB": 97887,
+      "observedUsedMiB": 62241,
+      "nativePid": 33860,
+      "nativeProcess": "sglang::scheduler",
+      "container": "llmctl-qwen38-27b-q1-server-480000-yarn4-bf16kv",
+      "owner": "mixed-memory-llm-api-server",
+      "role": "Qwen3.8-27B FP8 480K q1",
+      "maxGen": 3,
+      "currentGen": 3,
+      "maxWidth": 16,
+      "currentWidth": 4
+    }
+  ],
+  "externalAdaVisible": false,
+  "smallerAdaQwenRunningContainerObserved": false,
+  "imageServiceStopped": false,
+  "proposedPlacement": {
+    "gpuUuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+    "pciBusId": "00000000:01:00.0",
+    "availableNow": false,
+    "requires": "root coordinated creative-image reassignment after candidate review; no stop in C",
+    "qwenMemoryFraction": 0.72,
+    "ocrMemoryFraction": 0.18,
+    "nominalReserveFraction": 0.1,
+    "minimumMeasuredReserveFraction": 0.07,
+    "minimumFreeMiB": 3440,
+    "initialQwenTotalTokens": 16384,
+    "laterQwenTotalTokens": 32768,
+    "combinedFit": "NOT_TESTED"
+  },
+  "storage": {
+    "guardScripts": "/data/services/releases/h005-boot-restore-20260925/scripts",
+    "dataUuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+    "modelsUuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+    "modelsMount": "/data/models-large",
+    "initialModelAvailableBytes": 1731744206848,
+    "initialDataAvailableBytes": 1789517221888,
+    "initialRootAvailableBytes": 5380825088,
+    "guardWarning": "root filesystem has less than 6 GiB free; required 4 GiB guard passed",
+    "rootPayloadGuard": "PASS",
+    "modelDownloadReserveBytes": 68719476736,
+    "isolatedDependencyInstallation": false,
+    "downloadInterpreter": "existing /usr/bin/python3 standard library, no package installation",
+    "canonicalLifecycleLeaseDuringJob": true,
+    "guardHashes": {
+      "storage.py": "4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505",
+      "storage_io.py": "5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a",
+      "storage_binding.py": "69e61ce6685c310ce83449de75d45b209e63c6454c175f03d42bdad3daea7fbf",
+      "lifecycle_lease.py": "483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0"
+    }
+  },
+  "artifacts": {
+    "manifest": "configs/vision/h039-artifacts.lock.json",
+    "files": 36,
+    "weightFiles": 5,
+    "expectedAllBytes": 21259856084,
+    "expectedWeightBytes": 21223566848,
+    "checksumPin": "PASS_EXPECTED_HASHES_ONLY",
+    "existingMatchingArtifactDirectories": 0,
+    "selfcheck": {
+      "status": "PASS",
+      "scope": "CPU public config download and installed anchored storage guard",
+      "verifiedWeightFiles": 0,
+      "artifacts": [
+        {
+          "repo": "Qwen/Qwen3.5-9B",
+          "path": "config.json",
+          "status": "HASH_VERIFIED",
+          "bytes": 3126
+        },
+        {
+          "repo": "PaddlePaddle/PaddleOCR-VL-1.6",
+          "path": "config.json",
+          "status": "HASH_VERIFIED",
+          "bytes": 2059
+        }
+      ]
+    },
+    "models": [
+      {
+        "repo": "Qwen/Qwen3.5-9B",
+        "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+        "totalBytes": 19329393661,
+        "weightFiles": 4,
+        "directory": "qwen3.5-9b-c202236235762e1c871ad0ccb60c8ee5ba337b9a"
+      },
+      {
+        "repo": "PaddlePaddle/PaddleOCR-VL-1.6",
+        "revision": "c5630abae1d940eafe0697512a0325494b02ab42",
+        "totalBytes": 1930462423,
+        "weightFiles": 1,
+        "directory": "paddleocr-vl-1.6-c5630abae1d940eafe0697512a0325494b02ab42"
+      }
+    ]
+  },
+  "runtimeSupport": {
+    "vllm": {
+      "repo": "vllm-project/vllm",
+      "sha": "8bc31bd21075c5ca8a070e6da84e96e2eaf816ad",
+      "date": "2026-10-01T00:22:58Z"
+    },
+    "architectureRegistryEvidence": [
+      "Qwen3_5ForConditionalGeneration",
+      "PaddleOCRVLForConditionalGeneration"
+    ],
+    "containerImage": {
+      "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40",
+      "indexDigest": "sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+      "imagePulled": false,
+      "imageBuilt": false,
+      "sourceSupportInspectedAt": "8bc31bd21075c5ca8a070e6da84e96e2eaf816ad",
+      "imageSourceCorrespondence": "NOT_TESTED"
+    },
+    "job": "h039-vision-20261001-c-01a0f4d8"
+  },
+  "tests": [
+    {
+      "name": "11 isolated unit tests",
+      "status": "PASS",
+      "command": "python3 -m unittest discover -s scripts/vision/tests -v",
+      "scope": "manifest boundaries, transfer/reuse/resume/hash/deadline/error retention, launch deadline/no retries/log redaction, dry-run reserve/gates"
+    },
+    {
+      "name": "Python syntax compilation",
+      "status": "PASS",
+      "command": "python3 -m py_compile scripts/vision/*.py"
+    },
+    {
+      "name": "16K and 32K runtime plan generation",
+      "status": "PASS",
+      "scope": "no model execution"
+    },
+    {
+      "name": "installed guard public config selfcheck",
+      "status": "PASS",
+      "scope": "two config.json artifacts, zero weight shards"
+    },
+    {
+      "name": "git diff whitespace",
+      "status": "PASS",
+      "command": "git diff --check"
+    }
+  ],
+  "notTested": [
+    "complete VM weight-file hashes",
+    "exact container package/kernel/CUDA closure",
+    "container pull/build",
+    "GPU model loading",
+    "combined resident runtime fit and peak VRAM",
+    "full-page Paddle parser with separate layout model",
+    "technical diagram accuracy and connectivity",
+    "ordinary Codex tool acceptance",
+    "route activation or shared deployment"
+  ],
+  "failures": [
+    {
+      "action": "initial owned-source git commit",
+      "status": "FAIL_RESOLVED",
+      "exit": 128,
+      "reason": "isolated checkout Git author identity was unset",
+      "resolution": "per-invocation Codex H039 C / codex-h039-c@localhost identity; no shared Git configuration change"
+    }
+  ],
+  "limits": [
+    "Current-generation PCIe links are snapshot readings, not bandwidth/stability qualification.",
+    "Canonical lifecycle lease may block other lifecycle transitions until the bounded download settles; coordinate before deployment.",
+    "Timeout/shutdown retains partials; no automatic retries or cleanup. If storage guards prevent terminal receipt writes, supervisor failure must be retained.",
+    "Source fixtures and upstream architecture listings do not qualify this exact container on Ada.",
+    "The native terminal/outer exit receipts are written by the existing wrapper after this CLI closes."
+  ],
+  "suggestedNextStep": "Adopt the exact unit and outside-Git status/manifest; review C/D contracts; only after artifacts are fully hash-verified schedule approved image-owner reassignment, exact runtime qualification, simultaneous BF16 VRAM and technical accuracy tests.",
+  "download": {
+    "status": "STARTED_NOT_VERIFIED",
+    "unit": "h039-vision-20261001-c-01a0f4d8.service",
+    "job": "h039-vision-20261001-c-01a0f4d8",
+    "launchUtc": "2026-10-01T00:40:45+00:00",
+    "deadlineUtc": "2026-10-01T02:40:45+00:00",
+    "maximumWorkSeconds": 7200,
+    "supervisorStopGraceSeconds": 15,
+    "automaticRetries": 0,
+    "manifestPath": "/data/build/h039-vision-20261001-c-01a0f4d8/artifacts.lock.json",
+    "statusPath": "/data/logs/h039-vision-20261001-c-01a0f4d8/status.json",
+    "receiptManifestPath": "/data/logs/h039-vision-20261001-c-01a0f4d8/manifest.json",
+    "artifactRoot": "/data/models-large/h039-vision-20261001-c-01a0f4d8",
+    "canonicalLifecycleLeaseHeldDuringJob": true,
+    "supervisorSnapshot": {
+      "Restart": "no",
+      "RuntimeMaxUSec": "2h",
+      "MainPID": "1860339",
+      "Result": "success",
+      "ExecMainStartTimestamp": "Thu 2026-10-01 00:40:45 UTC",
+      "ExecMainCode": "0",
+      "ExecMainStatus": "0",
+      "Id": "h039-vision-20261001-c-01a0f4d8.service",
+      "ActiveState": "active",
+      "SubState": "running"
+    },
+    "snapshotStatus": "RUNNING",
+    "verifiedFilesAtImmediateSnapshot": 0,
+    "verifiedWeightFilesAtImmediateSnapshot": 0,
+    "artifactRowsAtImmediateSnapshot": 1,
+    "bytesRecordedAtImmediateSnapshot": 0,
+    "snapshotIsTerminal": false,
+    "runningSystemdResultIsNotTerminalSuccess": true
+  },
+  "stagedJobSourceSha256": "91585ddd103b79ce9bddfe8bbea43dd32bf32d9856dc6146f6887a5a1123dd55",
+  "closingEvidenceUtc": "2026-10-01T00:41:15.207681+00:00"
+}
