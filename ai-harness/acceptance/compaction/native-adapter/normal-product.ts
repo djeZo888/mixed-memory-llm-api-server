@@ -73,7 +73,7 @@ export class NormalProductProducer {
 }
 export async function startNormalProduct(configPath:string,restart?:import('./normal-restart-ticket.js').NormalRestartTicket){
  const configBytes=await privateFile(configPath),config=reviewSnapshot(JSON.parse(configBytes.toString('utf8'))),a=reviewedAuthorization(config.review);if(restart)assertNormalRestartConfig(restart,config,configBytes);if(process.platform!=='linux'||!process.getuid?.()||config.review.approvedBy!=='root'||config.review.actor!=='worker1'||!identifier(config.sessionId)||Date.now()>=a.dispatchCutoffAt)throw Error('reviewed_actual_normal_product_entry_required');
- 
+
  const qualification=await qualifyEntry(config.qualificationConfig,restart);if(!isQualifiedEntry(qualification))throw Error('actual_current_native_qualification_required');
  const ordinary=loadCodexOrdinaryEntry(config.ordinaryEntryPath,config.ordinaryEntryKeyPath,{serverDir:config.serverDir,deploymentDir:config.deploymentDir});if(!ordinary)throw Error('genuine_protected_normal_data_entry_required');
  const receipt=await loadQwenReceipt(config.qwenReceiptPath),inferenceKey=await readProtectedCredential(config.inferenceKeyPath),controlKey=await readProtectedCredential(config.controlKeyPath),verifyLane=createProductionQwenVerifier(receipt,{inferenceKey,controlKey});
