@@ -439,7 +439,7 @@
     }
   ],
   "preparedSource05": {
-    "status": "RUNNING_SOURCE_ONLY",
+    "status": "CLOSED_SOURCE_ONLY",
     "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
     "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
     "liveGo": false
@@ -516,5 +516,121 @@
     "historicalNativeUncertain": 2,
     "gatewayAcceptedUnresolved": 1,
     "productionLifecycle": "NOT_RUN"
-  }
+  },
+  "closedSource05": [
+    {
+      "host": "mac-worker1",
+      "phase": "A-delivery-preparation-05",
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 34792,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:14:26.081000+00:00",
+        "deadlineTermination": false
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 34791,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:14:26.089511+00:00"
+      },
+      "sameSessionProcessAbsent": true,
+      "head": "419444227ef1db6b3f21d4db5ad4ad9ba6846f69"
+    },
+    {
+      "host": "mac-worker2",
+      "phase": "E-delivery-combined-05",
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 36803,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:13:17.954442+00:00",
+        "deadlineTermination": false
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 36802,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:13:17.971073+00:00"
+      },
+      "sameSessionProcessAbsent": true,
+      "head": "d46bab70b725c8ec06b7e68aa6a5a5e6bed2960d"
+    }
+  ],
+  "source05StopFix": {
+    "actualCommit": "537012c86551eaed26678e42c15ee561427b6ea8",
+    "integratedCommit": "d1b0eec872b3fe6ecb7703f1ebb80083b35a86c6",
+    "exactFilesMatched": 3,
+    "sourceCases": 36,
+    "sourceExit": 0,
+    "strictExit": 0,
+    "sourceLogSha256": "af635e2e1a7bdffec6893ffc2060a38ea3702c768faa6ce01e0e3aaef07d6297",
+    "reviewMdSha256": "f33184370f8a9b9c6519d9fe1db5139fd341fede4373d3c386c8b313a25f03db",
+    "reviewJsonSha256": "7d624bca166e3d8b6595f72b967ca9d80fecfb351f2a196871075812e666c738",
+    "decision": "SAFE_DISABLED_SOURCE_INTEGRATION",
+    "lateIndependentFailureStopEdge": "NEEDS_NEGATIVE_CHECK",
+    "nativeAcceptance": "NOT_TESTED",
+    "EReceivedFullBundle": true
+  },
+  "preparedSource06": {
+    "status": "RUNNING_SOURCE_ONLY",
+    "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "liveGo": false
+  },
+  "source06Launched": [
+    {
+      "task": "A-ordinary-qualified-source-06",
+      "host": "mac-worker1",
+      "outerPid": 36845,
+      "startedUtc": "2026-10-01T12:23:06.276890+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "419444227ef1db6b3f21d4db5ad4ad9ba6846f69",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-ordinary-qualified-source-06",
+      "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-ordinary-qualified-consumer-06",
+      "host": "mac-worker2",
+      "outerPid": 39614,
+      "startedUtc": "2026-10-01T12:23:06.509151+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "d46bab70b725c8ec06b7e68aa6a5a5e6bed2960d",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-ordinary-qualified-consumer-06",
+      "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source06ActualSettings": [
+    {
+      "task": "A-ordinary-qualified-source-06",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T12:23:08.408Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-ordinary-qualified-source-06/repo"
+        }
+      ],
+      "native-pid": 36847,
+      "wrapper-pid": 36846,
+      "outer-pid": 36845,
+      "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
+    },
+    {
+      "task": "E-ordinary-qualified-consumer-06",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T12:23:09.439Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-ordinary-qualified-consumer-06/repo"
+        }
+      ],
+      "native-pid": 39619,
+      "wrapper-pid": 39618,
+      "outer-pid": 39614,
+      "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
+    }
+  ],
+  "currentRootReviewedHead": "114beeb1caccd343d6d54865f1feef19fba193fb",
+  "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
+  "liveAcceptance": "NOT_TESTED"
 }
