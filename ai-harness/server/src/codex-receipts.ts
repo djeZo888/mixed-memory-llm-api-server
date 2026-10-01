@@ -29,6 +29,12 @@ const receiptProvenance = new WeakMap<object, Readonly<{ rawPath: string; rawSha
 /** Exact protected OOB bytes. Synthetic validator objects never have transport provenance. */
 export function getCodexReceiptUtf8(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt): string | undefined { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? rawReceiptBytes.get(receipt) : undefined; }
 export function codexReceiptProvenance(receipt: CodexNativeLaunchReceipt | CodexNativeSettlementReceipt) { return transportReadObjects.has(receipt) && (isVerifiedCodexLaunchReceipt(receipt) || isVerifiedCodexSettlementReceipt(receipt)) ? receiptProvenance.get(receipt) : undefined; }
+/** Raw failure provenance is PRIVATE diagnostic data; it is never a verified
+ * launch/settlement receipt. Existing qualification getters remain strict. */
+export function getCodexLaunchFailureDiagnostic(value:unknown){
+ if(!object(value)||!transportReadObjects.has(value)||value.schema!=="codex-launch-failure-v1")return undefined;
+ return Object.freeze({value,rawUtf8:rawReceiptBytes.get(value),provenance:receiptProvenance.get(value),nativeQualified:false as const});
+}
 const verifiedLaunch = new WeakSet<object>(), verifiedSettlement = new WeakSet<object>();
 const validationRecords = new WeakMap<object, Readonly<{binding:CodexReceiptBinding;observedProducer:CodexReceiptIdentity;validatedAtMs:number}>>();
 const historicalReceipts = new WeakSet<object>();

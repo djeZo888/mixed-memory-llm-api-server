@@ -1,7 +1,7 @@
 /** Host-only launcher adapter. It never invokes a host Codex executable. */
 import { observeOwnedCodexProcess, type CodexHostObservations } from "./codex-host-observation.js";
 import { createHash, randomUUID } from "node:crypto";
-import { codexReceiptProvenance, getCodexReceiptUtf8, createCodexReceiptChannel, createCodexReceiptLifecycle, observeCodexProducer, validateCodexLaunchReceipt, validateCodexSettlementReceipt, validateCodexTraceReceipt, type CodexNativeTraceReceipt, type CodexReceiptPolicy, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
+import { getCodexLaunchFailureDiagnostic, createCodexReceiptChannel, createCodexReceiptLifecycle, observeCodexProducer, validateCodexLaunchReceipt, validateCodexSettlementReceipt, validateCodexTraceReceipt, type CodexNativeTraceReceipt, type CodexReceiptPolicy, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { spawn } from "node:child_process";
 import { isAbsolute, join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
@@ -78,7 +78,7 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
             async lookup(launch) { const value = await channel.wait("settlement", 500, () => false); return validateCodexSettlementReceipt(value, channel.binding, launch); },
         }) : undefined;
         const settlementReceipt = lifecycle?.settlementReceipt;
-        const launchFailureObservation=channel&&launchReceipt?(async()=>{if(await launchReceipt)return undefined;const value=await channel.wait('failure',500,()=>false);if(!value)return undefined;const v=value as Record<string,unknown>;if(v.schema!=='codex-launch-failure-v1'||v.nonce!==channel.binding.nonce||v.sessionId!==channel.binding.sessionId||v.runId!==channel.binding.runId)return undefined;return Object.freeze({value,rawUtf8:getCodexReceiptUtf8(value),provenance:codexReceiptProvenance(value),nativeQualified:false as const});})():undefined;
+        const launchFailureObservation=channel&&launchReceipt?(async()=>{if(await launchReceipt)return undefined;const value=await channel.wait('failure',500,()=>false);if(!value)return undefined;const v=value as Record<string,unknown>;if(v.schema!=='codex-launch-failure-v1'||v.nonce!==channel.binding.nonce||v.sessionId!==channel.binding.sessionId||v.runId!==channel.binding.runId)return undefined;return getCodexLaunchFailureDiagnostic(value);})():undefined;
         void launchFailureObservation?.catch(()=>undefined);
         let cleanup: Promise<boolean> | undefined;
         const owned: OwnedCodexProcess = { stdin: child.stdin, stdout: child.stdout, exited, receiptChannelDirectory:channel?.directory, launcherDiagnostics, launchFailureObservation, exitObservation, launchReceipt, settlementReceipt, terminateAndConfirm() {
