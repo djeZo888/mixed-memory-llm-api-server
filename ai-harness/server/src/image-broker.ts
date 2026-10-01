@@ -40,6 +40,8 @@ interface RecordData {
   decision?: "approve" | "reject";
 }
 export interface ImageBrokerOptions {
+  /** Trusted per-operation gate. Generation-only review never admits edits/children. */
+  operationQualified?: (sessionId:string, operation:"generation"|"edit") => boolean;
   store: Store;
   files: Files;
   backend: ImageBackend;
@@ -480,6 +482,7 @@ export class ImageBroker {
           );
         return this.public(old);
       }
+      if(this.options.operationQualified && this.options.operationQualified(sessionId,body.operation)!==true)throw new ApiError(503,"image_operation_unqualified","This image operation is not qualified. Existing jobs and artifacts remain available.");
       this.requireAvailable();
       const binding = this.binding(sessionId),
         id = randomUUID();
@@ -805,6 +808,7 @@ export class ImageBroker {
     if (this.pumping || this.lane !== "idle") return;
     const r = this.queued()[0];
     if (!r || this.now() < r.retryAt) return;
+    if(this.options.operationQualified && this.options.operationQualified(r.job.sessionId,r.job.operation)!==true){this.finish(r,"failed","image_operation_unqualified","This image operation lost qualification before dispatch");this.kick();return;}
     const previousState = r.job.state,
       previousStartedAt = r.job.startedAt;
     this.pumping = true;

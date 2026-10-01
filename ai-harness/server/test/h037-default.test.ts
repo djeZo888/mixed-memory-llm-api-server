@@ -12,7 +12,7 @@ import { CODEX_MODEL_POLICY } from "../src/codex-launcher.js";
 
 const inert = () => ({ async start() {}, async prompt() {}, async cancel() {}, async close() {} });
 for (const qualified of [true, false]) {
-  test(`SOURCE_FIXTURE central Codex new-chat default with qualification ${qualified} preserves old sessions and explicit MiniMax`, async t => {
+  test(`SOURCE_FIXTURE central Codex new-chat default with qualification ${qualified} preserves historical sessions without old-engine execution`, async t => {
     const dataDir = await mkdtemp(join(tmpdir(), "h037-default-"));
     const fixture = await createApp({ dataDir, allowedOrigins: ["http://localhost"],
       launcher: "/fixture/not-executed", gatewayUrl: "http://127.0.0.1:1/v1", issueToken: () => "fixture", revokeToken: () => {},
@@ -20,7 +20,7 @@ for (const qualified of [true, false]) {
       enginePolicy: { codex: { enabled: qualified, protocolQualified: qualified, engineVersion: CODEX_PIN.version, modelPolicyVersion: CODEX_MODEL_POLICY } },
     });
     t.after(async () => { await fixture.app.close(); await rm(dataDir, { recursive: true, force: true }); });
-    const oldMini = await fixture.broker.createSession(undefined, "minimax");
+    const oldMini = fixture.store.createSession(undefined, "minimax");
     const oldCodex = fixture.store.createSession(undefined, "codex", { engineVersion: CODEX_PIN.version, modelPolicyVersion: CODEX_MODEL_POLICY });
     fixture.store.setNative(oldMini.id, "original-minimax", "minimax");
     fixture.store.setNative(oldCodex.id, "original-codex", "codex");
@@ -40,7 +40,8 @@ for (const qualified of [true, false]) {
     assert.equal(created.statusCode, qualified ? 200 : 409);
     if (qualified) assert.equal(created.json().session.engineKind, "codex");
     const alternate = await fixture.app.inject({ method: "POST", url: "/api/sessions", headers, payload: { engineKind: "minimax" } });
-    assert.equal(alternate.statusCode, 200); assert.equal(alternate.json().session.engineKind, "minimax");
+    assert.equal(alternate.statusCode, 409); assert.equal(alternate.json().error.code, "historical_chat_read_only");
+    assert.throws(()=>fixture.broker.enqueue(oldMini.id,"message","continue",[]),/Start a new chat/);
     for (const [index, id] of [oldMini.id, oldCodex.id].entries())
       assert.deepEqual({ ...fixture.store.snapshot(id), environment: original[index]!.environment }, original[index]);
     assert.equal(fixture.store.getSession(oldCodex.id).nativeSessionId, "original-codex");

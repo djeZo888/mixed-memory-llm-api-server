@@ -33,6 +33,7 @@ die() { printf 'run-codex: %s\n' "$*" >&2; exit 64; }
 profile_dir=''
 workspace=''
 image_config=config.toml
+technical_qualified=false
 while (($#)); do
   case "$1" in
     --help|-h) usage; exit 0 ;;
@@ -43,6 +44,9 @@ while (($#)); do
     --image-jobs-qualified)
       [[ "$image_config" = config.toml ]] || die 'duplicate image gate'
       image_config=config-image-jobs.toml; shift ;;
+    --technical-vision-qualified)
+      [[ "$technical_qualified" = false ]] || die 'duplicate technical gate'
+      technical_qualified=true; shift ;;
     --workspace)
       (($# >= 2)) || die '--workspace needs an absolute path'
       [[ -z "$workspace" ]] || die 'duplicate --workspace'
@@ -94,6 +98,7 @@ trace_mode=${AI_HARNESS_CODEX_TRACE_MODE:-}
 if [[ "$trace_mode" = off ]]; then trace_mode=; unset AI_HARNESS_CODEX_TRACE_MODE; fi
 [[ -z "$trace_mode" || ( "$trace_mode" = post-sampling-token-usage-v1 || "$trace_mode" = post-sampling-token-usage-v2 ) && -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'trusted fixed trace receipt channel required'
 [[ -z "$receipt_dir" && -z "$receipt_nonce" || -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'incomplete private receipt channel'
+[[ "$technical_qualified" = false || -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'technical MCP requires exact private receipt closure'
 [[ "$gateway_url" = http://10.0.2.2:8081/v1 ]] || die 'gateway URL must be the reviewed rootless host-loopback endpoint'
 [[ ${#gateway_token} -ge 16 && ${#gateway_token} -le 4096 && ! "$gateway_token" =~ [[:cntrl:]] ]] || die 'an ephemeral gateway token of 16..4096 characters without control characters is required'
 [[ "$session_id" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*$ && ${#session_id} -le 128 ]] || die 'a valid session identifier is required'
@@ -162,7 +167,7 @@ image_patchset=${image_labels#*|}
 # The cached native image retains its original label; mounted host policy has its own pin.
 "$python_bin" - "$launcher_dir/codex" <<'PY_POLICY' || die 'Codex policy checksum mismatch'
 import hashlib,pathlib,sys
-p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == '38789bd752463b0a34beacb3849ea544ae5fc6fc4e6ea79204180ec229e5af59'
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == '6d70b39cb33340f793fde3c46f18f8dbb703e4e65267e2c9e54c7fa984c2a3e7'
 PY_POLICY
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
@@ -196,6 +201,10 @@ except OSError:
     valid = False
 sys.exit(0 if valid else 1)
 PY_SECCOMP
+technical_mounts=()
+if [[ "$technical_qualified" = true ]]; then
+  technical_mounts=(--volume "$overlay_root/tools/technical-vision/technical-vision-mcp.mjs:/opt/ai-harness/tools/technical-vision/technical-vision-mcp.mjs:ro,rprivate" --volume "$overlay_root/tools/technical-vision/technical-vision.mjs:/opt/ai-harness/tools/technical-vision/technical-vision.mjs:ro,rprivate")
+fi
 exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   "$launcher_dir/engine/redact-acp.py" "$podman_bin" \
   --remote=false --cgroup-manager=systemd run --cgroup-parent=aiharnesstasks.slice --init --init-path /usr/bin/catatonit --rm --interactive --pull=never \
@@ -215,6 +224,7 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --volume "$launcher_dir/codex/$image_config:$container_data/config.toml:ro,rprivate" \
   --volume "$launcher_dir/codex/models.json:/opt/sova/codex/models.json:ro,rprivate" \
   --volume "$launcher_dir/codex/skills/sova-local-tools:$container_data/skills/sova-local-tools:ro,rprivate" \
+  ${technical_mounts[@]+"${technical_mounts[@]}"} \
   --workdir "$workspace" \
   --env "HOME=$container_home" --env "CODEX_HOME=$container_data" \
   --env PATH=/opt/ai-harness-python/bin:/opt/ai-harness/tools/runtime/node_modules/.bin:/opt/ai-harness/bin:/usr/local/bin:/usr/bin:/bin \
@@ -224,5 +234,5 @@ exec "$python_bin" "$launcher_dir/engine/task-egress.py" -- \
   --env PYTHONDONTWRITEBYTECODE=1 \
   --env AI_HARNESS_GATEWAY_URL --env AI_HARNESS_GATEWAY_TOKEN \
   --env AI_HARNESS_SESSION_ID \
-  "${trace_args[@]}" \
+  ${trace_args[@]+"${trace_args[@]}"} \
   "$image_id"

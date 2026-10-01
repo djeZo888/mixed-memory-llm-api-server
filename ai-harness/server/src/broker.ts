@@ -1,3 +1,4 @@
+import { createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent } from "./codex-automatic-routing.js";
 import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -19,6 +20,9 @@ import { ApiError } from "./errors.js";
 export interface NativeReplacementCommitInput {readonly sessionId:string;readonly runId:string;readonly checkpoint:Readonly<import("./session-checkpoint.js").SessionCheckpointRecord>}
 export type NativeReplacementCommitVerifier=(input:NativeReplacementCommitInput)=>Promise<void>;
 export interface BrokerOptions extends CodexRecoveryObservers {
+  technicalVisionAvailable?: () => boolean;
+  technicalVisionContext?: (sessionId: string, runId: string, fileIds: string[]) => Promise<string>;
+  cancelTechnicalVision?: (sessionId: string) => Promise<void>;
   /** Trusted host source seam only, absent by default; never accepted from API/model input. */
   beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
   store: Store;
@@ -138,6 +142,10 @@ export class Broker {
       queueMicrotask(()=>this.pump(session.workspaceId));
     }
   }
+  currentTechnicalVisionRun(sessionId: string) {
+    const active = [...this.active.values()].find(a => a.run.sessionId === sessionId && a.run.kind === "message" && !a.cancelled && this.store.db.prepare("SELECT status FROM runs WHERE id=?").get(a.run.id)?.status === "running");
+    return active ? { sessionId, workspaceId: active.run.workspaceId, runId: active.run.id } : undefined;
+  }
   currentImageRun(sessionId: string) {
     const active = [...this.active.values()].find(
       (a) => a.run.sessionId === sessionId && !a.cancelled,
@@ -146,7 +154,7 @@ export class Broker {
       ? { runId: active.run.id, workspaceId: active.run.workspaceId }
       : undefined;
   }
-  async createSession(workspaceId?: string, engineKind: EngineKind = "minimax") {
+  async createSession(workspaceId?: string, engineKind: EngineKind = "codex") {
     assertEngineAvailable(engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
     const s = this.store.createSession(workspaceId, engineKind, engineKind === "codex" ? this.options.enginePolicy!.codex : {});
     await this.files.prepare(s.id, s.workspaceId);
@@ -226,7 +234,7 @@ export class Broker {
         throw new ApiError(429, "queue_full", "Run queue is full");
       for (const id of attachmentIds) {
         const f = this.store.file(id);
-        if (s.engineKind === "codex" && nativeMedia(f.mimeType))
+        if (s.engineKind === "codex" && nativeMedia(f.mimeType) && !(this.options.technicalVisionAvailable?.() && ["image/png", "image/jpeg"].includes(f.mimeType)))
           throw new ApiError(400,"codex_media_unsupported","Codex native media is not qualified; use an available image specialist");
         if (f.kind !== "attachment" || f.sessionId !== sessionId)
           throw new ApiError(
@@ -628,10 +636,11 @@ export class Broker {
           throw error;
         }
       } else {
-        const attachments = await this.files.attachments(
-          s.id,
-          run.attachmentIds,
-        );
+        const preparedAttachments = await this.files.attachments(s.id, run.attachmentIds);
+        const technicalContext = run.kind === "message" ? await this.options.technicalVisionContext?.(s.id, run.id, run.attachmentIds) ?? "" : "";
+        // Specialist pixels never enter native Codex's unsupported media path.
+        const attachments = s.engineKind === "codex" && this.options.technicalVisionAvailable?.()
+          ? preparedAttachments.filter(a => !["image/png", "image/jpeg"].includes(a.mimeType)) : preparedAttachments;
         const imageRefRow = this.store.db
           .prepare("SELECT data FROM h003_run_image_refs WHERE run_id=?")
           .get(run.id);
@@ -659,17 +668,27 @@ export class Broker {
           let promptOutcome: Awaited<ReturnType<Engine["prompt"]>>;
           try {
             await this.waitForDispatch(active);
-            const currentImageContext = this.options.imageContext?.(s.id, run.id) ?? "";
+            const currentImageContext = [this.options.imageContext?.(s.id, run.id) ?? "", technicalContext].filter(Boolean).join("\n\n");
             // Saved job state precedes the controlling request. Preserve the
             // original request/references and historical handoff verbatim.
             const priorContext = handoff
               ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\n`
               : "";
+            let priorIntent: CodexAutomaticIntent | undefined;
+            // Read the saved one-parent history; repeated follow-ups do not lose the original route.
+            for(const previous of this.store.db.prepare("SELECT text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id,run.id) as Iterable<{text:string;attachment_ids:string}>) {
+              const previousImages = (JSON.parse(previous.attachment_ids) as string[]).some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
+              const previousRoute=createCodexAutomaticRoute({text:previous.text,hasImages:previousImages});
+              if(previousRoute.intent === "ordinary" && isCodexRouteFollowup(previous.text))continue;
+              priorIntent=previousRoute.intent;break;
+            }
+            const routing = s.engineKind === "codex" && run.kind === "message" ? createCodexAutomaticRoute({text:run.text,hasImages:preparedAttachments.some(a=>["image/png","image/jpeg","application/pdf"].includes(a.mimeType)),previous:priorIntent}) : undefined;
             promptOutcome = await engine.prompt(
               (s.engineKind === "codex" ? this.store.memory.bridge(s.id).continuationText() : "") + priorContext + (currentImageContext
                 ? `${currentImageContext}\n\nCurrent user request (run ${run.id}):\n${requestText}`
                 : `${handoff ? "Current user request:\n" : ""}${requestText}`),
               attachments,
+              routing,
             );
           } catch (error) {
             promptRejectedDuringCancellation = active.cancelled;
@@ -915,7 +934,6 @@ export class Broker {
     return runner.closePromise;
   }
   async cancel(id: string) {
-    if (!this.closing) this.options.cancelImages?.(id);
     const s = this.store.getSession(id);
     const queue = this.queues.get(s.workspaceId) ?? [];
     this.queues.set(
@@ -940,6 +958,8 @@ export class Broker {
         });
     } else if (!s.deleteRequested && !this.store.isQuarantined(s.workspaceId))
       this.store.setStatus(id, "idle");
+    // Mark the creator cancelled before awaiting specialist observation/cancellation.
+    if (!this.closing) { this.options.cancelImages?.(id); await this.options.cancelTechnicalVision?.(id); }
   }
   async delete(id: string): Promise<"deleting" | "deleted"> {
     const s = this.store.getSession(id);

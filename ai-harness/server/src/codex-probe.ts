@@ -62,6 +62,8 @@ export const CODEX_H041_DELIVERY04_WINDOW=Object.freeze({startAtMs:Date.parse("2
 export const CODEX_H042_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T17:44:17Z"), expiresAtMs: Date.parse("2026-10-01T20:29:17Z"), settlementReserveMs: 120000 });
 /** H043 SOURCE capability only; no staging/native/generation authority. */
 export const CODEX_H043_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T21:19:33Z"), expiresAtMs: Date.parse("2026-10-02T00:04:33Z"), settlementReserveMs: 120000 });
+/** Confirmed H044 finite SOURCE admission, never root operational GO or chat expiry. */
+export const CODEX_H044_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T23:14:41Z"), expiresAtMs: Date.parse("2026-10-02T07:45:00Z"), settlementReserveMs: 120000 });
 export interface CodexTextOnlyPolicy {
   readonly sessionId: string; readonly runId: string;
   readonly mode: "summary-only" | "text-only-parent" | "read-original" | "parent-artifacts" | "retention-parent";
@@ -71,7 +73,7 @@ export interface CodexTextOnlyPolicy {
 }
 const policies = new WeakSet<object>();
 function buildCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy, "window">, authorization: typeof CODEX_H041_WINDOW,collaborationVersion?:"v1"|"v2"): CodexTextOnlyPolicy {
-  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW && authorization!==CODEX_H041_DELIVERY04_WINDOW && authorization!==CODEX_H041_DELIVERY05_WINDOW && authorization!==CODEX_H042_WINDOW && authorization!==CODEX_H043_WINDOW) throw Error("Untrusted source authorization window");
+  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW && authorization!==CODEX_H041_DELIVERY04_WINDOW && authorization!==CODEX_H041_DELIVERY05_WINDOW && authorization!==CODEX_H042_WINDOW && authorization!==CODEX_H043_WINDOW && authorization!==CODEX_H044_WINDOW) throw Error("Untrusted source authorization window");
   if (!id(input.sessionId) || !id(input.runId) || !(collaborationVersion?["retention-parent"]:["summary-only", "text-only-parent", "read-original", "parent-artifacts"]).includes(input.mode) || ![input.configSha256, input.modelCatalogSha256].every(v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v)) || Object.keys(input).sort().join() !== "configSha256,mode,modelCatalogSha256,runId,sessionId") throw Error("Invalid trusted text-only policy");
   const policy = freeze({ ...input, window: authorization,...(collaborationVersion?{collaborationVersion}:{}) }); policies.add(policy); return policy;
 }
@@ -99,7 +101,7 @@ export function codexTextOnlyThreadParams(policy: CodexTextOnlyPolicy, method: "
   for (const key of ["shell_tool", "view_image", "sleep_tool", "apps", "plugins", "tool_suggest", "code_mode", "code_mode_only", "multi_agent", "multi_agent_v2", "request_permissions_tool", "current_time_reminder", "token_budget", "deferred_executor", "send_message_to_user_async", "goals", "memories", "context_management", "image_generation", "standalone_web_search", "enable_mcp_apps"]) config["features." + key] = false;
   // The reviewed mounted config has exactly these three MCP servers. Its digest
   // and the model catalog digest are bound to the producer's launch closure.
-  for (const name of ["search", "browser", "image"]) config["mcp_servers." + name + ".enabled"] = false;
+  for (const name of ["search", "browser", "image", "technical_vision"]) config["mcp_servers." + name + ".enabled"] = false;
   if(policy.mode==="retention-parent"){config["agents.enabled"]=true;config["agents.max_depth"]=1;config["agents.max_concurrent_threads_per_session"]=1;config["features.multi_agent"]=true;config["features.multi_agent_v2"]=policy.collaborationVersion==="v2";}
   return { sandbox: "read-only", ...(method === "thread/start" ? { environments: [] } : {}), config };
 }
@@ -181,3 +183,10 @@ export function createCodexH043RetentionParentPolicy(input:Omit<CodexTextOnlyPol
 
 /** Distinct finite H043 entry; all prior policy factories retain their original windows. */
 export function createCodexH043Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H043_WINDOW); }
+
+/** Distinct H044 branded source factory; historical windows and factories are unchanged. */
+export function createCodexH044Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H044_WINDOW); }
+export function createCodexH044RetentionParentPolicy(input: Omit<CodexTextOnlyPolicy, "window" | "mode"> & {collaborationVersion: "v1" | "v2"}) {
+ if(Object.keys(input).sort().join()!=="collaborationVersion,configSha256,modelCatalogSha256,runId,sessionId" || (input.collaborationVersion!=="v1" && input.collaborationVersion!=="v2"))throw Error("Observed native collaboration version required");
+ const {collaborationVersion,...fields}=input;return buildCodexTextOnlyPolicy({...fields,mode:"retention-parent"},CODEX_H044_WINDOW,collaborationVersion);
+}

@@ -38,7 +38,8 @@ export interface Session {
 export type MessageChannel = "thought" | "commentary" | "final" | "unknown";
 export interface MessagePhase {
   /** App-owned external result; never a native assistant final or turn receipt. */
-  origin?: "image_service";
+  origin?: "image_service" | "technical_vision";
+  technicalVision?: { handle: string; requestId: string; runId: string; service: import("./technical-vision-contracts.js").TechnicalVisionIdentity; state: string; settled: boolean; source?: import("./technical-vision-contracts.js").TechnicalVisionManifest; originalFailure?: string; jobId?: string; pageImages?: { page: number; sha256: string }[]; originalSource?: import("./technical-vision-contracts.js").TechnicalVisionSource };
   imageJobId?: string;
   phase: "intermediate" | "thinking" | "final" | "unclassified";
   nativeMessageId?: string;
@@ -223,6 +224,7 @@ export interface Engine {
   prompt(
     text: string,
     attachments?: { path: string; mimeType: string; name: string }[],
+    routing?: import("./codex-automatic-routing.js").CodexAutomaticRoute,
   ): Promise<void | "completed" | "cancelled">;
   compact?(): Promise<"completed" | "cancelled">;
   cancel(): Promise<void>;

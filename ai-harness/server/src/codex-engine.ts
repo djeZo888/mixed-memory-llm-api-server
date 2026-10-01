@@ -1,3 +1,4 @@
+import { assertCodexAutomaticRoute, type CodexAutomaticRoute } from "./codex-automatic-routing.js";
 import { codexTraceSchemaForMode, type CodexNativeTraceMode } from "./codex-receipts.js";
 import {validateCodexChildMetadata} from "./codex-child-metadata.js";
 import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe, type CodexTextOnlyPolicy, assertCodexTextOnlyPolicy, codexTextOnlyThreadParams, type CodexParentArtifactScope, CODEX_PARENT_ARTIFACT_SPEC, claimCodexParentArtifactScope, reserveCodexParentArtifact, recordCodexPolicyThread, recordCodexPolicySettlement, codexPolicyOwnsSettledThread, recordCodexPolicyCheckpoint, recordCodexPolicySuccessfulTurn, recordCodexPolicySuccessfulCompaction, validateCodexPolicyFreshLaunch } from "./codex-probe.js";
@@ -78,10 +79,13 @@ export interface CodexRuntime {
   readonly contextLimit: 480000;
   /** Trusted host gate; child catalog and shared lineage must be reviewed first. */
   readonly delegationEnabled?: boolean;
+  readonly technicalVisionEnabled?: boolean;
+  automaticRouting?: (route: CodexAutomaticRoute, sessionId: string) => string;
   readonly imageToolEnabled?: boolean;
   readonly maxChildren?: number;
   /** Trusted host-reviewed child providers; absent keeps the Qwen-only boundary. */
   readonly qualifiedChildModels?: readonly string[];
+  qualifiedChildModelsForSession?: (sessionId:string) => readonly string[];
   /** Cold parent resume only: exact reviewed catalog text from trusted host files.
    * Existing child sessions keep their original instruction provenance. */
   loadResumeInstructions?(): Promise<CodexResumeInstructions>;
@@ -141,6 +145,9 @@ export class CodexEngine implements Engine {
   private probeBytes = 0;
   private probeCalls = new Map<string, { startSnapshot: string; snapshot: string; arguments: Record<string, unknown>; requestKey?: string; response?: Record<string, unknown>; artifact?: { name: string; artifactId: string; sha256: string }; serialized: boolean }>();
   private children: CodexChildren;
+  private readonly qualifiedChildren: readonly string[];
+  private automaticDeep = false;
+  private verifiedDeepChildren = new Set<string>();
   private compacting = new Set<string>();
   private compactRequested = false;
   private compactObserved = false;
@@ -180,11 +187,12 @@ export class CodexEngine implements Engine {
     private readonly options: EngineOptions,
     private readonly runtime: CodexRuntime,
   ) {
+    this.qualifiedChildren = runtime.qualifiedChildModelsForSession?.(options.sessionId) ?? runtime.qualifiedChildModels ?? ["qwen3.8-27b"];
     this.children = new CodexChildren(
       () => this.nativeId,
       options.onUpdate,
       runtime.maxChildren ?? 4,
-      runtime.qualifiedChildModels ?? ["qwen3.8-27b"],
+      this.qualifiedChildren,
       (failure, threadId, turnId) => this.stopRepeatedSchemaError(failure, threadId, turnId),
     );
     this.nativeId = options.nativeSessionId;
@@ -274,7 +282,7 @@ export class CodexEngine implements Engine {
     }
     this.terminal?.reject(error);
   }
-  private async readChildThread(candidateId:string):Promise<Readonly<Record<string,unknown>>> {if(!identifier(candidateId)||candidateId===this.nativeId||!this.connection||!this.nativeId||!this.launchReceipt||!codexReceiptProvenance(this.launchReceipt)||!this.active||this.closing||this.stopped||this.failed||this.cancelRequested||this.textPolicy?.mode!=="retention-parent"||this.retentionAction!=="child")fault("Owned live native child reader unavailable");const result=await this.connection.request("thread/read",{threadId:candidateId,includeTurns:false});if(this.closing||this.failed||!isRecord(result)||!isRecord(result.thread)||result.thread.id!==candidateId)fault("Late or foreign child read");return validateCodexChildMetadata(result.thread,this.nativeId,this.runtime.qualifiedChildModels??[this.runtime.model],this.runtime.provider);}
+  private async readChildThread(candidateId:string):Promise<Readonly<Record<string,unknown>>> {if(!identifier(candidateId)||candidateId===this.nativeId||!this.connection||!this.nativeId||!this.launchReceipt||!codexReceiptProvenance(this.launchReceipt)||!this.active||this.closing||this.stopped||this.failed||this.cancelRequested||this.textPolicy?.mode!=="retention-parent"||this.retentionAction!=="child")fault("Owned live native child reader unavailable");const result=await this.connection.request("thread/read",{threadId:candidateId,includeTurns:false});if(this.closing||this.failed||!isRecord(result)||!isRecord(result.thread)||result.thread.id!==candidateId)fault("Late or foreign child read");return validateCodexChildMetadata(result.thread,this.nativeId,this.qualifiedChildren,this.runtime.provider);}
   async readNativeThread():Promise<Readonly<Record<string,unknown>>> {await this.start();if(!this.nativeId||this.closing||this.failed)fault("Native thread read unavailable");const result=await this.connection!.request("thread/read",{threadId:this.nativeId,includeTurns:true});if(!isRecord(result)||!isRecord(result.thread)||result.thread.id!==this.nativeId)fault("Foreign native thread read");return Object.freeze(result);}
   async start() {
     if (this.launchPromise) return this.launchPromise;
@@ -357,6 +365,7 @@ export class CodexEngine implements Engine {
       // Read-only is a bounded probe setting, not proof of empty native read
       // roots or disabled tools. Host admission remains disabled pending scope.
       sandbox: this.probe ? "read-only" : "danger-full-access",
+      ...(!this.textPolicy && r.technicalVisionEnabled !== undefined ? {config:{"mcp_servers.technical_vision.enabled":r.technicalVisionEnabled === true}} : {}),
       ...(this.textPolicy ? codexTextOnlyThreadParams(this.textPolicy, this.nativeId ? "thread/resume" : "thread/start") : {}),
     };
     const resumeInstructions = !this.textPolicy && this.nativeId && r.loadResumeInstructions
@@ -409,9 +418,18 @@ export class CodexEngine implements Engine {
   async prompt(
     text: string,
     attachments: { path: string; mimeType: string; name: string }[] = [],
+    routing?: CodexAutomaticRoute,
   ): Promise<"completed" | "cancelled"> {
     if (this.textPolicy && attachments.length) fault("Text-only policy cannot accept attachments");
-    const input = await codexInput(text, this.options.workspace, attachments);
+    let directive = "";
+    if (routing) {
+      assertCodexAutomaticRoute(routing);
+      if (this.textPolicy && routing.intent !== "ordinary") fault("Finite text-only policy excludes specialist routing");
+      if (!this.runtime.automaticRouting && routing.intent !== "ordinary") fault("Automatic specialist routing is unavailable");
+      directive = this.runtime.automaticRouting?.(routing,this.options.sessionId) ?? "";
+    }
+    this.automaticDeep = routing?.intent === "deep";
+    const input = await codexInput((directive ? directive + "\n\n" : "") + text, this.options.workspace, attachments);
     if (this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
     await this.start();
@@ -457,6 +475,7 @@ export class CodexEngine implements Engine {
       }
       if (this.failed) throw this.failed;
       await this.cleanup();
+      if (outcome === "completed" && routing?.intent === "deep" && !this.children.completedModel("mimo-v2.6-pro-rl",this.verifiedDeepChildren)) fault("Deep analysis did not complete in its selected specialist; the request remains unavailable.");
       if (outcome === "completed" && !this.cancelRequested && this.textPolicy && this.completedTurn) recordCodexPolicySuccessfulTurn(this.textPolicy,this.completedTurn.id);
       // An absent native phase is not a reasoning/final split. Only the last
       // matching completed agent message in the successful owned turn summary
@@ -743,6 +762,10 @@ export class CodexEngine implements Engine {
       if (this.nativeId && p.thread.id !== this.nativeId) {
         if (!this.runtime.delegationEnabled)
           fault("Native delegation unavailable");
+        if (this.automaticDeep && p.thread.model === "mimo-v2.6-pro-rl") {
+          validateCodexChildMetadata(p.thread,this.nativeId,this.qualifiedChildren,this.runtime.provider);
+          this.verifiedDeepChildren.add(String(p.thread.id));
+        }
         this.children.thread(p.thread);
       }
       return;

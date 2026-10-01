@@ -1,0 +1,11 @@
+import test from 'node:test';import assert from 'node:assert/strict';import {createHash} from 'node:crypto';
+import {CODEX_SPECIALIST_PINS,validateCodexGenerationOnly,loadCodexGenerationOnly} from '../src/codex-specialist-qualification.js';
+test('genuine normal generation-only schema never qualifies edits/full creative children',()=>{
+ const id='11111111-1111-1111-1111-111111111111',hash='b'.repeat(64),job:any={kind:'normal-live-image-job',sourceOnly:false,state:'completed',operation:'generation',model:'qwen-image-2.1',size:'1920x1080',sessionId:id,runId:id,jobId:id,currentOwnerReceiptSha256:hash,settlementSha256:hash,runtimeIdentity:CODEX_SPECIALIST_PINS.image,publicArtifactSha256:hash},artifact:any={kind:'decoded-public-image-artifact',jobId:id,mimeType:'image/png',codec:'png',width:1920,height:1080,sha256:hash,rawPreCropArtifact:'NOT_CAPTURED',geometryGuard:'PASS',codecGuard:'PASS'};
+ const evidence:any={},ref=(name:string,value:any)=>{const text=JSON.stringify(value);evidence[name]={text,value};return {file:name,sha256:createHash('sha256').update(text).digest('hex')};};
+ const value:any={schema:1,kind:'root-reviewed-generation-only',pins:CODEX_SPECIALIST_PINS.image,sourceRevision:'a'.repeat(40),reviewedBy:'root',reviewedAt:'2026-10-01T23:20:00Z',normalJob:ref('job.json',job),publicArtifact:ref('artifact.json',artifact)},read=(name:string)=>evidence[name];
+ assert.deepEqual(validateCodexGenerationOnly(value,read),{generationQualified:true,imageJobsQualified:false,imageEditQualified:false,creativeChildQualified:false});
+ for(const patch of [{sourceOnly:true},{operation:'edit'},{model:'other'},{state:'running'}]){value.normalJob=ref('job.json',{...job,...patch});assert.equal(validateCodexGenerationOnly(value,read).generationQualified,false);}value.normalJob=ref('job.json',job);
+ for(const patch of [{width:1024},{height:864},{codec:'jpeg'},{sha256:'c'.repeat(64)},{rawPreCropArtifact:'CAPTURED'}]){value.publicArtifact=ref('artifact.json',{...artifact,...patch});assert.equal(validateCodexGenerationOnly(value,read).generationQualified,false);}
+ for(const path of [undefined,'/tmp/generation.json','/etc/sova-qualification/../generation.json'])assert.equal(loadCodexGenerationOnly(path).generationQualified,false);
+});

@@ -335,6 +335,10 @@ export class CodexChildren {
         );
       }
   }
+  /** Actual owned terminal turn and validated model, never collaboration ACK alone. */
+  completedModel(model: string, verified?: ReadonlySet<string>): boolean {
+    return [...this.children].some(([thread,status]) => status === "completed" && (!verified || verified.has(thread)) && this.models.get(thread) === model && this.turns.get(thread)?.terminalStatus === "completed" && [...this.turns.get(thread)!.items.values()].every(item=>item.completed));
+  }
   summary(): SubagentSummary {
     const values = [...this.children];
     return {

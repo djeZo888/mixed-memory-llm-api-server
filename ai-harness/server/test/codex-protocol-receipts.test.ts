@@ -105,3 +105,14 @@ test("H041 protected raw receipt parse is immutable before validator can brand i
   assert.equal(verified,parsed);
  } finally {rmSync(dir,{recursive:true,force:true});}
 });
+
+// New exact technical profile; historical seven-mount profile remains independent.
+import {CODEX_TECHNICAL_RECEIPT_SOURCES} from '../src/codex-receipts.js';
+import {receiptFixture as h044ReceiptFixture} from './helpers/codex-receipt-fixture.js';
+test('H044 technical stdio mounts are exact, read-only, source-bound and never arbitrary',()=>{
+ const f=h044ReceiptFixture(),binding:any={...f.binding,technicalVisionQualified:true,sources:{...f.binding.sources}};for(const path of CODEX_TECHNICAL_RECEIPT_SOURCES)binding.sources[path]??='b'.repeat(64);
+ const raw:any=structuredClone(f.rawLaunch);raw.sources={...binding.sources};const root=binding.deploymentDir.replace(/\/deploy$/,'');for(const name of ['technical-vision-mcp.mjs','technical-vision.mjs'])raw.container.mounts.push({source:root+'/tools/technical-vision/'+name,destination:'/opt/ai-harness/tools/technical-vision/'+name,rw:false,type:'bind'});
+ assert.doesNotThrow(()=>validateCodexLaunchReceipt(structuredClone(raw),binding,f.producer,f.now));
+ for(const patch of [{rw:true},{source:'/unreviewed/technical-vision.mjs'},{destination:'/opt/extra'}]){const invalid=structuredClone(raw);Object.assign(invalid.container.mounts.at(-1),patch);assert.throws(()=>validateCodexLaunchReceipt(invalid,binding,f.producer,f.now));}
+ assert.throws(()=>validateCodexLaunchReceipt(structuredClone(raw),f.binding,f.producer,f.now));assert.throws(()=>validateCodexLaunchReceipt(structuredClone(f.rawLaunch),binding,f.producer,f.now));
+});

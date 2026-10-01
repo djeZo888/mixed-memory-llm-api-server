@@ -97,9 +97,9 @@ class InspectedLaunch(unittest.TestCase):
     def fixture(self, path):
         binding = {'nonce': 'a' * 64, 'runId': 'probe-run', 'sessionId': 'session-1',
                    'workspace': '/fixture/workspace', 'profileDir': '/fixture/profile',
-                   'sources': {'synthetic': 'b' * 64}}
-        mounts = [{'source': '/fixture/mount-' + str(n), 'destination': '/native/mount-' + str(n),
-                   'rw': n < 2, 'type': 'bind'} for n in range(7)]
+                   'deploymentDir':'/fixture/deploy','imageJobsQualified':False,'sources': {'synthetic': 'b' * 64}}
+        ro=lambda src,dst:dict(source=src,destination=dst,rw=False,type='bind')
+        mounts=[dict(source='/fixture/profile',destination='/fixture/profile',rw=True,type='bind'),dict(source='/fixture/workspace',destination='/fixture/workspace',rw=True,type='bind'),ro('/fixture/tools/image/image-mcp.mjs','/opt/ai-harness/tools/image/image-mcp.mjs'),ro('/fixture/tools/image/image.mjs','/opt/ai-harness/tools/image/image.mjs'),ro('/fixture/deploy/codex/config.toml','/fixture/profile/codex-home/config.toml'),ro('/fixture/deploy/codex/models.json','/opt/sova/codex/models.json'),ro('/fixture/deploy/codex/skills/sova-local-tools','/fixture/profile/codex-home/skills/sova-local-tools')]
         args = []
         for mount in mounts:
             args += ['--volume', mount['source'] + ':' + mount['destination'] + (':rw,rprivate' if mount['rw'] else ':ro,rprivate')]

@@ -7,6 +7,7 @@ import { spawn } from "node:child_process";
 import { isAbsolute, join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
 export interface CodexLaunchInput {
+    technicalVisionQualified?: boolean;
     /** Trusted private qualification only; public/native input never sets this. */
     nativeTraceMode?: CodexNativeTraceMode;
     sessionId: string;
@@ -40,7 +41,7 @@ export interface OwnedCodexProcess {
 }
 export const CODEX_MODEL_POLICY = "sova-codex-0.158.0-qwen-text-v2";
 /** Mounted tool/instruction policy is separate from the persisted model profile. */
-export const CODEX_TOOL_POLICY_SHA256: string = "38789bd752463b0a34beacb3849ea544ae5fc6fc4e6ea79204180ec229e5af59";
+export const CODEX_TOOL_POLICY_SHA256: string = "6d70b39cb33340f793fde3c46f18f8dbb703e4e65267e2c9e54c7fa984c2a3e7";
 /** Fixed reviewed script uses task-egress.py and redact-acp.py. Supervisor exit0
  * attests exact random container rm + explicit exists exit1, not mere PID exit.
  * Unclean exits/timeout stay uncertain. Gateway settlement is a separate proof.
@@ -52,13 +53,13 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
         if (process.platform !== "linux" || process.getuid?.() === 0 || input.modelPolicyVersion !== CODEX_MODEL_POLICY || input.gatewayUrl !== "http://10.0.2.2:8081/v1" || input.codexHome !== join(resolve(input.profileDir), "codex-home"))
             throw Error("Unqualified Codex rootless policy");
         const traceSchema=codexTraceSchemaForMode(input.nativeTraceMode);
-        if(traceSchema&&!receiptPolicy)throw Error("Trusted trace receipt policy required");
+        if((traceSchema || input.technicalVisionQualified === true)&&!receiptPolicy)throw Error("Trusted trace receipt policy required");
         const channel = receiptPolicy ? createCodexReceiptChannel({ ...input, launcherPath, runId: input.receiptRunId ?? randomUUID() }, receiptPolicy) : undefined;
         const env: NodeJS.ProcessEnv = { PATH: "/usr/bin:/bin", HOME: process.env.HOME, USER: process.env.USER, LOGNAME: process.env.LOGNAME,
             AI_HARNESS_SESSION_ID: input.sessionId, AI_HARNESS_GATEWAY_URL: input.gatewayUrl, AI_HARNESS_GATEWAY_TOKEN: input.gatewayToken };
         if(traceSchema)env.AI_HARNESS_CODEX_TRACE_MODE=input.nativeTraceMode;
         if (channel) { env.AI_HARNESS_CODEX_RECEIPT_DIR = channel.directory; env.AI_HARNESS_CODEX_RECEIPT_NONCE = channel.binding.nonce; }
-        const child = spawn(launcherPath, ["--profile-dir", input.profileDir, "--workspace", input.workspace, ...(input.imageJobsQualified === true ? ["--image-jobs-qualified"] : [])], { env, stdio: ["pipe", "pipe", "pipe"] });
+        const child = spawn(launcherPath, ["--profile-dir", input.profileDir, "--workspace", input.workspace, ...(input.imageJobsQualified === true ? ["--image-jobs-qualified"] : []), ...(input.technicalVisionQualified === true ? ["--technical-vision-qualified"] : [])], { env, stdio: ["pipe", "pipe", "pipe"] });
         // Qualification-only private bounded diagnostic capture is armed BEFORE
         // any launch await. Ordinary unqualified stderr stays discarded. It is
         // untrusted diagnostic text and can NEVER promote native authority.

@@ -52,6 +52,17 @@ enabled_tools = ["image_capabilities", "image_status"]
 startup_timeout_sec = 10
 tool_timeout_sec = 20
 
+# Root-reviewed technical qualification enables this server through native thread config.
+# It remains independent of the creative image catalog and gate.
+[mcp_servers.technical_vision]
+command = "/usr/local/bin/node"
+args = ["/opt/ai-harness/tools/technical-vision/technical-vision-mcp.mjs"]
+env_vars = ["AI_HARNESS_GATEWAY_TOKEN"]
+enabled = false
+enabled_tools = ["technical_vision_capabilities", "technical_image_analyze", "technical_vision_status", "technical_vision_lookup", "technical_vision_cancel"]
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+
 [agents]
 enabled = true
 max_concurrent_threads_per_session = 4

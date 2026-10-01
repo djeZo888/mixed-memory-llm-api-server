@@ -22,6 +22,7 @@ import {
   type ServiceAvailability,
 } from "./service-availability.js";
 import { ApiError, requireId } from "./errors.js";
+import { TechnicalVisionError } from "./technical-vision-contracts.js";
 import Fastify, {
   type FastifyInstance,
   type FastifyReply,
@@ -85,6 +86,7 @@ export interface GatewayOptions {
   /** Latest unresolved durable request owner, retained across profile changes. */
   initialFrontierOwnerModel?: string;
   images?: ImageBroker;
+  technicalVision?: import("./technical-vision-host.js").NormalTechnicalVision;
   /** Separate reviewed specialist-job gate; text settlement never releases image ownership. */
   codexImageJobsQualified?: boolean;
   /** Trusted temporary exact-session/run acceptance, checked on each new job. */
@@ -600,6 +602,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     });
   }
   app.setErrorHandler((error, _request, reply) => {
+    if (error instanceof TechnicalVisionError) return reply.code(error.code === "not_found" ? 404 : error.code === "unavailable" ? 503 : 400).send({ error: { code: error.code, message: error.message } });
     if (error instanceof MimoError)
       return reply.code(error.code === "mimo_context_full" || error.code === "mimo_output_limit" ? 413 : error.code === "mimo_invalid_request" || error.code === "mimo_tool_history" ? 400 : 503).send({ error: { code: error.code, message: "MiMo request or qualification rejected" } });
     if (error instanceof ApiError)
@@ -652,7 +655,8 @@ export function createGateway(options: GatewayOptions): Gateway {
     const qualifiedImageRoute = existingImageRoute ||
       (request.method === "POST" && request.url === "/v1/image-jobs" &&
        (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true));
-    if (codexTokens.has(token) && !qualifiedImageRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
+    const technicalRoute = options.technicalVision && /^(?:\/v1\/technical-vision-capabilities|\/v1\/technical-vision-jobs(?:\/[a-zA-Z0-9_-]{1,80}\/(?:status|lookup|cancel))?)$/.test(request.url);
+    if (codexTokens.has(token) && !qualifiedImageRoute && !technicalRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
       return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
     // This internal bearer service has no browser API and never grants CORS.
     if (request.headers.origin)
@@ -702,6 +706,16 @@ export function createGateway(options: GatewayOptions): Gateway {
       throw new ApiError(401, "unauthorized", "Session authorization required");
     return sessionId;
   };
+  const vision = () => { if (!options.technicalVision) throw new ApiError(503, "technical_vision_unavailable", "Technical specialist is unavailable"); return options.technicalVision; };
+  const visionBody = (body: unknown) => { if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).length) throw new ApiError(400, "invalid_request", "Expected empty object"); };
+  app.get("/v1/technical-vision-capabilities", async req => { visionBody(req.query); return vision().capabilities(); });
+  app.post("/v1/technical-vision-jobs", { bodyLimit: 64 * 1024 }, async req => { visionBody(req.query); return vision().invoke(imageSession(req.headers.authorization), req.body); });
+  for (const action of ["status", "lookup", "cancel"] as const) app.post(`/v1/technical-vision-jobs/:handle/${action}`, { bodyLimit: 1024 }, async req => {
+    visionBody(req.body); visionBody(req.query);
+    const handle = (req.params as {handle:string}).handle;
+    if (!/^[a-zA-Z0-9_-]{1,80}$/.test(handle)) throw new ApiError(400, "invalid_request", "Invalid handle");
+    return vision().followup(imageSession(req.headers.authorization), handle, action);
+  });
   app.get("/v1/image-capabilities", async () => imageBroker().capabilities());
   app.post("/v1/image-jobs", { bodyLimit: 64 * 1024 }, async (request) => ({
     job: await imageBroker().submit(

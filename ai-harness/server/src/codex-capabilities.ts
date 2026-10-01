@@ -3,6 +3,7 @@ export type CapabilityName =
   | "nativeDelegation"
   | "compaction"
   | "attachments"
+  | "technicalVision"
   | "nativeMedia"
   | "search"
   | "browser"
@@ -25,7 +26,7 @@ const unavailable = (reason: string): CodexCapability => ({
 /** Describes implementation/qualification, never enables deployment or marks health ready. */
 export function codexCapabilities(
   reviewed: Partial<CodexCapabilities> = {},
-  gates: { delegationEnabled?: boolean; imageToolEnabled?: boolean } = {},
+  gates: { delegationEnabled?: boolean; imageToolEnabled?: boolean; technicalVisionAvailable?: boolean; technicalVisionFixture?: boolean } = {},
 ): CodexCapabilities {
   return {
     compaction: {
@@ -60,6 +61,7 @@ export function codexCapabilities(
       reason: "H021 matched Python, C++ and Node coding repairs passed independent original tests for both engines; earlier Qwen0 shell/edit/resumed follow-up passed",
     },
     ...reviewed,
+    technicalVision: { supported: gates.technicalVisionAvailable === true, qualification: gates.technicalVisionAvailable ? gates.technicalVisionFixture ? "scripted_fixture" : "live" : "not_tested", reason: "Separately accepted external technical specialist; native Codex pixels unsupported. One page, 2,097,152 pixels, 4096 per edge, 8 crops; PDF requires qualified renderer." },
     nativeDelegation: {
       ...(reviewed.nativeDelegation ?? {
         supported: false,

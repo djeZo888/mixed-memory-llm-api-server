@@ -118,7 +118,7 @@ class Fake implements ImageBackend {
 }
 async function fixture(
   t: TestContext,
-  options: { queueMs?: number; availability?: AvailabilityProvider } = {},
+  options: { queueMs?: number; availability?: AvailabilityProvider; operationQualified?:(sessionId:string,operation:"generation"|"edit")=>boolean } = {},
 ) {
   const dir = await realpath(await mkdtemp(path.join(tmpdir(), "h003-image-")));
   const store = new Store(path.join(dir, "db.sqlite")),
@@ -141,6 +141,7 @@ async function fixture(
     currentRun: (id) => (id === session.id ? current : undefined),
     now: () => clock,
     queueMs: options.queueMs,
+    operationQualified: options.operationQualified,
     availability: options.availability,
     tickMs: 5,
   });
@@ -1720,4 +1721,11 @@ test("production private stop/start adapter clears actual image quarantine only 
     await app.close();
     gate.close();
   }
+});
+
+test('generation-only operation gate rejects new edit/generation without cancelling active work',async t=>{
+ let qualified=true;const f=await fixture(t,{operationQualified:(_id,operation)=>qualified && operation==='generation'});
+ await assert.rejects(f.submit('edit-blocked',{operation:'edit',references:[{fileId:'owned-reference'}]}),/not qualified/);assert.equal(f.backend.calls.length,0);
+ const job=await f.submit('generation-open');await until(()=>f.backend.calls.length===1);assert.equal(job.operation,'generation');
+ qualified=false;await assert.rejects(f.submit('generation-closed'),/not qualified/);assert.equal(f.backend.calls.length,1);
 });

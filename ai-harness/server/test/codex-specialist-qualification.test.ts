@@ -34,6 +34,7 @@ test("reviewed pins plus exact retained cases drive host gates and capability me
   const f = fixture(), q = validateCodexSpecialists(f.record, f.read, now);
   const host = composeCodexHost("/trusted/run-codex.sh", () => undefined, {
     protocolQualified: true, rootlessQualified: true, verifyLane: async () => { throw Error("not observed"); },
+    nativeDelegationQualified: true,
     imageJobsQualified: q.imageJobsQualified ? true : undefined,
     frontierResponsesQualified: q.frontierResponsesQualified ? true : undefined, capabilities: q.capabilities,
   });

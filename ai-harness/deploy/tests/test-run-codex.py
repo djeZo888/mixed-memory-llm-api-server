@@ -18,6 +18,16 @@ base.IMAGE_ID = 'sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8
 base.PATCHSET = 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 
 class CodexLauncherContract(base.LauncherContract):
+    def test_engine_exit_status_propagates(self):
+        self.settings['exit']=17
+        request='{"jsonrpc":"2.0","id":1}\n'
+        result=self.invoke(text=request)
+        self.assertEqual(result.returncode,17)
+        self.assertEqual(result.stdout,request)
+        # Existing supervisor retains both engine stderr and its truthful failure diagnostic.
+        self.assertEqual(result.stderr,'fixture engine stderr\nrun-engine: ACP process failed\n')
+        self.assertEqual(self.calls()[-1]['argv'][1:3],['container','exists'])
+
     def test_active_v1_v2_unknown_modes_require_private_channel_before_podman(self):
         for mode in ['post-sampling-token-usage-v1','post-sampling-token-usage-v2','unknown']:
             self.env['AI_HARNESS_CODEX_TRACE_MODE']=mode

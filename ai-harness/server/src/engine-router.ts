@@ -8,6 +8,8 @@ export interface EnginePolicy {
     capabilities?: Partial<CodexCapabilities>;
     delegationEnabled?: boolean;
     imageToolEnabled?: boolean;
+    /** Descriptive external specialist capability, never native pixel permission. */
+    technicalVisionAvailable?: boolean;
     enabled: boolean;
     protocolQualified: boolean;
     engineVersion: string;
@@ -34,11 +36,12 @@ export function assertEngineAvailable(
 ): asserts kind is EngineKind {
   if (kind !== "minimax" && kind !== "codex")
     throw new ApiError(400, "unknown_engine", "Unknown engine kind");
+  if (kind === "minimax") throw new ApiError(409, "historical_chat_read_only", "This saved chat is read-only. Start a new chat to continue; your history and files are preserved.");
   if (kind === "codex" && !codexAvailable(policy, factory))
     throw new ApiError(
       409,
       "codex_preview_unavailable",
-      "Codex preview awaits protocol and deployment qualification",
+      "Chat is temporarily unavailable while its service is being checked.",
     );
 }
 export function createEngineRouter(
@@ -47,7 +50,7 @@ export function createEngineRouter(
   policy?: EnginePolicy,
 ): EngineFactory {
   return (options: EngineOptions) => {
-    const kind = options.engineKind ?? "minimax";
+    const kind = options.engineKind ?? "codex";
     assertEngineAvailable(kind, policy, codex);
     if (kind === "minimax") return minimax(options);
     if (

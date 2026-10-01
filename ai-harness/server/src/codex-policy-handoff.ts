@@ -5,7 +5,7 @@ import { dirname, join, sep } from "node:path";
 import { canonicalJson } from "./codex-canonical.js";
 import { validateSessionRestartOwnership,correlateSessionRestartOwnership,claimSessionRestartOwnership, type SessionRestartOwnershipProof } from "./session-checkpoint.js";
 import { codexReceiptProvenance, codexReceiptValidation, getCodexReceiptUtf8, revalidateRetainedCodexReceipts, type CodexReceiptBinding, type CodexReceiptIdentity } from "./codex-receipts.js";
-import { assertCodexTextOnlyPolicy, codexPolicyOwner, createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,createCodexDelivery04Policy,createCodexRetentionParent04Policy,createCodexDelivery05Policy,createCodexRetentionParent05Policy, createCodexH043Policy,createCodexH043RetentionParentPolicy,stageCodexPolicyAdoption, CODEX_PARENT_ARTIFACT_SPEC, type CodexTextOnlyPolicy, type CodexPolicyOwner } from "./codex-probe.js";
+import { assertCodexTextOnlyPolicy, codexPolicyOwner, createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,createCodexDelivery04Policy,createCodexRetentionParent04Policy,createCodexDelivery05Policy,createCodexRetentionParent05Policy, createCodexH044Policy,createCodexH044RetentionParentPolicy,createCodexH043Policy,createCodexH043RetentionParentPolicy,stageCodexPolicyAdoption, CODEX_PARENT_ARTIFACT_SPEC, type CodexTextOnlyPolicy, type CodexPolicyOwner } from "./codex-probe.js";
 const sha=(b:Uint8Array|string)=>createHash("sha256").update(b).digest("hex");
 function protectedRead(path:string,max:number):Buffer {
   if(realpathSync(path)!==path)throw Error("Noncanonical handoff path");
@@ -65,25 +65,25 @@ export function retainCodexPolicyHandoff(input:CodexPolicyHandoffInput) {
   writeFileSync(join(input.directory,"launch.raw.json"),launch,{flag:"wx",mode:0o600});writeFileSync(join(input.directory,"settlement.raw.json"),settlement,{flag:"wx",mode:0o600});
   const path=join(input.directory,"handoff.json"),bytes=JSON.stringify({body,seal})+"\n";writeFileSync(path,bytes,{flag:"wx",mode:0o600});return Object.freeze({path,sha256:sha(bytes),threadId:owner.threadId,checkpointId:input.checkpointId});
 }
-export type CodexPolicyHandoffAuthorization="continuation02"|"delivery03"|"delivery04"|"delivery05"|"h043";
+export type CodexPolicyHandoffAuthorization="continuation02"|"delivery03"|"delivery04"|"delivery05"|"h043"|"h044";
 /** Reconstruct a genuine branded source capability, never operational GO. */
 export function reconstructCodexPolicyHandoffPolicy(input:{sessionId:string;runId:string;configSha256:string;modelCatalogSha256:string;mode:"parent-artifacts"|"text-only-parent"|"retention-parent";collaborationVersion?:"v1"|"v2";authorization?:CodexPolicyHandoffAuthorization}):CodexTextOnlyPolicy {
  if(Object.keys(input).some(k=>!["sessionId","runId","configSha256","modelCatalogSha256","mode","collaborationVersion","authorization"].includes(k)))throw Error("Unexpected handoff policy field");
- if(input.authorization!==undefined&&!["continuation02","delivery03","delivery04","delivery05","h043"].includes(input.authorization))throw Error("Unknown source-frozen adoption authorization");
+ if(input.authorization!==undefined&&!["continuation02","delivery03","delivery04","delivery05","h043","h044"].includes(input.authorization))throw Error("Unknown source-frozen adoption authorization");
  const fields={sessionId:input.sessionId,runId:input.runId,configSha256:input.configSha256,modelCatalogSha256:input.modelCatalogSha256};
  if(input.mode==="retention-parent"){
   if(input.collaborationVersion!=="v1"&&input.collaborationVersion!=="v2")throw Error("Observed native collaboration version required");
-  const factory=input.authorization==="h043"?createCodexH043RetentionParentPolicy:input.authorization==="delivery05"?createCodexRetentionParent05Policy:input.authorization==="delivery04"?createCodexRetentionParent04Policy:createCodexRetentionParentPolicy;
+  const factory=input.authorization==="h044"?createCodexH044RetentionParentPolicy:input.authorization==="h043"?createCodexH043RetentionParentPolicy:input.authorization==="delivery05"?createCodexRetentionParent05Policy:input.authorization==="delivery04"?createCodexRetentionParent04Policy:createCodexRetentionParentPolicy;
   return factory({...fields,collaborationVersion:input.collaborationVersion});
  }
  if(!["parent-artifacts","text-only-parent"].includes(input.mode)||input.collaborationVersion!==undefined)throw Error("Invalid prior policy mode/collaboration");
- const factory=input.authorization==="h043"?createCodexH043Policy:input.authorization==="delivery05"?createCodexDelivery05Policy:input.authorization==="delivery04"?createCodexDelivery04Policy:input.authorization==="delivery03"?createCodexDeliveryPolicy:createCodexContinuationPolicy;
+ const factory=input.authorization==="h044"?createCodexH044Policy:input.authorization==="h043"?createCodexH043Policy:input.authorization==="delivery05"?createCodexDelivery05Policy:input.authorization==="delivery04"?createCodexDelivery04Policy:input.authorization==="delivery03"?createCodexDeliveryPolicy:createCodexContinuationPolicy;
  return factory({...fields,mode:input.mode});
 }
 export interface AdoptCodexPolicyHandoffInput { path:string;sha256:string;keyPath:string;sessionId:string;threadId:string;checkpointId:string;runId:string;configSha256:string;modelCatalogSha256:string;sourceClosure:Readonly<Record<string,string>>;ownership:SessionRestartOwnershipProof;purpose?:"accepted-continuation"|"settled-compaction";authorization?:CodexPolicyHandoffAuthorization }
 /** Stages historical ownership. CodexEngine.start still MUST validate a new genuine launch before resume. */
 export function adoptCodexPolicyHandoff(input:AdoptCodexPolicyHandoffInput):CodexTextOnlyPolicy {
-  if(input.authorization!==undefined&&input.authorization!=="continuation02"&&input.authorization!=="delivery03"&&input.authorization!=="delivery04"&&input.authorization!=="delivery05"&&input.authorization!=="h043")throw Error("Unknown source-frozen adoption authorization");
+  if(input.authorization!==undefined&&input.authorization!=="continuation02"&&input.authorization!=="delivery03"&&input.authorization!=="delivery04"&&input.authorization!=="delivery05"&&input.authorization!=="h043"&&input.authorization!=="h044")throw Error("Unknown source-frozen adoption authorization");
   protectedDirectory(dirname(input.path));const raw=protectedRead(input.path,131072);if(sha(raw)!==input.sha256)throw Error("Handoff hash changed");
   const value=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(raw)),key=protectedRead(input.keyPath,32);
   if(Object.keys(value).sort().join()!=="body,seal"||key.length!==32||typeof value.seal!=="string"||!/^[a-f0-9]{64}$/.test(value.seal)||!timingSafeEqual(Buffer.from(value.seal,"hex"),createHmac("sha256",key).update(JSON.stringify(value.body)).digest()))throw Error("Untrusted host handoff seal");

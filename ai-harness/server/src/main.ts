@@ -1,3 +1,4 @@
+import {CODEX_TECHNICAL_RECEIPT_SOURCES} from "./codex-receipts.js";
 import {isQualificationTaskAdmission,type QualificationTaskAdmission} from './qualification-task-admission.js';
 import {composeCodexProductObservers,type CodexProductObservers} from "./codex-product-observation.js";
 import {createCodexRecoveryHost} from "./codex-recovery.js";
@@ -16,8 +17,9 @@ import { fileURLToPath,pathToFileURL } from "node:url";
 import { createApp } from "./app.js";
 import { createGateway, type LaneState, type GatewayOptions } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
+import { loadTechnicalVisionQualification, TECHNICAL_VISION_ORIGIN, TECHNICAL_VISION_KEY_FILE } from "./technical-vision-qualification.js";
 import { createEngine } from "./engine.js";
-import { composeCodexHost, type CodexHostQualification } from "./codex-host.js";
+import { composeCodexHost, loadCurrentCodexFrontier, type CodexHostQualification } from "./codex-host.js";
 import { GatewayOwnershipLedger } from "./gateway-ownership.js";
 import { createProductionQwenVerifier, loadQwenReceipt } from "./codex-production.js";
 import { createResponsesDiagnostics, createQwenAdmissionDiagnostics } from "./codex-diagnostics.js";
@@ -61,11 +63,13 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
     const qualifiedAliases = Object.keys(receipt.lanes);
     // Legacy positional flags remain accepted, but cannot substitute for live evidence.
     const specialists = loadCodexSpecialists(specialistQualificationPath);
+    const currentFrontier = loadCurrentCodexFrontier(process.env.AI_HARNESS_CODEX_CURRENT_FRONTIER_FILE);
     qualification = { protocolQualified: true, rootlessQualified: true, verifyLane, onAdmissionDiagnostic, outputLimit, qualifiedAliases, nativeDelegationQualified: true,
       ...(acceptance ? { frontierAcceptance: acceptance.frontier, imageAcceptance: acceptance.image } : {}),
-      ...(specialists.frontierResponsesQualified ? { frontierResponsesQualified: true as const } : {}),
+      // Historical MiniMax specialist success is not current Codex MiMo qualification.
+      ...(currentFrontier ? { frontierResponsesQualified: true as const } : {}),
       ...(specialists.imageJobsQualified ? { imageJobsQualified: true as const } : {}),
-      capabilities: specialists.capabilities,
+      capabilities: {...specialists.capabilities,frontier:{supported:currentFrontier,qualification:currentFrontier?"live":"not_tested",reason:"Requires current protected native Codex MiMo Responses, tool continuation and same-parent automatic selection evidence; historical MiniMax evidence does not qualify."}},
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   const ordinary=qualification?loadCodexOrdinaryEntry(process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE||undefined,process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE||undefined,{serverDir:path.dirname(path.dirname(fileURLToPath(import.meta.url))),deploymentDir:path.dirname(required("AI_HARNESS_ENGINE_LAUNCHER"))}):undefined;
@@ -74,7 +78,7 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
   return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary,beforeNativeReplacementCommit:trustedObservers?.beforeNativeReplacementCommit,beforeNativeRecovery:trustedObservers?.beforeNativeRecovery,onNativeRecoveryObserved:trustedObservers?.onNativeRecoveryObserved,taskAdmission:trustedObservers?.taskAdmission });
 }
 export async function start(codex: {taskAdmission?:QualificationTaskAdmission} & import("./codex-recovery-observation.js").CodexRecoveryObservers & { beforeNativeReplacementCommit?:import("./broker.js").NativeReplacementCommitVerifier; enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
-  const newChatEngine = loadNewChatEngine();
+  const newChatEngine = "codex" as const;
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
@@ -98,6 +102,9 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
   let activeRunId = (_sessionId: string): string | undefined => undefined;
   const owned = codex.ownedAcceptancePath ? createHostOwnedAcceptance(codex.ownedAcceptancePath, id => activeRunId(id)) : undefined;
   if (owned && codex.qualification) codex.qualification = { ...codex.qualification, frontierAcceptance: owned.frontier, imageAcceptance: owned.image, onResponsesDiagnostic: owned.onDiagnostic };
+  const technicalQualification = loadTechnicalVisionQualification();
+  const technicalKey = technicalQualification ? await readProtectedCredential(TECHNICAL_VISION_KEY_FILE).catch(() => undefined) : undefined;
+  if(codex.qualification?.nativeReceiptPolicy && Object.keys(codex.qualification.nativeReceiptPolicy.sourceSha256).sort().join()===[...CODEX_TECHNICAL_RECEIPT_SOURCES].sort().join() && technicalQualification && technicalKey)codex.qualification={...codex.qualification,technicalVisionQualified:true};
   const codexHost = composeCodexHost(path.join(path.dirname(launcher), "run-codex.sh"), () => gateway, codex.qualification);
   if(task){const launch=codexHost.runtime.launchRootless;codexHost.runtime.launchRootless=async input=>{await task.verify({sessionId:input.sessionId,requestId:"launch:"+input.sessionId,lane:"qwen3.8-27b"});return launch(input);};}
   const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime });
@@ -120,6 +127,7 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
   };
   let recoveryHost:ReturnType<typeof createCodexRecoveryHost>|undefined;
   const application = await createApp({
+    ...(technicalQualification && technicalKey ? { technicalVision: { qualification: technicalQualification, client: { expectedService: technicalQualification.service, serviceOrigin: TECHNICAL_VISION_ORIGIN, key: () => technicalKey } } } : {}),
     newChatEngine,
     beforeNativeReplacementCommit:codex.beforeNativeReplacementCommit,
     beforeNativeRecovery:codex.beforeNativeRecovery,onNativeRecoveryObserved:codex.onNativeRecoveryObserved,
@@ -247,6 +255,7 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
       initialFrontierOwnerModel: (application.store.db.prepare("SELECT json_extract(value,'$.model') AS model FROM frontier_requests WHERE state IN ('active','quarantined') ORDER BY updated_at DESC LIMIT 1").get() as {model?: string} | undefined)?.model,
       upstreamKey: key,
       images: application.images,
+      technicalVision: application.technicalVision,
       codexImageJobsQualified: codex.qualification?.imageJobsQualified === true,
       availability,
       dispatchHeld: (alias) => held(alias),

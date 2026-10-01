@@ -1,3 +1,6 @@
+import {readFileSync,lstatSync,realpathSync} from "node:fs";
+import {dirname,join,resolve} from "node:path";
+import {fileURLToPath} from "node:url";
 /** Host-reviewed workflow evidence, never current readiness or a task entitlement.
  * Only root-owned files in /etc/sova-qualification can open global specialists.
  * Missing/invalid evidence keeps the ordinary Codex preview and scoped tickets.
@@ -138,4 +141,51 @@ export function loadCodexSpecialists(file?: string): CodexSpecialistQualificatio
     return validateCodexSpecialists(readMimoEvidence(file).value,
       name => readMimoEvidence(prefix + name));
   } catch { return closed(); }
+}
+
+/** A separate current protected root review; old H038/MiniMax receipts cannot enter. */
+export const CURRENT_CODEX_FRONTIER_PINS = Object.freeze({engine:CODEX_PIN,modelPolicy:CODEX_MODEL_POLICY,toolPolicySha256:CODEX_TOOL_POLICY_SHA256,parentModel:"qwen3.8-27b",childProvider:"sova",childProfile:codexProvider("mimo-v2.6-pro-rl")});
+export function validateCurrentCodexFrontier(value: any, read: (name:string)=>{text:string;value:any}, now=Date.now()): boolean {
+  const exact = (v:any, keys:string[]) => v && typeof v === "object" && !Array.isArray(v) && Object.keys(v).sort().join()===keys.sort().join();
+  const digest = (v:any) => typeof v === "string" && /^[a-f0-9]{64}$/.test(v);
+  if (!exact(value,["schema","kind","pins","sourceRevision","sourceClosure","reviewedBy","reviewedAt","workflows"]) || !value.sourceClosure || typeof value.sourceClosure!=="object" || Array.isArray(value.sourceClosure) || !Object.keys(value.sourceClosure).length || !Object.values(value.sourceClosure).every(digest) || value.schema!==1 || value.kind!=="current-native-codex-frontier-review" || value.reviewedBy!=="root" || !/^[a-f0-9]{40}$/.test(value.sourceRevision) || !isDeepStrictEqual(value.pins,CURRENT_CODEX_FRONTIER_PINS) || !Number.isFinite(Date.parse(value.reviewedAt)) || Date.parse(value.reviewedAt)>now || !exact(value.workflows,["responses","toolContinuation","automaticSelection"])) return false;
+  let parent: string | undefined;
+  for (const workflow of ["responses","toolContinuation","automaticSelection"]) {
+    const ref=value.workflows[workflow];
+    if(!exact(ref,["file","sha256"]) || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}\.json$/.test(ref.file) || !digest(ref.sha256))return false;
+    const evidence=read(ref.file), run=evidence.value;
+    if(createHash("sha256").update(evidence.text).digest("hex")!==ref.sha256 || !exact(run,["schema","kind","workflow","result","harness","pins","sourceRevision","sessionId","parentThreadId","childThreadId","model","provider","nativeSemanticAcceptance","transcriptSha256","settlementSha256","currentOwnerReceiptSha256"]) || run.schema!==1 || run.kind!=="current-native-codex-frontier-workflow" || run.workflow!==workflow || run.result!=="PASS" || run.harness!=="codex" || run.nativeSemanticAcceptance!=="PASS" || !isDeepStrictEqual(run.pins,value.pins) || run.sourceRevision!==value.sourceRevision || !/^[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(run.sessionId) || typeof run.parentThreadId!=="string" || !run.parentThreadId || typeof run.childThreadId!=="string" || !run.childThreadId || run.childThreadId===run.parentThreadId || run.model!=="mimo-v2.6-pro-rl" || run.provider!=="sova" || ![run.transcriptSha256,run.settlementSha256,run.currentOwnerReceiptSha256].every(digest))return false;
+    const tuple=JSON.stringify([run.sessionId,run.parentThreadId]);if(parent && parent!==tuple)return false;parent=tuple;
+  }
+  return true;
+}
+export function loadCurrentCodexFrontier(file?:string): boolean {
+  const prefix="/etc/sova-qualification/";
+  if(!file?.startsWith(prefix) || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}\.json$/.test(file.slice(prefix.length)))return false;
+  try{
+    const value=readMimoEvidence(file).value,server=dirname(fileURLToPath(import.meta.url)),deploy=resolve(server,"../../deploy");
+    const expected=[...['main','broker','gateway','codex-host','codex-engine','codex-children','codex-child-metadata','codex-automatic-routing','codex-specialist-qualification'].map(name=>join(server,name+'.js')),join(deploy,'run-codex.sh'),join(deploy,'codex/config.toml'),join(deploy,'codex/models.json')];
+    if(!value.sourceClosure || Object.keys(value.sourceClosure).sort().join()!==expected.sort().join())return false;
+    for(const path of expected){const stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o022||![0,process.getuid?.()].includes(stat.uid)||realpathSync(path)!==path||createHash('sha256').update(readFileSync(path)).digest('hex')!==value.sourceClosure[path])return false;}
+    return validateCurrentCodexFrontier(value,name=>readMimoEvidence(prefix+name));
+  }catch{return false;}
+}
+
+/** Generation-only evidence is independent of the historical full image workflow.
+ * This intentionally supplies NO full image/edits/creative-child enable flag. */
+export interface CodexGenerationOnlyQualification {generationQualified:boolean;imageJobsQualified:false;imageEditQualified:false;creativeChildQualified:false}
+const generationClosed=():CodexGenerationOnlyQualification=>({generationQualified:false,imageJobsQualified:false,imageEditQualified:false,creativeChildQualified:false});
+export function validateCodexGenerationOnly(value:any,read:EvidenceReader,now=Date.now()):CodexGenerationOnlyQualification {
+ const result=generationClosed();
+ try {
+  fields(value,["schema","kind","pins","sourceRevision","reviewedBy","reviewedAt","normalJob","publicArtifact"]);
+  if(value.schema!==1||value.kind!=="root-reviewed-generation-only"||value.reviewedBy!=="root"||!isDeepStrictEqual(value.pins,CODEX_SPECIALIST_PINS.image)||!/^[a-f0-9]{40}$/.test(value.sourceRevision)||!Number.isFinite(Date.parse(value.reviewedAt))||Date.parse(value.reviewedAt)>now)return result;
+  const job=referencedEvidence(value.normalJob,read),artifact=referencedEvidence(value.publicArtifact,read);
+  if(job.kind!=="normal-live-image-job"||job.sourceOnly!==false||job.state!=="completed"||job.operation!=="generation"||job.model!=="qwen-image-2.1"||job.size!=="1920x1080"||!uuid(job.sessionId)||!uuid(job.runId)||!uuid(job.jobId)||!digest(job.currentOwnerReceiptSha256)||!digest(job.settlementSha256)||!isDeepStrictEqual(job.runtimeIdentity,CODEX_SPECIALIST_PINS.image)||artifact.kind!=="decoded-public-image-artifact"||artifact.jobId!==job.jobId||artifact.mimeType!=="image/png"||artifact.codec!=="png"||artifact.width!==1920||artifact.height!==1080||!digest(artifact.sha256)||artifact.sha256!==job.publicArtifactSha256||artifact.rawPreCropArtifact!=="NOT_CAPTURED"||artifact.geometryGuard!=="PASS"||artifact.codecGuard!=="PASS")return result;
+  result.generationQualified=true;return result;
+ }catch{return result;}
+}
+export function loadCodexGenerationOnly(file?:string):CodexGenerationOnlyQualification {
+ if(!file?.startsWith(CODEX_SPECIALIST_DIRECTORY+"/")||!fileName(file.slice(CODEX_SPECIALIST_DIRECTORY.length+1)))return generationClosed();
+ try{return validateCodexGenerationOnly(readMimoEvidence(file).value,name=>readMimoEvidence(CODEX_SPECIALIST_DIRECTORY+"/"+name));}catch{return generationClosed();}
 }
