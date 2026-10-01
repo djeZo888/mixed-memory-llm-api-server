@@ -1,16 +1,19 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "urn:sova:h039:compaction-evidence:1",
+  "$id": "urn:sova:h040:compaction-evidence:2",
   "type": "object",
   "additionalProperties": false,
-  "required": ["schemaVersion", "suiteId", "runId", "qualification", "status", "mode", "cycle", "runtime", "sourceHashes", "actionId", "nativeThreadId", "nativeTurnId", "compactionActionId", "compactionNativeThreadId", "compactionTokens", "compactionDurationMs", "trigger", "tokens", "durationMs", "nativeOutcome", "scores", "checks", "artifactHashes", "retrieval", "isolation", "originals", "settlement", "failure", "limitations"],
+  "required": ["schemaVersion", "logicalManifestFormat", "operationWindowId", "nativeCompactionWindowId", "suiteId", "runId", "qualification", "status", "mode", "cycle", "runtime", "sourceHashes", "actionId", "nativeThreadId", "nativeTurnId", "compactionActionId", "compactionNativeThreadId", "compactionTokens", "compactionDurationMs", "trigger", "tokens", "durationMs", "nativeOutcome", "scores", "checks", "artifactHashes", "retrieval", "isolation", "originals", "settlement", "failure", "limitations"],
   "properties": {
-    "schemaVersion": {"const": 1},
+    "schemaVersion": {"const": 2},
+    "logicalManifestFormat": {"const": "h040-sorted-json-v1"},
+    "operationWindowId": {"$ref": "#/$defs/metadata"},
+    "nativeCompactionWindowId": {"$ref": "#/$defs/metadata"},
     "suiteId": {"const": "h039-technical-retention-v1"},
     "runId": {"type": "string", "minLength": 1},
     "qualification": {"enum": ["synthetic", "native"]},
     "status": {"enum": ["PASS", "FAIL", "NOT_TESTED"]},
-    "mode": {"enum": ["summary-only", "durable-retrieval", "continuation", "fault", "child-context", "cold-resume"]},
+    "mode": {"enum": ["summary-only", "durable-retrieval", "continuation", "fault", "child-context", "cold-resume", "cold-resume-after-continuation"]},
     "cycle": {"type": "integer", "minimum": 1, "maximum": 3},
     "runtime": {
       "type": "object", "additionalProperties": false,
@@ -27,8 +30,8 @@
       }
     },
     "sourceHashes": {
-      "type": "object", "additionalProperties": false, "required": ["corpus", "truth", "controller", "scorer", "evidence", "schema", "config"],
-      "properties": {"corpus": {"$ref": "#/$defs/hash"}, "truth": {"$ref": "#/$defs/hash"}, "controller": {"$ref": "#/$defs/hash"}, "scorer": {"$ref": "#/$defs/hash"}, "evidence": {"$ref": "#/$defs/hash"}, "schema": {"$ref": "#/$defs/hash"}, "config": {"$ref": "#/$defs/hash"}}
+      "type": "object", "additionalProperties": false, "required": ["corpus", "truth", "controller", "scorer", "evidence", "schema", "config", "qualification", "qualificationSchema"],
+      "properties": {"corpus": {"$ref": "#/$defs/hash"}, "truth": {"$ref": "#/$defs/hash"}, "controller": {"$ref": "#/$defs/hash"}, "scorer": {"$ref": "#/$defs/hash"}, "evidence": {"$ref": "#/$defs/hash"}, "schema": {"$ref": "#/$defs/hash"}, "config": {"$ref": "#/$defs/hash"}, "qualification": {"$ref": "#/$defs/hash"}, "qualificationSchema": {"$ref": "#/$defs/hash"}}
     },
     "actionId": {"$ref": "#/$defs/metadata"},
     "nativeThreadId": {"$ref": "#/$defs/metadata"},

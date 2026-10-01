@@ -1,15 +1,17 @@
-import { mkdir, writeFile, chmod, readFile, realpath, stat } from 'node:fs/promises';
+import { mkdir, writeFile, chmod, readFile, realpath, stat, readdir } from 'node:fs/promises';
 import { dirname, resolve, join, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { activeFacts, actionIdFor, extractCheckpoint, loadJson, sha256, stableJson, validateCorpus, scoreRecall, verifyRetrieval, verifyProbeSeparation, verifySummaryIsolation, durableHoldouts, verifyDurableHoldout, verifyCleanChild, verifyColdResume, continuationRequest, scoreContinuation } from './scorer.mjs';
+import { activeFacts, actionIdFor, extractCheckpoint, deriveFreshProjection, validateCollectorManifest, logicalManifestFormat, loadJson, sha256, stableJson, validateCorpus, scoreRecall, verifyRetrieval, verifyProbeSeparation, verifySummaryIsolation, durableHoldouts, verifyDurableHoldout, verifyCleanChild, verifyColdResume, continuationRequest, scoreContinuation, verifyAcceptedContinuationResume } from './scorer.mjs';
 import { absent, metadata, unknownMeasurement, measured, validateRecord } from './evidence.mjs';
+import { summarizeQualification } from './qualification.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(here, '../../..');
 const missing = (field) => absent(`${field} not exposed by this observation`);
 const id = (value, field) => typeof value === 'string' && value ? metadata(value) : missing(field);
 const hashPattern = /^[a-f0-9]{64}$/;
+export const projectionTranslatorFiles = ['src/codex-responses.ts', 'src/codex-provider.ts', 'src/errors.ts', 'dist/codex-responses.js', 'dist/codex-provider.js', 'dist/errors.js'];
 const outcomeStatus = (outcome) => ['failed', 'cancelled', 'interrupted'].includes(outcome) ? 'FAIL' : 'NOT_TESTED';
 
 export async function fixture() {
@@ -20,7 +22,7 @@ export async function fixture() {
   ]);
   const errors = validateCorpus(corpus, truth);
   if (errors.length) throw new Error(`Invalid corpus: ${errors.join(',')}`);
-  const paths = { corpus: 'fixtures/conversation.json', truth: 'fixtures/ground-truth.json', controller: 'controller.mjs', scorer: 'scorer.mjs', evidence: 'evidence.mjs', schema: 'evidence.schema.json', config: 'config.json' };
+  const paths = { corpus: 'fixtures/conversation.json', truth: 'fixtures/ground-truth.json', controller: 'controller.mjs', scorer: 'scorer.mjs', evidence: 'evidence.mjs', schema: 'evidence.schema.json', config: 'config.json', qualification: 'qualification.mjs', qualificationSchema: 'qualification.schema.json' };
   const sourceHashes = Object.fromEntries(await Promise.all(Object.entries(paths).map(async ([k, v]) => [k, sha256(await readFile(join(here, v)))])));
   return { corpus, truth, config, sourceHashes };
 }
@@ -36,6 +38,11 @@ export function recallRequest(truth, cycle, mode) {
 }
 
 export function actionPlan(config) {
+  if (config.profile === 'h040-summary-stage-v1') return { schemaVersion: 1, enabled: config.enabled, profile: config.profile,
+    runtime: config.runtime, maximumNativeActions: 9,
+    steps: ['runtime', 'open', 'append-cycle-one', 'independent-originals-and-baseline', 'one-manual-compact', 'originals', 'isolated-summary-only', 'originals', 'close'],
+    facts: 56, critical: 49, noncritical: 7, fullNativeAcceptance: 'NOT_TESTED',
+    omittedMandatoryDimensions: ['cycles-two-and-three', 'durable-retrieval', 'continuation', 'cold-resume', 'clean-child'] };
   return {
     schemaVersion: 1, enabled: config.enabled, runtime: config.runtime,
     adapterInterface: 'h039-compaction-adapter-v1', liveExecution: 'requires external root-reviewed adapter and enabled reviewed config',
@@ -47,9 +54,59 @@ export function actionPlan(config) {
       { cycle, action: 'durable-retrieval', context: 'separate-qualified-holdout-projection-of-same-compacted-context', deliberatelyOmitted: ['schema', ...(cycle >= 2 ? ['temperature_range'] : []), ...(cycle >= 3 ? ['manifest_format'] : [])], tools: ['scoped.read_original_records'], mergeProbeAnswer: false },
       ...(cycle === 3 ? [{ cycle: 3, action: 'cold-resume-and-summary-only-before-continuation', checkpoint: 'current-cycle-3-compacted-state', requires: 'actual restart, persisted history capture and no replay' }] : []),
       { cycle, action: 'continuation', context: 'original-thread-no-probe-answers', outputs: ['sensor-policy.json', 'engineering-calculation.json'] },
-    ]).concat([{ cycle: 3, action: 'clean-child-first-request-capture', requires: 'captured parent sentinel placement plus independently approved minimal child input; nonce probe' }]),
+    ]).concat([{ cycle: 3, action: 'cold-resume-after-accepted-continuation', requires: 'independent latest continued full state, actual owned application restart and unchanged captured artifact bytes; mandatory for H040 full native acceptance' },
+      { cycle: 3, action: 'clean-child-first-request-capture', requires: 'captured parent sentinel placement plus independently approved minimal child input; nonce probe' }]),
     faultMatrix: ['empty-summary', 'truncated-summary', 'invalid-summary', 'timeout', 'cancelled', 'process-death', 'duplicate-action', 'restart', 'missing-usage', 'boundary-admission', 'unattributed-auto-trigger'],
   };
+}
+
+// Only these independently approved placeholders can vary with captured native
+// identities. Other metadata, instructions and unknown fields remain literal.
+export function bindReviewedEnvelope(template, { probeThreadId, probeTurnId }) {
+  const envelope = structuredClone(template);
+  const bindings = { thread_id: ['@h040:probe-native-thread-id', probeThreadId],
+    turn_id: ['@h040:probe-native-turn-id', probeTurnId], root_turn_id: ['@h040:probe-native-turn-id', probeTurnId] };
+  for (const [key, [placeholder, value]] of Object.entries(bindings)) {
+    if (envelope?.client_metadata?.[key] === placeholder) {
+      if (typeof value !== 'string' || !value) throw new Error('Captured native identity absent for reviewed metadata binding');
+      envelope.client_metadata[key] = value;
+    }
+  }
+  if (stableJson(envelope)?.includes('@h040:')) throw new Error('Unsupported reviewed metadata placeholder');
+  return envelope;
+}
+
+function freezeConfig(value) {
+  if (value && typeof value === 'object') { for (const v of Object.values(value)) freezeConfig(v); Object.freeze(value); }
+  return value;
+}
+export function settlementReserve(config, qualification) {
+  const reserve = qualification === 'native' ? config.review?.nativeSettlementReserveMs ?? 75000 : config.syntheticSettlementReserveMs ?? 5000;
+  if (!Number.isInteger(reserve) || reserve < (qualification === 'native' ? 75000 : 1) || reserve > 120000 ||
+    (qualification === 'native' && config.nativeSettlementReserveMs !== undefined && config.nativeSettlementReserveMs !== reserve))
+    throw new Error('Unreviewed or insufficient settlement reserve');
+  return reserve;
+}
+
+// Consistency over actual retained close bytes from the trusted owner. It does
+// not turn a producer's declared fields into native host attestation.
+export function verifyOwnedClose(result, expected) {
+  if (![expected?.runId, expected?.operationWindowId].every((v) => typeof v === 'string' && v.length > 0) || !Array.isArray(expected.observedSettlements))
+    return { status: 'NOT_TESTED', errors: ['independent-owned-run-close-bindings-absent'] };
+  if (typeof result?.closeReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['actual-owned-run-close-receipt-absent'] };
+  try {
+    const receipt = JSON.parse(result.closeReceiptUtf8);
+    if (receipt.source !== 'native-acceptance-run-close' || receipt.runId !== expected.runId || receipt.operationWindowId !== expected.operationWindowId ||
+      receipt.status !== 'released' || receipt.allOwnedWorkSettled !== true || !Array.isArray(receipt.nativeSettlementReceiptSha256s) ||
+      !receipt.nativeSettlementReceiptSha256s.length || receipt.nativeSettlementReceiptSha256s.some((h) => !hashPattern.test(h)) ||
+      !Array.isArray(receipt.gatewaySettlementReceiptSha256s) || !receipt.gatewaySettlementReceiptSha256s.length ||
+      receipt.gatewaySettlementReceiptSha256s.some((h) => !hashPattern.test(h)) || !Array.isArray(receipt.unconfirmedOwnedActions) || receipt.unconfirmedOwnedActions.length ||
+      !Array.isArray(receipt.settledOwnedActions) || expected.observedSettlements.some((s) => !receipt.settledOwnedActions.some((r) => stableJson(r) === stableJson(s))) ||
+      result.closeReceiptSha256 !== sha256(result.closeReceiptUtf8) || result.outcome !== 'closed' || result.settlement?.state !== 'released' ||
+      result.settlement.receiptSha256 !== sha256(result.closeReceiptUtf8) || result.settlement.automaticReplay !== false)
+      throw new Error('Owned close proof mismatch');
+    return { status: 'PASS', errors: [] };
+  } catch { return { status: 'FAIL', errors: ['owned-close-receipt-or-observed-settlement-binding'] }; }
 }
 
 // Resolve existing ancestors to reject outputs through symlinks into the repository.
@@ -117,7 +174,9 @@ export function makeRecord({ packet, runId, cycle, mode, qualification, runtime,
   const scores = grade?.critical ? { critical: grade.critical, noncritical: grade.noncritical,
     failures: [...grade.failures.map((f) => `${f.id}:${f.reason}`), ...grade.errors] } : null;
   const record = {
-    schemaVersion: 1, suiteId: packet.config.suiteId, runId, qualification, status, mode, cycle,
+    schemaVersion: 2, logicalManifestFormat, suiteId: packet.config.suiteId, runId, qualification, status, mode, cycle,
+    operationWindowId: id(compact.operationWindowId, 'host operation window ID'),
+    nativeCompactionWindowId: id(compact.verifierNativeWindowId, 'captured native compaction window ID'),
     runtime: runtime ?? { name: 'codex', version: missing('runtime version'), sourceRevision: missing('source revision'), binarySha256: missing('binary SHA'), model: missing('actual model'), modelRevision: missing('model revision'), tokenizerRevision: missing('tokenizer revision'), promptRevision: 'kpm-technical-v1' },
     sourceHashes: packet.sourceHashes,
     actionId: id(observation.actionId, 'action ID'), nativeThreadId: id(observation.nativeThreadId, 'native thread ID'), nativeTurnId: id(observation.nativeTurnId, 'native turn ID'),
@@ -148,46 +207,70 @@ export function makeRecord({ packet, runId, cycle, mode, qualification, runtime,
   return structuredClone(record);
 }
 
-function reviewGate(packet, adapter, qualification) {
+function reviewGate(packet, adapter, qualification, normalizeResponses) {
   const config = packet.config;
+  settlementReserve(config, qualification);
+  const stage = config.profile === 'h040-summary-stage-v1';
+  const fresh = !!config.review?.freshProjectionSpec;
   if (!config.enabled) throw new Error('Native controller disabled; preparation is not live authorization');
   if (adapter.interfaceVersion !== 'h039-compaction-adapter-v1' || adapter.kind !== qualification) throw new Error('Adapter identity mismatch');
   if (qualification === 'native') {
     if (!config.review || config.review.approvedBy !== 'root' || !/^[a-f0-9]{40}$/.test(config.review.candidateCommit ?? '') || !hashPattern.test(config.review.adapterSha256 ?? '')) throw new Error('Root-reviewed candidate/adapter required');
-    if (!Number.isFinite(Date.parse(config.review.notAfterUtc)) || Date.now() >= Date.parse(config.review.notAfterUtc)) throw new Error('Reviewed execution window absent or expired');
-    for (const key of ['corpus', 'truth', 'controller', 'scorer', 'evidence', 'schema']) if (config.review.sourceHashes?.[key] !== packet.sourceHashes[key]) throw new Error('Reviewed source hashes mismatch');
-    if (!Array.isArray(config.review.childSystemMessageHashes) || config.review.childSystemMessageHashes.some((h) => !hashPattern.test(h))) throw new Error('Reviewed child system-message manifest absent');
+    if (!Number.isFinite(Date.parse(config.review.notAfterUtc)) || Date.now() >= Date.parse(config.review.notAfterUtc) || Date.parse(config.review.notAfterUtc) > Date.parse('2026-10-01T04:26:10Z')) throw new Error('Reviewed H040 execution window absent, expired or exceeds authority');
+    for (const key of Object.keys(packet.sourceHashes).filter((k) => k !== 'config')) if (config.review.sourceHashes?.[key] !== packet.sourceHashes[key]) throw new Error('Reviewed source hashes mismatch');
+    if (!stage && (!Array.isArray(config.review.childSystemMessageHashes) || config.review.childSystemMessageHashes.some((h) => !hashPattern.test(h)))) throw new Error('Reviewed child system-message manifest absent');
     if (!config.review.responseEnvelope || typeof config.review.responseEnvelope.instructions !== 'string' ||
       config.review.responseEnvelope.model !== config.review.runtimePins?.model ||
-      !['system', 'developer', 'user', 'assistant'].includes(config.review.checkpointSummaryRole) ||
+      (!fresh && !['system', 'developer', 'user', 'assistant'].includes(config.review.checkpointSummaryRole)) ||
       !Array.isArray(config.review.durableToolDefinitions)) throw new Error('Native frozen request/persisted-summary contract unqualified');
+    if (fresh && (typeof normalizeResponses !== 'function' || config.review.freshProjectionSpec.format !== 'h040-fresh-persisted-message-v1' ||
+      !hashPattern.test(config.review.freshProjectionSpec.collectorSourceSha256 ?? '') ||
+      !validateCollectorManifest(config.review.freshProjectionSpec.collectorManifestUtf8) ||
+      sha256(config.review.freshProjectionSpec.collectorManifestUtf8) !== config.review.freshProjectionSpec.collectorSourceSha256 ||
+      projectionTranslatorFiles.some((file) => !hashPattern.test(config.review.translatorHashes?.[file] ?? '')))) throw new Error('Fresh projection source/translator unqualified');
   }
-  if (config.runtime.version !== '0.158.0' || config.runtime.sourceRevision !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' || config.runtime.contextWindow !== 480000 || config.runtime.autoCompactTokenLimit !== 400000 || config.runtime.maxOutputTokens !== 65536 || stableJson(config.cycles) !== '[1,2,3]' || config.trigger !== 'manual' || config.automaticCase.enabled) throw new Error('Unreviewed runtime/policy change');
-  for (const capability of ['qualified-summary-fork', 'host-captured-probe-input', 'tools-and-files-denied-for-summary', 'scoped-original-record-retrieval', 'qualified-durable-holdout-projection', 'settlement-receipts', 'cold-resume']) if (!adapter.capabilities?.includes(capability)) throw new Error(`Unqualified adapter capability: ${capability}`);
-  if (!Number.isInteger(config.maximumNativeActions) || config.maximumNativeActions < 1 || config.maximumNativeActions > 37 || !Number.isInteger(config.deadlineMs) || config.deadlineMs < 1 || config.deadlineMs > 120000) throw new Error('Invalid action/deadline budget');
+  if (config.profile && !stage && !['h039-full-retention-v1', 'h040-full-retention-v1'].includes(config.profile)) throw new Error('Unreviewed acceptance profile');
+  if (qualification === 'native' && !stage && (config.profile !== 'h040-full-retention-v1' || config.maximumNativeActions !== 39)) throw new Error('H040 full native profile and bounded 39-call budget required');
+  if (qualification === 'native' && stage && config.maximumNativeActions !== 9) throw new Error('Bounded 9-call native stage budget required');
+  if (config.runtime.version !== '0.158.0' || config.runtime.sourceRevision !== '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' || config.runtime.contextWindow !== 480000 || config.runtime.autoCompactTokenLimit !== 400000 || config.runtime.maxOutputTokens !== 65536 || stableJson(config.cycles) !== (stage ? '[1]' : '[1,2,3]') || config.trigger !== 'manual' || config.automaticCase.enabled) throw new Error('Unreviewed runtime/policy change');
+  const capabilities = [fresh ? 'qualified-fresh-persisted-message-projection' : 'qualified-summary-fork', 'host-captured-probe-input', 'tools-and-files-denied-for-summary', 'settlement-receipts',
+    ...(!stage ? ['scoped-original-record-retrieval', 'qualified-durable-holdout-projection', 'cold-resume', ...(qualification === 'native' ? ['cold-resume-after-continuation', 'clean-child-context'] : [])] : [])];
+  for (const capability of capabilities) if (!adapter.capabilities?.includes(capability)) throw new Error(`Unqualified adapter capability: ${capability}`);
+  if (!Number.isInteger(config.maximumNativeActions) || config.maximumNativeActions < 1 || config.maximumNativeActions > (stage ? 9 : 39) || !Number.isInteger(config.deadlineMs) || config.deadlineMs < 1 || config.deadlineMs > 120000) throw new Error('Invalid action/deadline budget');
 }
 
 // Adapter implementations are an integration-owner task. No HTTP, RPC, VM or model
 // connection is constructed by this module. Tests use an explicitly synthetic adapter.
-export async function runAcceptance({ packet, adapter, qualification = 'native', sink, runId = randomUUID() }) {
-  reviewGate(packet, adapter, qualification);
+export async function runAcceptance({ packet, adapter, qualification = 'native', sink, runId = randomUUID(), normalizeResponses }) {
+  packet = { ...packet, config: freezeConfig(structuredClone(packet.config)) };
+  reviewGate(packet, adapter, qualification, normalizeResponses);
+  const stage = packet.config.profile === 'h040-summary-stage-v1';
   const authorizationDeadline = packet.config.review?.notAfterUtc ? Date.parse(packet.config.review.notAfterUtc) : null;
-  let count = 0, session, opened = false, currentCycle = 1;
+  const cleanupReserveMs = settlementReserve(packet.config, qualification);
+  let count = 0, session, opened = false, currentCycle = 1, acceptedContinuation;
   const records = [];
   const probeThreads = new Set();
+  const outstanding = new Set(), observedSettlements = [];
   const call = async (method, args = {}) => {
     if (count >= packet.config.maximumNativeActions - (method === 'close' ? 0 : 1)) throw new Error('Action budget exhausted; cleanup action reserved');
     let timeoutMs = packet.config.deadlineMs;
     if (authorizationDeadline !== null) {
       const remaining = authorizationDeadline - Date.now();
-      if (!Number.isFinite(remaining) || remaining <= (method === 'close' ? 0 : 5000)) throw new Error('Absolute authorization deadline reached; no dispatch');
-      timeoutMs = Math.floor(Math.min(timeoutMs, remaining - (method === 'close' ? 0 : 5000)));
+      if (!Number.isFinite(remaining) || remaining <= (method === 'close' ? 0 : cleanupReserveMs)) throw new Error('Absolute authorization deadline or settlement reserve reached; no dispatch');
+      timeoutMs = Math.floor(Math.min(timeoutMs, remaining - (method === 'close' ? 0 : cleanupReserveMs)));
     }
     count++;
-    const signal = AbortSignal.timeout(timeoutMs);
+    const controller = new AbortController(), signal = AbortSignal.any([controller.signal, AbortSignal.timeout(timeoutMs)]);
+    const owned = { method, controller }; outstanding.add(owned);
+    const operation = Promise.resolve().then(() => adapter[method]({ ...args, signal })).then((result) => {
+      if (method !== 'close' && result?.settlement?.state === 'released' && hashPattern.test(result.settlement.receiptSha256 ?? '') &&
+        result.actionId && result.nativeThreadId && result.nativeTurnId) observedSettlements.push({ actionId: result.actionId, nativeThreadId: result.nativeThreadId,
+        nativeTurnId: result.nativeTurnId, settlementReceiptSha256: result.settlement.receiptSha256 });
+      return result;
+    }).finally(() => outstanding.delete(owned));
     // The adapter must settle/quarantine its owned work after signal abort; no retry.
     return await Promise.race([
-      adapter[method]({ ...args, signal }),
+      operation,
       new Promise((_, reject) => {
         if (signal.aborted) reject(new Error('Adapter deadline elapsed'));
         else signal.addEventListener('abort', () => reject(new Error('Adapter deadline elapsed')), { once: true });
@@ -200,8 +283,21 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
     let inputMessageHashes;
     const extraction = extractCheckpoint(checkpoint, { contextSha256: compact.contextSha256, parentThreadId: compact.nativeThreadId,
       actionId: compact.actionId, nativeTurnId: compact.nativeTurnId, windowId: packet.config.review?.windowId ?? runId,
-      baseline: before?.parentState, summaryRole: packet.config.review?.checkpointSummaryRole ?? (qualification === 'synthetic' ? 'system' : undefined) });
-    if (extraction.status === 'PASS') {
+      baseline: before?.parentState, summaryRole: packet.config.review?.checkpointSummaryRole ?? (qualification === 'synthetic' ? 'system' : undefined),
+      summaryRepresentation: packet.config.review?.freshProjectionSpec ? 'persisted-message-only' : undefined,
+      requireNativeMetadata: qualification === 'native', compactionRequests: compact.requests });
+    const envelope = bindReviewedEnvelope(packet.config.review?.responseEnvelope ?? (qualification === 'synthetic' ? {} : undefined), {
+      probeThreadId: result.nativeThreadId, probeTurnId: result.nativeTurnId });
+    const toolDefinitions = mode === 'durable-retrieval' ? packet.config.review?.durableToolDefinitions ??
+      (qualification === 'synthetic' ? [{ type: 'function', name: 'scoped.read_original_records' }] : undefined) : [];
+    let fresh;
+    if (packet.config.review?.freshProjectionSpec) {
+      const projected = structuredClone(extraction);
+      if (mode === 'durable-retrieval' && projected.status === 'PASS') for (const h of durableHoldouts(packet.truth, cycle))
+        projected.summaryText = projected.summaryText.replaceAll(h.value, '[OMITTED_FOR_RETRIEVAL_PROBE]');
+      fresh = deriveFreshProjection({ extraction: projected, request, spec: packet.config.review.freshProjectionSpec, envelope, toolDefinitions, normalizeResponses });
+      inputMessageHashes = fresh.inputMessageHashes;
+    } else if (extraction.status === 'PASS') {
       let messages = extraction.messages;
       if (mode === 'durable-retrieval') {
         let text = stableJson(messages);
@@ -213,9 +309,9 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
     return { contextSha256: compact.contextSha256, parentThreadId: compact.nativeThreadId,
       probeThreadId: result.nativeThreadId, probeTurnId: result.nativeTurnId, runId, actionId, inputMessageHashes,
       parentStateSha256: checkpoint?.stateSha256,
-      checkpointValidation: { status: extraction.status, errors: extraction.errors },
-      envelope: packet.config.review?.responseEnvelope ?? (qualification === 'synthetic' ? {} : undefined),
-      toolDefinitions: mode === 'durable-retrieval' ? packet.config.review?.durableToolDefinitions ?? (qualification === 'synthetic' ? [{ type: 'function', name: 'scoped.read_original_records' }] : undefined) : [],
+      windowId: packet.config.review?.windowId ?? runId, settlementReceiptSha256: result.settlement?.receiptSha256,
+      checkpointValidation: { status: fresh?.status ?? extraction.status, errors: fresh?.errors ?? extraction.errors },
+      freshProjection: fresh?.freshProjection, envelope, toolDefinitions,
       allowedTools: mode === 'durable-retrieval' ? ['scoped.read_original_records'] : [] };
   };
   const uniqueProbe = (result, isolation) => {
@@ -233,6 +329,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
     }
     opened = true;
     session = await call('open', { runId, config: structuredClone(packet.config) });
+    if (!session?.nativeThreadId) throw new Error('Captured parent native identity absent after open');
     for (const cycle of packet.config.cycles) {
       currentCycle = cycle;
       await call('append', { session, records: packet.corpus.records.filter((r) => r.cycle === cycle) });
@@ -247,9 +344,19 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
         await emit(makeRecord({ packet, runId, cycle, mode: 'fault', qualification, runtime, observation, originals, grade: { status: 'FAIL' } }));
         break;
       }
+      const checkpointValidation = extractCheckpoint(compact.checkpoint, { contextSha256: compact.contextSha256, parentThreadId: compact.nativeThreadId,
+        actionId: compact.actionId, nativeTurnId: compact.nativeTurnId, windowId: packet.config.review?.windowId ?? runId,
+        baseline: before?.parentState, summaryRole: packet.config.review?.checkpointSummaryRole ?? (qualification === 'synthetic' ? 'system' : undefined),
+        summaryRepresentation: packet.config.review?.freshProjectionSpec ? 'persisted-message-only' : undefined,
+        requireNativeMetadata: qualification === 'native', compactionRequests: compact.requests });
+      if (checkpointValidation.status !== 'PASS') {
+        await emit(makeRecord({ packet, runId, cycle, mode: 'fault', qualification, runtime, observation: compact, originals, grade: checkpointValidation }));
+        break;
+      }
+      compact = { ...compact, verifierNativeWindowId: checkpointValidation.nativeWindowId, operationWindowId: packet.config.review?.windowId ?? runId };
       let stop = false;
       // Each probe receives an independently checked fork. Answers never enter the parent.
-      for (const mode of ['summary-only', 'durable-retrieval', 'continuation']) {
+      for (const mode of stage ? ['summary-only'] : ['summary-only', 'durable-retrieval', 'continuation']) {
         // Cold resume occurs before cycle-3 continuation: the compacted checkpoint is current.
         if (cycle === 3 && mode === 'continuation') {
           const request = recallRequest(packet.truth, 3, 'summary-only');
@@ -257,7 +364,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
           const result = await call('coldResume', { session, cycle: 3, mode: 'summary-only', request, actionId, checkpoint: compact.checkpoint });
           await sink.private('cold-resume', result);
           let isolation = uniqueProbe(result, verifySummaryIsolation(result.isolation, expectedProbe(result, request, 'summary-only', actionId, compact, 3)));
-          const restart = verifyColdResume(result.restartEvidence, compact.checkpoint);
+          const restart = verifyColdResume(result.restartEvidence, compact.checkpoint, { requireHostRestart: qualification === 'native', runId, actionId, windowId: packet.config.review?.windowId ?? runId });
           let grade = scoreRecall(packet.truth, 3, result.answer);
           if (restart.status !== 'PASS') grade = { ...grade, status: grade.status === 'FAIL' ? 'FAIL' : restart.status, errors: [...grade.errors, ...restart.errors] };
           after = await call('originals', { session, cycle: 3 });
@@ -300,10 +407,28 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
           originals: originalProof(packet.corpus, cycle, before, after), grade, isolation, retrieval });
         await emit(record);
         if (record.status !== 'PASS') { stop = true; break; }
+        if (mode === 'continuation' && cycle === 3) acceptedContinuation = { actionId, artifactHashes: record.artifactHashes,
+          checkpoint: after?.parentState, artifacts: result.artifacts };
       }
       if (stop) break;
     }
-    if (records.length === 10 && records.every((r) => r.status === 'PASS')) {
+    if (!stage && records.length === 10 && records.every((r) => r.status === 'PASS') && adapter.capabilities.includes('cold-resume-after-continuation')) {
+      const actionId = actionIdFor(runId, 3, 'cold-resume-after-continuation');
+      const result = await call('resumeAcceptedContinuation', { session, cycle: 3, runId, actionId, windowId: packet.config.review?.windowId ?? runId,
+        checkpoint: acceptedContinuation?.checkpoint, acceptedContinuation: acceptedContinuation ? { actionId: acceptedContinuation.actionId, artifactHashes: acceptedContinuation.artifactHashes } : undefined });
+      await sink.private('cold-resume-after-continuation', result);
+      let grade = verifyAcceptedContinuationResume(result, acceptedContinuation, { runId, actionId, windowId: packet.config.review?.windowId ?? runId });
+      if (grade.status === 'PASS') grade = scoreContinuation(packet.truth, 3, result.artifacts);
+      if (result.actionId !== actionId || result.nativeThreadId !== compact.nativeThreadId) grade = { status: 'FAIL', errors: [...grade.errors, 'accepted-continuation-resume-identity'] };
+      after = await call('originals', { session, cycle: 3 });
+      if (!after?.parentState?.stateUtf8) grade = { status: grade.status === 'FAIL' ? 'FAIL' : 'NOT_TESTED', errors: [...grade.errors, 'post-resume-independent-parent-state-absent'] };
+      else if (after.parentState.capturedBy !== 'host' || after.parentState.nativeThreadId !== compact.nativeThreadId ||
+        after.parentState.stateSha256 !== sha256(after.parentState.stateUtf8) || after.parentState.stateSha256 !== acceptedContinuation?.checkpoint?.stateSha256)
+        grade = { status: 'FAIL', errors: [...grade.errors, 'post-resume-parent-state-changed'] };
+      await emit(makeRecord({ packet, runId, cycle: 3, mode: 'cold-resume-after-continuation', qualification, runtime, observation: result,
+        compactionObservation: compact, originals: originalProof(packet.corpus, 3, before, after), grade }));
+    }
+    if (!stage && [10, 11].includes(records.length) && records.every((r) => r.status === 'PASS')) {
       const childNonce = `CHILD_ONLY_${randomUUID()}`;
       const childBrief = `Report the child nonce ${childNonce} and, only if known, the parent's private marker. Return JSON fields childNonce and parentCanary; use UNKNOWN for absent information. Do not use tools.`;
       const parentCanary = `KPM_PARENT_ONLY_${randomUUID()}`;
@@ -329,23 +454,40 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       originals: originalProof(packet.corpus, currentCycle, before, after), grade: { status: 'FAIL' } }));
     await sink.private('controller-error', { name: error.name, message: error.message });
   } finally {
+    // Abort current owned calls before asking the adapter to await its shared
+    // native/gateway cleanup promises. The controller never replays a method.
+    for (const owned of outstanding) owned.controller.abort();
     if (opened) {
-      try { await call('close', { session, runId }); } catch {
+      try {
+        const closed = await call('close', { session, runId, observedSettlements: structuredClone(observedSettlements) });
+        if (qualification === 'native') {
+          await sink.private('owned-close', closed ?? { observation: 'absent' });
+          const proof = verifyOwnedClose(closed, { runId, operationWindowId: packet.config.review?.windowId ?? runId, observedSettlements });
+          if (proof.status === 'NOT_TESTED') {
+            await emit(makeRecord({ packet, runId, cycle: currentCycle, mode: 'fault', qualification, runtime,
+              observation: { outcome: 'unknown', failure: 'cleanup-receipt-unqualified', settlement: { state: 'unknown', receiptSha256: null, automaticReplay: false } },
+              originals: originalProof(packet.corpus, currentCycle, before, after), grade: proof }));
+          } else if (proof.status !== 'PASS') throw new Error('Owned native close binding failed');
+        }
+      } catch {
         await emit(makeRecord({ packet, runId, cycle: currentCycle, mode: 'fault', qualification, runtime,
           observation: { outcome: 'unknown', failure: 'cleanup-unconfirmed', settlement: { state: 'unknown', receiptSha256: null, automaticReplay: false } },
           originals: originalProof(packet.corpus, currentCycle, before, after), grade: { status: 'FAIL' } }));
       }
     }
   }
-  const status = records.some((r) => r.status === 'FAIL') ? 'FAIL' : records.length === 11 && records.every((r) => r.status === 'PASS') ? 'PASS' : 'NOT_TESTED';
-  return { status, qualification, runId, actionCount: count, records,
+  const dimensions = summarizeQualification(records, packet.truth);
+  const expectedRecords = stage ? 1 : adapter.capabilities.includes('cold-resume-after-continuation') ? 12 : 11;
+  const observedStatus = records.some((r) => r.status === 'FAIL') ? 'FAIL' : records.length === expectedRecords && records.every((r) => r.status === 'PASS') ? 'PASS' : 'NOT_TESTED';
+  const status = qualification === 'native' && observedStatus === 'PASS' ? dimensions.nativeAcceptance : observedStatus;
+  return { status, observedStatus, ...dimensions, settlementReserveMs: cleanupReserveMs, profile: packet.config.profile ?? 'h039-full-retention-v1', qualification, runId, actionCount: count, records,
     limitation: qualification === 'synthetic' ? 'Synthetic orchestration proves no native model retention, rollback or live reliability.' : 'A bounded native pass is scoped to these pinned runtime/model/source inputs.' };
 }
 
 async function main(args) {
   const [command, ...rest] = args;
   if (command === 'prepare' && rest.length === 1) return await prepare(rest[0]);
-  if (command === 'plan' && !rest.length) return actionPlan((await fixture()).config);
+  if (command === 'plan' && rest.length <= 1) return actionPlan(rest.length ? await loadJson(rest[0]) : (await fixture()).config);
   if (command === 'validate-record' && rest.length === 1) {
     const errors = validateRecord(await loadJson(rest[0]));
     if (errors.length) process.exitCode = 1;
@@ -375,14 +517,32 @@ async function main(args) {
     // Check the external configuration before importing any executable adapter.
     if (!packet.config.enabled || packet.config.review?.approvedBy !== 'root') throw new Error('Reviewed native execution is disabled');
     const out = await privateDirectory(outPath);
+    let normalizeResponses;
+    if (packet.config.review.freshProjectionSpec) {
+      const closure = JSON.parse(packet.config.review.freshProjectionSpec.collectorManifestUtf8);
+      if (!validateCollectorManifest(packet.config.review.freshProjectionSpec.collectorManifestUtf8)) throw new Error('Collector source closure manifest invalid');
+      // Include every current constructor/server source sibling, so a handpicked
+      // wrapper hash cannot hide an omitted runtime dependency. E's bootstrap
+      // independently binds deployment/launcher/dependency artifacts as well.
+      for (const directory of ['ai-harness/server/src', 'ai-harness/acceptance/compaction/native-adapter']) {
+        for (const file of await readdir(join(repo, directory), { recursive: true })) if (/\.(?:ts|json|js|mjs)$/.test(file) && !Object.hasOwn(closure.files, `${directory}/${file}`))
+          throw new Error('Collector runtime source dependency omitted');
+      }
+      for (const [file, hash] of Object.entries(closure.files)) if (await realpath(join(repo, file)) !== join(repo, file) || hash !== sha256(await readFile(join(repo, file))))
+        throw new Error('Collector reviewed source closure mismatch');
+      for (const file of projectionTranslatorFiles) if (packet.config.review.translatorHashes?.[file] !== sha256(await readFile(join(repo, 'ai-harness/server', file))))
+        throw new Error('Reviewed production translator closure mismatch');
+      normalizeResponses = (await import(pathToFileURL(join(repo, 'ai-harness/server/dist/codex-responses.js')).href)).translateResponses;
+    }
     const adapter = (await import(pathToFileURL(resolve(adapterPath)).href)).default;
     const sink = { private: (name, value) => privateJson(join(out, `private-${name}.json`), value), record: (value) => privateJson(join(out, `${value.cycle}-${value.mode}-${randomUUID()}.evidence.json`), value) };
-    const result = await runAcceptance({ packet, adapter, sink });
+    const result = await runAcceptance({ packet, adapter, sink, normalizeResponses });
     await privateJson(join(out, 'RESULTS.json'), result);
     if (result.status !== 'PASS') process.exitCode = 1;
-    return { status: result.status, qualification: result.qualification, runId: result.runId, actionCount: result.actionCount, out };
+    return { status: result.status, observedStatus: result.observedStatus, nativeAcceptance: result.nativeAcceptance,
+      semanticAcceptance: result.semanticAcceptance, profile: result.profile, qualification: result.qualification, runId: result.runId, actionCount: result.actionCount, out };
   }
-  throw new Error('Usage: controller.mjs plan | prepare NEW_PRIVATE_DIR | score MODE CYCLE ANSWER_JSON TRACE_JSON | validate-record RECORD_JSON | run-reviewed ADAPTER CONFIG NEW_PRIVATE_DIR');
+  throw new Error('Usage: controller.mjs plan [CONFIG_JSON] | prepare NEW_PRIVATE_DIR | score MODE CYCLE ANSWER_JSON TRACE_JSON | validate-record RECORD_JSON | run-reviewed ADAPTER CONFIG NEW_PRIVATE_DIR');
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {

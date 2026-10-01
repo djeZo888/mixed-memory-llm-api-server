@@ -1,5 +1,11 @@
 # Native acceptance adapter v1 — source contract, not live qualification
 
+The [H040 contract](h040-interoperability.md) adds an independently frozen fresh
+persisted-message representation, native/host window provenance, a separate
+nine-call stage, schema-v2 dimension reporting and mandatory post-continuation
+cold resume in the 39-call full native profile. The original 37-call description
+below remains the H039 synthetic baseline; it cannot grant H040 native PASS.
+
 Task B supplies `controller.mjs`, the deterministic scorer and evidence schema.
 Task E owns NEW `native-adapter/` source and `h039-native-adapter*` tests. No B
 file establishes that Codex 0.158.0 supports the required forks, projection,

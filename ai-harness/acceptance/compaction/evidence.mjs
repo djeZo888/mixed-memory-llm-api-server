@@ -8,10 +8,10 @@ export const measured = (value, source, receiptSha256) => ({ state: 'measured', 
 
 // Small offline validator for exactly the keywords used by the checked-in schema.
 // The schema is also consumable by a full Draft 2020-12 validator at integration.
-export function validateShape(value, rule = schema, path = '$') {
-  if (rule.$ref) return validateShape(value, rule.$ref.split('/').slice(1).reduce((v, k) => v[k], schema), path);
+export function validateShape(value, rule = schema, path = '$', rootSchema = rule) {
+  if (rule.$ref) return validateShape(value, rule.$ref.split('/').slice(1).reduce((v, k) => v[k], rootSchema), path, rootSchema);
   if (rule.oneOf) {
-    const passing = rule.oneOf.filter((r) => !validateShape(value, r, path).length);
+    const passing = rule.oneOf.filter((r) => !validateShape(value, r, path, rootSchema).length);
     return passing.length === 1 ? [] : [`${path}:oneOf`];
   }
   const errors = [];
@@ -28,11 +28,11 @@ export function validateShape(value, rule = schema, path = '$') {
     if (rule.minimum !== undefined && value < rule.minimum) errors.push(`${path}:minimum`);
     if (rule.maximum !== undefined && value > rule.maximum) errors.push(`${path}:maximum`);
   }
-  if (actualType === 'array' && rule.items) value.forEach((v, i) => errors.push(...validateShape(v, rule.items, `${path}[${i}]`)));
+  if (actualType === 'array' && rule.items) value.forEach((v, i) => errors.push(...validateShape(v, rule.items, `${path}[${i}]`, rootSchema)));
   if (actualType === 'object') {
     for (const key of rule.required ?? []) if (!Object.hasOwn(value, key)) errors.push(`${path}.${key}:required`);
     for (const [key, val] of Object.entries(value)) {
-      if (rule.properties?.[key]) errors.push(...validateShape(val, rule.properties[key], `${path}.${key}`));
+      if (rule.properties?.[key]) errors.push(...validateShape(val, rule.properties[key], `${path}.${key}`, rootSchema));
       else if (rule.additionalProperties === false) errors.push(`${path}.${key}:additionalProperty`);
     }
   }
@@ -66,9 +66,12 @@ export function validateRecord(record) {
     if (['summary-only', 'durable-retrieval', 'cold-resume'].includes(record.mode) && (!record.scores || record.scores.critical.total + record.scores.noncritical.total === 0)) errors.push('pass-without-score');
     if (['summary-only', 'cold-resume'].includes(record.mode) && (record.retrieval.used !== false || record.retrieval.callIds.length || record.retrieval.sourceIds.length || record.isolation.status !== 'PASS' || !record.isolation.receiptSha256)) errors.push('summary-not-isolated');
     if (record.mode === 'durable-retrieval' && (record.retrieval.used !== true || !record.retrieval.callIds.length || !record.retrieval.sourceIds.length || !record.retrieval.traceSha256 || record.isolation.status !== 'PASS' || !record.isolation.receiptSha256)) errors.push('durable-retrieval-unproven');
-    if (record.mode === 'continuation' && Object.keys(record.artifactHashes).length !== 2) errors.push('continuation-artifacts-absent');
+    if (['continuation', 'cold-resume-after-continuation'].includes(record.mode) && Object.keys(record.artifactHashes).length !== 2) errors.push('continuation-artifacts-absent');
     if (record.mode === 'child-context' && (record.isolation.status !== 'PASS' || !record.isolation.receiptSha256)) errors.push('child-context-unproven');
     if (record.qualification === 'native') {
+      if (!record.operationWindowId.value || !record.nativeCompactionWindowId.value ||
+        !record.nativeCompactionWindowId.value.startsWith(record.compactionNativeThreadId.value + ':') ||
+        !/^\d+$/.test(record.nativeCompactionWindowId.value.slice((record.compactionNativeThreadId.value ?? '').length + 1))) errors.push('native-and-host-operation-window-unproven');
       if (record.trigger.type !== 'manual' || !record.trigger.evidence.some((e) => e.kind === 'manual-action' && e.runId === record.runId && e.actionId === record.compactionActionId.value && e.nativeThreadId === record.compactionNativeThreadId.value) || record.compactionActionId.value !== actionIdFor(record.runId, record.cycle, 'compact')) errors.push('native-manual-attribution-required');
       if (['summary-only', 'durable-retrieval', 'cold-resume'].includes(record.mode) &&
         (record.nativeThreadId.value !== record.isolation.nativeThreadId || record.nativeTurnId.value !== record.isolation.nativeTurnId || record.nativeThreadId.value === record.compactionNativeThreadId.value || record.isolation.parentNativeThreadId !== record.compactionNativeThreadId.value || record.actionId.value !== record.isolation.actionId)) errors.push('native-probe-identity-binding');

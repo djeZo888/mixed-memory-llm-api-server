@@ -1,5 +1,11 @@
 # H039 technical retention acceptance
 
+H040 adds a [separately gated collector/controller contract](h040-interoperability.md),
+disabled one-cycle stage and schema-v2 dimension report. The 72-fact corpus and
+exact scorer expectations below are retained. The new full native profile also
+requires cold resume after the latest independently accepted continuation;
+the historical 37-call synthetic flow cannot qualify that dimension.
+
 Source preparation only. Native acceptance, model fidelity, operational rollback,
 automatic triggering and deployment are **NOT_TESTED**. No model connection is
 included. The checked-in controller configuration is disabled. Task E owns the
@@ -63,15 +69,18 @@ Each cycle separates:
    It produces `sensor-policy.json` and `engineering-calculation.json` using the
    latest state. Fixture calculations are independently authored in the tests.
 
-Cold resume is deliberately **before cycle-three continuation**, when the cycle
+The H039 baseline cold resume is deliberately **before cycle-three continuation**, when the cycle
 three compacted checkpoint is still current. It requires a real runner restart,
 captured persisted history, unchanged checkpoint and no replay. Continuation is
-then checked separately. The final child probe proves that a private sentinel
+then checked separately. H040 additionally verifies a real owned application
+restart after the accepted continuation and unchanged captured artifacts.
+The final child probe proves that a private sentinel
 was actually recorded in the parent, checks a child-only nonce, and compares the
 complete child first request to an independent minimal-brief manifest. Distinct
 IDs or a child saying UNKNOWN do not prove clean inheritance by themselves.
 
-`evidence.schema.json` is a reusable Draft 2020-12 record contract. Metadata
+`evidence.schema.json` is a reusable Draft 2020-12 schema-v2 record contract.
+Archived version-one evidence retains its own source/hash domain. Metadata
 absence carries a reason; counts and durations are measured or explicitly null.
 Compaction and probe/continuation/resume observations have separate identities,
 counts and durations. Usage absence alone does not invalidate a settled result.

@@ -55,3 +55,21 @@ old/new decision coexistence, pending check preservation, literal search limits,
 UTF-8 boundaries, deleted records and cold retrieval. The present synthetic suite
 tests the proposed receipt/answer contract; it does not prove these future store
 methods or native tools already exist.
+
+H040 read-only inspection still finds the broad `memory` tool blocked and no
+original-record read API in this B base. Root's A source proposal supplies a
+different, explicitly branded fresh `read_original` probe: an immutable
+checkpoint-bound set of copied original byte slices, exact native
+`item/tool/call` handling and default-absent trusted launch/settlement receipts.
+That can pilot the session-scoped successor before a store schema change.
+
+The exact next B/E interface proposal is a separate reviewed native retrieval
+representation. Preserve the synthetic `scoped.read_original_records` contract;
+validate `read_original` wire name, owned native thread/turn/call/item IDs,
+reference/offset/limit, immutable checkpoint ID, exact returned original bytes
+and current citations from captured native requests and canonical completion.
+Use E's preserved original-to-message byte references as the source authority,
+never the ground-truth file. A host response write alone is not consumption or
+settlement. This proposal is not implemented or native-qualified by B; the
+full-profile retrieval gate remains closed until the owners' coherent source
+and actual trusted Linux transport pass root review.

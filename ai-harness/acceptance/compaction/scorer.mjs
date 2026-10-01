@@ -2,12 +2,30 @@ import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
 export const sha256 = (bytes) => createHash('sha256').update(bytes).digest('hex');
-export const stableJson = (value) => JSON.stringify(value);
+// Logical manifests share E's recursive sorted-key JSON contract. Arrays and
+// strings retain their exact order/bytes. sha256(raw) never canonicalizes bytes.
+export const stableJson = (value) => JSON.stringify(canonical(value));
+const canonical = (value) => Array.isArray(value) ? value.map(canonical) :
+  value !== null && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map((key) => [key, canonical(value[key])])) : value;
 export const actionIdFor = (runId, cycle, operation) => `h039-${sha256(runId).slice(0, 24)}-c${cycle}-${operation}`;
 export const loadJson = async (path) => JSON.parse(await readFile(path, 'utf8'));
 const object = (v) => v !== null && typeof v === 'object' && !Array.isArray(v);
 const same = (a, b) => stableJson(a) === stableJson(b);
 const exactKeys = (v, keys) => object(v) && same(Object.keys(v).sort(), [...keys].sort());
+export const logicalManifestFormat = 'h040-sorted-json-v1';
+export const collectorRequiredFiles = [
+  ...['adapter', 'bootstrap', 'checkpoint', 'dispatch-guard', 'probe', 'projection', 'source-closure'].map((name) => `ai-harness/acceptance/compaction/native-adapter/${name}.ts`),
+  ...['app', 'broker', 'codex-connection', 'codex-engine', 'codex-launcher', 'codex-provider', 'codex-responses', 'errors', 'files', 'gateway', 'store'].map((name) => `ai-harness/server/src/${name}.ts`),
+  'ai-harness/server/package.json', 'ai-harness/server/package-lock.json',
+];
+export function validateCollectorManifest(bytes) {
+  try {
+    const manifest = JSON.parse(bytes);
+    return manifest.format === 'h040-collector-closure-v1' && manifest.sourceRevision === '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' &&
+      object(manifest.files) && collectorRequiredFiles.every((name) => Object.hasOwn(manifest.files, name)) &&
+      Object.entries(manifest.files).every(([name, hash]) => name.startsWith('ai-harness/') && !name.split('/').includes('..') && /^[a-f0-9]{64}$/.test(hash));
+  } catch { return false; }
+}
 
 // Narrow text-only pinned Responses input support. Other native items remain
 // unqualified, rather than being stripped or converted by an adapter.
@@ -29,13 +47,63 @@ export function normalizeNativeInput(input) {
   });
 }
 
+// Pinned native metadata is read at the captured HTTP boundary, before the
+// production translator drops it. A host operation window never supplies this.
+export function extractNativeCompactionWindow(captures, expected) {
+  if (![expected?.parentThreadId, expected?.nativeTurnId, expected?.actionId].every((v) => typeof v === 'string' && v.length > 0))
+    return { status: 'NOT_TESTED', errors: ['independent-native-compaction-request-owner-absent'] };
+  if (!Array.isArray(captures) || !captures.length || captures.some((c) => typeof c.firstRequestUtf8 !== 'string'))
+    return { status: 'NOT_TESTED', errors: ['actual-native-compaction-request-bytes-absent'] };
+  try {
+    const windows = captures.map((capture) => {
+      if (capture.capturedBy !== 'host' || capture.nativeThreadId !== expected.parentThreadId || capture.nativeTurnId !== expected.nativeTurnId ||
+        typeof capture.requestId !== 'string' || !capture.requestId || typeof capture.runId !== 'string' || !capture.runId ||
+        capture.actionId !== expected.actionId || capture.captureSha256 !== sha256(capture.firstRequestUtf8) ||
+        typeof capture.normalizedRequestUtf8 !== 'string' || capture.normalizedSha256 !== sha256(capture.normalizedRequestUtf8)) throw new Error('Native request capture ownership mismatch');
+      const request = JSON.parse(capture.firstRequestUtf8), metadata = request.client_metadata;
+      if (typeof metadata?.['x-codex-turn-metadata'] !== 'string') return null;
+      const native = JSON.parse(metadata['x-codex-turn-metadata']);
+      if (!Number.isSafeInteger(native.window_number) || native.window_number < 0 || native.window_id !== `${expected.parentThreadId}:${native.window_number}` ||
+        native.thread_id !== expected.parentThreadId || native.turn_id !== expected.nativeTurnId || typeof native.context_window_id !== 'string' || !native.context_window_id ||
+        native.request_kind !== 'compaction' || !same(native.compaction, { trigger: 'manual', reason: 'user_requested', implementation: 'responses', phase: 'standalone_turn', strategy: 'memento' }) ||
+        (metadata['x-codex-window-id'] !== undefined && metadata['x-codex-window-id'] !== native.window_id) ||
+        (metadata.thread_id !== undefined && metadata.thread_id !== native.thread_id) || (metadata.turn_id !== undefined && metadata.turn_id !== native.turn_id))
+        throw new Error('Native metadata identity, provenance or trigger mismatch');
+      return { nativeWindowId: native.window_id, nativeWindowNumber: native.window_number, contextWindowId: native.context_window_id };
+    });
+    if (windows.some((w) => w === null)) return { status: 'NOT_TESTED', errors: ['canonical-native-window-metadata-absent'] };
+    if (windows.some((w) => !same(w, windows[0]))) throw new Error('Compaction native window ambiguous');
+    return { status: 'PASS', errors: [], ...windows[0], captures: captures.map((c) => ({ requestId: c.requestId, sha256: c.captureSha256, normalizedSha256: c.normalizedSha256 })) };
+  } catch { return { status: 'FAIL', errors: ['native-compaction-request-window-turn-trigger-or-capture-binding'] }; }
+}
+
+function stateReceiptProof(state) {
+  if (typeof state?.receiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['raw-owned-persisted-state-receipt-absent'] };
+  try {
+    const receipt = JSON.parse(state.receiptUtf8);
+    if (receipt.source !== 'owned-native-persisted-state' || !receipt.captureId || !receipt.sessionId || !receipt.sourceRef ||
+      receipt.nativeThreadId !== state.nativeThreadId || receipt.stateSha256 !== sha256(state.stateUtf8) || receipt.bytes !== Buffer.byteLength(state.stateUtf8) ||
+      !Number.isFinite(Date.parse(receipt.observedAt)) || state.receiptSha256 !== sha256(state.receiptUtf8)) throw new Error('State capture receipt mismatch');
+    return { status: 'PASS', errors: [] };
+  } catch { return { status: 'FAIL', errors: ['owned-persisted-state-raw-receipt-binding'] }; }
+}
+
 export function extractCheckpoint(checkpoint, expected) {
   const baseline = expected.baseline;
   if (!checkpoint || typeof checkpoint.stateUtf8 !== 'string' || typeof checkpoint.compactedRecordUtf8 !== 'string' ||
     typeof checkpoint.bindingReceiptUtf8 !== 'string' || typeof checkpoint.settledOperationUtf8 !== 'string' ||
-    !baseline || typeof baseline.stateUtf8 !== 'string' || !expected.nativeTurnId || !expected.windowId)
+    !baseline || typeof baseline.stateUtf8 !== 'string' ||
+    ![expected.parentThreadId, expected.actionId, expected.nativeTurnId, expected.windowId].every((v) => typeof v === 'string' && v.length > 0) ||
+    !/^[a-f0-9]{64}$/.test(expected.contextSha256 ?? ''))
     return { status: 'NOT_TESTED', errors: ['full-state-baseline-owned-record-or-settled-operation-absent'] };
-  if (!['system', 'developer', 'user', 'assistant'].includes(expected.summaryRole)) return { status: 'NOT_TESTED', errors: ['pinned-native-summary-role-unqualified'] };
+  const fresh = expected.summaryRepresentation === 'persisted-message-only';
+  if (!fresh && !['system', 'developer', 'user', 'assistant'].includes(expected.summaryRole)) return { status: 'NOT_TESTED', errors: ['pinned-native-summary-role-unqualified'] };
+  let nativeWindow;
+  if (expected.requireNativeMetadata) {
+    for (const state of [baseline, checkpoint]) { const proof = stateReceiptProof(state); if (proof.status !== 'PASS') return proof; }
+    nativeWindow = extractNativeCompactionWindow(expected.compactionRequests, expected);
+    if (nativeWindow.status !== 'PASS') return nativeWindow;
+  }
   try {
     const binding = JSON.parse(checkpoint.bindingReceiptUtf8), settled = JSON.parse(checkpoint.settledOperationUtf8);
     const stateHash = sha256(checkpoint.stateUtf8), recordHash = sha256(checkpoint.compactedRecordUtf8);
@@ -46,14 +114,26 @@ export function extractCheckpoint(checkpoint, expected) {
       !checkpoint.stateUtf8.endsWith('\n') || !baseline.stateUtf8.endsWith('\n')) throw new Error('Full-state or baseline ownership mismatch');
     const lines = checkpoint.stateUtf8.slice(0, -1).split('\n');
     const records = lines.map((line) => JSON.parse(line));
-    const index = records.findLastIndex((record) => record.type === 'compacted');
     const baselineRecords = baseline.stateUtf8.slice(0, -1).split('\n').length;
+    const metas = records.filter((record) => record.type === 'session_meta');
+    if (records[0]?.type !== 'session_meta' || metas.length !== 1 || metas[0].payload?.id !== expected.parentThreadId)
+      throw new Error('Persisted native session ownership mismatch');
+    const suffix = records.slice(baselineRecords);
+    // Pinned reconstruction can undo a compaction. No rollback selector is
+    // qualified here; reject rather than call a reverted append surviving.
+    if (suffix.some((record) => /rollback|rolled[_ -]?back|revert/i.test(String(record.type)) ||
+      /rollback|rolled[_ -]?back|revert/i.test(String(record.payload?.type)))) throw new Error('Rollback reconstruction unqualified');
+    if (suffix.filter((record) => record.type === 'compacted').length !== 1) throw new Error('Owned post-baseline compaction ambiguous');
+    const index = records.findLastIndex((record) => record.type === 'compacted');
     if (index < baselineRecords || lines[index] + '\n' !== checkpoint.compactedRecordUtf8 ||
       checkpoint.compactedRecordSha256 !== recordHash) throw new Error('Selected record is not latest surviving post-baseline compaction');
     if (binding.source !== 'native-rollout-record-owner' || binding.nativeThreadId !== expected.parentThreadId ||
       binding.compactionActionId !== expected.actionId || binding.nativeTurnId !== expected.nativeTurnId ||
       binding.windowId !== expected.windowId || binding.recordSha256 !== recordHash || binding.stateSha256 !== stateHash ||
-      !binding.recordId || !binding.sourceRef || checkpoint.bindingReceiptSha256 !== sha256(checkpoint.bindingReceiptUtf8)) throw new Error('Record owner mismatch');
+      typeof binding.recordId !== 'string' || !binding.recordId || typeof binding.sourceRef !== 'string' || !binding.sourceRef || checkpoint.bindingReceiptSha256 !== sha256(checkpoint.bindingReceiptUtf8)) throw new Error('Record owner mismatch');
+    if (expected.requireNativeMetadata && (binding.operationWindowId !== expected.windowId || binding.windowIdProvenance !== 'host-operation-window' ||
+      binding.nativeWindowId !== nativeWindow.nativeWindowId || settled.operationWindowId !== expected.windowId || settled.windowIdProvenance !== 'host-operation-window' ||
+      settled.nativeWindowId !== nativeWindow.nativeWindowId || !same(settled.nativeRequestCaptures, nativeWindow.captures))) throw new Error('Native and host operation windows differ');
     const timestamp = Date.parse(records[index].timestamp), started = Date.parse(settled.startedAt), completed = Date.parse(settled.completedAt);
     if (settled.source !== 'native-compaction-settlement' || settled.status !== 'completed' || settled.settlement !== 'released' ||
       settled.nativeThreadId !== expected.parentThreadId || settled.actionId !== expected.actionId || settled.nativeTurnId !== expected.nativeTurnId ||
@@ -63,9 +143,10 @@ export function extractCheckpoint(checkpoint, expected) {
     const record = records[index];
     if (!object(record.payload) || typeof record.payload.message !== 'string' || !record.payload.message.trim()) throw new Error('Invalid native summary');
     // NEVER project replacement_history: pinned native may retain original user text there.
-    const messages = [{ role: expected.summaryRole, content: record.payload.message }];
+    const messages = fresh ? undefined : [{ role: expected.summaryRole, content: record.payload.message }];
     if (checkpoint.messages !== undefined && !same(checkpoint.messages, messages)) throw new Error('Independent adapter messages rejected');
-    return { status: 'PASS', errors: [], messages, stateSha256: stateHash, compactedRecordSha256: recordHash };
+    return { status: 'PASS', errors: [], summaryText: record.payload.message, messages, stateSha256: stateHash, compactedRecordSha256: recordHash,
+      nativeWindowId: nativeWindow?.nativeWindowId ?? null };
   } catch { return { status: 'FAIL', errors: ['full-state-baseline-latest-record-or-settlement-binding'] }; }
 }
 
@@ -164,6 +245,75 @@ function scopeProof(probe, threadId, turnId, actionId, tools) {
   return { status: valid ? 'PASS' : 'FAIL', errors: valid ? [] : ['scope-receipt-binding'], scopeReceiptSha256: sha256(probe.scopeReceiptUtf8) };
 }
 
+// A separately reviewed representation for a fresh native thread. This derives
+// E's one-user-message wrapper ourselves from verified persisted bytes and the
+// independently approved query/policy. Adapter-declared messages are not input.
+export function deriveFreshProjection({ extraction, request, spec, envelope, toolDefinitions, normalizeResponses }) {
+  if (extraction?.status !== 'PASS') return extraction ?? { status: 'NOT_TESTED', errors: ['verified-persisted-summary-absent'] };
+  if (!spec || spec.format !== 'h040-fresh-persisted-message-v1' || typeof spec.frozenPolicy !== 'string' ||
+    !spec.frozenPolicy.trim() || !Array.isArray(spec.prefixInput) || !/^[a-f0-9]{64}$/.test(spec.collectorSourceSha256 ?? '') ||
+    typeof spec.collectorManifestUtf8 !== 'string' || !validateCollectorManifest(spec.collectorManifestUtf8) || sha256(spec.collectorManifestUtf8) !== spec.collectorSourceSha256 ||
+    typeof normalizeResponses !== 'function' || !object(envelope) || typeof envelope.instructions !== 'string' ||
+    envelope.model !== 'qwen3.8-27b' || !Array.isArray(toolDefinitions)) return { status: 'NOT_TESTED', errors: ['independently-frozen-fresh-projection-or-translator-absent'] };
+  try {
+    const prefix = normalizeNativeInput(spec.prefixInput);
+    if (prefix.some((message) => !['system', 'developer'].includes(message.role)) || typeof extraction.summaryText !== 'string')
+      throw new Error('Unapproved projection scaffolding');
+    const summary = extraction.summaryText;
+    const userText = stableJson({ policy: spec.frozenPolicy, persistedCompactedMessage: summary, questions: request });
+    const input = [...structuredClone(spec.prefixInput), { type: 'message', role: 'user', content: [{ type: 'input_text', text: userText }] }];
+    const messages = normalizeNativeInput(input);
+    const raw = { ...structuredClone(envelope), input, tools: structuredClone(toolDefinitions) };
+    // Invoke the production translator, including Qwen instruction adaptation;
+    // no second implementation of that adaptation is an acceptance authority.
+    const normalizedRequest = normalizeResponses(raw).body;
+    return { status: 'PASS', errors: [], inputMessageHashes: messages.map((m) => sha256(stableJson(m))),
+      freshProjection: { input, normalizedRequest, collectorSourceSha256: spec.collectorSourceSha256,
+        collectorManifestUtf8: spec.collectorManifestUtf8,
+        summarySha256: sha256(summary), querySha256: sha256(stableJson(request)), policySha256: sha256(spec.frozenPolicy),
+        compactedRecordSha256: extraction.compactedRecordSha256 } };
+  } catch { return { status: 'FAIL', errors: ['frozen-fresh-projection-invalid-or-translation-rejected'] }; }
+}
+
+function verifyFreshProjectionCapture(probe, expected) {
+  const p = expected.freshProjection;
+  if (![expected.windowId, expected.runId, expected.actionId, expected.parentThreadId, expected.probeThreadId, expected.probeTurnId].every((v) => typeof v === 'string' && v.length > 0) ||
+    ![expected.contextSha256, expected.parentStateSha256, expected.settlementReceiptSha256, p?.compactedRecordSha256, p?.summarySha256,
+      p?.querySha256, p?.policySha256, p?.collectorSourceSha256].every((v) => /^[a-f0-9]{64}$/.test(v ?? '')) ||
+    !Array.isArray(expected.inputMessageHashes) || !expected.inputMessageHashes.length || expected.inputMessageHashes.some((v) => !/^[a-f0-9]{64}$/.test(v)) ||
+    !object(p?.normalizedRequest) || !Array.isArray(p?.input) || !object(expected.envelope) || typeof p.collectorManifestUtf8 !== 'string')
+    return { status: 'NOT_TESTED', errors: ['independent-fresh-projection-bindings-absent'] };
+  if (expected.contextSha256 !== expected.parentStateSha256) return { status: 'FAIL', errors: ['fresh-projection-full-state-hash-mismatch'] };
+  if (typeof probe.projectionReceiptUtf8 !== 'string' || typeof probe.normalizedRequestUtf8 !== 'string' ||
+    typeof probe.probeSettledOperationUtf8 !== 'string' || typeof probe.collectorManifestUtf8 !== 'string')
+    return { status: 'NOT_TESTED', errors: ['raw-fresh-projection-or-normalized-capture-absent'] };
+  try {
+    const receipt = JSON.parse(probe.projectionReceiptUtf8), request = JSON.parse(probe.firstRequestUtf8), settled = JSON.parse(probe.probeSettledOperationUtf8);
+    const wantedSettlement = { source: 'native-probe-settlement', runId: expected.runId, actionId: expected.actionId, windowId: expected.windowId,
+      parentNativeThreadId: expected.parentThreadId, nativeThreadId: expected.probeThreadId, nativeTurnId: expected.probeTurnId,
+      parentStateSha256: expected.parentStateSha256, status: 'completed', settlement: 'released',
+      nativeProcessGone: true, gatewaySettled: true, firstRequestSha256: sha256(probe.firstRequestUtf8),
+      normalizedRequestSha256: sha256(probe.normalizedRequestUtf8), startedAt: settled.startedAt, completedAt: settled.completedAt };
+    if (!same(settled, wantedSettlement) || !Number.isFinite(Date.parse(settled.startedAt)) || !Number.isFinite(Date.parse(settled.completedAt)) ||
+      Date.parse(settled.startedAt) > Date.parse(settled.completedAt) || probe.probeSettledOperationSha256 !== sha256(probe.probeSettledOperationUtf8) ||
+      expected.settlementReceiptSha256 !== probe.probeSettledOperationSha256) throw new Error('Owned probe settlement missing or mismatched');
+    const wanted = { source: 'native-fresh-persisted-message-projection', logicalManifestFormat,
+      runId: expected.runId, actionId: expected.actionId, windowId: expected.windowId,
+      parentNativeThreadId: expected.parentThreadId, nativeThreadId: expected.probeThreadId, nativeTurnId: expected.probeTurnId,
+      parentStateSha256: expected.parentStateSha256, compactedRecordSha256: p.compactedRecordSha256,
+      summarySha256: p.summarySha256, querySha256: p.querySha256, policySha256: p.policySha256,
+      collectorSourceSha256: p.collectorSourceSha256, firstRequestSha256: sha256(probe.firstRequestUtf8),
+      normalizedRequestSha256: sha256(probe.normalizedRequestUtf8), scopeReceiptSha256: probe.scopeReceiptSha256,
+      inputManifestSha256: sha256(stableJson(expected.inputMessageHashes)), envelopeSha256: sha256(stableJson(expected.envelope)),
+      settledOperationSha256: probe.probeSettledOperationSha256 };
+    if (!same(receipt, wanted) || probe.projectionReceiptSha256 !== sha256(probe.projectionReceiptUtf8) ||
+      probe.collectorManifestUtf8 !== p.collectorManifestUtf8 || sha256(probe.collectorManifestUtf8) !== p.collectorSourceSha256 ||
+      probe.normalizedSha256 !== sha256(probe.normalizedRequestUtf8) || !same(request.input, p.input) ||
+      !same(JSON.parse(probe.normalizedRequestUtf8), p.normalizedRequest)) throw new Error('Fresh capture mismatch');
+    return { status: 'PASS', errors: [] };
+  } catch { return { status: 'FAIL', errors: ['fresh-projection-full-request-normalization-or-receipt-binding'] }; }
+}
+
 export function verifyProbeSeparation(probe, expected = {}) {
   if (!probe) return { status: 'NOT_TESTED', errors: ['compiled-input-and-sandbox-evidence-absent'] };
   if (expected.checkpointValidation && expected.checkpointValidation.status !== 'PASS') return { status: expected.checkpointValidation.status, errors: expected.checkpointValidation.errors };
@@ -182,6 +332,10 @@ export function verifyProbeSeparation(probe, expected = {}) {
   if (parent.capturedBy !== 'host' || parent.nativeThreadId !== expected.parentThreadId ||
     parent.stateSha256 !== sha256(parent.stateUtf8) || parent.stateSha256 !== expected.parentStateSha256 ||
     !/^[a-f0-9]{64}$/.test(parent.receiptSha256 ?? '')) errors.push('probe-answer-contaminated-parent');
+  if (expected.freshProjection) {
+    const proof = stateReceiptProof(parent);
+    if (proof.status !== 'PASS') return { status: errors.length ? 'FAIL' : proof.status, errors: [...errors, ...proof.errors] };
+  }
   let request;
   try { request = JSON.parse(probe.firstRequestUtf8); } catch { errors.push('invalid-first-request'); }
   if (probe.captureSha256 !== sha256(probe.firstRequestUtf8)) errors.push('first-request-hash');
@@ -201,8 +355,11 @@ export function verifyProbeSeparation(probe, expected = {}) {
     !Array.isArray(probe.accessiblePaths) || probe.accessiblePaths.length ||
     probe.answerKeyExposed !== false || probe.parentHistoryExposed !== false) errors.push('probe-source-contamination');
   if (probe.capturedBy !== 'host' || !/^[a-f0-9]{64}$/.test(probe.captureSha256 ?? '') ||
-    probe.contextSha256 !== expected.contextSha256 || !probe.qualifiedForkReceiptSha256 ||
-    !/^[a-f0-9]{64}$/.test(probe.qualifiedForkReceiptSha256)) errors.push('unqualified-summary-context');
+    probe.contextSha256 !== expected.contextSha256) errors.push('unqualified-summary-context');
+  if (expected.freshProjection) {
+    const projection = verifyFreshProjectionCapture(probe, expected);
+    if (projection.status !== 'PASS') return { status: errors.length ? 'FAIL' : projection.status, errors: [...errors, ...projection.errors] };
+  } else if (!/^[a-f0-9]{64}$/.test(probe.qualifiedForkReceiptSha256 ?? '')) errors.push('unqualified-summary-context');
   return { status: errors.length ? 'FAIL' : 'PASS', errors, firstRequestSha256: sha256(probe.firstRequestUtf8),
     inputManifestSha256: sha256(stableJson(expected.inputMessageHashes)), scopeReceiptSha256: scope.scopeReceiptSha256 };
 }
@@ -275,14 +432,51 @@ export function verifyCleanChild(probe, approved = {}) {
     firstRequestSha256: sha256(probe.firstRequestUtf8), inputManifestSha256: sha256(stableJson(approved.messageHashes)), scopeReceiptSha256: scope.scopeReceiptSha256 };
 }
 
-export function verifyColdResume(evidence, checkpoint) {
-  if (!evidence || typeof evidence.afterStateUtf8 !== 'string' || !checkpoint) return { status: 'NOT_TESTED', errors: ['actual-restart-and-persisted-history-capture-absent'] };
+export function verifyColdResume(evidence, checkpoint, expected = {}) {
+  if (!evidence || typeof evidence.afterStateUtf8 !== 'string' || typeof checkpoint?.stateUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['actual-restart-and-persisted-history-capture-absent'] };
   const errors = [];
-  if (evidence.capturedBy !== 'host' || !evidence.beforeProcessId || !evidence.afterProcessId || evidence.beforeProcessId === evidence.afterProcessId ||
+  if (checkpoint.capturedBy !== 'host' || checkpoint.stateSha256 !== sha256(checkpoint.stateUtf8) ||
+    evidence.capturedBy !== 'host' || !evidence.beforeProcessId || !evidence.afterProcessId || evidence.beforeProcessId === evidence.afterProcessId ||
     evidence.nativeThreadId !== checkpoint.nativeThreadId || evidence.beforeStateSha256 !== checkpoint.stateSha256 ||
     sha256(evidence.afterStateUtf8) !== checkpoint.stateSha256 || !Array.isArray(evidence.replayedActionIds) || evidence.replayedActionIds.length ||
     !/^[a-f0-9]{64}$/.test(evidence.receiptSha256 ?? '')) errors.push('restart-or-no-replay-unproven');
+  if (expected.requireHostRestart) {
+    const stateProof = stateReceiptProof(checkpoint);
+    if (stateProof.status !== 'PASS') return { status: errors.length ? 'FAIL' : stateProof.status, errors: [...errors, ...stateProof.errors] };
+    if (![expected.runId, expected.actionId, expected.windowId].every((v) => typeof v === 'string' && v.length > 0)) return { status: errors.length ? 'FAIL' : 'NOT_TESTED', errors: [...errors, 'independent-restart-operation-window-absent'] };
+    if (typeof evidence.restartReceiptUtf8 !== 'string') return { status: errors.length ? 'FAIL' : 'NOT_TESTED', errors: [...errors, 'actual-owned-application-restart-receipt-absent'] };
+    try {
+      const r = JSON.parse(evidence.restartReceiptUtf8);
+      if (r.source !== 'native-owned-host-cold-resume' || r.runId !== expected.runId || r.actionId !== expected.actionId || r.windowId !== expected.windowId ||
+        r.nativeThreadId !== checkpoint.nativeThreadId || r.checkpointStateSha256 !== checkpoint.stateSha256 ||
+        !r.beforeHostId || !r.afterHostId || r.beforeHostId === r.afterHostId ||
+        r.beforeApplicationProcessId !== evidence.beforeProcessId || r.afterApplicationProcessId !== evidence.afterProcessId ||
+        r.oldApplicationExitConfirmed !== true || r.oldGatewaySettled !== true || r.noActionReplay !== true || r.capturedAfterRestart !== true ||
+        evidence.restartReceiptSha256 !== sha256(evidence.restartReceiptUtf8)) errors.push('application-restart-lifecycle-binding');
+    } catch { errors.push('invalid-application-restart-receipt'); }
+  }
   return { status: errors.length ? 'FAIL' : 'PASS', errors };
+}
+
+export function verifyAcceptedContinuationResume(result, accepted, expected) {
+  if (!accepted?.checkpoint || !accepted.artifactHashes || !accepted.actionId)
+    return { status: 'NOT_TESTED', errors: ['independently-accepted-latest-continuation-checkpoint-absent'] };
+  const restart = verifyColdResume(result.restartEvidence, accepted.checkpoint, { ...expected, requireHostRestart: true });
+  if (restart.status !== 'PASS') return restart;
+  if (typeof result.artifactReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['actual-restarted-workspace-artifact-bytes-absent'] };
+  try {
+    const lifecycle = JSON.parse(result.restartEvidence.restartReceiptUtf8), capture = JSON.parse(result.artifactReceiptUtf8);
+    if (lifecycle.acceptedContinuationActionId !== accepted.actionId || !same(lifecycle.acceptedArtifactHashes, accepted.artifactHashes) ||
+      capture.source !== 'native-owned-workspace-artifacts' || capture.nativeThreadId !== accepted.checkpoint.nativeThreadId ||
+      capture.actionId !== expected.actionId || capture.windowId !== expected.windowId || capture.afterHostId !== lifecycle.afterHostId ||
+      result.artifactReceiptSha256 !== sha256(result.artifactReceiptUtf8) || !exactKeys(capture.artifactUtf8, ['sensor-policy.json', 'engineering-calculation.json']) ||
+      !exactKeys(result.artifacts, ['sensor-policy.json', 'engineering-calculation.json'])) throw new Error('Continuation artifact ownership mismatch');
+    for (const [name, bytes] of Object.entries(capture.artifactUtf8)) {
+      if (typeof bytes !== 'string' || !same(JSON.parse(bytes), result.artifacts[name]) ||
+        sha256(stableJson(JSON.parse(bytes))) !== accepted.artifactHashes[name]) throw new Error('Accepted artifact changed or substituted');
+    }
+    return { status: 'PASS', errors: [] };
+  } catch { return { status: 'FAIL', errors: ['latest-continuation-resume-artifact-or-lifecycle-binding'] }; }
 }
 
 export function continuationRequest() {

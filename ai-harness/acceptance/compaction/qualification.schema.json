@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:sova:h040:retention-qualification:1",
+  "type": "object", "additionalProperties": false,
+  "required": ["schemaVersion", "nativeAcceptance", "semanticAcceptance", "dimensions", "limitation"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "nativeAcceptance": {"$ref": "#/$defs/status"},
+    "semanticAcceptance": {"$ref": "#/$defs/status"},
+    "limitation": {"type": "string", "minLength": 1},
+    "dimensions": {
+      "type": "object", "additionalProperties": false,
+      "required": ["criticalFacts", "corrections", "supersededChoices", "authorization", "unfinishedChecks", "continuation", "durableRetrieval", "coldResumeBaseline", "coldResumeAfterContinuation", "cleanChild"],
+      "properties": {
+        "criticalFacts": {"$ref": "#/$defs/dimension"}, "corrections": {"$ref": "#/$defs/dimension"},
+        "supersededChoices": {"$ref": "#/$defs/dimension"}, "authorization": {"$ref": "#/$defs/dimension"},
+        "unfinishedChecks": {"$ref": "#/$defs/dimension"}, "continuation": {"$ref": "#/$defs/dimension"},
+        "durableRetrieval": {"$ref": "#/$defs/dimension"}, "coldResumeBaseline": {"$ref": "#/$defs/dimension"},
+        "coldResumeAfterContinuation": {"$ref": "#/$defs/dimension"}, "cleanChild": {"$ref": "#/$defs/dimension"}
+      }
+    }
+  },
+  "$defs": {
+    "status": {"enum": ["PASS", "FAIL", "NOT_TESTED"]},
+    "cycles": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 3}},
+    "dimension": {
+      "type": "object", "additionalProperties": false,
+      "required": ["actualStatus", "nativeStatus", "requiredCycles", "missingCycles", "observations"],
+      "properties": {
+        "actualStatus": {"$ref": "#/$defs/status"}, "nativeStatus": {"$ref": "#/$defs/status"},
+        "requiredCycles": {"$ref": "#/$defs/cycles"}, "missingCycles": {"$ref": "#/$defs/cycles"},
+        "observations": {"type": "array", "items": {
+          "type": "object", "additionalProperties": false,
+          "required": ["cycle", "mode", "qualification", "actualStatus", "nativeStatus", "exactFacts", "evidenceRef"],
+          "properties": {
+            "cycle": {"type": "integer", "minimum": 1, "maximum": 3}, "mode": {"type": "string", "minLength": 1},
+            "qualification": {"enum": ["synthetic", "native"]}, "actualStatus": {"$ref": "#/$defs/status"},
+            "nativeStatus": {"$ref": "#/$defs/status"}, "evidenceRef": {"type": "string", "minLength": 1},
+            "exactFacts": {"oneOf": [{"type": "null"}, {"type": "object", "additionalProperties": false,
+              "required": ["correct", "total"], "properties": {"correct": {"type": "integer", "minimum": 0}, "total": {"type": "integer", "minimum": 0}}}]}
+          }
+        }}
+      }
+    }
+  }
+}
