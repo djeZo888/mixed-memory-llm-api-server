@@ -43,7 +43,7 @@ export function applicationProxy(input:RunnerInput,qualification:EntryQualificat
       try{await runner.start();started=true;const actual=await runner.call('qualification');
         if(actual?.enabled!==true||actual.profile!==qualification.profile||actual.qualificationSha256!==qualification.qualificationSha256||stableJson(actual.capabilities)!==stableJson(approvedCapabilities))throw Error('actual_supported_worker_capabilities_required');
         ready=true;
-      }catch(error){if(started)await runner.shutdownAndConfirm().catch(()=>undefined);throw error;}
+      }catch(error){try{await shutdown();}catch(cleanup){throw new AggregateError([error,cleanup],'worker_qualification_and_owned_cleanup_failed');}throw error;}
     },
     runtime:async()=>({name:'codex',...qualification.runtime,promptRevision:'kpm-technical-v1'}),
     open:async(args:any)=>{runId=args.runId;session=await invoke('open',args);return session;},

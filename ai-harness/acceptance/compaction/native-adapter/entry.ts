@@ -5,6 +5,8 @@ import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
 import {selectPolicyFactories} from './policy-selection.js';
 import {DelegatedChildProducer} from './delegated-child.js';
+import {carrierForConfig} from './carrier-admission.js';
+import {isQualificationTaskAdmission,type QualificationTaskAdmission} from '../../../server/src/qualification-task-admission.js';
 import {selectRestartCheckpoint} from './restart-selection.js';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -20,6 +22,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   const config = JSON.parse((await privateFile(configPath)).toString('utf8'));
   if (stableJson(config.bootstrap) !== stableJson(config.adapterInput?.bootstrap)) throw Error('entry_and_adapter_bootstrap_tuple_must_match');
   const qualified = await qualifyEntry(config,restart);
+  const carrier=config.carrier?await carrierForConfig(configPath):undefined;
   const task=config.bootstrap.review.authorization.task;
   const selected=selectPolicyFactories(probeApi,task,qualified.profile==='h041-full-retention-v1'),factory=selected.factory;
   if(typeof factory!=='function')throw Error('separately_branded_frozen_authority_policy_unavailable');
@@ -30,6 +33,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   let sink: ReturnType<typeof createArtifactSink> | undefined;
   const hooks: BootstrapHooks = {
     qualification: qualified,
+    carrier,
     delegatedChild:input=>delegated.run({...input,review:config.bootstrap.review,parentPrefix:config.adapterInput.parentProjectionSpec.prefixInput}),
     evidence: { receiptUtf8: getCodexReceiptUtf8 },
     retainPolicy: async input=>{
@@ -105,7 +109,16 @@ export async function loadReviewedEntry(configPath:string) {
   const expected=manifest.runtimeFiles['ai-harness/acceptance/compaction/native-adapter/application-worker.js'];
   if(!expected||sha256(await readFile(workerPath))!==expected)throw Error('actual_reviewed_application_worker_build_required');
   const proxy=applicationProxy({workerPath,workerSha256:expected,configPath,configSha256:sha256(await privateFile(configPath)),hostPrivate:config.runnerPrivate,review:config.bootstrap.review},qualification);
-  await proxy.qualifyWorker();
-  return proxy;
+  return qualifyOwnedEntry(proxy);
+}
+export async function qualifyOwnedEntry<T extends {qualifyWorker():Promise<unknown>;shutdown():Promise<unknown>}>(proxy:T):Promise<T>{
+  try{await proxy.qualifyWorker();return proxy;}catch(failure){try{await proxy.shutdown();}catch(cleanup){throw new AggregateError([failure,cleanup],'entry_qualification_and_owned_cleanup_failed');}throw failure;}
+}
+/** The brand is checked in this process; the application worker independently
+ * reloads the same protected packet. No secret or boolean crosses IPC. */
+export async function loadReviewedCarrierEntry(configPath:string,admission:QualificationTaskAdmission) {
+  if(!isQualificationTaskAdmission(admission))throw Error('actual_A_carrier_admission_required');
+  await carrierForConfig(configPath,admission);
+  return loadReviewedEntry(configPath);
 }
 export default createNativeAdapter();

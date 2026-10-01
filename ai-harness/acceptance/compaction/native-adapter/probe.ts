@@ -17,13 +17,15 @@ export async function summaryProbe(host: TemporaryHost, input: {
   request: unknown; manifest: ProbeManifest; childBrief?:string; actionId: string; runId: string; signal: AbortSignal;
 }) {
   requireIdentity(input.parentNativeThreadId);
-  if (host.launchHeld() || !input.summary.trim() || !/^[a-f0-9]{64}$/.test(input.contextSha256) || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
+  if (host.closing || !input.summary.trim() || !/^[a-f0-9]{64}$/.test(input.contextSha256) || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
   const ownedAbort = new AbortController();
   const totalDeadlineMs = Math.max(1, Math.min(120000, host.dispatchCutoffAt - Date.now()));
   const signal = AbortSignal.any([input.signal, ownedAbort.signal, AbortSignal.timeout(totalDeadlineMs)]);
   const text = input.childBrief ?? summaryProbeText(input.summary, input.frozenPolicy, input.request);
   if (input.manifest.userText !== text || input.manifest.contextSha256 !== input.contextSha256) throw Error('reviewed_summary_manifest_mismatch');
   const sessionId = randomUUID();
+  await host.authorizeTaskAction?.(sessionId,input.actionId,signal);
+  if(host.launchHeld())throw Error('trusted_probe_launch_held_or_cancelled');
   const mounts = await emptyProbeMounts(host.layout.dataDir, [host.layout.hostPrivate]);
   if (host.closing || signal.aborted) throw Error('probe_host_closed_or_deadline_before_registration');
   const token = host.gateway.issueToken(sessionId, 'codex');

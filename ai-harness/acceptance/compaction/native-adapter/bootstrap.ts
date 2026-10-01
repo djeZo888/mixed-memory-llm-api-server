@@ -46,7 +46,7 @@ export interface BootstrapInput {
 export function reviewedExpiry(review: BootstrapInput['review'], now = Date.now()) {
   return reviewedAuthorization(review, now).expiresAt;
 }
-export interface BootstrapHooks { qualification: EntryQualification; evidence: EvidenceHooks; applicationRestart?(method:'coldResume'|'resumeAcceptedContinuation',input:any):Promise<any>; delegatedChild?(input:any):Promise<any>; retainPolicy?(input:any):Promise<any>; adoptPolicy?(input:any):Promise<void>; configureHost(base: CodexHostQualification, context: { guard: DispatchGuard; observer: NativeObserver; layout: Awaited<ReturnType<typeof createLayout>>; application(): Awaited<ReturnType<typeof createApp>> | undefined; originalProbes: Map<string,CodexReadOriginalProbe>; originalSettlements: any[]; artifactSettlements: any[] }): CodexHostQualification; }
+export interface BootstrapHooks { qualification: EntryQualification; evidence: EvidenceHooks; carrier?:import('./carrier-admission.js').CarrierAdmission; applicationRestart?(method:'coldResume'|'resumeAcceptedContinuation',input:any):Promise<any>; delegatedChild?(input:any):Promise<any>; retainPolicy?(input:any):Promise<any>; adoptPolicy?(input:any):Promise<void>; configureHost(base: CodexHostQualification, context: { guard: DispatchGuard; observer: NativeObserver; layout: Awaited<ReturnType<typeof createLayout>>; application(): Awaited<ReturnType<typeof createApp>> | undefined; originalProbes: Map<string,CodexReadOriginalProbe>; originalSettlements: any[]; artifactSettlements: any[] }): CodexHostQualification; }
 export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,restart?:RestartTicket) {
   if(restart){if(!isRestartTicket(restart))throw Error('owned_qualified_restart_required');assertRestartBootstrap(restart,input);}
   input = reviewSnapshot(input);
@@ -95,14 +95,18 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   // Opening the normal owner would create/chmod shared production gate state.
   await privateFile(DISPATCH_STATE);
   const freezeDb = new DatabaseSync(DISPATCH_STATE, { readOnly: true });
-  const freeze = { held: (alias: string) => DispatchFreeze.prototype.held.call({ db: freezeDb } as DispatchFreeze, alias), close: () => freezeDb.close() };
+  const freeze = { held: (alias: string) => {try{return hooks?.carrier ? hooks.carrier.held(freezeDb.prepare('SELECT key,fingerprint,action,acknowledged,scope FROM dispatch_holds').all(),alias) : DispatchFreeze.prototype.held.call({ db: freezeDb } as DispatchFreeze, alias);}catch{return true;}}, close: () => freezeDb.close() };
+  const authorizeTaskAction=async(sessionId:string,requestId:string,signal?:AbortSignal)=>{if(hooks?.carrier)await hooks.carrier.verify(sessionId,requestId,signal,captures);};
   let gateway: Gateway | undefined, closed = false;
   const originalProbes = new Map<string,CodexReadOriginalProbe>(), originalSettlements: any[] = [], artifactSettlements: any[] = [];
   const baseQualification: CodexHostQualification = { protocolQualified: true, rootlessQualified: true, verifyLane, outputLimit: 65536, qualifiedAliases: STAGE_POLICY.qualifiedAliases };
   const host = composeCodexHost(input.launcherPath, () => gateway, hooks ? hooks.configureHost(baseQualification,{guard,observer,layout,application:() => application,originalProbes,originalSettlements,artifactSettlements}) : baseQualification);
   if (hooks && (!host.runtime.nativeReceiptsRequired || typeof (host.runtime as unknown as Record<string,unknown>).textOnlyPolicy !== 'function')) throw Error('actual_receipt_and_thread_policy_consumer_required');
   const originalLaunch = host.runtime.launchRootless, originalSettlement = host.runtime.confirmGatewaySettlement;
+  const beforeAction=host.runtime.beforeNativeAction;
+  host.runtime.beforeNativeAction=async action=>{await authorizeTaskAction(action.sessionId,'native-action-'+randomUUID());await beforeAction?.(action);};
   host.runtime.launchRootless = async params => {
+    await authorizeTaskAction(params.sessionId,'native-launch-'+randomUUID());
     if (launchHeld()) throw Error('trusted_shared_native_launch_held');
     const process = evidence ? await evidence.launch(params.sessionId,params,() => originalLaunch(params)) : await originalLaunch(params);
     // A hold arriving during launch blocks all subsequent request admission.
@@ -153,7 +157,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   try {
   const ownership = new GatewayOwnershipLedger(application.store.db).options();
   gateway = createGateway({ upstreamKey: inferenceKey, ownership, dispatchHeld: alias => held() || freeze.held(alias),
-    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: guard.wrap(counts.wrap(host.responses!.countQwen)) },
+    qwenOutputLimit: 65536, responses: { ...host.responses!, countQwen: guard.wrap(counts.wrap(async(body,lane,key,signal,context)=>{if(!context?.requestId)throw Error('actual_carrier_request_context_required');await authorizeTaskAction(guard.authenticationSession(context.requestId),context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_before_actual_count');const result=await host.responses!.countQwen(body,lane,key,signal,context);await authorizeTaskAction(guard.authenticationSession(context.requestId),context.requestId,signal);if(held()||freeze.held(lane.alias))throw Error('shared_hold_after_actual_count');return result;})) },
     diagnostics: { capture: guard.capture }, activeTimeoutMs: 120000, queueTimeoutMs: 120000 });
     // Fixed bind only. EADDRINUSE is retained and propagated; no fallback/sweep.
     await gateway.app.listen({ host: '127.0.0.1', port: 8081 });
@@ -162,7 +166,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
       schema: 1, candidateCommit: review.candidateCommit, policy: FIXED_POLICY, layout,
       reviewSha256: sha256(stableJson(review)), productionStateReceiptSha256: review.productionStateReceiptSha256,
       productionBrowserQualification: 'NOT_TESTED', runtimeBinaryQualification: 'NOT_TESTED' }) + '\n');
-    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
+    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, authorizeTaskAction, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
   } catch (error) {
     return failedBootstrap(error, () => durableFile(join(layout.hostPrivate, 'bootstrap-FAILED.json'), stableJson({
       outcome: 'failed', code: (error as NodeJS.ErrnoException).code === 'EADDRINUSE' ? 'EADDRINUSE' : 'bootstrap_failed', automaticRetry: false }) + '\n'), close);

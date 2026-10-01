@@ -53,6 +53,10 @@ export class DispatchGuard {
   delegatedFollowup?:(sessionId:string,input:unknown,prefix:unknown[])=>Promise<void>;
   beforeDispatch?: (scope: RequestScope, capture: {firstRequestUtf8:string;normalizedRequestUtf8:string;nativeThreadId:string;nativeTurnId:string}) => Promise<Record<string,unknown>>;
   activeScope(sessionId: string) { return this.scopes.get(sessionId); }
+  authenticationSession(requestId:string) {
+    const capture=this.captures.get(requestId);if(!capture)throw Error('actual_authenticated_request_capture_required');
+    this.active(capture.authenticationScope);return capture.authenticationScope.sessionId;
+  }
   register(scope: RequestScope) {
     if (this.scopes.has(scope.sessionId) || !identifier(scope.sessionId) || !identifier(scope.actionId) ||
         !identifier(scope.runId) || !Number.isFinite(scope.expiresAt) || scope.expiresAt <= this.now() ||

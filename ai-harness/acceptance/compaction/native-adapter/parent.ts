@@ -10,6 +10,7 @@ import { stableJson } from './projection.js';
  * probes. No prompt is sent to obtain an ID. Callbacks come from the native engine.
  */
 export async function openNativeParent(h: TemporaryHost, sessionId: string, callerSignal: AbortSignal, expectedResumeThreadId?:string) {
+  await h.authorizeTaskAction?.(sessionId,'parent-initialize-'+randomUUID(),callerSignal);
   if (h.closing || h.launchHeld() || callerSignal.aborted) throw Error('trusted_parent_launch_held_or_aborted');
   const ownedAbort = new AbortController(), signal = AbortSignal.any([callerSignal, ownedAbort.signal]);
   let finish!: () => void;

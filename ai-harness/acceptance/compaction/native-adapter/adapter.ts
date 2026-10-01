@@ -82,6 +82,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
     const abort = () => { h.gateway.revokeSession(parentId!); cancellation ??= h.application.broker.cancel(parentId!).then(() => undefined).catch(() => undefined); };
     signal.addEventListener('abort', abort, { once: true });
     try {
+      await h.authorizeTaskAction?.(parentId!,actionId,signal);
       runId = h.application.broker.enqueue(parentId!, kind, text, [], [], kind === 'compact' ? actionId : undefined);
       h.guard.register({ sessionId: parentId!, actionId, runId, mode: dispatchMode, purpose, manifest, validateFollowup: dispatchMode==='parent-artifacts' ? body=>{if(purpose==='child')return h.guard.delegatedFollowup!(parentId!,body,manifest!.input);const current=h.application.store.getSession(parentId!);validateConsumedFollowup(body,manifest!.input,{tool:'write_checkpoint_artifact',threadId:current.nativeSessionId!,turnId:current.nativeState.activeTurnId!,runId:h.host.runtime.textOnlyPolicy!(parentId!)!.runId,frames:h.observer.frames(parentId!),settled:h.artifactSettlements});} : undefined, toolPolicy: dispatchMode === 'parent-artifacts' ? (hooks?.qualification.profile==='h041-full-retention-v1'?(input!.bootstrap.review as any).retentionParentPolicy?.[purpose==='child'?'childPolicy':'artifactPolicy']:(input!.bootstrap.review as any).parentArtifactPolicy) : undefined, signal,
         expiresAt: Math.min(h.dispatchCutoffAt, Date.now() + 120000), identity: () => {
