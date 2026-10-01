@@ -129,7 +129,7 @@
       "task": "C-fan100-source",
       "host": "mac-worker1",
       "actualSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0; reviewed source integrated; live deployment NOT_TESTED",
       "sourceCandidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan100-source",
       "outerPid": 20973,
@@ -137,7 +137,27 @@
       "sessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
       "candidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
       "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan100-source",
-      "hardDeadlineUtc": "2026-10-01T03:15:00+00:00"
+      "hardDeadlineUtc": "2026-10-01T03:15:00+00:00",
+      "nativePid": 20975,
+      "wrapperPid": 20974,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted same-session turn_context2026-10-01T02:55:11.403Z",
+      "cliVersion": "0.159.2",
+      "expandedScope": "narrow CHA_FAN3 tier and artifact staged-directory durability correction; source only",
+      "sourceCommit": "193652ee635b8e20068a427255c1b7997e78212e",
+      "nativeTerminal": {
+        "nativePid": 20975,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:12:58.483897+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 20974,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:12:58.492469+00:00"
+      },
+      "sourceChecks": "25 integrated +69 CHA_FAN3 +42 artifact synthetic PASS; pycompile/diff PASS"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -151,7 +171,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T02:58:02.430905+00:00",
+  "observedUtc": "2026-10-01T03:02:17.418977+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
