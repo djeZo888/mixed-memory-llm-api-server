@@ -109,14 +109,16 @@ export class CodexConnection {
   private receive(chunk: string) {
     if (this.failure) return;
     this.buffer += chunk;
-    if (Buffer.byteLength(this.buffer) > 4 * 1024 * 1024) {
-      this.fail(new CodexProtocolError("App Server frame exceeds limit"));
-      return;
-    }
     let end: number;
     while (!this.failure && (end = this.buffer.indexOf("\n")) >= 0) {
       const line = this.buffer.slice(0, end);
       this.buffer = this.buffer.slice(end + 1);
+      // A stdio chunk may contain many frames (including retained history).
+      // Bound each frame, not the aggregate transport chunk.
+      if (Buffer.byteLength(line) > 4 * 1024 * 1024) {
+        this.fail(new CodexProtocolError("App Server frame exceeds limit"));
+        return;
+      }
       try {
         this.message(JSON.parse(line));
       } catch (error) {
@@ -129,6 +131,8 @@ export class CodexConnection {
         );
       }
     }
+    if (!this.failure && Buffer.byteLength(this.buffer) > 4 * 1024 * 1024)
+      this.fail(new CodexProtocolError("App Server frame exceeds limit"));
   }
   private message(value: unknown) {
     if (!isRecord(value)) throw new Error("Invalid frame");

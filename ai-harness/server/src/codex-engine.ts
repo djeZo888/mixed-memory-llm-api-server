@@ -274,7 +274,9 @@ export class CodexEngine implements Engine {
     const result = await this.connection.request(
       this.nativeId ? "thread/resume" : "thread/start",
       this.nativeId
-        ? { ...params, threadId: this.nativeId, ...(resumeInstructions ? { baseInstructions: resumeInstructions.text } : {}) }
+        // Native resume still restores persisted context; its response need not
+        // rehydrate the entire transcript already retained in Sova's store.
+        ? { ...params, threadId: this.nativeId, excludeTurns: true, ...(resumeInstructions ? { baseInstructions: resumeInstructions.text } : {}) }
         : { ...params, ephemeral: false },
     );
     if (
@@ -309,6 +311,9 @@ export class CodexEngine implements Engine {
     if (this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
     await this.start();
+    // Startup is shared and asynchronous; another caller may have claimed this engine.
+    if (this.active || this.stopped || this.closing || this.failed)
+      fault("Codex engine cannot accept this prompt");
     if (this.options.dispatchHeld?.())
       fault("Codex prompt blocked by dispatch freeze");
     this.active = true;
@@ -374,6 +379,9 @@ export class CodexEngine implements Engine {
     if (this.active || this.stopped || this.closing || this.failed)
       fault("Codex cannot compact now");
     await this.start();
+    // Recheck after shared startup before installing a terminal or dispatching.
+    if (this.active || this.stopped || this.closing || this.failed)
+      fault("Codex cannot compact now");
     if (this.options.dispatchHeld?.())
       fault("Codex compaction blocked by dispatch freeze");
     this.active = true;
@@ -576,6 +584,21 @@ export class CodexEngine implements Engine {
         source: current
           ? "codex.latest-request.totalTokens"
           : "codex.restored-usage.awaiting-current-request",
+      });
+      this.cursor++;
+      return;
+    }
+    if (method === "error" && p.willRetry === true) {
+      // Pinned StreamError is an intermediate native retry, not terminal failure.
+      // Preserve ownership and the pending operation; never replay its RPC here.
+      if (p.threadId !== this.nativeId || !this.active || !this.turnId ||
+          p.turnId !== this.turnId || this.completedTurn ||
+          !isRecord(p.error) || typeof p.error.message !== "string")
+        fault("Invalid or unowned native retry notification");
+      this.options.onUpdate({
+        type: "progress",
+        kind: "native_retry",
+        label: "Native request retrying; awaiting terminal state",
       });
       this.cursor++;
       return;

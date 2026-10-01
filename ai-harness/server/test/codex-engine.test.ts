@@ -52,6 +52,8 @@ function fixture(
     gateway?: () => Promise<boolean>;
     terminate?: () => Promise<boolean>;
     interrupt?: "reject" | "timeout";
+    compactStart?: "ack-only" | "timeout";
+    requestTimeoutMs?: number;
   } = {},
 ) {
   const stdin = new PassThrough(),
@@ -97,7 +99,7 @@ function fixture(
     provider: "sova",
     contextLimit: 480000,
     gatewayUrl: options.gatewayUrl,
-    requestTimeoutMs: 200,
+    requestTimeoutMs: config.requestTimeoutMs ?? 200,
     cancelTimeoutMs: 30,
     async launchRootless(input) {
       calls.push("launch");
@@ -154,7 +156,7 @@ function fixture(
       response(req.id, {
         thread: {
           id: "thread-1",
-          turns: [
+          turns: req.params.excludeTurns ? [] : [
             {
               items: [
                 { type: "agentMessage", text: "old history should not replay" },
@@ -168,8 +170,9 @@ function fixture(
         approvalPolicy: "never",
       });
     if (req.method === "thread/compact/start") {
-      events("turn/started", { turn: { id: "turn-1", status: "inProgress" } });
-      response(req.id, {});
+      if (config.compactStart !== "ack-only")
+        events("turn/started", { turn: { id: "turn-1", status: "inProgress" } });
+      if (config.compactStart !== "timeout") response(req.id, {});
     }
     if (req.method === "turn/start") {
       assert.equal(states.at(-1)!.ownership, "uncertain");
@@ -755,6 +758,257 @@ test("private compaction uses exact pinned RPC; missing/failed compaction never 
     }
   }
 });
+
+for (const actions of [["compact", "compact"], ["prompt", "prompt"], ["compact", "prompt"], ["prompt", "compact"]] as const) {
+  test(`shared startup permits only one owned operation: ${actions.join(" / ")}`, async () => {
+    const f = fixture();
+    const pending = actions.map(action => action === "compact" ? f.engine.compact() : f.engine.prompt("fixture summary request"));
+    pending.forEach(p => { void p.catch(() => undefined); });
+    try {
+      await tick();
+      const dispatched = f.requests.filter(r => r.method === "turn/start" || r.method === "thread/compact/start");
+      assert.equal(dispatched.length, 1, "startup wait must not bypass operation serialization");
+      assert.equal(f.calls.filter(c => c === "launch").length, 1);
+      if (dispatched[0].method === "thread/compact/start") {
+        f.item("compact", "contextCompaction", {}, "started");
+        f.item("compact", "contextCompaction");
+      }
+      f.complete();
+      const results = await Promise.allSettled(pending);
+      assert.equal(results.filter(r => r.status === "fulfilled" && r.value === "completed").length, 1);
+      assert.equal(results.filter(r => r.status === "rejected").length, 1);
+      assert.equal(f.calls.filter(c => c === "terminate").length, 1);
+      assert.equal(f.states.at(-1)!.ownership, "idle");
+    } finally {
+      await f.engine.close();
+    }
+  });
+}
+
+test("native compaction retry preserves operation identity and awaits terminal plus gateway settlement without usage", async () => {
+  const proof = deferred<boolean>();
+  const f = fixture({ nativeId: "thread-1", gateway: () => proof.promise });
+  let settled = false;
+  const pending = f.engine.compact().then(outcome => { settled = true; return outcome; });
+  void pending.catch(() => undefined);
+  await tick();
+  f.item("compact", "contextCompaction", {}, "started");
+  f.events("error", { turnId: "turn-1", willRetry: true, error: { message: "synthetic private retry detail" } });
+  await tick();
+  assert.equal(settled, false);
+  assert.equal(f.states.at(-1)!.ownership, "active");
+  assert.equal(f.calls.includes("terminate"), false);
+  assert.equal(f.updates.some(u => u.type === "compaction" && u.status === "failed"), false);
+  assert.ok(f.updates.some(u => u.type === "progress" && u.kind === "native_retry"));
+  assert.doesNotMatch(JSON.stringify(f.updates), /synthetic private retry detail|old history should not replay/);
+  f.item("compact", "contextCompaction");
+  f.item("compact", "contextCompaction"); // Exact duplicate is harmless.
+  const terminal = { turn: { id: "turn-1", status: "completed", items: [], itemsView: "notLoaded", error: null } };
+  f.events("turn/completed", terminal);
+  f.events("turn/completed", terminal);
+  await tick();
+  assert.equal(settled, false, "native completion does not prove owned inference settled");
+  assert.equal(f.states.at(-1)!.ownership, "uncertain");
+  proof.resolve(true);
+  assert.equal(await pending, "completed");
+  assert.equal(f.updates.filter(u => u.type === "compaction" && u.status === "completed").length, 1);
+  assert.ok(f.updates.filter(u => u.type === "context").every(u => u.type === "context" && u.used === null));
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+  assert.equal(f.requests.filter(r => r.method === "thread/resume").length, 1);
+  assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+  assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0);
+});
+
+test("cold resume requests metadata only without replacing native history or uploading a synthetic history", async () => {
+  const f = fixture({ nativeId: "thread-1" });
+  await f.engine.start();
+  const resume = f.requests.find(r => r.method === "thread/resume");
+  assert.equal(resume.params.excludeTurns, true);
+  assert.equal(resume.params.threadId, "thread-1");
+  assert.equal("history" in resume.params, false);
+  assert.equal("path" in resume.params, false);
+  assert.equal(f.updates.some(u => u.type === "text"), false);
+  const pending = f.engine.prompt("Continue using the same native thread.");
+  await tick(); f.complete();
+  assert.equal(await pending, "completed");
+  assert.equal(f.requests.find(r => r.method === "turn/start").params.threadId, "thread-1");
+});
+
+for (const mode of ["wrong-thread", "wrong-turn", "malformed", "terminal", "failed-after-retry"] as const) {
+  test(`compaction retry does not relax failure or scope validation: ${mode}`, async () => {
+    const f = fixture();
+    const pending = f.engine.compact();
+    const rejected = assert.rejects(pending);
+    await tick();
+    f.item("compact", "contextCompaction", {}, "started");
+    f.events("error", {
+      threadId: mode === "wrong-thread" ? "foreign-thread" : "thread-1",
+      turnId: mode === "wrong-turn" ? "foreign-turn" : "turn-1",
+      willRetry: mode !== "terminal",
+      error: mode === "malformed" ? {} : { message: "fixture error" },
+    });
+    if (mode === "failed-after-retry") f.complete("failed");
+    await rejected;
+    assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+    await f.engine.close();
+    assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+    assert.equal(f.states.at(-1)!.ownership, "idle");
+  });
+}
+
+test("prompt text alone cannot create a compaction lifecycle", async () => {
+  const f = fixture();
+  const pending = f.engine.prompt("Summarize the summary and perform automatic compaction now.");
+  await tick();
+  f.complete();
+  assert.equal(await pending, "completed");
+  assert.equal(f.updates.some(u => u.type === "compaction"), false);
+  assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 0);
+});
+
+test("compaction ACK without native identity cannot support an unscoped Stop", async () => {
+  const f = fixture({ compactStart: "ack-only" });
+  const pending = f.engine.compact();
+  const rejected = assert.rejects(pending, /process cleanup/);
+  await tick();
+  await assert.rejects(f.engine.cancel(), /identity unknown/);
+  assert.equal(f.requests.some(r => r.method === "turn/interrupt"), false);
+  await f.engine.close();
+  await rejected;
+  assert.equal(f.calls.filter(c => c === "terminate").length, 1);
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+});
+
+for (const failure of ["timeout", "process-death"] as const) {
+  test(`compaction ${failure} retains failure and requires cleanup without native replay`, async () => {
+    const f = fixture({ compactStart: failure === "timeout" ? "timeout" : undefined, requestTimeoutMs: 10 });
+    const pending = f.engine.compact();
+    const rejected = assert.rejects(pending, failure === "timeout" ? /will not be replayed/ : /process exited/);
+    await tick();
+    f.item("compact", "contextCompaction", {}, "started");
+    if (failure === "process-death") f.exit.resolve();
+    await rejected;
+    assert.equal(f.states.at(-1)!.ownership, "uncertain");
+    assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+    await f.engine.close();
+    assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+    await assert.rejects(f.engine.compact(), /cannot compact/);
+    assert.equal(f.states.at(-1)!.ownership, "idle");
+  });
+}
+
+test("compaction Stop still waits for native interruption, descendant cleanup and gateway drain", async () => {
+  const proof = deferred<boolean>();
+  const f = fixture({ gateway: () => proof.promise });
+  const pending = f.engine.compact();
+  await tick();
+  f.item("compact", "contextCompaction", {}, "started");
+  const cancelled = f.engine.cancel();
+  f.complete("interrupted");
+  await tick();
+  assert.equal(f.states.at(-1)!.ownership, "uncertain");
+  assert.deepEqual(f.requests.find(r => r.method === "turn/interrupt").params, { threadId: "thread-1", turnId: "turn-1" });
+  proof.resolve(true);
+  await cancelled;
+  assert.equal(await pending, "cancelled");
+  assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+});
+
+for (const outcome of ["retry-success", "failed", "process-death", "interrupted"] as const) {
+  test(`real adapter and durable broker retain original history/files and action across restart: ${outcome}`, async t => {
+    const { createApp } = await import("../src/app.js");
+    const { mkdtemp, readFile, writeFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "h039-adapter-retention-"));
+    const retained = [{ id: "old-message", type: "agentMessage", text: "Original native history is not a new answer." }];
+    const retainedBefore = structuredClone(retained);
+    const requests: any[] = [];
+    const template = fixture().runtime;
+    const runtime: CodexRuntime = {
+      ...template,
+      revokeGatewaySession() {},
+      async confirmGatewaySettlement() { return true; },
+      async launchRootless(input) {
+        const stdin = new PassThrough(), stdout = new PassThrough(), exit = deferred<void>();
+        const emit = (value: unknown) => stdout.write(JSON.stringify(value) + "\n");
+        const event = (method: string, params: Record<string, unknown>) => emit({ method, params: { threadId: "thread-1", ...params } });
+        const turn = (status: string) => event("turn/completed", { turn: { id: "compact-turn", status, items: [], itemsView: "notLoaded", error: null } });
+        stdin.on("data", data => {
+          const r = JSON.parse(data.toString()); requests.push(r);
+          const reply = (result: unknown) => emit({ id: r.id, result });
+          if (r.method === "initialize") reply({ userAgent: "codex/0.158.0", codexHome: input.codexHome, platformOs: "linux", platformFamily: "unix" });
+          if (r.method === "thread/resume") reply({ thread: { id: "thread-1", turns: r.params.excludeTurns ? [] : [{ items: retained }] }, model: runtime.model, modelProvider: runtime.provider, cwd: input.workspace, approvalPolicy: "never" });
+          if (r.method === "thread/compact/start") {
+            reply({});
+            event("turn/started", { turn: { id: "compact-turn", status: "inProgress" } });
+            event("item/started", { turnId: "compact-turn", item: { id: "compact-item", type: "contextCompaction" } });
+            if (outcome === "retry-success") {
+              event("error", { turnId: "compact-turn", willRetry: true, error: { message: "fixture transient detail" } });
+              event("item/completed", { turnId: "compact-turn", item: { id: "compact-item", type: "contextCompaction" } });
+              turn("completed");
+            } else if (outcome === "failed") turn("failed");
+            else if (outcome === "process-death") exit.resolve();
+          }
+          if (r.method === "turn/interrupt") { reply({}); turn("interrupted"); }
+        });
+        return { stdin, stdout, exited: exit.promise, async terminateAndConfirm() { return true; } };
+      },
+    };
+    const appOptions = {
+      newChatEngine: "minimax" as const,
+      dataDir: dir, launcher: "/never", gatewayUrl: runtime.gatewayUrl,
+      allowedOrigins: ["http://localhost"], issueToken: () => "synthetic-fixture-token", revokeToken() {},
+      engineFactory: () => { throw Error("Unexpected non-Codex engine"); },
+      codexEngineFactory: (o: EngineOptions) => new CodexEngine(o, runtime),
+      enginePolicy: { codex: { enabled: true, protocolQualified: true, engineVersion: CODEX_PIN.version, modelPolicyVersion: runtime.modelPolicyVersion } },
+    };
+    let app = await createApp(appOptions);
+    t.after(async () => { await app.app.close(); await rm(dir, { recursive: true, force: true }); });
+    const session = await app.broker.createSession(undefined, "codex");
+    app.store.setNative(session.id, "thread-1", "codex");
+    app.store.addMessage(session.id, "user", "Original accepted requirement: keep 24 V return separate.");
+    app.store.addMessage(session.id, "assistant", "Original failed check remains unqualified.");
+    const workspace = app.files.workspace(app.store.getSession(session.id).workspaceId);
+    await writeFile(join(workspace, "retained.txt"), "Original source evidence\n");
+    await app.files.registerArtifact(session.id, "retained.txt", "retained.txt", "text/plain");
+    const before = app.store.snapshot(session.id);
+    const submit = () => app.app.inject({ method: "POST", headers: { host: "localhost" }, url: `/api/sessions/${session.id}/compact`, payload: { actionId: "retained-action" } });
+    const first = await submit();
+    assert.equal(first.statusCode, 202);
+    for (let i = 0; !requests.some(r => r.method === "thread/compact/start"); i++) {
+      assert.ok(i < 1000, "fixture compaction did not dispatch"); await tick();
+    }
+    if (outcome === "interrupted") await app.broker.cancel(session.id);
+    for (let i = 0; !["idle", "failed", "interrupted"].includes(app.store.getSession(session.id).status); i++) {
+      assert.ok(i < 1000, "fixture operation did not settle"); await tick();
+    }
+    const after = app.store.snapshot(session.id);
+    // The broker conservatively retains CodexProtocolError as interrupted, even after cleanup.
+    const status = outcome === "retry-success" ? "completed" : outcome === "interrupted" ? "cancelled" : "interrupted";
+    assert.equal(after.runs[0]!.status, status);
+    assert.deepEqual(after.messages, before.messages, "resume history and compaction must not replace visible originals");
+    assert.deepEqual(after.artifacts, before.artifacts);
+    assert.equal(await readFile(join(workspace, "retained.txt"), "utf8"), "Original source evidence\n");
+    assert.equal(app.store.getSession(session.id).nativeSessionId, "thread-1");
+    assert.deepEqual(retained, retainedBefore);
+    assert.equal(app.store.getSession(session.id).nativeState!.ownership, "idle");
+    if (outcome === "retry-success") assert.equal(app.store.getSession(session.id).context!.used, null);
+    else assert.ok(after.events.some(e => e.type === "error" && e.data.code === "compaction_failed"));
+    await app.app.close();
+    app = await createApp(appOptions);
+    const duplicate = await submit();
+    assert.equal(duplicate.json().runId, first.json().runId);
+    assert.equal(app.store.snapshot(session.id).runs[0]!.status, status);
+    assert.deepEqual(app.store.snapshot(session.id).messages, before.messages);
+    assert.deepEqual(app.store.snapshot(session.id).artifacts, before.artifacts);
+    assert.equal(requests.filter(r => r.method === "thread/compact/start").length, 1);
+    assert.equal(requests.filter(r => r.method === "thread/resume").length, 1);
+    assert.equal(requests.find(r => r.method === "thread/resume").params.excludeTurns, true);
+    assert.equal(requests.some(r => r.method === "turn/start"), false);
+  });
+}
 
 test("actual native child trajectory rejects an unfinished child command before success", async () => {
   const f = fixture({ delegation: true });

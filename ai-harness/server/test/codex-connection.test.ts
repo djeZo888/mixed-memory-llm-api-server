@@ -86,3 +86,52 @@ test("timeout and late response never dispatch a second prompt", async () => {
   assert.equal(f.sent.length, 1);
   assert.equal(f.errors.length, 1);
 });
+
+test("coalesced frames preserve retained history when the transport chunk exceeds the frame limit", async () => {
+  const f = fixture();
+  const history = [{ role: "user", text: "old requirement " + "ž".repeat(1250000) }];
+  const result = { thread: { id: "retained-thread", turns: [{ items: history }] } };
+  const pending = f.connection.request("thread/resume", { threadId: "retained-thread" });
+  const event = { method: "thread/started", params: { thread: { id: "retained-thread", turns: [{ items: history }] } } };
+  const responseFrame = JSON.stringify({ id: 1, result });
+  const eventFrame = JSON.stringify(event);
+  assert.ok(Buffer.byteLength(responseFrame) < 4 * 1024 * 1024);
+  assert.ok(Buffer.byteLength(eventFrame) < 4 * 1024 * 1024);
+  assert.ok(Buffer.byteLength(responseFrame + eventFrame) > 4 * 1024 * 1024);
+  f.input.write(responseFrame + "\n" + eventFrame + "\n");
+  assert.deepEqual(await pending, result);
+  assert.deepEqual(f.events, [event]);
+  assert.deepEqual(result.thread.turns[0].items, history);
+  assert.equal(f.errors.length, 0);
+  assert.equal(f.sent.length, 1, "history receipt must not replay resume");
+});
+
+test("individual oversized frames still fail closed, including split and unterminated frames", async () => {
+  for (const ending of ["\n", ""]) {
+    const f = fixture();
+    const pending = f.connection.request("thread/resume", { threadId: "retained-thread" });
+    const rejected = assert.rejects(pending, /frame exceeds limit/);
+    const frame = JSON.stringify({ id: 1, result: { history: "ž".repeat(2200000) } });
+    f.input.write(frame.slice(0, 1100000));
+    assert.equal(f.errors.length, 0);
+    f.input.write(frame.slice(1100000) + ending);
+    await rejected;
+    assert.equal(f.errors.length, 1);
+    assert.equal(f.events.length, 0);
+    assert.equal(f.sent.length, 1);
+    await assert.rejects(f.connection.request("thread/resume", {}));
+  }
+});
+
+test("compaction ACK is not a terminal event; a missing ACK times out without replay", async () => {
+  const f = fixture(10);
+  const acknowledged = f.connection.request("thread/compact/start", { threadId: "thread" });
+  f.receive({ id: 1, result: {} });
+  assert.deepEqual(await acknowledged, {});
+  assert.equal(f.events.length, 0, "RPC response must not fabricate completion");
+  const pending = f.connection.request("thread/compact/start", { threadId: "thread" });
+  await assert.rejects(pending, /will not be replayed/);
+  f.receive({ id: 2, result: {} });
+  assert.equal(f.sent.length, 2, "exactly the two explicitly requested operations");
+  assert.equal(f.errors.length, 1);
+});
