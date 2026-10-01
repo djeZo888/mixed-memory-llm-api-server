@@ -249,6 +249,27 @@
       "verifiedReasoningEffort": "ultra",
       "cliVersion": "0.159.2",
       "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:46:50.800Z"
+    },
+    {
+      "task": "B-qualification-closure",
+      "host": "mac-worker2",
+      "actualSessionId": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
+      "status": "resumed; actual closure pending",
+      "sourceCandidate": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-qualification-closure",
+      "outerPid": 27722,
+      "startedUtc": "2026-10-01T03:50:53.391502+00:00",
+      "sessionId": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
+      "candidate": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-qualification-closure",
+      "hardDeadlineUtc": "2026-10-01T04:05:00+00:00",
+      "nativePid": 27724,
+      "wrapperPid": 27723,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "cliVersion": "0.159.2",
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:50:55.053Z",
+      "expandedScope": "Native unknown cleanup aggregate gate + separately bound accepted artifact raw-byte preservation; B controller/scorer/evidence only as necessary"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -262,7 +283,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T03:49:17.339775+00:00",
+  "observedUtc": "2026-10-01T03:53:06.043601+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
@@ -298,9 +319,24 @@
     "maximumPreflight": 1,
     "maximumStage": 1,
     "maximumLaunch": 1,
-    "status": "closed one preflight denied at initial canonical acquire (lifecycle_busy); actual stage0/launch0; original evidence unchanged",
+    "status": "closed one preflight denied at initial canonical acquire lifecycle_busy; stage0/launch0",
     "deadlineUtc": "2026-10-01T04:26:10Z",
     "failureUtc": "2026-10-01T03:42:19Z",
     "ownerAtDenial": "UNKNOWN"
+  },
+  "artifactDirectStage": {
+    "phase": "C-artifact-direct-stage-02",
+    "owner": "root coordinator outside paidCLI",
+    "runnerSha256": "1ba16aaeb15f67c6d8d3bcd12293bf0c95f4f1dc1e4193d806ae6d1283466d65",
+    "actualStageInvocations": 1,
+    "actualStageExit": 1,
+    "failureType": "LeaseBusy",
+    "failureCode": "lifecycle_busy",
+    "actualAdmission": "DENIED",
+    "actualLaunchInvocations": 0,
+    "stagedNamespace": "not admitted",
+    "automaticRetry": false,
+    "finishedUtc": "2026-10-01T03:51:27.008147+00:00",
+    "originalEvidence": "preserved"
   }
 }
