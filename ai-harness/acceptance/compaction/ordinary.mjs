@@ -20,7 +20,9 @@ export function verifyAutomaticCapture(observation,expected) {
   if(windows.size!==1||r.gatewayRecords.length!==ids.size||metadata.some(m=>!same(m.compaction,metadata[0].compaction)))throw Error('automatic_window_request_ambiguity');
   for(const bytes of r.gatewayRecords){const g=JSON.parse(bytes);if(!ids.delete(g.id)||g.sessionId!==r.sessionId||g.state!=='settled')throw Error('automatic_current_gateway_ledger');}
   const frames=JSON.parse(r.nativeFramesUtf8),lifecycle=automaticFrames(frames,r.nativeThreadId,r.nativeTurnId);
-  for(const capture of r.requests){const at=Date.parse(capture.observedAt);if(!Number.isFinite(at)||at<Date.parse(lifecycle.start.observedAt)||at>Date.parse(lifecycle.end.observedAt))throw Error('automatic_request_outside_actual_lifecycle');}
+  for(const capture of r.requests)if(capture.sessionId!==r.sessionId||capture.runId!==r.storeRunId||capture.nativeThreadId!==r.nativeThreadId||capture.nativeTurnId!==r.nativeTurnId)throw Error('automatic_current_owned_request_operation_binding');
+  // Stdio notifications and gateway ingress have no cross-channel delivery
+  // barrier. Retain times, but do not infer causality from their wall clocks.
   const record=after.stateUtf8.trimEnd().split('\n').map(JSON.parse).filter(x=>x.type==='compacted').at(-1);
   if(typeof record?.payload?.message!=='string'||!record.payload.message.startsWith(expected.summaryPrefix)||sha(record.payload.message)!==r.selectedMessageSha256)throw Error('automatic-latest-persisted-summary');
   if(!Array.isArray(r.counts)||r.counts.length!==r.requests.length)return {status:'NOT_TESTED',errors:['actual_complete_input_count_captures_absent'],nativeAcceptance:'NOT_TESTED'};
