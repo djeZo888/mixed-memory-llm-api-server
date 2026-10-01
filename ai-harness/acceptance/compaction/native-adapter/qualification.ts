@@ -1,8 +1,8 @@
 import {verifyFreshArtifactOwner} from '../artifact-source-proof.mjs';
 import {verifyManifestSourceIdentity} from '../model-artifact-identity.mjs';
 import { verifyInstalledBuild } from './build-closure.mjs';
-import {isNormalRestartTicket,type NormalRestartTicket} from './normal-restart-ticket.js';
-import { isRestartTicket,type RestartTicket } from './restart.js';
+import {assertNormalRestartQualification,isNormalRestartTicket,type NormalRestartTicket} from './normal-restart-ticket.js';
+import { assertRestartTicketForConfig,isRestartTicket,type RestartTicket } from './restart.js';
 import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { privateFile } from './checkpoint.js';
@@ -22,6 +22,7 @@ export interface EntryQualification {
  * six runtime pins are captured before open; default exports have no packet. */
 export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRestartTicket): Promise<EntryQualification> {
   if(restart&&!isRestartTicket(restart)&&!isNormalRestartTicket(restart))throw Error('verified_restart_qualification_reuse_required');
+  if(restart){if(isNormalRestartTicket(restart))assertNormalRestartQualification(restart,config);else assertRestartTicketForConfig(restart,config);}
   if (process.platform !== 'linux' || !process.getuid?.()) throw Error('actual_rootless_linux_entry_qualification_required');
   reviewedAuthorization(config?.bootstrap?.review);
   const review = config.bootstrap.review;
@@ -37,7 +38,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRest
   const runtime: EntryQualification['runtime'] = {};
   for (const key of keys) {
     const evidence = packet.pins?.[key];
-    if(['modelRevision','tokenizerRevision'].includes(key)&&evidence?.value===null&&review.runtimePins?.[key]?.kind==='MANIFEST_SOURCE_REVISION'){const expected=review.artifactIdentityExpected;if(!expected||!['separate-raw-files-v2','retained-linux-files-v1'].includes(expected.proofVersion)||typeof evidence.rawUtf8!=='string'||sha256(evidence.rawUtf8)!==evidence.rawSha256||!Array.isArray(evidence.jsonPath)||evidence.exitCode!==0||evidence.capturedBy!=='root-owned-linux-readback'||evidence.jsonPath.reduce((v:any,k:string)=>v?.[k],JSON.parse(evidence.rawUtf8))!==null)throw Error('actual_native_revision_null_capture_required');const verification=verifyManifestSourceIdentity(packet.artifactIdentity,expected);if(verification.status!=='SOURCE_VALID'||stableJson(verification.identity)!==stableJson(review.runtimePins[key]))throw Error('actual_typed_current_artifact_source_identity_required');runtime[key]={value:null,reason:'Native revision unreported; immutable artifact source independently bound',identity:verification.identity,artifactEvidence:{receipt:packet.artifactIdentity,expected}};continue;}
+    if(['modelRevision','tokenizerRevision'].includes(key)&&evidence?.value===null&&review.runtimePins?.[key]?.kind==='MANIFEST_SOURCE_REVISION'){const expected=review.artifactIdentityExpected;if(!expected||!['separate-raw-files-v2','retained-linux-files-v1'].includes(expected.proofVersion)||typeof evidence.rawUtf8!=='string'||sha256(evidence.rawUtf8)!==evidence.rawSha256||!Array.isArray(evidence.jsonPath)||evidence.exitCode!==0||evidence.capturedBy!=='root-owned-linux-readback'||evidence.jsonPath.reduce((v:any,k:string)=>v?.[k],JSON.parse(evidence.rawUtf8))!==null)throw Error('actual_native_revision_null_capture_required');const verification=verifyManifestSourceIdentity(packet.artifactIdentity,expected);if(verification.status!=='SOURCE_VALID'||stableJson(verification.identity)!==stableJson(review.runtimePins[key]))throw Error('actual_typed_current_artifact_source_identity_required');runtime[key]={value:null,reason:key==='modelRevision'?'Native revision explicitly reported null; immutable artifact source independently bound':'Native tokenizer revision unreported; producer projection null; immutable artifact source independently bound',identity:verification.identity,artifactEvidence:{receipt:packet.artifactIdentity,expected}};continue;}
     if (!evidence || typeof evidence.value !== 'string' || !evidence.value || typeof evidence.rawUtf8 !== 'string' || sha256(evidence.rawUtf8) !== evidence.rawSha256 ||
         !Array.isArray(evidence.argv) || !evidence.argv.length || evidence.exitCode !== 0 || evidence.capturedBy !== 'root-owned-linux-readback' || review.runtimePins?.[key] !== evidence.value) throw Error('actual_six_runtime_pin_captures_required');
     // Each pin is extracted from captured producer bytes by its independently
@@ -52,7 +53,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRest
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
   await verifyInstalledBuild(config.bootstrap.repository,manifest);
   for (const mode of config.profile === 'h041-summary-stage-v1' ? ['summary-only'] : ['summary-only','read-original','clean-child']) if (!packet.scopePolicies?.[mode] || stableJson(packet.scopePolicies[mode]) !== stableJson(review.scopePolicies?.[mode])) throw Error('independently_reviewed_scope_policy_missing');
-  if(config.profile==='h041-full-retention-v1'&&(!['H041-COMPACTION-DELIVERY-03','H041-COMPACTION-DELIVERY-04'].includes(review.authorization.task)||!['v1','v2'].includes(review.retentionParentPolicy?.collaborationVersion)||stableJson(packet.retentionParentPolicy)!==stableJson(review.retentionParentPolicy)||!review.retentionParentPolicy.artifactPolicy||!review.retentionParentPolicy.childPolicy||!review.retentionParentPolicy.collaborationToolNames||!review.childProjectionSpec||stableJson(packet.childProjectionSpec)!==stableJson(review.childProjectionSpec)||stableJson(review.childProjectionSpec.envelope)!==stableJson(review.childResponseEnvelope)))throw Error('distinct_initial_source_frozen_retention_parent_policy_required');
+  if(config.profile==='h041-full-retention-v1'&&(!['H041-COMPACTION-DELIVERY-03','H041-COMPACTION-DELIVERY-04','H041-COMPACTION-DELIVERY-05'].includes(review.authorization.task)||!['v1','v2'].includes(review.retentionParentPolicy?.collaborationVersion)||stableJson(packet.retentionParentPolicy)!==stableJson(review.retentionParentPolicy)||!review.retentionParentPolicy.artifactPolicy||!review.retentionParentPolicy.childPolicy||!review.retentionParentPolicy.collaborationToolNames||!review.childProjectionSpec||stableJson(packet.childProjectionSpec)!==stableJson(review.childProjectionSpec)||stableJson(review.childProjectionSpec.envelope)!==stableJson(review.childResponseEnvelope)))throw Error('distinct_initial_source_frozen_retention_parent_policy_required');
   if (!packet.receiptSources || stableJson(packet.receiptSources) !== stableJson(review.receiptSources)) throw Error('receipt_source_pins_missing');
   const result = reviewSnapshot({ runtime, profile: config.profile, receiptSources: packet.receiptSources, scopePolicies: packet.scopePolicies, qualificationSha256: sha256(bytes), sourceBuildManifestSha256: sha256(manifestBytes),routeInstanceId:packet.route.instanceId });
   qualified.add(result); return result;

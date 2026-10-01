@@ -1,4 +1,4 @@
-import { isRestartTicket,type RestartTicket } from './restart.js';
+import { assertRestartBootstrap,isRestartTicket,type RestartTicket } from './restart.js';
 import { randomUUID } from 'node:crypto';
 import { reviewedAuthorization } from '../authorization.mjs';
 import { readFile } from 'node:fs/promises';
@@ -34,7 +34,7 @@ export interface BootstrapInput {
   review: { enabled: boolean; approvedBy: string; candidateCommit: string; notAfterUtc: string; settlementReserveMs: number;
     policy: typeof FIXED_POLICY; stagePolicy: typeof STAGE_POLICY; files: Record<string, string>; productionStateReceiptSha256: string;
     projection: { format: 'h040-fresh-persisted-message-v1'; frozenPolicySha256: string; specSha256: string; collectorSourceSha256: string };
-    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03' | 'H041-COMPACTION-DELIVERY-04'; windowId: string; startsUtc: string; capUtc: string } };
+    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03' | 'H041-COMPACTION-DELIVERY-04' | 'H041-COMPACTION-DELIVERY-05'; windowId: string; startsUtc: string; capUtc: string } };
   actualCandidateCommit: string; privateBase: string; productionDataDir: string; repository: string;
   launcherPath: string; qwenReceiptPath: string; inferenceKeyPath: string; controlKeyPath: string;
   productionStateReceiptPath: string;
@@ -48,7 +48,7 @@ export function reviewedExpiry(review: BootstrapInput['review'], now = Date.now(
 }
 export interface BootstrapHooks { qualification: EntryQualification; evidence: EvidenceHooks; applicationRestart?(method:'coldResume'|'resumeAcceptedContinuation',input:any):Promise<any>; delegatedChild?(input:any):Promise<any>; retainPolicy?(input:any):Promise<any>; adoptPolicy?(input:any):Promise<void>; configureHost(base: CodexHostQualification, context: { guard: DispatchGuard; observer: NativeObserver; layout: Awaited<ReturnType<typeof createLayout>>; application(): Awaited<ReturnType<typeof createApp>> | undefined; originalProbes: Map<string,CodexReadOriginalProbe>; originalSettlements: any[]; artifactSettlements: any[] }): CodexHostQualification; }
 export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,restart?:RestartTicket) {
-  if(restart&&!isRestartTicket(restart))throw Error('owned_qualified_restart_required');
+  if(restart){if(!isRestartTicket(restart))throw Error('owned_qualified_restart_required');assertRestartBootstrap(restart,input);}
   input = reviewSnapshot(input);
   const review = input.review, expiry = Date.parse(review?.notAfterUtc);
   if (review?.enabled !== true || review.approvedBy !== 'root' || !/^[a-f0-9]{40}$/.test(review.candidateCommit) ||

@@ -1,14 +1,17 @@
 import { privateFile, canonicalDirectory, within } from './checkpoint.js';
-import { sha256, stableJson } from './projection.js';
+import { sha256, stableJson, reviewSnapshot } from './projection.js';
 import { verifyObservedOwnedClose } from '../owned-close-verifier.mjs';
 import { observeApplicationIdentity } from './process-runner.js';
-const tickets=new WeakSet<object>();
+const tickets=new WeakMap<object,{configSha256:string;receiptSha256:string;ticketSha256:string;bootstrapSha256:string}>();
 export interface RestartTicket {state:any;closed:any;input:any}
 export function isRestartTicket(value:unknown):value is RestartTicket{return !!value&&typeof value==='object'&&tickets.has(value);}
+export function assertRestartTicketForConfig(value:unknown,config:any){const b=value&&typeof value==='object'?tickets.get(value):undefined;if(!b||b.configSha256!==sha256(stableJson(config))||b.ticketSha256!==sha256(stableJson(value))||(value as RestartTicket).input.stateSha256!==b.receiptSha256)throw Error('restart_ticket_exact_config_and_handoff_required');}
+export function assertRestartBootstrap(value:unknown,input:any){const b=value&&typeof value==='object'?tickets.get(value):undefined;if(!b||b.bootstrapSha256!==sha256(stableJson(input)))throw Error('restart_ticket_exact_bootstrap_required');}
 /** IPC host-owned adoption, independently checked against private raw handoff,
  * actual new OS identity, actual absence of the old process, and all producer
  * bytes. Does not brand a Codex policy; A must revalidate its own durable bridge. */
 export async function qualifyRestart(input:any,config:any):Promise<RestartTicket> {
+  input=reviewSnapshot(input);config=reviewSnapshot(config);
   const bytes=await privateFile(input.statePath);
   if(sha256(bytes)!==input.stateSha256)throw Error('restart_handoff_bytes_changed');
   const state=JSON.parse(bytes.toString('utf8'));
@@ -23,5 +26,5 @@ export async function qualifyRestart(input:any,config:any):Promise<RestartTicket
   if(stableJson(actual)!==stableJson(input.afterProcess)||input.beforeProcess.pid===actual.pid&&input.beforeProcess.startTicks===actual.startTicks)throw Error('new_application_process_identity_mismatch');
   const old=await observeApplicationIdentity(input.beforeProcess.pid).catch(()=>undefined);
   if(old&&old.bootId===input.beforeProcess.bootId&&old.startTicks===input.beforeProcess.startTicks)throw Error('old_application_still_present');
-  const ticket={state,closed:input.closed,input};tickets.add(ticket);return ticket;
+  const ticket=reviewSnapshot({state,closed:input.closed,input});tickets.set(ticket,{configSha256:sha256(stableJson(config)),receiptSha256:input.stateSha256,ticketSha256:sha256(stableJson(ticket)),bootstrapSha256:sha256(stableJson(config.bootstrap))});return ticket;
 }

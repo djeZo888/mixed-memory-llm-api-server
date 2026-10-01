@@ -16,6 +16,7 @@ import {sha256,stableJson,reviewSnapshot,identifier} from './projection.js';
 import {qualifyEntry,isQualifiedEntry,type EntryQualification} from './qualification.js';
 import {reviewedAuthorization} from '../authorization.mjs';
 import {lstat,readFile} from 'node:fs/promises';import {join,dirname} from 'node:path';
+import {assertNormalRestartConfig} from './normal-restart-ticket.js';
 import {collectOrdinaryAutomatic} from './automatic.js';
 import {bounded} from './process-runner.js';
 export async function kernelProcessReceipt(pid=process.pid){if(process.platform!=='linux')throw Error('native_normal_process_requires_linux_kernel');const procStatUtf8=await readFile(`/proc/${pid}/stat`,'utf8'),bootIdUtf8=await readFile('/proc/sys/kernel/random/boot_id','utf8'),fields=procStatUtf8.slice(procStatUtf8.lastIndexOf(') ')+2).trim().split(/\s+/);return {source:'linux-proc-process-observation',pid,startTicks:fields[19],bootId:bootIdUtf8.trim(),procStatUtf8,bootIdUtf8};}
@@ -66,7 +67,7 @@ export class NormalProductProducer {
  nativeEvidence(){return {frames:()=>this.observer.frames(this.config.sessionId),captures:()=>[...this.captures.values()],producers:()=>[...this.producers.values()],counts:this.counts};}
 }
 export async function startNormalProduct(configPath:string,restart?:import('./normal-restart-ticket.js').NormalRestartTicket){
- const config=reviewSnapshot(JSON.parse((await privateFile(configPath)).toString('utf8'))),a=reviewedAuthorization(config.review);if(process.platform!=='linux'||!process.getuid?.()||config.review.approvedBy!=='root'||config.review.actor!=='worker1'||!identifier(config.sessionId)||Date.now()>=a.dispatchCutoffAt)throw Error('reviewed_actual_normal_product_entry_required');
+ const configBytes=await privateFile(configPath),config=reviewSnapshot(JSON.parse(configBytes.toString('utf8'))),a=reviewedAuthorization(config.review);if(restart)assertNormalRestartConfig(restart,config,configBytes);if(process.platform!=='linux'||!process.getuid?.()||config.review.approvedBy!=='root'||config.review.actor!=='worker1'||!identifier(config.sessionId)||Date.now()>=a.dispatchCutoffAt)throw Error('reviewed_actual_normal_product_entry_required');
  
  const qualification=await qualifyEntry(config.qualificationConfig,restart);if(!isQualifiedEntry(qualification))throw Error('actual_current_native_qualification_required');
  const ordinary=loadCodexOrdinaryEntry(config.ordinaryEntryPath,config.ordinaryEntryKeyPath,{serverDir:config.serverDir,deploymentDir:config.deploymentDir});if(!ordinary)throw Error('genuine_protected_normal_data_entry_required');
