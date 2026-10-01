@@ -1,8 +1,8 @@
 {
-  "candidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+  "candidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
   "status": "FAIL",
   "nativeAcceptance": "NOT_TESTED",
-  "generatedAt": "2026-10-01T04:11:45.152018+00:00",
+  "generatedAt": "2026-10-01T04:15:56.141761+00:00",
   "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
   "actualSettings": {
     "model": "gpt-6.1-sol",
@@ -12,7 +12,7 @@
   "scope": "SOURCE VALIDATION ONLY; no source edits/VM/Linux/runtime/deployment/GPU/fan/model/inference/native binary calls",
   "checks": [
     {
-      "name": "combined-ts",
+      "name": "combined-ts-final",
       "argv": [
         "node",
         "--import",
@@ -39,14 +39,15 @@
       "cwd": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/repo/ai-harness/server",
       "exit": 0,
       "timeout": false,
-      "seconds": 4.276,
+      "seconds": 4.192,
       "count": 260,
       "passed": 260,
       "failed": 0,
       "skipped": 0,
-      "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/combined-ts.log",
-      "logSHA": "fadae4f352b2c822429adca2acaddbf4451858881facbccaff73fe0f1d76ce98",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/combined-ts-final.log",
+      "logSHA": "eb45ac729787574c69b3d4812b6b59b182a3d92e8e6d2bd082e498bcfca7b661",
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "candidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6"
     },
     {
       "name": "server-build",
@@ -65,7 +66,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/server-build.log",
       "logSHA": "35089eeb4e6097bb087e8c050db80ac802cb01ecb4ba684fffcb35e57da50d91",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "adapter-strict",
@@ -84,10 +88,13 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/adapter-strict.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
-      "name": "changed-tests-strict",
+      "name": "changed-tests-strict-final",
       "argv": [
         "./node_modules/.bin/tsc",
         "--noEmit",
@@ -117,14 +124,15 @@
       "cwd": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/repo/ai-harness/server",
       "exit": 2,
       "timeout": false,
-      "seconds": 1.601,
+      "seconds": 0.896,
       "count": null,
       "passed": null,
       "failed": null,
       "skipped": null,
-      "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/changed-tests-strict.log",
-      "logSHA": "69b8476d74a2a70c285762dbe106d1bb47175fc405cf74fbcbe04b61ae61d61a",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/changed-tests-strict-final.log",
+      "logSHA": "3218cec63d34c9eb40ec47d8571aa4d10e1b5a794155af71b9eeeaaa3a318acd",
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "candidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6"
     },
     {
       "name": "codex-receipts-python",
@@ -143,7 +151,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/codex-receipts-python.log",
       "logSHA": "4bf377dc897e9321535de32ba1e2fcdc4ac6194087ce7536825eeadea9603ce7",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "launcher-regressions",
@@ -168,7 +179,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/launcher-regressions.log",
       "logSHA": "5798576c03654075de15572c772457979cd417fc85a34a6f716b210bf9202cc9",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "egress-guards",
@@ -188,7 +202,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/egress-guards.log",
       "logSHA": "de840cb2f587bd66af2117efe4b185c4dd7d3013fabaeb4c41c1a88669950907",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "shell-syntax",
@@ -207,7 +224,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/shell-syntax.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "markdown-links",
@@ -226,7 +246,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/markdown-links.log",
       "logSHA": "7608aeb77874fb61729eb7a6d7ce65ec9223563c074a6cc114dc14f0a09329fb",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "git-diff-check",
@@ -245,7 +268,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/git-diff-check.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "b-syntax-controller",
@@ -264,7 +290,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/b-syntax-controller.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "b-syntax-evidence",
@@ -283,7 +312,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/b-syntax-evidence.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "b-syntax-qualification",
@@ -302,7 +334,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/b-syntax-qualification.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     },
     {
       "name": "b-syntax-scorer",
@@ -321,7 +356,10 @@
       "skipped": null,
       "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/b-syntax-scorer.log",
       "logSHA": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED",
+      "observedCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+      "reusedForCandidateCommit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+      "reuse": "Input production sources/fixtures unchanged; no repeated execution"
     }
   ],
   "sourceHashes": {
@@ -452,14 +490,14 @@
     "ai-harness/server/test/fixtures/codex/native-requests.json": "aa80755341e92bd07c115f163cefd74ec9bec5366b525f5b574611f376d62487",
     "ai-harness/server/test/fixtures/h040-native-prefix.json": "b056de35f831e736f1ddb01260d750c4559c52dc320664fa6d7aed419563d278",
     "ai-harness/server/test/h039-compaction-retention.test.ts": "20230ee89259351e2e5c3cbf2296c51108f65ff0d3d558e92acffa6c0217d6e7",
-    "ai-harness/server/test/h040-compaction-qualification-closure.test.ts": "41c06f17da6fc72d718431e4005f5c83878a00acdd65939b5388efb70c45d0cf",
-    "ai-harness/server/test/h040-compaction-retention.collector.test.ts": "1e730f0027760593c7d19dec72dc88e3da3c8c637a969b73d17aa0e0cf55afd7",
-    "ai-harness/server/test/h040-compaction-retention.controller.test.ts": "0572663e64885d50714d6793e24fe066ccc4289ea5db37330630ff9681347d0a",
-    "ai-harness/server/test/h040-compaction-retention.integration.test.ts": "a204ca33f81a60de9d32b174954a9995e1c89a2f54d5e9582089eb40322f6faf",
+    "ai-harness/server/test/h040-compaction-qualification-closure.test.ts": "4cf707d7d50e8c4dd02decfa67f11b2c2160068c8caac61c006fe808a4f7decc",
+    "ai-harness/server/test/h040-compaction-retention.collector.test.ts": "8245c8e2190fad53461d6ac8d51a9653cd800c7c9bf43160e65e21dea8d282f5",
+    "ai-harness/server/test/h040-compaction-retention.controller.test.ts": "e270aed6a33893a8146bd687ed977ddef78a2a51a52ce03715b89e4e979e71fc",
+    "ai-harness/server/test/h040-compaction-retention.integration.test.ts": "01ba3278910e30f72ba4a4f85fd188892dfa887d55251a7ee336904b38301f80",
     "ai-harness/server/test/h040-native-adapter-collector.test.ts": "3110b374cf5adb2c0937297db021ac8e393d85fdae3dfce50b6a4b2d82fa801f",
     "ai-harness/server/test/h040-native-adapter-contract.test.ts": "a7e084e0a7ac7f96126df177d2bcd0d99b778ac1c1b87cbe6252a28a8a7eb52f",
     "ai-harness/server/test/h040-native-adapter-gateway.test.ts": "ee4679cea36a2d64a4ad9209bee9a9f6e5f468e48966497cf9daf442c31c7d80",
-    "ai-harness/server/test/h040-native-adapter-integration.test.ts": "889f7bcac66faabcc69be3b2d832f4a9ac29ddbd811f901d0f4c75c5e2d7faba",
+    "ai-harness/server/test/h040-native-adapter-integration.test.ts": "4f5567f5468aedee4ad27ef7532de1f275e58b4d8b5816e05177bbae5377dc06",
     "ai-harness/server/test/h040-native-adapter-lifecycle.test.ts": "8004e6b9ffe8436e353a0dae527cd91304dfbba0f7a920e34e7262e77cc60510",
     "ai-harness/server/test/h040-native-adapter-protocol.test.ts": "eae19ba519ea9b22044ca2adf0cc90a4c720d0ac1d2ca181cfa38d1976bcec0c",
     "ai-harness/server/test/helpers/codex-receipt-fixture.ts": "e53d4f987d0bc00d632a158a9e555a014e53198f36fd57df2af2d0bb8c4a685c",
@@ -544,18 +582,10 @@
   },
   "failures": [
     {
-      "check": "changed-tests-strict",
+      "check": "changed-tests-strict-final",
       "exit": 2,
-      "diagnostics": 25,
-      "affectedFiles": [
-        "test/h040-compaction-qualification-closure.test.ts",
-        "test/h040-compaction-retention.collector.test.ts",
-        "test/h040-compaction-retention.controller.test.ts",
-        "test/h040-compaction-retention.integration.test.ts",
-        "test/h040-native-adapter-integration.test.ts"
-      ],
-      "likelyIssue": "H040 fixture typing against inferred B .mjs signatures: missing required fields, un-narrowed union properties, UUID template literal run IDs, delete on required properties, empty-object .id. Runtime fixtures pass; no repair/retry authorized.",
-      "receipt": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/changed-tests-strict.json"
+      "diagnostics": 2,
+      "likelyIssue": "After narrowing, accepted.artifactBaseline delete requires an explicit optional malformed DTO; key-mutation loop needs a typed key tuple/record. Both remaining in h040-compaction-retention.integration.test.ts300/314. No suppression or second automatic retry."
     }
   ],
   "earlierFailureEvidence": {
@@ -563,53 +593,96 @@
     "priorPhases": "Earlier A/E/B failures retained in existing committed reports and prior private outputs; not overwritten/reclassified by this validation."
   },
   "unchangedQualificationReuse": {
-    "reviewedCommit": "193652ee635b8e20068a427255c1b7997e78212e",
+    "reviewedCommit": "4a3ae2486e571e1a47aa2361cd5b12ff3f64dda2",
     "priorCases": 136,
     "newExecution": false,
     "hashMatches": {
       "scripts/thermal/cha_fan3.py": {
         "actualSHA256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "matches": true
       },
       "scripts/thermal/fan_boost.py": {
         "actualSHA256": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
+        "matches": true
       },
       "scripts/thermal/test_cha_fan3.py": {
         "actualSHA256": "ea1ad9a2747c6b8e23a47f327620ffaa470ecb63917d1964554cc0c321208b5c",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "ea1ad9a2747c6b8e23a47f327620ffaa470ecb63917d1964554cc0c321208b5c",
+        "matches": true
       },
       "tests/test_h013_fan_boost.py": {
         "actualSHA256": "46f8df5661ab946cc80cc8ee7908122efcd57f95fd8735df65e5441198e48515",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "46f8df5661ab946cc80cc8ee7908122efcd57f95fd8735df65e5441198e48515",
+        "matches": true
       },
       "scripts/vision/artifact_job.py": {
         "actualSHA256": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+        "matches": true
       },
       "scripts/vision/launch_job.py": {
         "actualSHA256": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+        "matches": true
       },
       "scripts/vision/stage_job.py": {
         "actualSHA256": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+        "matches": true
       },
       "scripts/vision/tests/test_h040_recovery.py": {
         "actualSHA256": "94d7bae510a18a169fc5004da5dfd13ca32105d28f8026962122a245c208896f",
-        "reviewedSHA256": null,
-        "matches": false
+        "reviewedSHA256": "94d7bae510a18a169fc5004da5dfd13ca32105d28f8026962122a245c208896f",
+        "matches": true
       }
     },
-    "allMatched": false,
-    "scope": "Prior source qualification only; no fresh native/fan/artifact acceptance"
+    "allMatched": true,
+    "scope": "Prior source qualification only; no fresh native/fan/artifact acceptance",
+    "earlierReviewReferenceComparison": {
+      "scripts/thermal/cha_fan3.py": {
+        "actualSHA256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "reviewedSHA256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "matches": true
+      },
+      "scripts/thermal/fan_boost.py": {
+        "actualSHA256": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
+        "reviewedSHA256": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
+        "matches": true
+      },
+      "scripts/thermal/test_cha_fan3.py": {
+        "actualSHA256": "ea1ad9a2747c6b8e23a47f327620ffaa470ecb63917d1964554cc0c321208b5c",
+        "reviewedSHA256": "ea1ad9a2747c6b8e23a47f327620ffaa470ecb63917d1964554cc0c321208b5c",
+        "matches": true
+      },
+      "tests/test_h013_fan_boost.py": {
+        "actualSHA256": "46f8df5661ab946cc80cc8ee7908122efcd57f95fd8735df65e5441198e48515",
+        "reviewedSHA256": "46f8df5661ab946cc80cc8ee7908122efcd57f95fd8735df65e5441198e48515",
+        "matches": true
+      },
+      "scripts/vision/artifact_job.py": {
+        "actualSHA256": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+        "reviewedSHA256": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+        "matches": true
+      },
+      "scripts/vision/launch_job.py": {
+        "actualSHA256": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+        "reviewedSHA256": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+        "matches": true
+      },
+      "scripts/vision/stage_job.py": {
+        "actualSHA256": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+        "reviewedSHA256": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+        "matches": true
+      },
+      "scripts/vision/tests/test_h040_recovery.py": {
+        "actualSHA256": "94d7bae510a18a169fc5004da5dfd13ca32105d28f8026962122a245c208896f",
+        "reviewedSHA256": "94d7bae510a18a169fc5004da5dfd13ca32105d28f8026962122a245c208896f",
+        "matches": true
+      }
+    },
+    "note": "Authoritative prior live/source receipt names integratedRoot4a3ae24; earlier preintegration193652 comparison was the wrong reference, preserved separately."
   },
   "gates": [
     "Root/owners review standalone strict test compilation failure; A did not fix or retry.",
@@ -617,5 +690,69 @@
     "Root records actual native/outer exits after closure; prospective exits remain null."
   ],
   "nativeExit": null,
-  "outerExit": null
+  "outerExit": null,
+  "initialCandidateCommit": "982b53d9caeba111ced9ee2fc84574ab8e60ebd8",
+  "earlierFailedChecks": [
+    {
+      "name": "changed-tests-strict",
+      "argv": [
+        "./node_modules/.bin/tsc",
+        "--noEmit",
+        "--strict",
+        "--esModuleInterop",
+        "--target",
+        "ES2023",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--skipLibCheck",
+        "--allowJs",
+        "test/codex-protocol-receipts.test.ts",
+        "test/helpers/codex-receipt-fixture.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/repo/ai-harness/server",
+      "exit": 2,
+      "timeout": false,
+      "seconds": 1.601,
+      "count": null,
+      "passed": null,
+      "failed": null,
+      "skipped": null,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-coherent-source-validation/output/changed-tests-strict.log",
+      "logSHA": "69b8476d74a2a70c285762dbe106d1bb47175fc405cf74fbcbe04b61ae61d61a",
+      "scope": "synthetic source validation; native/Linux acceptance NOT_TESTED"
+    }
+  ],
+  "fixtureCorrection": {
+    "commit": "f43ad5b3fb5ba5567c82435254871056155930c6",
+    "files": [
+      "h040-compaction-qualification-closure.test.ts",
+      "h040-compaction-retention.collector.test.ts",
+      "h040-compaction-retention.controller.test.ts",
+      "h040-compaction-retention.integration.test.ts",
+      "h040-native-adapter-integration.test.ts"
+    ],
+    "scope": "Only fixture typings: explicit undefined optional JS parameters, asserted result union fields, scoped malformed DTOs, deterministic UUID acceptanceIDs, guarded arbitrary native wire objects. All existing runtime assertions retained; no production edits.",
+    "runtimeRerun": {
+      "count": 260,
+      "exit": 0,
+      "skipped": 0
+    },
+    "strictRerun": {
+      "exit": 2,
+      "diagnostics": 2
+    },
+    "sourceDiffSHA256": "49b27b882b0f5290b630900ffa16135043c5edd2efa90292e4005402d1d3a79d"
+  }
 }

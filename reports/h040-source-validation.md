@@ -1,6 +1,6 @@
 # H040 coherent source validation
 
-Candidate under test: `982b53d9caeba111ced9ee2fc84574ab8e60ebd8`. Source-only validation; native acceptance NOT_TESTED.
+Final candidate under test: `f43ad5b3fb5ba5567c82435254871056155930c6` (initial source candidate `982b53d9caeba111ced9ee2fc84574ab8e60ebd8`). Source-only validation; native acceptance NOT_TESTED.
 
 Final actual checks and hashes will be recorded in [the JSON receipt](h040-source-validation.json). The tests use the committed [native prefix fixture](../ai-harness/server/test/fixtures/h040-native-prefix.json), repository-local [controller](../ai-harness/acceptance/compaction/controller.mjs) and [native adapter](../ai-harness/acceptance/compaction/native-adapter/README.md). No external E source root, native process, inference or deployment is qualified.
 
@@ -11,3 +11,9 @@ Standalone strict test compilation exited2 with25 diagnostics across H040 B/E fi
 The exact399-byte committed prefix hashes to e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e. All fifteen resolved test files, actual repository-local B modules/E adapter and candidate source/input hashes are recorded in the JSON. H040_E_SOURCE_ROOT was removed from child environments; no external sibling fixtures were used. Every hashed candidate file matches its committed Git object and remained unchanged after checks. Existing dependency symlink was reused, no installs.
 
 Prior136 fan/artifact source cases were not replayed; their reviewed source hashes were compared and recorded separately. Earlier phase failures remain in their original reports/private outputs. Native/Linux/runtime placement/scoped retrieval/semantic compaction/isolation and atomic rollback are NOT_TESTED. No default native activation, source/VM/deployment/GPU/fan/model/credential changes, publication, GitHub contact or new session occurred. Actual native/outer exits remain null pending root wrapper receipts after closure.
+
+Root explicitly authorized five fixture-only source files at04:10UTC. Correction commit `f43ad5b3fb5ba5567c82435254871056155930c6` supplies explicit undefined JS parameters, asserts positive unions, scopes malformed optional DTOs, gives acceptance IDs deterministic UUIDs independently of store run IDs, and guards native wire turn ids. Existing runtime assertions and all production source/default gates are retained.
+
+The one authorized strict rerun still exits2 with two diagnostics in h040-compaction-retention.integration.test.ts300/314: optional malformed artifactBaseline deletion and typed keys for baseline mutation after positive narrowing. The one authorized changed suite rerun passes260/260 with zero skips. Final status remains **FAIL**; both initial25-diagnostic and final2-diagnostic receipts are preserved. No suppression, assertion weakening, production repair or extra automatic retry occurred. Root/owner must finish these two fixture annotations before a PASS publication.
+
+Unchanged build/strict adapter/Python/launcher/egress/syntax/Markdown checks reuse their actual successful receipts with exact input hashes. Prior136 fan/artifact source hashes match the authoritative integratedRoot4a3ae24 receipt; the earlier preintegration reference comparison is preserved separately as an evidence correction. No live acceptance is inferred. Native and outer exits remain null pending wrapper receipts.
