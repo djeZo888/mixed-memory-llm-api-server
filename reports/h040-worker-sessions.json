@@ -69,7 +69,7 @@
       "task": "E-native-collector",
       "host": "mac-worker2",
       "actualSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0; sealed source preparation only; native acceptance NOT_TESTED",
       "sourceCandidate": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/E-native-collector",
       "outerPid": 24603,
@@ -83,13 +83,26 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context at 2026-10-01T02:30:49.216Z",
-      "cliVersion": "0.159.2"
+      "cliVersion": "0.159.2",
+      "nativeTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:39:29.615951+00:00",
+        "nativePid": 24606,
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:39:29.634596+00:00",
+        "wrapperPid": 24605
+      },
+      "sourceCommit": "866809c86277573f1f16831dc20fdeacdbf33021",
+      "reportSuccessor": "fb6592eb930153a1f81adf27e834951d980024a1"
     },
     {
       "task": "B-retention-integration",
       "host": "mac-worker2",
       "actualSessionId": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0; sealed source preparation only; native acceptance NOT_TESTED",
       "sourceCandidate": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-retention-integration",
       "outerPid": 24700,
@@ -103,13 +116,26 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context at 2026-10-01T02:30:49.876Z",
-      "cliVersion": "0.159.2"
+      "cliVersion": "0.159.2",
+      "nativeTerminal": {
+        "nativePid": 24702,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:46:42.720231+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 24701,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:46:42.737171+00:00"
+      },
+      "sourceCommit": "f4b905ec3ba89059b21af66a9ca9b774f98463ba",
+      "bundleSha256": "4fd660fc799c90c12d9b1a9453b160a3e2d1b9768b7e1c5bcc0b5b83047f2da1"
     },
     {
       "task": "A-protocol-receipts",
       "host": "mac-worker1",
       "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
-      "status": "resumed; actual closure pending",
+      "status": "closed actual native0/outer0; sealed source preparation only; native acceptance NOT_TESTED",
       "sourceCandidate": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/A-protocol-receipts",
       "outerPid": 20701,
@@ -123,7 +149,20 @@
       "verifiedModel": "gpt-6.1-sol",
       "verifiedReasoningEffort": "ultra",
       "settingsEvidence": "persisted same-session turn_context2026-10-01T02:50:57.030Z",
-      "cliVersion": "0.159.2"
+      "cliVersion": "0.159.2",
+      "nativeTerminal": {
+        "nativePid": 20703,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:39:23.612143+00:00",
+        "deadlineTermination": false
+      },
+      "outerTerminal": {
+        "wrapperPid": 20702,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T03:39:23.620249+00:00"
+      },
+      "sourceCommit": "c2053e4607859514babe6fe8f63b03658e7eaecf",
+      "bundleSha256": "4da44f6a35f1be62d0bda59c0415186cff210c3a4d5d9181bdaf9927f74bc12d"
     },
     {
       "task": "C-fan100-source",
@@ -190,6 +229,26 @@
         "actualExitCode": 0,
         "finishedUtc": "2026-10-01T03:35:46.852462+00:00"
       }
+    },
+    {
+      "task": "E-compaction-portability",
+      "host": "mac-worker2",
+      "actualSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "status": "resumed; actual closure pending",
+      "sourceCandidate": "112a4d93b001762c8b6582d995c529036257efc6",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/E-compaction-portability",
+      "outerPid": 27348,
+      "startedUtc": "2026-10-01T03:45:16.867274+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "112a4d93b001762c8b6582d995c529036257efc6",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/E-compaction-portability",
+      "hardDeadlineUtc": "2026-10-01T04:03:00+00:00",
+      "nativePid": 27351,
+      "wrapperPid": 27350,
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "cliVersion": "0.159.2",
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:46:50.800Z"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -203,7 +262,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T03:02:17.418977+00:00",
+  "observedUtc": "2026-10-01T03:49:17.339775+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
@@ -225,7 +284,7 @@
       "comparison": ">",
       "fanPercent": 100
     },
-    "liveSuccessorCoverage": "NOT_TESTED",
+    "liveSuccessorCoverage": "configured startup/stop/restart100 and cool40 PASS; native hot thresholds/measured PWM NOT_TESTED",
     "latestAuthority": "Specific human CHA_FAN3 clarification supersedes blanket70C interpretation for that external fan only"
   },
   "newGpuTransitions": "HELD pending physical slot mapping and reviewed successors",
@@ -239,7 +298,9 @@
     "maximumPreflight": 1,
     "maximumStage": 1,
     "maximumLaunch": 1,
-    "status": "reviewed GO; actual outcome pending",
-    "deadlineUtc": "2026-10-01T04:26:10Z"
+    "status": "closed one preflight denied at initial canonical acquire (lifecycle_busy); actual stage0/launch0; original evidence unchanged",
+    "deadlineUtc": "2026-10-01T04:26:10Z",
+    "failureUtc": "2026-10-01T03:42:19Z",
+    "ownerAtDenial": "UNKNOWN"
   }
 }
