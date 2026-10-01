@@ -1,0 +1,13 @@
+# H039 adoption checkpoint — 1 October 2026
+
+Root adopted all four recorded native worker sessions with fresh SSH PID checks before any new dispatch. No duplicate session or download was launched. A/B/D remained active; original C closed with actual native/outer exit 0. Existing session metadata and private terminal receipts are retained.
+
+Compaction is the first priority. A's adapter source tests passed in its intermediate receipt, but final source export is pending. Independent review found no adapter regression and identified native persistence/manual-summary limitations. Native context replacement precedes confirmed persistence; fixtures and completion events do not prove atomic rollback. Any bounded live suite needs a quiescent external checkpoint and disposable qualification chats. B's synthetic 72-fact suite is under review: actual route ID grammar, independently captured isolation, separate probe metadata, current cold-resume checkpoint and execution deadlines are being corrected in the existing native session. Native retention remains NOT_TESTED.
+
+C's source-preparation commit is `b1e9f099b63fbe8bca32043a8d7f0f5d30f03ccb`. The adopted durable unit `h039-vision-20261001-c-01a0f4d8.service` actually FAILED at 00:42:30 UTC, exit 1 / TimeoutError. It verified 13 files, including one Qwen weight shard; the next shard partial and original failed receipts remain preserved. The canonical lifecycle lease was observed released at 00:50:37 UTC. A source-preparation PASS is not download completion. Root resumed the exact C session for a bounded recovery proposal, retaining its 01:08:52 UTC native deadline; retry launch requires review of the concrete attempt and must end by 02:25 UTC. No GPU load, reassignment or capability activation occurred.
+
+D's intermediate source fixtures/build passed; final commit and review remain pending. C's serving candidate and D's asynchronous HTTP contract still need an implementation bridge and live qualification. The internal Ada remains recorded as creative-image owned; external Ada availability and combined BF16 fit are not assumed.
+
+Current PR checks show installer fixtures and client/worker regressions passing. Repository-sanity failed because its local-link checker did not resolve encoded spaces in the future-vision link. Root changed the seven active links to supported angle destinations with literal spaces; the local checker and four existing archive/provenance tests pass. No archive evidence was edited.
+
+Global H039 window remains 02:25 UTC / 04:25 Ljubljana. Creative image acceptance, upstream Codex upgrade, Proxmox, driver and fan changes remain deferred. PR #11 stays draft and unmerged.

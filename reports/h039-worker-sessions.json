@@ -1,6 +1,6 @@
 {
   "task": "H039-20261001",
-  "phase": "four_native_sessions_launched_verified",
+  "phase": "existing_sessions_adopted_source_reviews_in_progress",
   "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
   "globalDeadlineUtc": "2026-10-01T02:25:00Z",
   "model": "gpt-6.1-sol",
@@ -35,7 +35,12 @@
         "WRAPPER-TERMINAL.json",
         "OUTER-TERMINAL.json"
       ],
-      "backgroundJob": null
+      "backgroundJob": null,
+      "adoption": {
+        "observedUtc": "2026-10-01T00:53:28.798170+00:00",
+        "duplicateNativeSessionLaunched": false,
+        "status": "existing native session adopted; source result pending"
+      }
     },
     {
       "task": "B-retention-suite",
@@ -66,7 +71,12 @@
         "WRAPPER-TERMINAL.json",
         "OUTER-TERMINAL.json"
       ],
-      "backgroundJob": null
+      "backgroundJob": null,
+      "adoption": {
+        "observedUtc": "2026-10-01T00:53:28.798170+00:00",
+        "duplicateNativeSessionLaunched": false,
+        "status": "existing native session adopted; source result pending"
+      }
     },
     {
       "task": "C-vision-artifacts",
@@ -97,7 +107,35 @@
         "WRAPPER-TERMINAL.json",
         "OUTER-TERMINAL.json"
       ],
-      "backgroundJob": "not yet observed; read task C OUTBOX for actual unit/receipt/manifest"
+      "backgroundJob": {
+        "unit": "h039-vision-20261001-c-01a0f4d8.service",
+        "launchedUtc": "2026-10-01T00:40:45Z",
+        "deadlineUtc": "2026-10-01T02:40:45Z",
+        "currentObservedState": "FAILED",
+        "finishedUtc": "2026-10-01T00:42:30Z",
+        "actualExitCode": 1,
+        "failureCode": "TimeoutError",
+        "verifiedFiles": 13,
+        "verifiedWeightFiles": 1,
+        "partialArtifactsPreserved": true,
+        "lifecycleLeaseReleased": true,
+        "restartLaunched": false,
+        "statusPath": "/data/logs/h039-vision-20261001-c-01a0f4d8/status.json",
+        "receiptManifestPath": "/data/logs/h039-vision-20261001-c-01a0f4d8/manifest.json",
+        "artifactRoot": "/data/models-large/h039-vision-20261001-c-01a0f4d8"
+      },
+      "adoption": {
+        "observedUtc": "2026-10-01T00:53:28.798170+00:00",
+        "duplicateNativeSessionLaunched": false,
+        "status": "original native and outer exit0; source-preparation commit b1e9f099; artifact job FAILED TimeoutError; exact native session resumed for bounded source recovery only"
+      },
+      "recovery": {
+        "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-recovery-01",
+        "resumeSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+        "hardDeadlineUtc": "2026-10-01T01:08:52Z",
+        "scope": "source-recovery proposal; no retry before root review",
+        "result": "pending"
+      }
     },
     {
       "task": "D-vision-bridge",
@@ -128,8 +166,15 @@
         "WRAPPER-TERMINAL.json",
         "OUTER-TERMINAL.json"
       ],
-      "backgroundJob": null
+      "backgroundJob": null,
+      "adoption": {
+        "observedUtc": "2026-10-01T00:53:28.798170+00:00",
+        "duplicateNativeSessionLaunched": false,
+        "status": "existing native session adopted; source result pending"
+      }
     }
   ],
-  "adoptionRule": "Collect actual current PID/session terminal and OUTBOX before new dispatch. A launch receipt is not task completion. Preserve any bounded download job; do not duplicate it."
+  "adoptionRule": "Collect actual current PID/session terminal and OUTBOX before new dispatch. A launch receipt is not task completion. Preserve any bounded download job; do not duplicate it.",
+  "adoptedUtc": "2026-10-01T00:53:28.798170+00:00",
+  "adoptionEvidence": "Fresh SSH PID checks and terminal/OUTBOX receipts; root private ADOPTION-INITIAL.json and read-only reviews"
 }
