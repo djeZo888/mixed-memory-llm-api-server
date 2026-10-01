@@ -1,0 +1,13 @@
+/** Actual local Node child exit/source filesystem cases; NOT native runtime acceptance. */
+import test from 'node:test';import assert from 'node:assert/strict';import {spawn} from 'node:child_process';
+import {mkdtempSync,realpathSync,writeFileSync,rmSync} from 'node:fs';import {tmpdir} from 'node:os';import {join} from 'node:path';
+import {waitCodexReceiptFile,createCodexReceiptLifecycle} from '../src/codex-receipts.js';
+test('actual local child17 with missing launch ready settles awaited receipt and owned cleanup without Node13',async()=>{
+ const root=realpathSync(mkdtempSync(join(tmpdir(),'h041-receipt-exit-')));try{
+ const source=`import {spawn} from 'node:child_process';import {waitCodexReceiptFile,createCodexReceiptLifecycle} from ${JSON.stringify(new URL('../src/codex-receipts.ts',import.meta.url).href)};const child=spawn(process.execPath,['-e','process.exit(17)'],{stdio:['ignore','pipe','pipe']});child.stdout.resume();child.stderr.resume();let ended=false,raw;const exited=new Promise(r=>child.once('exit',(code,signal)=>{ended=true;raw={code,signal};r();}));const launchReceipt=waitCodexReceiptFile(${JSON.stringify(root)},process.getuid(),'launch',1000,()=>ended);const lifecycle=createCodexReceiptLifecycle({launchReceipt,exited,hasExited:()=>ended,terminate:()=>child.kill('SIGTERM'),lookup:async()=>undefined,cleanupBudgetMs:1000});const launch=await launchReceipt,clean=await lifecycle.confirm();console.log(JSON.stringify({launch:launch??null,raw,clean,settlement:await lifecycle.settlementReceipt??null}));`;
+ const file=join(root,'probe.mjs');writeFileSync(file,source,{mode:0o600});const child=spawn(process.execPath,['--import','tsx',file],{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',b=>stdout+=b);child.stderr.on('data',b=>stderr+=b);const code=await new Promise<number|null>(r=>child.once('exit',r));assert.equal(code,0,stderr);assert.deepEqual(JSON.parse(stdout),{launch:null,raw:{code:17,signal:null},clean:false,settlement:null});
+ }finally{rmSync(root,{recursive:true,force:true});}
+});
+test('missing receipt bounded wait remains referenced after every producer handle has drained',async()=>{
+ const root=realpathSync(mkdtempSync(join(tmpdir(),'h041-receipt-bound-')));try{const start=performance.now();assert.equal(await waitCodexReceiptFile(root,process.getuid!(),'launch',40,()=>false),undefined);assert(performance.now()-start>=35);}finally{rmSync(root,{recursive:true,force:true});}
+});

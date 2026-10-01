@@ -225,3 +225,12 @@ def publish_settlement(config, producer, container, native_id, raw_exit, request
                containerName=container, containerId=native_id, engineExitStatus=raw_exit, requestedStop=requested_stop,
                cliReaped=cli_reaped, rmExit=rm_exit, existsExit=exists_exit, pipesJoined=pipes_joined,
                cleanupOk=cli_reaped and rm_exit == 0 and exists_exit == 1 and pipes_joined))
+
+
+def publish_failure(config, producer, phase, error):
+    """Out-of-band fixed phase/class/hash. No raw error, config, token or stderr."""
+    if phase not in ['bootstrap','spawn','inspect-launch','run','cleanup']:
+        raise ValueError('untrusted failure phase')
+    path,binding=config
+    result=dict(schema='codex-launch-failure-v1',nonce=binding['nonce'],sessionId=binding['sessionId'],runId=binding['runId'],producer=producer,phase=phase,errorClass=type(error).__name__,messageSha256=hashlib.sha256(str(error).encode()).hexdigest(),checkedAtMs=int(time.time()*1000))
+    write_once(path,'failure',result)

@@ -25,6 +25,10 @@ export interface OwnedCodexProcess {
     stdin: Writable;
     stdout: Readable;
     exited: Promise<void>;
+    /** Factual host child exit, never a native/cleanup qualification. */
+    /** Host-only OOB location; never native authority or a model/tool path. */
+    receiptChannelDirectory?: string;
+    exitObservation?: Promise<Readonly<{code:number|null;signal:NodeJS.Signals|null;spawnFailed:boolean}>>;
     launchReceipt?: Promise<CodexNativeLaunchReceipt | undefined>;
     traceReceipt?: Promise<CodexNativeTraceReceipt | undefined>;
     settlementReceipt?: Promise<CodexNativeSettlementReceipt | undefined>;
@@ -54,7 +58,8 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
         child.stderr.resume();
         let status: number | null | undefined;
         let spawnFailed = false;
-        const exited = new Promise<void>(resolve => { child.once("error", () => { spawnFailed = true; resolve(); }); child.once("exit", code => { status = code; resolve(); }); });
+        const exitObservation=new Promise<Readonly<{code:number|null;signal:NodeJS.Signals|null;spawnFailed:boolean}>>(resolve=>{child.once("error",()=>{spawnFailed=true;resolve(Object.freeze({code:null,signal:null,spawnFailed:true}));});child.once("exit",(code,signal)=>{status=code;resolve(Object.freeze({code,signal,spawnFailed:false}));});});
+        const exited=exitObservation.then(()=>undefined);
         const ended = () => status !== undefined || spawnFailed;
         const launchReceipt = channel ? (async () => {
             try { const value: any = await channel.wait("launch", 15000, ended); if (!value || !child.pid) return undefined;
@@ -68,11 +73,10 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
         }) : undefined;
         const settlementReceipt = lifecycle?.settlementReceipt;
         let cleanup: Promise<boolean> | undefined;
-        const owned: OwnedCodexProcess = { stdin: child.stdin, stdout: child.stdout, exited, launchReceipt, settlementReceipt, terminateAndConfirm() {
+        const owned: OwnedCodexProcess = { stdin: child.stdin, stdout: child.stdout, exited, receiptChannelDirectory:channel?.directory, exitObservation, launchReceipt, settlementReceipt, terminateAndConfirm() {
                 if (lifecycle) return lifecycle.confirm();
                 return cleanup ??= new Promise<boolean>(resolve => {
                     const timer = setTimeout(() => resolve(false), 45000);
-                    timer.unref();
                     if (status === undefined && !spawnFailed)
                         child.kill("SIGTERM");
                     void exited.then(() => { clearTimeout(timer); resolve(!spawnFailed && status === 0); });

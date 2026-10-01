@@ -97,6 +97,7 @@ def main():
     requested_stop = False
     receipt_config = receipts = producer = native_id = None
     rm_exit = exists_exit = None
+    failure_phase = "bootstrap"
     try:
         if os.environ.get('AI_HARNESS_CODEX_RECEIPT_DIR') or os.environ.get('AI_HARNESS_CODEX_RECEIPT_NONCE'):
             import runpy
@@ -107,6 +108,7 @@ def main():
             if receipt_config and receipt_config[1].get('nativeTraceMode'):
                 module=runpy.run_path(str(Path(__file__).resolve().with_name('codex_native_trace.py')))
                 trace=module['TraceCapture'](receipt_config)
+        failure_phase = "spawn"
         process = subprocess.Popen(args, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True)
         for source, destination in ((process.stdout, 1), (process.stderr, 2)):
@@ -114,8 +116,10 @@ def main():
             worker.start()
             filters.append(worker)
         if receipt_config is not None:
+            failure_phase = 'inspect-launch'
             launch = receipts['inspect_launch'](podman, container, args, receipt_config)
             native_id = launch['container']['id']
+        failure_phase = 'run'
         while not stopped.is_set():
             try:
                 code = process.wait(timeout=0.1)
@@ -128,7 +132,10 @@ def main():
         # A requested stop is acknowledged only after verified settlement below.
         # An already observed engine failure is never normalized by a signal.
         requested_stop = bool(received_signal[0]) and not engine_exited
-    except (OSError, ValueError, TypeError, KeyError, IndexError, subprocess.TimeoutExpired):
+    except (OSError, ValueError, TypeError, KeyError, IndexError, subprocess.TimeoutExpired) as error:
+        if receipt_config is not None and producer is not None:
+            try: receipts['publish_failure'](receipt_config,producer,failure_phase,error)
+            except (OSError,ValueError,TypeError,KeyError): pass
         os.write(2, b"run-engine: ACP process start failed\n")
     finally:
         # A second TERM must not interrupt cleanup and strand the container.

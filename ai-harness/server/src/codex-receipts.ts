@@ -106,10 +106,20 @@ export function createCodexReceiptChannel(input: { sessionId: string; runId: str
   const directory=mkdtempSync(join(root,'run-'));protectedDirectory(directory,uid);
   const binding: CodexReceiptBinding={nonce:randomBytes(32).toString('hex'),runId:input.runId,sessionId:input.sessionId,startedAtMs:Date.now(),uid,profileDir:input.profileDir,workspace:input.workspace,deploymentDir:deployment,imageJobsQualified:input.imageJobsQualified===true,gid:process.getgid!(),sources,...(input.nativeTraceMode?{nativeTraceMode:input.nativeTraceMode}:{})};
   writeFileSync(join(directory,'request.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
-  return { directory, binding, async wait(name: 'launch'|'settlement'|'trace', timeoutMs: number, ended: ()=>boolean): Promise<unknown|undefined> {
-    const deadline=Date.now()+timeoutMs;
-    while (Date.now()<deadline) { try { protectedDirectory(directory,uid); const ready=lstatSync(join(directory,name+'.ready')); if (!ready.isFile() || ready.isSymbolicLink() || ready.uid!==uid || (ready.mode&0o777)!==0o600 || ready.nlink!==1 || ready.size!==0) return undefined; const value = readCodexReceiptFile(join(directory,name+'.json'),uid); if (object(value)) transportReadObjects.add(value); return value; } catch(e) { if ((e as NodeJS.ErrnoException).code!=='ENOENT') return undefined; } if (ended()) return undefined; await new Promise<void>(r=>{const t=setTimeout(r,25);t.unref();}); } return undefined;
-  } };
+  return { directory, binding, wait: (name:'launch'|'settlement'|'trace'|'failure',timeoutMs:number,ended:()=>boolean)=>waitCodexReceiptFile(directory,uid,name,timeoutMs,ended) };
+}
+/** A bounded owned wait MUST keep Node alive until it settles. Neither a missing
+ * file nor an ended child becomes a native qualification/cleanup attestation. */
+export async function waitCodexReceiptFile(directory:string,uid:number,name:'launch'|'settlement'|'trace'|'failure',timeoutMs:number,ended:()=>boolean):Promise<unknown|undefined>{
+ if(!Number.isSafeInteger(timeoutMs)||timeoutMs<1||timeoutMs>120000||!['launch','settlement','trace','failure'].includes(name))throw Error('Invalid bounded receipt wait');
+ const deadline=performance.now()+timeoutMs;
+ while(performance.now()<deadline){
+  try{protectedDirectory(directory,uid);const ready=lstatSync(join(directory,name+'.ready'));if(!ready.isFile()||ready.isSymbolicLink()||ready.uid!==uid||(ready.mode&0o777)!==0o600||ready.nlink!==1||ready.size!==0)return undefined;const value=readCodexReceiptFile(join(directory,name+'.json'),uid);if(object(value))transportReadObjects.add(value);return value;}
+  catch(error){if((error as NodeJS.ErrnoException).code!=='ENOENT')return undefined;}
+  if(ended())return undefined;
+  await new Promise<void>(resolve=>setTimeout(resolve,Math.min(25,Math.max(1,deadline-performance.now()))));
+ }
+ return undefined;
 }
 
 /** Shares one cleanup and receipt promise. No settlement age limit while the owner is active. */
@@ -134,7 +144,7 @@ export function createCodexReceiptLifecycle(input: {
   let cleanup: Promise<boolean> | undefined;
   return { settlementReceipt, confirm() {
     return cleanup ??= (async () => {
-      const timer = setTimeout(expire, input.cleanupBudgetMs ?? 45000); timer.unref();
+      const timer = setTimeout(expire, input.cleanupBudgetMs ?? 45000);
       try { if (!input.hasExited()) input.terminate(); const receipt = await settlementReceipt; return receipt?.cleanupOk === true; }
       catch { expire(); return false; }
       finally { clearTimeout(timer); }
