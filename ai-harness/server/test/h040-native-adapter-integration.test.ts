@@ -13,9 +13,14 @@ import { NativeCollector } from '../../acceptance/compaction/native-adapter/coll
 import { DispatchGuard } from '../../acceptance/compaction/native-adapter/dispatch-guard.js';
 import { createSyntheticAdapter } from '../../acceptance/compaction/native-adapter/adapter.js';
 import { sha256 } from '../../acceptance/compaction/native-adapter/projection.js';
-const base = new URL('../../../../../B-retention-integration/repo/ai-harness/acceptance/compaction/', import.meta.url);
+const base = new URL('../../acceptance/compaction/', import.meta.url);
 const b = await import(new URL('scorer.mjs', base).href), bc = await import(new URL('controller.mjs', base).href), be = await import(new URL('evidence.mjs', base).href);
-const prefix = JSON.parse(await readFile(new URL('../../../../native-prefix.json', import.meta.url), 'utf8')).text;
+const auditedPrefix = JSON.parse(await readFile(new URL('./fixtures/h040-native-prefix.json', import.meta.url), 'utf8'));
+const prefix = auditedPrefix.text;
+assert.equal(auditedPrefix.bytes, 399);
+assert.equal(Buffer.byteLength(prefix, 'utf8'), 399);
+assert.equal(auditedPrefix.sha256, 'e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e');
+assert.equal(sha256(prefix), auditedPrefix.sha256);
 // Entire adapter.compact path with real Store/Files/checkpoint/connection/guard
 // and a clearly synthetic broker/stdin peer. Never qualifies native execution.
 test('SYNTHETIC actual E adapter.compact result passes B shape/scorer with native acceptance NOT_TESTED', async t => {

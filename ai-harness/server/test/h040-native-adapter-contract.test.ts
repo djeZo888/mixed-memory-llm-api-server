@@ -12,9 +12,14 @@ import { reviewedExpiry, FIXED_POLICY, STAGE_POLICY } from '../../acceptance/com
 import { reviewSnapshot, sha256, stableJson, summaryProbeText, extractPersistedSummary } from '../../acceptance/compaction/native-adapter/projection.js';
 import { normalizeNativeInput, bindReviewedEnvelope } from '../../acceptance/compaction/native-adapter/dispatch-guard.js';
 import { createNativeAdapter } from '../../acceptance/compaction/native-adapter/adapter.js';
-const b = await import(new URL('../../../../../B-retention-integration/repo/ai-harness/acceptance/compaction/scorer.mjs', import.meta.url).href);
-const bc = await import(new URL('../../../../../B-retention-integration/repo/ai-harness/acceptance/compaction/controller.mjs', import.meta.url).href);
-const prefix = JSON.parse(await readFile(new URL('../../../../native-prefix.json', import.meta.url), 'utf8')).text;
+const b = await import(new URL('../../acceptance/compaction/scorer.mjs', import.meta.url).href);
+const bc = await import(new URL('../../acceptance/compaction/controller.mjs', import.meta.url).href);
+const auditedPrefix = JSON.parse(await readFile(new URL('./fixtures/h040-native-prefix.json', import.meta.url), 'utf8'));
+const prefix = auditedPrefix.text;
+assert.equal(auditedPrefix.bytes, 399);
+assert.equal(Buffer.byteLength(prefix, 'utf8'), 399);
+assert.equal(auditedPrefix.sha256, 'e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e');
+assert.equal(sha256(prefix), auditedPrefix.sha256);
 test('SYNTHETIC independently B-derived projection equals E exact constructor/typed manifest and metadata bindings', () => {
   const input = [{ type: 'message', id: 'developer-native-id', role: 'developer', phase: 'commentary', content: [{ type: 'input_text', text: 'frozen scaffold', annotations: [] }] }];
   assert.equal(b.stableJson({ z: { b: 2, a: 1 }, a: 'bytes\nunchanged' }), stableJson({ z: { b: 2, a: 1 }, a: 'bytes\nunchanged' }));

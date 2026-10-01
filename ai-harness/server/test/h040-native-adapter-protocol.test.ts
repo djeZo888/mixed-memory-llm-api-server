@@ -10,7 +10,7 @@ import { DispatchGuard } from '../../acceptance/compaction/native-adapter/dispat
 import { sha256, stableJson, summaryProbeText } from '../../acceptance/compaction/native-adapter/projection.js';
 import { translateResponses } from '../src/codex-responses.js';
 const native = JSON.parse(await readFile(new URL('./fixtures/codex/native-requests.json', import.meta.url), 'utf8'))[0].body;
-const b = await import(new URL('../../../../../B-retention-integration/repo/ai-harness/acceptance/compaction/scorer.mjs', import.meta.url).href);
+const b = await import(new URL('../../acceptance/compaction/scorer.mjs', import.meta.url).href);
 // SYNTHETIC protocol and counter. Production parser/translator/guard/stdio tap
 // execute; no native/model/container/mount or token measurement is qualified.
 async function fixture(t: any, opts: any = {}) {

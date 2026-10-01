@@ -14,8 +14,13 @@ import { translateResponses } from '../src/codex-responses.js';
 import { sha256 } from '../../acceptance/compaction/native-adapter/projection.js';
 // SYNTHETIC peers only. Real stdio parser, Store, Files, translator and fsynced
 // registry execute. No native binary or provider is started or qualified.
-const b = await import(new URL('../../../../../B-retention-integration/repo/ai-harness/acceptance/compaction/scorer.mjs', import.meta.url).href);
-const prefix = JSON.parse(await readFile(new URL('../../../../native-prefix.json', import.meta.url), 'utf8')).text;
+const b = await import(new URL('../../acceptance/compaction/scorer.mjs', import.meta.url).href);
+const auditedPrefix = JSON.parse(await readFile(new URL('./fixtures/h040-native-prefix.json', import.meta.url), 'utf8'));
+const prefix = auditedPrefix.text;
+assert.equal(auditedPrefix.bytes, 399);
+assert.equal(Buffer.byteLength(prefix, 'utf8'), 399);
+assert.equal(auditedPrefix.sha256, 'e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e');
+assert.equal(sha256(prefix), auditedPrefix.sha256);
 async function fixture(t: any, opts: any = {}) {
   const root = await realpath(await mkdtemp(join(tmpdir(), 'h040-native-adapter-collector-')));
   const privateDir = join(root, 'private'), captures = join(privateDir, 'captures');
