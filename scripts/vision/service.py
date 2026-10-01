@@ -78,8 +78,8 @@ def ident(v):
     return v
 
 
-def text(v, cap=65536):
-    if not isinstance(v, str) or not v or len(v) > cap or '\0' in v:
+def text(v, cap=8192):
+    if not isinstance(v, str) or not v or len(v.encode('utf-16-le','surrogatepass'))//2 > cap or re.search(r'[\x00-\x08\x0b\x0c\x0e-\x1f\x7f]',v) or re.search(r'data:(?:image|application)/[^;]+;base64,',v,re.I):
         raise Reject()
     return v
 
@@ -318,7 +318,7 @@ def validate_result(r, source, service):
     """Mirror H039 evidence/graph validation; refuse extra model fields."""
     obj(r, ('schemaVersion','service','source','description','evidence','extraction','observations','uncertainties','derivedConclusions','electricalNetReconstruction'))
     if type(r['schemaVersion']) is not int or r['schemaVersion']!=1 or r['service']!=service or r['source']!=source or r['electricalNetReconstruction']!='not_qualified':raise Reject('invalid_evidence')
-    text(r['description']);all_ids={};ev=set()
+    text(r['description'],65536);all_ids={};ev=set()
     def register(k,kind):
         ident(k)
         if k in all_ids:raise Reject('invalid_evidence')

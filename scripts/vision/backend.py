@@ -87,7 +87,8 @@ class LocalVisionBackend:
                 if type(choice['index']) is not int or choice['index']!=0 or choice['finish_reason']!='stop':raise Reject()
                 message=obj(choice['message'],('role','content'),('reasoning_content','refusal','tool_calls'))
                 if message['role']!='assistant' or message.get('tool_calls') or message.get('refusal'):raise Reject()
-                literal=text(message['content'])
+                literal=message['content']
+                if not isinstance(literal,str) or not literal or len(literal)>65536:raise Reject()
             except Reject:raise BackendFailure(False) # no well-formed completion proof
             checkpoint(dict(kind='model_response',role=role,model=model,revision=self.service['interpreter' if role=='interpretation' else 'parser']['revision'],responseSha256=digest(raw),response=data,literalText=literal,**context))
             return literal
@@ -120,7 +121,7 @@ class LocalVisionBackend:
             if cancel.is_set():return Outcome(None,True)
             try:
                 from service import parse_json
-                q=obj(parse_json(literal.encode()),('description','uncertainties','derivedConclusions'));descriptions.append(text(q['description']))
+                q=obj(parse_json(literal.encode()),('description','uncertainties','derivedConclusions'));descriptions.append(text(q['description'],65536))
                 for u in arr(q['uncertainties'],32):
                     counter+=1;result['uncertainties'].append(dict(id=f'qwen-uncertainty-{counter}',description=text(u),evidenceIds=[eid],affectedIds=[]))
                 for d in arr(q['derivedConclusions'],32):

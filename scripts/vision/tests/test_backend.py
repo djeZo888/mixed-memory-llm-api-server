@@ -22,6 +22,7 @@ class BackendTests(unittest.TestCase):
                 outer.assertEqual(self.path,'/v1/chat/completions');outer.assertEqual(self.headers['Authorization'],'Bearer fixture-backend-key-0001')
                 body=parse_json(self.rfile.read(int(self.headers['Content-Length'])),60*1024*1024);outer.requests.append(body)
                 model=body['model'];literal='R1  10 kΩ\n  Vcc\n' if model==PADDLE else json.dumps(dict(description='Fixture Qwen response',uncertainties=['Unclear crossing'],derivedConclusions=['Possible resistor']))
+                if outer.mode=='long-ocr' and model==PADDLE:literal='x'*8193
                 if outer.mode=='bad-json' and model==QWEN:literal='```not json```'
                 payload=dict(model=model,choices=[dict(index=0,message=dict(role='assistant',content=literal),finish_reason='stop')])
                 if outer.mode=='wrong-model':payload['model']='other'
@@ -85,6 +86,10 @@ class BackendTests(unittest.TestCase):
         with self.assertRaises(BackendFailure) as e:self.backend.execute(m,{1:p['page-1'][1]},threading.Event(),time.monotonic()+2,self.evidence.append)
         self.assertTrue(e.exception.settled);self.assertEqual(self.requests,[])
 
+    def test_long_literal_ocr_private_history_preserved_public_failure_settled(self):
+        self.mode='long-ocr'
+        with self.assertRaises(BackendFailure) as e:self.run_backend()
+        self.assertTrue(e.exception.settled);self.assertEqual(self.evidence[-1]['literalText'],'x'*8193);self.assertEqual(self.evidence[-1]['response']['choices'][0]['message']['content'],'x'*8193);self.assertEqual(len(self.requests),2)
     def test_backend_rejects_changed_page_bytes_before_any_dispatch(self):
         m,p=fixture()
         with self.assertRaises(BackendFailure) as e:self.backend.execute(m,{1:p['page-1'][1]+b'changed'},threading.Event(),time.monotonic()+2,self.evidence.append)

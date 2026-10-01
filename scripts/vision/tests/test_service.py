@@ -129,6 +129,13 @@ class ServiceTests(unittest.TestCase):
         with self.assertRaises(Reject):runtime_profile(m)
         m,_=fixture();m['source']['crops']=[{**m['source']['crops'][0],'id':f'crop-{n}'} for n in range(8)];runtime_profile(m);m['source']['crops'].append({**m['source']['crops'][0],'id':'crop-9'})
         with self.assertRaises(Reject):runtime_profile(m)
+    def test_public_text_limits_match_ts_without_truncation(self):
+        m,_=fixture();r=minimal_result(m);r['evidence']=[dict(id='e',page=1,box=dict(x=0,y=0,width=4,height=3))];r['extraction']['text']=[dict(id='t',kind='text',exactText='x'*8192,evidenceIds=['e'])]
+        validate_result(r,m['source'],SERVICE)
+        for literal in ['x'*8193,'bad\x01control','data:image/png;base64,AAAA','😀'*4097]:
+            r['extraction']['text'][0]['exactText']=literal
+            with self.assertRaises(Reject):validate_result(r,m['source'],SERVICE)
+        r['extraction']['text'][0]['exactText']='tab\tline\r\n';r['description']='x'*65536;validate_result(r,m['source'],SERVICE)
     def test_unexpected_worker_death_closes_admission(self):
         def die(*args):raise SystemExit('injected unexpected worker death')
         self.backend.execute=die;job=self.admit('worker-death');end=time.monotonic()+1
