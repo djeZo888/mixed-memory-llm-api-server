@@ -440,6 +440,7 @@ class Controller:
     def __init__(self, bmc, store):
         self.bmc, self.store = bmc, store
         self.expected = None
+        self.desired = None
         self.baseline = store.read('baseline.json')
         self.proof = store.read('status.json') or {}
         if type(self.proof.get('readback_duty')) is int:
@@ -477,7 +478,9 @@ class Controller:
             raise LoweringCancelled()
     def command(self, s, current, desired):
         payload(s, desired)  # Reject a legacy/new forbidden target before intent writes.
+        self.desired = desired
         if desired == current:
+            self.expected = current  # Caller just independently inspected this readback.
             return s, current
         s, fresh_duty = self.inspect()
         if fresh_duty != current:
@@ -498,6 +501,7 @@ class Controller:
             if readback != desired:
                 raise Fault('bmc_write_readback_mismatch')
             self.store.write('pending-write.json', dict(intent, state='verified', readback_at=utc()))
+            self.expected = readback
             return after, readback
         except LoweringCancelled:
             self.expected = current
@@ -515,7 +519,7 @@ class Controller:
         self.proof = {'schema_version': 1, 'gpu_uuid': GPU, 'host_boot_id': self.host_boot,
           'pid': os.getpid(), 'source_sha256': self.source_sha, 'started_at': self.started_at,
           'updated_at': utc(), 'state': state, 'errors': [error] if error else [],
-          'desired_duty': self.expected, 'readback_duty': duty,
+          'desired_duty': self.desired, 'confirmed_expected_duty': self.expected, 'readback_duty': duty,
           'readback_kind': 'first_four_curve_duties_not_measured_pwm',
           'readback_at': self.readback_at if duty is not None else previous.get('readback_at'),
           'last_known_readback_duty': duty if duty is not None else previous.get('last_known_readback_duty'),
@@ -549,12 +553,12 @@ class Controller:
         self.policy = Policy()  # Outage never counts toward the cool dwell.
 
     def high(self, check_expected=False):
+        self.desired = HIGH_DUTY
         self.reconcile_pending()
         s, duty = self.inspect()
         if check_expected and self.expected is not None and duty != self.expected:
             raise Fault('competing_writer_or_overwrite')
-        self.expected = HIGH_DUTY
-        return self.command(s, duty, self.expected)[1]
+        return self.command(s, duty, HIGH_DUTY)[1]
     def terminal(self, error):
         # Persist intent before ONE safe-high attempt. Restart/ExecStopPost must not fight.
         self.store.write('blocked.json', {'at': utc(), 'reason': error, 'high_attempt_reserved': True})
@@ -580,7 +584,7 @@ class Controller:
         except Exception as e:
             error = str(e) if isinstance(e, Fault) else 'telemetry_unavailable'
         desired = self.policy.decide(observed, current, time.monotonic() if now is None else now)
-        self.expected = desired
+        self.desired = desired
         _, duty = self.command(s, current, desired)
         self.status('healthy' if observed else 'degraded_high', duty, observed, error, self.bmc.tach())
 

@@ -251,6 +251,48 @@ class ControllerTests(unittest.TestCase):
         for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=60
         with self.assertRaisesRegex(f.Fault,'competing_writer'):c.command(old,40,f.HIGH_DUTY)
         self.assertEqual(b.puts,0)
+    def test_pre_intent_low_to_hot_transport_failure_does_not_invent_overwrite(self):
+        c,b,s=self.make(40);c.inspect();c.expected=40;c.recovering=False
+        original=b.snapshot;calls=[0]
+        def fail_second():
+            calls[0]+=1
+            if calls[0]==2:raise f.Fault('bmc_transport_unavailable')
+            return original()
+        with patch.object(b,'snapshot',side_effect=fail_second):
+            self.assertFalse(c.cycle(FakeNode(70)))
+        self.assertEqual(b.duties,[100]);self.assertEqual(c.expected,100)
+        self.assertEqual(c.proof['desired_duty'],100)
+        self.assertEqual(c.proof['confirmed_expected_duty'],100)
+        self.assertIsNone(s.read('blocked.json'))
+    def test_pre_intent_high_to_low_failure_preserves_confirmed_high(self):
+        c,b,s=self.make(100);c.start();c.recovering=False
+        for t in range(0,30,5):c.step(FakeNode(65),t)
+        original=b.snapshot;calls=[0]
+        def fail_second():
+            calls[0]+=1
+            if calls[0]==2:raise f.Fault('bmc_transport_unavailable')
+            return original()
+        with patch.object(b,'snapshot',side_effect=fail_second):
+            with self.assertRaisesRegex(f.Fault,'bmc_transport_unavailable'):c.step(FakeNode(65),30)
+        self.assertEqual(c.expected,100);self.assertEqual(c.desired,40)
+        self.assertIsNone(s.read('pending-write.json'));self.assertEqual(b.puts,0)
+        self.assertEqual(c.high(check_expected=True),100);self.assertEqual(b.puts,0)
+    def test_high_pre_intent_failure_retains_confirmed_low_and_real_overwrite_blocks(self):
+        c,b,s=self.make(40);c.inspect();c.expected=40
+        original=b.snapshot;calls=[0]
+        def fail_second():
+            calls[0]+=1
+            if calls[0]==2:raise f.Fault('bmc_transport_unavailable')
+            return original()
+        with patch.object(b,'snapshot',side_effect=fail_second):
+            with self.assertRaisesRegex(f.Fault,'bmc_transport_unavailable'):c.high(check_expected=True)
+        c.status('degraded_unknown',None,error='bmc_transport_unavailable')
+        self.assertEqual(c.expected,40);self.assertEqual(c.proof['desired_duty'],100)
+        self.assertEqual(c.proof['confirmed_expected_duty'],40)
+        self.assertIsNone(s.read('pending-write.json'));self.assertEqual(b.puts,0)
+        for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=80
+        with self.assertRaisesRegex(f.Fault,'competing_writer_or_overwrite'):c.high(check_expected=True)
+        self.assertEqual(b.puts,0);self.assertEqual(c.expected,40)
     def test_readback_mismatch_latches_bounded(self):
         c,b,s=self.make();b.reject=True
         with self.assertRaisesRegex(f.Fault,'write_uncertain'):c.start()
