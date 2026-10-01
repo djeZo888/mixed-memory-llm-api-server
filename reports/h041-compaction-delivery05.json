@@ -1,0 +1,885 @@
+{
+  "phase": "H041-SOURCE-FINAL-INTEGRATION-05",
+  "candidateCommit": "3c140dabdad7d13875eae23a2776416e3882b7e8",
+  "ownedSourceCommits": [
+    "382f396f8d9353d3a1a6b1613e60fa63aa11e295",
+    "3c140dabdad7d13875eae23a2776416e3882b7e8"
+  ],
+  "reportCommit": null,
+  "rootBaseTarget": "37e91014be2f0422837621f51fcf04a37095e6e2",
+  "ancestryBase": "213634e39955929674d21dbe04d192cf1a3b2e9c",
+  "sourceStatus": "OWNED_SOURCE_CHECKS_PASS_COMBINED_PARTIAL",
+  "nativeAcceptance": "NOT_TESTED",
+  "defaultCapabilities": [],
+  "liveGo": false,
+  "changedPaths": [
+    "ai-harness/acceptance/compaction/authorization.d.mts",
+    "ai-harness/acceptance/compaction/authorization.mjs",
+    "ai-harness/acceptance/compaction/automatic-evidence.d.mts",
+    "ai-harness/acceptance/compaction/automatic-evidence.mjs",
+    "ai-harness/acceptance/compaction/evidence.d.mts",
+    "ai-harness/acceptance/compaction/native-adapter/README.md",
+    "ai-harness/acceptance/compaction/native-adapter/automatic.ts",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts",
+    "ai-harness/acceptance/compaction/native-adapter/browser-evidence.ts",
+    "ai-harness/acceptance/compaction/native-adapter/count-observer.ts",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts",
+    "ai-harness/acceptance/compaction/native-adapter/entry.ts",
+    "ai-harness/acceptance/compaction/native-adapter/ordinary-client.ts",
+    "ai-harness/acceptance/compaction/native-adapter/ordinary-runner.ts",
+    "ai-harness/acceptance/compaction/native-adapter/policy-selection.ts",
+    "ai-harness/acceptance/compaction/native-adapter/qualification.ts",
+    "ai-harness/acceptance/compaction/native-adapter/supplement-template.mjs",
+    "ai-harness/acceptance/compaction/ordinary.mjs",
+    "ai-harness/server/test/h041-native-adapter-source05.test.ts"
+  ],
+  "changedSha256": {
+    "ai-harness/acceptance/compaction/authorization.d.mts": "432542bfce4bbe78144747362d1b65032bd3fd07e13dd2398bb5d9d9131fc941",
+    "ai-harness/acceptance/compaction/authorization.mjs": "fb8645972ced748fa5a4929a1ecf6dc5ac316d43d5a77126b9541af7bf431900",
+    "ai-harness/acceptance/compaction/automatic-evidence.d.mts": "391bf9202bf91f49e1e68a05dad25fb82fac4d16c19dbad8cc33d0be079d1959",
+    "ai-harness/acceptance/compaction/automatic-evidence.mjs": "4e59a58e804f4e72d78c4eb90eea08d7e4bb4fa0fbb8a11c7fc11bed2b3a0d9a",
+    "ai-harness/acceptance/compaction/evidence.d.mts": "9edfa3a343fd1a05f7c5646e68f839c8d642b7d29cdbf90b0cbc67bc628a3b1e",
+    "ai-harness/acceptance/compaction/native-adapter/README.md": "87e2c4474d3a2899b1f5aa803b1afd121afe828200ea7e454ab755e2b6f91735",
+    "ai-harness/acceptance/compaction/native-adapter/automatic.ts": "75a514e1df0cfb6f7975d37f077f29acfd781ae095c1f33f00975892ea9944fe",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts": "9ed93bba992922940151163592fed249c4ac4dcc9cda34b6718dd85904d34c9c",
+    "ai-harness/acceptance/compaction/native-adapter/browser-evidence.ts": "9e65d6c4cd6f81e3e7a873c0b9982cf2c9d26fd26134298054942e1221df09df",
+    "ai-harness/acceptance/compaction/native-adapter/count-observer.ts": "7601bf613a66ebe77ddc7fe43f36177018f54f313d6cb4206d460f5cdf305e6f",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts": "316c39da41bcd726fb9d1cc80bd02b391fd9dd620c4d099c227076b2d27812cc",
+    "ai-harness/acceptance/compaction/native-adapter/entry.ts": "c817d40c941c0763f09dffdbe9dbe97937a08a7ef84afd54a8910bc69a36ed45",
+    "ai-harness/acceptance/compaction/native-adapter/ordinary-client.ts": "773fc2edd2f6a1c727df2a7a05121913d2bdbf7c8a7196815650813b6b5965cc",
+    "ai-harness/acceptance/compaction/native-adapter/ordinary-runner.ts": "301746840460c86ec0256cad3318f873bb7051587ceb952ef331455552719400",
+    "ai-harness/acceptance/compaction/native-adapter/policy-selection.ts": "2e68145f24cd192eae82810d75fe615b516ef05b40b33eb9e1adea0b3eb307ff",
+    "ai-harness/acceptance/compaction/native-adapter/qualification.ts": "318f13594861d0241ca5fab3105493d5f9a00b4ac039c16e94e11d56edf01c4a",
+    "ai-harness/acceptance/compaction/native-adapter/supplement-template.mjs": "7c0452e82b010a2ab91197d1575ebdf81b17bbea7f5c863a7d4be877a8bf79fa",
+    "ai-harness/acceptance/compaction/ordinary.mjs": "1d9ab848998e078a7de57da6345e8b564bf7442883a8543b12957bfcd0313880",
+    "ai-harness/server/test/h041-native-adapter-source05.test.ts": "b2bd65aeedd54547c5ca67402a71cd2e5d6646618bc252850159b4e0950c768a"
+  },
+  "sourceProvenance": {
+    "adoptedE": [
+      "78ccaa95581ca8751c4549788972c59c73bf5f5e",
+      "9266b438af3de752f5db8ef0fb3b7b4fe28f3b82"
+    ],
+    "importedAOriginals": [
+      "3130aa6",
+      "02250df",
+      "d5eda2b25cbef6e965e2e26c117dc03a54c00747",
+      "86bebb212ce1a5f6d0a9e74c9d5a638413182ac5"
+    ],
+    "localA": [
+      "e826bf29",
+      "eca89965",
+      "086ff23",
+      "50bb0bc"
+    ],
+    "previousActualEClosure": "0/0 adopted from root source04; earlier -15/143 preserved"
+  },
+  "additionalActualFailure": {
+    "argv": [
+      "git",
+      "fetch",
+      "../A-FULL-ANCESTRY-02250df.bundle",
+      "refs/h041/a-source04-final02250df"
+    ],
+    "exit": 128,
+    "failure": "named ref absent; actual HEAD fetched instead",
+    "timestamp": null,
+    "provenance": "actual early tool receipt, not in command logger"
+  },
+  "build": {
+    "manifestSha256": "4337263aef7b617cfa580ceced9cedef8771eafd4365473f62d5e9201efa7a7e",
+    "sourceFiles": 155,
+    "runtimeFiles": 116,
+    "helperFiles": 36,
+    "dependencyFiles": 4034,
+    "compilerExit": 0,
+    "webManifestSha256": "f748e7fc0298a44fd7ead9a45978c2b4edbb88e09c245cf21fa0a76b87c6b300",
+    "platform": "darwin",
+    "linuxQualification": "NOT_TESTED"
+  },
+  "remainingGates": [
+    "Root exact combined source/build/config/owner review and explicit later phase GO.",
+    "A-owned stop/drain product regression and shutdown-source assertion: first full1331/1321pass/6fail/4skip; successor affected140/133pass/7fail. Retain actual failures; import only actual A fix then targeted checks.",
+    "Actual normal-product OrdinaryHost in owned process: real Store/Gateway/count/stdio/capture bridge; protected browser click/CDP and SSE consumer qualification. Temporary private app does not prove production.",
+    "Independent normal whole-application restart and fresh no-replay recovery producer verifier; O5/O7 remain NOT_TESTED, never qualify string presence.",
+    "Actual model/tokenizer six-pin provenance remains unknown; do not fabricate Hub/source revisions from local artifact hash.",
+    "Actual Linux rootless runtime, current loaded Qwen route/admission/mount/egress/tool/envelope and same-parent child/runtime transport qualification.",
+    "Native9-action56fact49critical manual stage then39-action72fact62critical full mandatory suite including retrieval/artifacts/accepted cold resume/child before ONE automatic case.",
+    "Exact native400000 trigger requires actual resolved Total/effective budget/fallback0/token-budgetoff config and current native active-context/history estimate provenance, not a positive compaction request count. No normal producer caller currently supplies these.",
+    "Installed Chrome source browser fixtures12pass/3fail; default bundled browser15 launch failures absent executable. Product/browser native acceptance NOT_TESTED."
+  ],
+  "prospectiveNativeIds": null,
+  "prospectiveProofIds": null,
+  "actualNativeExit": null,
+  "actualOuterExit": null,
+  "settings": {
+    "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "sourceDeadlineUtc": "2026-10-01T12:15:00+00:00",
+    "nativePin": "0.158.0/064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "automaticLimit": 400000,
+    "output": 65536
+  },
+  "commands": [
+    {
+      "name": "strict05-initial",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json",
+        "--noEmit"
+      ],
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "b9097c96a413a2302e14867edded24c91cb3329e9d531d9b2eb14caebb4a0550",
+      "failedCases": []
+    },
+    {
+      "name": "strict05-helpers",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json",
+        "--noEmit"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failedCases": []
+    },
+    {
+      "name": "source05-changed",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-source05.test.ts"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "21602b30ca190b73c0562dbef61957045effe71e7c1b40ea96b431de07ce9040",
+      "failedCases": [
+        "SOURCE real normal app original endpoints and human CAS consumer, no native execution"
+      ]
+    },
+    {
+      "name": "source05-changed-host",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-source05.test.ts"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "tests": 6,
+        "pass": 5,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "e1994642204bc692c5af3450e952d0c856d959a795b8de5f1ead862b7497760e",
+      "failedCases": [
+        "SOURCE real normal app original endpoints and human CAS consumer, no native execution"
+      ]
+    },
+    {
+      "name": "source05-changed-origin",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-source05.test.ts"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "8257607794415a23e1619e9951f03638a5d5e964216606da4f2bdd8479bb596d",
+      "failedCases": []
+    },
+    {
+      "name": "strict05-final",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failedCases": []
+    },
+    {
+      "name": "docs-tests",
+      "argv": [
+        "python3",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests/ci",
+        "-p",
+        "test_markdown_links.py",
+        "-v"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 4,
+        "skipped": 0,
+        "exit": 0
+      },
+      "logSha256": "725c1bb674ba8f140b5fcf81d77a2eda9f18d9ee2186296408e1ab8a082bd815",
+      "failedCases": []
+    },
+    {
+      "name": "docs-links",
+      "argv": [
+        "python3",
+        "scripts/ci/check_markdown_links.py"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "7608aeb77874fb61729eb7a6d7ce65ec9223563c074a6cc114dc14f0a09329fb",
+      "failedCases": []
+    },
+    {
+      "name": "web-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "c1c78febcb8d8c420936dbc10d825a7e715925afe5b9628b6b5bdd1ebb249a60",
+      "failedCases": []
+    },
+    {
+      "name": "server-strict",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "failedCases": []
+    },
+    {
+      "name": "server-build",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "35089eeb4e6097bb087e8c050db80ac802cb01ecb4ba684fffcb35e57da50d91",
+      "failedCases": []
+    },
+    {
+      "name": "web-tests",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 256,
+        "pass": 256,
+        "fail": 0
+      },
+      "logSha256": "5b7f64011359c5b95f10eb432b2fdb54ba4d07d111be563c44b11c97cdcf2374",
+      "failedCases": []
+    },
+    {
+      "name": "sealed-build",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05/repo/../output/build-source05"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "511386af888cb66ea8559965bc1e8b6898d7699af31e55963c6e019ccbf1bcc3",
+      "failedCases": []
+    },
+    {
+      "name": "clients-a1",
+      "argv": [
+        "python3",
+        "-W",
+        "error::ResourceWarning",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_agent*.py",
+        "-v"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 97,
+        "skipped": 0,
+        "exit": 0
+      },
+      "logSha256": "3ad2993a4a282b8896bfe44545c296c5fd4c39c7a3b2d971a14f0e299ecb7c01",
+      "failedCases": []
+    },
+    {
+      "name": "clients-bootstrap",
+      "argv": [
+        "python3",
+        "-W",
+        "error::ResourceWarning",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "scripts/client/tests",
+        "-p",
+        "test_*.py",
+        "-v"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 153,
+        "skipped": 1,
+        "exit": 0
+      },
+      "logSha256": "644da23dadfd4219a174cd412dce9485c3adaac5b4a44c43ef6cd6743aa08ea0",
+      "failedCases": []
+    },
+    {
+      "name": "server-full",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "tests": 1331,
+        "pass": 1321,
+        "fail": 6,
+        "cancelled": 0,
+        "skipped": 4,
+        "todo": 0
+      },
+      "logSha256": "5c3d7a1d32864c19fbc31b850e6ee145f0fdb1ccec35792e4fdb69ee70d395d6",
+      "failedCases": [
+        "Stop interrupted: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "Stop failed: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "native cleanup false fails promptly without entering gateway observation or releasing followup",
+        "native cleanup reject fails promptly without entering gateway observation or releasing followup",
+        "Codex Stop uncertain fails closed and cannot admit a followup or become success on a late settled record",
+        "Codex Stop ledger fails closed and cannot admit a followup or become success on a late settled record",
+        "Stop interrupted: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "Stop failed: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "native cleanup false fails promptly without entering gateway observation or releasing followup",
+        "native cleanup reject fails promptly without entering gateway observation or releasing followup",
+        "Codex Stop uncertain fails closed and cannot admit a followup or become success on a late settled record",
+        "Codex Stop ledger fails closed and cannot admit a followup or become success on a late settled record"
+      ]
+    },
+    {
+      "name": "supplemental-template",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/supplement-template.mjs",
+        "--template"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "33d4ada1ec930c4692eb80c1c93de710a0d94e779871de92941dcf1cb76269f6",
+      "failedCases": []
+    },
+    {
+      "name": "browser-source-fixture",
+      "argv": [
+        "npm",
+        "run",
+        "test:browser"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "fail": 15,
+        "pass": 0,
+        "tests": 15
+      },
+      "logSha256": "6684ab98596b621ab824541db3e587622dc595879f64d1a3b383a0beffdce7c9",
+      "failedCases": []
+    },
+    {
+      "name": "strict05-successor",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failedCases": []
+    },
+    {
+      "name": "combined-affected05",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h041-compaction-ordinary.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts",
+        "test/h041-native-adapter-source03.test.ts",
+        "test/h041-native-adapter-source04.test.ts",
+        "test/h041-native-adapter-source05.test.ts",
+        "test/codex-stop-drain.test.ts",
+        "test/codex-probe.test.ts",
+        "test/h041-production-memory.test.ts",
+        "test/h041-production-recovery.test.ts",
+        "test/broker.test.ts"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "tests": 140,
+        "pass": 133,
+        "fail": 7,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "d7034deff534f788254bc53ea51703c204e5f11cf6e6d362feb5d51d1ea65c02",
+      "failedCases": [
+        "Stop interrupted: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "Stop failed: cancelling beyond 15s, no terminal event or followup dispatch before durable drain",
+        "shutdown abort before broker.close ends pending and future observation false without releasing drain",
+        "native cleanup false fails promptly without entering gateway observation or releasing followup",
+        "native cleanup reject fails promptly without entering gateway observation or releasing followup",
+        "Codex Stop uncertain fails closed and cannot admit a followup or become success on a late settled record",
+        "Codex Stop ledger fails closed and cannot admit a followup or become success on a late settled record"
+      ]
+    },
+    {
+      "name": "web-build-A86",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "4560742f183420ecfd978cfcb39c41c6a17821a570dc9d0fff3bde5ccd2c7ab1",
+      "failedCases": []
+    },
+    {
+      "name": "strict05-sealed",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "failedCases": []
+    },
+    {
+      "name": "server-strict-A86",
+      "argv": [
+        "npm",
+        "run",
+        "typecheck"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "625b7e53b042e469998ad1d08b1e6745dd79558b9e3fcc03af5c1f2bd0c9463d",
+      "failedCases": []
+    },
+    {
+      "name": "server-build-A86",
+      "argv": [
+        "npm",
+        "run",
+        "build"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "35089eeb4e6097bb087e8c050db80ac802cb01ecb4ba684fffcb35e57da50d91",
+      "failedCases": []
+    },
+    {
+      "name": "web-test-A86",
+      "argv": [
+        "npm",
+        "test"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 257,
+        "pass": 257,
+        "fail": 0
+      },
+      "logSha256": "406e789ea7cedbb904479ec20d7f4d6b81d8bb68de16aae2472567bd721fff63",
+      "failedCases": []
+    },
+    {
+      "name": "sealed-build-successor",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05/repo/../output/build-source05-final"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "1309968f064598051c831cdd05e0c70e86a5959473d6feeb5f8c0784e2693f04",
+      "failedCases": []
+    },
+    {
+      "name": "owned-acceptance05",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-compaction-retention.test.ts",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h041-compaction-ordinary.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts",
+        "test/h041-native-adapter-source03.test.ts",
+        "test/h041-native-adapter-source04.test.ts",
+        "test/h041-native-adapter-source05.test.ts"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 150,
+        "pass": 150,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "d76aafddce594112752c7b49883b1af0377b703769f3625965c94535e868e53f",
+      "failedCases": []
+    },
+    {
+      "name": "browser-source-installed-chrome",
+      "argv": [
+        "npm",
+        "run",
+        "test:browser"
+      ],
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "counts": {
+        "fail": 3,
+        "pass": 12,
+        "tests": 15
+      },
+      "logSha256": "48897ac737c91cb7c2f53b4a726124c882fe5f9aebfeff1a55e633e935c40db3",
+      "failedCases": []
+    },
+    {
+      "name": "repository-web-closure",
+      "argv": [
+        "python3",
+        "../output/closure-check.py"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "10f03a605bf75c43302ad25a929676cb7e3881fb1606cb72f52bf37b90dc96d1",
+      "failedCases": []
+    },
+    {
+      "name": "final-safety-check",
+      "argv": [
+        "node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-source05.test.ts",
+        "test/h041-compaction-ordinary.test.ts"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": 10,
+        "pass": 10,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "logSha256": "a27888cc128766b6985da9fd50f6604423c608f8d0f5e11e33fde452e800285d",
+      "failedCases": []
+    },
+    {
+      "name": "final-safety-build",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05/repo/../output/build-source05-sealed"
+      ],
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "logSha256": "0f09ab56f94a11274c4d6fa912ebcf7eecbe0f6ad72838b3ba001e061551eec7",
+      "failedCases": []
+    }
+  ]
+}
