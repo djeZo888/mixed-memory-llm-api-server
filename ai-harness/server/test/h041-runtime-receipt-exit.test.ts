@@ -11,3 +11,6 @@ test('actual local child17 with missing launch ready settles awaited receipt and
 test('missing receipt bounded wait remains referenced after every producer handle has drained',async()=>{
  const root=realpathSync(mkdtempSync(join(tmpdir(),'h041-receipt-bound-')));try{const start=performance.now();assert.equal(await waitCodexReceiptFile(root,process.getuid!(),'launch',40,()=>false),undefined);assert(performance.now()-start>=35);}finally{rmSync(root,{recursive:true,force:true});}
 });
+
+import {PassThrough} from 'node:stream';import {captureCodexLauncherDiagnostics} from '../src/codex-launcher.js';
+test('private original launcher failure stderr is armed before await, copied byte-exact and bounded with explicit loss',async()=>{const stream=new PassThrough(),capture=captureCodexLauncherDiagnostics(stream),first=Buffer.from('run-engine: ACP process start failed\n');stream.write(first);first.fill(120);stream.end();const actual=await capture;assert.equal(actual.bytes.toString(),'run-engine: ACP process start failed\n');assert.equal(actual.complete,true);assert.equal(actual.truncated,false);const overflow=new PassThrough(),bounded=captureCodexLauncherDiagnostics(overflow);overflow.end(Buffer.alloc(70000,120));const result=await bounded;assert.equal(result.bytes.length,65536);assert.equal(result.truncated,true);});
