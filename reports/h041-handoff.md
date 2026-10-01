@@ -1,0 +1,5 @@
+# H041 compaction continuation
+
+The user requested further Codex implementation to finish, focused on context compaction. Read [execution plan](h041-execution-plan.md) and [adopted worker roster](h041-worker-sessions.json). H040 source and fan/artifact outcomes are completed history; actual native compaction remains unqualified. Root delegates, integrates and reviews; worker1 implements runtime integration and owns later reviewed Linux delivery; worker2 implements the adapter/acceptance path. No new models, placements, downloads or upstream upgrades.
+
+Current baseline213634e:281sourcecases/strictcompile and all8publishedCI pass; VERIFIED36visionfiles; all prior native sessions closed, Bpartial preserved. Current source gaps: qualified opt-in entry, actual receipt/scope/close producers, retrieval/continuation/resume/child integrations. The initial segment ends10:05:07UTC/12:05:07Ljubljana; future finite phases remain under the user's explicit continuation authority. Preserve partial results and default-disabled native gates.
