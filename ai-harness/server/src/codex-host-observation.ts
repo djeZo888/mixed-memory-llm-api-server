@@ -43,11 +43,11 @@ export function observeOwnedCodexProcess(process:OwnedCodexProcess,input:Pick<Co
   if(!raw||raw.length>1024*1024||(bytes+=raw.length)>max)throw fail();
   synchronous(()=>observer.onRawNative?.(Object.freeze({sessionId:input.sessionId,process,direction,sequence:++sequence,bytes:raw,sha256:digest(raw)})));
  };
- // Intercept actual writes/emissions without a data listener: no early flow or lost ACK bytes.
+ // Intercept actual writes/raw pushes without a data listener: no early flow or lost ACK bytes.
  const write=process.stdin.write;
  process.stdin.write=function(chunk:any,encoding?:BufferEncoding|((error?:Error|null)=>void),callback?:(error?:Error|null)=>void){capture("input",chunk,typeof encoding==="string"?encoding:undefined);const bound=write.bind(this);return typeof encoding==="string"?bound(chunk,encoding,callback):bound(chunk,encoding);};
- const emit=process.stdout.emit;
- process.stdout.emit=function(event:string|symbol,...args:any[]){if(event==="data")try{capture("output",args[0]);}catch{return false;}return emit.call(this,event,...args);};
+ const push=process.stdout.push;
+ process.stdout.push=function(chunk:any,encoding?:BufferEncoding){if(chunk!==null)try{capture("output",chunk);}catch{return false;}return push.call(this,chunk,encoding);};
  process.observationFailure=observationFailure;
  try{synchronous(()=>observer.onNativeProcess?.(Object.freeze({sessionId:input.sessionId,process})));}catch{throw fail();}
  return process;

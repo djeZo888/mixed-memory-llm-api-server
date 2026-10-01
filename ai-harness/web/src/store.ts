@@ -7,7 +7,6 @@ import { imageJobActive, mergeImageJobs } from './image-jobs';
 import {
   canStageEditReference,
   imageCapabilities,
-  imageReferencesAvailable,
   type ImageCapabilities,
 } from './image-capabilities';
 import { uploadKey, uploadProblem } from './uploads';
@@ -826,7 +825,7 @@ export class HarnessStore {
               throw new Error('Codex image specialist accepts qualified PNG/JPEG references only; native image recognition is unavailable.');
             const problem = uploadProblem(
               file,
-              codex ? specialist : this.state.visionAvailable || imageReferencesAvailable(this.state.imageCapabilities),
+              codex ? specialist : this.state.visionAvailable,
             );
             if (problem) throw new Error(problem);
             onUpdate?.({ file, status: 'uploading' });

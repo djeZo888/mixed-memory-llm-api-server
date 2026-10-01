@@ -123,3 +123,5 @@ it('chat navigation during a delayed batch retains the target Codex specialist c
  first.resolve({attachment:{id:'first',name:'first.png',mimeType:'image/png',size:3}});expect(await uploading).toBe(true);
  expect(transport.upload).toHaveBeenCalledTimes(2);expect(store.getSnapshot().imageReferences['chat/a'].map(a=>a.id)).toEqual(['first','second']);expect(store.getSnapshot().attachments['chat/a']??[]).toEqual([]);store.dispose();
 });
+
+it('MiniMax image upload obeys actual server vision gate even when generated edit references are qualified',async()=>{const {store,transport}=await ready();transport.imageCapabilities.mockResolvedValue({profiles:[{operation:'edit',references:1,size:'64x64',transparent:false,evidence_sha256:'a'.repeat(64)}]});expect(await store.uploadBatch('chat/a',[new File(['synthetic'],'photo.png',{type:'image/png'})])).toBe(false);expect(transport.upload).not.toHaveBeenCalled();store.dispose();});
