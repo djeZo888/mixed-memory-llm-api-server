@@ -211,3 +211,12 @@ Recovery handoff: `../C-recovery-01/OUTBOX.md` and
 `../C-recovery-01/output/RESULTS.json`, with the actual source commit and diff.
 The original C `../OUTBOX.md` remains historical and is linked there. Closing
 READY_FOR_ROOT_REVIEW preserves compaction priority and the paid deadline.
+
+Root GO arrived after the source commit, pinning the previously reviewed
+21-test artifact-job source. The sealed final source includes the additional
+in-place legacy-rerun rejection and its 22nd test. `artifact_job.py` therefore
+does not match the GO hash (reviewed `1428220136e01a309bcccee9055c9d3fd59778a39ca832c2467ed2061a61340d`,
+current `26a545dee9e51077e0d1984275928b0b4a891c7847c7755f97106dddb91838c6`).
+The launch/stage scripts and immutable manifest do match. INBOX explicitly
+instructs stop/re-export if source changed. Recovery remains
+**READY_FOR_ROOT_REVIEW**, unstaged and unlaunched; no paid wait for updated GO.

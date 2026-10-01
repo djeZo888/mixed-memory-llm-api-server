@@ -288,7 +288,7 @@
     "phase": "C-recovery-01",
     "retryStaged": false,
     "retryLaunched": false,
-    "rootGoObserved": false,
+    "rootGoObserved": true,
     "originalDownloadStatus": "FAILED",
     "originalSupervisor": {
       "Restart": "no",
@@ -511,8 +511,34 @@
         "tests": 21,
         "errors": 3,
         "reason": "new filesystem fixture constructor omitted guard argument; corrected fixture signature"
+      },
+      {
+        "status": "PASS",
+        "tests": 21
+      },
+      {
+        "status": "PASS",
+        "tests": 22,
+        "final": true
       }
-    ]
+    ],
+    "approvalComparison": {
+      "status": "READY_FOR_ROOT_REVIEW",
+      "rootGoReceived": true,
+      "launchBlockedByPinnedSourceMismatch": true,
+      "mismatches": {},
+      "matchingSourceFiles": [
+        "scripts/vision/artifact_job.py",
+        "scripts/vision/launch_job.py",
+        "scripts/vision/stage_job.py",
+        "configs/vision/h039-artifacts.lock.json"
+      ],
+      "rootInstruction": "source files must equal those hashes (if changed stop/re-export)",
+      "retryStaged": false,
+      "retryLaunched": false,
+      "sourceCommit": "b57909e",
+      "finalTests": 22
+    }
   },
   "artifactDownload": "FAILED_ORIGINAL_ATTEMPT_NOT_COMPLETE"
 }
