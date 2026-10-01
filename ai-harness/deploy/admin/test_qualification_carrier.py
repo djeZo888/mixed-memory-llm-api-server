@@ -79,6 +79,20 @@ class Fixtures(unittest.TestCase):
   plan=self.plan();carrier=QualificationCarrier(self.ops,self.host('uncertain'),clock=lambda:200)
   with self.assertRaisesRegex(Exception,'unknown settlement'):carrier.run(plan)
   self.assertNotIn('service.start',self.calls);self.assertIn('restore-needed',self.calls);self.assertTrue(plan.backup_root.exists());self.assertTrue(carrier.pending(plan.transaction_id));self.assertTrue(self.lease.active);carrier.host=self.host();restored=carrier.settle_pending(plan.transaction_id);self.assertEqual(restored['status'],'restored_no_replay');self.assertFalse(self.lease.active);self.assertFalse(carrier.pending(plan.transaction_id));self.assertEqual(self.calls.count('task'),1)
+ def test_failed_backup_restores_normal_without_task_when_originals_unchanged(self):
+  plan=self.plan();plan.backup_root.mkdir()
+  with self.assertRaisesRegex(CarrierError,'fresh_preservation_root_required'):
+   QualificationCarrier(self.ops,self.host(),clock=lambda:200).run(plan)
+  self.assertNotIn('task',self.calls);self.assertIn('service.start',self.calls);self.assertNotIn('restore-needed',self.calls);self.assertFalse(self.lease.active)
+ def test_failed_backup_and_changed_originals_retain_lease_without_restore(self):
+  plan=self.plan();host=self.host();original=host.assert_task_closed
+  def change(p,l):original(p,l);(plan.source_roots[0]/'history').write_text('unexpected writer')
+  host.assert_task_closed=change;plan.backup_root.mkdir();carrier=QualificationCarrier(self.ops,host,clock=lambda:200)
+  with self.assertRaises(CarrierError):carrier.run(plan)
+  self.assertNotIn('service.start',self.calls);self.assertTrue(self.lease.active);self.assertTrue(carrier.pending(plan.transaction_id))
+  # Synthetic fixture alone owns this retained lease; no cleanup grant is inferred.
+  import qualification_carrier as module
+  retained=carrier._pending.pop(plan.transaction_id);module._retained_carriers.pop(plan.transaction_id);retained[1].__exit__(None,None,None)
  def test_expiry_before_dispatch_cannot_stop_normal_unit(self):
   plan=self.plan()
   with self.assertRaises(CarrierError):QualificationCarrier(self.ops,self.host(),clock=lambda:900).run(plan)

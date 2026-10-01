@@ -203,6 +203,7 @@ class QualificationCarrier:
         task_started = False
         restored = False
         preservation = None
+        stopped_baseline = None
         stop = None
         context = self.operations.lease()
         lease = None
@@ -225,6 +226,7 @@ class QualificationCarrier:
                 raise CarrierError("normal_stop_unproved")
             stopped = True
             self.host.assert_stopped_writers(plan, lease)
+            stopped_baseline = [tree_manifest(root) for root in plan.source_roots]
             preservation = preserve_stopped_roots(plan.source_roots, plan.backup_root)
             event("stopped-preservation", roots=preservation)
             task_error = None
@@ -260,6 +262,27 @@ class QualificationCarrier:
                 raise CarrierError("carrier_expired_after_restore")
             return {"status": "settled", "stop": stop, "start": start, "task": task, "preservation": preservation, "recoveryDelta": delta}
         except Exception:
+            # A failed backup or pre-task guard must not leave the ordinary unit
+            # stopped when no task ever began and stopped originals are provably
+            # unchanged. Never take this path after uncertain task dispatch.
+            if stopped and not task_started and stopped_baseline is not None:
+                try:
+                    self.host.assert_task_closed(plan, lease)
+                    self.host.assert_stopped_writers(plan, lease)
+                    for root, baseline in zip(plan.source_roots, stopped_baseline):
+                        if tree_manifest(root) != baseline:
+                            raise CarrierError("pre_task_original_changed")
+                    self.host.assert_current(plan, lease, "before-restore")
+                    start = self.operations.submit_under_lease(plan.start_request, lease)
+                    if start["status"] != "succeeded":
+                        raise CarrierError("normal_restore_unproved")
+                    delta = self.host.assert_restored(plan, lease, {"stop": stop, "start": start, "preservation": preservation})
+                    lease.validate()
+                    restored = True
+                    event("restored-before-task-failure", recoveryDelta=delta)
+                except Exception:
+                    # Failed restoration remains owned and quarantined below.
+                    pass
             if stop_attempted and not restored:
                 # Store owner/context BEFORE calling any fallible journal/quarantine producer.
                 # Do not let a failed cleanup release the lock and race normal restoration.
