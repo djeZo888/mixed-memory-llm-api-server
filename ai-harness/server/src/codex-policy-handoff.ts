@@ -5,7 +5,7 @@ import { dirname, join, sep } from "node:path";
 import { canonicalJson } from "./codex-canonical.js";
 import { validateSessionRestartOwnership,correlateSessionRestartOwnership,claimSessionRestartOwnership, type SessionRestartOwnershipProof } from "./session-checkpoint.js";
 import { codexReceiptProvenance, codexReceiptValidation, getCodexReceiptUtf8, revalidateRetainedCodexReceipts, type CodexReceiptBinding, type CodexReceiptIdentity } from "./codex-receipts.js";
-import { assertCodexTextOnlyPolicy, codexPolicyOwner, createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy, stageCodexPolicyAdoption, CODEX_PARENT_ARTIFACT_SPEC, type CodexTextOnlyPolicy, type CodexPolicyOwner } from "./codex-probe.js";
+import { assertCodexTextOnlyPolicy, codexPolicyOwner, createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,createCodexDelivery04Policy,createCodexRetentionParent04Policy, stageCodexPolicyAdoption, CODEX_PARENT_ARTIFACT_SPEC, type CodexTextOnlyPolicy, type CodexPolicyOwner } from "./codex-probe.js";
 const sha=(b:Uint8Array|string)=>createHash("sha256").update(b).digest("hex");
 function protectedRead(path:string,max:number):Buffer {
   if(realpathSync(path)!==path)throw Error("Noncanonical handoff path");
@@ -65,10 +65,10 @@ export function retainCodexPolicyHandoff(input:CodexPolicyHandoffInput) {
   writeFileSync(join(input.directory,"launch.raw.json"),launch,{flag:"wx",mode:0o600});writeFileSync(join(input.directory,"settlement.raw.json"),settlement,{flag:"wx",mode:0o600});
   const path=join(input.directory,"handoff.json"),bytes=JSON.stringify({body,seal})+"\n";writeFileSync(path,bytes,{flag:"wx",mode:0o600});return Object.freeze({path,sha256:sha(bytes),threadId:owner.threadId,checkpointId:input.checkpointId});
 }
-export interface AdoptCodexPolicyHandoffInput { path:string;sha256:string;keyPath:string;sessionId:string;threadId:string;checkpointId:string;runId:string;configSha256:string;modelCatalogSha256:string;sourceClosure:Readonly<Record<string,string>>;ownership:SessionRestartOwnershipProof;purpose?:"accepted-continuation"|"settled-compaction";authorization?:"continuation02"|"delivery03" }
+export interface AdoptCodexPolicyHandoffInput { path:string;sha256:string;keyPath:string;sessionId:string;threadId:string;checkpointId:string;runId:string;configSha256:string;modelCatalogSha256:string;sourceClosure:Readonly<Record<string,string>>;ownership:SessionRestartOwnershipProof;purpose?:"accepted-continuation"|"settled-compaction";authorization?:"continuation02"|"delivery03"|"delivery04" }
 /** Stages historical ownership. CodexEngine.start still MUST validate a new genuine launch before resume. */
 export function adoptCodexPolicyHandoff(input:AdoptCodexPolicyHandoffInput):CodexTextOnlyPolicy {
-  if(input.authorization!==undefined&&input.authorization!=="continuation02"&&input.authorization!=="delivery03")throw Error("Unknown source-frozen adoption authorization");
+  if(input.authorization!==undefined&&input.authorization!=="continuation02"&&input.authorization!=="delivery03"&&input.authorization!=="delivery04")throw Error("Unknown source-frozen adoption authorization");
   protectedDirectory(dirname(input.path));const raw=protectedRead(input.path,131072);if(sha(raw)!==input.sha256)throw Error("Handoff hash changed");
   const value=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(raw)),key=protectedRead(input.keyPath,32);
   if(Object.keys(value).sort().join()!=="body,seal"||key.length!==32||typeof value.seal!=="string"||!/^[a-f0-9]{64}$/.test(value.seal)||!timingSafeEqual(Buffer.from(value.seal,"hex"),createHmac("sha256",key).update(JSON.stringify(value.body)).digest()))throw Error("Untrusted host handoff seal");
@@ -88,6 +88,6 @@ export function adoptCodexPolicyHandoff(input:AdoptCodexPolicyHandoffInput):Code
   claimSessionRestartOwnership(input.ownership,input.runId,input.sha256);
   writeFileSync(join(dirname(input.path),"adoption.claim"),JSON.stringify({sessionId:input.sessionId,threadId:input.threadId,runId:input.runId,claimedAt:new Date().toISOString()}),{flag:"wx",mode:0o600});
   const fields={sessionId:input.sessionId,runId:input.runId,configSha256:input.configSha256,modelCatalogSha256:input.modelCatalogSha256};
-  const policy=b.policy.mode==="retention-parent"?createCodexRetentionParentPolicy({...fields,collaborationVersion:b.policy.collaborationVersion!}):(input.authorization==="delivery03"?createCodexDeliveryPolicy:createCodexContinuationPolicy)({...fields,mode:b.policy.mode});
+  const policy=b.policy.mode==="retention-parent"?(input.authorization==="delivery04"?createCodexRetentionParent04Policy:createCodexRetentionParentPolicy)({...fields,collaborationVersion:b.policy.collaborationVersion!}):(input.authorization==="delivery04"?createCodexDelivery04Policy:input.authorization==="delivery03"?createCodexDeliveryPolicy:createCodexContinuationPolicy)({...fields,mode:b.policy.mode});
   assertCodexTextOnlyPolicy(policy);stageCodexPolicyAdoption(policy,owner,cap);return policy;
 }

@@ -10,7 +10,7 @@ import {receiptFixture} from "./helpers/codex-receipt-fixture.js";
 import {adoptCodexPolicyHandoff,retainCodexPolicyHandoff,type AdoptCodexPolicyHandoffInput} from "../src/codex-policy-handoff.js";
 import {revalidateRetainedCodexReceipts} from "../src/codex-receipts.js";
 import {canonicalJson} from "../src/codex-canonical.js";
-import {CODEX_PARENT_ARTIFACT_SPEC,createCodexTextOnlyPolicy,createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,CODEX_H041_DELIVERY_WINDOW,CODEX_H041_WINDOW,CODEX_H041_CONTINUATION_WINDOW,codexPolicyOwnsSettledThread,codexPolicyOwner,validateCodexPolicyFreshLaunch,stageCodexPolicyAdoption} from "../src/codex-probe.js";
+import {CODEX_H041_DELIVERY04_WINDOW,createCodexDelivery04Policy,createCodexRetentionParent04Policy,assertCodexTextOnlyPolicy,CODEX_PARENT_ARTIFACT_SPEC,createCodexTextOnlyPolicy,createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,CODEX_H041_DELIVERY_WINDOW,CODEX_H041_WINDOW,CODEX_H041_CONTINUATION_WINDOW,codexPolicyOwnsSettledThread,codexPolicyOwner,validateCodexPolicyFreshLaunch,stageCodexPolicyAdoption} from "../src/codex-probe.js";
 import {validateSessionRestartOwnership} from "../src/session-checkpoint.js";
 // Explicit historical clock for SOURCE fixtures; production expiry remains enforced.
 mock.timers.enable({apis:["Date"],now:CODEX_H041_DELIVERY_WINDOW.startAtMs+60_000});
@@ -51,3 +51,15 @@ import {dirname as dirnameForTest} from "node:path";
 
 test("delivery03 and initial retention-parent are separate source-frozen policies",()=>{const fields={sessionId:"s",runId:"r",configSha256:"b".repeat(64),modelCatalogSha256:"b".repeat(64)};assert.equal(createCodexDeliveryPolicy({...fields,mode:"parent-artifacts"}).window,CODEX_H041_DELIVERY_WINDOW);assert.equal(createCodexRetentionParentPolicy({...fields,collaborationVersion:"v1"}).mode,"retention-parent");assert.equal(createCodexRetentionParentPolicy({...fields,collaborationVersion:"v2"}).collaborationVersion,"v2");assert.throws(()=>createCodexTextOnlyPolicy({...fields,mode:"retention-parent"}));});
 test("new delivery03 adoption preserves original historical receipt bytes",t=>{const f=fixture(t),old=readFileSync(join(dirnameForTest(f.input.path),"launch.raw.json"));const policy=adoptCodexPolicyHandoff({...f.input,authorization:"delivery03"});assert.equal(policy.window,CODEX_H041_DELIVERY_WINDOW);assert.deepEqual(readFileSync(join(dirnameForTest(f.input.path),"launch.raw.json")),old);});
+
+test("delivery04 is separately source-frozen and earlier caps cannot be widened by JSON",()=>{
+ const fields={sessionId:"s",runId:"r",configSha256:"b".repeat(64),modelCatalogSha256:"b".repeat(64)},policy=createCodexDelivery04Policy({...fields,mode:"summary-only"});
+ assert.equal(policy.window,CODEX_H041_DELIVERY04_WINDOW);assert.equal(policy.window.startAtMs,Date.parse("2026-10-01T11:26:45.729698Z"));assert.equal(policy.window.expiresAtMs,Date.parse("2026-10-01T15:26:45.729698Z"));assert.equal(policy.window.settlementReserveMs,120000);
+ assert.equal(createCodexRetentionParent04Policy({...fields,collaborationVersion:"v1"}).window,CODEX_H041_DELIVERY04_WINDOW);assert.equal(createCodexRetentionParent04Policy({...fields,collaborationVersion:"v2"}).mode,"retention-parent");
+ assert.equal(createCodexDeliveryPolicy({...fields,mode:"summary-only"}).window,CODEX_H041_DELIVERY_WINDOW);
+ assertCodexTextOnlyPolicy(policy,"s",policy.window.startAtMs+1);assert.throws(()=>assertCodexTextOnlyPolicy(policy,"s",policy.window.startAtMs-1));assert.throws(()=>assertCodexTextOnlyPolicy(policy,"s",policy.window.expiresAtMs-policy.window.settlementReserveMs));assert.throws(()=>assertCodexTextOnlyPolicy(policy,"s",policy.window.expiresAtMs+1,false));assert.throws(()=>assertCodexTextOnlyPolicy(structuredClone(policy),"s",policy.window.startAtMs+1));
+});
+test("explicit delivery04 signed adoption preserves original raw bytes and global one-shot claim",t=>{
+ const f=fixture(t),old=readFileSync(join(dirnameForTest(f.input.path),"launch.raw.json"));mock.timers.setTime(CODEX_H041_DELIVERY04_WINDOW.startAtMs+60_000);
+ try{const policy=adoptCodexPolicyHandoff({...f.input,authorization:"delivery04"});assert.equal(policy.window,CODEX_H041_DELIVERY04_WINDOW);assert.deepEqual(readFileSync(join(dirnameForTest(f.input.path),"launch.raw.json")),old);assert.throws(()=>adoptCodexPolicyHandoff({...f.input,authorization:"delivery04"}));}finally{mock.timers.setTime(CODEX_H041_DELIVERY_WINDOW.startAtMs+60_000);}
+});

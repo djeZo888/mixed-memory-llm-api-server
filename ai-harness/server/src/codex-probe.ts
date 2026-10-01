@@ -54,6 +54,8 @@ export async function readCodexOriginal(probe: CodexReadOriginalProbe, args: unk
 export const CODEX_H041_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T08:05:07Z"), expiresAtMs: Date.parse("2026-10-01T10:05:07Z"), settlementReserveMs: 120000 });
 export const CODEX_H041_CONTINUATION_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T09:11:06.096969Z"), expiresAtMs: Date.parse("2026-10-01T11:11:06.096969Z"), settlementReserveMs: 120000 });
 export const CODEX_H041_DELIVERY_WINDOW=Object.freeze({startAtMs:Date.parse("2026-10-01T10:07:11.972488Z"),expiresAtMs:Date.parse("2026-10-01T13:07:11.972488Z"),settlementReserveMs:120000});
+/** Separate DELIVERY04 source-frozen authority; never redirects original/02/03 callers. */
+export const CODEX_H041_DELIVERY04_WINDOW=Object.freeze({startAtMs:Date.parse("2026-10-01T11:26:45.729698Z"),expiresAtMs:Date.parse("2026-10-01T15:26:45.729698Z"),settlementReserveMs:120000});
 export interface CodexTextOnlyPolicy {
   readonly sessionId: string; readonly runId: string;
   readonly mode: "summary-only" | "text-only-parent" | "read-original" | "parent-artifacts" | "retention-parent";
@@ -63,7 +65,7 @@ export interface CodexTextOnlyPolicy {
 }
 const policies = new WeakSet<object>();
 function buildCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy, "window">, authorization: typeof CODEX_H041_WINDOW,collaborationVersion?:"v1"|"v2"): CodexTextOnlyPolicy {
-  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW) throw Error("Untrusted source authorization window");
+  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW && authorization!==CODEX_H041_DELIVERY04_WINDOW) throw Error("Untrusted source authorization window");
   if (!id(input.sessionId) || !id(input.runId) || !(collaborationVersion?["retention-parent"]:["summary-only", "text-only-parent", "read-original", "parent-artifacts"]).includes(input.mode) || ![input.configSha256, input.modelCatalogSha256].every(v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v)) || Object.keys(input).sort().join() !== "configSha256,mode,modelCatalogSha256,runId,sessionId") throw Error("Invalid trusted text-only policy");
   const policy = freeze({ ...input, window: authorization,...(collaborationVersion?{collaborationVersion}:{}) }); policies.add(policy); return policy;
 }
@@ -73,6 +75,11 @@ export function createCodexDeliveryPolicy(input:Omit<CodexTextOnlyPolicy,"window
 export function createCodexRetentionParentPolicy(input:Omit<CodexTextOnlyPolicy,"window"|"mode">&{collaborationVersion:"v1"|"v2"}){
  if(input.collaborationVersion!=="v1"&&input.collaborationVersion!=="v2")throw Error("Observed native collaboration version required");
  const {collaborationVersion,...fields}=input;return buildCodexTextOnlyPolicy({...fields,mode:"retention-parent"},CODEX_H041_DELIVERY_WINDOW,collaborationVersion);
+}
+export function createCodexDelivery04Policy(input:Omit<CodexTextOnlyPolicy,"window"|"collaborationVersion">){return buildCodexTextOnlyPolicy(input,CODEX_H041_DELIVERY04_WINDOW);}
+export function createCodexRetentionParent04Policy(input:Omit<CodexTextOnlyPolicy,"window"|"mode">&{collaborationVersion:"v1"|"v2"}){
+ if(input.collaborationVersion!=="v1"&&input.collaborationVersion!=="v2")throw Error("Observed native collaboration version required");
+ const {collaborationVersion,...fields}=input;return buildCodexTextOnlyPolicy({...fields,mode:"retention-parent"},CODEX_H041_DELIVERY04_WINDOW,collaborationVersion);
 }
 export function assertCodexTextOnlyPolicy(policy: CodexTextOnlyPolicy, sessionId = policy.sessionId, now = Date.now(), dispatch = true): void {
   if (!policies.has(policy) || policy.sessionId !== sessionId || now < policy.window.startAtMs || now >= policy.window.expiresAtMs - (dispatch ? policy.window.settlementReserveMs : 0)) throw Error("Unowned or expired H041 text-only policy");
