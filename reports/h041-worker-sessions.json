@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T13:28:48.570177+00:00",
+  "updatedUtc": "2026-10-01T13:33:29.206944+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-07",
@@ -701,13 +701,20 @@
   },
   "source07Launched": true,
   "scopedNoTurnGo07": {
-    "status": "ROOT_SCOPED_NO_TURN_GO_ISSUED",
+    "status": "WITHDRAWN_BEFORE_FURTHER_DISPATCH",
     "issuedUtc": "2026-10-01T13:27:30.126250+00:00",
     "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
     "inputSHA256": "c46e0116b1b34944c8fccfb07330019f1cf55d7ab5aaa1a8a1da1d4ebce80cec",
     "approvalSHA256": "d08d15d31d8ee890cb94ddd34243ed0da4f339e4fa45905d1852ed340ccccccb",
-    "actualResult": "PENDING",
+    "actualResult": "FAIL_PRE_NATIVE_DEPENDENCY_HARDLINK_CLOSURE",
+    "actualCommandStartUtc": "2026-10-01T13:28:55.588783+00:00",
+    "actualCommandEndUtc": "2026-10-01T13:28:56.732299+00:00",
+    "actualCommandExit": 1,
+    "noNativeLaunched": true,
+    "noAckOrNativeReceipts": true,
     "generationGo": false,
-    "lifecycleGo": false
+    "lifecycleGo": false,
+    "withdrawnUtc": "2026-10-01T13:30:40.668262+00:00",
+    "successor": "task-private identical dependencycopy and narrow primarynotification handling reviewedbefore any new GO"
   }
 }
