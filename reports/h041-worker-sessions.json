@@ -1310,5 +1310,53 @@
     "sourceSHA256": "763e9af291b94398b8dd2d7f434adc04345d555a7ede3fee41d2b15f6dc09ead",
     "sourceCallerExecuted": false,
     "next": "Distinct09e protected exact-byte Node copy + corrected wrapper tuple; new review/fresh GO only"
+  },
+  "finalWrapup": {
+    "status": "ALL_22_PHASES_CLOSED_USER_WRAPUP",
+    "finishedWorkerUtc": "2026-10-01T16:58:53.159310+00:00",
+    "processAbsenceVerifiedUtc": "2026-10-01T17:00:17Z",
+    "retireOldSessions": true,
+    "activePhases": [],
+    "oldOperationalGo": "ALL_EXPIRED_SPENT_OR_WITHDRAWN",
+    "authoritativeFinalLedger": "reports/h041-worker-outcomes.json",
+    "handoff": "reports/h041-final-handoff.md",
+    "nativeAcceptance": "NOT_TESTED",
+    "goalComplete": false,
+    "finalClosures": [
+      {
+        "host": "mac-worker1",
+        "phase": "A-compaction-completion-10",
+        "wrapper": {
+          "nativePid": 52946,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:58:53.152980+00:00",
+          "deadlineTermination": false
+        },
+        "outer": {
+          "wrapperPid": 52945,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:58:53.159310+00:00"
+        },
+        "sameSessionAndOwnedPidsAbsentVerifiedUtc": "2026-10-01T17:00:17Z",
+        "sourceChecksAreNotNativeAcceptance": true
+      },
+      {
+        "host": "mac-worker2",
+        "phase": "E-compaction-completion-10b",
+        "wrapper": {
+          "nativePid": 52728,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:57:40.848533+00:00",
+          "deadlineTermination": false
+        },
+        "outer": {
+          "wrapperPid": 52727,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:57:40.856355+00:00"
+        },
+        "sameSessionAndOwnedPidsAbsentVerifiedUtc": "2026-10-01T17:00:17Z",
+        "sourceChecksAreNotNativeAcceptance": true
+      }
+    ]
   }
 }
