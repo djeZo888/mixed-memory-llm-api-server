@@ -1,6 +1,6 @@
 # H039 D — technical vision bridge preparation
 
-**PASS — source preparation only.** Implementation commit `175a796c8b728b0362781d1379479f35b80e2db9` on
+**PASS — source preparation only.** Corrected implementation commit `1d2551f638bdd00c021a26be898bb758c89db87c` on
 `h039/d-vision-bridge`. No service activation or live inference is qualified.
 
 Native worker2 session `01a0f4d8-c550-78a3-86bf-184759a1c9d3` used the fresh local
@@ -28,10 +28,10 @@ No native Codex pixels, source URLs, raw DWG or creative-image fallback is used.
 
 | Check | Result |
 | --- | --- |
-| Vision generation0, sources, evidence and factory suite | PASS: 27 passed, 0 failed, 0 skipped |
+| Vision generation0, sources, evidence and factory suite | PASS: 29 passed, 0 failed, 0 skipped (corrected candidate) |
 | `npm run build` | PASS |
-| `npm run typecheck` | PASS |
-| Full server `npm test` | PASS: 1012 passed, 0 failed, 4 skipped, 1016 total |
+| `npm run typecheck` | PASS on prior candidate; corrected build also typechecks source |
+| Full server `npm test` | Retained prior candidate PASS: 1012 passed, 0 failed, 4 skipped, 1016 total |
 | Staged whitespace check | PASS |
 
 Coverage includes invalid source/path/owner, actual format/EXIF geometry, explicit
@@ -42,9 +42,19 @@ responses, cancellation draining, ownership isolation and late-output suppressio
 
 **Retained FAIL:** the initial typecheck found new literal-default/Buffer typing
 errors. These were corrected; the initial failed output remains outside Git in
-`../output/h039-typecheck-initial.log`. The final build/typecheck and both test
-suites passed. Four existing opt-in native tests are skipped; their exact names
+`../output/h039-typecheck-initial.log`. The prior candidate build/typecheck and both suites passed. The corrected
+candidate passes 29 focused tests and build; the full suite was not rerun after
+the enum fix, following root instruction. Four existing opt-in native tests are skipped; their exact names
 and all final private receipt locations are in [the JSON report](h039-vision-bridge.json).
+
+
+**Retained review FAIL, corrected:** root independently reproduced array-valued
+runtime enums bypassing state/revision guards in initial commit `175a796c8b728b0362781d1379479f35b80e2db9`.
+The helper now requires a string before membership checks. Regressions cover
+mode, media type, text kind, relationship kind, job state and error code, plus a
+real HTTP client response with array-valued failed state. Corrective source
+commit `1d2551f638bdd00c021a26be898bb758c89db87c` passes 29 focused tests and build. The earlier full-suite
+receipt is preserved without being presented as a run on the corrected commit.
 
 ## Limits and root handoff
 
