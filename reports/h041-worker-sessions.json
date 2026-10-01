@@ -210,28 +210,28 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T15:21:23.686765+00:00",
+  "updatedUtc": "2026-10-01T15:29:06.728563+00:00",
   "activePhases": [
     {
-      "task": "A-compaction-completion-08",
+      "task": "A-compaction-completion-09",
       "host": "mac-worker1",
-      "outerPid": 42261,
-      "startedUtc": "2026-10-01T14:26:59.851434+00:00",
+      "outerPid": 47477,
+      "startedUtc": "2026-10-01T15:26:36.245344+00:00",
       "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
-      "candidate": "4baa8b5b40fd615b54639fae9667980e8df2f768",
-      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-08",
-      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "candidate": "485a1067ccdf6fd8c9a6335e57de2bda8c919d53",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
       "authority": "SOURCE_ONLY_NO_LIVE_GO"
     },
     {
-      "task": "E-compaction-completion-08",
+      "task": "E-compaction-completion-09",
       "host": "mac-worker2",
-      "outerPid": 44347,
-      "startedUtc": "2026-10-01T14:27:00.361852+00:00",
+      "outerPid": 47533,
+      "startedUtc": "2026-10-01T15:26:36.805277+00:00",
       "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
-      "candidate": "e6b82d52e1187a46bc40a4c1345ab76a38d4af6d",
-      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-08",
-      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "candidate": "6dedf474491dafe23f131fc7c3ab3e9285c152fd",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
       "authority": "SOURCE_ONLY_NO_LIVE_GO"
     }
   ],
@@ -614,7 +614,7 @@
       "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
     }
   ],
-  "currentRootReviewedHead": "d32199a977e19053a13a3a92f8eee554169182d3",
+  "currentRootReviewedHead": "23417c021ac4b454d34580a19bfc68389f9ebd1f",
   "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
   "liveAcceptance": "NOT_TESTED",
   "closedSource06": {
@@ -986,11 +986,10 @@
     "priorFailuresAndBlocked08bPreserved": true
   },
   "source09Prepared": {
-    "launched": false,
-    "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+    "launched": true,
+    "adoptedActual08Closure": true,
     "sameSessions": true,
-    "adoptActual08ClosureFirst": true,
-    "parentDelivery05Unchanged": true
+    "hardDeadlineUtc": "2026-10-01T16:35:00+00:00"
   },
   "source08RemainingConcrete": {
     "A": [
@@ -1003,5 +1002,145 @@
       "always settle owned worker on runtime/pre-open failure"
     ],
     "native": "all compaction retention/ordinary/AUTO/production NOT_TESTED"
+  },
+  "source08ActualClosures": {
+    "A-compaction-completion-08": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 42263,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T15:24:45.136626+00:00",
+        "deadlineTermination": true
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 42262,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T15:24:45.142604+00:00"
+      }
+    },
+    "E-compaction-completion-08": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 44349,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T15:24:45.113213+00:00",
+        "deadlineTermination": true
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 44348,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T15:24:45.120578+00:00"
+      }
+    }
+  },
+  "source08Closed": true,
+  "source09Authority": {
+    "id": "H041-COMPACTION-COMPLETION-09",
+    "issuedUtc": "2026-10-01T15:20:22.245393+00:00",
+    "expiresUtc": "2026-10-01T18:30:02.674394+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "Complete concrete carrier and normal caller cleanup, coherent combined checks, current native delivery05 packet; only exact root approved actions thereafter. Root orchestrates, both same adopted Mac sessions implement/test.",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-COMPLETION-08",
+    "priorCapsUnchanged": true,
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-05",
+    "privateLinuxStagingOwner": "worker1",
+    "prepared": true,
+    "launched": true,
+    "reviewedCombinedHead": "23417c021ac4b454d34580a19bfc68389f9ebd1f",
+    "combinedBundleSha256": "eb496428814d43a6c398098599a2d33a091a636a0783b986681a1ff44d534643",
+    "actualLaunchesFile": "SOURCE-09-LAUNCHES.json",
+    "sourceExportTargetUtc": "2026-10-01T16:30:00+00:00"
+  },
+  "source09Launched": [
+    {
+      "task": "A-compaction-completion-09",
+      "host": "mac-worker1",
+      "outerPid": 47477,
+      "startedUtc": "2026-10-01T15:26:36.245344+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "485a1067ccdf6fd8c9a6335e57de2bda8c919d53",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-compaction-completion-09",
+      "host": "mac-worker2",
+      "outerPid": 47533,
+      "startedUtc": "2026-10-01T15:26:36.805277+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "6dedf474491dafe23f131fc7c3ab3e9285c152fd",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source09ActualSettings": [
+    {
+      "host": "mac-worker1",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "nativePid": 47479,
+      "wrapperPid": 47478,
+      "turnContextUtc": "2026-10-01T15:26:38.668Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    },
+    {
+      "host": "mac-worker2",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "nativePid": 47535,
+      "wrapperPid": 47534,
+      "turnContextUtc": "2026-10-01T15:26:38.947Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    }
+  ],
+  "source08NoTurn08cActual": {
+    "schema": "h041-source08-no-turn-actual-command-v1",
+    "startedUtc": "2026-10-01T15:21:49.707025+00:00",
+    "finishedUtc": "2026-10-01T15:21:51.359740+00:00",
+    "exit": 13,
+    "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSHA256": "72f6f8ae48b27575b190ff897eaff2bb1ec5775ef2884cefc3928436852be41c",
+    "prerequisiteSHA256": "64fbf065ad9d5c75117e6ef0028f4c3e6e072c502d4fc46a4014cb9e1043cf4f",
+    "nativeCompactionAcceptance": "NOT_TESTED",
+    "ordinaryAcceptance": "NOT_TESTED",
+    "status": "EXECUTED_ONCE_EXIT13_NO_ACCEPTANCE_RESULT",
+    "approvalSpent": true,
+    "rootApprovalSHA256": "4fec9e6c0925b033bf594b148dc0cce140edb5f9f8f482f59ca243ea17073dc3",
+    "physicalCause": "UNKNOWN_PENDING_ORIGINAL_STDERR",
+    "cleanup": "UNKNOWN_PENDING_OWNED_RESOURCE_EVIDENCE"
+  },
+  "source08FinalReviewed": {
+    "A06d": "e74b37775b7f457d1f6672418009b7aa539e59a0",
+    "E_a73e": "6a20713",
+    "E_671aa": "d9b4f66",
+    "E_6ded": "23417c0",
+    "activation": "DISABLED_NATIVE_NOT_TESTED",
+    "A_E_parserDuplicate": "1b9 deferred because current E4d stronger; df876 empty source cherry-pick skipped"
   }
 }
