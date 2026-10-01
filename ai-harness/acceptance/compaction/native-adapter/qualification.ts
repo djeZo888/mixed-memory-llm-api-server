@@ -32,7 +32,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRest
   if (packet.source !== 'root-owned-linux-no-generation-qualification' || packet.candidateCommit !== review.candidateCommit || packet.windowId !== review.authorization.windowId ||
       packet.route?.alias !== 'qwen3.8-27b' || packet.route?.service !== 'qwen-gpu1' || packet.route?.controlSlot !== 'qwen' || packet.route?.endpoint !== 'http://10.156.100.60:30004/v1' ||
       typeof packet.route.instanceId!=='string'||!packet.route.instanceId||!packet.route.operationId || !packet.route.identitySha256 || !Number.isFinite(Date.parse(packet.observedAt)) || Date.now() - Date.parse(packet.observedAt) < 0 || (!restart&&Date.now() - Date.parse(packet.observedAt) > 60000)) throw Error('fresh_current_linux_route_qualification_required');
-  if(!restart&&review.artifactIdentityExpected?.proofVersion==='retained-linux-files-v1')verifyFreshArtifactOwner(packet.artifactIdentity,review.artifactIdentityExpected,review.freshArtifactOwnerExpected,packet.route);
+  if(!restart&&review.artifactIdentityExpected?.proofVersion==='retained-linux-files-v1'&&verifyFreshArtifactOwner(packet.artifactIdentity,review.artifactIdentityExpected,review.freshArtifactOwnerExpected,packet.route).status!=='SOURCE_VALID')throw Error('actual_fresh_owner_and_manifest_protection_required');
   const keys = ['version','sourceRevision','binarySha256','model','modelRevision','tokenizerRevision'];
   const runtime: EntryQualification['runtime'] = {};
   for (const key of keys) {
