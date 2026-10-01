@@ -16,6 +16,7 @@ export interface SessionCheckpointRecord {
   nativeState: import("./contracts.js").NativeEngineState;
   preparedAt: string; status: "prepared" | "replacement_observed" | "settled" | "recovery_required" | "recovered";
   compactions: { id: string; status: "start" | "completed" | "failed" }[];
+  verification?:{status:"rejected";physicalCompactions:string[];rejectedAt:string};
   outcome?: "completed" | "cancelled" | "failed" | "process_restart";
 }
 export interface SessionRestartOwnershipProof { readonly sessionId:string;readonly runId:string;readonly checkpointId:string;readonly threadId:string;readonly purpose?:"accepted-continuation"|"settled-compaction" }
@@ -108,6 +109,12 @@ export class SessionCheckpoint {
         session.nativeState.ownership==="idle"&&session.nativeState.activeTurnId===null&&!this.store.isQuarantined(session.workspaceId);
       r.status = r.status === "recovery_required" || (outcome !== "completed"&&!settledOrdinaryStop) || !retainedState || !retainedInventory ? "recovery_required" : "settled";
     });
+  }
+  /** Sticky semantic rejection after observed physical replacement; no rollback or replay. */
+  rejectReplacementVerification(sessionId:string,runId:string,checkpointId:string){
+    return this.update(sessionId,runId,r=>{if(r.id!==checkpointId||!r.compactions.some(c=>c.status==="completed"))throw Error("No exact owned completed replacement");
+      if(r.verification)throw Error("Replacement verification already rejected");
+      r.verification={status:"rejected",physicalCompactions:r.compactions.filter(c=>c.status==="completed").map(c=>c.id),rejectedAt:new Date().toISOString()};r.status="recovery_required";});
   }
   recordNativeEvidence(sessionId:string,runId:string,kind:string,body:unknown) {
     if(kind!=="native_operation")throw Error("Native evidence requires opaque genuine host observation");

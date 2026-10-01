@@ -159,6 +159,7 @@ export async function createApp(options: AppOptions): Promise<{
     const files = new Files(temporary.root, store);
     await files.init();
     const broker = new Broker({
+      beforeNativeReplacementCommit:options.beforeNativeReplacementCommit,
       ...options,
       store,
       files,

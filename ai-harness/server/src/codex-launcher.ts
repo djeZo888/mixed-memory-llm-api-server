@@ -1,4 +1,5 @@
 /** Host-only launcher adapter. It never invokes a host Codex executable. */
+import { observeOwnedCodexProcess, type CodexHostObservations } from "./codex-host-observation.js";
 import { randomUUID } from "node:crypto";
 import { createCodexReceiptChannel, createCodexReceiptLifecycle, observeCodexProducer, validateCodexLaunchReceipt, validateCodexSettlementReceipt, type CodexReceiptPolicy, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { spawn } from "node:child_process";
@@ -18,6 +19,7 @@ export interface CodexLaunchInput {
     receiptRunId?: string;
 }
 export interface OwnedCodexProcess {
+    observationFailure?: Promise<never>;
     stdin: Writable;
     stdout: Readable;
     exited: Promise<void>;
@@ -32,7 +34,7 @@ export const CODEX_TOOL_POLICY_SHA256: string = "38789bd752463b0a34beacb3849ea54
  * attests exact random container rm + explicit exists exit1, not mere PID exit.
  * Unclean exits/timeout stay uncertain. Gateway settlement is a separate proof.
  */
-export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?: CodexReceiptPolicy): (input: CodexLaunchInput) => Promise<OwnedCodexProcess> {
+export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?: CodexReceiptPolicy, observations?: CodexHostObservations): (input: CodexLaunchInput) => Promise<OwnedCodexProcess> {
     if (!isAbsolute(launcherPath) || !launcherPath.endsWith("/deploy/run-codex.sh"))
         throw Error("Trusted Codex launcher path required");
     return async (input) => {
@@ -61,7 +63,7 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
         }) : undefined;
         const settlementReceipt = lifecycle?.settlementReceipt;
         let cleanup: Promise<boolean> | undefined;
-        return { stdin: child.stdin, stdout: child.stdout, exited, launchReceipt, settlementReceipt, terminateAndConfirm() {
+        const owned: OwnedCodexProcess = { stdin: child.stdin, stdout: child.stdout, exited, launchReceipt, settlementReceipt, terminateAndConfirm() {
                 if (lifecycle) return lifecycle.confirm();
                 return cleanup ??= new Promise<boolean>(resolve => {
                     const timer = setTimeout(() => resolve(false), 45000);
@@ -71,5 +73,7 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
                     void exited.then(() => { clearTimeout(timer); resolve(!spawnFailed && status === 0); });
                 });
             } };
+        if (observations) { try { return observeOwnedCodexProcess(owned,input,observations); } catch { await owned.terminateAndConfirm().catch(()=>false); throw Error("Trusted native observation failed"); } }
+        return owned;
     };
 }

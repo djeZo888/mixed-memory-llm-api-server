@@ -35,6 +35,7 @@ export const CODEX_PIN = Object.freeze({
     "5742a9a7dd41a8b44dca3138f506e013620d4a93573c792b1e5881c053f169a7",
 });
 export interface RootlessCodexProcess {
+  readonly observationFailure?: Promise<never>;
   readonly stdin: Writable;
   readonly stdout: Readable;
   readonly exited: Promise<void>;
@@ -297,7 +298,8 @@ export class CodexEngine implements Engine {
       modelPolicyVersion: r.modelPolicyVersion,
       ...(this.textPolicy ? { receiptRunId: this.textPolicy.runId } : {}),
     });
-    if (this.closing) fault("Codex closed during launch");
+    void this.child.observationFailure?.catch(() => { const error=new CodexProtocolError("Trusted native observation failed");this.connection?.fail(error);this.fail(error); });
+    if (this.closing || this.failed) fault("Codex closed during launch");
     if (r.nativeReceiptsRequired) {
       const receipt = await this.child.launchReceipt;
       if (!isVerifiedCodexLaunchReceipt(receipt) || isHistoricalCodexReceipt(receipt) || receipt.sessionId !== o.sessionId || receipt.container.profileDir !== o.profileDir || receipt.container.workspace !== o.workspace || (this.textPolicy && (receipt.runId !== this.textPolicy.runId || receipt.sources["codex/config.toml"] !== this.textPolicy.configSha256 || receipt.sources["codex/models.json"] !== this.textPolicy.modelCatalogSha256))) fault("Trusted native launch receipt unavailable");

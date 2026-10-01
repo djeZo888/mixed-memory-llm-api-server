@@ -1,4 +1,5 @@
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
+import type {CodexHostObservations} from "./codex-host-observation.js";
 import { codexReceiptProvenance, type CodexReceiptPolicy } from "./codex-receipts.js";
 import type { CodexReadOriginalProbe, CodexTextOnlyPolicy } from "./codex-probe.js";
 import { admissionContext, admissionReason, emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
@@ -9,6 +10,7 @@ import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwe
 import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
+  observations?:CodexHostObservations;
   onNativeThread?:CodexRuntime["onNativeThread"];
   beforeNativeAction?:CodexRuntime["beforeNativeAction"];
   onNativeChildObserved?:CodexRuntime["onNativeChildObserved"];
@@ -105,7 +107,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     qualifiedChildModels: (qualification?.frontierResponsesQualified === true || !!qualification?.frontierAcceptance) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,
-    launchRootless: input => createRootlessCodexLauncher(launcherPath, qualification?.nativeReceiptPolicy)({ ...input, imageJobsQualified: imageGateForCodexLaunch(input, qualification) }),
+    launchRootless: input => createRootlessCodexLauncher(launcherPath, qualification?.nativeReceiptPolicy, qualification?.observations)({ ...input, imageJobsQualified: imageGateForCodexLaunch(input, qualification) }),
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.
     // Observe the durable session ledger; this never releases native/image ownership.
@@ -135,5 +137,5 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
       return aliases.filter((alias, index) => results[index]?.status === "fulfilled" &&
         (results[index] as PromiseFulfilledResult<QwenCountQualification>).value.alias === alias);
     },
-    countQwen: createCodexQwenCounter(qualification.verifyLane, qualification.onAdmissionDiagnostic) } : undefined };
+    countQwen: createCodexQwenCounter(qualification.verifyLane, qualification.onAdmissionDiagnostic, qualification.observations) } : undefined };
 }

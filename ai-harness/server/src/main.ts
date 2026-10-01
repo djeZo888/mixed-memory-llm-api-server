@@ -1,3 +1,4 @@
+import {composeCodexProductObservers,type CodexProductObservers} from "./codex-product-observation.js";
 import {createCodexRecoveryHost} from "./codex-recovery.js";
 import {loadCodexOrdinaryEntry,type CodexOrdinaryEntry} from "./codex-ordinary-entry.js";
 import { readFileSync } from "node:fs";
@@ -45,7 +46,7 @@ function port(name: string, fallback: number) {
 }
 /** Explicit reviewed release entrypoint. The trusted new-chat default must qualify.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string, trustedObservers?:CodexProductObservers) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -67,11 +68,11 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
   const ordinary=qualification?loadCodexOrdinaryEntry(process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE||undefined,process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE||undefined,{serverDir:path.dirname(path.dirname(fileURLToPath(import.meta.url))),deploymentDir:path.dirname(required("AI_HARNESS_ENGINE_LAUNCHER"))}):undefined;
-  if(ordinary&&qualification)qualification={...qualification,nativeReceiptPolicy:ordinary.nativeReceiptPolicy,...ordinary.hooks};
+  if(qualification)qualification=composeCodexProductObservers(qualification,ordinary,trustedObservers);
   if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified\n");
-  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary });
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary,beforeNativeReplacementCommit:trustedObservers?.beforeNativeReplacementCommit });
 }
-export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
+export async function start(codex: { beforeNativeReplacementCommit?:import("./broker.js").NativeReplacementCommitVerifier; enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
   const newChatEngine = loadNewChatEngine();
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
@@ -116,6 +117,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
   let recoveryHost:ReturnType<typeof createCodexRecoveryHost>|undefined;
   const application = await createApp({
     newChatEngine,
+    beforeNativeReplacementCommit:codex.beforeNativeReplacementCommit,
     dataDir,
     launcher,
     engineFactory: createEngine,

@@ -15,7 +15,11 @@ import type {
 import { CONTEXT_LIMIT } from "./contracts.js";
 import { assertEngineAvailable, createEngineRouter, type EnginePolicy } from "./engine-router.js";
 import { ApiError } from "./errors.js";
+export interface NativeReplacementCommitInput {readonly sessionId:string;readonly runId:string;readonly checkpoint:Readonly<import("./session-checkpoint.js").SessionCheckpointRecord>}
+export type NativeReplacementCommitVerifier=(input:NativeReplacementCommitInput)=>Promise<void>;
 export interface BrokerOptions {
+  /** Trusted host source seam only, absent by default; never accepted from API/model input. */
+  beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
   store: Store;
   files: Files;
   engineFactory: EngineFactory;
@@ -369,6 +373,7 @@ export class Broker {
     let summary = "";
     const summaryParts = new Map<string, string>();
     let success = false;
+    let verificationRejected = false;
     let cleanupConfirmed = false;
     let promptRejectedDuringCancellation = false;
     let failureStatus: Status = "failed";
@@ -648,6 +653,13 @@ export class Broker {
       await active.cancelPromise;
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
+      if(s.engineKind==="codex"&&this.options.beforeNativeReplacementCommit){
+        const checkpoint=this.store.checkpoints.status(s.id).find(c=>c.runId===run.id);
+        if(checkpoint?.compactions.some(c=>c.status==="completed")){
+          try{await this.options.beforeNativeReplacementCommit(Object.freeze({sessionId:s.id,runId:run.id,checkpoint:Object.freeze(structuredClone(checkpoint))}));}
+          catch{verificationRejected=true;this.store.checkpoints.rejectReplacementVerification(s.id,run.id,checkpoint.id);throw Object.assign(new Error("Native replacement verification rejected"),{code:"native_replacement_verification_failed"});}
+        }
+      }
       await Promise.all(artifactJobs);
       for (const assistantId of assistantIds)
         this.store.emit(
@@ -758,7 +770,7 @@ export class Broker {
       if (cancellationRace && !cleanupConfirmed) emitFailure();
       if (cleanupConfirmed) {
         this.store.releaseQuarantineAfterVerifiedCleanup(run.workspaceId);
-        if (active.cancelled) {
+        if (active.cancelled && !verificationRejected) {
           this.store.updateRun(run.id, "cancelled");
           failureStatus = "idle";
         }
@@ -785,8 +797,9 @@ export class Broker {
           run.id,
         );
     } finally {
+      if(verificationRejected){this.store.updateRun(run.id,"failed");failureStatus="failed";}
       if (!success && this.store.db.prepare("SELECT id FROM h041_session_checkpoints WHERE session_id=? AND run_id=?").get(run.sessionId,run.id))
-        this.store.checkpoints.finish(run.sessionId,run.id,active.cancelled ? "cancelled" : "failed");
+        this.store.checkpoints.finish(run.sessionId,run.id,active.cancelled && !verificationRejected ? "cancelled" : "failed");
       if (!success)
         for (const assistantId of assistantIds)
           this.store.emit(
