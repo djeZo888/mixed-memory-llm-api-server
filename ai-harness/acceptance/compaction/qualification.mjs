@@ -40,8 +40,11 @@ export function summarizeQualification(records, truth) {
       !missingCycles.length && observations.every((o) => o.nativeStatus === 'PASS') ? 'PASS' : 'NOT_TESTED';
     return [name, { actualStatus, nativeStatus, requiredCycles: definition.cycles, missingCycles, observations }];
   }));
-  const nativeAcceptance = records.some((r) => r.qualification === 'native' && r.mode === 'fault' && r.status === 'FAIL') || Object.values(dimensions).some((d) => d.nativeStatus === 'FAIL') ? 'FAIL' :
-    Object.values(dimensions).every((d) => d.nativeStatus === 'PASS') ? 'PASS' : 'NOT_TESTED';
+  // A native fault is not mandatory semantic coverage. Unknown owned cleanup
+  // still vetoes aggregate PASS, without turning missing proof into failure.
+  const nativeFaults = records.filter((r) => r.qualification === 'native' && r.mode === 'fault');
+  const nativeAcceptance = nativeFaults.some((r) => r.status === 'FAIL') || Object.values(dimensions).some((d) => d.nativeStatus === 'FAIL') ? 'FAIL' :
+    !nativeFaults.length && Object.values(dimensions).every((d) => d.nativeStatus === 'PASS') ? 'PASS' : 'NOT_TESTED';
   return { schemaVersion: 1, nativeAcceptance, semanticAcceptance: nativeAcceptance, dimensions,
-    limitation: 'ActualStatus covers observed deterministic checks only. Native PASS requires every mandatory dimension with native evidence; source consistency does not attest a host or establish universal reliability.' };
+    limitation: 'ActualStatus covers observed deterministic checks only. Native PASS requires every mandatory dimension with native evidence and no native faults; source consistency does not attest a host or establish universal reliability.' };
 }

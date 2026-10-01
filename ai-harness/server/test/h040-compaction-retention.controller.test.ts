@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { actionIdFor, activeFacts, sha256, stableJson } from '../../acceptance/compaction/scorer.mjs';
+import { actionIdFor, activeFacts, scoreContinuation, sha256, stableJson } from '../../acceptance/compaction/scorer.mjs';
 import { fixture, runAcceptance, actionPlan, settlementReserve, verifyOwnedClose } from '../../acceptance/compaction/controller.mjs';
 
 const packet = await fixture(), hash = sha256('SYNTHETIC controller host boundary'), runId = 'synthetic-full-h040';
@@ -57,7 +57,7 @@ function syntheticAdapter(options: any = {}) {
       toolsDenied: true, filesDenied: true, networkDenied: true, accessiblePaths: [], originalRecordIds: [], toolCalls: [], answerKeyExposed: false, parentHistoryExposed: false };
   };
   const adapter: any = { interfaceVersion: 'h039-compaction-adapter-v1', kind: 'synthetic', capabilities: [...packet.config.requiredCapabilities, 'cold-resume-after-continuation'],
-    async runtime() { return undefined; }, async open() { return { nativeThreadId: parent }; },
+    async runtime() { return undefined; }, async open() { return { sessionId: 'synthetic-session', nativeThreadId: parent }; },
     async append({ records }: any) { for (const r of records) state += JSON.stringify({ type: 'response_item', payload: typed({ role: r.role, content: r.content }) }) + '\n'; },
     async originals({ cycle }: any) { return { capturedBy: 'host', parentState: capture(), receiptSha256: hash,
       recordHashes: Object.fromEntries(packet.corpus.records.filter((r: any) => r.cycle <= cycle).map((r: any) => [r.id, sha256(r.content)])) }; },
@@ -85,7 +85,13 @@ function syntheticAdapter(options: any = {}) {
           records: packet.corpus.records.filter((r: any) => r.cycle <= cycle).map((r: any) => ({ sourceId: r.id, sha256: sha256(r.content) })) }] } } : {}) };
     },
     async continue({ cycle, actionId }: any) { calls.push(`continue-${cycle}`); state += JSON.stringify({ type: 'response_item', payload: typed({ role: 'assistant', content: `SYNTHETIC_ACCEPTED_CONTINUATION_${cycle}` }) }) + '\n';
-      return { ...common(actionId, `synthetic-continue-${cycle}`), artifacts: clone(outputs[cycle]) }; },
+      const storeRunId = `synthetic-store-continuation-${cycle}`;
+      const artifactReceiptUtf8 = JSON.stringify({ source: 'owned-store-registered-continuation-artifacts', sessionId: 'synthetic-session', runId: storeRunId,
+        artifacts: Object.entries(outputs[cycle]).map(([name, value]) => ({ name, runId: storeRunId, artifactId: `synthetic-artifact-${name}`,
+          messageId: 'synthetic-artifact-message', captureId: `synthetic-original-${name}`, sha256: sha256(JSON.stringify(value)), bytes: Buffer.byteLength(JSON.stringify(value), 'utf8') })) });
+      return { ...common(actionId, `synthetic-continue-${cycle}`), sessionId: 'synthetic-session', runId: storeRunId,
+        parentState: capture(), artifacts: clone(outputs[cycle]), artifactReceiptUtf8: options.missingOriginal ? undefined : artifactReceiptUtf8,
+        artifactReceiptSha256: sha256(artifactReceiptUtf8) }; },
     async coldResume({ request, actionId, checkpoint }: any) { calls.push('baseline-cold'); const proof = isolation(checkpoint, request, 3, 'cold', actionId);
       return { ...common(actionId, proof.nativeTurnId, proof.nativeThreadId), isolation: proof, answer: answer(3), restartEvidence: {
         capturedBy: 'host', beforeProcessId: 'synthetic-baseline-app-1', afterProcessId: 'synthetic-baseline-app-2', nativeThreadId: parent,
@@ -99,8 +105,13 @@ function syntheticAdapter(options: any = {}) {
         oldGatewaySettled: true, noActionReplay: true, capturedAfterRestart: true, acceptedContinuationActionId: acceptedContinuation.actionId,
         acceptedArtifactHashes: acceptedContinuation.artifactHashes });
       const artifacts = clone(outputs[3]); if (options.staleArtifact) artifacts['sensor-policy.json'].watchdog = '2000 ms';
-      const artifactReceiptUtf8 = JSON.stringify({ source: 'native-owned-workspace-artifacts', nativeThreadId: parent, actionId, windowId,
+      const baseline = acceptedContinuation.artifactBaseline;
+      const artifactReceiptUtf8 = JSON.stringify({ source: 'native-owned-workspace-artifacts', runId, sessionId: 'synthetic-session', nativeThreadId: parent, actionId, windowId,
+        acceptedArtifactReceiptSha256: baseline?.artifactReceiptSha256, acceptedArtifactReceiptBytes: baseline?.artifactReceiptBytes,
+        acceptedStoreRunId: baseline?.storeRunId, acceptedContinuationActionId: acceptedContinuation.actionId,
+        checkpointStateSha256: checkpoint.stateSha256, captureId: 'synthetic-restarted-artifact-capture',
         afterHostId: 'synthetic-owned-host-2', artifactUtf8: Object.fromEntries(Object.entries(artifacts).map(([name, value]) => [name, JSON.stringify(value)])) });
+      if (options.mutateBaseline) baseline.artifacts['sensor-policy.json'].sha256 = sha256('synthetic-adapter-substitution');
       return { ...common(actionId, 'synthetic-restart-operation'), artifacts, artifactReceiptUtf8: options.missingArtifacts ? undefined : artifactReceiptUtf8,
         artifactReceiptSha256: sha256(artifactReceiptUtf8), restartEvidence: { capturedBy: 'host', beforeProcessId: 'synthetic-app-1', afterProcessId: 'synthetic-app-2',
           nativeThreadId: parent, beforeStateSha256: checkpoint.stateSha256, afterStateUtf8: state, replayedActionIds: [], receiptSha256: hash,
@@ -132,12 +143,20 @@ test('H040 full sequencing checks both cold boundaries and preserves latest acce
   for (const d of Object.values(result.dimensions) as any[]) { assert.equal(d.actualStatus, 'PASS'); assert.equal(d.nativeStatus, 'NOT_TESTED'); }
 });
 test('stale resumed artifact fails and absent actual bytes remain NOT_TESTED before child, without retry', async () => {
-  for (const [options, expected] of [[{ staleArtifact: true }, 'FAIL'], [{ missingArtifacts: true }, 'NOT_TESTED']] as const) {
+  for (const [options, expected] of [[{ staleArtifact: true }, 'FAIL'], [{ missingArtifacts: true }, 'NOT_TESTED'], [{ missingOriginal: true }, 'NOT_TESTED']] as const) {
     const { calls, result } = await simulate(options);
     assert.equal(result.status, expected); assert.equal(calls.includes('child'), false);
     assert.equal(calls.filter(c => c === 'latest-continuation-cold').length, 1); assert.equal(calls.at(-1), 'close');
     assert.equal(result.records.at(-1).mode, 'cold-resume-after-continuation');
   }
+});
+test('adapter resume arguments cannot mutate the retained independent original artifact baseline', async () => {
+  const reversed = clone(outputs[3]);
+  reversed['sensor-policy.json'] = Object.fromEntries(Object.entries(reversed['sensor-policy.json']).reverse());
+  assert.equal(scoreContinuation(packet.truth, 3, reversed).status, 'PASS');
+  const { result } = await simulate({ mutateBaseline: true });
+  assert.equal(result.status, 'PASS');
+  assert.equal(result.nativeAcceptance, 'NOT_TESTED');
 });
 test('stage configuration has one manual cycle and does not silently downgrade the full profile', async () => {
   const stage = { ...packet.config, profile: 'h040-summary-stage-v1', cycles: [1], maximumNativeActions: 9 };

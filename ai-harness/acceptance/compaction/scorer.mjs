@@ -458,9 +458,46 @@ export function verifyColdResume(evidence, checkpoint, expected = {}) {
   return { status: errors.length ? 'FAIL' : 'PASS', errors };
 }
 
+// Retain the original E collector's byte-domain receipt independently of the
+// semantic JSON hashes. Binding values come from the owned operation and the
+// independently captured latest checkpoint, never from after-restart bytes.
+export function captureAcceptedArtifactBaseline(observation, checkpoint, expected) {
+  if (typeof observation?.artifactReceiptUtf8 !== 'string' || !observation.artifactReceiptSha256 ||
+    ![expected?.runId, expected?.sessionId, expected?.actionId, expected?.nativeThreadId, observation.runId].every((v) => typeof v === 'string' && v.length))
+    return { status: 'NOT_TESTED', errors: ['original-owned-artifact-receipt-or-bindings-absent'] };
+  const state = stateReceiptProof(checkpoint);
+  if (state.status !== 'PASS') return state;
+  try {
+    const receipt = JSON.parse(observation.artifactReceiptUtf8);
+    if (receipt.source !== 'owned-store-registered-continuation-artifacts' || receipt.sessionId !== expected.sessionId ||
+      receipt.runId !== observation.runId || observation.sessionId !== expected.sessionId || observation.actionId !== expected.actionId ||
+      observation.nativeThreadId !== expected.nativeThreadId || checkpoint.nativeThreadId !== expected.nativeThreadId ||
+      observation.parentState?.stateSha256 !== checkpoint.stateSha256 || observation.artifactReceiptSha256 !== sha256(observation.artifactReceiptUtf8) ||
+      !Array.isArray(receipt.artifacts) || receipt.artifacts.length !== 2) throw new Error('Original artifact ownership mismatch');
+    const artifacts = Object.fromEntries(receipt.artifacts.map((r) => [r.name, r]));
+    if (!exactKeys(artifacts, ['sensor-policy.json', 'engineering-calculation.json']) || receipt.artifacts.some((r) =>
+      r.runId !== observation.runId || ![r.artifactId, r.messageId, r.captureId].every((v) => typeof v === 'string' && v.length) ||
+      !Number.isSafeInteger(r.bytes) || r.bytes < 1 || r.bytes > 1048576 || !/^[a-f0-9]{64}$/.test(r.sha256 ?? '')))
+      throw new Error('Original raw artifact receipt mismatch');
+    return { status: 'PASS', errors: [], baseline: { acceptanceRunId: expected.runId, sessionId: expected.sessionId,
+      storeRunId: observation.runId, actionId: expected.actionId, nativeThreadId: expected.nativeThreadId,
+      checkpointStateSha256: checkpoint.stateSha256, artifactReceiptUtf8: observation.artifactReceiptUtf8,
+      artifactReceiptSha256: observation.artifactReceiptSha256, artifactReceiptBytes: Buffer.byteLength(observation.artifactReceiptUtf8, 'utf8'), artifacts } };
+  } catch { return { status: 'FAIL', errors: ['original-continuation-artifact-receipt-binding'] }; }
+}
+
 export function verifyAcceptedContinuationResume(result, accepted, expected) {
   if (!accepted?.checkpoint || !accepted.artifactHashes || !accepted.actionId)
     return { status: 'NOT_TESTED', errors: ['independently-accepted-latest-continuation-checkpoint-absent'] };
+  if (accepted.artifactBaselineStatus?.status === 'FAIL') return accepted.artifactBaselineStatus;
+  const baseline = accepted.artifactBaseline;
+  if (!baseline) return { status: 'NOT_TESTED', errors: ['original-accepted-raw-artifact-baseline-absent'] };
+  const original = captureAcceptedArtifactBaseline({ artifactReceiptUtf8: baseline.artifactReceiptUtf8,
+    artifactReceiptSha256: baseline.artifactReceiptSha256, sessionId: baseline.sessionId, runId: baseline.storeRunId,
+    actionId: accepted.actionId, nativeThreadId: accepted.checkpoint.nativeThreadId, parentState: accepted.checkpoint },
+    accepted.checkpoint, { runId: expected.runId, sessionId: baseline.sessionId, actionId: accepted.actionId, nativeThreadId: accepted.checkpoint.nativeThreadId });
+  if (original.status !== 'PASS') return original;
+  if (!same(original.baseline, baseline)) return { status: 'FAIL', errors: ['accepted-original-artifact-baseline-substituted'] };
   const restart = verifyColdResume(result.restartEvidence, accepted.checkpoint, { ...expected, requireHostRestart: true });
   if (restart.status !== 'PASS') return restart;
   if (typeof result.artifactReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['actual-restarted-workspace-artifact-bytes-absent'] };
@@ -468,11 +505,16 @@ export function verifyAcceptedContinuationResume(result, accepted, expected) {
     const lifecycle = JSON.parse(result.restartEvidence.restartReceiptUtf8), capture = JSON.parse(result.artifactReceiptUtf8);
     if (lifecycle.acceptedContinuationActionId !== accepted.actionId || !same(lifecycle.acceptedArtifactHashes, accepted.artifactHashes) ||
       capture.source !== 'native-owned-workspace-artifacts' || capture.nativeThreadId !== accepted.checkpoint.nativeThreadId ||
-      capture.actionId !== expected.actionId || capture.windowId !== expected.windowId || capture.afterHostId !== lifecycle.afterHostId ||
+      capture.runId !== expected.runId || capture.sessionId !== baseline.sessionId || capture.actionId !== expected.actionId ||
+      capture.windowId !== expected.windowId || capture.afterHostId !== lifecycle.afterHostId ||
+      capture.acceptedArtifactReceiptSha256 !== baseline.artifactReceiptSha256 || capture.acceptedArtifactReceiptBytes !== baseline.artifactReceiptBytes ||
+      capture.acceptedStoreRunId !== baseline.storeRunId || capture.acceptedContinuationActionId !== accepted.actionId ||
+      capture.checkpointStateSha256 !== accepted.checkpoint.stateSha256 || typeof capture.captureId !== 'string' || !capture.captureId ||
       result.artifactReceiptSha256 !== sha256(result.artifactReceiptUtf8) || !exactKeys(capture.artifactUtf8, ['sensor-policy.json', 'engineering-calculation.json']) ||
       !exactKeys(result.artifacts, ['sensor-policy.json', 'engineering-calculation.json'])) throw new Error('Continuation artifact ownership mismatch');
     for (const [name, bytes] of Object.entries(capture.artifactUtf8)) {
       if (typeof bytes !== 'string' || !same(JSON.parse(bytes), result.artifacts[name]) ||
+        sha256(bytes) !== baseline.artifacts[name].sha256 || Buffer.byteLength(bytes, 'utf8') !== baseline.artifacts[name].bytes ||
         sha256(stableJson(JSON.parse(bytes))) !== accepted.artifactHashes[name]) throw new Error('Accepted artifact changed or substituted');
     }
     return { status: 'PASS', errors: [] };

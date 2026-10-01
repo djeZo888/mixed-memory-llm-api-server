@@ -6,7 +6,7 @@ import { resolve, join } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { translateResponses } from '../src/codex-responses.js';
 import { activeFacts, actionIdFor, collectorRequiredFiles, deriveFreshProjection, extractCheckpoint, logicalManifestFormat,
-  sha256, stableJson, verifySummaryIsolation, verifyColdResume, verifyAcceptedContinuationResume } from '../../acceptance/compaction/scorer.mjs';
+  sha256, stableJson, verifySummaryIsolation, verifyColdResume, captureAcceptedArtifactBaseline, verifyAcceptedContinuationResume } from '../../acceptance/compaction/scorer.mjs';
 import { fixture, bindReviewedEnvelope, makeRecord, recallRequest, runAcceptance } from '../../acceptance/compaction/controller.mjs';
 import { validateRecord, validateShape } from '../../acceptance/compaction/evidence.mjs';
 import { summarizeQualification } from '../../acceptance/compaction/qualification.mjs';
@@ -251,7 +251,16 @@ function acceptedResume() {
   const p = persisted(), continued = p.checkpoint.stateUtf8 + JSON.stringify({ type: 'response_item', payload: typed('assistant', 'Accepted latest technical continuation') }) + '\n';
   const checkpoint = capturedState(continued), artifacts = { 'sensor-policy.json': { watchdog: '1500 ms', deployment: 'NOT_AUTHORIZED' }, 'engineering-calculation.json': { unit: 'V', value: 2.153846153846154 } };
   const artifactHashes = Object.fromEntries(Object.entries(artifacts).map(([key, value]) => [key, sha256(stableJson(value))]));
-  const actionId = actionIdFor(runId, 3, 'cold-resume-after-continuation'), accepted = { checkpoint, artifactHashes, actionId: actionIdFor(runId, 3, 'continuation') };
+  const originalUtf8 = Object.fromEntries(Object.entries(artifacts).map(([key, value]) => [key, JSON.stringify(value, null, 2) + '\n']));
+  const continuationActionId = actionIdFor(runId, 3, 'continuation');
+  const originalReceiptUtf8 = JSON.stringify({ source: 'owned-store-registered-continuation-artifacts', sessionId: 'synthetic-store-session', runId: 'synthetic-store-continuation-run',
+    artifacts: Object.entries(originalUtf8).map(([name, bytes]) => ({ artifactId: `synthetic-artifact-${name}`, messageId: 'synthetic-message', captureId: `synthetic-original-${name}`,
+      name, runId: 'synthetic-store-continuation-run', sha256: sha256(bytes), bytes: Buffer.byteLength(bytes, 'utf8') })) });
+  const baseline = captureAcceptedArtifactBaseline({ artifactReceiptUtf8: originalReceiptUtf8, artifactReceiptSha256: sha256(originalReceiptUtf8),
+    sessionId: 'synthetic-store-session', runId: 'synthetic-store-continuation-run', actionId: continuationActionId, nativeThreadId: parent, parentState: checkpoint },
+    checkpoint, { runId, sessionId: 'synthetic-store-session', actionId: continuationActionId, nativeThreadId: parent });
+  assert.equal(baseline.status, 'PASS');
+  const actionId = actionIdFor(runId, 3, 'cold-resume-after-continuation'), accepted = { checkpoint, artifactHashes, actionId: continuationActionId, artifactBaseline: baseline.baseline };
   const restartReceiptUtf8 = JSON.stringify({ source: 'native-owned-host-cold-resume', runId, actionId, windowId, nativeThreadId: parent,
     checkpointStateSha256: checkpoint.stateSha256, beforeHostId: 'synthetic-application-1', afterHostId: 'synthetic-application-2',
     beforeApplicationProcessId: 'synthetic-app-pid-1', afterApplicationProcessId: 'synthetic-app-pid-2', oldApplicationExitConfirmed: true,
@@ -259,8 +268,10 @@ function acceptedResume() {
   const restartEvidence = { capturedBy: 'host', beforeProcessId: 'synthetic-app-pid-1', afterProcessId: 'synthetic-app-pid-2',
     nativeThreadId: parent, beforeStateSha256: checkpoint.stateSha256, afterStateUtf8: checkpoint.stateUtf8, replayedActionIds: [], receiptSha256: syntheticHash,
     restartReceiptUtf8, restartReceiptSha256: sha256(restartReceiptUtf8) };
-  const artifactReceiptUtf8 = JSON.stringify({ source: 'native-owned-workspace-artifacts', nativeThreadId: parent, actionId, windowId, afterHostId: 'synthetic-application-2',
-    artifactUtf8: Object.fromEntries(Object.entries(artifacts).map(([key, value]) => [key, JSON.stringify(value, null, 2) + '\n'])) });
+  const artifactReceiptUtf8 = JSON.stringify({ source: 'native-owned-workspace-artifacts', runId, sessionId: 'synthetic-store-session', nativeThreadId: parent, actionId, windowId, afterHostId: 'synthetic-application-2',
+    acceptedArtifactReceiptSha256: baseline.baseline.artifactReceiptSha256, acceptedArtifactReceiptBytes: baseline.baseline.artifactReceiptBytes,
+    acceptedStoreRunId: baseline.baseline.storeRunId, acceptedContinuationActionId: continuationActionId, checkpointStateSha256: checkpoint.stateSha256,
+    captureId: 'synthetic-after-restart-capture', artifactUtf8: originalUtf8 });
   return { accepted, expected: { runId, actionId, windowId }, result: { artifacts, restartEvidence, artifactReceiptUtf8, artifactReceiptSha256: sha256(artifactReceiptUtf8) }, compacted: p.checkpoint };
 }
 test('after-continuation cold resume binds actual application lifecycle and latest artifact bytes, not earlier summary checkpoint', () => {
@@ -280,6 +291,27 @@ test('after-continuation cold resume binds actual application lifecycle and late
   sameHost.restartEvidence.restartReceiptSha256 = sha256(sameHost.restartEvidence.restartReceiptUtf8);
   assert.equal(verifyAcceptedContinuationResume(sameHost, p.accepted, p.expected).status, 'FAIL');
   assert.equal(verifyColdResume(p.result.restartEvidence, p.accepted.checkpoint, { ...p.expected, requireHostRestart: true }).status, 'PASS');
+});
+test('accepted continuation preserves original raw bytes separately from property-order-indifferent semantic hashes', () => {
+  const p = acceptedResume();
+  assert.equal(verifyAcceptedContinuationResume(p.result, p.accepted, p.expected).status, 'PASS');
+  const missing = clone(p.accepted); delete missing.artifactBaseline;
+  assert.equal(verifyAcceptedContinuationResume(p.result, missing, p.expected).status, 'NOT_TESTED');
+  for (const rewrite of [(bytes: string) => JSON.stringify(JSON.parse(bytes)),
+    (bytes: string) => JSON.stringify(Object.fromEntries(Object.entries(JSON.parse(bytes)).reverse()), null, 2) + '\n']) {
+    const changed = clone(p.result), capture = JSON.parse(changed.artifactReceiptUtf8);
+    const name = 'sensor-policy.json', before = capture.artifactUtf8[name];
+    capture.artifactUtf8[name] = rewrite(before);
+    assert.notEqual(capture.artifactUtf8[name], before);
+    assert.equal(sha256(stableJson(JSON.parse(capture.artifactUtf8[name]))), p.accepted.artifactHashes[name]);
+    changed.artifacts[name] = JSON.parse(capture.artifactUtf8[name]);
+    changed.artifactReceiptUtf8 = JSON.stringify(capture); changed.artifactReceiptSha256 = sha256(changed.artifactReceiptUtf8);
+    assert.equal(verifyAcceptedContinuationResume(changed, p.accepted, p.expected).status, 'FAIL');
+  }
+  for (const key of ['artifactReceiptSha256', 'artifactReceiptBytes', 'storeRunId', 'actionId', 'nativeThreadId', 'checkpointStateSha256']) {
+    const altered = clone(p.accepted); altered.artifactBaseline[key] = key === 'artifactReceiptBytes' ? 1 : 'synthetic-substitution';
+    assert.equal(verifyAcceptedContinuationResume(p.result, altered, p.expected).status, 'FAIL', key);
+  }
 });
 test('per-dimension evidence keeps synthetic/partial actual PASS distinct from native qualification', async () => {
   const answer = { answers: Object.fromEntries(activeFacts(packet.truth, 1).map((f: any) => [f.id, { value: f.current.value }])) };

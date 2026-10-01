@@ -2,7 +2,7 @@ import { mkdir, writeFile, chmod, readFile, realpath, stat, readdir } from 'node
 import { dirname, resolve, join, relative, isAbsolute } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { randomUUID } from 'node:crypto';
-import { activeFacts, actionIdFor, extractCheckpoint, deriveFreshProjection, validateCollectorManifest, logicalManifestFormat, loadJson, sha256, stableJson, validateCorpus, scoreRecall, verifyRetrieval, verifyProbeSeparation, verifySummaryIsolation, durableHoldouts, verifyDurableHoldout, verifyCleanChild, verifyColdResume, continuationRequest, scoreContinuation, verifyAcceptedContinuationResume } from './scorer.mjs';
+import { activeFacts, actionIdFor, extractCheckpoint, deriveFreshProjection, validateCollectorManifest, logicalManifestFormat, loadJson, sha256, stableJson, validateCorpus, scoreRecall, verifyRetrieval, verifyProbeSeparation, verifySummaryIsolation, durableHoldouts, verifyDurableHoldout, verifyCleanChild, verifyColdResume, continuationRequest, scoreContinuation, captureAcceptedArtifactBaseline, verifyAcceptedContinuationResume } from './scorer.mjs';
 import { absent, metadata, unknownMeasurement, measured, validateRecord } from './evidence.mjs';
 import { summarizeQualification } from './qualification.mjs';
 
@@ -407,15 +407,21 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
           originals: originalProof(packet.corpus, cycle, before, after), grade, isolation, retrieval });
         await emit(record);
         if (record.status !== 'PASS') { stop = true; break; }
-        if (mode === 'continuation' && cycle === 3) acceptedContinuation = { actionId, artifactHashes: record.artifactHashes,
-          checkpoint: after?.parentState, artifacts: result.artifacts };
+        if (mode === 'continuation' && cycle === 3) {
+          const baseline = captureAcceptedArtifactBaseline(result, after?.parentState, { runId, sessionId: session.sessionId,
+            actionId, nativeThreadId: compact.nativeThreadId });
+          acceptedContinuation = freezeConfig(structuredClone({ actionId, artifactHashes: record.artifactHashes, checkpoint: after?.parentState,
+            artifacts: result.artifacts, artifactBaseline: baseline.baseline, artifactBaselineStatus: { status: baseline.status, errors: baseline.errors } }));
+          await sink.private('accepted-continuation-original-artifact-baseline', acceptedContinuation);
+        }
       }
       if (stop) break;
     }
     if (!stage && records.length === 10 && records.every((r) => r.status === 'PASS') && adapter.capabilities.includes('cold-resume-after-continuation')) {
       const actionId = actionIdFor(runId, 3, 'cold-resume-after-continuation');
       const result = await call('resumeAcceptedContinuation', { session, cycle: 3, runId, actionId, windowId: packet.config.review?.windowId ?? runId,
-        checkpoint: acceptedContinuation?.checkpoint, acceptedContinuation: acceptedContinuation ? { actionId: acceptedContinuation.actionId, artifactHashes: acceptedContinuation.artifactHashes } : undefined });
+        checkpoint: structuredClone(acceptedContinuation?.checkpoint), acceptedContinuation: acceptedContinuation ? structuredClone({ actionId: acceptedContinuation.actionId,
+          artifactHashes: acceptedContinuation.artifactHashes, artifactBaseline: acceptedContinuation.artifactBaseline }) : undefined });
       await sink.private('cold-resume-after-continuation', result);
       let grade = verifyAcceptedContinuationResume(result, acceptedContinuation, { runId, actionId, windowId: packet.config.review?.windowId ?? runId });
       if (grade.status === 'PASS') grade = scoreContinuation(packet.truth, 3, result.artifacts);
