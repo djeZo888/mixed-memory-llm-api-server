@@ -1,3 +1,7 @@
+# H042 current continuation — 1 October 2026
+
+The user authorized a new three-hour compaction continuation beginning17:44:17UTC, ending20:44:17UTC with closure reserve from20:29:17UTC. Follow [../reports/h042-execution-plan.md](../reports/h042-execution-plan.md) and docs/h041-worker-orchestration.md from the integration root. Mac-orchestrator delegates/reviews; mac-worker1/mac-worker2 execute through SSH, each bounded task in a fresh GPT6.1SolUltra codex exec session and isolated checkout. Start with minimal no-generation startup and verified owned shutdown. Adopt saved state/credentials, preserve pins/histories. All old operational approvals remain expired; only a new exact finite root GO can authorize shared live actions. Historical sections below are retained evidence.
+
 # H041 wrap-up / stand-down — 1 October 2026
 
 The latest human requested stopping this eight-hour continuation, preserving important work and publishing a concise handoff. All worker phases are closed; old worker SIDs are retired and every old GO is expired, spent or withdrawn. No automatic continuation, implementation, live tests or fan/model actions are authorized by the historical sections below. A new user continuation should read the [compact final handoff](../reports/h041-final-handoff.md) first, use NEW bounded worker sessions via SSH and preserve the original histories/credentials. Root orchestrates; mac-worker1/mac-worker2 execute. Earlier authority is retained as history and does not override this stop.
