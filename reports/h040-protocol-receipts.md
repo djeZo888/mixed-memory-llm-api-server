@@ -92,8 +92,8 @@ Both global and per-session image acceptance are blocked for a probe.
 Minimum cross-owner proposal: A observes canonical native thread policy and tool
 registration; the gateway/responses owner observes and gates the **entire** actual
 provider tools envelope for the same owned run/thread/window, retaining schema
-hashes and rejecting extra tools. Summary may allow only the reviewed original
-reader; recovery must meet B's no-tools contract. E joins those genuine
+hashes and rejecting extra tools. Summary-only must have tools[]; separately scoped durable retrieval may allow
+only the reviewed read_original reader. E joins those genuine
 observations with physical receipts and B's scope requirements. Dedicated gateway
 transport needs an explicit approved exception. Denial of parent/oracle/original
 paths also requires reviewed fresh mount scope that does not expose them. A did
