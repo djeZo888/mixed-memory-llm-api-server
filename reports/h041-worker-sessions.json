@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T15:11:49.952383+00:00",
+  "updatedUtc": "2026-10-01T15:21:23.686765+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-08",
@@ -966,5 +966,42 @@
     "protection": "actual FD/lstat rootuid0 regular nlink1 no groupworldwrite",
     "sourceParser": "SOURCE_VALID historical parserclock; live current expiry rejected, genuine independent provider route still required",
     "nativeAcceptance": "NOT_TESTED"
+  },
+  "source08NoTurn08c": {
+    "status": "ISSUED_SCOPED_ONE_NO_TURN_INVOCATION",
+    "issuedUtc": "2026-10-01T15:19:45.318796+00:00",
+    "dispatchBeforeUtc": "2026-10-01T15:22:00+00:00",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "574c6720166561a38788e7ef63984250bf546701176a439e959e69f62adc0d48",
+    "scriptSHA256": "3f52a907789317030ec9b8872a98979b9aa4ffa9c93b630531af32f4bf7b8d96",
+    "approvalSHA256": "4fec9e6c0925b033bf594b148dc0cce140edb5f9f8f482f59ca243ea17073dc3",
+    "nativeAcceptance": "NOT_TESTED",
+    "generationGo": false,
+    "lifecycleGo": false,
+    "scope": "initialize/initialized/ephemeral readOnly thread/start/owned close only; no generation/count/tokenize/compact/normal lifecycle",
+    "sourceReviews": {
+      "root-review-runtime/source08c-no-turn-packet/REVIEW.json": "68d28bd2a797b7b317e0c0b8838530460f8fab514981c626f29ce0c8d423fdf4",
+      "root-review-acceptance/source08c-no-turn-caller/REVIEW.json": "96a2a537d925995e8ffb3ecca49a0894dab25b867d2be73875432a1c066df15a"
+    },
+    "priorFailuresAndBlocked08bPreserved": true
+  },
+  "source09Prepared": {
+    "launched": false,
+    "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+    "sameSessions": true,
+    "adoptActual08ClosureFirst": true,
+    "parentDelivery05Unchanged": true
+  },
+  "source08RemainingConcrete": {
+    "A": [
+      "guardian lifecycle before mutation",
+      "physical original alias/mount/writer scope",
+      "exact normal restore tuple/readiness",
+      "truthful no-replay startup deltas"
+    ],
+    "E": [
+      "always settle owned worker on runtime/pre-open failure"
+    ],
+    "native": "all compaction retention/ordinary/AUTO/production NOT_TESTED"
   }
 }
