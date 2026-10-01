@@ -1357,6 +1357,7 @@
         "sameSessionAndOwnedPidsAbsentVerifiedUtc": "2026-10-01T17:00:17Z",
         "sourceChecksAreNotNativeAcceptance": true
       }
-    ]
+    ],
+    "additionalPublicationSshOperation": "reports/h041-publication-cleanup.json"
   }
 }

@@ -12,7 +12,7 @@ Worker2 connected admission, carrier, acceptance and retained-artifact consumers
 
 The reviewed CHA_FAN3 source correction changes expected duty only after a verified command/readback, removing a possible false overwrite detection after a transient BMC failure. Seventy-two source cases passed. It is committed but **not installed**. Worker2 also exported a partial, disabled recovery helper and fourteen corrected synthetic checks; it has no live approval.
 
-Reviewed application source is preserved on the existing draft PR branch. Final report-only worker commits, important unintegrated patches and the partial helper are retained separately as [disabled WIP](../docs/h041-wip/README.md). Existing protected credentials, original failure receipts and raw private evidence remain outside Git.
+Reviewed application source is preserved on the existing draft PR branch. Final report-only worker commits, a worker2 one-byte whitespace publication cleanup, important unintegrated patches and the partial helper are retained separately as [disabled WIP](../docs/h041-wip/README.md). Existing protected credentials, original failure receipts and raw private evidence remain outside Git.
 
 ## Evidence and limits
 
@@ -47,6 +47,10 @@ The 16:30 whole-state preflight failed during the thermal transport step. A corr
 3. Run the bounded manual stage, then repeated full retention with scoped retrieval, real cold resumes and same-parent child; ordinary UI/manual/restart/human correction/Unicode/SSE/failure recovery; finally one genuine 400k AUTO case after prerequisite gates.
 4. Activate and accept the ordinary production integration under exact owner/preservation/restore review. Remaining technical vision service/fit/workflow work is retained from H040 and stays secondary to compaction.
 5. Independently finish/review fan recovery, obtain a fresh complete state/BMC/GPU/failed-owner proof, and permit one start plus 90-second observation only under a new exact root packet.
+
+## Publication checks
+
+The initial published HEADec18cd8 was read back exactly from GitHub. Repository sanity, client regressions and installer fixture checks passed; D2 lifecycle reached its whitespace gate and failed on a single trailing blank-line space at normal-product.ts:76. A bounded SSH operation on mac-worker2 removed that one byte, returned an exact reviewed bundle and closed in three seconds with actual exit0. No new Codex session, application behavior change or live action occurred. The [cleanup receipt](h041-publication-cleanup.json) is committed; the original failed hosted log remains private. The final branch/PR readback and hosted checks are captured again after republishing; this does not supply final combined application/native qualification.
 
 ## Worker tracking and continuation
 

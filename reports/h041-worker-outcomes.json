@@ -1202,5 +1202,27 @@
     "producer": "root SSH readback, supplied by parent in wrap-up",
     "originalReceiptPath": "UNKNOWN_NOT_SUPPLIED_TO_LEDGER_AUTHOR",
     "independentlyReadByLedgerAuthor": false
-  }
+  },
+  "additionalBoundedSshPublicationOperations": [
+    {
+      "kind": "bounded-ssh-publication-cleanup",
+      "worker": "mac-worker2",
+      "startedUtc": "2026-10-01T17:08:25.364860+00:00",
+      "finishedUtc": "2026-10-01T17:08:28.186250+00:00",
+      "actualExit": 0,
+      "beforeCommit": "ec18cd8da8d639c5cd813160d48e1e132bec4850",
+      "workerCommit": "25ee5e22103cf9cce8b61e5c199be10bf7f34498",
+      "path": "ai-harness/acceptance/compaction/native-adapter/normal-product.ts",
+      "beforeSHA256": "3b837e5f5987a19e9d06754b69ba71fabced5f28797b505892f45b92db0f7ab6",
+      "afterSHA256": "52f13766f8cfbbf94caeafb04b4b4b4796dc2c71b8a47b1671e407cffc40483f",
+      "change": "one trailing blank-line space removed; no application behavior change",
+      "bundleSHA256": "98b4e4769a3734d2182f897d4e2596fb0f088cde26b481d00c0dcc7544ef2082",
+      "newCodexSessionLaunched": false,
+      "nativeAcceptance": "NOT_TESTED",
+      "liveAction": false,
+      "integratedCommit": "82d18f2ef13360adb538d6e10e7be7a13d7506b6",
+      "rootStaticDiffReview": "Exactly one trailing blank-line space removed; source otherwise byte-identical",
+      "hostedOriginalFailureLogSHA256": "392d991aac1f87eed6a0e2f29044ea4a5f969a15d0a7db46923fda29462937f6"
+    }
+  ]
 }
