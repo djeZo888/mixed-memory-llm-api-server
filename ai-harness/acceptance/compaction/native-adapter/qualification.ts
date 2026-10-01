@@ -7,6 +7,7 @@ import { readFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { privateFile } from './checkpoint.js';
 import { sha256, stableJson, reviewSnapshot } from './projection.js';
+import {FULL_RETENTION_TASKS} from './policy-selection.js';
 import { reviewedAuthorization } from '../authorization.mjs';
 const qualified = new WeakSet<object>();
 export const isQualifiedEntry = (value: unknown): value is EntryQualification => !!value && typeof value === 'object' && qualified.has(value);
@@ -53,7 +54,7 @@ export async function qualifyEntry(config: any,restart?:RestartTicket|NormalRest
   const manifest = JSON.parse(manifestBytes.toString('utf8'));
   await verifyInstalledBuild(config.bootstrap.repository,manifest);
   for (const mode of config.profile === 'h041-summary-stage-v1' ? ['summary-only'] : ['summary-only','read-original','clean-child']) if (!packet.scopePolicies?.[mode] || stableJson(packet.scopePolicies[mode]) !== stableJson(review.scopePolicies?.[mode])) throw Error('independently_reviewed_scope_policy_missing');
-  if(config.profile==='h041-full-retention-v1'&&(!['H041-COMPACTION-DELIVERY-03','H041-COMPACTION-DELIVERY-04','H041-COMPACTION-DELIVERY-05'].includes(review.authorization.task)||!['v1','v2'].includes(review.retentionParentPolicy?.collaborationVersion)||stableJson(packet.retentionParentPolicy)!==stableJson(review.retentionParentPolicy)||!review.retentionParentPolicy.artifactPolicy||!review.retentionParentPolicy.childPolicy||!review.retentionParentPolicy.collaborationToolNames||!review.childProjectionSpec||stableJson(packet.childProjectionSpec)!==stableJson(review.childProjectionSpec)||stableJson(review.childProjectionSpec.envelope)!==stableJson(review.childResponseEnvelope)))throw Error('distinct_initial_source_frozen_retention_parent_policy_required');
+  if(config.profile==='h041-full-retention-v1'&&(!FULL_RETENTION_TASKS.includes(review.authorization.task)||!['v1','v2'].includes(review.retentionParentPolicy?.collaborationVersion)||stableJson(packet.retentionParentPolicy)!==stableJson(review.retentionParentPolicy)||!review.retentionParentPolicy.artifactPolicy||!review.retentionParentPolicy.childPolicy||!review.retentionParentPolicy.collaborationToolNames||!review.childProjectionSpec||stableJson(packet.childProjectionSpec)!==stableJson(review.childProjectionSpec)||stableJson(review.childProjectionSpec.envelope)!==stableJson(review.childResponseEnvelope)))throw Error('distinct_initial_source_frozen_retention_parent_policy_required');
   if (!packet.receiptSources || stableJson(packet.receiptSources) !== stableJson(review.receiptSources)) throw Error('receipt_source_pins_missing');
   const result = reviewSnapshot({ runtime, profile: config.profile, receiptSources: packet.receiptSources, scopePolicies: packet.scopePolicies, qualificationSha256: sha256(bytes), sourceBuildManifestSha256: sha256(manifestBytes),routeInstanceId:packet.route.instanceId });
   qualified.add(result); return result;

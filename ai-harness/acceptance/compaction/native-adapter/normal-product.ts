@@ -7,7 +7,7 @@ import {loadCodexOrdinaryEntry} from '../../../server/src/codex-ordinary-entry.j
 import {createProductionQwenVerifier,loadQwenReceipt} from '../../../server/src/codex-production.js';
 import {readProtectedCredential} from '../../../server/src/protected-credential.js';
 import * as traceApi from '../../../server/src/codex-receipts.js';
-import {parsePostSamplingTrace,verifyTraceSchemaMode,traceSchemaForMode,type NativeTraceMode} from '../native-trace-evidence.mjs';
+import {parsePostSamplingTrace,verifyRetainedTrace,verifyTraceSchemaMode,traceSchemaForMode,type NativeTraceMode} from '../native-trace-evidence.mjs';
 import {getCodexReceiptUtf8} from '../../../server/src/codex-receipts.js';
 import {translateResponses} from '../../../server/src/codex-responses.js';
 import type {CodexHostQualification} from '../../../server/src/codex-host.js';
@@ -54,10 +54,15 @@ export class NormalProductProducer {
    if(this.traceFailure)throw this.traceFailure;
    if(!traceApi.isVerifiedCodexTraceReceipt(r))throw Error('actual_owned_current_A_trace_receipt_required');
    const raw=traceApi.getCodexTraceUtf8(r),events=traceApi.getCodexTraceEvents(r);
-   if(!raw||!events||r.sessionId!==this.config.sessionId||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');
+   if(!raw||!events||r.sessionId!==this.config.sessionId||r.mode!==selectedMode||this.traceCaptures.has(r.nonce))throw Error('actual_owned_current_A_trace_receipt_required');
    const producer=this.producers.get(r.nonce);if(!producer?.settlementReceiptUtf8)throw Error('actual_trace_after_owned_settlement_required');
-   verifyTraceSchemaMode(r.schema,selectedMode);
+   // Settled evidence is accepted through expiry; the reserve forbids new
+   // dispatch, not collection of the already owned operation's originals.
+   reviewedAuthorization(this.config.review);verifyTraceSchemaMode(r.schema,selectedMode);
    const packet={...producer,selectedMode,traceReceiptUtf8:raw,traceReceiptSha256:sha256(raw),events:events.map(e=>{const lineUtf8=e.bytes.toString('utf8');if(!Buffer.from(lineUtf8).equals(e.bytes))throw Error('original_trace_invalid_utf8');parsePostSamplingTrace(lineUtf8);return {lineUtf8};})};
+   // Recheck the complete original carrier before selecting any records. The
+   // branded A callback remains mandatory; a valid JSON packet cannot create it.
+   verifyRetainedTrace(packet,{mode:selectedMode,sessionId:this.config.sessionId,receiptSources:this.qualification.receiptSources,traceReceiptSha256:packet.traceReceiptSha256,launchReceiptSha256:packet.launchReceiptSha256,settlementReceiptSha256:packet.settlementReceiptSha256});
    this.traceCaptures.set(r.nonce,packet);
   }catch(e){this.traceFailure=e instanceof Error?e:Error('actual_trace_capture_failed');throw this.traceFailure;}}};
  }
@@ -70,9 +75,9 @@ export class NormalProductProducer {
     const c=this.captures.get(event.context?.requestId);if(this.captureFailure)throw this.captureFailure;if(!c)throw Error('normal_owned_count_raw_capture_missing');this.active(signal);const app=this.owned(c.sessionId),runs=app.store.db.prepare("SELECT id,kind FROM runs WHERE session_id=? AND status='running'").all(c.sessionId);if(this.holding||runs.length!==1)throw Error('actual_unique_normal_store_run_required');const raw=JSON.parse(c.firstRequestUtf8),m=JSON.parse(raw.client_metadata?.['x-codex-turn-metadata']??'null'),translated={...translateResponses(raw).body,model:event.lane};if(!m||m.thread_id!==app.store.getSession(c.sessionId).nativeSessionId||typeof m.turn_id!=='string'||stableJson(translated)!==stableJson(event.body)||sha256(JSON.stringify(event.body))!==event.bodySha256)throw Error('normal_compiled_request_actual_owner_translation');const policy=this.config.review.normalToolPolicies?.[m.request_kind==='compaction'?'compaction':'parent'];if(!policy||sha256(stableJson(raw.tools))!==policy.rawToolsSha256||sha256(stableJson(event.body.tools))!==policy.translatedToolsSha256)throw Error('normal_reviewed_distinct_tool_policy_before_dispatch');Object.assign(c,{runId:String(runs[0].id),nativeThreadId:m.thread_id,nativeTurnId:m.turn_id,normalizedRequestUtf8:JSON.stringify(event.body),normalizedSha256:event.bodySha256});await durableFile(join(this.config.hostPrivate,`${c.requestId}-normal-provider-capture.json`),stableJson(c));await this.counts.retainVerifiedEvent(event,signal);this.active(signal);
    }},
    beforeNativeAction:async input=>{await base.beforeNativeAction?.(input);if(input.sessionId===this.config.sessionId)this.active();if(input.sessionId===this.config.sessionId&&this.holding)throw Error('normal_capture_blocks_native_mutation');},
-   onNativeLaunchReceipt:r=>{base.onNativeLaunchReceipt?.(r);if(r.sessionId===this.config.sessionId)this.producers.set(r.nonce,{launchReceiptUtf8:this.raw(r),launchReceiptSha256:sha256(this.raw(r))});},
+   onNativeLaunchReceipt:r=>{base.onNativeLaunchReceipt?.(r);if(r.sessionId===this.config.sessionId){if(this.producers.has(r.nonce))throw Error('actual_normal_launch_receipt_no_replay');this.producers.set(r.nonce,{launchReceiptUtf8:this.raw(r),launchReceiptSha256:sha256(this.raw(r))});}},
    onNativeThread:async input=>{await base.onNativeThread?.(input);if(input.sessionId===this.config.sessionId){if(!input.rolloutPath)throw Error('actual_normal_rollout_path_missing');this.rolloutPath=input.rolloutPath;await durableFile(join(this.config.hostPrivate,`${input.launchReceipt.nonce}-normal-thread.json`),stableJson({source:'actual-normal-native-thread',sessionId:input.sessionId,threadId:input.threadId,rolloutPath:input.rolloutPath,method:input.method,observedSettings:input.observedSettings}));}},
-   onNativeSettlementReceipt:r=>{base.onNativeSettlementReceipt?.(r);if(r.sessionId===this.config.sessionId){const p=this.producers.get(r.nonce);if(!p)throw Error('normal_settlement_without_actual_launch');p.settlementReceiptUtf8=this.raw(r);p.settlementReceiptSha256=sha256(p.settlementReceiptUtf8);if(!this.currentProcess||!r.cleanupOk)throw Error('actual_normal_cleanup_missing');this.observer.cleanupObserved(this.currentProcess);}},
+   onNativeSettlementReceipt:r=>{base.onNativeSettlementReceipt?.(r);if(r.sessionId===this.config.sessionId){const p=this.producers.get(r.nonce);if(!p||p.settlementReceiptUtf8)throw Error('normal_settlement_without_actual_launch_or_replayed');p.settlementReceiptUtf8=this.raw(r);p.settlementReceiptSha256=sha256(p.settlementReceiptUtf8);if(!this.currentProcess||!r.cleanupOk)throw Error('actual_normal_cleanup_missing');this.observer.cleanupObserved(this.currentProcess);}},
   } as CodexHostQualification;
  }
  async reopenBaseline(baseline:any){const app=this.owned(baseline.sessionId);if(this.rolloutPath||baseline.nativeThreadId!==app.store.getSession(baseline.sessionId).nativeSessionId||sha256(baseline.stateUtf8)!==baseline.stateSha256)throw Error('normal_reopen_exact_accepted_parent_required');const path=baseline.rolloutPath;if(typeof path!=='string'||!path.startsWith(app.files.profile(baseline.sessionId)+'/')||sha256(await readFile(path))!==baseline.stateSha256)throw Error('normal_reopen_protected_rollout_changed');await app.files.assertNoLinks(path);const session=app.store.getSession(baseline.sessionId);if(session.nativeState.ownership!=='idle'||session.nativeState.activeTurnId!==null||app.store.isQuarantined(session.workspaceId)||app.store.runs(session.id).some((r:any)=>['queued','running','cancelling'].includes(r.status)))throw Error('normal_reopened_owner_not_idle');this.active();const token=app.gateway.issueToken(session.id,'codex');try{this.active();}finally{app.gateway.revokeToken(token);}this.rolloutPath=path;this.reopenedBaseline=baseline;}

@@ -3,7 +3,7 @@ import { createCodexTextOnlyPolicy, createCodexParentArtifactScope, type CodexTe
 import { getCodexReceiptUtf8 } from '../../../server/src/codex-receipts.js';
 import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
-import {selectPolicyFactories} from './policy-selection.js';
+import {selectPolicyFactories,createSelectedRetentionParentPolicy} from './policy-selection.js';
 import {DelegatedChildProducer} from './delegated-child.js';
 import {carrierForConfig} from './carrier-admission.js';
 import {isQualificationTaskAdmission,type QualificationTaskAdmission} from '../../../server/src/qualification-task-admission.js';
@@ -59,7 +59,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
           const scope = context.guard.activeScope(sessionId);
           const mode = scope?.mode === 'durable-retrieval' ? 'read-original' : ['summary-only','clean-child'].includes(scope?.mode ?? '') ? 'summary-only' : qualified.profile === 'h041-full-retention-v1' ? 'parent-artifacts' : 'text-only-parent';
           const fields={sessionId,runId:scope?.mode === 'durable-retrieval' ? scope.runId : config.bootstrap.review.authorization.windowId,mode,configSha256:config.bootstrap.review.mountedConfigSha256,modelCatalogSha256:config.bootstrap.review.modelCatalogSha256};
-          const policy=mode==='parent-artifacts'?selected.parentFactory!({...fields,collaborationVersion:config.bootstrap.review.retentionParentPolicy?.collaborationVersion}):factory(fields);
+          const policy=mode==='parent-artifacts'?createSelectedRetentionParentPolicy(selected,task,fields,config.bootstrap.review.retentionParentPolicy?.collaborationVersion):factory(fields);
           policies.set(sessionId,policy); return policy;
         },
         authorizeNativeTurn: async ({policy,launchReceipt,threadId,params,method}) => {
