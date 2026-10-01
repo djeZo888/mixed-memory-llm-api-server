@@ -1,0 +1,176 @@
+{
+  "schema": "h044-vision-wiring03-v1",
+  "status": "SOURCE_ONLY",
+  "utc": "2026-10-01T23:46:03.887079+00:00",
+  "base": "58bff2ec474fd0cf4a7ba3f71028bb2710555c88",
+  "predecessor": "84e83449705818550955ae8baf7f8b619dce6d26",
+  "adoption": "verified bundle SHA; private distinct ref; clean owned --3way; no whole commit adoption",
+  "W1": "implemented transaction-internal claim/cap/uniqueinsert; revision/binding/source/snapshot/terminal/job CAS; terminal message/event/dedup transaction; unique cancel dispatch",
+  "W2": "narrow bounded exact POST template plus meaningful parsed validator and negatives",
+  "checks": {
+    "focused-sealed": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:43:43.030509+00:00",
+      "endUtc": "2026-10-01T23:43:45.355743+00:00",
+      "pid": 84164,
+      "pgid": 84164,
+      "groupAbsent": true,
+      "logs": {
+        "logs/focused-sealed.stdout": {
+          "sha256": "f4ef08b87995272079c8e0012769cd8175221ba756fe1ab81c7bb37c689337b4",
+          "bytes": 24652
+        },
+        "logs/focused-sealed.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    "typecheck-sealed": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:43:43.030505+00:00",
+      "endUtc": "2026-10-01T23:43:45.468798+00:00",
+      "pid": 84165,
+      "pgid": 84165,
+      "groupAbsent": true,
+      "logs": {
+        "logs/typecheck-sealed.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "logs/typecheck-sealed.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    "build-sealed": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:43:43.030505+00:00",
+      "endUtc": "2026-10-01T23:43:45.723223+00:00",
+      "pid": 84163,
+      "pgid": 84163,
+      "groupAbsent": true,
+      "logs": {
+        "logs/build-sealed.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "logs/build-sealed.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    },
+    "nginx-final": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:40:57.193908+00:00",
+      "endUtc": "2026-10-01T23:40:57.257348+00:00",
+      "pid": 83550,
+      "pgid": 83550,
+      "groupAbsent": true,
+      "logs": {
+        "logs/nginx-final.stdout": {
+          "sha256": "e587d4666d8888de52e56157ec82131b35d4a2affaa7310c9d710b6b863bc2cb",
+          "bytes": 85
+        },
+        "logs/nginx-final.stderr": {
+          "sha256": "9caaa3de00c8a0ac20cf07a6543431d3f76c884e33de087aeb041004870e7d6f",
+          "bytes": 391
+        }
+      }
+    },
+    "nginx-regression": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:40:57.193914+00:00",
+      "endUtc": "2026-10-01T23:40:57.308336+00:00",
+      "pid": 83549,
+      "pgid": 83549,
+      "groupAbsent": true,
+      "logs": {
+        "logs/nginx-regression.stdout": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        "logs/nginx-regression.stderr": {
+          "sha256": "f2f0f240b188b6ba2b2ed39e47ff2483dde7c67fbfdd55ce1a2a6043de9c642a",
+          "bytes": 438
+        }
+      }
+    },
+    "public-controls-final": {
+      "exitCode": 0,
+      "startUtc": "2026-10-01T23:40:57.192893+00:00",
+      "endUtc": "2026-10-01T23:40:58.046525+00:00",
+      "pid": 83548,
+      "pgid": 83548,
+      "groupAbsent": true,
+      "logs": {
+        "logs/public-controls-final.stdout": {
+          "sha256": "3deccfaf3a7918791f12d6e1463b4490d63d5d38c33eae91155f3712509624da",
+          "bytes": 1193
+        },
+        "logs/public-controls-final.stderr": {
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        }
+      }
+    }
+  },
+  "overlay": "six R interface files only in isolated check tree; excluded from source commits/diff/bundle",
+  "Store": "unchanged base bytes; narrow seam not needed",
+  "missing": [
+    "genuine root qualification/runtime/owner/ingress/OCR originals",
+    "native MCP integration/routing R work",
+    "installed nginx current actualpeer inventory, nginx syntax and live access tests",
+    "independent native wrapper/outer closure receipts pending return"
+  ],
+  "NOT_TESTED": [
+    "Linux deployment",
+    "GPU/model load",
+    "native minimal startup/shutdown",
+    "manual/400K compaction",
+    "OCR accuracy",
+    "Qwen-Image",
+    "nativeMCP",
+    "real browser onechat",
+    "all six resident/concurrent",
+    "fan"
+  ],
+  "sourceChecks": "PASS_SOURCE_ONLY",
+  "focusedTests": {
+    "tests": 51,
+    "passed": 51,
+    "failed": 0,
+    "newIndependentConnectionTests": 7
+  },
+  "nginxSourceTests": {
+    "unitCases": 3,
+    "compatibilityCases": 2,
+    "negativeMutations": 11,
+    "status": "SOURCE_ONLY_NOT_INSTALLED_NGINX"
+  },
+  "preReviewUtc": "2026-10-01T23:39:12.942999+00:00",
+  "preReview": "output/pre-review/PRE-REVIEW.json",
+  "originalFailure": "concurrency-01 exit 1: fixture source-reference mismatch; preserved original command/stdout/stderr/receipt; corrected and final tests passed",
+  "bootstrapReceiptLimitation": "original early exploration/tool failures retained in phase events and output/ORIGINAL-FAILURES.json; no worker-created PID/birth/UTC receipt for those exploration commands",
+  "closure": "checks actually reaped and groups absent; root independently collects native wrapper/outer integer exits and all recorded birth/group absence AFTER return",
+  "W1Additional": "under the same admission lock, Stop blocks new claim and different keys cannot replace the same unknown source; existing original claims remain followup-only",
+  "ownedFiles": [
+    "ai-harness/server/src/app.ts",
+    "ai-harness/server/src/store.ts",
+    "ai-harness/server/src/technical-vision-host.ts",
+    "ai-harness/server/src/technical-vision-tool.ts",
+    "ai-harness/server/src/technical-vision-qualification.ts",
+    "ai-harness/server/test/technical-vision-host.test.ts",
+    "ai-harness/server/test/h043-technical-vision-wiring.test.ts",
+    "ai-harness/server/test/h044-technical-vision-concurrency.test.ts",
+    "ai-harness/docs/technical-vision.md",
+    "ai-harness/deploy/nginx/ai-harness.conf",
+    "ai-harness/deploy/nginx/status-proxy.inc",
+    "ai-harness/deploy/nginx/technical-vision-proxy.inc",
+    "ai-harness/deploy/security/validate-nginx-boundary.py",
+    "reports/h044-vision-wiring03.md",
+    "reports/h044-vision-wiring03.json"
+  ]
+}
