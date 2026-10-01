@@ -37,7 +37,7 @@ const unsupportedSlashCommands = new Set<string>([
 ]);
 export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   /** Root-reviewed ordinary recovery host. Absent by default; no browser body can qualify this seam. */
-  memoryRecoveryHost?: (input:{sessionId:string;checkpointId:string;memory:import("./session-memory.js").SessionMemoryBridge}) => Promise<import("./session-checkpoint.js").FreshParentRecoveryEvidence>;
+  memoryRecoveryHost?: (input:{sessionId:string;checkpointId:string;signal:AbortSignal;reservation:import("./store.js").WorkspaceRecoveryReservation;memory:import("./session-memory.js").SessionMemoryBridge}) => Promise<import("./session-checkpoint.js").FreshParentRecoveryEvidence>;
   /** Trusted host/fixture configuration only; existing session identity is separate. */
   newChatEngine?: "codex" | "minimax";
   dataDir: string;
@@ -463,7 +463,7 @@ export async function createApp(options: AppOptions): Promise<{
     });
     app.get("/api/sessions/:id/memory", async (req) => {
       store.memory.indexHistory(id(req));
-      return { ...store.memory.view(id(req)), versions: store.memory.versions(id(req)), recovery: store.checkpoints.status(id(req)) };
+      return { ...store.memory.view(id(req)), versions: store.memory.versions(id(req)), proposals: store.db.prepare("SELECT id,body FROM h041_memory_proposals WHERE session_id=? ORDER BY rowid DESC LIMIT 16").all(id(req)).map(row=>({id:String(row.id),state:JSON.parse(String(row.body))})), recovery: store.checkpoints.status(id(req)) };
     });
     app.get("/api/sessions/:id/memory/originals/:originalId", async (req) => {
       const q = object(req.query); only(q,["offset","limit"]);
@@ -502,7 +502,7 @@ export async function createApp(options: AppOptions): Promise<{
       assertMemoryHuman(req.headers);only(object(req.body),[]);const sessionId=id(req),checkpointId=requireId((req.params as {checkpointId:unknown}).checkpointId);
       if(!options.memoryRecoveryHost)throw new ApiError(503,"memory_recovery_unqualified","Fresh no-replay recovery host is not qualified");
       if(broker.currentImageRun(sessionId))throw new ApiError(409,"memory_recovery_busy","Session has active work");
-      return store.checkpoints.recoverWithFreshParent(sessionId,checkpointId,await options.memoryRecoveryHost({sessionId,checkpointId,memory:store.memory.bridge(sessionId)}));
+      return broker.recoverMemory(sessionId,checkpointId,options.memoryRecoveryHost);
     });
     app.post("/api/sessions/:id/handoff", async (req, reply) => {
       const body = object(req.body);

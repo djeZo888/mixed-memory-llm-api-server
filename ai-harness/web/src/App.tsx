@@ -13,6 +13,7 @@ import {
 import { codexSpecialistAvailable, HarnessStore, busyKey, pendingRunIds } from './store';
 import { isActive, type EngineKind, type Status } from './types';
 import { resolveStatus } from './status';
+import { MemoryPanel } from './MemoryPanel';
 import { FrontierActivity } from './FrontierActivity';
 import { Composer } from './Composer';
 import { canStageEditReference } from './image-capabilities';
@@ -32,6 +33,7 @@ export function App({ store }: { store: HarnessStore }) {
   const [newEngine, setNewEngine] = useState<EngineKind | undefined>();
   const selectedNewEngine = newEngine ?? state.newChatEngine;
   const [handoffChoice, setHandoffChoice] = useState<{ sessionId: string; engineKind: EngineKind } | null>(null);
+  const [memorySession, setMemorySession] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [narrow, setNarrow] = useState(window.innerWidth <= 700);
   const sidebar = useRef<HTMLElement>(null);
@@ -260,8 +262,10 @@ export function App({ store }: { store: HarnessStore }) {
             </span>
             <h1>{selected ? title : 'Your workspace'}</h1>
           </div>
+          {memorySession === selected && memorySession && <MemoryPanel key={memorySession} sessionId={memorySession} onClose={()=>setMemorySession(null)} />}
           {thread && (
             <div className="header-actions">
+              {thread.session.engineKind === 'codex' && <button className="text-button" onClick={()=>setMemorySession(thread.session.id)}>Review memory</button>}
               <Badge status={resolveStatus(thread.session.status, thread.runs)} />
               {thread.session.engineKind === 'codex' && (
                 <button

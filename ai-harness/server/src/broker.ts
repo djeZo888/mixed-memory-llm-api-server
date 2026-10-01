@@ -72,6 +72,7 @@ export class Broker {
   private active = new Map<string, Active>();
   private runners = new Map<string, Runner>();
   private closing = false;
+  private recoveries = new Map<string,{abort:AbortController;settled:Promise<void>}>();
   constructor(readonly options: BrokerOptions) {
     this.store = options.store;
     this.files = options.files;
@@ -94,6 +95,22 @@ export class Broker {
       });
     if (this.closing || active?.cancelled)
       throw new Error("Dispatch cancelled while frozen");
+  }
+  async recoverMemory(sessionId: string, checkpointId: string, host: NonNullable<import("./app.js").AppOptions["memoryRecoveryHost"]>) {
+    const session=this.store.getSession(sessionId);
+    if(this.closing || this.options.dispatchHeld?.() || this.active.has(session.workspaceId) || this.queues.get(session.workspaceId)?.length)
+      throw new ApiError(409,"memory_recovery_busy","Workspace has active work");
+    const reservation=this.store.reserveWorkspaceRecovery(sessionId,checkpointId); let verified=false;
+    const abort=new AbortController();let finished!:()=>void;const settled=new Promise<void>(r=>{finished=r;});this.recoveries.set(reservation.id,{abort,settled});
+    try {
+      const evidence=await host({sessionId,checkpointId,memory:this.store.memory.bridge(sessionId),reservation,signal:abort.signal});
+      abort.signal.throwIfAborted();
+      const result=this.store.checkpoints.recoverWithFreshParent(sessionId,checkpointId,evidence);
+      verified=true; return result;
+    } finally {
+      try{this.store.finishWorkspaceRecovery(reservation,verified);}finally{this.recoveries.delete(reservation.id);finished();}
+      queueMicrotask(()=>this.pump(session.workspaceId));
+    }
   }
   currentImageRun(sessionId: string) {
     const active = [...this.active.values()].find(
@@ -131,6 +148,7 @@ export class Broker {
       if (existing) return existing;
     }
     const admit = (s: StoredSession) => {
+      if(this.store.workspaceRecoveryBlocked(s.workspaceId)) throw new ApiError(409,"memory_recovery_busy","Workspace has an active or unresolved recovery owner");
       if (s.engineKind === "codex") this.store.memory.bridge(s.id).assertContinuationAllowed();
       assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
       if (kind === "handoff")
@@ -243,7 +261,8 @@ export class Broker {
     if (
       this.closing ||
       this.options.dispatchHeld?.() ||
-      this.active.has(workspaceId)
+      this.active.has(workspaceId) ||
+      this.store.workspaceRecoveryBlocked(workspaceId)
     )
       return;
     const queue = this.queues.get(workspaceId);
@@ -911,6 +930,8 @@ export class Broker {
   }
   private async shutdown() {
     this.closing = true;
+    const recoveries=[...this.recoveries.values()];for(const r of recoveries)r.abort.abort(new Error("Recovery cancelled by shutdown"));
+    await Promise.all(recoveries.map(r=>r.settled));
     const active = [...this.active.values()];
     await Promise.all(active.map((a) => this.cancel(a.run.sessionId)));
     // Deliver launcher shutdown now; waiting for an unresponsive prompt first

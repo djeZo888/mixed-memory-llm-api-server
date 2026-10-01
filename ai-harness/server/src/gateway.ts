@@ -1287,7 +1287,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     },
     confirmSettlement: async (query, waitMs = 0) => ownership.waitForSettlement(query, waitMs),
     observeSettlement: (query, stop) => ownership.waitForSettlement(query, stop),
-    observeNoGeneration: (sessionId,work)=>observeGatewayNoGeneration(sessionId,()=>ownership.snapshot(sessionId),work),
+    observeNoGeneration: (sessionId,work)=>observeGatewayNoGeneration(sessionId,()=>ownership.admissionObservation(sessionId),work),
     sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,
@@ -1325,7 +1325,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       admission.notifyAvailabilityChanged();
       frontierAdmission?.notifyAvailabilityChanged();
     },
-    close: () => app.close(),
+    close: () => {ownership.stopObservation();return app.close();},
   };
 }
 

@@ -1,7 +1,5 @@
+import {createCodexRecoveryHost} from "./codex-recovery.js";
 import {loadCodexOrdinaryEntry,type CodexOrdinaryEntry} from "./codex-ordinary-entry.js";
-import {CodexEngine} from "./codex-engine.js";
-import type {CodexNativeObservation} from "./codex-observation.js";
-import type {FreshParentRecoveryEvidence} from "./session-checkpoint.js";
 import { readFileSync } from "node:fs";
 import { loadCodexSpecialists } from "./codex-specialist-qualification.js";
 import { createHostOwnedAcceptance } from "./owned-acceptance.js";
@@ -115,20 +113,14 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
         }
       : observed;
   };
+  let recoveryHost:ReturnType<typeof createCodexRecoveryHost>|undefined;
   const application = await createApp({
     newChatEngine,
     dataDir,
     launcher,
     engineFactory: createEngine,
     ...codexOptions,
-    memoryRecoveryHost:codex.ordinary?async input=>{
-      const session=application.store.getSession(input.sessionId),g=gateway;if(!g?.observeNoGeneration||session.engineKind!=="codex"||session.nativeState.ownership!=="idle"||session.nativeState.activeTurnId!==null||application.store.isQuarantined(session.workspaceId)||freeze.held("harness"))throw Error("Ordinary recovery owner is unavailable");
-      const row=application.store.db.prepare("SELECT id FROM h041_session_checkpoints WHERE session_id=? AND id=? AND status='recovery_required'").get(input.sessionId,input.checkpointId);if(!row||!application.store.db.prepare("SELECT id FROM h041_checkpoint_recoveries WHERE session_id=? AND checkpoint_id=?").get(input.sessionId,input.checkpointId))throw Error("Exact human-acknowledged recovery required");
-      if(application.store.db.prepare("SELECT id FROM runs WHERE workspace_id=? AND status IN ('queued','running','cancelling') LIMIT 1").get(session.workspaceId))throw Error("Workspace still has queued/active owner");
-      await application.files.prepare(input.sessionId,session.workspaceId);const observed:Partial<FreshParentRecoveryEvidence>={};const token=g.issueToken(input.sessionId,"codex");
-      const result=await g.observeNoGeneration(input.sessionId,async()=>{const engine=new CodexEngine({sessionId:input.sessionId,profileDir:application.files.profile(input.sessionId),workspace:application.files.workspace(session.workspaceId),launcher,gatewayUrl:codexHost.runtime.gatewayUrl,gatewayToken:token,stderrPath:application.files.log(input.sessionId),sessionMemory:input.memory,onNativeSessionId:()=>{},onNativeState:state=>application.store.setNativeState(input.sessionId,"codex",state),onUpdate:()=>{},onNativeLifecycle:event=>{if(["launch","thread","settlement","gateway_settled"].includes(event.kind))Object.assign(observed,{[event.kind==="gateway_settled"?"gateway":event.kind]:event});}},codexHost.runtime);try{await engine.start();await engine.close();}catch(error){try{await engine.close();}catch{application.store.quarantine(session.workspaceId,"Fresh recovery cleanup unknown");}throw error;}finally{g.revokeToken(token);}return observed;});
-      if(!result.value.launch||!result.value.thread||!result.value.settlement||!result.value.gateway)throw Error("Fresh recovery lifecycle observations incomplete");return {...result.value,noGeneration:result.proof} as FreshParentRecoveryEvidence;
-    }:undefined,
+    memoryRecoveryHost:codex.ordinary?input=>(recoveryHost??=createCodexRecoveryHost({store:application.store,files:application.files,runtime:codexHost.runtime,gateway:()=>gateway,launcher,dispatchHeld:()=>freeze.held("harness")}))(input):undefined,
     imageAcceptance: codex.qualification?.imageAcceptance,
     imageReferenceAcceptance: owned?.imageReference,
     onRunAccepted: owned?.onRunAccepted,

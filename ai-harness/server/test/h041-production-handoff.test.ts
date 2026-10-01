@@ -1,5 +1,5 @@
 /** Synthetic host-authority/SQLite/private-file fixtures. No Linux transport or native PASS. */
-import test,{type TestContext} from "node:test";
+import test,{mock,type TestContext} from "node:test";
 import assert from "node:assert/strict";
 import {mkdtempSync,realpathSync,mkdirSync,writeFileSync,readFileSync,chmodSync,rmSync} from "node:fs";
 import {tmpdir} from "node:os";
@@ -12,6 +12,8 @@ import {revalidateRetainedCodexReceipts} from "../src/codex-receipts.js";
 import {canonicalJson} from "../src/codex-canonical.js";
 import {CODEX_PARENT_ARTIFACT_SPEC,createCodexTextOnlyPolicy,createCodexContinuationPolicy,createCodexDeliveryPolicy,createCodexRetentionParentPolicy,CODEX_H041_DELIVERY_WINDOW,CODEX_H041_WINDOW,CODEX_H041_CONTINUATION_WINDOW,codexPolicyOwnsSettledThread,codexPolicyOwner,validateCodexPolicyFreshLaunch,stageCodexPolicyAdoption} from "../src/codex-probe.js";
 import {validateSessionRestartOwnership} from "../src/session-checkpoint.js";
+// Explicit historical clock for SOURCE fixtures; production expiry remains enforced.
+mock.timers.enable({apis:["Date"],now:CODEX_H041_DELIVERY_WINDOW.startAtMs+60_000});
 const sha=(b:string|Uint8Array)=>createHash("sha256").update(b).digest("hex");
 function fixture(t:TestContext) {
  const root=realpathSync(mkdtempSync(join(tmpdir(),"h041-handoff-"))),directory=join(root,"handoff"),profile=join(root,"profile"),workspace=join(root,"workspace");for(const p of [directory,profile,workspace,join(profile,"codex-home"),join(profile,"codex-home","sessions")])mkdirSync(p,{mode:0o700});
