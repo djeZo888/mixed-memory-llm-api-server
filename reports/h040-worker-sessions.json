@@ -267,7 +267,7 @@
       "task": "B-qualification-closure",
       "host": "mac-worker2",
       "actualSessionId": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
-      "status": "resumed; actual closure pending",
+      "status": "deadline terminated actualnative-15/outer143 after source/report/bundle export; source67PASS; RESULTS/OUTBOX absent; finalcoherentvalidation required",
       "sourceCandidate": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
       "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-qualification-closure",
       "outerPid": 27722,
@@ -282,7 +282,26 @@
       "verifiedReasoningEffort": "ultra",
       "cliVersion": "0.159.2",
       "settingsEvidence": "persisted same-session turn_context 2026-10-01T03:50:55.053Z",
-      "expandedScope": "Native unknown cleanup aggregate gate + separately bound accepted artifact raw-byte preservation; B controller/scorer/evidence only as necessary"
+      "expandedScope": "Native unknown cleanup aggregate gate + separately bound accepted artifact raw-byte preservation; B controller/scorer/evidence only as necessary",
+      "nativeTerminal": {
+        "nativePid": 27724,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T04:04:45.090849+00:00",
+        "deadlineTermination": true
+      },
+      "outerTerminal": {
+        "wrapperPid": 27723,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T04:04:45.099427+00:00"
+      },
+      "sourceCommit": "82cbd49bf9e1fa0199ba091478b2cad3a01c3db3",
+      "bundleSha256": "accadc60b2c979270267130c32da7aaf9ce7915ad8a8b0009bae55ae09f5b3e5",
+      "sourceTests": {
+        "passed": 67,
+        "failed": 0,
+        "scope": "synthetic-source-only"
+      },
+      "exportCompletion": "partial; bundle+committedreports exist, no postcommit OUTBOX/RESULTS"
     }
   ],
   "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
@@ -296,7 +315,7 @@
   "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
   "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
   "automaticRestartOrRetry": false,
-  "observedUtc": "2026-10-01T03:57:38.165596+00:00",
+  "observedUtc": "2026-10-01T04:06:08.913546+00:00",
   "latestHumanGpuPlacement": {
     "imageGenEdit": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
     "visualToText": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",

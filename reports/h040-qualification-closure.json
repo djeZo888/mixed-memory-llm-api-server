@@ -21,13 +21,15 @@
       "outerExitCode": 0,
       "atUtc": "2026-10-01T03:46:42Z"
     },
-    "currentNativeExitCode": null,
-    "currentOuterExitCode": null,
-    "exitLimitation": "Current actual native/outer exits belong to wrapper receipts after closure, never prospective values."
+    "currentNativeExitCode": -15,
+    "currentOuterExitCode": 143,
+    "exitLimitation": "Root collected actual wrapper/native terminal receipts after closure; original worker report had null prospective values.",
+    "deadlineTermination": true,
+    "actualClosureUtc": "2026-10-01T04:04:45.099427+00:00"
   },
   "baseCommit": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
-  "commit": null,
-  "commitLimitation": "Post-commit OUTBOX and RESULTS export the exact commit without a self-referential tracked report.",
+  "commit": "82cbd49bf9e1fa0199ba091478b2cad3a01c3db3",
+  "commitLimitation": "Root verified the exported bundle HEAD; worker deadline arrived before postcommit OUTBOX/RESULTS.",
   "ownedFiles": [
     "ai-harness/acceptance/compaction/qualification.mjs",
     "ai-harness/acceptance/compaction/controller.mjs",
@@ -135,5 +137,13 @@
     "Review exact B bundle at base with coherent A/E disabled source and dispatch final combined validation.",
     "Preserve original E receipt source and byte domain; E future afterrestart native-owned-workspace-artifacts receipt must carry actual runId/sessionId/captureId/checkpointStateSha256/acceptedArtifactReceiptSha256/acceptedArtifactReceiptBytes/acceptedStoreRunId/acceptedContinuationActionId, alongside existing nativeThread/action/window/afterHost/artifactUtf8. No declared attestation replaces actual captures.",
     "Keep native disabled until independently observed trusted receipt transport/runtime/source/mount/model-tool/gateway scope and whole requests qualify; root alone owns later live GO."
-  ]
+  ],
+  "sourceStatus": "PASS",
+  "phaseOutcome": "PARTIAL_DEADLINE_TERMINATED",
+  "bundle": {
+    "sha256": "accadc60b2c979270267130c32da7aaf9ce7915ad8a8b0009bae55ae09f5b3e5",
+    "sourceCommit": "82cbd49bf9e1fa0199ba091478b2cad3a01c3db3",
+    "baseCommit": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
+    "exportedBeforeDeadline": true
+  }
 }
