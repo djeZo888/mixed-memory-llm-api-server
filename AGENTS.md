@@ -21,7 +21,7 @@ Read the [H037 plan](reports/h037-execution-plan.md) and
 not the current deployment state. H036 recovery and failed outcomes remain in
 [its report](reports/h036-resumed-recovery.md).
 
-## Current assignment
+## Retained H038 assignment
 
 The user authorized H038 on 30 September 2026, 13:45:26–16:45:26 UTC
 (15:45:26–18:45:26 Ljubljana). Read reports/h038-execution-plan.md.

@@ -1,10 +1,135 @@
 {
   "task": "H039-20261001",
-  "phase": "dispatch_prepared",
-  "baseCommit": "c73a853abbf46ecede65d0dae04dd2e5ac8e5c37",
+  "phase": "four_native_sessions_launched_verified",
+  "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
   "globalDeadlineUtc": "2026-10-01T02:25:00Z",
   "model": "gpt-6.1-sol",
   "reasoningEffort": "ultra",
-  "sessions": [],
-  "note": "Root will replace this roster with actual launch receipts. Empty sessions do not establish dispatch."
+  "sessions": [
+    {
+      "task": "A-native-compaction",
+      "host": "mac-worker1",
+      "branch": "h039/a-native-compaction",
+      "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
+      "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted native turn_context",
+      "cliVersion": "0.159.2",
+      "pids": {
+        "outer": 14379,
+        "wrapper": 14381,
+        "native": 14383
+      },
+      "startedUtc": "2026-10-01T00:23:51.882485+00:00",
+      "hardDeadlineUtc": "2026-10-01T01:53:51.882485+00:00",
+      "observedUtc": "2026-10-01T00:24:13.386212+00:00",
+      "statusAtObservation": "native session running; result not yet collected",
+      "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/A-native-compaction",
+      "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/A-native-compaction/repo",
+      "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/A-native-compaction/LAUNCH-RECEIPT.json",
+      "collectFiles": [
+        "OUTBOX.md",
+        "output/RESULTS.json",
+        "LAST_MESSAGE.md",
+        "WRAPPER-TERMINAL.json",
+        "OUTER-TERMINAL.json"
+      ],
+      "backgroundJob": null
+    },
+    {
+      "task": "B-retention-suite",
+      "host": "mac-worker2",
+      "branch": "h039/b-retention-suite",
+      "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
+      "actualSessionId": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted native turn_context",
+      "cliVersion": "0.159.2",
+      "pids": {
+        "outer": 18885,
+        "wrapper": 18887,
+        "native": 18889
+      },
+      "startedUtc": "2026-10-01T00:24:02.043829+00:00",
+      "hardDeadlineUtc": "2026-10-01T01:54:02.043829+00:00",
+      "observedUtc": "2026-10-01T00:24:26.133490+00:00",
+      "statusAtObservation": "native session running; result not yet collected",
+      "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/B-retention-suite",
+      "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/B-retention-suite/repo",
+      "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/B-retention-suite/LAUNCH-RECEIPT.json",
+      "collectFiles": [
+        "OUTBOX.md",
+        "output/RESULTS.json",
+        "LAST_MESSAGE.md",
+        "WRAPPER-TERMINAL.json",
+        "OUTER-TERMINAL.json"
+      ],
+      "backgroundJob": null
+    },
+    {
+      "task": "C-vision-artifacts",
+      "host": "mac-worker1",
+      "branch": "h039/c-vision-artifacts",
+      "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
+      "actualSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted native turn_context",
+      "cliVersion": "0.159.2",
+      "pids": {
+        "outer": 14491,
+        "wrapper": 14492,
+        "native": 14493
+      },
+      "startedUtc": "2026-10-01T00:23:52.694982+00:00",
+      "hardDeadlineUtc": "2026-10-01T01:08:52.694982+00:00",
+      "observedUtc": "2026-10-01T00:24:13.403235+00:00",
+      "statusAtObservation": "native session running; result not yet collected",
+      "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts",
+      "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts/repo",
+      "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/C-vision-artifacts/LAUNCH-RECEIPT.json",
+      "collectFiles": [
+        "OUTBOX.md",
+        "output/RESULTS.json",
+        "LAST_MESSAGE.md",
+        "WRAPPER-TERMINAL.json",
+        "OUTER-TERMINAL.json"
+      ],
+      "backgroundJob": "not yet observed; read task C OUTBOX for actual unit/receipt/manifest"
+    },
+    {
+      "task": "D-vision-bridge",
+      "host": "mac-worker2",
+      "branch": "h039/d-vision-bridge",
+      "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
+      "actualSessionId": "01a0f4d8-c550-78a3-86bf-184759a1c9d3",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted native turn_context",
+      "cliVersion": "0.159.2",
+      "pids": {
+        "outer": 18886,
+        "wrapper": 18888,
+        "native": 18890
+      },
+      "startedUtc": "2026-10-01T00:24:02.043830+00:00",
+      "hardDeadlineUtc": "2026-10-01T01:54:02.043830+00:00",
+      "observedUtc": "2026-10-01T00:24:26.134656+00:00",
+      "statusAtObservation": "native session running; result not yet collected",
+      "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/D-vision-bridge",
+      "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/D-vision-bridge/repo",
+      "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/D-vision-bridge/LAUNCH-RECEIPT.json",
+      "collectFiles": [
+        "OUTBOX.md",
+        "output/RESULTS.json",
+        "LAST_MESSAGE.md",
+        "WRAPPER-TERMINAL.json",
+        "OUTER-TERMINAL.json"
+      ],
+      "backgroundJob": null
+    }
+  ],
+  "adoptionRule": "Collect actual current PID/session terminal and OUTBOX before new dispatch. A launch receipt is not task completion. Preserve any bounded download job; do not duplicate it."
 }

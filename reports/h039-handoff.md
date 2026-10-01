@@ -137,6 +137,13 @@ reading its actual unit/receipt/manifest, preserving partial artifacts.
 
 Root-local private launch records live under
 `/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/`.
+Four native sessions were observed running at 00:24 UTC, each verified from
+persisted native context as GPT 6.1 Sol Ultra. Tasks A/B/D expire around
+01:54 UTC / 03:54 Ljubljana; C expires 01:08:52 UTC / 03:08:52 Ljubljana
+and should close earlier once its durable job is launched. The VM download
+unit was not yet observed when these launch receipts were recorded; collect
+C's actual OUTBOX/manifest rather than assuming completion.
+
 Public session metadata appears in the linked JSON; private events and passwords
 remain outside Git. Git publication uses mac-worker2's already authenticated
 GitHub helper from an isolated repository; credentials are not copied to root.
@@ -145,8 +152,8 @@ GitHub helper from an isolated repository; credentials are not copied to root.
 
 > Continue Sova from reports/h039-handoff.md and
 > reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image.
-> First collect/adopt the existing four bounded Mac worker sessions and vision
-> download job; do not launch duplicates. Compaction reliability is priority one.
+> First collect/adopt the four recorded bounded Mac worker sessions and any
+> download job actually recorded by task C; do not assume its launch or create duplicates. Compaction reliability is priority one.
 > Review source/fixtures before coordinated live integration. Technical vision
 > preparation runs in parallel. Sova may stay offline; the smaller Ada Qwen may
 > be retired. Keep original chats/files/credentials and failed evidence. Root
