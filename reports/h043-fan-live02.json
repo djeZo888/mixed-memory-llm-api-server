@@ -1,0 +1,180 @@
+{
+  "schema": "h043-fan-live02-progress-v1",
+  "phase": "E-fan-live02",
+  "base": "fe60d5a9ec5bfb68492584740174670a683bbe5d",
+  "at": "2026-10-01T22:41:59.463563+00:00",
+  "status": "PARTIAL_BASELINE_COMPLETE_REPAIR_POSTPONED_BY_CURRENT_HUMAN",
+  "qualification": {
+    "SOURCE": "10 affected diagnostic checks and11 distinct recovery/admission checks PASS; stage/bridge filesystem qualification incomplete",
+    "READBACK": "PASS25joined configuration/tach/GPU/owner samples over120s; sampled configuration identical",
+    "PHYSICAL": "raw tach2640\u20135040 with null units; broad variation observed; exact10\u201315s periodicity INCONCLUSIVE; repair NOT_TESTED",
+    "PARTIAL": "Recovery source candidate retained privately; human postponed fan repair and withdrew unused authority at22:37:12Z. No recovery Linux operation occurred.",
+    "NOT_TESTED": [
+      "recovery Linux staging",
+      "authentic30s recovery preflight",
+      "source install/latch archive/service start",
+      "post-repair policy/startup/physical stability",
+      "RPM or measured PWM",
+      "rawSEL event direction/trigger readings"
+    ]
+  },
+  "diagnostic": {
+    "GOsha256": "8fc33fe20941494da8dfedae7d900d088ab3eca689234e1009f10068c0296397",
+    "GOdisposition": "SPENT_COMPLETED_NO_RETRY",
+    "configSha256": "85b0de52580c001b7667489befadc35e0d14017c204e94432056a2349f97bbfb",
+    "originalResultSha256": "eab592df7a575d691bd22d9fbd54a25be992dc331a1013b65d59a439f04afc02",
+    "startedUtc": "2026-10-01T22:17:46.582883+00:00",
+    "finishedUtc": "2026-10-01T22:19:48.467211+00:00",
+    "samples": 25,
+    "sampleStartSpanSeconds": 120.00022628900479,
+    "routeCounts": {
+      "DELETE /api/session": 1,
+      "GET /api/fanctrl/PWM": 25,
+      "GET /api/fanctrl/last_source": 25,
+      "GET /api/fanctrl/mode": 25,
+      "GET /api/fanctrl/source": 25,
+      "GET /redfish/v1/Chassis/Self/LogServices": 1,
+      "GET /redfish/v1/Chassis/Self/Thermal": 25,
+      "GET http://10.156.100.60:30008/control/v1/node/status": 25,
+      "POST /api/session": 1
+    },
+    "rootAdmissionChecks": 181,
+    "baselineOwnerCheckpoints": 27,
+    "helperOwnerCheckpoints": 208,
+    "stagingOwnerCheckpoints": 1,
+    "all25ConfigurationReadbacksIdentical": true,
+    "configuredDutyFirstFour": [
+      100,
+      100,
+      100,
+      100
+    ],
+    "mode": 4,
+    "sourceMask": [
+      0,
+      0,
+      0
+    ],
+    "lastSource": 0,
+    "otherZoneProjectionSha256": "93a191511b06d9e6444b1fa70122b467151cc649304c3f456fe42833a75728b1",
+    "GPUtemperatureMinimumC": 34.0,
+    "GPUtemperatureMaximumC": 34.0,
+    "rawTachMinimum": 2640,
+    "rawTachMaximum": 5040,
+    "tachUnits": null,
+    "measuredPWM": null,
+    "configurationBetweenGETs": "NOT_TESTED; explicit receipt gaps preserved",
+    "rawSEL": "UNAVAILABLE: literal collection returned one Logs link; no link followed",
+    "LogServicesMember": "/redfish/v1/Chassis/Self/LogServices/Logs",
+    "authUncertain": false,
+    "ownSessionDisposition": "logout attempted",
+    "actualIntegerExits": {
+      "diagnosticChild": 0,
+      "sshBridge": 0,
+      "localCommand": 0
+    },
+    "ownedDiagnosticPID": 434044,
+    "postExitPIDAbsence": true
+  },
+  "actualActions": {
+    "credentialOriginalValueReads": "authorized per-route original FD reader only; no values/digests exported",
+    "BMCLogins": 1,
+    "BMCOwnLogouts": 1,
+    "BMCConfigurationGETs": 100,
+    "BMCThermalGETs": 25,
+    "BMCLogServicesGETs": 1,
+    "NodeGETs": 25,
+    "diagnosticStageDirectories": 2,
+    "diagnosticStageFiles": 3,
+    "diagnosticEvidenceWrites": 1,
+    "recoveryStaging": 0,
+    "recoveryLogins": 0,
+    "PUTs": 0,
+    "install": 0,
+    "archiveLatch": 0,
+    "serviceStarts": 0,
+    "serviceStops": 0,
+    "SELclear": 0,
+    "inferenceStress": 0,
+    "pushes": 0
+  },
+  "durableServiceDisposition": {
+    "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+    "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+    "ActiveState": "failed",
+    "SubState": "failed",
+    "MainPID": 0,
+    "ExecMainStatus": 78,
+    "NRestarts": 0,
+    "original25StateFilesUnchanged": true,
+    "protectedOriginalMetadataUnchanged": true,
+    "controllerProcessAbsent": true,
+    "lastVerifiedUtc": "2026-10-01T22:23:04.548722+00:00"
+  },
+  "controllerTestDocChanged": false,
+  "recoveryRootDecision": {
+    "authority": "NONE_FOR_NEW_EXECUTION",
+    "dependentActionAllowed": false,
+    "rootChosenPath": "unchanged90s observer,>=40s raw tach/>=9samples after10s,<=6s gap; separate authentic30s preflight<=60s freshness; one300s live window/120s settlement/installation within30s",
+    "sourceCorrectionsRemaining": [
+      "exact staged control-file/marker/GO canonical owner0600 single-link FD/metadata CAS",
+      "fresh post-response expiry and launch admission at every control write/spawn",
+      "complete fake filesystem stage->derived config->launch qualification"
+    ],
+    "historicalSourceFeedbackSha256": "021455bd42dc43de5484241ae37ac52b77723f2f772c8ad32c89b2cf055c6ac1",
+    "sha256": "212975da7a07d38499ab5b6891dab7e50e2de9e32cb1a9916c824379a2416063",
+    "latestInstruction": "Stop trying to operate CHA_FAN3; preserve existing BMC configuration at100% regardless of temperature. Postpone repair."
+  },
+  "sourceGraph": {
+    "fan_diagnostic.py": "d569de7402b1279a3597b88f55366eecfea93a2002f9730bc5c7c7616c6488d2",
+    "test_fan_diagnostic.py": "0e3faaacd230b134e690305fbef16f10873ebea389a4d3ad9cd87bfab94c6ebf",
+    "stage_diagnostic.py": "ea2ed7727d32f4b0cdbf71122232dda46cdce0f2f012f3280991cfc79c9b8061",
+    "diagnostic_bridge.py": "f4417c84666031266e22ca254df59be0efabb38d57f7d41c80d6e15307b582ad",
+    "fan_recovery.py": "c65a6c31df787916bf0f114ba0edbd3c897a6943c2133bbfecf856a50e747269",
+    "fan_observer.py": "b0c44dd81040c4852068741dfe0dcf1dd2efa34e1ff30cabc595c754c25da5aa",
+    "test_fan_recovery.py": "7706cd7bf0afe2cc97a099664621c2ab980f33f0e284e55786c587a061846e51",
+    "test_fan_observer.py": "60187c1d47456ea5665f11107062e84393bcd1dbe125347073c1a03b52f9527c",
+    "test_fan_recovery_h043.py": "594f612d13caa7fd03a26503cfc0484a4e5b844cfd1ab6159754bb5df7e429ce",
+    "stage_recovery.py": "4f9317b187d83ef0873c0ee72eb5f870cdaf7ba9d902bf44c8f1dd167b70e1b6",
+    "recovery_bridge.py": "8c11e64737895b25930ad917fef3a60c1d8a5926554e0c7c0411260da92d9ff5",
+    "recovery-seed.json": "56fe178fc4da7ab4587550685ec2548560d9c9329924e02169c1ade0cd409574"
+  },
+  "tests": {
+    "diagnosticAffected": 10,
+    "recoveryDistinctCurrent": 11,
+    "latestActualIntegerExits": [
+      0,
+      0
+    ],
+    "retainedInitialRecoveryNarrowFailure": {
+      "exitCode": 1,
+      "reason": "test expected namespace-specific message but full metadata guard rejected earlier; corrected expectation, original logs preserved"
+    },
+    "historicalSourceOnlyNotReplayed": {
+      "priorDiagnostic": 53,
+      "Fan05ControllerAndGraph": 152
+    }
+  },
+  "nativeClosure": "ROOT_POST_RETURN_ACTUAL_NATIVE_WRAPPER_OUTER_EXITS_SETTINGS_BIRTH_PGID_ABSENCE_REQUIRED",
+  "deadline": {
+    "exportTargetUtc": "2026-10-01T22:47:29.244954+00:00",
+    "hardUtc": "2026-10-01T22:52:29.244954+00:00"
+  },
+  "retainedControllerSourcePolicy": {
+    "below70C": 40,
+    "70Through80C": 80,
+    "strictlyAbove80C": 100,
+    "immediateRaises": true,
+    "freshLowerDwellSeconds": 30,
+    "missingStaleStartStopFault": 100
+  },
+  "currentFanAuthority": {
+    "issuedUtc": "2026-10-01T22:37:12.148229+00:00",
+    "authority": "NONE_FOR_NEW_EXECUTION",
+    "decisionSha256": "212975da7a07d38499ab5b6891dab7e50e2de9e32cb1a9916c824379a2416063",
+    "instruction": "Stop trying to operate CHA_FAN3; preserve existing BMC configuration at100% regardless of temperature. Postpone repair.",
+    "noFurtherLinuxActions": true,
+    "unusedGOwithdrawn": true,
+    "noSuccessorSessions": true
+  }
+}
