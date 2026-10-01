@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "service": {
+    "serviceId": "technical-vision-generation0",
+    "generation": 0,
+    "mode": "mock",
+    "interpreter": { "model": "Qwen/Qwen3.5-9B", "revision": "generation0-not-loaded", "precision": "BF16" },
+    "parser": { "model": "PaddlePaddle/PaddleOCR-VL-1.6", "revision": "generation0-not-loaded" }
+  },
+  "source": {
+    "reference": { "fileId": "source1" },
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "mediaType": "image/png",
+    "coordinateSpace": "oriented_page_pixels",
+    "pages": [{ "page": 1, "width": 120, "height": 80, "originalWidth": 120, "originalHeight": 80, "orientation": 1 }],
+    "crops": [{ "id": "detail1", "page": 1, "x": 10, "y": 10, "width": 80, "height": 40 }]
+  },
+  "description": "Synthetic contract fixture: R1 is printed beside 10 kΩ and a resistor symbol. U1 and pin 1 are shown nearby. The crossing is unclear. No electrical connection is established by this fixture.",
+  "evidence": [
+    { "id": "region1", "page": 1, "cropId": "detail1", "box": { "x": 12, "y": 12, "width": 45, "height": 20 } },
+    { "id": "region2", "page": 1, "box": { "x": 60, "y": 10, "width": 30, "height": 25 } },
+    { "id": "region3", "page": 1, "box": { "x": 15, "y": 55, "width": 90, "height": 20 } }
+  ],
+  "extraction": {
+    "text": [
+      { "id": "r1-label", "kind": "reference_designator", "exactText": "R1", "evidenceIds": ["region1"] },
+      { "id": "r1-value", "kind": "value", "exactText": "10", "evidenceIds": ["region1"] },
+      { "id": "r1-unit", "kind": "unit", "exactText": "kΩ", "evidenceIds": ["region1"] },
+      { "id": "u1-label", "kind": "reference_designator", "exactText": "U1", "evidenceIds": ["region2"] },
+      { "id": "u1-pin", "kind": "pin", "exactText": "1", "evidenceIds": ["region2"] }
+    ],
+    "tables": [{ "id": "table1", "evidenceIds": ["region3"], "cells": [
+      { "row": 0, "column": 0, "exactText": "V", "evidenceIds": ["region3"] },
+      { "row": 0, "column": 1, "exactText": "3.3", "evidenceIds": ["region3"] }
+    ] }],
+    "formulas": [{ "id": "formula1", "exactText": "V = I × R", "evidenceIds": ["region3"] }],
+    "layout": [{ "id": "layout1", "kind": "schematic area", "evidenceIds": ["region1", "region2"] }]
+  },
+  "observations": {
+    "components": [
+      { "id": "resistor1", "kind": "resistor symbol", "labelIds": ["r1-label"], "valueIds": ["r1-value"], "unitIds": ["r1-unit"], "pinLabelIds": [], "evidenceIds": ["region1"] },
+      { "id": "device1", "kind": "rectangular symbol", "labelIds": ["u1-label"], "valueIds": [], "unitIds": [], "pinLabelIds": ["u1-pin"], "evidenceIds": ["region2"] }
+    ],
+    "relationships": [{ "id": "crossing1", "kind": "crossing", "from": "resistor1", "to": "device1", "description": "A nearby stroke crosses another; junction status is unclear.", "evidenceIds": ["region2"] }]
+  },
+  "uncertainties": [{ "id": "uncertainty1", "description": "Insufficient detail to determine whether the crossing has a junction dot.", "evidenceIds": ["region2"], "affectedIds": ["crossing1"] }],
+  "derivedConclusions": [{ "id": "conclusion1", "description": "The printed value could denote a 10 kilohm resistor. This is interpretation, not a measured resistance or reconstructed net.", "basisIds": ["r1-label", "r1-value", "r1-unit", "resistor1"], "evidenceIds": ["region1"], "uncertaintyIds": [] }],
+  "electricalNetReconstruction": "not_qualified"
+}
