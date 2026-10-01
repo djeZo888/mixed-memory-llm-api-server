@@ -38,26 +38,12 @@ export function FrontierActivity({ sessionId }: { sessionId: string }) {
   }, [sessionId]);
   if (!value || !value.configured) return null;
   const latest = value.requests[0];
+  const active = latest && ['active', 'queued', 'running', 'pending'].includes(latest.state);
+  if (!active && value.queued === 0) return null;
   return (
-    <aside className="frontier-activity" aria-label="Frontier child activity">
-      <small>
-        {value.model} child · backend {value.availability?.state ?? 'unknown'} · lane{' '}
-        {value.state} · queue {value.queued}/8 · context{' '}
-        {value.contextWindow?.toLocaleString() ?? 'unknown'}
-        {value.provider === 'mimo' && value.capacity && (<> · allocated {value.capacity.allocated?.toLocaleString() ?? 'unknown'} · largest completed input {value.capacity.occupiedTested?.toLocaleString() ?? 'unknown'}</>)}
-        {latest && (
-          <>
-            {' '}
-            · this chat: {latest.model ?? value.model} {latest.state}
-            {latest.promptTokens !== undefined && (
-              <>
-                {' '}
-                · rendered input {latest.promptTokens.toLocaleString()} + output reserve{' '}
-                {latest.reservedOutput?.toLocaleString()}
-              </>
-            )}
-          </>
-        )}
+    <aside className="frontier-activity" aria-label="Research activity" role="status">
+      <small>{latest?.state === 'queued' ? 'Research queued' : 'Research in progress'}
+        {value.queued > 0 && ` · ${value.queued} waiting`}
       </small>
     </aside>
   );

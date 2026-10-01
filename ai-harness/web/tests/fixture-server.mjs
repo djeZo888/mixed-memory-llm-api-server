@@ -107,6 +107,7 @@ const connections = new Map();
 function session(id, title) {
   return {
     id,
+    engineKind: 'codex',
     title,
     createdAt: at,
     updatedAt: at,
@@ -467,6 +468,10 @@ const server = http.createServer(async (request, response) => {
       history.events = [];
       return json(response, 200, { fixture: true });
     }
+    if (url.pathname === '/__fixture/legacy') {
+      sessions[0].engineKind = 'minimax';
+      return json(response, 200, { fixture: 'historical chat' });
+    }
     if (url.pathname === '/__fixture/vision') {
       vision = data().enabled;
       return json(response, 200, { vision });
@@ -494,7 +499,7 @@ const server = http.createServer(async (request, response) => {
       return json(response, 200, { disconnected: true });
     }
     if (url.pathname === '/api/health')
-      return json(response, 200, { version: '0.0.2', status: 'ok', visionAvailable: vision, engines: { default: 'minimax', codex: { available: false } } });
+      return json(response, 200, { version: '0.0.2', status: 'ok', visionAvailable: vision, engines: { default: 'codex', codex: { available: true, imageToolEnabled: true } }, technicalVision: { available: vision, qualification: 'fixture_only', nativeCodexPixels: false, caps: { pages: 1, pagePixels: 2097152, edge: 4096, crops: 8, sourceBytes: 26214400 }, formats: ['image/png', 'image/jpeg'], pdf: 'unsupported_without_qualified_renderer', reason: 'Explicit browser fixture' } });
     if (url.pathname === '/api/image-capabilities') {
       calls.push({ action: 'image-capabilities' });
       return json(response, 200, imageCapabilities);
@@ -505,7 +510,7 @@ const server = http.createServer(async (request, response) => {
       const s = session(`fixture/new-${++counter}`, 'New fixture conversation');
       sessions.unshift(s);
       histories.set(s.id, freshHistory());
-      calls.push({ action: 'create', id: s.id });
+      calls.push({ action: 'create', id: s.id, engineKind: data().engineKind });
       return json(response, 201, { session: s });
     }
     const imageRoute =

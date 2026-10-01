@@ -394,6 +394,61 @@ interface ImageReplyProps {
   imageActions?: ImageActions;
   useForEdit?: (artifactId: string) => void;
   editUnavailable?: string;
+  technicalVisionAction?: (handle: string, action: 'status' | 'cancel') => Promise<void>;
+}
+/** Durable server message snapshots and SSE replay own content; actions only observe/cancel the retained handle. */
+export function TechnicalVisionResult({ message, thread, action: requestAction }: {
+  message: Message; thread: Thread;
+  action?: (handle: string, action: 'status' | 'cancel') => Promise<void>;
+}) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const provenance = message.technicalVision;
+  const record = (value: unknown): Record<string, unknown> => value && typeof value === 'object' && !Array.isArray(value) ? value as Record<string, unknown> : {};
+  let payload: Record<string, unknown> = {};
+  try { payload = record(JSON.parse(message.content)); } catch { /* keep saved text below */ }
+  if (!provenance || typeof provenance.state !== 'string' || typeof provenance.settled !== 'boolean' ||
+    typeof provenance.handle !== 'string' || !provenance.handle || provenance.runId !== message.runId || !thread.runs.some(run => run.id === provenance.runId))
+    return <section aria-label="Technical vision result"><strong>Image analysis could not be verified</strong><p>The original saved record is retained. No verified analysis result is available.</p></section>;
+  const sourceId = (provenance.source?.reference ?? provenance.originalSource)?.fileId;
+  const source = [...thread.attachments, ...thread.artifacts].find(file => file.id === sourceId);
+  const url = source && (thread.artifacts.some(file => file.id === source.id)
+    ? artifactDownloadUrl(source.id) : attachmentDownloadUrl(source.id, source.downloadUrl));
+  const job = record(payload.job);
+  const result = provenance.state === 'completed' && provenance.settled ? record(job.result) : {};
+  const extraction = record(result.extraction);
+  const text = (value: unknown): string => typeof value === 'string' ? value : '';
+  const entries = (value: unknown): Record<string, unknown>[] => Array.isArray(value) ? value.map(record) : [];
+  const usable = typeof result.description === 'string' && Array.isArray(extraction.text) && Array.isArray(extraction.tables) && Array.isArray(extraction.formulas);
+  async function action(kind: 'status' | 'cancel') {
+    if (busy) return;
+    setBusy(true); setError('');
+    try {
+      if (!requestAction) throw new Error('Image analysis status is unavailable. The saved request is retained.');
+      await requestAction(provenance!.handle, kind);
+    } catch (failure) { setError(failure instanceof Error ? failure.message : 'Image analysis status is unavailable.'); }
+    finally { setBusy(false); }
+  }
+  return <section className="technical-vision-result" aria-label="Technical vision result" data-run-id={provenance.runId}>
+    <div className="message-meta"><strong>Image analysis</strong><span role="status">{provenance.state}</span></div>
+    {provenance.service?.mode === 'mock' && <p>Development fixture · no model inference.</p>}
+    <p>Source: {url ? <a href={url} download>{source!.name}</a> : source?.name ?? 'Original attachment'}</p>
+    {text(provenance.originalFailure) && <p role="alert">{text(provenance.originalFailure)}</p>}
+    {usable ? <>
+      <p>{text(result.description)}</p>
+      <strong>Extracted text</strong>
+      {entries(extraction.text).map((item, index) => <pre key={`text-${index}`}>{text(item.exactText)}</pre>)}
+      {entries(extraction.tables).map((table, index) => <div key={`table-${index}`}>{entries(table.cells).map((cell, column) => <pre key={column}>{`Row ${cell.row}, column ${cell.column}: `}{text(cell.exactText)}</pre>)}</div>)}
+      {entries(extraction.formulas).map((item, index) => <pre key={`formula-${index}`}>{text(item.exactText)}</pre>)}
+      {entries(result.uncertainties).length > 0 && <><strong>Uncertainties</strong>{entries(result.uncertainties).map((item, index) => <p key={index}>{text(item.description)}</p>)}</>}
+      {entries(result.derivedConclusions).length > 0 && <><strong>Interpretation</strong>{entries(result.derivedConclusions).map((item, index) => <p key={index}>{text(item.description)}</p>)}</>}
+    </> : <p>{text(record(job.error).message) || (provenance.settled ? 'No usable completed result is available.' : 'Image analysis has not finished. Its last saved status is shown.')}</p>}
+    {!provenance.settled && <div className="image-job-actions">
+      <button className="text-button" disabled={busy} onClick={() => void action('status')}>Refresh analysis status</button>
+      <button className="text-button" disabled={busy} onClick={() => void action('cancel')}>Cancel image analysis</button>
+    </div>}
+    {error && <p role="alert">{error}</p>}
+  </section>;
 }
 function AssistantReply({
   reply,
@@ -401,6 +456,7 @@ function AssistantReply({
   imageActions,
   useForEdit,
   editUnavailable,
+  technicalVisionAction,
 }: { reply: Reply; thread: Thread } & ImageReplyProps) {
   const [inlineImages, setInlineImages] = useState<ReadonlyMap<string, number>>(new Map());
   const registerInlineImage = useCallback<InlineImageRegistration>((id) => {
@@ -414,18 +470,18 @@ function AssistantReply({
         return next;
       });
   }, []);
-  const messages = reply.messages.filter((message) => message.content.trim().length > 0);
+  const messages = reply.messages.filter((message) => message.content.trim().length > 0 || message.origin === 'technical_vision');
   const progress = messages.filter(
     (message) =>
-      message.origin !== 'image_service' &&
+      message.origin !== 'technical_vision' && message.origin !== 'image_service' &&
       (message.phase === 'intermediate' || message.phase === 'thinking'),
   );
   const responses = messages.filter(
     (message) =>
-      message.origin === 'image_service' ||
+      message.origin === 'technical_vision' || message.origin === 'image_service' ||
       (message.phase !== 'intermediate' && message.phase !== 'thinking'),
   );
-  const modelResponses = responses.filter((message) => message.origin !== 'image_service');
+  const modelResponses = responses.filter((message) => message.origin !== 'image_service' && message.origin !== 'technical_vision');
   const finalReady = modelResponses.some(
     (message) => message.phase === 'final' && message.streamState === 'completed',
   );
@@ -475,6 +531,7 @@ function AssistantReply({
           </div>
         )}
         {responses.map((message) => {
+          if (message.origin === 'technical_vision') return <TechnicalVisionResult key={message.id} message={message} thread={thread} action={technicalVisionAction} />;
           const imageResult = message.origin === 'image_service';
           const final = !imageResult && message.phase === 'final';
           return (
@@ -585,12 +642,12 @@ export function WorkingStatus({
               : status[0].toUpperCase() + status.slice(1)
             : status === 'idle'
               ? unavailable
-                ? 'Preview disabled'
+                ? 'Temporarily unavailable'
                 : 'Ready'
               : status}
         </strong>
       </span>
-      <span>{known ? `Active subagents: ${summary.active}` : 'Active subagents: unknown'}</span>
+      {known && summary.active! > 0 && <span>{summary.active} supporting tasks</span>}
       {queued > 0 && <span>{queued} queued for next turn</span>}
     </div>
   );

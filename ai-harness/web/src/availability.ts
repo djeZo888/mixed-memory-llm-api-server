@@ -16,9 +16,8 @@ export function availabilityNotice(value?: HealthAvailability): string {
   const unavailable = text.filter((state) => state === 'unavailable').length;
   const messages: string[] = [];
   if (unavailable === 2) messages.push('Text service unavailable.');
-  else if (unavailable === 1) messages.push('Text service degraded: one Qwen lane unavailable.');
-  if (text.includes('unknown')) messages.push('Text service availability is partly unknown.');
+  else if (unavailable === 1) messages.push('Text service is running with reduced capacity.');
   if (current.image === 'unavailable') messages.push('Image service unavailable.');
-  else if (current.image === 'unknown') messages.push('Image service availability unknown.');
+  if (text.includes('unknown') || current.image === 'unknown') messages.push('Some services are still being checked.');
   return messages.join(' ');
 }

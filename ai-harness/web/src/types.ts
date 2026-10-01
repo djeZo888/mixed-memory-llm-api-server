@@ -44,7 +44,8 @@ export interface Message {
   nativeMessageId?: string;
   nativeTurnId?: string;
   streamState?: StreamState;
-  origin?: 'image_service';
+  origin?: 'image_service' | 'technical_vision';
+  technicalVision?: TechnicalVisionSnapshot;
   imageJobId?: string;
 }
 export interface Attachment {
@@ -264,4 +265,22 @@ export interface CodexHealth {
   protocolQualified?: boolean;
   qualification?: string;
   capabilityDetails?: Record<string, CodexCapability>;
+}
+
+export interface TechnicalVisionCapabilities {
+  available: boolean;
+  qualification: 'fixture_only' | 'root_accepted' | 'not_qualified';
+  nativeCodexPixels: false;
+  caps: { pages: 1; pagePixels: 2097152; edge: 4096; crops: 8; sourceBytes: 26214400 };
+  formats: string[];
+  pdf: string;
+  reason: string;
+}
+export interface TechnicalVisionSnapshot {
+  handle: string; requestId: string; runId: string; state: string; settled: boolean;
+  jobId?: string; originalFailure?: string;
+  pageImages?: { page: number; sha256: string }[];
+  originalSource?: { fileId?: string; workspacePath?: string };
+  service: { mode: 'mock' | 'live'; serviceId: string; generation: number };
+  source?: { reference: { fileId?: string; workspacePath?: string }; sha256: string; mediaType: string; pages: { page: number; width: number; height: number }[]; crops: { id: string; page: number; x: number; y: number; width: number; height: number }[] };
 }

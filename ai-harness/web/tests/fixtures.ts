@@ -4,6 +4,7 @@ import type { ServerEvent, Session, Snapshot } from '../src/types';
 export const createdAt = '2026-09-22T12:00:00.000Z';
 export const session = (id = 'chat/a'): Session => ({
   id,
+  engineKind: 'codex',
   title: `Chat ${id}`,
   status: 'idle',
   createdAt,
@@ -41,7 +42,7 @@ export function fixtureTransport() {
   }[] = [];
   const transport = {
     imageCapabilities: vi.fn(async (): Promise<unknown> => ({ profiles: [] })),
-    health: vi.fn<Transport['health']>(async () => ({ visionAvailable: false, engines: { default: "minimax" } })),
+    health: vi.fn<Transport['health']>(async () => ({ visionAvailable: false, engines: { default: "codex", codex: { available: true } } })),
     list: vi.fn(async () => ({ sessions: [session(), session('chat/b')] })),
     snapshot: vi.fn(async (id: string) => snapshot(id)),
     imageJobs: vi.fn(async () => ({ jobs: [] as import('../src/types').ImageJob[] })),
@@ -64,3 +65,10 @@ export function fixtureTransport() {
   } satisfies Transport;
   return { transport, streams };
 }
+
+// Explicit local contract capability; never used as native/model qualification.
+export const technicalCapability = {
+  available: true, qualification: 'fixture_only' as const, nativeCodexPixels: false as const,
+  caps: { pages: 1 as const, pagePixels: 2097152 as const, edge: 4096 as const, crops: 8 as const, sourceBytes: 26214400 as const },
+  formats: ['image/png', 'image/jpeg'], pdf: 'unsupported_without_qualified_renderer', reason: 'Explicit test fixture',
+};

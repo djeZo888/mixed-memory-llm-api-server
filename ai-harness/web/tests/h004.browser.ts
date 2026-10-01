@@ -44,7 +44,7 @@ test('H004 stored reply: narrative images, discoverable ZIP downloads and scoped
     final = reply.getByLabel('Final answer'),
     additional = reply.locator('.additional-image-previews');
   await expect(final.locator('img')).toHaveCount(10);
-  await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-connection', 'connected');
   await expect(additional).not.toHaveAttribute('open', '');
   await expect(additional.locator('summary')).toContainText('Additional image previews');
   await expect(additional.locator('img')).toHaveCount(9);
@@ -202,7 +202,7 @@ test('H004 preview disclosure and ownership survive artifact refresh and streame
   request,
 }) => {
   await page.goto('/');
-  await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-connection', 'connected');
   const reply = page.locator('[data-run-id="fixture/initial-run"]'),
     final = reply.getByLabel('Final answer'),
     additional = reply.locator('.additional-image-previews');
@@ -291,7 +291,7 @@ test('H004 narrow table and historical fallback remain usable without model call
   });
   const final = page.getByLabel('Final answer'),
     table = final.getByRole('region', { name: 'Scrollable table' });
-  await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-connection', 'connected');
   await expect(table).toBeVisible();
   await table.scrollIntoViewIfNeeded();
   expect(await table.evaluate((node) => node.scrollWidth > node.clientWidth)).toBe(true);

@@ -3,6 +3,7 @@ import { App } from './App';
 import { HarnessStore } from './store';
 import './styles.css';
 
+document.title = 'Sova';
 const store = new HarnessStore(undefined, (id) => {
   try {
     if (id) localStorage.setItem('ai-harness:selected', id);

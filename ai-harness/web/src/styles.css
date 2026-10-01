@@ -1549,3 +1549,13 @@ h1 {
 .codex-capabilities ul {
   padding-left: 17px;
 }
+
+/* Keep saved analysis readable without exposing execution metadata. */
+.technical-vision-result { padding: 14px 0; }
+.technical-vision-result pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; }
+.attachment-help { max-width: 100%; }
+.attachment-help summary { cursor: pointer; }
+.attachment-help p { margin: 7px 0; }
+
+label.composer-queue-note { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 12px; }
+.composer-queue-note select { font: inherit; min-width: 0; max-width: 100%; color: inherit; border: 1px solid #d8ded4; border-radius: 5px; background: white; padding: 4px; }

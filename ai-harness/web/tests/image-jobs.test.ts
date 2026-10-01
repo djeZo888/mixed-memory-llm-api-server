@@ -147,6 +147,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('loads persisted jobs after reconnect, buffers SSE and never cancels on disposal', async () => {
     const fixture = fixtureTransport();
+    fixture.transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: true, imageToolEnabled: true } } });
     fixture.transport.imageJobs.mockResolvedValue({ jobs: [job()] });
     const store = new HarnessStore(fixture.transport);
     await store.start();
@@ -171,6 +172,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('keeps a newer card revision when a successful reconnect GET returns an older job projection', async () => {
     const fixture = fixtureTransport();
+    fixture.transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: true, imageToolEnabled: true } } });
     const newer = job({ revision: 4, state: 'queued', queuePosition: 2 });
     fixture.transport.imageJobs.mockResolvedValueOnce({ jobs: [newer] });
     const store = new HarnessStore(fixture.transport);
@@ -186,6 +188,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('preserves ordinary chat and last known jobs when the image route fails, and refreshes disabled capabilities on reconnect', async () => {
     const fixture = fixtureTransport();
+    fixture.transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: true, imageToolEnabled: true } } });
     fixture.transport.imageCapabilities.mockResolvedValue(capabilities);
     fixture.transport.imageJobs.mockRejectedValueOnce(new Error('Temporarily offline'));
     fixture.transport.snapshot.mockResolvedValue({
@@ -226,6 +229,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('keeps current-session artifact references separate from uploads and enforces the discovered count', async () => {
     const fixture = fixtureTransport();
+    fixture.transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: true, imageToolEnabled: true } } });
     fixture.transport.imageCapabilities.mockResolvedValue(capabilities);
     const artifact = {
       id: 'generated',
@@ -266,6 +270,7 @@ describe('image lifecycle and reference boundaries', () => {
 
   it('stages references toward a qualified two-reference edit without inventing single-reference support', async () => {
     const fixture = fixtureTransport();
+    fixture.transport.health.mockResolvedValue({ visionAvailable: false, engines: { codex: { available: true, imageToolEnabled: true } } });
     const onlyTwo = { ...capabilities, profiles: [profile('edit', 2)] };
     fixture.transport.imageCapabilities.mockResolvedValue(onlyTwo);
     fixture.transport.snapshot.mockResolvedValue({

@@ -64,25 +64,12 @@ export function ImageJobs({ jobs, actions }: { jobs: ImageJob[]; actions?: Image
                 <dt>{job.actualSize ? 'Output dimensions' : 'Requested dimensions'}</dt>
                 <dd>{job.actualSize ?? job.requestedSize}</dd>
               </div>
-              <div>
-                <dt>Seed</dt>
-                <dd>{job.seed}</dd>
-              </div>
-              <div>
-                <dt>Model</dt>
-                <dd>{job.model}</dd>
-              </div>
             </dl>
             {!!job.references.length && (
               <ul className="image-job-sources" aria-label="Image sources">
                 {job.references.map((source, index) => (
                   <li key={`${source.referenceId}:${index}`}>
                     <span>{source.name}</span> · {source.width}×{source.height}
-                    {source.fileId && <small> · File {source.fileId}</small>}
-                    <details>
-                      <summary>Source fingerprint</summary>
-                      <code>{source.sha256}</code>
-                    </details>
                   </li>
                 ))}
               </ul>
@@ -146,7 +133,7 @@ export function ImageJobs({ jobs, actions }: { jobs: ImageJob[]; actions?: Image
             )}
             {job.error && (
               <p className="run-error" role="alert">
-                {job.error.message} <small>({job.error.code})</small>
+                {job.error.message}
               </p>
             )}
             {job.state === 'interrupted' && (
@@ -163,7 +150,7 @@ export function ImageJobs({ jobs, actions }: { jobs: ImageJob[]; actions?: Image
               </p>
             )}
             {draining && (
-              <p>The backend is finishing its active work. GPU cancellation is not immediate.</p>
+              <p>Cancellation is requested. Waiting for the image task to finish safely.</p>
             )}
             {imageJobActive(job) && (
               <button

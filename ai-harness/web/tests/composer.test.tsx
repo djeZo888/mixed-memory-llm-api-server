@@ -5,11 +5,11 @@ import { describe, expect, it } from 'vitest';
 import { Composer } from '../src/Composer';
 import { HarnessStore } from '../src/store';
 import { MAX_UPLOAD_BYTES } from '../src/uploads';
-import { deferred, fixtureTransport } from './fixtures';
+import { deferred, fixtureTransport, technicalCapability } from './fixtures';
 
 async function setup(visionAvailable = false) {
   const fixture = fixtureTransport();
-  fixture.transport.health.mockResolvedValue({ visionAvailable });
+  fixture.transport.health.mockResolvedValue({ visionAvailable, engines: { codex: { available: true } }, technicalVision: { ...technicalCapability, available: visionAvailable } });
   const store = new HarnessStore(fixture.transport);
   await store.start();
   await waitFor(() => expect(store.getSnapshot().thread).not.toBeNull());
@@ -123,9 +123,9 @@ describe('composer keyboard and file interactions', () => {
     });
     await screen.findByText('Server refused this file.');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Attach files' })).toBeEnabled());
-    expect(screen.getByText(/Image uploads are unavailable/)).toBeVisible();
+    expect(screen.getByText(/Image analysis is unavailable. Image generation references require/)).toBeVisible();
     expect(screen.getByText('Upload exceeds 50 MiB per file.')).toBeVisible();
-    expect(screen.getByText('valid.txt')).toBeVisible();
+    expect(within(screen.getByRole('list', { name: 'Attached files' })).getByText('valid.txt')).toBeVisible();
     expect(transport.upload).toHaveBeenCalledTimes(2);
     expect(transport.upload).toHaveBeenNthCalledWith(1, 'chat/a', refused);
     expect(transport.upload).toHaveBeenNthCalledWith(2, 'chat/a', valid);
@@ -144,7 +144,7 @@ describe('composer keyboard and file interactions', () => {
     drop([file]);
     await waitFor(() => expect(screen.getByRole('list', { name: 'Attached files' })).toBeVisible());
     expect(transport.upload).toHaveBeenCalledWith('chat/a', file);
-    expect(screen.getByLabelText('Upload file').getAttribute('accept')).toContain('image/*');
+    expect(screen.getByLabelText('Upload file').getAttribute('accept')).toContain('image/png,image/jpeg');
     store.dispose();
   });
 

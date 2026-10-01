@@ -23,6 +23,7 @@ export interface ViewState {
   error: string | null;
   connection: 'connecting' | 'connected' | 'reconnecting' | 'offline';
   visionAvailable: boolean;
+  technicalVision?: import("./types").TechnicalVisionCapabilities;
   healthLoaded: boolean;
   codexAvailable?: boolean;
   codexHealth?: CodexHealth;
@@ -61,6 +62,8 @@ export function pendingRunIds(state: ViewState, id: string): string[] {
 export const codexSpecialistAvailable = (state: ViewState, count = 1) =>
   state.codexAvailable === true && state.codexHealth?.imageToolEnabled === true &&
   canStageEditReference(state.imageCapabilities, count);
+
+export const technicalVisionAvailable = (state: ViewState) => state.healthLoaded && state.technicalVision?.available === true && state.technicalVision.nativeCodexPixels === false && state.technicalVision.caps?.pages === 1 && state.technicalVision.caps.pagePixels === 2097152;
 
 export class HarnessStore {
   private state: ViewState = {
@@ -144,6 +147,7 @@ export class HarnessStore {
       if (current())
         this.update({
           healthLoaded: true,
+          technicalVision: undefined,
           codexAvailable: false,
           newChatEngine: undefined,
           serviceAvailability: healthAvailability(undefined),
@@ -158,8 +162,9 @@ export class HarnessStore {
       if (!current() || read.signal.aborted) return;
       this.update({
         visionAvailable: health.visionAvailable === true,
+        technicalVision: health.technicalVision,
         codexAvailable: health.engines?.codex?.available === true,
-        newChatEngine: health.engines?.default === 'codex' || health.engines?.default === 'minimax' ? health.engines.default : undefined,
+        newChatEngine: 'codex',
         codexHealth: health.engines?.codex,
         healthLoaded: true,
         serviceAvailability: healthAvailability(health.availability),
@@ -447,14 +452,10 @@ export class HarnessStore {
       this.update({ busy: { ...this.state.busy, [key]: false } });
     }
   }
-  create = (engineKind: EngineKind | undefined = this.state.newChatEngine) => {
-    if (!engineKind) {
-      this.update({ error: 'The new-chat default is unavailable. Refresh service status.' });
-      return Promise.resolve();
-    }
-    if (engineKind === 'codex' && !this.state.codexAvailable) {
-      this.update({ error: 'Codex preview is not available yet.' });
-      return Promise.resolve();
+  create = (engineKind: EngineKind = 'codex') => {
+    if (engineKind !== 'codex' || !this.state.codexAvailable) {
+      this.update({ error: 'Chat is temporarily unavailable. Please try again shortly.' });
+      return Promise.resolve(false);
     }
     const generation = this.generation;
     return this.action(
@@ -497,7 +498,7 @@ export class HarnessStore {
     const attachments = lookup(this.state.attachments, id) ?? [];
     const imageReferences = lookup(this.state.imageReferences, id) ?? [];
     if (this.state.thread?.session.id === id && this.state.thread.session.engineKind === 'codex' && imageReferences.length && !codexSpecialistAvailable(this.state,imageReferences.length)) {
-      this.update({error:'Codex image specialist is unavailable.'}); return Promise.resolve(false);
+      this.update({error:'Image generation is unavailable.'}); return Promise.resolve(false);
     }
     if (
       (!text.trim() && attachments.length === 0 && imageReferences.length === 0) ||
@@ -527,6 +528,10 @@ export class HarnessStore {
     if (this.state.thread?.session.id !== id || this.state.loading ||
       this.state.busy[busyKey('delete', id)] || this.state.thread.session.status === 'deleting')
       return Promise.resolve(false);
+    if (this.state.thread.session.engineKind !== 'codex') {
+      this.update({ error: 'This earlier chat is available to read. Start a new chat to continue.' });
+      return Promise.resolve(false);
+    }
     let pending: PendingSubmission;
     return this.action(
       'send', id,
@@ -581,7 +586,7 @@ export class HarnessStore {
       this.state.thread?.session.id === id
         ? this.state.thread.imageJobs?.find((candidate) => candidate.id === jobId)
         : undefined;
-    if (!job || !imageJobActive(job) || (decision && job.state !== 'awaiting_approval'))
+    if (!job || !imageJobActive(job) || (decision && (job.state !== 'awaiting_approval' || this.state.thread?.session.engineKind !== 'codex')))
       return Promise.resolve(false);
     return this.action(
       `image:${jobId}`,
@@ -638,9 +643,25 @@ export class HarnessStore {
       },
     });
   };
+  technicalVisionAction = (id: string, handle: string, action: 'status' | 'cancel') => {
+    if (!this.transport.technicalVisionAction || this.state.thread?.session.id !== id) {
+      this.update({ error: 'Image analysis status is unavailable. The saved request is retained.' });
+      return Promise.resolve(false);
+    }
+    const owned = this.state.thread.messages.some(message => message.origin === 'technical_vision' &&
+      message.technicalVision?.handle === handle && message.technicalVision.runId === message.runId &&
+      this.state.thread?.runs.some(run => run.id === message.runId));
+    if (!owned) return Promise.resolve(false);
+    return this.action(`vision:${action}:${handle}`, id, () => this.transport.technicalVisionAction!(id, handle, action), () => {
+      if (this.state.selectedId === id) void this.resync();
+    });
+  };
   cancel = (id: string) => {
     const cursor = this.state.thread?.lastEventId;
-    return this.action(
+    const thread = this.state.thread?.session.id === id ? this.state.thread : undefined;
+    const handles = new Set(thread?.messages.filter(message => message.origin === 'technical_vision' &&
+      message.technicalVision && message.technicalVision.settled === false).map(message => message.technicalVision!.handle));
+    const cancelled = this.action(
       'cancel',
       id,
       () => this.transport.cancel(id),
@@ -652,6 +673,8 @@ export class HarnessStore {
         if (this.state.selectedId === id) void this.resync();
       },
     );
+    const analyses = [...handles].map(handle => this.technicalVisionAction(id, handle, 'cancel'));
+    return Promise.all([cancelled, ...analyses]).then(outcomes => outcomes.every(Boolean));
   };
   private compactionAction(id: string): { actionId: string; runId?: string } | undefined {
     const raw = sessionStorage.getItem(`ai-harness:compaction:${id}`);
@@ -732,17 +755,15 @@ export class HarnessStore {
   handoff = (id: string, engineKind?: EngineKind) => {
     const before = this.handoffs.get(id) ?? 0;
     if (pendingRunIds(this.state, id).length) return Promise.resolve(false);
-    const source = this.state.thread?.session.id === id
-      ? this.state.thread.session : this.state.sessions.find(session => session.id === id);
-    const target = engineKind ?? source?.engineKind ?? 'minimax';
-    if (target === 'codex' && !this.state.codexAvailable) {
-      this.update({ error: 'Codex preview is not available yet.' });
+    const source = this.state.thread?.session.id === id ? this.state.thread.session : undefined;
+    if (source?.engineKind !== 'codex' || (engineKind && engineKind !== 'codex') || !this.state.codexAvailable) {
+      this.update({ error: 'Start a new chat to continue. Your earlier history and files are saved.' });
       return Promise.resolve(false);
     }
     return this.action(
       'handoff',
       id,
-      () => this.transport.handoff(id, engineKind),
+      () => this.transport.handoff(id, 'codex'),
       ({ runId }) => {
         const settled =
           this.completedRuns.get(id)?.has(runId) || (this.handoffs.get(id) ?? 0) !== before;
@@ -755,6 +776,7 @@ export class HarnessStore {
   };
   reuseFile = (id: string, fileId: string) => {
     if (
+      this.state.thread?.session.id !== id || this.state.thread.session.engineKind !== 'codex' ||
       !this.transport.reference ||
       this.state.busy[busyKey('send', id)] ||
       this.state.busy[busyKey('delete', id)]
@@ -787,6 +809,10 @@ export class HarnessStore {
     const targetSession = this.state.thread?.session.id === id
       ? this.state.thread.session : this.state.sessions.find(session => session.id === id);
     const targetIsCodex = targetSession?.engineKind === 'codex';
+    if (!targetIsCodex) {
+      this.update({ error: 'Start a new chat to attach files. This earlier chat is saved.' });
+      return false;
+    }
     const unique = [...new Map(files.map((file) => [uploadKey(file), file])).values()];
     if (!unique.length) return false;
     const generation = this.generation;
@@ -820,12 +846,14 @@ export class HarnessStore {
           try {
             const codex = targetIsCodex;
             const imageFile = file.type.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg|avif|heic|bmp|tiff?)$/i.test(file.name);
-            const specialist = codex && imageFile;
+            const technical = imageFile && technicalVisionAvailable(this.state);
+            if (technical && (!['image/png','image/jpeg'].includes(file.type) || file.size > 25 * 1024 * 1024)) throw new Error('Technical vision accepts PNG/JPEG, at most 25 MiB, one page and 2,097,152 pixels. No downscale; PDF pages need a qualified renderer.');
+            const specialist = codex && imageFile && !technical;
             if (specialist && (!['image/png','image/jpeg'].includes(file.type) || !codexSpecialistAvailable(this.state,(lookup(this.state.imageReferences,id) ?? []).length+1)))
-              throw new Error('Codex image specialist accepts qualified PNG/JPEG references only; native image recognition is unavailable.');
+              throw new Error('Image analysis is unavailable. Image generation references require qualified PNG/JPEG support.');
             const problem = uploadProblem(
               file,
-              codex ? specialist : this.state.visionAvailable,
+              technical || (codex ? specialist : this.state.visionAvailable),
             );
             if (problem) throw new Error(problem);
             onUpdate?.({ file, status: 'uploading' });

@@ -76,9 +76,12 @@ export interface Transport {
     signal?: AbortSignal,
   ): Promise<{
     visionAvailable: boolean;
+    technicalVision?: import("./types").TechnicalVisionCapabilities;
     availability?: HealthAvailability;
     engines?: { default?: 'minimax' | 'codex'; codex?: CodexHealth };
   }>;
+  technicalVisionCapabilities?(signal?: AbortSignal): Promise<import('./types').TechnicalVisionCapabilities>;
+  technicalVisionAction?(id: string, handle: string, action: 'status' | 'lookup' | 'cancel'): Promise<unknown>;
   imageCapabilities(signal?: AbortSignal): Promise<unknown>;
   list(signal?: AbortSignal): Promise<{ sessions: Session[] }>;
   snapshot(id: string, signal?: AbortSignal): Promise<Snapshot>;
@@ -135,6 +138,8 @@ export function subscribe(id: string, after: number, callbacks: StreamCallbacks)
 }
 export const api: Transport = {
   health: (signal) => request('/api/health', { signal }),
+  technicalVisionCapabilities: signal => request('/api/technical-vision-capabilities', { signal }),
+  technicalVisionAction: (id, handle, action) => post(`${sessionPath(id)}/technical-vision-jobs/${encodeURIComponent(handle)}/${action}`, {}),
   imageCapabilities: (signal) => request('/api/image-capabilities', { signal }),
   list: (signal) => request('/api/sessions', { signal }),
   reference: (id, fileId) => post(`${sessionPath(id)}/references`, { fileId }),

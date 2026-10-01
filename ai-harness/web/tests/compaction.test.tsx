@@ -173,8 +173,9 @@ describe('owned manual compaction', () => {
 
   it('does not offer native compaction on MiniMax or enable it on an empty Codex chat', async () => {
     const mini = fixtureTransport();
+    mini.transport.snapshot.mockImplementation(async id => ({ ...snapshot(id), session: { ...snapshot(id).session, engineKind: 'minimax' } }));
     const first = render(<App store={new HarnessStore(mini.transport)} />);
-    await screen.findByRole('button', { name: /Continue in new chat/ });
+    await screen.findByRole('button', { name: 'Start a new chat' });
     expect(screen.queryByRole('button', { name: 'Compact context' })).not.toBeInTheDocument();
     first.unmount();
     const { store, snap } = codexFixture();

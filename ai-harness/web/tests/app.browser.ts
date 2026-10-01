@@ -8,7 +8,7 @@ const id = 'fixture/chat-a';
 test.beforeEach(async ({ request }) => {
   await request.post('/__fixture/reset');
 });
-test('desktop contract fixture: send, upload, stop, reconnect, handoff, download and 202 delete', async ({
+test('desktop contract fixture: send, upload, stop, reconnect, new chat, download and 202 delete', async ({
   page,
   request,
 }) => {
@@ -48,7 +48,7 @@ test('desktop contract fixture: send, upload, stop, reconnect, handoff, download
     mimeType: 'text/plain',
     buffer: Buffer.from('fixture notes'),
   });
-  await expect(page.getByText('notes.txt', { exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Attached files' }).getByText('notes.txt', { exact: true })).toBeVisible();
   await page.getByRole('textbox', { name: 'Message' }).fill('Review the attached notes');
   await page.getByRole('button', { name: 'Send message' }).click();
   await expect(page.getByText('Checking the fixture pipeline', { exact: true })).toBeVisible();
@@ -76,7 +76,7 @@ test('desktop contract fixture: send, upload, stop, reconnect, handoff, download
   await expect(
     page.getByText('Checking the fixture pipeline after reconnect.', { exact: true }),
   ).toBeVisible();
-  await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-connection', 'connected');
   response = await request.get('/__fixture/calls');
   calls = (await response.json()).calls;
   expect(
@@ -94,19 +94,11 @@ test('desktop contract fixture: send, upload, stop, reconnect, handoff, download
   ).toHaveLength(0);
   await page.getByRole('button', { name: 'Stop all', exact: true }).click();
   await expect(page.locator('.badge')).toHaveText('interrupted');
-  await page.getByRole('button', { name: 'Continue in new chat' }).click();
-  await expect(page.getByRole('heading', { name: 'Continued: streaming pipeline' })).toBeVisible();
-  await expect(
-    page.getByRole('button', { name: /Investigate a streaming pipeline interrupted/ }),
-  ).toBeVisible();
-  await page.getByRole('button', { name: 'Delete chat Continued: streaming pipeline' }).click();
+  await page.getByRole('button', { name: 'New chat', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'New fixture conversation' })).toBeVisible();
+  await page.getByRole('button', { name: 'Delete chat New fixture conversation' }).click();
   await page.getByRole('button', { name: 'Delete chat', exact: true }).click();
-  await expect(
-    page.getByRole('button', { name: 'Delete chat Continued: streaming pipeline' }),
-  ).toHaveCount(0);
-  await expect(
-    page.getByRole('heading', { name: 'Investigate a streaming pipeline' }),
-  ).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Investigate a streaming pipeline' })).toBeVisible();
   await page.reload();
   await expect(page.getByText('Review the attached notes', { exact: true })).toBeVisible();
   expect(errors).toEqual([]);
@@ -116,6 +108,7 @@ test('mobile fixture: no horizontal overflow, sidebar focus, unknown context and
   request,
 }) => {
   await page.setViewportSize({ width: 390, height: 844 });
+  await request.post('/__fixture/images', { data: { sessionId: id, capabilities: { profiles: [] } } });
   await page.goto('/');
   await expect(page.getByRole('textbox', { name: 'Message' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'New chat', exact: true })).not.toBeVisible();
@@ -172,7 +165,7 @@ test('mobile fixture: no horizontal overflow, sidebar focus, unknown context and
   await page
     .getByLabel('Upload file')
     .setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
-  await expect(page.getByRole('alert')).toContainText('Image uploads are unavailable');
+  await expect(page.getByRole('alert')).toContainText('Image analysis is unavailable');
 });
 
 test('fixture new-chat and image callback are gated by explicit health capability', async ({
@@ -189,8 +182,9 @@ test('fixture new-chat and image callback are gated by explicit health capabilit
     mimeType: 'image/png',
     buffer: Buffer.from('fixture bytes, not a real model input'),
   });
-  await expect(page.getByText('photo.png', { exact: true })).toBeVisible();
-  await expect(page.getByText(/PDF, source, text and image files/)).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Attached files' }).getByText('photo.png', { exact: true })).toBeVisible();
+  await page.getByText('Attachment help', { exact: true }).click();
+  await expect(page.getByText(/Image analysis: PNG\/JPEG/)).toBeVisible();
   const { calls } = await (await request.get('/__fixture/calls')).json();
   expect(calls.filter((call: { action: string }) => call.action === 'create')).toHaveLength(1);
   expect(calls.find((call: { action: string }) => call.action === 'upload').field).toBe(true);
@@ -259,7 +253,7 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
     },
   });
   const working = page.getByRole('status', { name: 'Run status' });
-  await expect(working).toContainText('Active subagents: 2');
+  await expect(working).toContainText('2 supporting tasks');
   expect(await working.evaluate((element) => element.closest('.composer') === null)).toBe(true);
   await mkdir(evidence, { recursive: true });
   await page.evaluate(() => {
@@ -371,7 +365,7 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
   await expect(reply.getByRole('link', { name: /second-turn.txt/ })).toBeVisible();
   await expect(reply.getByRole('link', { name: 'Download all ZIP', exact: true })).toHaveCount(0);
   await expect(initialReply.getByRole('link', { name: /second-turn.txt/ })).toHaveCount(0);
-  await expect(working).toContainText('Active subagents: 0');
+  await expect(working).not.toContainText('supporting tasks');
   await page.screenshot({
     path: resolve(evidence, 'v002-fixture-desktop-final.png'),
     fullPage: true,
@@ -386,4 +380,43 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
     path: resolve(evidence, 'v002-fixture-mobile-final.png'),
     fullPage: true,
   });
+});
+
+test('clean chat and source-linked technical analysis persist through reload without a choice of engine', async ({ page, request }) => {
+  await page.setViewportSize({ width: 1440, height: 1080 });
+  await page.goto('/');
+  await expect(page).toHaveTitle('Sova');
+  await expect(page.getByRole('button', { name: 'Compact context' })).toBeEnabled();
+  await expect(page.getByRole('combobox', { name: /Harness|Model/i })).toHaveCount(0);
+  await request.post('/__fixture/event', { data: {
+    sessionId: id, type: 'message', runId: 'fixture/initial-run', data: { message: {
+      id: 'technical-analysis', role: 'assistant', runId: 'fixture/initial-run', createdAt: '2026-10-01T23:00:00Z', origin: 'technical_vision',
+      content: JSON.stringify({ job: { result: { description: 'The image contains a resistor label.', extraction: { text: [{ exactText: 'R1  10 kΩ\n  Vcc\n' }], tables: [], formulas: [] }, uncertainties: [{ description: 'The crossing needs review.' }], derivedConclusions: [] } } }),
+      technicalVision: { handle: 'fixture-technical-handle', requestId: 'fixture-original-request', runId: 'fixture/initial-run', state: 'completed', settled: true, service: { serviceId: 'fixture', mode: 'mock', generation: 0 }, source: { reference: { fileId: 'fixture/initial-upload' }, sha256: 'a'.repeat(64), mediaType: 'image/png', pages: [{ page: 1, width: 120, height: 80 }], crops: [] } },
+    } },
+  } });
+  const analysis = page.getByLabel('Technical vision result');
+  await expect(analysis.locator('pre')).toHaveText('R1  10 kΩ\n  Vcc\n');
+  await expect(analysis.getByRole('link', { name: 'sample-log.txt' })).toHaveAttribute('href', '/api/attachments/fixture%2Finitial-upload/download');
+  await expect(analysis).not.toContainText('fixture-original-request');
+  await page.reload();
+  await expect(analysis).toHaveCount(1);
+  await expect(analysis.getByText('The crossing needs review.')).toBeVisible();
+  await mkdir(evidence, { recursive: true });
+  await page.screenshot({ path: resolve(evidence, 'h044-clean-analysis-desktop.png'), fullPage: true });
+});
+
+test('earlier chat history remains readable and only a new active chat can send a follow-up', async ({ page, request }) => {
+  await request.post('/__fixture/legacy');
+  await page.goto('/');
+  await expect(page.getByRole('button', { name: 'Start a new chat' })).toBeVisible();
+  await expect(page.getByRole('textbox', { name: 'Message' })).toBeDisabled();
+  await page.getByRole('button', { name: 'Start a new chat' }).click();
+  await expect(page.getByRole('heading', { name: 'New fixture conversation' })).toBeVisible();
+  const { calls } = await (await request.get('/__fixture/calls')).json();
+  expect(calls.filter((call: { action: string }) => ['send', 'handoff'].includes(call.action))).toHaveLength(0);
+  expect(calls.find((call: { action: string }) => call.action === 'create').engineKind).toBe('codex');
+  const original = await (await request.get('/api/sessions/' + encodeURIComponent(id))).json();
+  expect(original.session.engineKind).toBe('minimax');
+  expect(original.messages.length).toBeGreaterThan(0);
 });

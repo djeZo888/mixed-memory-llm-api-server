@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { HarnessStore } from '../src/store';
 import { ApiError } from '../src/api';
-import { deferred, event, fixtureTransport, snapshot } from './fixtures';
+import { technicalCapability, deferred, event, fixtureTransport, snapshot } from './fixtures';
 import type { Snapshot } from '../src/types';
 async function ready() {
   const fixture = fixtureTransport();
@@ -149,9 +149,9 @@ describe('real store callback flows', () => {
     const { store, transport } = await ready();
     await store.upload('chat/a', new File(['image'], 'photo.png', { type: 'image/png' }));
     expect(transport.upload).not.toHaveBeenCalled();
-    expect(store.getSnapshot().error).toMatch(/Image uploads are unavailable/);
+    expect(store.getSnapshot().error).toMatch(/Image analysis is unavailable/);
     store.dispose();
-    transport.health.mockResolvedValue({ visionAvailable: true });
+    transport.health.mockResolvedValue({ visionAvailable: true, engines: { codex: { available: true } }, technicalVision: technicalCapability });
     const enabled = new HarnessStore(transport);
     await enabled.start();
     await enabled.upload('chat/a', new File(['image'], 'photo.png', { type: 'image/png' }));

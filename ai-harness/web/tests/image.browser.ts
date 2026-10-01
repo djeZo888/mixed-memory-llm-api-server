@@ -284,7 +284,7 @@ test('revision-ordered SSE and reconnect ignore stale jobs, allow requeue, and d
   await request.post('/__fixture/disconnect', { data: { sessionId } });
   await expect(card(page, failed.id)).toContainText(failed.error.message);
   await expect(card(page, failed.id)).toContainText(/failed/i);
-  await expect(page.locator('.connection')).toContainText('Connected');
+  await expect(page.locator('.app-shell')).toHaveAttribute('data-connection', 'connected');
   await expect(card(page, active.id).getByRole('status')).toHaveText('Queued');
   await expect(
     page
@@ -362,8 +362,8 @@ test('image reuse sends explicit artifact references and a later text reply pres
   await page.goto('/');
   const reply = page.locator(`[data-run-id="${initialRun}"]`);
   await expect(card(page, completed.id)).toContainText(/completed/i);
-  await expect(card(page, completed.id)).toContainText('42');
-  await expect(card(page, completed.id)).toContainText('Qwen-Image-2.1');
+  const retained = await (await request.get('/api/sessions/' + encodeURIComponent(sessionId) + '/image-jobs')).json();
+  expect(retained.jobs.find((job: { id: string }) => job.id === completed.id)).toMatchObject({ seed: 42, model: 'Qwen-Image-2.1' });
   await expect(reply.getByRole('img', { name: original.name, exact: true })).toHaveJSProperty(
     'naturalWidth',
     1920,

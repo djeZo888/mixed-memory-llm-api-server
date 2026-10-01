@@ -1,7 +1,6 @@
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react';
 import {
   ArrowDown,
-  ArrowUpRight,
   FileText,
   Menu,
   MessageSquare,
@@ -11,9 +10,8 @@ import {
   X,
 } from 'lucide-react';
 import { codexSpecialistAvailable, HarnessStore, busyKey, pendingRunIds } from './store';
-import { isActive, type EngineKind, type Status } from './types';
+import { isActive, type Status } from './types';
 import { resolveStatus } from './status';
-import { MemoryPanel } from './MemoryPanel';
 import { FrontierActivity } from './FrontierActivity';
 import { Composer } from './Composer';
 import { canStageEditReference } from './image-capabilities';
@@ -30,10 +28,6 @@ function Badge({ status }: { status: Status }) {
 
 export function App({ store }: { store: HarnessStore }) {
   const state = useSyncExternalStore(store.subscribe, store.getSnapshot);
-  const [newEngine, setNewEngine] = useState<EngineKind | undefined>();
-  const selectedNewEngine = newEngine ?? state.newChatEngine;
-  const [handoffChoice, setHandoffChoice] = useState<{ sessionId: string; engineKind: EngineKind } | null>(null);
-  const [memorySession, setMemorySession] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [narrow, setNarrow] = useState(window.innerWidth <= 700);
   const sidebar = useRef<HTMLElement>(null);
@@ -44,12 +38,6 @@ export function App({ store }: { store: HarnessStore }) {
   const sidebarButton = useRef<HTMLButtonElement>(null);
   const thread = state.thread;
   const selected = state.selectedId;
-  const handoffEngine = handoffChoice && handoffChoice.sessionId === thread?.session.id
-    ? handoffChoice.engineKind : thread?.session.engineKind ?? 'minimax';
-  const handoffBusy = !!thread && (
-    !!state.busy[busyKey('handoff', thread.session.id)] ||
-    isActive(thread.session.status) || pendingRunIds(state, thread.session.id).length > 0
-  );
   const title =
     thread?.session.title ||
     state.sessions.find((s) => s.id === selected)?.title ||
@@ -92,6 +80,7 @@ export function App({ store }: { store: HarnessStore }) {
   return (
     <div
       className="app-shell"
+      data-connection={state.connection}
       onDragOver={(event) => {
         if (Array.from(event.dataTransfer.types).includes('Files')) event.preventDefault();
       }}
@@ -125,7 +114,7 @@ export function App({ store }: { store: HarnessStore }) {
             <Terminal size={18} />
           </span>
           <span>
-            ai-harness<small>WORKSPACE</small>
+            Sova
           </span>
           <button
             className="icon-button mobile-only close-sidebar"
@@ -135,61 +124,11 @@ export function App({ store }: { store: HarnessStore }) {
             <X size={19} />
           </button>
         </div>
-        <label className="sidebar-hint">
-          Harness for new chat
-          <select
-            aria-label="Harness for new chat"
-            value={selectedNewEngine ?? ''}
-            onChange={(event) => setNewEngine(event.target.value as 'minimax' | 'codex')}
-          >
-            {!selectedNewEngine && <option value="" disabled>Waiting for service default</option>}
-            <option value="minimax">MiniMax</option>
-            <option value="codex" disabled={!state.codexAvailable}>
-              Codex (preview){state.codexAvailable ? '' : ' — pending'}
-            </option>
-          </select>
-        </label>
-        {state.codexHealth && (
-          <details className="sidebar-hint codex-capabilities">
-            <summary>Codex preview capabilities</summary>
-            <p>
-              {state.codexHealth.configured ? 'Configured' : 'Not configured'} ·{' '}
-              {state.codexHealth.version ?? 'Version unknown'} ·{' '}
-              {state.codexHealth.readiness ?? 'Readiness unknown'}
-            </p>
-            <p>
-              Protocol qualification: {state.codexHealth.protocolQualified ? 'recorded' : 'pending'}
-              . Live acceptance is separate.
-            </p>
-            <ul>
-              {Object.entries(state.codexHealth.capabilityDetails ?? {}).map(
-                ([name, capability]) => (
-                  <li key={name}>
-                    {{
-                      nativeDelegation: 'Native delegation',
-                      nativeMedia: 'Native media',
-                      compaction: 'Compaction',
-                      attachments: 'File attachments',
-                      search: 'Search',
-                      browser: 'Browser',
-                      pdf: 'PDF',
-                      image: 'Image specialist',
-                      coding: 'Coding',
-                      frontier: 'MiMo frontier',
-                    }[name] ?? name}
-                    : {capability.supported ? 'Supported' : 'Unavailable'} (
-                    {capability.qualification.replaceAll('_', ' ')}) — {capability.reason}
-                  </li>
-                ),
-              )}
-            </ul>
-          </details>
-        )}
         <button
           className="new-chat"
-          disabled={!!state.busy[busyKey('create')] || !selectedNewEngine || (selectedNewEngine === 'codex' && !state.codexAvailable)}
+          disabled={!!state.busy[busyKey('create')] || !state.codexAvailable}
           onClick={() => {
-            void store.create(selectedNewEngine);
+            void store.create();
             setSidebarOpen(false);
           }}
         >
@@ -238,8 +177,7 @@ export function App({ store }: { store: HarnessStore }) {
         </nav>
         <div className="sidebar-footer">
           <span className="version-dot" />
-          ai-harness <span>0.0.3</span>
-          <p>A space for technical work.</p>
+          Sova
         </div>
       </aside>
       <main inert={sidebarOpen && narrow} className="main-pane" id="conversation" tabIndex={-1}>
@@ -254,18 +192,11 @@ export function App({ store }: { store: HarnessStore }) {
             <Menu size={20} />
           </button>
           <div className="chat-heading">
-            <span className="eyebrow">
-              CONVERSATION
-              {thread
-                ? ` · ${thread.session.engineKind === 'codex' ? 'Codex (preview)' : 'MiniMax'}`
-                : ''}
-            </span>
-            <h1>{selected ? title : 'Your workspace'}</h1>
+            <span className="eyebrow">CONVERSATION</span>
+            <h1>{selected ? title : 'Sova'}</h1>
           </div>
-          {memorySession === selected && memorySession && <MemoryPanel key={memorySession} sessionId={memorySession} onClose={()=>setMemorySession(null)} />}
           {thread && (
             <div className="header-actions">
-              {thread.session.engineKind === 'codex' && <button className="text-button" onClick={()=>setMemorySession(thread.session.id)}>Review memory</button>}
               <Badge status={resolveStatus(thread.session.status, thread.runs)} />
               {thread.session.engineKind === 'codex' && (
                 <button
@@ -283,49 +214,16 @@ export function App({ store }: { store: HarnessStore }) {
                   Compact context
                 </button>
               )}
-              <div className="handoff-controls">
-                <label className="handoff-target">
-                  <span>Continue with</span>
-                  <select
-                    aria-label="Harness for continued chat"
-                    value={handoffEngine}
-                    disabled={handoffBusy}
-                    onChange={(event) => setHandoffChoice({
-                      sessionId: thread.session.id, engineKind: event.target.value as EngineKind,
-                    })}
-                  >
-                    <option value="minimax">MiniMax</option>
-                    <option value="codex" disabled={!state.codexAvailable}>
-                      Codex (preview){state.codexAvailable ? '' : ' — pending'}
-                    </option>
-                  </select>
-                </label>
-                <button
-                  className="text-button handoff"
-                  disabled={handoffBusy || (handoffEngine === 'codex' && !state.codexAvailable)}
-                  onClick={() => void store.handoff(thread.session.id, handoffEngine)}
-                >
-                  <span>Continue in new chat</span>
-                  <ArrowUpRight size={17} />
-                </button>
-              </div>
             </div>
           )}
         </header>
-        {selected && <FrontierActivity sessionId={selected} />}
-        {selected && (
+        {thread?.session.engineKind === 'codex' && selected && <FrontierActivity sessionId={selected} />}
+        {selected && state.connection !== 'connected' && (
           <div className={`connection connection-${state.connection}`} role="status">
             <span className="connection-dot" />
-            {state.connection === 'connected'
-              ? 'Connected'
-              : state.connection === 'reconnecting'
-                ? 'Connection lost · reconnecting. Your task continues on the server.'
-                : state.connection === 'connecting'
-                  ? 'Connecting…'
-                  : 'Offline'}
-            {state.connection === 'connected' && (
-              <span className="connection-note">Tasks continue when you close this page</span>
-            )}
+            {state.connection === 'reconnecting'
+              ? 'Connection lost · reconnecting. Your task continues on the server.'
+              : state.connection === 'connecting' ? 'Connecting…' : 'Offline'}
           </div>
         )}
         {thread && (
@@ -375,12 +273,13 @@ export function App({ store }: { store: HarnessStore }) {
               <p>Research a question, investigate code, or work through a technical problem.</p>
               <button
                 className="primary-button"
-                disabled={!!state.busy[busyKey('create')]}
+                disabled={!!state.busy[busyKey('create')] || !state.codexAvailable}
                 onClick={() => void store.create()}
               >
                 <Plus size={17} />
                 Start a conversation
               </button>
+              {state.healthLoaded && !state.codexAvailable && <p role="status">Chat is temporarily unavailable. Please try again shortly.</p>}
               <div className="empty-capabilities">
                 <span>
                   <FileText size={15} />
@@ -424,8 +323,13 @@ export function App({ store }: { store: HarnessStore }) {
               {thread && (
                 <ConversationReplies
                   thread={thread}
+                  technicalVisionAction={async (handle, action) => {
+                    if (!await store.technicalVisionAction(thread.session.id, handle, action))
+                      throw new Error(store.getSnapshot().error ?? 'Image analysis status is unavailable.');
+                  }}
                   imageActions={{
                     decide: (jobId, decision) => {
+                      if (thread.session.engineKind !== 'codex') return;
                       void store.approveImage(thread.session.id, jobId, decision);
                     },
                     cancel: (jobId) => {
@@ -438,7 +342,7 @@ export function App({ store }: { store: HarnessStore }) {
                     store.addImageReference(thread.session.id, artifactId)
                   }
                   editUnavailable={
-                    canStageEditReference(state.imageCapabilities) && (thread.session.engineKind !== 'codex' || codexSpecialistAvailable(state))
+                    thread.session.engineKind === 'codex' && canStageEditReference(state.imageCapabilities) && codexSpecialistAvailable(state)
                       ? undefined
                       : state.imageCapabilitiesLoaded
                         ? 'Image editing is unavailable for this service.'

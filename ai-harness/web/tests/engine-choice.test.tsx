@@ -1,80 +1,32 @@
-import { render, screen, waitFor, within } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { expect, it } from 'vitest';
 import { App } from '../src/App';
 import { HarnessStore } from '../src/store';
 import { fixtureTransport } from './fixtures';
-it('defaults new chat to MiniMax and disables unqualified Codex preview', async () => {
+
+it('creates only the active chat engine even when the server reports an old default', async () => {
   const { transport } = fixtureTransport();
+  transport.health.mockResolvedValue({ visionAvailable: false, engines: { default: 'minimax', codex: { available: true } } });
   const store = new HarnessStore(transport);
   render(<App store={store} />);
-  const selector = await screen.findByRole('combobox', { name: 'Harness for new chat' });
-  expect(selector).toHaveValue('minimax');
-  expect(within(selector).getByRole('option', { name: /Codex/ })).toBeDisabled();
-  await store.create('codex');
-  expect(transport.create).not.toHaveBeenCalled();
-  await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
-  await waitFor(() => expect(transport.create).toHaveBeenCalledWith("minimax"));
-});
-it('qualified deployment enables new-chat choice and sends immutable engine choice only on creation', async () => {
-  const { transport } = fixtureTransport();
-  transport.health.mockResolvedValue({
-    visionAvailable: false,
-    engines: { default: "codex", codex: { available: true } },
-  });
-  const store = new HarnessStore(transport);
-  render(<App store={store} />);
-  const selector = screen.getByRole('combobox', { name: 'Harness for new chat' });
-  await waitFor(() => expect(within(selector).getByRole('option', { name: /Codex/ })).toBeEnabled());
-  expect(selector).toHaveValue('codex');
-  await userEvent.selectOptions(selector, 'codex');
+  await waitFor(() => expect(screen.getByRole('button', { name: 'New chat' })).toBeEnabled());
+  expect(screen.queryByRole('combobox', { name: /Harness/ })).toBeNull();
   await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
   await waitFor(() => expect(transport.create).toHaveBeenCalledWith('codex'));
-  expect(transport.send).not.toHaveBeenCalled();
+  await store.create('minimax');
+  expect(transport.create).toHaveBeenCalledTimes(1);
 });
-it('keeps an unavailable Codex default selected and permits only an explicit MiniMax alternative', async () => {
+
+it('does not substitute an old engine when active chat availability is withdrawn', async () => {
   const { transport } = fixtureTransport();
-  transport.health.mockResolvedValue({ visionAvailable: false, engines: { default: 'codex', codex: { available: false } } });
+  transport.health.mockResolvedValue({ visionAvailable: false, engines: { default: 'minimax', codex: { available: false, configured: true, protocolQualified: true } } });
   const store = new HarnessStore(transport);
   render(<App store={store} />);
-  const selector = screen.getByRole('combobox', { name: 'Harness for new chat' });
-  await waitFor(() => expect(selector).toHaveValue('codex'));
+  await screen.findByText('Chat is temporarily unavailable. Your history and files are saved.');
   expect(screen.getByRole('button', { name: 'New chat' })).toBeDisabled();
-  await store.create(); expect(transport.create).not.toHaveBeenCalled();
-  await userEvent.selectOptions(selector, 'minimax');
-  await userEvent.click(screen.getByRole('button', { name: 'New chat' }));
-  await waitFor(() => expect(transport.create).toHaveBeenCalledWith('minimax'));
-});
-it('shows qualification separately from configuration without enabling preview', async () => {
-  const { transport } = fixtureTransport();
-  transport.health.mockResolvedValue({
-    visionAvailable: false,
-    engines: {
-      codex: {
-        available: false,
-        configured: true,
-        version: '0.158.0',
-        readiness: 'disabled',
-        protocolQualified: true,
-        capabilityDetails: {
-          nativeDelegation: {
-            supported: false,
-            qualification: 'native_fixture',
-            reason: 'Gateway qualification pending',
-          },
-          nativeMedia: {
-            supported: false,
-            qualification: 'not_tested',
-            reason: 'Native media unavailable',
-          },
-        },
-      },
-    },
-  });
-  const store = new HarnessStore(transport);
-  render(<App store={store} />);
-  await screen.findByText(/Configured · 0.158.0 · disabled/);
-  expect(within(screen.getByRole('combobox', { name: 'Harness for new chat' })).getByRole('option', { name: /Codex/ })).toBeDisabled();
-  expect(screen.getByText(/Gateway qualification pending/)).toBeInTheDocument();
-  expect(screen.getByText(/Live acceptance is separate/)).toBeInTheDocument();
+  await store.create();
+  await store.create('minimax');
+  expect(transport.create).not.toHaveBeenCalled();
+  expect(screen.getByRole('textbox', { name: 'Message' })).toBeDisabled();
 });

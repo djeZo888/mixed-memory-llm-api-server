@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState, type DragEvent } from 'react';
 import { ArrowUp, FileText, Paperclip, Square, X } from 'lucide-react';
-import { HarnessStore, busyKey, lookup, codexSpecialistAvailable, pendingRunIds, type ViewState } from './store';
+import { HarnessStore, busyKey, lookup, codexSpecialistAvailable, technicalVisionAvailable, pendingRunIds, type ViewState } from './store';
 import { ContextMeter } from './ContextMeter';
 import { contextForThread } from './context';
 import { isActive } from './types';
 import { imageJobActive } from './image-jobs';
-import { canStageEditReference } from './image-capabilities';
 import { uploadAccept, uploadKey } from './uploads';
 import { availabilityNotice } from './availability';
 
@@ -45,9 +44,10 @@ export function Composer({
   const attachments = lookup(state.attachments, id) ?? [];
   const imageReferences = lookup(state.imageReferences, id) ?? [];
   const codex = state.thread?.session.engineKind === 'codex';
+  const historical = !!state.thread && !codex;
   const codexUnavailable = codex && state.healthLoaded && state.codexAvailable !== true;
   const imageUploads =
-    codex ? codexSpecialistAvailable(state) : state.visionAvailable;
+    technicalVisionAvailable(state) || (codex ? codexSpecialistAvailable(state) : state.visionAvailable);
   const reusableFiles = [
     ...(state.thread?.attachments ?? []),
     ...(state.thread?.artifacts ?? []),
@@ -55,6 +55,7 @@ export function Composer({
   const pendingSubmission = lookup(state.pendingSubmissions, id);
   const busy = (action: string) => state.busy[busyKey(action, id)];
   const locked =
+    historical ||
     codexUnavailable ||
     !!pendingSubmission ||
     uploading ||
@@ -64,7 +65,8 @@ export function Composer({
     state.loading ||
     !state.thread;
   const active = isActive(state.thread?.session.status) || pendingRunIds(state, id).length > 0;
-  const imageActive = state.thread?.imageJobs?.some(imageJobActive) ?? false;
+  const imageActive = (state.thread?.imageJobs?.some(imageJobActive) ?? false) ||
+    (state.thread?.messages.some(message => message.origin === 'technical_vision' && message.technicalVision && message.technicalVision.settled === false) ?? false);
   const availability = state.healthLoaded ? availabilityNotice(state.serviceAvailability) : '';
   useEffect(() => {
     input.current?.focus();
@@ -233,7 +235,7 @@ export function Composer({
               <li key={artifact.id}>
                 <FileText size={15} />
                 <span>{artifact.name}</span>
-                <small>{codex ? 'Specialist image reference' : 'Image reference'} · Original retained</small>
+                <small>Image reference · Original retained</small>
                 <button
                   type="button"
                   className="icon-button"
@@ -369,14 +371,14 @@ export function Composer({
       </form>
       {pendingSubmission && (
         <div className="composer-queue-note" role="status">
-          <p>A submitted message is awaiting acknowledgement. Retry checks or submits the saved message without creating a second run. It does not send the current draft.</p>
+          <p>Message delivery is unconfirmed. Check the saved message before sending again.</p>
           <details>
             <summary>Saved message</summary>
             <p style={{ whiteSpace: 'pre-wrap', overflowWrap: 'anywhere' }}>{pendingSubmission.text || '(Files only)'}</p>
             <p>{pendingSubmission.attachmentIds.length} attachments; {pendingSubmission.imageReferences.length} image references.</p>
           </details>
           <button type="button" className="text-button"
-            disabled={!!busy('send') || !!busy('delete') || state.loading || !state.thread}
+            disabled={historical || !!busy('send') || !!busy('delete') || state.loading || !state.thread}
             onClick={async () => {
               if (await store.retrySubmission(id))
                 setText((value) => value === pendingSubmission.text ? '' : value);
@@ -385,9 +387,16 @@ export function Composer({
           </button>
         </div>
       )}
+      {historical && (
+        <div className="composer-queue-note" role="status">
+          <p>This earlier chat is available to read. Start a new chat to continue; your history and files are saved.</p>
+          {state.healthLoaded && !state.codexAvailable && <p>New chat is temporarily unavailable. Please try again shortly.</p>}
+          <button className="text-button" disabled={!state.codexAvailable || !!state.busy[busyKey('create')]} onClick={() => void store.create()}>Start a new chat</button>
+        </div>
+      )}
       {codexUnavailable && (
         <p className="composer-queue-note" role="status">
-          Codex preview is disabled. This chat’s history and files remain available.
+          Chat is temporarily unavailable. Your history and files are saved.
         </p>
       )}
       {active && (
@@ -401,22 +410,14 @@ export function Composer({
         </p>
       )}
       <div className="composer-note">
-        <span>
-          {state.healthLoaded
-            ? imageUploads
-              ? codex ? 'PDF, source, text and PNG/JPEG specialist references · 50 MiB per file' : 'PDF, source, text and image files · 50 MiB per file'
-              : 'PDF, source and text files · 50 MiB per file · Images unavailable'
-            : 'Checking attachment capabilities…'}
-        </span>
-        {state.imageCapabilitiesLoaded && !canStageEditReference(state.imageCapabilities) && (
-          <span>Image editing unavailable</span>
-        )}
-        {codex && (
-          <span>
-            Files are workspace references. Native image, audio and video recognition is
-            unavailable.
-          </span>
-        )}
+        <details className="attachment-help">
+          <summary>Attachment help</summary>
+          <p>PDF, source and text files · 50 MiB per file.</p>
+          <p>{technicalVisionAvailable(state)
+            ? 'Image analysis: PNG/JPEG, up to 25 MiB and 2,097,152 pixels per image. Originals are retained.'
+            : 'Image analysis is unavailable.'}</p>
+          <p>{codexSpecialistAvailable(state) ? 'PNG/JPEG references for image generation are available.' : 'Image generation references are unavailable.'}</p>
+        </details>
         <span className="keyboard-hint" id="composer-keyboard-hint">
           Enter for a new line · Ctrl / Cmd + Enter to send
         </span>

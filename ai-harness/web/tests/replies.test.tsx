@@ -411,7 +411,7 @@ describe('reply-level conversation presentation', () => {
       </>,
     );
     expect(screen.getByRole('status', { name: 'Run status' })).toHaveTextContent(
-      'Active subagents: 1',
+      '1 supporting tasks',
     );
     expect(thread.activity.filter((item) => item.legacy)).toHaveLength(60);
     expect(additional).toHaveTextContent('Compatibility summary 59');
@@ -853,7 +853,7 @@ describe('reply-level conversation presentation', () => {
       ),
     );
     rerender(<WorkingStatus thread={thread} />);
-    expect(screen.getByRole('status', { name: 'Run status' })).toHaveTextContent(/0/);
+    expect(screen.getByRole('status', { name: 'Run status' })).not.toHaveTextContent('supporting tasks');
     expect(screen.getByRole('status', { name: 'Run status' })).toHaveTextContent(/running/i);
   });
 
@@ -1163,9 +1163,7 @@ describe('reply-level conversation presentation', () => {
       ],
     });
     render(<WorkingStatus thread={thread} />);
-    expect(screen.getByRole('status', { name: 'Run status' })).toHaveTextContent(
-      'Active subagents: unknown',
-    );
+    expect(screen.getByRole('status', { name: 'Run status' })).not.toHaveTextContent('supporting tasks');
   });
 
   it('retains Stop when typed work is pending despite idle aggregate state', async () => {
