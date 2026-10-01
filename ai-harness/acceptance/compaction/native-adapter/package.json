@@ -1,0 +1,6 @@
+{
+  "name": "h039-native-compaction-adapter",
+  "private": true,
+  "type": "module",
+  "description": "Disabled source candidate; native acceptance NOT_TESTED"
+}
