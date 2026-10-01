@@ -60,6 +60,8 @@ export const CODEX_H041_DELIVERY05_WINDOW=Object.freeze({startAtMs:Date.parse("2
 export const CODEX_H041_DELIVERY04_WINDOW=Object.freeze({startAtMs:Date.parse("2026-10-01T11:26:45.729698Z"),expiresAtMs:Date.parse("2026-10-01T15:26:45.729698Z"),settlementReserveMs:120000});
 /** H042 source capability only; operational admission/lease and fresh root GO remain mandatory. */
 export const CODEX_H042_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T17:44:17Z"), expiresAtMs: Date.parse("2026-10-01T20:29:17Z"), settlementReserveMs: 120000 });
+/** H043 SOURCE capability only; no staging/native/generation authority. */
+export const CODEX_H043_WINDOW = Object.freeze({ startAtMs: Date.parse("2026-10-01T21:19:33Z"), expiresAtMs: Date.parse("2026-10-02T00:04:33Z"), settlementReserveMs: 120000 });
 export interface CodexTextOnlyPolicy {
   readonly sessionId: string; readonly runId: string;
   readonly mode: "summary-only" | "text-only-parent" | "read-original" | "parent-artifacts" | "retention-parent";
@@ -69,7 +71,7 @@ export interface CodexTextOnlyPolicy {
 }
 const policies = new WeakSet<object>();
 function buildCodexTextOnlyPolicy(input: Omit<CodexTextOnlyPolicy, "window">, authorization: typeof CODEX_H041_WINDOW,collaborationVersion?:"v1"|"v2"): CodexTextOnlyPolicy {
-  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW && authorization!==CODEX_H041_DELIVERY04_WINDOW && authorization!==CODEX_H041_DELIVERY05_WINDOW && authorization!==CODEX_H042_WINDOW) throw Error("Untrusted source authorization window");
+  if (authorization!==CODEX_H041_WINDOW && authorization!==CODEX_H041_CONTINUATION_WINDOW && authorization!==CODEX_H041_DELIVERY_WINDOW && authorization!==CODEX_H041_DELIVERY04_WINDOW && authorization!==CODEX_H041_DELIVERY05_WINDOW && authorization!==CODEX_H042_WINDOW && authorization!==CODEX_H043_WINDOW) throw Error("Untrusted source authorization window");
   if (!id(input.sessionId) || !id(input.runId) || !(collaborationVersion?["retention-parent"]:["summary-only", "text-only-parent", "read-original", "parent-artifacts"]).includes(input.mode) || ![input.configSha256, input.modelCatalogSha256].every(v => typeof v === "string" && /^[a-f0-9]{64}$/.test(v)) || Object.keys(input).sort().join() !== "configSha256,mode,modelCatalogSha256,runId,sessionId") throw Error("Invalid trusted text-only policy");
   const policy = freeze({ ...input, window: authorization,...(collaborationVersion?{collaborationVersion}:{}) }); policies.add(policy); return policy;
 }
@@ -170,3 +172,6 @@ export function createCodexRetentionParent05Policy(input:Omit<CodexTextOnlyPolic
 
 /** New bounded H042 source entry. Does not issue launch, generation, or native qualification authority. */
 export function createCodexH042Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H042_WINDOW); }
+
+/** Distinct finite H043 entry; all prior policy factories retain their original windows. */
+export function createCodexH043Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H043_WINDOW); }

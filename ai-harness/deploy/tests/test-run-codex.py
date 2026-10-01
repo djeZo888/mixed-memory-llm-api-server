@@ -2,6 +2,8 @@
 """Reuse existing container ownership/security fixtures for Codex; fake Podman only."""
 import importlib.util
 import hashlib
+import subprocess
+import sys
 import tomllib
 from pathlib import Path
 import unittest
@@ -75,6 +77,13 @@ class CodexLauncherContract(base.LauncherContract):
         (self.profile/'codex-home'/'home').symlink_to(self.home,target_is_directory=True)
         self.assertEqual(self.invoke().returncode,64)
         self.assertFalse(any('run' in c['argv'] for c in self.calls()))
+    def test_failed_bootstrap_receipt_transport_prevents_native_creation(self):
+        self.env.update(AI_HARNESS_CODEX_RECEIPT_DIR='/private/nonexistent-h043-fixture',AI_HARNESS_CODEX_RECEIPT_NONCE='a'*64)
+        result=subprocess.run([sys.executable,str(base.LAUNCHER.parent/'engine/redact-acp.py'),str(self.bin/'podman'),'--remote=false','--cgroup-manager=systemd','run'],env=self.env,capture_output=True,timeout=5)
+        self.assertEqual(result.returncode,125)
+        self.assertIn(b'ACP process failed',result.stderr)
+        self.assertEqual(self.calls(),[])
+
     def test_help_does_not_start_podman(self):
         result=self.invoke(['--help']);self.assertEqual(result.returncode,0)
         self.assertIn('private AppServer stdio',result.stdout);self.assertFalse(self.calls())

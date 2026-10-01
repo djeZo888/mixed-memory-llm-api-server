@@ -11,6 +11,7 @@ import signal
 import subprocess
 import sys
 import threading
+import time
 import uuid
 
 
@@ -42,11 +43,44 @@ def publish_cleanup_evidence(config,receipts,trace,producer,container,native_id,
     trace_ok=True
     if trace is not None:
         try:trace.publish(receipts,producer,native_id,raw_exit,requested_stop,cli_reaped and rm_exit==0 and exists_exit==1 and pipes_joined)
-        except (ValueError,OSError,TypeError):trace_ok=False
+        except Exception:trace_ok=False
     settlement_ok=True
     try:receipts['publish_settlement'](config,producer,container,native_id,raw_exit,requested_stop,cli_reaped,rm_exit,exists_exit,pipes_joined)
-    except (ValueError,OSError,TypeError):settlement_ok=False
+    except Exception:settlement_ok=False
     return trace_ok and settlement_ok
+
+def cleanup_command(argv, timeout, env, config, receipts, producer, container, name):
+    """Own/reap this exact fresh cleanup CLI; seal raw terminal before later checks."""
+    process = None; identity = None; error = None; raw_exit = None
+    started = time.monotonic()
+    try:
+        process = subprocess.Popen(argv, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                   stderr=subprocess.DEVNULL, env=env, start_new_session=True)
+        if config is not None:
+            try: identity = receipts['process_identity'](process.pid)
+            except Exception: pass  # Missing birth remains an explicit unknown fact.
+        try: raw_exit = process.wait(timeout=max(0.01, timeout - min(2, timeout/4)))
+        except subprocess.TimeoutExpired as failure:
+            error = failure
+            # Exact Popen PID/group remains unreaped/owned; no PID-name lookup.
+            os.killpg(process.pid, signal.SIGKILL)
+            raw_exit = process.wait(timeout=max(0.01, timeout - (time.monotonic()-started)))
+    except Exception as failure:
+        error = failure
+    finally:
+        if process is not None and process.poll() is None:
+            try:
+                os.killpg(process.pid, signal.SIGKILL)
+                raw_exit = process.wait(timeout=max(0.01, timeout - (time.monotonic()-started)))
+            except Exception as failure:
+                if error is None: error = failure
+        if process is not None and type(process.returncode) is int: raw_exit=process.returncode
+        if config is not None:
+            receipts['publish_cleanup_terminal'](config, producer, container, name,
+                process.pid if process is not None else None, identity, raw_exit, error)
+    if error is not None: raise error
+    return subprocess.CompletedProcess(argv, raw_exit)
+
 
 def main():
     if sys.argv[1:] in (["--help"], ["-h"]):
@@ -84,7 +118,7 @@ def main():
                     return
                 if destination == 2 and trace is not None: trace.feed(chunk)
                 write_all(destination, redactor.feed(chunk))
-        except (OSError, ValueError):
+        except Exception:
             # No raw-stream fallback and no exception text containing payloads.
             pipe_failed.set()
             stopped.set()
@@ -94,6 +128,8 @@ def main():
     code = 125
     cleanup_ok = True
     engine_exited = False
+    failure_observed = False
+    failure_published = False
     requested_stop = False
     receipt_config = receipts = producer = native_id = None
     rm_exit = exists_exit = None
@@ -105,12 +141,20 @@ def main():
             receipts = runpy.run_path(str(Path(__file__).resolve().with_name('codex_receipts.py')))
             receipt_config = receipts['channel']()
             producer = receipts['process_identity']()
+            receipts['publish_producer'](receipt_config, producer, container)
             if receipt_config and receipt_config[1].get('nativeTraceMode'):
                 module=runpy.run_path(str(Path(__file__).resolve().with_name('codex_native_trace.py')))
                 trace=module['TraceCapture'](receipt_config)
+        if stopped.is_set():
+            requested_stop = bool(received_signal[0])
+            raise InterruptedError('stop before Podman child creation')
+        if receipt_config is not None:
+            receipts['verify_child_gate'](receipt_config, producer, container)
         failure_phase = "spawn"
         process = subprocess.Popen(args, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True)
+        if receipt_config is not None:
+            receipts['publish_cli'](receipt_config, producer, container, process.pid)
         for source, destination in ((process.stdout, 1), (process.stderr, 2)):
             worker = threading.Thread(target=copy_stream, args=(source, destination), daemon=True)
             worker.start()
@@ -128,23 +172,37 @@ def main():
             except subprocess.TimeoutExpired:
                 pass
         if pipe_failed.is_set():
-            code = 125
+            raise OSError('ACP pipe forwarding failed')
+        if engine_exited and code != 0:
+            raise RuntimeError('original engine exited unsuccessfully')
         # A requested stop is acknowledged only after verified settlement below.
         # An already observed engine failure is never normalized by a signal.
         requested_stop = bool(received_signal[0]) and not engine_exited
-    except (OSError, ValueError, TypeError, KeyError, IndexError, subprocess.TimeoutExpired) as error:
+    except Exception as error:
+        failure_observed = True
+        code = 125 if not engine_exited else code
         if receipt_config is not None and producer is not None:
-            try: receipts['publish_failure'](receipt_config,producer,failure_phase,error)
-            except (OSError,ValueError,TypeError,KeyError): pass
-        os.write(2, b"run-engine: ACP process start failed\n")
+            try:
+                receipts['publish_failure'](receipt_config,producer,failure_phase,error)
+                failure_published = True
+            except Exception: pass
+        try: os.write(2, b"run-engine: ACP process failed\n")
+        except OSError: pass
     finally:
         # A second TERM must not interrupt cleanup and strand the container.
         for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
             signal.signal(number, signal.SIG_IGN)
         if process is not None and process.poll() is not None and not engine_exited:
-            code = process.returncode
+            if not failure_observed: code = process.returncode
             engine_exited = True
             requested_stop = False
+        if engine_exited and code != 0 and not failure_observed:
+            failure_observed = True
+            if receipt_config is not None and producer is not None:
+                try:
+                    receipts['publish_failure'](receipt_config, producer, 'run', RuntimeError('original engine exit observed before stop'))
+                    failure_published = True
+                except Exception: pass
         if process is not None and process.poll() is None:
             try:
                 os.killpg(process.pid, signal.SIGTERM)
@@ -159,38 +217,57 @@ def main():
                 pass
             except OSError:
                 cleanup_ok = False
+        if receipt_config is not None and producer is not None:
+            try: receipts['publish_cli_terminal'](receipt_config, producer, container, process)
+            except Exception: cleanup_ok = False
         # Stop CLI creation first, then remove this exact container. Podman's
         # forced removal terminates its container process tree after 20 seconds.
         # Never report successful settlement if local cleanup cannot complete.
-        cleanup_env = {key: value for key, value in os.environ.items() if not key.startswith("AI_HARNESS_")}
-        try:
-            result = subprocess.run([podman, "--remote=false", "rm", "--force", "--time", "20", "--ignore", container],
-                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    timeout=28, env=cleanup_env, check=False)
-            rm_exit = result.returncode
-            cleanup_ok = cleanup_ok and result.returncode == 0
-        except (OSError, subprocess.TimeoutExpired):
-            cleanup_ok = False
-        # rm success alone is insufficient: Podman must explicitly report this
-        # exact random container absent (exists exit1). Exit0 or errors are not
-        # a settlement receipt. Cleanup budget: CLI4 + rm28 + exists2 + pipes4.
-        try:
-            result = subprocess.run([podman, "--remote=false", "container", "exists", container],
-                                    stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                                    timeout=2, env=cleanup_env, check=False)
-            exists_exit = result.returncode
-            cleanup_ok = cleanup_ok and result.returncode == 1
-        except (OSError, subprocess.TimeoutExpired):
-            cleanup_ok = False
+        if process is not None:
+            cleanup_env = {key: value for key, value in os.environ.items() if not key.startswith("AI_HARNESS_")}
+            try:
+                result = cleanup_command([podman, "--remote=false", "rm", "--force", "--time", "20", "--ignore", container],
+                                         28, cleanup_env, receipt_config, receipts, producer, container, 'rm-terminal')
+                rm_exit = result.returncode
+                cleanup_ok = cleanup_ok and result.returncode == 0
+            except Exception:
+                cleanup_ok = False
+            # rm success alone is insufficient: Podman must explicitly report this
+            # exact random container absent (exists exit1). Exit0 or errors are not
+            # a settlement receipt. Cleanup budget: CLI4 + rm28 + exists2 + pipes4.
+            try:
+                result = cleanup_command([podman, "--remote=false", "container", "exists", container],
+                                         2, cleanup_env, receipt_config, receipts, producer, container, 'exists-terminal')
+                exists_exit = result.returncode
+                cleanup_ok = cleanup_ok and result.returncode == 1
+            except Exception:
+                cleanup_ok = False
         for worker in filters:
             worker.join(timeout=2)
-        if any(worker.is_alive() for worker in filters) or pipe_failed.is_set():
+        # If a postfork gate failed before filters started, close the actual
+        # owned read pipes after reap; no vacuous joined-empty-list claim.
+        pipes_closed = True
+        if process is not None and len(filters) != 2:
+            for source in (process.stdout, process.stderr):
+                try: source.close()
+                except Exception: pipes_closed = False
+        if not pipes_closed or any(worker.is_alive() for worker in filters) or pipe_failed.is_set():
             cleanup_ok = False
-        if receipt_config is not None:
+        if receipt_config is not None and producer is not None:
+            if not cleanup_ok and not failure_published:
+                try:
+                    receipts['publish_failure'](receipt_config, producer, 'cleanup', RuntimeError('original cleanup unconfirmed'))
+                    failure_published = True
+                except Exception: pass
+            try:
+                receipts['publish_cleanup'](receipt_config, producer, container, process,
+                    rm_exit, exists_exit, pipes_closed and not any(worker.is_alive() for worker in filters),
+                    pipe_failed.is_set(), received_signal[0], failure_observed)
+            except Exception: cleanup_ok = False
             published=publish_cleanup_evidence(receipt_config,receipts,trace,producer,container,native_id,
                 process.returncode if process is not None else None,requested_stop,
                 process is not None and process.poll() is not None,rm_exit,exists_exit,
-                not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
+                pipes_closed and not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
             cleanup_ok=cleanup_ok and published
         if not cleanup_ok:
             # Fixed text only; stderr may be closed after the server cancels.
@@ -200,7 +277,7 @@ def main():
             except OSError:
                 pass
             code = 125
-        elif requested_stop and process is not None:
+        elif requested_stop and process is not None and not failure_observed:
             # SERVER treats exit0 as the clean cancellation acknowledgment.
             # ACP stdout remains exclusively the engine's byte stream.
             code = 0

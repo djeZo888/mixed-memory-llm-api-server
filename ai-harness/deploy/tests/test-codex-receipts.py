@@ -7,6 +7,7 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import shutil
 import time
 import unittest
 from unittest.mock import patch
@@ -70,6 +71,27 @@ class FileTransport(unittest.TestCase):
             with self.assertRaises(ValueError): receipts.capture(str(command), ['inspect'], timeout=0.05)
             self.assertLess(time.monotonic() - start, 1.5)
 
+    def test_atomic_publication_failure_never_exposes_json_or_ready(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root).resolve();path.chmod(0o700)
+            with patch.object(receipts.os,'write',side_effect=OSError('original disk failure')):
+                with self.assertRaises(OSError):receipts.write_once(path,'scope-intent',{'original':True})
+            self.assertFalse((path/'scope-intent.json').exists());self.assertFalse((path/'scope-intent.ready').exists())
+            with patch.object(receipts.os,'link',side_effect=OSError('atomic link failure')):
+                with self.assertRaises(OSError):receipts.write_once(path,'producer',{'original':True})
+            self.assertFalse((path/'producer.json').exists());self.assertFalse((path/'producer.ready').exists())
+
+    def test_inspect_setup_error_reaps_actual_spawned_child(self):
+        with tempfile.TemporaryDirectory() as root:
+            command=Path(root)/'capture-child.py';command.write_text('#!'+sys.executable+'\nimport time\ntime.sleep(4)\n');command.chmod(0o700)
+            created=[];actual=subprocess.Popen
+            def spawn(*args,**kwargs):
+                p=actual(*args,**kwargs);created.append(p);return p
+            with patch.object(receipts.subprocess,'Popen',spawn),patch.object(receipts.selectors,'DefaultSelector',side_effect=OSError('selector setup failed')):
+                with self.assertRaises(OSError):receipts.capture(str(command),['inspect'])
+            self.assertEqual(len(created),1);self.assertIsInstance(created[0].returncode,int)
+            with self.assertRaises(ProcessLookupError):os.kill(created[0].pid,0)
+
 
 class InspectedLaunch(unittest.TestCase):
     def fixture(self, path):
@@ -96,6 +118,7 @@ class InspectedLaunch(unittest.TestCase):
             if command[0] == 'inspect': return json.dumps([native]).encode()
             if command[0] == 'info': return b'true\n'
             return json.dumps([image]).encode()
+        receipts.write_once(path, 'producer', receipts.causal((path,binding),'codex-producer-original-v1',producer=identity,containerName='ai-harness-'+'f'*32))
         receipts.write_once(path, 'egress', {'synthetic': True})
         return binding, args, identity, native, image, capture
 
@@ -128,10 +151,10 @@ class InspectedLaunch(unittest.TestCase):
     def test_receipt_root_mount_exposure_refused_before_inspect(self):
         with tempfile.TemporaryDirectory() as root:
             path = Path(root).resolve(); path.chmod(0o700)
-            binding, args, _, _, _, _ = self.fixture(path)
+            binding, args, identity, _, _, _ = self.fixture(path)
             args[1] = str(path.parent) + ':/exposed:ro,rprivate'
-            with patch.object(receipts, 'capture') as capture:
-                with self.assertRaises(ValueError): receipts.inspect_launch('/fixture/podman', 'fixture', args, (path, binding))
+            with patch.object(receipts, 'capture') as capture, patch.object(receipts,'process_identity',return_value=identity):
+                with self.assertRaises(ValueError): receipts.inspect_launch('/fixture/podman', 'ai-harness-'+'f'*32, args, (path, binding))
                 capture.assert_not_called()
 
 
@@ -147,11 +170,12 @@ class ScopeForwarding(unittest.TestCase):
         with patch.object(sys, 'argv', ['guard', '--', str(supervisor), 'fixture']), \
              patch.object(guard, 'verify', return_value='fixture/slice'), \
              patch.dict(os.environ, {'AI_HARNESS_CODEX_RECEIPT_DIR': '/private/fixture', 'AI_HARNESS_CODEX_RECEIPT_NONCE': 'a' * 64}), \
+             patch.object(guard, 'receipt_module', return_value={'channel':lambda:None}), \
              patch.object(guard.os, 'execv', exec_capture):
             with self.assertRaises(ExecCaptured): guard.main()
         self.assertEqual(captured['path'], '/usr/bin/systemd-run')
         self.assertEqual(captured['argv'][1:7], ['--user','--scope','--quiet','--collect','--expand-environment=no','--slice=aiharnesstasks.slice'])
-        self.assertEqual(captured['argv'][-4:], ['--inside-scope','--',str(supervisor),'fixture'])
+        self.assertEqual(captured['argv'][-5:], ['--inside-scope','-','--',str(supervisor),'fixture'])
         result = subprocess.run([sys.executable, '-c', 'import os,sys;sys.exit(0 if os.environ.get("AI_HARNESS_CODEX_RECEIPT_DIR")=="/private/fixture" and os.environ.get("AI_HARNESS_CODEX_RECEIPT_NONCE")=="a"*64 else 1)'],
                                 env=captured['env'], capture_output=True, timeout=3)
         self.assertEqual(result.returncode, 0); self.assertEqual(result.stdout + result.stderr, b'')
@@ -164,13 +188,13 @@ class ScopeForwarding(unittest.TestCase):
         def read(path, *args, **kwargs):
             return '0::/' + prefix + '/test.scope\n' if str(path) == '/proc/self/cgroup' else read_text(path, *args, **kwargs)
         def execute(path, argv): calls.append(('exec', path, argv)); raise ExecCaptured()
-        with patch.object(sys, 'argv', ['guard','--inside-scope','--',str(supervisor),'fixture']), \
+        with patch.object(sys, 'argv', ['guard','--inside-scope','-','--',str(supervisor),'fixture']), \
              patch.object(guard, 'verify', return_value=prefix), patch.object(Path, 'read_text', read), \
-             patch('runpy.run_path', return_value={'publish_egress': lambda p: calls.append(('egress', p))}), \
+             patch('runpy.run_path', return_value={'channel':lambda:None,'publish_egress': lambda p: calls.append(('egress', p))}), \
              patch.object(guard.os, 'execv', execute):
             with self.assertRaises(ExecCaptured): guard.main()
         self.assertEqual(calls[0], ('egress', prefix)); self.assertEqual(calls[1][2], [sys.executable,str(supervisor),'fixture'])
-        with patch.object(sys, 'argv', ['guard','--inside-scope','--',str(supervisor),'fixture']), \
+        with patch.object(sys, 'argv', ['guard','--inside-scope','-','--',str(supervisor),'fixture']), \
              patch.object(guard, 'verify', return_value=prefix), patch.object(Path, 'read_text', return_value='0::/wrong/scope\n'), \
              patch.object(guard.os, 'execv') as execute:
             with self.assertRaises(ValueError): guard.main()
@@ -178,34 +202,60 @@ class ScopeForwarding(unittest.TestCase):
 
 
 class RealSupervisorFixture(unittest.TestCase):
-    def run_supervisor(self, root, raw_exit=7, rm_exit=0, exists_exit=1, stop=False):
+    def run_supervisor(self, root, raw_exit=7, rm_exit=0, exists_exit=1, stop=False, fail_phase=None):
         path = Path(root).resolve(); path.chmod(0o700)
         podman = path / 'fake-podman.py'
         podman.write_text('#!' + sys.executable + '\n' + '''import json,os,sys,time
 from pathlib import Path
 args=sys.argv[1:]
+assert Path(__file__).with_name('producer.ready').exists()
 with open(Path(__file__).with_name('calls.jsonl'),'a') as f: f.write(json.dumps({'args':args,'host_receipt_env':any(k.startswith('AI_HARNESS_CODEX_RECEIPT') for k in os.environ)})+'\\n')
 if 'run' in args:
+ time.sleep(0.15)
  print('synthetic engine bytes',flush=True); print(os.environ['AI_HARNESS_GATEWAY_TOKEN'],file=sys.stderr,flush=True)
  if ''' + repr(stop) + ''': time.sleep(4)
+ Path(__file__).with_name('run-exiting.ready').write_text(str(os.getpid()))
  sys.exit(''' + str(raw_exit) + ''')
 if 'rm' in args: sys.exit(''' + str(rm_exit) + ''')
 sys.exit(''' + str(exists_exit) + ')\n')
         podman.chmod(0o700)
         wrapper = path / 'wrapper.py'
-        wrapper.write_text('''import importlib.util,os,runpy,sys
+        wrapper.write_text('''import importlib.util,os,runpy,sys,subprocess,time
 from pathlib import Path
 def load(p):
  s=importlib.util.spec_from_file_location('fixture'+Path(p).stem,p);m=importlib.util.module_from_spec(s);s.loader.exec_module(m);return m
 r=load(sys.argv[1]); supervisor=load(sys.argv[2]); root=Path(sys.argv[3]); podman=sys.argv[4]
-binding={'nonce':'a'*64,'runId':'probe-run','sessionId':'session-1'}
-producer={'pid':123,'startTicks':'456','uid':os.getuid(),'bootId':'synthetic','cgroupPath':'synthetic'}
-runpy.run_path=lambda _: {'channel':lambda:(root,binding),'process_identity':lambda:producer,'inspect_launch':lambda *args:{'container':{'id':'c'*64}},'publish_settlement':r.publish_settlement}
+binding={'nonce':'a'*64,'runId':'probe-run','sessionId':'session-1','sources':{'synthetic':'b'*64}}
+def identity(pid=None):
+ pid=os.getpid() if pid is None else pid
+ q=subprocess.run(['/bin/ps','-p',str(pid),'-o','lstart='],capture_output=True,check=True)
+ birth=str(int(time.mktime(time.strptime(q.stdout.decode().strip(),'%a %b %d %H:%M:%S %Y'))))
+ return {'pid':pid,'startTicks':birth,'uid':os.getuid(),'bootId':'synthetic-mac-fixture','cgroupPath':'/fixture/scope'}
+producer=identity();r.process_identity=identity
+r.write_once(root,'scope',r.causal((root,binding),'codex-scope-original-v1',producer=producer,unit='ai-harness-codex-'+'e'*32+'.scope',scope={'inode':root.stat().st_ino,'dev':root.stat().st_dev,'invocationId':'e'*32},parent=producer,creator=producer))
+phase=sys.argv[5]
+def gate(config,producer,container):
+ if phase=='producer':raise OSError('original receipt write failed')
+ return r.publish_producer(config,producer,container)
+def inspect(*args):
+ if phase=='inspect':
+  deadline=time.monotonic()+2
+  while not (root/'run-exiting.ready').exists() and time.monotonic()<deadline:time.sleep(0.01)
+  if not (root/'run-exiting.ready').exists():raise TimeoutError('fixture child did not reach original exit')
+  time.sleep(0.05);raise ValueError('original inspection failed after child exit')
+ if phase=='inspect-signal':
+  os.kill(os.getpid(),15);time.sleep(0.35);raise ValueError('inspection failed during stop')
+ return {'container':{'id':'c'*64}}
+def cli(config,producer,container,pid):
+ # Actual child PID and observed birth; fixture only, no Linux qualification.
+ if phase=='cli':raise OSError('original postfork CLI publication failed')
+ r.write_once(root,'cli',r.causal(config,'codex-cli-original-v1',producer=producer,containerName=container,child=identity(pid),pgid=os.getpgid(pid)))
+runpy.run_path=lambda _: {'channel':lambda:(_ for _ in ()).throw(OSError('bootstrap failed')) if phase=='bootstrap' else (root,binding),'process_identity':identity,'publish_producer':gate,'verify_child_gate':lambda *a:None,'publish_cli':cli,'inspect_launch':inspect,'publish_failure':r.publish_failure,'publish_cli_terminal':r.publish_cli_terminal,'publish_cleanup':r.publish_cleanup,'publish_cleanup_terminal':r.publish_cleanup_terminal,'publish_settlement':r.publish_settlement}
 sys.argv=['supervisor',podman,'--remote=false','--cgroup-manager=systemd','run']
 os._exit(supervisor.main())
 ''')
         env = dict(os.environ, AI_HARNESS_GATEWAY_TOKEN='synthetic-token-not-a-secret', AI_HARNESS_CODEX_RECEIPT_DIR=str(path), AI_HARNESS_CODEX_RECEIPT_NONCE='a' * 64)
-        command = [sys.executable,str(wrapper),str(DEPLOY/'engine/codex_receipts.py'),str(DEPLOY/'engine/redact-acp.py'),str(path),str(podman)]
+        command = [sys.executable,str(wrapper),str(DEPLOY/'engine/codex_receipts.py'),str(DEPLOY/'engine/redact-acp.py'),str(path),str(podman),fail_phase or '-']
         if stop:
             process = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             deadline = time.monotonic() + 2
@@ -213,9 +263,19 @@ os._exit(supervisor.main())
             process.terminate(); stdout, stderr = process.communicate(timeout=8)
             result = subprocess.CompletedProcess(command, process.returncode, stdout, stderr)
         else:
-            result = subprocess.run(command, env=env, capture_output=True, timeout=8)
-        value = receipts.read_private(path / 'settlement.json')
-        calls = [json.loads(line) for line in (path / 'calls.jsonl').read_text().splitlines()]
+            process = subprocess.Popen(command, env=env, stdout=subprocess.PIPE, stderr=subprocess.PIPE, start_new_session=True)
+            stdout,stderr=process.communicate(timeout=8)
+            result=subprocess.CompletedProcess(command,process.returncode,stdout,stderr)
+        value = receipts.read_private(path / 'settlement.json') if (path/'settlement.ready').exists() else None
+        calls = [json.loads(line) for line in (path / 'calls.jsonl').read_text().splitlines()] if (path / 'calls.jsonl').exists() else []
+        self.last_failure = receipts.read_private(path/'failure.json') if (path/'failure.ready').exists() else None
+        self.last_cleanup = receipts.read_private(path/'cleanup.json') if (path/'cleanup.ready').exists() else None
+        self.last_producer = receipts.read_private(path/'producer.json') if (path/'producer.ready').exists() else None
+        evidence=os.environ.get('H043_FIXTURE_EVIDENCE_DIR')
+        if evidence:
+            target=Path(tempfile.mkdtemp(prefix='redactor-',dir=evidence));shutil.copytree(path,target,dirs_exist_ok=True)
+            (target/'stdout.private').write_bytes(result.stdout);(target/'stderr.private').write_bytes(result.stderr)
+            (target/'fixture-result.json').write_text(json.dumps({'argv':command,'cwd':str(Path.cwd()),'pid':process.pid,'actualExit':result.returncode,'reaped':True,'injectedFailurePhase':fail_phase,'qualification':'MAC_SOURCE_FIXTURE_ONLY'}))
         return result, value, calls
 
     def test_raw_engine_failure_distinct_from_successful_exact_cleanup(self):
@@ -244,6 +304,44 @@ os._exit(supervisor.main())
         self.assertEqual(result.returncode, 0); self.assertTrue(value['requestedStop'])
         self.assertEqual(value['engineExitStatus'], -15); self.assertTrue(value['cleanupOk'])
 
+
+    def test_producer_publication_failure_prevents_every_podman_child(self):
+        with tempfile.TemporaryDirectory() as root:
+            result,value,calls=self.run_supervisor(root,fail_phase='producer')
+        self.assertEqual(result.returncode,125);self.assertEqual(calls,[])
+        self.assertIsNone(self.last_producer);self.assertEqual(self.last_failure['phase'],'bootstrap')
+        self.assertFalse(value['cleanupOk']);self.assertFalse(self.last_cleanup['childCreated'])
+        self.assertIsNone(value['rmExit']);self.assertIsNone(value['existsExit'])
+
+    def test_postfork_inspection_failure_never_becomes_success_from_child_exit_zero(self):
+        for phase in ('inspect','inspect-signal'):
+            with self.subTest(phase=phase),tempfile.TemporaryDirectory() as root:
+                result,value,calls=self.run_supervisor(root,raw_exit=0,fail_phase=phase)
+            self.assertEqual(result.returncode,125)
+            self.assertEqual(self.last_failure['phase'],'inspect-launch')
+            self.assertTrue(value['cleanupOk']);self.assertFalse(value['requestedStop'])
+            self.assertTrue(self.last_cleanup['observedError'])
+            self.assertEqual(self.last_producer['producer']['pid'],self.last_cleanup['producer']['pid'])
+            self.assertTrue(all(c['args'][-1]==self.last_producer['containerName'] for c in calls if 'rm' in c['args'] or 'exists' in c['args']))
+            if phase=='inspect':self.assertEqual(value['engineExitStatus'],0)
+            else:self.assertIn(value['engineExitStatus'],(0,-15))
+
+
+    def test_bootstrap_failure_cannot_spawn_or_claim_absence(self):
+        with tempfile.TemporaryDirectory() as root:
+            result,value,calls=self.run_supervisor(root,fail_phase='bootstrap')
+        self.assertEqual(result.returncode,125);self.assertIsNone(value);self.assertEqual(calls,[])
+        self.assertIsNone(self.last_cleanup);self.assertIsNone(self.last_producer)
+
+    def test_postfork_cli_receipt_failure_retains_failure_and_reaps_exact_child(self):
+        with tempfile.TemporaryDirectory() as root:
+            result,value,calls=self.run_supervisor(root,fail_phase='cli')
+            self.assertTrue((Path(root)/'cli-terminal.ready').exists())
+            self.assertTrue((Path(root)/'rm-terminal.ready').exists())
+            self.assertTrue((Path(root)/'exists-terminal.ready').exists())
+        self.assertEqual(result.returncode,125);self.assertEqual(self.last_failure['phase'],'spawn')
+        self.assertTrue(value['cliReaped']);self.assertTrue(value['cleanupOk'])
+        self.assertTrue(self.last_cleanup['observedError']);self.assertFalse(value['requestedStop'])
 
 if __name__ == '__main__':
     unittest.main(verbosity=2)

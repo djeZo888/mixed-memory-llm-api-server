@@ -4,6 +4,11 @@ import importlib.util
 import ipaddress
 import json
 import math
+import os
+import subprocess
+import tempfile
+import time
+import shutil
 from pathlib import Path
 import re
 import sys
@@ -22,6 +27,7 @@ def load(name, path):
 
 policy = load('policy', DEPLOY / 'security/task-egress-policy.py')
 guard = load('guard', DEPLOY / 'engine/task-egress.py')
+receipts = load('causal_receipts', DEPLOY / 'engine/codex_receipts.py')
 nginx_guard = load('nginx_guard', DEPLOY / 'security/validate-nginx-boundary.py')
 CONFIG = {'schema': 'h005-task-egress-v1', 'uid': 1000, 'dns_servers': ['127.0.0.53']}
 
@@ -160,6 +166,82 @@ class ProxyFixtures(unittest.TestCase):
         self.assertIn('/etc/ai-harness/image-approval-proxy.conf;', approval)
         launcher = (DEPLOY / 'run-engine.sh').read_text()
         self.assertNotIn('--volume /run', launcher)
+
+
+class OriginalCreationFixtures(unittest.TestCase):
+    def identity(self, pid=None):
+        pid=os.getpid() if pid is None else pid
+        q=self.real_popen(['/bin/ps','-p',str(pid),'-o','lstart='],stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+        raw,err=q.communicate(timeout=2)
+        if q.returncode!=0:raise ValueError('missing actual fixture birth')
+        birth=str(int(time.mktime(time.strptime(raw.decode().strip(),'%a %b %d %H:%M:%S %Y'))))
+        return {'pid':pid,'startTicks':birth,'uid':os.getuid(),'bootId':'source-mac-fixture','cgroupPath':'/fixture/parent'}
+
+    def fixture(self,path,fail=None):
+        self.real_popen=subprocess.Popen
+        binding={'nonce':'a'*64,'runId':'h043-run','sessionId':'h043-session','sources':{'synthetic':'b'*64}}
+        config=(path,binding)
+        child=path/'creator.py'
+        child.write_text("import os,sys,json\nfrom pathlib import Path\ngate=int(sys.argv[1])\nif os.read(gate,2)!=b'G':sys.exit(64)\nPath(sys.argv[2]).write_text(json.dumps({'actualPid':os.getpid(),'parentPid':os.getppid()}))\nsys.exit(7)\n")
+        seen=[]
+        def spawn(argv,**kwargs):
+            if len(argv)>1 and argv[1]==str(DEPLOY/'engine/task-egress.py'):
+                original=receipts.original(config,'scope-intent')
+                self.assertEqual(original['creationState'],'PENDING')
+                self.assertEqual(argv[4],original['unit'])
+                self.assertFalse((path/'started.json').exists())
+                p=self.real_popen([sys.executable,str(child),argv[3],str(path/'started.json')],**kwargs)
+                seen.append({'argv':argv,'pid':p.pid,'pgid':os.getpgid(p.pid)})
+                return p
+            return self.real_popen(argv,**kwargs)
+        module={k:getattr(receipts,k) for k in ('publish_scope_intent','publish_scope_creator','publish_scope_terminal')}
+        module['process_identity']=self.identity
+        if fail=='intent':module['publish_scope_intent']=lambda *a:(_ for _ in ()).throw(OSError('intent publication failed'))
+        if fail=='creator':module['publish_scope_creator']=lambda *a:(_ for _ in ()).throw(OSError('creator publication failed'))
+        with patch.object(guard.subprocess,'Popen',spawn),patch.object(receipts,'process_identity',self.identity):
+            if fail=='intent':
+                with self.assertRaises(OSError):guard.supervise_scope(['fixture'],module,config)
+                code=None
+            else:code=guard.supervise_scope(['fixture'],module,config)
+        evidence=os.environ.get('H043_FIXTURE_EVIDENCE_DIR')
+        if evidence:
+            target=Path(tempfile.mkdtemp(prefix='scope-',dir=evidence));shutil.copytree(path,target,dirs_exist_ok=True)
+            (target/'fixture-result.json').write_text(json.dumps({'failure':fail,'actualSupervisorResult':code,'actualCreatedProcesses':seen,'qualification':'MAC_SOURCE_FIXTURE_ONLY'}))
+        return code,seen,config
+
+    def test_original_intent_and_creator_birth_precede_real_gate_release_and_actual_terminal(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root).resolve();path.chmod(0o700);code,seen,config=self.fixture(path)
+            self.assertEqual(code,7);self.assertEqual(len(seen),1)
+            creator=receipts.original(config,'scope-creator');terminal=receipts.original(config,'scope-terminal')
+            actual=json.loads((path/'started.json').read_text())
+            self.assertEqual(actual['actualPid'],creator['creator']['pid']);self.assertEqual(actual['parentPid'],creator['parent']['pid'])
+            self.assertEqual(terminal['creatorExit'],7);self.assertTrue(terminal['creatorReaped']);self.assertEqual(terminal['resourceState'],'UNKNOWN')
+            self.assertFalse((path/'scope.ready').exists());self.assertFalse((path/'producer.ready').exists())
+
+    def test_failed_intent_publication_has_no_creation_subprocess(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root).resolve();path.chmod(0o700);code,seen,config=self.fixture(path,'intent')
+            self.assertEqual(seen,[]);self.assertFalse((path/'started.json').exists())
+
+    def test_failed_creator_receipt_closes_pipe_without_hidden_child_creation(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root).resolve();path.chmod(0o700);code,seen,config=self.fixture(path,'creator')
+            self.assertEqual(code,125);self.assertEqual(len(seen),1);self.assertFalse((path/'started.json').exists())
+            terminal=receipts.original(config,'scope-terminal')
+            self.assertEqual(terminal['creatorExit'],64);self.assertTrue(terminal['creatorReaped'])
+            self.assertEqual(terminal['resourceState'],'UNKNOWN');self.assertFalse((path/'scope-creator.ready').exists())
+
+    def test_unit_name_and_missing_or_contradictory_originals_fail_closed(self):
+        with tempfile.TemporaryDirectory() as root:
+            path=Path(root).resolve();path.chmod(0o700)
+            config=(path,{'nonce':'a'*64,'runId':'r','sessionId':'s','sources':{'fixture':'b'*64}})
+            with self.assertRaises(FileNotFoundError):receipts.original(config,'scope-intent')
+            with self.assertRaises(ValueError):receipts.publish_scope_intent(config,'caller-guess.scope',{})
+            receipts.write_once(path,'scope-intent',receipts.causal(config,'codex-scope-intent-v1',unit='ai-harness-codex-'+'a'*32+'.scope',parent={},creationState='PENDING'))
+            with self.assertRaises(ValueError):receipts.original((path,dict(config[1],nonce='c'*64)),'scope-intent')
+            with self.assertRaises(FileNotFoundError):receipts.verify_creator(config,'ai-harness-codex-'+'a'*32+'.scope')
+            self.assertEqual(receipts.original(config,'scope-intent')['creationState'],'PENDING')
 
 
 if __name__ == '__main__':
