@@ -1,3 +1,4 @@
+import { codexTraceSchemaForMode, type CodexNativeTraceMode } from "./codex-receipts.js";
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
 import type {CodexHostObservations} from "./codex-host-observation.js";
 import { codexReceiptProvenance, type CodexReceiptPolicy } from "./codex-receipts.js";
@@ -10,7 +11,7 @@ import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwe
 import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
-  nativeTraceMode?: "post-sampling-token-usage-v1";
+  nativeTraceMode?: CodexNativeTraceMode;
   onNativeTraceReceipt?: CodexRuntime["onNativeTraceReceipt"];
   observations?:CodexHostObservations;
   onNativeThread?:CodexRuntime["onNativeThread"];
@@ -60,6 +61,7 @@ export function imageGateForCodexLaunch(input: {sessionId: string; receiptRunId?
 }
 export function composeCodexHost(launcherPath: string, gateway: () => Gateway | undefined,
   qualification?: CodexHostQualification) {
+  codexTraceSchemaForMode(qualification?.nativeTraceMode);
   if (qualification && (qualification.protocolQualified !== true || qualification.rootlessQualified !== true || typeof qualification.verifyLane !== "function"))
     throw Error("Codex requires reviewed protocol/rootless/current-instance qualification");
   if (qualification?.outputLimit !== undefined && (!Number.isSafeInteger(qualification.outputLimit) || qualification.outputLimit < 1 || qualification.outputLimit > 65536))

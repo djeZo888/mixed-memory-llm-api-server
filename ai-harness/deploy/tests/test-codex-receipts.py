@@ -133,6 +133,19 @@ class InspectedLaunch(unittest.TestCase):
             self.assertNotIn('UNTRUSTED_LOG_BODY', json.dumps(value))
             self.assertEqual(receipts.read_private(path / 'launch.json'), value)
 
+    def test_v1_v2_environment_is_independently_inspected_and_wrong_pair_fails(self):
+        for mode,log in [('post-sampling-token-usage-v1','off,codex_core::session::turn=trace'),('post-sampling-token-usage-v2','off,codex_core::session::turn=trace,codex_core::tasks=info')]:
+            with tempfile.TemporaryDirectory() as root:
+                path=Path(root).resolve();path.chmod(0o700);binding,args,identity,native,image,capture=self.fixture(path);binding['nativeTraceMode']=mode;native['Config']['Env']+=['RUST_LOG='+log,'LOG_FORMAT=json']
+                with patch.object(receipts,'capture',capture),patch.object(receipts,'process_identity',return_value=identity):
+                    receipts.inspect_launch('/fixture/podman','ai-harness-'+'f'*32,args,(path,binding))
+                self.assertEqual(receipts.read_private(path/'trace-env.json')['environment'],{'RUST_LOG':log,'LOG_FORMAT':'json'})
+            with tempfile.TemporaryDirectory() as root:
+                path=Path(root).resolve();path.chmod(0o700);binding,args,identity,native,image,capture=self.fixture(path);binding['nativeTraceMode']=mode;native['Config']['Env']+=['RUST_LOG=wrong','LOG_FORMAT=json']
+                with patch.object(receipts,'capture',capture),patch.object(receipts,'process_identity',return_value=identity),self.assertRaises(ValueError):
+                    receipts.inspect_launch('/fixture/podman','ai-harness-'+'f'*32,args,(path,binding))
+                self.assertFalse((path/'launch.ready').exists())
+
     def test_mount_caps_network_privilege_user_and_image_tamper_refused(self):
         mutations = [lambda c, i: c['Mounts'].pop(), lambda c, i: c.update(EffectiveCaps=['CAP_SYS_ADMIN']),
                      lambda c, i: c['HostConfig'].update(NetworkMode='host'),

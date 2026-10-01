@@ -18,6 +18,12 @@ base.IMAGE_ID = 'sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8
 base.PATCHSET = 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 
 class CodexLauncherContract(base.LauncherContract):
+    def test_active_v1_v2_unknown_modes_require_private_channel_before_podman(self):
+        for mode in ['post-sampling-token-usage-v1','post-sampling-token-usage-v2','unknown']:
+            self.env['AI_HARNESS_CODEX_TRACE_MODE']=mode
+            result=self.invoke()
+            self.assertNotEqual(result.returncode,0);self.assertIn('trusted fixed trace receipt channel required',result.stderr);self.assertEqual(self.calls(),[])
+
     def assert_catalog_selected_by_container_config_is_mounted(self, run, config_name):
         # Inspect the real launcher's emitted Podman arguments, not a mocked catalog.
         mounts = [run[i+1] for i, value in enumerate(run) if value == '--volume']

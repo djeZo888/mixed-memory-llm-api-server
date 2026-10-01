@@ -23,3 +23,11 @@ test('H043 does not redirect H042 or permit retention/general installer scope',a
  assert.equal(CODEX_H042_WINDOW.expiresAtMs,Date.parse('2026-10-01T20:29:17Z'));
  for(const mode of ['retention-parent','installer','image'])assert.throws(()=>createCodexH043Policy({...fields,mode} as any));
 });
+
+import {createCodexH043RetentionParentPolicy} from '../src/codex-probe.js';
+test('H043 retention observes collaboration independently of trace mode, brands and freezes fixed window',()=>{
+ const {mode,...identity}=fields;
+ for(const collaborationVersion of ['v1','v2'] as const){const p=createCodexH043RetentionParentPolicy({...identity,collaborationVersion});assert.equal(p.mode,'retention-parent');assert.equal(p.collaborationVersion,collaborationVersion);assert.equal(p.window,CODEX_H043_WINDOW);assertCodexTextOnlyPolicy(p,p.sessionId,p.window.startAtMs+1);assert.throws(()=>assertCodexTextOnlyPolicy({...p},p.sessionId,p.window.startAtMs+1));}
+ for(const collaborationVersion of [undefined,'post-sampling-token-usage-v2','unknown'])assert.throws(()=>createCodexH043RetentionParentPolicy({...identity,collaborationVersion} as any));
+ assert.throws(()=>createCodexH043RetentionParentPolicy({...identity,collaborationVersion:'v2',window:CODEX_H043_WINDOW} as any));
+});

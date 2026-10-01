@@ -91,7 +91,8 @@ session_id=${AI_HARNESS_SESSION_ID:-}
 receipt_dir=${AI_HARNESS_CODEX_RECEIPT_DIR:-}
 receipt_nonce=${AI_HARNESS_CODEX_RECEIPT_NONCE:-}
 trace_mode=${AI_HARNESS_CODEX_TRACE_MODE:-}
-[[ -z "$trace_mode" || "$trace_mode" = post-sampling-token-usage-v1 && -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'trusted fixed trace receipt channel required'
+if [[ "$trace_mode" = off ]]; then trace_mode=; unset AI_HARNESS_CODEX_TRACE_MODE; fi
+[[ -z "$trace_mode" || ( "$trace_mode" = post-sampling-token-usage-v1 || "$trace_mode" = post-sampling-token-usage-v2 ) && -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'trusted fixed trace receipt channel required'
 [[ -z "$receipt_dir" && -z "$receipt_nonce" || -n "$receipt_dir" && -n "$receipt_nonce" ]] || die 'incomplete private receipt channel'
 [[ "$gateway_url" = http://10.0.2.2:8081/v1 ]] || die 'gateway URL must be the reviewed rootless host-loopback endpoint'
 [[ ${#gateway_token} -ge 16 && ${#gateway_token} -le 4096 && ! "$gateway_token" =~ [[:cntrl:]] ]] || die 'an ephemeral gateway token of 16..4096 characters without control characters is required'
@@ -122,7 +123,11 @@ unset receipt_dir receipt_nonce
 trace_args=()
 if [[ -n "$trace_mode" ]]; then
   export AI_HARNESS_CODEX_TRACE_MODE="$trace_mode"
-  trace_args=(--env RUST_LOG=off,codex_core::session::turn=trace --env LOG_FORMAT=json)
+  if [[ "$trace_mode" = post-sampling-token-usage-v2 ]]; then
+    trace_args=(--env RUST_LOG=off,codex_core::session::turn=trace,codex_core::tasks=info --env LOG_FORMAT=json)
+  else
+    trace_args=(--env RUST_LOG=off,codex_core::session::turn=trace --env LOG_FORMAT=json)
+  fi
 fi
 unset trace_mode
 

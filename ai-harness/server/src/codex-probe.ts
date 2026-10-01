@@ -173,5 +173,11 @@ export function createCodexRetentionParent05Policy(input:Omit<CodexTextOnlyPolic
 /** New bounded H042 source entry. Does not issue launch, generation, or native qualification authority. */
 export function createCodexH042Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H042_WINDOW); }
 
+/** Observed collaboration version is independent of trace mode. Source only. */
+export function createCodexH043RetentionParentPolicy(input:Omit<CodexTextOnlyPolicy,"window"|"mode">&{collaborationVersion:"v1"|"v2"}) {
+ if(input.collaborationVersion!=="v1"&&input.collaborationVersion!=="v2")throw Error("Observed native collaboration version required");
+ const {collaborationVersion,...fields}=input;return buildCodexTextOnlyPolicy({...fields,mode:"retention-parent"},CODEX_H043_WINDOW,collaborationVersion);
+}
+
 /** Distinct finite H043 entry; all prior policy factories retain their original windows. */
 export function createCodexH043Policy(input: Omit<CodexTextOnlyPolicy, "window" | "collaborationVersion">) { return buildCodexTextOnlyPolicy(input, CODEX_H043_WINDOW); }

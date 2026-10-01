@@ -46,7 +46,20 @@ const hex = (v: unknown, n = 64) => typeof v === "string" && new RegExp(`^[0-9a-
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
 const exact = (v: unknown, keys: string[]) => object(v) && Object.keys(v).sort().join() === keys.sort().join();
 const digest = (v: Uint8Array) => createHash("sha256").update(v).digest("hex");
-export interface CodexReceiptBinding { nonce: string; runId: string; sessionId: string; startedAtMs: number; uid: number; profileDir: string; workspace: string; deploymentDir: string; imageJobsQualified: boolean; gid: number; sources: Record<string, string>; nativeTraceMode?: "post-sampling-token-usage-v1" }
+export type CodexNativeTraceMode="off"|"post-sampling-token-usage-v1"|"post-sampling-token-usage-v2";
+export type CodexNativeTraceSchema=null|"codex-native-trace-v1"|"codex-native-trace-v2";
+export const CODEX_NATIVE_TRACE_MODES=Object.freeze(["off","post-sampling-token-usage-v1","post-sampling-token-usage-v2"] as const);
+export function codexTraceSchemaForMode(mode:CodexNativeTraceMode|undefined):CodexNativeTraceSchema {
+ if(mode===undefined||mode==="off")return null;
+ if(mode==="post-sampling-token-usage-v1")return "codex-native-trace-v1";
+ if(mode==="post-sampling-token-usage-v2")return "codex-native-trace-v2";
+ throw Error("Fixed trusted native trace mode required");
+}
+export function codexTraceEnvironment(mode:Exclude<CodexNativeTraceMode,"off">) {
+ const schema=codexTraceSchemaForMode(mode);if(schema===null)throw Error("Off trace has no native environment");
+ return {RUST_LOG:schema==="codex-native-trace-v2"?"off,codex_core::session::turn=trace,codex_core::tasks=info":"off,codex_core::session::turn=trace",LOG_FORMAT:"json"};
+}
+export interface CodexReceiptBinding { nonce: string; runId: string; sessionId: string; startedAtMs: number; uid: number; profileDir: string; workspace: string; deploymentDir: string; imageJobsQualified: boolean; gid: number; sources: Record<string, string>; nativeTraceMode?: CodexNativeTraceMode }
 function identity(v: unknown): v is CodexReceiptIdentity {
   return object(v) && exact(v, ["pid", "startTicks", "uid", "bootId", "cgroupPath"]) && Number.isSafeInteger(v.pid) && v.pid > 0 && Number.isSafeInteger(v.uid) && v.uid > 0 && typeof v.startTicks === "string" && /^\d+$/.test(v.startTicks) && typeof v.bootId === "string" && /^[0-9a-f-]{36}$/.test(v.bootId) && typeof v.cgroupPath === "string" && v.cgroupPath.length < 1024;
 }
@@ -102,7 +115,8 @@ export function revalidateRetainedCodexReceipts(input: {
   transportReadObjects.add(launch);transportReadObjects.add(settlement);historicalReceipts.add(launch);historicalReceipts.add(settlement);
   return {launch,settlement};
 }
-export function createCodexReceiptChannel(input: { sessionId: string; runId: string; profileDir: string; workspace: string; launcherPath: string; imageJobsQualified?: boolean; nativeTraceMode?: "post-sampling-token-usage-v1" }, policy: CodexReceiptPolicy) {
+export function createCodexReceiptChannel(input: { sessionId: string; runId: string; profileDir: string; workspace: string; launcherPath: string; imageJobsQualified?: boolean; nativeTraceMode?: CodexNativeTraceMode }, policy: CodexReceiptPolicy) {
+  const traceSchema=codexTraceSchemaForMode(input.nativeTraceMode);
   const uid = process.getuid?.(); if (process.platform !== 'linux' || !uid || policy.linuxTransportQualified !== true) throw Error('Native receipt transport unqualified');
   const deployment = resolve(input.launcherPath,'..'); const sources: Record<string,string> = {};
   if (Object.keys(policy.sourceSha256).sort().join() !== [...CODEX_RECEIPT_SOURCES].sort().join()) throw Error('Incomplete reviewed receipt source closure');
@@ -110,7 +124,7 @@ export function createCodexReceiptChannel(input: { sessionId: string; runId: str
   const root=`/run/user/${uid}/ai-harness-codex-receipts`; if (![input.profileDir,input.workspace].every(p => p!==root && !root.startsWith(p+sep) && !p.startsWith(root+sep) && !deployment.startsWith(p+sep) && p!==deployment)) throw Error('Receipt/source channel overlaps model mount');
   try { mkdirSync(root,{mode:0o700}); } catch (e) { if ((e as NodeJS.ErrnoException).code!=='EEXIST') throw e; } protectedDirectory(root,uid);
   const directory=mkdtempSync(join(root,'run-'));protectedDirectory(directory,uid);
-  const binding: CodexReceiptBinding={nonce:randomBytes(32).toString('hex'),runId:input.runId,sessionId:input.sessionId,startedAtMs:Date.now(),uid,profileDir:input.profileDir,workspace:input.workspace,deploymentDir:deployment,imageJobsQualified:input.imageJobsQualified===true,gid:process.getgid!(),sources,...(input.nativeTraceMode?{nativeTraceMode:input.nativeTraceMode}:{})};
+  const binding: CodexReceiptBinding={nonce:randomBytes(32).toString('hex'),runId:input.runId,sessionId:input.sessionId,startedAtMs:Date.now(),uid,profileDir:input.profileDir,workspace:input.workspace,deploymentDir:deployment,imageJobsQualified:input.imageJobsQualified===true,gid:process.getgid!(),sources,...(traceSchema?{nativeTraceMode:input.nativeTraceMode}:{})};
   writeFileSync(join(directory,'request.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
   return { directory, binding, wait: (name:'launch'|'settlement'|'trace'|'failure',timeoutMs:number,ended:()=>boolean)=>waitCodexReceiptFile(directory,uid,name,timeoutMs,ended) };
 }
@@ -160,28 +174,65 @@ export function createCodexReceiptLifecycle(input: {
 
 /** Separate capture receipt; genuine launch/settlement are mandatory and never
  * inferred from this JSON. Original selected stderr lives only in host channel. */
-export interface CodexNativeTraceReceipt {
- schema:"codex-native-trace-v1";nonce:string;sessionId:string;runId:string;mode:"post-sampling-token-usage-v1";
- producer:CodexReceiptIdentity;containerId:string;environment:{RUST_LOG:string;LOG_FORMAT:string};sources:Record<string,string>;
- events:ReadonlyArray<{file:string;sha256:string;bytes:number;stderrSequence:number;stderrOffset:number;chain:string;turnId:string;nativeTimestamp:unknown;observedAtMs:number;observedMonotonicNs:number}>;
+export interface CodexNativeTraceEvent {
+ file:string;sha256:string;bytes:number;stderrSequence:number;stderrOffset:number;chain:string;turnId:string;nativeTimestamp:unknown;observedAtMs:number;observedMonotonicNs:number;
+}
+export interface CodexNativeTraceV2Event extends CodexNativeTraceEvent {kind:"postSampling"|"autoCompactNew";threadId:string;}
+interface CodexNativeTraceReceiptBase {
+ nonce:string;sessionId:string;runId:string;producer:CodexReceiptIdentity;containerId:string;environment:{RUST_LOG:string;LOG_FORMAT:string};sources:Record<string,string>;
  stderrBytes:number;stderrSHA256:string;stderrChain:string;complete:true;cleanupOk:boolean;engineExitStatus:number|null;requestedStop:boolean;
 }
+export type CodexNativeTraceReceipt=CodexNativeTraceReceiptBase & (
+ {schema:"codex-native-trace-v1";mode:"post-sampling-token-usage-v1";events:ReadonlyArray<CodexNativeTraceEvent>} |
+ {schema:"codex-native-trace-v2";mode:"post-sampling-token-usage-v2";events:ReadonlyArray<CodexNativeTraceV2Event>;autoCalls:ReadonlyArray<CodexNativeTraceV2Event>}
+);
+export interface CodexOriginalTraceLine {lineUtf8:string;stderrSequence:number;lineSha256:string;}
+interface CapturedTraceEvent {bytes:Buffer;parsed:Readonly<Record<string,unknown>>;stderrSequence:number;lineSha256:string;kind:"postSampling"|"autoCompactNew";}
 const verifiedTrace=new WeakSet<object>();
-const traceLines=new WeakMap<object,ReadonlyArray<Readonly<{bytes:Buffer;parsed:Readonly<Record<string,unknown>>}>>>();
+const traceLines=new WeakMap<object,ReadonlyArray<Readonly<CapturedTraceEvent>>>();
+/** Validate literal task ancestry without selecting away foreign numeric events. */
+function traceTaskIdentity(parsed:Record<string,any>) {
+ if(parsed.spans!==undefined&&!Array.isArray(parsed.spans))throw Error("Invalid original task ancestry");
+ const tasks=[...(parsed.spans??[]),...(parsed.span?[parsed.span]:[])].filter(s=>object(s)&&s.name==="turn");
+ if(!tasks.length||tasks.some(s=>typeof s["thread.id"]!=="string"||!s["thread.id"]||typeof s["turn.id"]!=="string"||!s["turn.id"]||s["thread.id"]!==tasks[0]["thread.id"]||s["turn.id"]!==tasks[0]["turn.id"]))throw Error("Invalid original task ancestry");
+ return {threadId:tasks[0]["thread.id"],turnId:tasks[0]["turn.id"]};
+}
 export function validateCodexTraceReceipt(value:unknown,binding:CodexReceiptBinding,launch:CodexNativeLaunchReceipt,settlement:CodexNativeSettlementReceipt):CodexNativeTraceReceipt {
- if(!object(value)||!transportReadObjects.has(value)||!isVerifiedCodexLaunchReceipt(launch)||!isVerifiedCodexSettlementReceipt(settlement)||isHistoricalCodexReceipt(launch)||!codexReceiptProvenance(launch)||!codexReceiptProvenance(settlement)||binding.nativeTraceMode!=="post-sampling-token-usage-v1"||!exact(value,["schema","nonce","sessionId","runId","mode","producer","containerId","environment","sources","events","stderrBytes","stderrSHA256","stderrChain","complete","cleanupOk","engineExitStatus","requestedStop"])||value.schema!=="codex-native-trace-v1"||value.nonce!==launch.nonce||value.sessionId!==launch.sessionId||value.runId!==launch.runId||value.mode!==binding.nativeTraceMode||JSON.stringify(value.producer)!==JSON.stringify(launch.producer)||value.containerId!==launch.container.id||JSON.stringify(value.sources)!==JSON.stringify(launch.sources)||JSON.stringify(value.environment)!==JSON.stringify({RUST_LOG:"off,codex_core::session::turn=trace",LOG_FORMAT:"json"})||value.complete!==true||value.cleanupOk!==settlement.cleanupOk||value.engineExitStatus!==settlement.engineExitStatus||value.requestedStop!==settlement.requestedStop||!Number.isSafeInteger(value.stderrBytes)||value.stderrBytes<0||value.stderrBytes>16*1024*1024||!hex(value.stderrSHA256)||!hex(value.stderrChain)||!Array.isArray(value.events)||value.events.length>64)throw Error("Unbound native trace capture");
- const directory=dirname(receiptProvenance.get(value)!.rawPath),lines:Array<Readonly<{bytes:Buffer;parsed:Readonly<Record<string,unknown>>}>>=[];let lastSequence=0,lastEnd=0;
+ const schema=codexTraceSchemaForMode(binding.nativeTraceMode),v2=schema==="codex-native-trace-v2";
+ const keys=["schema","nonce","sessionId","runId","mode","producer","containerId","environment","sources","events","stderrBytes","stderrSHA256","stderrChain","complete","cleanupOk","engineExitStatus","requestedStop",...(v2?["autoCalls"]:[])];
+ if(!object(value)||!transportReadObjects.has(value)||!isVerifiedCodexLaunchReceipt(launch)||!isVerifiedCodexSettlementReceipt(settlement)||isHistoricalCodexReceipt(launch)||isHistoricalCodexReceipt(settlement)||!codexReceiptProvenance(launch)||!codexReceiptProvenance(settlement)||schema===null||!exact(value,keys)||value.schema!==schema||value.mode!==binding.nativeTraceMode||value.nonce!==binding.nonce||value.nonce!==launch.nonce||value.sessionId!==binding.sessionId||value.sessionId!==launch.sessionId||value.runId!==binding.runId||value.runId!==launch.runId||settlement.nonce!==launch.nonce||settlement.sessionId!==launch.sessionId||settlement.runId!==launch.runId||settlement.containerId!==launch.container.id||settlement.containerName!==launch.container.name||JSON.stringify(settlement.producer)!==JSON.stringify(launch.producer)||JSON.stringify(value.producer)!==JSON.stringify(launch.producer)||value.containerId!==launch.container.id||JSON.stringify(value.sources)!==JSON.stringify(launch.sources)||JSON.stringify(value.sources)!==JSON.stringify(binding.sources)||JSON.stringify(value.environment)!==JSON.stringify(codexTraceEnvironment(value.mode))||value.complete!==true||value.cleanupOk!==settlement.cleanupOk||value.engineExitStatus!==settlement.engineExitStatus||value.requestedStop!==settlement.requestedStop||!Number.isSafeInteger(value.stderrBytes)||value.stderrBytes<0||value.stderrBytes>16*1024*1024||!hex(value.stderrSHA256)||!hex(value.stderrChain)||!Array.isArray(value.events)||value.events.length>64||(v2&&(!Array.isArray(value.autoCalls)||JSON.stringify(value.autoCalls)!==JSON.stringify(value.events.filter((e:any)=>e.kind==="autoCompactNew")))))throw Error("Unbound native trace capture");
+ const directory=dirname(receiptProvenance.get(value)!.rawPath),lines:Array<Readonly<CapturedTraceEvent>>=[];let lastSequence=0,lastEnd=0;
  for(const [index,event] of value.events.entries()){
-  if(!exact(event,["file","sha256","bytes","stderrSequence","stderrOffset","chain","turnId","nativeTimestamp","observedAtMs","observedMonotonicNs"])||event.file!==`trace-event-${String(index).padStart(4,"0")}.raw`||!hex(event.sha256)||!hex(event.chain)||!Number.isSafeInteger(event.bytes)||event.bytes<2||event.bytes>65536||!Number.isSafeInteger(event.stderrSequence)||event.stderrSequence<=lastSequence||!Number.isSafeInteger(event.stderrOffset)||event.stderrOffset<lastEnd||event.stderrOffset+event.bytes>value.stderrBytes||typeof event.turnId!=="string"||event.turnId.length<1||event.turnId.length>512||!Number.isSafeInteger(event.observedAtMs)||!Number.isSafeInteger(event.observedMonotonicNs))throw Error("Invalid native trace index");
+  if(!exact(event,["file","sha256","bytes","stderrSequence","stderrOffset","chain","turnId","nativeTimestamp","observedAtMs","observedMonotonicNs",...(v2?["kind","threadId"]:[])])||event.file!==`trace-event-${String(index).padStart(4,"0")}.raw`||!hex(event.sha256)||!hex(event.chain)||!Number.isSafeInteger(event.bytes)||event.bytes<2||event.bytes>65536||!Number.isSafeInteger(event.stderrSequence)||event.stderrSequence<=lastSequence||!Number.isSafeInteger(event.stderrOffset)||event.stderrOffset<lastEnd||event.stderrOffset+event.bytes>value.stderrBytes||typeof event.turnId!=="string"||event.turnId.length<1||event.turnId.length>512||!Number.isSafeInteger(event.observedAtMs)||!Number.isSafeInteger(event.observedMonotonicNs)||(v2&&(!["postSampling","autoCompactNew"].includes(event.kind)||typeof event.threadId!=="string"||!event.threadId)))throw Error("Invalid native trace index");
   const path=join(directory,event.file),fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);let raw:Buffer;
-  try{const info=fstatSync(fd);if(!info.isFile()||info.uid!==binding.uid||(info.mode&0o777)!==0o600||info.nlink!==1||info.size!==event.bytes)throw Error("Unsafe original native trace");raw=readFileSync(fd);if(raw.length!==event.bytes||digest(raw)!==event.sha256||raw.at(-1)!==10)throw Error("Changed original native trace");}finally{closeSync(fd);}
-  const parsed=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(raw));if(!object(parsed)||parsed.target!=="codex_core::session::turn"||parsed.level!=="TRACE"||!object(parsed.fields)||parsed.fields.message!=="post sampling token usage"||parsed.fields.turn_id!==event.turnId||JSON.stringify(parsed.timestamp??null)!==JSON.stringify(event.nativeTimestamp))throw Error("Original trace selector mismatch");freeze(parsed);lines.push(Object.freeze({bytes:raw,parsed}));lastSequence=event.stderrSequence;lastEnd=event.stderrOffset+event.bytes;
+  try{const info=fstatSync(fd);if(!info.isFile()||info.uid!==binding.uid||(info.mode&0o777)!==0o600||info.nlink!==1||info.size!==event.bytes)throw Error("Unsafe original native trace");raw=readFileSync(fd);const after=fstatSync(fd);if(raw.length!==event.bytes||after.size!==info.size||after.mtimeMs!==info.mtimeMs||after.ctimeMs!==info.ctimeMs||digest(raw)!==event.sha256||raw.at(-1)!==10||raw.subarray(0,-1).includes(10))throw Error("Changed original native trace");}finally{closeSync(fd);}
+  const parsed=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(raw)),kind=v2?event.kind:"postSampling";
+  if(!object(parsed)||parsed.target!=="codex_core::session::turn"||parsed.level!=="TRACE"||!object(parsed.fields)||JSON.stringify(parsed.timestamp??null)!==JSON.stringify(event.nativeTimestamp))throw Error("Original trace selector mismatch");
+  if(kind==="postSampling"?(parsed.fields.message!=="post sampling token usage"||parsed.fields.turn_id!==event.turnId):(parsed.fields.message!=="new"||!object(parsed.span)||parsed.span.name!=="run_auto_compact"||typeof parsed.span.reason!=="string"||!parsed.span.reason||typeof parsed.span.phase!=="string"||!parsed.span.phase))throw Error("Original trace selector mismatch");
+  if(v2){const task=traceTaskIdentity(parsed);if(task.threadId!==event.threadId||task.turnId!==event.turnId||typeof parsed.timestamp!=="string"||!parsed.timestamp)throw Error("Original V2 task/timestamp mismatch");}
+  freeze(parsed);lines.push(Object.freeze({bytes:raw,parsed,stderrSequence:event.stderrSequence,lineSha256:event.sha256,kind}));lastSequence=event.stderrSequence;lastEnd=event.stderrOffset+event.bytes;
  }
- verifiedTrace.add(value);traceLines.set(value,Object.freeze(lines));return value as CodexNativeTraceReceipt;
+ freeze(value);verifiedTrace.add(value);traceLines.set(value,Object.freeze(lines));return value as CodexNativeTraceReceipt;
 }
 export const isVerifiedCodexTraceReceipt=(v:unknown):v is CodexNativeTraceReceipt=>!!v&&typeof v==="object"&&verifiedTrace.has(v);
 export function getCodexTraceUtf8(value:CodexNativeTraceReceipt){return verifiedTrace.has(value)?rawReceiptBytes.get(value):undefined;}
-export function getCodexTraceEvents(value:CodexNativeTraceReceipt){return verifiedTrace.has(value)?traceLines.get(value)?.map(v=>Object.freeze({bytes:Buffer.from(v.bytes),parsed:v.parsed})):undefined;}
+/** All original events, including every numeric record and every AUTO NEW. */
+export function getCodexTraceEvents(value:CodexNativeTraceReceipt){return verifiedTrace.has(value)?traceLines.get(value)?.map(v=>Object.freeze({...v,bytes:Buffer.from(v.bytes)})):undefined;}
+export function getCodexTraceAutoCalls(value:Extract<CodexNativeTraceReceipt,{schema:"codex-native-trace-v2"}>):CodexOriginalTraceLine[]|undefined {
+ if(!isVerifiedCodexTraceReceipt(value)||value.schema!=="codex-native-trace-v2"||value.mode!=="post-sampling-token-usage-v2")return undefined;
+ return getCodexTraceEvents(value)?.filter(e=>e.kind==="autoCompactNew").map(e=>({lineUtf8:e.bytes.toString("utf8"),stderrSequence:e.stderrSequence,lineSha256:e.lineSha256}));
+}
+/** Genuine transport projection. Causal/native acceptance still requires E's joins. */
+export function getCodexRetainedTraceEvidence(value:CodexNativeTraceReceipt,selectedMode:Exclude<CodexNativeTraceMode,"off">) {
+ if(!isVerifiedCodexTraceReceipt(value))throw Error("Missing original producer trace");
+ if(value.mode!==selectedMode||value.schema!==codexTraceSchemaForMode(selectedMode))throw Error("Selected root trace mode mismatch");
+ const events=getCodexTraceEvents(value),raw=getCodexTraceUtf8(value);if(!events||!raw)throw Error("Missing original trace bytes");
+ const original=(e:CapturedTraceEvent):CodexOriginalTraceLine=>({lineUtf8:e.bytes.toString("utf8"),stderrSequence:e.stderrSequence,lineSha256:e.lineSha256});
+ const lines=events.filter(e=>e.kind==="postSampling").map(original),autoCalls=events.filter(e=>e.kind==="autoCompactNew").map(original);
+ const common={status:"SOURCE_VALID" as const,nativeAcceptance:"NOT_TESTED" as const,lines,producer:{launchNonce:value.nonce,processId:`${value.producer.bootId}:${value.producer.pid}:${value.producer.startTicks}`},receiptSha256:digest(Buffer.from(raw))};
+ if(value.schema==="codex-native-trace-v2")return {...common,schema:value.schema,mode:value.mode,selectedMode:value.mode,autoCalls};
+ return {...common,schema:value.schema,mode:value.mode,selectedMode:value.mode,autoCalls};
+}
 
 /** Read-only exact source preflight; grants no transport qualification or lease. */
 export function assertCodexReceiptSourceClosure(deployment:string,sourceSha256:Readonly<Record<string,string>>,uid=process.getuid?.()):Record<string,string>{if(uid===undefined)throw Error("Source owner unavailable");if(Object.keys(sourceSha256).sort().join()!==[...CODEX_RECEIPT_SOURCES].sort().join())throw Error("Incomplete reviewed receipt source closure");const policy={sourceSha256},sources:Record<string,string>={};

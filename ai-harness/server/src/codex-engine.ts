@@ -1,3 +1,4 @@
+import { codexTraceSchemaForMode, type CodexNativeTraceMode } from "./codex-receipts.js";
 import {validateCodexChildMetadata} from "./codex-child-metadata.js";
 import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe, type CodexTextOnlyPolicy, assertCodexTextOnlyPolicy, codexTextOnlyThreadParams, type CodexParentArtifactScope, CODEX_PARENT_ARTIFACT_SPEC, claimCodexParentArtifactScope, reserveCodexParentArtifact, recordCodexPolicyThread, recordCodexPolicySettlement, codexPolicyOwnsSettledThread, recordCodexPolicyCheckpoint, recordCodexPolicySuccessfulTurn, recordCodexPolicySuccessfulCompaction, validateCodexPolicyFreshLaunch } from "./codex-probe.js";
 import { isHistoricalCodexReceipt, isVerifiedCodexLaunchReceipt, isVerifiedCodexSettlementReceipt, type CodexNativeLaunchReceipt, isVerifiedCodexTraceReceipt, type CodexNativeTraceReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
@@ -46,7 +47,7 @@ export interface RootlessCodexProcess {
   terminateAndConfirm(): Promise<boolean>;
 }
 export interface CodexRuntime {
-  nativeTraceMode?: "post-sampling-token-usage-v1";
+  nativeTraceMode?: CodexNativeTraceMode;
   onNativeTraceReceipt?(receipt:CodexNativeTraceReceipt):void;
   /** Default absent. Host observes current native/provider tool scope; no finite probe policy substitution. */
   ordinaryMemoryAdmission?(input: { sessionId: string; threadId: string; turnId: string; callId: string; tool: string; launchReceipt: CodexNativeLaunchReceipt }, signal: AbortSignal): Promise<void>;
@@ -287,6 +288,7 @@ export class CodexEngine implements Engine {
   private async launch() {
     const o = this.options,
       r = this.runtime;
+    codexTraceSchemaForMode(r.nativeTraceMode);
     if (this.textPolicy) assertCodexTextOnlyPolicy(this.textPolicy, o.sessionId);
     if (o.dispatchHeld?.()) fault("Codex launch blocked by dispatch freeze");
     const codexHome = join(resolve(o.profileDir), "codex-home");
@@ -640,7 +642,7 @@ export class CodexEngine implements Engine {
         else { if (this.textPolicy) recordCodexPolicySettlement(this.textPolicy, receipt); this.runtime.onNativeSettlementReceipt?.(receipt);this.observeLifecycle({kind:"settlement",receipt}); }
       }
       let traceFailed=false;
-      if(this.runtime.nativeTraceMode && this.child){try{const trace=await this.child.traceReceipt;if(!isVerifiedCodexTraceReceipt(trace))traceFailed=true;else this.runtime.onNativeTraceReceipt?.(trace);}catch{traceFailed=true;}}
+      if(codexTraceSchemaForMode(this.runtime.nativeTraceMode) && this.child){try{const trace=await this.child.traceReceipt;if(!isVerifiedCodexTraceReceipt(trace)||trace.mode!==this.runtime.nativeTraceMode||trace.schema!==codexTraceSchemaForMode(this.runtime.nativeTraceMode)||!this.launchReceipt||trace.nonce!==this.launchReceipt.nonce||trace.sessionId!==this.launchReceipt.sessionId||trace.runId!==this.launchReceipt.runId||trace.containerId!==this.launchReceipt.container.id||JSON.stringify(trace.producer)!==JSON.stringify(this.launchReceipt.producer)||JSON.stringify(trace.sources)!==JSON.stringify(this.launchReceipt.sources))traceFailed=true;else this.runtime.onNativeTraceReceipt?.(trace);}catch{traceFailed=true;}}
       // Stop producers, revoke this runner capability, then prove all retained lineage drained.
       if (nativeSettled) this.children.interruptedAfterCleanup();
       this.runtime.revokeGatewaySession(this.options.sessionId);

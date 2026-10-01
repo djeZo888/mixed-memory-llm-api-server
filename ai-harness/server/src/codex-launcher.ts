@@ -1,3 +1,4 @@
+import { codexTraceSchemaForMode, type CodexNativeTraceMode } from "./codex-receipts.js";
 /** Host-only launcher adapter. It never invokes a host Codex executable. */
 import { observeOwnedCodexProcess, type CodexHostObservations } from "./codex-host-observation.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -7,7 +8,7 @@ import { isAbsolute, join, resolve } from "node:path";
 import type { Readable, Writable } from "node:stream";
 export interface CodexLaunchInput {
     /** Trusted private qualification only; public/native input never sets this. */
-    nativeTraceMode?: "post-sampling-token-usage-v1";
+    nativeTraceMode?: CodexNativeTraceMode;
     sessionId: string;
     profileDir: string;
     workspace: string;
@@ -50,11 +51,12 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
     return async (input) => {
         if (process.platform !== "linux" || process.getuid?.() === 0 || input.modelPolicyVersion !== CODEX_MODEL_POLICY || input.gatewayUrl !== "http://10.0.2.2:8081/v1" || input.codexHome !== join(resolve(input.profileDir), "codex-home"))
             throw Error("Unqualified Codex rootless policy");
-        if(input.nativeTraceMode && (input.nativeTraceMode!=="post-sampling-token-usage-v1"||!receiptPolicy))throw Error("Trusted trace receipt policy required");
+        const traceSchema=codexTraceSchemaForMode(input.nativeTraceMode);
+        if(traceSchema&&!receiptPolicy)throw Error("Trusted trace receipt policy required");
         const channel = receiptPolicy ? createCodexReceiptChannel({ ...input, launcherPath, runId: input.receiptRunId ?? randomUUID() }, receiptPolicy) : undefined;
         const env: NodeJS.ProcessEnv = { PATH: "/usr/bin:/bin", HOME: process.env.HOME, USER: process.env.USER, LOGNAME: process.env.LOGNAME,
             AI_HARNESS_SESSION_ID: input.sessionId, AI_HARNESS_GATEWAY_URL: input.gatewayUrl, AI_HARNESS_GATEWAY_TOKEN: input.gatewayToken };
-        if(input.nativeTraceMode)env.AI_HARNESS_CODEX_TRACE_MODE=input.nativeTraceMode;
+        if(traceSchema)env.AI_HARNESS_CODEX_TRACE_MODE=input.nativeTraceMode;
         if (channel) { env.AI_HARNESS_CODEX_RECEIPT_DIR = channel.directory; env.AI_HARNESS_CODEX_RECEIPT_NONCE = channel.binding.nonce; }
         const child = spawn(launcherPath, ["--profile-dir", input.profileDir, "--workspace", input.workspace, ...(input.imageJobsQualified === true ? ["--image-jobs-qualified"] : [])], { env, stdio: ["pipe", "pipe", "pipe"] });
         // Qualification-only private bounded diagnostic capture is armed BEFORE
@@ -90,7 +92,7 @@ export function createRootlessCodexLauncher(launcherPath: string, receiptPolicy?
                     void exited.then(() => { clearTimeout(timer); resolve(!spawnFailed && status === 0); });
                 });
             } };
-        if(input.nativeTraceMode && channel){owned.traceReceipt=(async()=>{const settlement=await owned.settlementReceipt,launch=await launchReceipt;if(!settlement||!launch)return undefined;const value=await channel.wait("trace",500,()=>false);return validateCodexTraceReceipt(value,channel.binding,launch,settlement);})();void owned.traceReceipt.catch(()=>undefined);}
+        if(traceSchema && channel){owned.traceReceipt=(async()=>{const settlement=await owned.settlementReceipt,launch=await launchReceipt;if(!settlement||!launch)return undefined;const value=await channel.wait("trace",500,()=>false);return validateCodexTraceReceipt(value,channel.binding,launch,settlement);})();void owned.traceReceipt.catch(()=>undefined);}
         if (observations) { try { return observeOwnedCodexProcess(owned,input,observations); } catch { await owned.terminateAndConfirm().catch(()=>false); throw Error("Trusted native observation failed"); } }
         return owned;
     };

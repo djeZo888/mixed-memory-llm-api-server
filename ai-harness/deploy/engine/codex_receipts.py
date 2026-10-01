@@ -63,7 +63,7 @@ def channel():
     protected(root, True); protected(path, True)
     value = read_private(path / 'request.json')
     required = {'nonce', 'runId', 'sessionId', 'startedAtMs', 'uid', 'profileDir', 'workspace', 'deploymentDir', 'imageJobsQualified', 'gid', 'sources'}
-    if set(value) != required | ({'nativeTraceMode'} if 'nativeTraceMode' in value else set()) or value.get('nativeTraceMode') not in (None,'post-sampling-token-usage-v1') or value.get('nativeTraceMode') != os.environ.get('AI_HARNESS_CODEX_TRACE_MODE') or value['nonce'] != nonce or value['uid'] != os.getuid() or value['gid'] != os.getgid() or value['sessionId'] != os.environ.get('AI_HARNESS_SESSION_ID') or not all(isinstance(value[k], str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,127}', value[k]) for k in ('runId','sessionId')):
+    if set(value) != required | ({'nativeTraceMode'} if 'nativeTraceMode' in value else set()) or value.get('nativeTraceMode') not in (None,'post-sampling-token-usage-v1','post-sampling-token-usage-v2') or value.get('nativeTraceMode') != os.environ.get('AI_HARNESS_CODEX_TRACE_MODE') or value['nonce'] != nonce or value['uid'] != os.getuid() or value['gid'] != os.getgid() or value['sessionId'] != os.environ.get('AI_HARNESS_SESSION_ID') or not all(isinstance(value[k], str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,127}', value[k]) for k in ('runId','sessionId')):
         raise ValueError('unbound receipt request')
     deployment = Path(__file__).resolve().parent.parent
     if value['deploymentDir'] != str(deployment) or type(value['imageJobsQualified']) is not bool:
@@ -349,7 +349,7 @@ def inspect_launch(podman, container, args, config):
                    'securityOpt': security, 'readOnly': host['ReadonlyRootfs'], 'privileged': host['Privileged'],
                    'mounts': sort(actual_mounts), 'additionalMounts': sort(additional_mounts), 'workdir': native['WorkingDir'], 'profileDir': binding['profileDir'], 'workspace': binding['workspace']})
     if binding.get('nativeTraceMode'):
-        expected={'RUST_LOG':'off,codex_core::session::turn=trace','LOG_FORMAT':'json'}
+        expected={'RUST_LOG':'off,codex_core::session::turn=trace'+(',codex_core::tasks=info' if binding['nativeTraceMode']=='post-sampling-token-usage-v2' else ''),'LOG_FORMAT':'json'}
         observed={}
         for key in expected:
             values=[x[len(key)+1:] for x in native.get('Env',[]) if x.startswith(key+'=')]
