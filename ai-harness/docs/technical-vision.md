@@ -227,3 +227,90 @@ Run isolated tests with
 The annotated generation0 JSON is fabricated contract data, with a generated
 blank PNG transport view. It is not a model prediction, an answer-key comparison,
 an electrical drawing interpretation or live accuracy evidence.
+
+## H043 source01 durable implementation (disabled)
+
+The earlier H039 sections remain the contract/history. H043 implements
+`scripts/vision/service.py` and `backend.py` without registration or activation.
+`VisionService.submit/get/capabilities/close` plus `BoundedHTTPServer` implement
+the five v1 routes. `PrivateLedger` requires a canonical host-owned 0700
+directory and regular, single-link, no-follow 0600 records. An exclusive flock
+retains single-writer ownership. Record writes fsync, atomically rename and
+fsync the private directory before acknowledgement. Frozen PNG bytes and bounded
+literal model responses live only in those private records. References are
+validated provenance and never opened by the service.
+
+Admission deduplicates `(workspaceId,sessionId,runId,requestId)` under one lock,
+including hashes/manifest/question/identity; exact multipart bytes are validated,
+with no JSON base64 upload shortcut. Lookup/reopen retain original owner and
+identity. Restart changes unfinished records to `interrupted/settled:false`,
+never retries them, and blocks new inference. Queue cap is four, concurrency one,
+retained history cap 128, private ledger cap 256 MiB. There is no eviction or
+model-call retry. Ledger/checkpoint/final-write failure or worker death closes
+admission. Unknown remote dispatch or cancellation retains an unsettled barrier;
+HTTP close/timeout is never remote engine shutdown proof. No source recovery
+method silently clears that barrier.
+
+H043 narrows execution to one page / 2,097,152 pixels / edge 4096 / eight crop
+requests, one image per inference. The service and backend reject wider H039
+transport sources before dispatch, without shrinking labels. Normalized PNG
+validation supports 8-bit noninterlaced grayscale/RGB/gray-alpha/RGBA, verifies
+CRCs, bounded inflation, rows and dimensions; palette/16-bit/interlaced/APNG are
+rejected. Original host guards and PDF sandbox requirements still apply.
+HTTP request watchdog covers headers/body as an absolute deadline (default 10s),
+and backend watchdog retains the owned socket even with `Connection: close`.
+The entire job deadline is 120s. HTTP watchdogs end observation; they do not
+cancel already committed admissions or prove native engine drain.
+
+`LocalVisionBackend` sends real byte-derived data-URI images to two host-fixed
+loopback OpenAI-compatible endpoints. Keys come from a host-only role callback.
+Production pins are exact Qwen c202236235762e1c871ad0ccb60c8ee5ba337b9a and
+Paddle c5630abae1d940eafe0697512a0325494b02ab42. No URLs from a document, redirects,
+remote origins, argv, subprocesses, fallback or downloads are accepted. Complete
+`stop` responses with correct model aliases are required; malformed/truncated or
+lost dispatch remains unknown. Raw OCR whitespace/text is unchanged. Protected
+response records carry source/page/crop hashes, input regions and model revisions.
+Qwen uncertainties and derived conclusions stay separate; region evidence is
+known input geometry, not a predicted tight text box. Electrical nets remain
+`not_qualified`. Runtime revision ownership must still bind aliases to actual
+pinned native owners; an HTTP model name alone does not attest residency.
+
+`server/src/technical-vision-host.ts` exports:
+
+- `createTechnicalVisionHost({backend,service,journal,owner,authorize,prepare,enabled?,deliverOnce?})`
+- `constructTechnicalVisionHost({...options,client})` using the real H039 client.
+- `PrivateTechnicalVisionHostJournal.open(privateDirectory)` and the journal port
+  for a later existing database integration.
+- Host boundaries `invoke`, `status`, `lookup`, `cancel`, `deliverTerminal`.
+
+`enabled` defaults false. Model arguments select no owner, endpoint or key.
+Invocation persists original owner/request/input fingerprint before preparation;
+repeated or ambiguous invocations only lookup, even if the source later changes
+or disappears. Pre-admission failure also remains a conservative lookup claim;
+recovery needs explicit host reconciliation, not blind resubmission. Follow-ups
+check `authorize` against the retained owner, never substitute a later run.
+Public responses are bounded text and omit owner/bytes/credentials.
+
+The host journal uses a private exclusive lock file; a crash leaves a lock that
+requires owned reconciliation, never PID guesses or automatic takeover. Each
+settled terminal has one immutable durable outbox event ID. `deliverOnce` must
+commit that unique ID atomically in the normal host event/database transaction.
+If sink acknowledgement is lost, the same event may be offered again; exactly
+one logical delivery requires that transactional deduplication. The local journal
+alone does not claim impossible exactly-once network delivery. Acknowledged
+events remain acknowledged across reopen. Interrupted unsettled jobs produce no
+settled terminal event.
+
+Precise next-phase file proposal: `main.ts` constructs the protected client,
+source resolver/PDF sandbox, private journal (prefer existing DB journal port),
+trusted creator owner and original-owner authorization callbacks; `gateway.ts`
+registers authenticated host invoke/follow-up/Stop boundaries and transactional
+terminal sink; policy/catalog/provider owners gate a separate specialist MCP tool
+and preserve engine histories. These shared files are unchanged. The normal
+client real origin requires a separately reviewed private ingress bridge from
+`10.156.100.60:18193` to loopback; local fixture success is not remote integration.
+
+Source tests include real Python service + concrete backend + fake local model
+HTTP + existing TS client + host, literal OCR/crop hashes, durable replay and
+cancel/restart failures. They do not establish model accuracy, native PDF,
+container compatibility, GPU/USB4 stability, VRAM fit or ordinary Codex workflow.
