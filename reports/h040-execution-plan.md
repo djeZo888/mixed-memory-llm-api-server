@@ -1,0 +1,18 @@
+# H040 — resume after second Ada installation
+
+The user confirmed ai-vm is back up and explicitly authorized resuming planned work on 1 October 2026. This supersedes the H039 hardware hold and expired initial window. Root adopts the exact original closed native sessions and preserved failed artifact receipts before new dispatch. Fresh continuation window: 02:26:10–04:26:10 UTC / 04:26:10–06:26:10 Ljubljana. Individual native phases close earlier and never remain paid while a durable model/download job runs.
+
+Fresh root readback: boot `424b2823-b27c-4b3c-88b3-0ae9f4e7106d`; two RTX 6000 Ada 48 GB cards and three Blackwells visible and idle. New external Ada UUID `GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23`. User reports a replacement short cable negotiates 40 Gbps; sustained stability is unqualified. Idle PCIe readings do not establish loaded throughput. Original artifact root remains device2081/inode140247041; original FAILED status/manifest hashes match H039. The transient unit is absent after reboot; that is not download success.
+
+Compaction is first priority. Reuse coherent source candidate12b83de/95f4270 and passing checks; Linux native remains0.158.0, upstream064c6b8c737f5b41d171fdda80bd9ef10ad06eb3, Qwen main/MiMo child routing, 480K context/400K auto/65536 output. New source integration, protected current ownership and concrete source closure must be reviewed before live probes. Preserve chats, original history/files, protected credentials, uncertain owners and failed evidence. No fabricated usage0, atomic rollback, native test passes or cable stability.
+
+| Resumed owner | Host | Finite scope |
+| --- | --- | --- |
+| A | mac-worker1 | Adopt current backend ownership after reboot; prepare or initiate one normal existing fast-Qwen start via qualified installed path; no old request replay or uncertain-owner destruction. Audit minimum native server-call facility needed for scoped original retrieval and propose seam. |
+| C | mac-worker1 | Diagnose old staging failure, narrowly renew explicit bounded-window source gates and diagnostics; preserve original artifacts. No new download before reviewed candidate/hash/deadline GO and A backend transition complete. Sole VM artifact writer. |
+| E | mac-worker2 | Trusted full-state collector, exact B/E interoperability and owned settlement; scoped retrieval/cold resume/continuation only if actual pinned protocol supports them. Own native-adapter subtree and new adapter tests. Default disabled until review. |
+| B | mac-worker2 | B-owned controller/verifier integration with E, independent approved actual first-request projection and native capture validity, critical-fact scoring and source interoperability tests. No oracle/history leakage or weakening fail-closed checks. |
+
+A is sole VM model lifecycle writer for the startup phase; C may perform read-only diagnostics concurrently but artifact staging/launch waits for A closure/root handoff. E/B source work does not mutate shared deployments. Root names one later harness deployment/live suite owner after coherent review. No driver/fan/Proxmox changes, upstream Codex upgrade, creative-image acceptance, 950K or old four-fact benchmark, or merge authorization. The two approved vision models retain official revisions; external Ada placement is only qualified after complete artifacts and measured runtime fit.
+
+Read [H039 handoff](h039-handoff.md), [source checks](h039-source-validation.json) and [new worker roster](h040-worker-sessions.json). Preserve H039 records as historical evidence. Root coordinates/reviews/publishes; actual Mac native Codex sessions implement using gpt-6.1-sol/ultra, with exact adopted IDs and actual terminal receipts.

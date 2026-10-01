@@ -1,0 +1,21 @@
+{
+  "task": "H040-20261001",
+  "authority": "User confirmed ai-vm back up and explicitly resumed planned work",
+  "startedUtc": "2026-10-01T02:26:10Z",
+  "globalDeadlineUtc": "2026-10-01T04:26:10Z",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "sourceBaseCommit": "12b83deb6eba94f6583b2416032859d6e01db060",
+  "sessions": [],
+  "adoption": "A/B/C/D/E prior actual exit0 receipts reread before dispatch; C recovery deadline -15/143 and original download FAILED retained",
+  "bootId": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+  "reportedExternalLinkGbps": 40,
+  "linkStability": "NOT_TESTED",
+  "originalArtifactRootIdentity": {
+    "device": 2081,
+    "inode": 140247041
+  },
+  "originalStatusSha256": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
+  "originalManifestSha256": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509",
+  "automaticRestartOrRetry": false
+}

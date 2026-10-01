@@ -1,3 +1,7 @@
+# Current H040 continuation
+
+The user resumed planned work after ai-vm restart/second Ada installation. Read root [H040 plan](../reports/h040-execution-plan.md) and current [worker roster](../reports/h040-worker-sessions.json). Earlier H039 hold/deadlines are historical. E owns native-adapter source, B owns the sibling verifier/controller; no cross-owner edits. Root reviews one coherent candidate before live deployment/inference. Preserve pinned0.158.0 and Qwen/MiMo routing/480K/400K/65536.
+
 # ai-harness — H039
 
 Read root [current H039 plan](../reports/h039-execution-plan.md) and

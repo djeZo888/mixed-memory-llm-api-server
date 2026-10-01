@@ -1,3 +1,7 @@
+# Current continuation: H040
+
+The user confirmed ai-vm is back up with the second Ada and authorized resumed work. Follow [H040 plan](h040-execution-plan.md) and [roster](h040-worker-sessions.json). The H039 hardware hold and initial deadline below are historical; preserve their evidence and passing source checks.
+
 # Sova handoff — 1 October 2026
 
 ## Start here
