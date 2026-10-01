@@ -112,3 +112,33 @@ never `replacement_history`. Full persisted-state hashes are separate from the
 selected record hash and must bind the independent pre-operation baseline,
 latest surviving post-baseline record and actual settled turn/window. Parent
 immutability and cold resume check full state so appended answers/replays fail.
+
+Source07 normal entry is `native-adapter/normal-entry.ts`, emitted as the same
+relative `.js` path. Explicit invocation is `node normal-entry.js PRIVATE_CONFIG
+ordinary` or `automatic`. Importing it performs no lifecycle action. The private
+outer configuration and worker configuration must name the same session, Store,
+root review and qualification packet; both processes independently qualify that
+packet. The build graph includes the normal entry and normal worker alongside
+the isolated entry/worker. Worker1 is the sole prospective Linux actor after root
+reviews the exact source/build/helper/config/owner tuple and issues a separate GO.
+
+The connected normal host uses actual `main.start`, its Store/Gateway observers,
+protected browser HTTP, CDP mouse press/release ACKs, and raw CDP stream bytes.
+Reconnect reselects the current real UI session, observes a new EventSource URL
+and checks its cursor against the previous captured stream. Two frozen minimal
+normal turns count against the existing ten-turn ordinary budget. O7 uses the
+second distinct manual compaction for the negative-only post-replacement fault;
+it retains the controller's exact pre-fault baseline and actual failed run bytes
+before the protected recovery endpoint. The recovery consumer uses A's bounded
+launch/commit hooks and genuine post-close/no-generation observation.
+
+AUTO has a real ordinary IPC collector, but the current readiness handshake
+returns NOT_TESTED before any generation. The pinned native active-history/tail
+and non-last-reasoning estimate plus native resolved configuration producer are
+still unavailable through the observed interfaces. Native usage and incoming
+request count alone do not qualify the 400000 trigger. No missing contribution
+is filled with zero. The separate original71+3 artifact passes are reused; new
+entry requires a fresh original stat-only producer packet bound to the current
+route, owner and protected installed manifest. Historical timestamps cannot be
+relabelled. Source fixtures, source-valid raw parsers and this executable path
+remain distinct from native, ordinary browser and AUTO qualification.
