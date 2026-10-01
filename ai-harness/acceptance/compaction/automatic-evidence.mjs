@@ -1,4 +1,5 @@
 /** Independent pinned064c AUTO parser. Source validation cannot mint native PASS. */
+import {verifyRetainedTrace,verifyTraceCausalJoin} from './native-trace-evidence.mjs';
 import {createHash} from 'node:crypto';
 const canonical=v=>Array.isArray(v)?v.map(canonical):v&&typeof v==='object'?Object.fromEntries(Object.keys(v).sort().map(k=>[k,canonical(v[k])])):v;
 const equal=(a,b)=>JSON.stringify(canonical(a))===JSON.stringify(canonical(b));
@@ -26,6 +27,15 @@ export function automaticFrames(frames,threadId,turnId){
  * configuration + pinned native active-context producer bytes. A new prompt's
  * gateway count alone cannot substitute for the pre-turn native baseline. */
 export function automaticThreshold(r,expected,metadata){
+ if(r.nativeTracePacketUtf8){
+  if(sha(r.nativeTracePacketUtf8)!==r.nativeTracePacketSha256)throw Error('actual_original_auto_trace_packet_changed');
+  if(!expected.nativeTraceProof||!r.nativeTraceCausalProofUtf8||!r.nativeResolvedConfigProofUtf8)return {status:'NOT_TESTED',errors:['actual_original_TRACE_present_but_independent_protected_config_and_causal_join_unavailable']};
+  const packet=JSON.parse(r.nativeTracePacketUtf8),trace=verifyRetainedTrace(packet,expected.nativeTraceProof);
+  if(sha(r.nativeTraceCausalProofUtf8)!==expected.nativeTraceCausalProofSha256||sha(r.nativeResolvedConfigProofUtf8)!==expected.nativeResolvedConfigProofSha256||sha(r.nativeOperationUtf8)!==r.nativeOperationSha256)throw Error('independent_actual_trace_cause_config_operation_bytes');
+  const frames=JSON.parse(r.nativeFramesUtf8),operation=JSON.parse(r.nativeOperationUtf8);automaticFrames(frames,r.nativeThreadId,r.nativeTurnId);if(!['request','ack','started','completed'].every(k=>frames.some(f=>equal(f,operation[k]))))throw Error('trace_actual_owned_operation_frames_required');
+  const causal=JSON.parse(r.nativeTraceCausalProofUtf8),config=JSON.parse(r.nativeResolvedConfigProofUtf8);
+  return verifyTraceCausalJoin({...causal,lines:trace.lines,producer:trace.producer,operation,metadata,resolvedConfig:config});
+ }
  const bytes=r.activeContextReceiptUtf8;
  if(typeof bytes!=='string'||!expected.runtimeQualificationSha256||(!expected.activeContextReceiptSha256&&!expected.activeContextProducerPlanSha256))return {status:'NOT_TESTED',errors:['actual_resolved_config_and_native_active_context_producer_unavailable']};
  if((expected.activeContextReceiptSha256&&sha(bytes)!==expected.activeContextReceiptSha256)||sha(bytes)!==r.activeContextReceiptSha256)throw Error('actual_native_active_context_bytes_not_independently_bound');

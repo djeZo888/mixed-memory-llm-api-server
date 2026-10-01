@@ -2,7 +2,7 @@
 import {isQualifiedEntry} from './qualification.js';
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
-interface AutomaticHost {evidence:any;qualification:any;counts:any;application:any;observer:any;guard:any;gateway:any;layout:any;withCaptureHold:any;}
+interface AutomaticHost {evidence:any;qualification:any;counts:any;application:any;observer:any;guard:any;gateway:any;layout:any;withCaptureHold:any;tracePackets?():any[];}
 import type {ParentState} from './collector.js';
 import {automaticMetadata} from '../automatic-evidence.mjs';
 import {NativeCollector,nativeCompactionMetadata} from './collector.js';
@@ -25,9 +25,9 @@ export async function collectOrdinaryAutomatic(host:AutomaticHost,input:{session
   const selected=extractPersistedSummary(Buffer.from(after.stateUtf8),{nativeThreadId:op.nativeThreadId,nativeTurnId:op.nativeTurnId,actionId:input.operationId,beforeBytes:Buffer.byteLength(input.baseline.stateUtf8),beforeSha256:input.baseline.stateSha256,dispatchedAt:start.observedAt,settledAt:op.gateway.observedAt,summaryPrefix:input.summaryPrefix});
   const ledger=host.application.store.db.prepare('SELECT id,session_id,state,record FROM h021_gateway_requests WHERE session_id=?').all(input.sessionId).filter((r:any)=>automatic.some((c:any)=>c.requestId===r.id));
   if(ledger.length!==automatic.length||ledger.some((r:any)=>r.state!=='settled')||host.gateway.sessionWork(input.sessionId).length)throw Error('automatic_owned_gateway_settlement_unconfirmed');
-  const producer=host.evidence.parentProducer(input.sessionId);
+  const producer=host.evidence.parentProducer(input.sessionId),tracePackets=host.tracePackets?.().filter((p:any)=>JSON.parse(p.traceReceiptUtf8).events.some((e:any)=>e.turnId===op.nativeTurnId))??[];if(tracePackets.length>1)throw Error('ambiguous_actual_auto_trace_producer');
   const automaticReceiptUtf8=stableJson({source:'h041-owned-ordinary-automatic-compaction',operationId:input.operationId,storeRunId:input.storeRunId,sessionId:input.sessionId,nativeThreadId:op.nativeThreadId,nativeTurnId:op.nativeTurnId,windowId:automaticMetadata(JSON.parse(automatic[0].firstRequestUtf8),op.nativeThreadId,op.nativeTurnId).window_id,
-    beforeState:input.baseline,afterState:after,selectedMessageSha256:sha256(selected.message),summaryPrefixSha256:sha256(input.summaryPrefix),requests:automatic,nativeUsageFramesUtf8:stableJson(frames.filter((f:any)=>f.direction==='from-native'&&f.value.method==='thread/tokenUsage/updated')),nativeOperationUtf8:stableJson(op),nativeOperationSha256:sha256(stableJson(op)),nativeFramesUtf8:stableJson(frames),producer,gatewayRecords:ledger.map((r:any)=>String(r.record)),counts:host.counts.receipts(automatic.map((c:any)=>c.requestId)),startedAt:start.observedAt,completedAt:op.gateway.observedAt,automaticReplay:false});
+    beforeState:input.baseline,afterState:after,...(tracePackets.length?{nativeTracePacketUtf8:stableJson(tracePackets[0]),nativeTracePacketSha256:sha256(stableJson(tracePackets[0]))}:{}),selectedMessageSha256:sha256(selected.message),summaryPrefixSha256:sha256(input.summaryPrefix),requests:automatic,nativeUsageFramesUtf8:stableJson(frames.filter((f:any)=>f.direction==='from-native'&&f.value.method==='thread/tokenUsage/updated')),nativeOperationUtf8:stableJson(op),nativeOperationSha256:sha256(stableJson(op)),nativeFramesUtf8:stableJson(frames),producer,gatewayRecords:ledger.map((r:any)=>String(r.record)),counts:host.counts.receipts(automatic.map((c:any)=>c.requestId)),startedAt:start.observedAt,completedAt:op.gateway.observedAt,automaticReplay:false});
   await durableFile(join(host.layout.hostPrivate,`${randomUUID()}-ordinary-automatic.json`),automaticReceiptUtf8);
   return {automaticReceiptUtf8,automaticReceiptSha256:sha256(automaticReceiptUtf8),nativeAcceptance:'NOT_TESTED',limitation:'Collection alone does not qualify ordinary entry, trusted state, retention or admitted near-threshold counts.'};
 }
