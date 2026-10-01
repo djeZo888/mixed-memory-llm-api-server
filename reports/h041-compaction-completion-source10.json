@@ -1,0 +1,136 @@
+{
+  "candidateCommit": "bf7e79e87ff4984d5394921559afdb6f5a560ccb",
+  "codeCommit": "ca42389b3b1b5c52239bc7ca095840b01dc8d55c",
+  "status": "FAIL",
+  "nativeAcceptance": "NOT_TESTED",
+  "ordinaryAcceptance": "NOT_TESTED",
+  "goalComplete": false,
+  "phase": "H041 source10 wrap-up",
+  "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "applicationSourceChanges": [],
+  "readbacks": [
+    {
+      "argv": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "ai-harness",
+        "exact private execute-startup09d.remote.py; protected input over stdin"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-10/repo",
+      "startedUtc": "2026-10-01T16:44:02.565829+00:00",
+      "finishedUtc": "2026-10-01T16:44:02.979162+00:00",
+      "exit": 1,
+      "sourceSHA256": "763e9af291b94398b8dd2d7f434adc04345d555a7ede3fee41d2b15f6dc09ead",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "401e47a64401e66fd05800f3a04e388ee6d2286e79992a354c1764e7cfcf51e8",
+      "scope": "READBACK / pre-entry protection; no native application dispatch",
+      "name": "execute-startup09d",
+      "count": null,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-10/output/execute-startup09d.log"
+    },
+    {
+      "argv": [
+        "ssh",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=8",
+        "ai-harness",
+        "exact readonly ancestor metadata producer"
+      ],
+      "startedUtc": "2026-10-01T16:45:13.542358+00:00",
+      "finishedUtc": "2026-10-01T16:45:13.831372+00:00",
+      "exit": 0,
+      "sourceSHA256": "15ff8ef060226a7596d32fc0bb729ccec91964a0bd346df9bebdffc99701eb92",
+      "logSHA256": "5941e79d9465c62fd2ddaff9d70cd7f282f3537ea184bc5d695a6d72cd043778",
+      "scope": "READBACK / pre-entry protection; no native application dispatch",
+      "name": "startup09d-preentry-protection",
+      "count": null,
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-10/output/startup09d-preentry-protection.log"
+    }
+  ],
+  "sourceManifestSHA256": "188b5aebfca5a8521d26a36ab0ae8767fa1468c100392e5b0968f56e185ade78",
+  "buildManifestSHA256": "78e05dea9a7f2e8ff4da401e88e7063ad42b9fedc73c8ec84a9333e022824080",
+  "buildEvidenceReusedFrom": "ca42389b3b1b5c52239bc7ca095840b01dc8d55c",
+  "adoptedSourceHashMatches": 142,
+  "nativeExit": null,
+  "outerExit": null,
+  "priorTerminal": {
+    "nativeExit": -15,
+    "outerExit": 143,
+    "finishedUtc": "2026-10-01T16:34:45Z",
+    "deadlineTermination": true
+  },
+  "startup09d": {
+    "status": "UNDISPATCHED_PROTECTION_FAILURE",
+    "executorExit": 1,
+    "startedUtc": "2026-10-01T16:44:02.565829Z",
+    "finishedUtc": "2026-10-01T16:44:02.979162Z",
+    "nativeLaunched": false,
+    "approvalInstalled": false,
+    "invocationClaimed": false,
+    "reason": "Pinned installed Node ancestry /home/user/.local is mode0775 (UID1000); strict guard rejected before observer/key install/fork/claim/exec.",
+    "dispatchCutoffUtc": "2026-10-01T16:46:00Z",
+    "goExpired": true,
+    "retryPerformed": false,
+    "stderrSHA256": "401e47a64401e66fd05800f3a04e388ee6d2286e79992a354c1764e7cfcf51e8"
+  },
+  "fullSuite": {
+    "executedCandidateCommit": "ca42389b3b1b5c52239bc7ca095840b01dc8d55c",
+    "total": 1411,
+    "pass": 1406,
+    "fail": 1,
+    "skip": 4,
+    "exit": 1,
+    "reusedUnchanged": true
+  },
+  "liveMutationScope": "No native/container/service/model/fan dispatch; pre-entry remote protection check and read-only ancestor diagnosis only.",
+  "currentResources": {
+    "workerOwnedNativeChildCreated": false,
+    "lastRootNormalBaselineUtc": "2026-10-01T16:37:41Z",
+    "baselineGatewayRecords": 355,
+    "baselineNativeOwnerRows": 83,
+    "baselineAccepted": 1,
+    "baselineUncertain": 2,
+    "baselineIsCurrentProof": false,
+    "freshFinalLiveInventory": "NOT_TESTED; wrap-up disallows new Linux work",
+    "unknownAmbientOwnersPreserved": [
+      "2675",
+      "204869"
+    ]
+  },
+  "limitations": [
+    "Compaction implementation/delivery remains incomplete; source checks do not prove native behavior.",
+    "Adopted full-suite failure is E-owned completion09 missing task-admission schema fields, not a passing combined candidate.",
+    "C4 stopped-state verifier still rejects source-supported interrupted/stale/event append/checkpoint recovery_required deltas. No C4 source edit started in source10.",
+    "Distinct09e protected interpreter packet, pre/postflight output isolation, finite timeout grace, and persist-child-exit-before-postcheck remain deferred.",
+    "Full STOP row fingerprint/action/scope/ack validation, native V2 AUTO producer, executable carrier settlement/restoration and genuine stage/full/ordinary/restart/AUTO/production gates remain pending.",
+    "No source10 inference, startup ACK, Linux cleanup or native qualification exists."
+  ],
+  "nextRootGates": [
+    "Preserve expired09d rejection and original logs; no retry or shared ancestor chmod.",
+    "Next chat may prepare separately reviewed protected byte-identical Node successor and corrected executor; requires new exact root GO.",
+    "Owner-resolve remaining E full-suite fixture and A C4/STOP/trace/carrier gaps before coherent source validation and live delivery.",
+    "Root alone collects actual current terminal receipts and publishes/reviews handoff."
+  ],
+  "wrapupInstructionUtc": "2026-10-01T16:51:00Z",
+  "exportedUtc": "2026-10-01T16:55:53.960076+00:00",
+  "finalLocalChecks": [
+    {
+      "name": "source10-final-markdown",
+      "exit": 0,
+      "logSHA256": "7608aeb77874fb61729eb7a6d7ce65ec9223563c074a6cc114dc14f0a09329fb"
+    },
+    {
+      "name": "source10-final-diffcheck",
+      "exit": 0,
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "localEvidenceRunnerErrors": 2
+}
