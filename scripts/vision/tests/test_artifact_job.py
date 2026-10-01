@@ -1,4 +1,5 @@
 import copy
+import contextlib
 import hashlib
 import importlib.util
 import io
@@ -7,6 +8,7 @@ import os
 from pathlib import Path
 import tempfile
 import time
+import types
 import unittest
 from unittest.mock import patch
 
@@ -39,7 +41,10 @@ class File:
 
 class FixtureRoot:
     """Transfer-only seam. Production uses existing descriptor-anchored guards."""
-    def __init__(self, path): self.path = Path(path)
+    def __init__(self, path, guard=None): self.path = Path(path)
+    def __enter__(self): return self
+    def __exit__(self, *args):
+        if hasattr(self,"fd"): os.close(self.fd)
     def stat(self, name, missing_ok=False):
         try: return (self.path/name).stat()
         except FileNotFoundError:
@@ -48,7 +53,12 @@ class FixtureRoot:
     def mkdir(self, name): (self.path/name).mkdir(parents=True, exist_ok=True)
     def open(self, name, flags=os.O_RDONLY): return File(self.path/name, flags)
     def replace(self, a, b): (self.path/a).rename(self.path/b)
-    def fileno(self): raise AssertionError("use mocked disk capacity")
+    def fileno(self):
+        if not hasattr(self,"fd"): self.fd=os.open(self.path,os.O_RDONLY)
+        return self.fd
+    def directory(self,name): return FixtureRoot(self.path/name)
+    def read_json(self,name): return json.loads((self.path/name).read_text())
+    def atomic_json(self,name,value): (self.path/name).write_text(json.dumps(value))
 
 
 class Response(io.BytesIO):
@@ -119,6 +129,88 @@ class ArtifactTests(unittest.TestCase):
         with patch.object(self.root, "stat", side_effect=RuntimeError("storage_detached")), patch.object(job.urllib.request, "urlopen") as request:
             with self.assertRaises(RuntimeError): self.run_transfer()
         request.assert_not_called()
+    def test_configurable_timeout_is_clamped_to_absolute_deadline(self):
+        with patch.object(job.time,"time",return_value=100):
+            self.assertEqual(job.bounded_network_timeout(180,400),180)
+            self.assertEqual(job.bounded_network_timeout(180,115),15)
+            with self.assertRaises(job.JobFailure): job.bounded_network_timeout(180,100)
+            with self.assertRaises(job.JobFailure): job.bounded_network_timeout(601,400)
+    def test_open_timeout_is_one_attempt_and_keeps_partial(self):
+        path=self.root.path/"model/model.safetensors.partial"
+        path.write_bytes(self.data[:5])
+        with patch.object(job.urllib.request,"urlopen",side_effect=TimeoutError) as request:
+            with self.assertRaises(TimeoutError): self.run_transfer()
+        self.assertEqual(request.call_count,1)
+        self.assertEqual(path.read_bytes(),self.data[:5])
+        self.assertLessEqual(request.call_args.kwargs['timeout'],60)
+    def test_read_timeout_retains_incremental_block_for_next_resume(self):
+        response=Response(self.data)
+        response.read1=lambda size: self.data[:7]
+        with patch.object(job.urllib.request,"urlopen",return_value=response), patch.object(response,"read1",side_effect=[self.data[:7],TimeoutError]):
+            with self.assertRaises(TimeoutError): self.run_transfer()
+        path=self.root.path/"model/model.safetensors.partial"
+        self.assertEqual(path.read_bytes(),self.data[:7])
+        response=Response(self.data[7:],206,{'Content-Range':f'bytes 7-{len(self.data)-1}/{len(self.data)}'})
+        with patch.object(job.urllib.request,"urlopen",return_value=response): self.run_transfer()
+        self.assertEqual((self.root.path/"model/model.safetensors").read_bytes(),self.data)
+
+
+class AttemptTests(unittest.TestCase):
+    def run_attempt(self, response_error=False, wrong_inode=False, legacy_noattempt=False):
+        import sys
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory)
+            job_name="h039-vision-original"
+            attempt="h039-vision-recovery-01"
+            for path in ['logs/'+job_name,'models/'+job_name]: (root/path).mkdir(parents=True)
+            body=b'official fixture'
+            manifest={'models':[]}
+            for repo in job.APPROVED:
+                revision='a'*40
+                manifest['models'].append({'repo':repo,'revision':revision,'directory':repo.split('/')[1].lower()+'-'+revision,
+                    'files':[{'path':'config.json','size':len(body),'sha256':hashlib.sha256(body).hexdigest()}]})
+            manifest_path=root/'manifest.json'; manifest_path.write_text(json.dumps(manifest))
+            original=root/'logs'/job_name
+            (original/'manifest.json').write_text(json.dumps(manifest))
+            failed=json.dumps({'status':'FAILED','failureCode':'TimeoutError','verifiedFiles':13,'verifiedWeightFiles':1})
+            (original/'status.json').write_text(failed)
+            old_hashes={p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in original.iterdir()}
+            info=(root/'models'/job_name).stat()
+            binding=types.SimpleNamespace(path=lambda role:str(root/role), verify=lambda:{'capacity':{'model_available_bytes':10**15}}, mounted_guard=lambda io:contextlib.nullcontext(lambda:{}))
+            lease_module=types.ModuleType('common.lifecycle_lease')
+            lease_module.acquire_lease=lambda **k:contextlib.nullcontext(types.SimpleNamespace(validate=lambda:None))
+            binding_module=types.ModuleType('lifecycle.storage_binding')
+            binding_module.RegisteredStorageBinding=types.SimpleNamespace(load=lambda runner:binding)
+            install_module=types.ModuleType('install'); install_module.storage_io=types.SimpleNamespace(AnchoredRoot=FixtureRoot)
+            modules={'common.lifecycle_lease':lease_module,'lifecycle.storage_binding':binding_module,'install':install_module}
+            argv=['artifact_job.py','--job',job_name,'--attempt',attempt,'--manifest',str(manifest_path),'--guard-scripts','/fixture',
+                  '--deadline-epoch',str(job.RECOVERY_CUTOFF),'--expected-root-device',str(info.st_dev),'--expected-root-inode',str(info.st_ino+(1 if wrong_inode else 0))]
+            if legacy_noattempt:
+                index=argv.index('--attempt'); del argv[index:index+2]
+            with patch.dict(sys.modules,modules), patch.object(sys,'argv',argv), patch.object(job.time,'time',return_value=job.RECOVERY_CUTOFF-3600), patch.object(job.signal,'signal'), patch.object(job.signal,'setitimer'), patch.object(job.os,'fstatvfs',return_value=types.SimpleNamespace(f_bavail=10**15,f_frsize=1)), patch.object(job.urllib.request,'urlopen',side_effect=TimeoutError if response_error else lambda *a,**k:Response(body)) as network:
+                if legacy_noattempt:
+                    with self.assertRaisesRegex(job.JobFailure,'settled_original_requires_distinct_attempt'): job.main()
+                    network.assert_not_called()
+                elif wrong_inode:
+                    with self.assertRaisesRegex(job.JobFailure,'original_artifact_root_identity_changed'): job.main()
+                    network.assert_not_called()
+                else:
+                    self.assertEqual(job.main(),1 if response_error else 0)
+                    retry=json.loads((root/'logs'/attempt/'status.json').read_text())
+                    self.assertEqual(retry['status'],'FAILED' if response_error else 'VERIFIED')
+                    if response_error:
+                        self.assertEqual(retry['failureCode'],'TimeoutError')
+                        self.assertEqual(retry['artifacts'][0]['networkPhase'],'OPENING_PUBLIC_REVISION_URL')
+                        self.assertEqual(network.call_count,1)
+                    with self.assertRaises(FileExistsError): job.main()
+                self.assertEqual({p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in original.iterdir()},old_hashes)
+    def test_successful_attempt_has_distinct_receipts_and_leaves_failure_unchanged(self): self.run_attempt()
+    def test_failed_attempt_stays_failed_without_overwriting_original(self): self.run_attempt(response_error=True)
+    def test_changed_original_root_identity_rejected_before_network(self): self.run_attempt(wrong_inode=True)
+    def test_legacy_failed_original_cannot_be_rerun_in_place(self): self.run_attempt(legacy_noattempt=True)
+    def test_normal_success_exit_not_caught_as_failure(self):
+        with patch.object(job,'main',return_value=0): self.assertEqual(job.cli(),0)
+        with patch.object(job,'main',return_value=1): self.assertEqual(job.cli(),1)
 
 
 class RuntimeTests(unittest.TestCase):
@@ -137,6 +229,37 @@ class RuntimeTests(unittest.TestCase):
 
 
 class LauncherTests(unittest.TestCase):
+    def recovery_args(self,path):
+        return ['launch_job.py','--job','h039-vision-original','--attempt','h039-vision-recovery-01','--deadline-utc','2026-10-01T02:25:00Z',
+                '--expected-root-device','2081','--expected-root-inode','140247041','--receipt',str(path)]
+    def test_recovery_proposal_separates_receipts_and_keeps_original_root(self):
+        import sys,subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            path=Path(directory)/'proposal.json'
+            with patch.object(sys,'argv',self.recovery_args(path)+['--prepare-only']), patch.object(launcher,'remote',return_value=subprocess.CompletedProcess([],0,str(int(launcher.RECOVERY_CUTOFF)-3600)+'\n','')) as remote, patch('builtins.print'):
+                self.assertEqual(launcher.main(),0)
+            self.assertEqual(remote.call_count,1) # Clock only; never systemd-run.
+            proposal=json.loads(path.read_text())
+            self.assertEqual(proposal['status'],'READY_FOR_ROOT_REVIEW')
+            self.assertEqual(proposal['unit'],'h039-vision-recovery-01.service')
+            self.assertEqual(proposal['artifactRoot'],'/data/models-large/h039-vision-original')
+            self.assertEqual(proposal['statusPath'],'/data/logs/h039-vision-recovery-01/status.json')
+            self.assertEqual(proposal['deadlineEpoch'],launcher.RECOVERY_CUTOFF)
+            self.assertEqual(proposal['networkTimeoutSeconds'],180)
+    def test_recovery_launch_requires_explicit_root_review_gate(self):
+        import sys
+        with tempfile.TemporaryDirectory() as directory:
+            with patch.object(sys,'argv',self.recovery_args(Path(directory)/'attempt.json')), patch.object(launcher,'remote') as remote:
+                with self.assertRaisesRegex(ValueError,'root_review_required'): launcher.main()
+            remote.assert_not_called()
+    def test_recovery_deadline_after_0225_rejected(self):
+        import sys,subprocess
+        with tempfile.TemporaryDirectory() as directory:
+            argv=self.recovery_args(Path(directory)/'attempt.json')+['--prepare-only']
+            argv[argv.index('--deadline-utc')+1]='2026-10-01T02:26:00Z'
+            with patch.object(sys,'argv',argv), patch.object(launcher,'remote',return_value=subprocess.CompletedProcess([],0,str(int(launcher.RECOVERY_CUTOFF)-3600)+'\n','')) as remote:
+                with self.assertRaisesRegex(ValueError,'deadline_outside_reviewed_recovery_window'): launcher.main()
+            self.assertEqual(remote.call_count,1)
     def test_launch_failure_is_bounded_and_is_not_retried(self):
         import subprocess
         import sys

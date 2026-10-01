@@ -1,6 +1,7 @@
 # H039 C — isolated vision artifact/runtime preparation
 
-Source preparation **PASS**. Complete weight verification, runtime fit and
+Source preparation **PASS**. The original durable download **FAILED** at
+00:42:30 UTC with `TimeoutError`; it did not complete. Complete weight verification, runtime fit and
 technical accuracy are **NOT_TESTED**. No GPU model was loaded or stopped,
 registry/route activated, existing conversation/file/credential changed, image
 service replaced, package installed, upstream runtime upgraded or GitHub work
@@ -152,3 +153,61 @@ The initial commit attempt failed with exit 128 because this isolated checkout
 had no Git author identity. The retry uses a task-specific `Codex H039 C`
 identity per invocation; shared Git configuration is unchanged. This failed
 attempt is retained in the JSON evidence.
+
+## C-recovery-01 — ready for root review, no retry launched
+
+Exact adopted session remains `01a0f4d8-a09f-7922-b970-ce7c401cc220`,
+GPT 6.1 Sol Ultra, native hard deadline 01:08:52 UTC. Root reported the original
+native and outer wrappers exited zero at 00:49; that source-preparation exit
+never qualifies the background download.
+
+The preserved failed job reports `FAILED` / `TimeoutError`, finished
+00:42:29.939831 UTC; systemd records failure at 00:42:30, MainPID 0,
+`Result=exit-code`, main exit 1, empty control group. PID 1860339 is absent.
+Lease observation and a nonblocking acquisition confirmed no original lifecycle
+owner remains. There are 13 hash-verified files including Qwen shard 1,
+5,276,436,216 bytes, expected SHA256
+`db6f444b43d318c92f360a13a25561a6a65b10c0631b8ed305a426dbaa6c380e`.
+Shard 2's `.partial` is retained at zero bytes. No verified artifact or partial
+was changed or deleted in recovery preparation. The original did not log the
+network phase, so opening-versus-reading timeout is unresolved.
+
+Exact original status, manifest and supervisor JSON are archived, without
+rewriting the originals, at
+`/data/logs/h039-vision-20261001-c-01a0f4d8/preserved-c-recovery-01/`.
+Hashes and a local outside-Git copy are in the recovery output. The original
+status hash is `dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217`.
+All approved revision/file pins are unchanged.
+
+Narrow fixes: configurable 1–600-second socket-operation timeout (proposed
+180 seconds), clamped to time remaining at connection, with the existing absolute
+process alarm enforcing expiry during subsequent reads; incremental `read1`
+retention; sanitized network-phase enums; separate attempt receipts and a unique
+claim; exact original manifest and device/inode checks before reuse. Existing
+final files are rehashed and reused, and failed/partial files retained. The outer
+handler previously caught normal `sys.exit(0)` as `BaseException`; corrected exit
+handling permits a truthful success. Finalization rejects another invocation's
+receipt. None of these changes adds automatic retries.
+
+Proposed unit: `h039-vision-20261001-c-01a0f4d8-recovery-01.service`.
+Proposed deadline: **2026-10-01 02:25:00 UTC**, never later; runtime maximum is
+clamped to remaining time and at most two hours, restart disabled, 15-second
+supervisor receipt/stop grace. Network timeout: 180 seconds. Reuse the original
+artifact root `/data/models-large/h039-vision-20261001-c-01a0f4d8`,
+registered model UUID `a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a`,
+device 2081, inode 140247041. New build and log roots use the distinct
+`h039-vision-20261001-c-01a0f4d8-recovery-01` namespace. No second model root.
+
+**PASS:** 22 isolated tests, syntax compilation, normal CLI help exit, unchanged
+pin-manifest comparison and installed guarded failure preservation. The first
+expanded test run had three fixture constructor errors; the fixture was fixed,
+the failed result retained outside Git, and all 21 then passed; the final suite with an in-place-rerun rejection test passed 22. Full retry,
+long network reliability and complete weight integrity remain **NOT_TESTED**.
+No candidate retry was staged or launched. The preparation-only launcher emits
+concrete argv/properties; executing a recovery requires an explicit reviewed
+operator gate after root GO through INBOX. It never waits for that GO.
+
+Recovery handoff: `../C-recovery-01/OUTBOX.md` and
+`../C-recovery-01/output/RESULTS.json`, with the actual source commit and diff.
+The original C `../OUTBOX.md` remains historical and is linked there. Closing
+READY_FOR_ROOT_REVIEW preserves compaction priority and the paid deadline.

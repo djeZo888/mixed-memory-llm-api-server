@@ -10,6 +10,7 @@ import contextlib
 import datetime
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import re
@@ -23,6 +24,7 @@ import urllib.request
 APPROVED = {"Qwen/Qwen3.5-9B", "PaddlePaddle/PaddleOCR-VL-1.6"}
 CHUNK = 1024 * 1024
 RESERVE_BYTES = 64 * 1024**3
+RECOVERY_CUTOFF = datetime.datetime(2026, 10, 1, 2, 25, tzinfo=datetime.timezone.utc).timestamp()
 
 
 class JobFailure(Exception):
@@ -61,6 +63,13 @@ def check_deadline(deadline):
         raise JobFailure("deadline_exceeded")
 
 
+def bounded_network_timeout(value, deadline):
+    if not math.isfinite(value) or not 1 <= value <= 600:
+        raise JobFailure("network_timeout_must_be_1_to_600_seconds")
+    check_deadline(deadline)
+    return min(value, deadline - time.time())
+
+
 def digest(stream, deadline):
     value = hashlib.sha256()
     stream.seek(0)
@@ -72,7 +81,7 @@ def digest(stream, deadline):
         value.update(block)
 
 
-def transfer(root, relative, model, item, deadline, progress):
+def transfer(root, relative, model, item, deadline, progress, *, network_timeout=180, phase=lambda _value: None):
     """Never overwrite a final artifact or discard a failed/incomplete partial."""
     final = root.stat(relative, missing_ok=True)
     if final is not None:
@@ -96,8 +105,8 @@ def transfer(root, relative, model, item, deadline, progress):
             headers = {"Accept-Encoding": "identity", "User-Agent": "H039-public-artifact-preparation/1"}
             if offset:
                 headers["Range"] = "bytes=" + str(offset) + "-"
-            check_deadline(deadline)
-            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=min(30, max(1, deadline-time.time()))) as response:
+            phase("OPENING_PUBLIC_REVISION_URL")
+            with urllib.request.urlopen(urllib.request.Request(url, headers=headers), timeout=bounded_network_timeout(network_timeout, deadline)) as response:
                 if offset:
                     wanted = f"bytes {offset}-{item['size']-1}/{item['size']}"
                     if response.status != 206 or response.headers.get("Content-Range") != wanted:
@@ -105,12 +114,15 @@ def transfer(root, relative, model, item, deadline, progress):
                 elif response.status != 200:
                     raise JobFailure("unexpected_download_status")
                 stream.seek(offset)
+                phase("READING_RESPONSE")
                 notified = time.monotonic()
                 while offset < item["size"]:
                     check_deadline(deadline)
                     if os.fstatvfs(root.fileno()).f_bavail * os.fstatvfs(root.fileno()).f_frsize < RESERVE_BYTES:
                         raise JobFailure("model_disk_reserve_exhausted")
-                    block = response.read(min(CHUNK, item["size"] - offset))
+                    # HTTPResponse.read1 saves each received block rather than
+                    # waiting to fill a whole MiB before retaining those bytes.
+                    block = response.read1(min(CHUNK, item["size"] - offset))
                     if not block:
                         raise JobFailure("incomplete_response")
                     stream.write(block)
@@ -121,6 +133,7 @@ def transfer(root, relative, model, item, deadline, progress):
                 if response.read(1):
                     raise JobFailure("response_exceeds_expected_size")
         stream.fsync()
+        phase("HASHING_RETAINED_FILE")
         progress("DOWNLOADED_NOT_HASH_VERIFIED", offset)
         if digest(stream, deadline) != item["sha256"]:
             progress("HASH_MISMATCH_RETAINED", offset)
@@ -142,13 +155,26 @@ def main():
     parser.add_argument("--guard-scripts", required=True)
     parser.add_argument("--manifest", type=Path, required=True)
     parser.add_argument("--job", required=True)
+    parser.add_argument("--attempt", help="distinct receipt namespace when reusing the original artifact job")
+    parser.add_argument("--network-timeout-seconds", type=float, default=180)
+    parser.add_argument("--expected-root-device", type=int)
+    parser.add_argument("--expected-root-inode", type=int)
     parser.add_argument("--deadline-epoch", type=float, required=True)
     parser.add_argument("--finalize", action="store_true")
     args = parser.parse_args()
     if not re.fullmatch(r"h039-vision-[a-z0-9-]{1,70}", args.job):
         raise JobFailure("invalid_job_name")
+    attempt = args.attempt or args.job
+    if not re.fullmatch(r"h039-vision-[a-z0-9-]{1,70}", attempt):
+        raise JobFailure("invalid_attempt_name")
+    if args.attempt and (attempt == args.job or args.deadline_epoch > RECOVERY_CUTOFF):
+        raise JobFailure("recovery_requires_distinct_attempt_and_0225_cutoff")
+    if args.attempt and (args.expected_root_device is None or args.expected_root_inode is None):
+        raise JobFailure("reviewed_original_root_identity_required")
     if not args.finalize and not 0 < args.deadline_epoch - time.time() <= 7200:
         raise JobFailure("deadline_must_be_within_two_hours")
+    if not args.finalize:
+        bounded_network_timeout(args.network_timeout_seconds, args.deadline_epoch)
     sys.path.insert(0, args.guard_scripts)
     from common.lifecycle_lease import acquire_lease
     from lifecycle.storage_binding import RegisteredStorageBinding
@@ -159,10 +185,16 @@ def main():
         binding = RegisteredStorageBinding.load(Runner())
         with binding.mounted_guard(storage_io) as guard, contextlib.ExitStack() as stack:
             logs = stack.enter_context(storage_io.AnchoredRoot(binding.path("logs"), guard))
-            logs.mkdir(args.job)
-            receipts = stack.enter_context(logs.directory(args.job))
+            logs.mkdir(attempt)
+            receipts = stack.enter_context(logs.directory(attempt))
             if args.finalize:
                 status = receipts.read_json("status.json")
+                if status.get("attempt") != attempt:
+                    return 0  # Never rewrite a legacy failed original receipt.
+                if status.get("systemdInvocationId") and status["systemdInvocationId"] != os.environ.get("INVOCATION_ID"):
+                    # A rejected duplicate launch cannot alter the settled
+                    # receipt of a different invocation of this attempt name.
+                    return 0
                 status["supervisor"] = {k: os.environ.get(k) for k in ("SERVICE_RESULT", "EXIT_CODE", "EXIT_STATUS")}
                 if status["status"] == "PLANNED":
                     status.update(status="FAILED", failureCode="failed_before_running_receipt", finishedUtc=timestamp())
@@ -170,16 +202,37 @@ def main():
                     status.update(status="TIMED_OUT" if time.time() >= args.deadline_epoch or os.environ.get("SERVICE_RESULT") == "timeout" else "STOPPED", finishedUtc=timestamp())
                 receipts.atomic_json("status.json", status)
                 return 0
+            if not args.attempt and receipts.read_json("status.json")["status"] != "PLANNED":
+                raise JobFailure("settled_original_requires_distinct_attempt")
             models = stack.enter_context(storage_io.AnchoredRoot(binding.path("models"), guard))
-            models.mkdir(args.job)
+            if args.attempt:
+                # Require the original root and exact original manifest before
+                # claiming a new receipt namespace. Never write old receipts.
+                models.stat(args.job)
+                with logs.directory(args.job) as original:
+                    if original.read_json("manifest.json") != manifest:
+                        raise JobFailure("original_manifest_must_match_exactly")
+                    if original.read_json("status.json")["status"] not in ("FAILED", "TIMED_OUT", "STOPPED"):
+                        raise JobFailure("original_attempt_must_be_failed_or_stopped")
+            else:
+                models.mkdir(args.job)
             destination = stack.enter_context(models.directory(args.job))
+            root_info = os.fstat(destination.fileno())
+            if args.attempt and (root_info.st_dev, root_info.st_ino) != (args.expected_root_device, args.expected_root_inode):
+                raise JobFailure("original_artifact_root_identity_changed")
+            # One launch per attempt, even after successful unit collection.
+            with receipts.open("attempt.claim.json", os.O_CREAT | os.O_EXCL | os.O_WRONLY) as claim:
+                claim.write(json.dumps({"job": args.job, "attempt": attempt, "pid": os.getpid()}).encode())
+                claim.fsync()
             total = sum(f["size"] for m in manifest["models"] for f in m["files"])
             if binding.verify()["capacity"]["model_available_bytes"] < total + RESERVE_BYTES:
                 raise JobFailure("insufficient_model_disk_capacity")
-            state = {"schema": "h039-artifact-status-v1", "job": args.job, "status": "RUNNING",
+            state = {"schema": "h039-artifact-status-v1", "job": args.job, "attempt": attempt, "status": "RUNNING",
+                     "systemdInvocationId": os.environ.get("INVOCATION_ID"),
                      "pid": os.getpid(), "startedUtc": timestamp(), "deadlineEpoch": args.deadline_epoch,
                      "expectedBytes": total, "verifiedFiles": 0, "verifiedWeightFiles": 0,
-                     "artifacts": [], "terminalReceipt": str(Path(binding.path("logs"))/args.job/"status.json")}
+                     "artifacts": [], "networkTimeoutSeconds": args.network_timeout_seconds,
+                     "terminalReceipt": str(Path(binding.path("logs"))/attempt/"status.json")}
             receipts.atomic_json("manifest.json", manifest)
             receipts.atomic_json("status.json", state)
             def stop(_signal, _frame):
@@ -202,7 +255,11 @@ def main():
                             state["verifiedFiles"] = sum(r["status"].startswith("HASH_VERIFIED") for r in state["artifacts"])
                             state["verifiedWeightFiles"] = sum(r["status"].startswith("HASH_VERIFIED") and r["path"].endswith(".safetensors") for r in state["artifacts"])
                             receipts.atomic_json("status.json", state)
-                        transfer(destination, model["directory"] + "/" + item["path"], model, item, args.deadline_epoch, progress)
+                        def phase(value):
+                            row["networkPhase"] = value
+                            receipts.atomic_json("status.json", state)
+                        transfer(destination, model["directory"] + "/" + item["path"], model, item, args.deadline_epoch, progress,
+                                 network_timeout=args.network_timeout_seconds, phase=phase)
                 state["status"] = "VERIFIED"
             except BaseException as exc:
                 code = str(exc) if isinstance(exc, JobFailure) else type(exc).__name__
@@ -220,10 +277,14 @@ def main():
             return 0 if state["status"] == "VERIFIED" else 1
 
 
-if __name__ == "__main__":
+def cli():
     try:
-        sys.exit(main())
-    except BaseException as exc:
+        return main()
+    except Exception as exc:
         # Never log raw HTTP exceptions (signed URLs) or protected environments.
         print(json.dumps({"status": "FAILED_BEFORE_OR_AFTER_RECEIPT", "failureType": type(exc).__name__}), file=sys.stderr)
-        sys.exit(1)
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(cli())

@@ -7,12 +7,14 @@ Output is outside Git. A failed launch is preserved and never silently repeated.
 import argparse
 import datetime
 import json
+import math
 from pathlib import Path
 import re
 import shlex
 import subprocess
 
 GUARDS = "/data/services/releases/h005-boot-restore-20260925/scripts"
+RECOVERY_CUTOFF = datetime.datetime(2026, 10, 1, 2, 25, tzinfo=datetime.timezone.utc).timestamp()
 
 
 def remote(command):
@@ -23,23 +25,48 @@ def remote(command):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--job", required=True)
+    parser.add_argument("--attempt")
+    parser.add_argument("--deadline-utc")
+    parser.add_argument("--network-timeout-seconds", type=float, default=180)
+    parser.add_argument("--expected-root-device", type=int)
+    parser.add_argument("--expected-root-inode", type=int)
+    parser.add_argument("--prepare-only", action="store_true")
+    parser.add_argument("--reviewed-retry", action="store_true", help="explicit operator gate after root GO through INBOX")
     parser.add_argument("--receipt", type=Path, required=True)
     args = parser.parse_args()
     if not re.fullmatch(r"h039-vision-[a-z0-9-]{1,70}", args.job):
         raise ValueError("invalid_job_name")
+    attempt = args.attempt or args.job
+    if not re.fullmatch(r"h039-vision-[a-z0-9-]{1,70}", attempt):
+        raise ValueError("invalid_attempt_name")
+    if args.attempt:
+        if attempt == args.job or not args.deadline_utc or args.expected_root_device is None or args.expected_root_inode is None:
+            raise ValueError("distinct_attempt_deadline_and_root_identity_required")
+        if not args.prepare_only and not args.reviewed_retry:
+            raise ValueError("root_review_required")
+    if not math.isfinite(args.network_timeout_seconds) or not 1 <= args.network_timeout_seconds <= 600:
+        raise ValueError("invalid_bounded_network_timeout")
+    if args.receipt.exists():
+        raise ValueError("receipt_already_exists")
     # Use VM time for the absolute two-hour work deadline.
     clock = remote(["/usr/bin/date", "+%s"])
     if clock.returncode:
         raise RuntimeError("vm_clock_unavailable")
     launch_epoch = int(clock.stdout.strip())
-    deadline = launch_epoch + 7200
-    unit = args.job + ".service"
-    build = "/data/build/" + args.job
-    logs = "/data/logs/" + args.job
+    deadline = int(datetime.datetime.fromisoformat(args.deadline_utc.replace("Z", "+00:00")).timestamp()) if args.deadline_utc else launch_epoch + 7200
+    if not 0 < deadline - launch_epoch <= 7200 or (args.attempt and deadline > RECOVERY_CUTOFF):
+        raise ValueError("deadline_outside_reviewed_recovery_window")
+    maximum_seconds = deadline - launch_epoch
+    unit = attempt + ".service"
+    build = "/data/build/" + attempt
+    logs = "/data/logs/" + attempt
     models = "/data/models-large/" + args.job
     command = ["/usr/bin/python3", "-I", build + "/artifact_job.py", "--guard-scripts", GUARDS,
-               "--manifest", build + "/artifacts.lock.json", "--job", args.job, "--deadline-epoch", str(deadline)]
-    properties = ["Type=exec", "Restart=no", "RuntimeMaxSec=7200s", "TimeoutStopSec=15s", "KillMode=control-group",
+               "--manifest", build + "/artifacts.lock.json", "--job", args.job, "--deadline-epoch", str(deadline),
+               "--network-timeout-seconds", str(args.network_timeout_seconds)]
+    if args.attempt:
+        command += ["--attempt", attempt, "--expected-root-device", str(args.expected_root_device), "--expected-root-inode", str(args.expected_root_inode)]
+    properties = ["Type=exec", "Restart=no", "RuntimeMaxSec=" + str(maximum_seconds) + "s", "TimeoutStopSec=15s", "KillMode=control-group",
                   "MemoryMax=1G", "Nice=10", "IOWeight=20", "NoNewPrivileges=yes",
                   "ProtectHome=yes", "ProtectKernelTunables=yes", "ProtectKernelModules=yes", "ProtectControlGroups=yes",
                   "StandardOutput=null", "StandardError=journal",
@@ -48,16 +75,22 @@ def main():
     for value in properties:
         argv += ["--property", value]
     argv += ["--", *command]
-    receipt = {"schema": "h039-durable-download-launch-v1", "unit": unit, "job": args.job,
+    receipt = {"schema": "h039-durable-download-launch-v1", "unit": unit, "job": args.job, "attempt": attempt,
                "launchEpoch": launch_epoch, "deadlineEpoch": deadline,
                "launchUtc": datetime.datetime.fromtimestamp(launch_epoch, datetime.timezone.utc).isoformat(),
                "deadlineUtc": datetime.datetime.fromtimestamp(deadline, datetime.timezone.utc).isoformat(),
-               "maximumWorkSeconds": 7200, "supervisorStopGraceSeconds": 15, "automaticRetries": 0,
+               "maximumWorkSeconds": maximum_seconds, "supervisorStopGraceSeconds": 15, "automaticRetries": 0,
+               "networkTimeoutSeconds": args.network_timeout_seconds, "expectedRootDevice": args.expected_root_device,
+               "expectedRootInode": args.expected_root_inode, "sourceBuildRoot": build,
                "manifestPath": build + "/artifacts.lock.json", "statusPath": logs + "/status.json",
                "receiptManifestPath": logs + "/manifest.json", "artifactRoot": models,
                "canonicalLifecycleLeaseHeldDuringJob": True, "gpuLoads": 0, "properties": properties,
-               "status": "LAUNCH_REQUESTED"}
+               "command": command, "supervisorArgv": argv,
+               "status": "READY_FOR_ROOT_REVIEW" if args.prepare_only else "LAUNCH_REQUESTED"}
     args.receipt.write_text(json.dumps(receipt, indent=2) + "\n")
+    if args.prepare_only:
+        print(json.dumps({k: receipt.get(k) for k in ("status", "unit", "artifactRoot", "deadlineUtc", "networkTimeoutSeconds")}))
+        return 0
     started = remote(argv)
     receipt.update(launchExit=started.returncode, status="STARTED_NOT_VERIFIED" if started.returncode == 0 else "LAUNCH_FAILED")
     # Never expose manager/HTTP raw logs or environment in the compact receipt.
