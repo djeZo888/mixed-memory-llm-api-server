@@ -1,3 +1,4 @@
+import {validateGatewayNoGeneration,type GatewayNoGenerationProof} from "./codex-no-generation.js";
 /** Recovery journal, not a native rollback transaction. Original rows/versions are never overwritten. */
 import { randomUUID, createHash, createHmac, randomBytes, timingSafeEqual } from "node:crypto";
 import {lstatSync,readFileSync,writeFileSync,realpathSync} from "node:fs";
@@ -18,7 +19,7 @@ export interface SessionCheckpointRecord {
   outcome?: "completed" | "cancelled" | "failed" | "process_restart";
 }
 export interface SessionRestartOwnershipProof { readonly sessionId:string;readonly runId:string;readonly checkpointId:string;readonly threadId:string;readonly purpose?:"accepted-continuation"|"settled-compaction" }
-export interface FreshParentRecoveryEvidence {launch:CodexNativeObservation;thread:CodexNativeObservation;settlement:CodexNativeObservation;gateway:CodexNativeObservation}
+export interface FreshParentRecoveryEvidence {launch:CodexNativeObservation;thread:CodexNativeObservation;settlement:CodexNativeObservation;gateway:CodexNativeObservation;noGeneration:GatewayNoGenerationProof}
 const restartProofs=new WeakMap<SessionRestartOwnershipProof,{store:Store;snapshot:string}>();
 function evidenceKey(store:Store,create=false) {
   const path=store.databasePath+".h041-native-evidence.key",directory=dirname(path),dir=lstatSync(directory);
@@ -55,6 +56,7 @@ export function claimSessionRestartOwnership(proof:SessionRestartOwnershipProof,
 export function correlateSessionRestartOwnership(proof:SessionRestartOwnershipProof,owner:CodexPolicyOwner) {
  const snapshot=JSON.parse(validateSessionRestartOwnership(proof)),launch=snapshot.observed.find((r:any)=>r.event.kind==="launch"),settlement=snapshot.observed.find((r:any)=>r.event.kind==="settlement"),thread=snapshot.observed.find((r:any)=>r.event.kind==="thread");
  if(owner.threadId!==proof.threadId||thread.event.rolloutPath!==owner.rolloutPath||launch.receiptRawSha256!==codexReceiptProvenance(owner.launch)?.rawSha256||settlement.receiptRawSha256!==codexReceiptProvenance(owner.settlement!)?.rawSha256||launch.event.receipt.nonce!==owner.launch.nonce||settlement.event.receipt.nonce!==owner.settlement?.nonce||canonicalJson(launch.launchValidation)!==canonicalJson(codexReceiptValidation(owner.launch)))throw Error("Store proof does not match ORIGINAL policy receipts/rollout");
+ if(snapshot.observed.find((r:any)=>r.event.kind==="gateway_settled")?.event.lastSettledTurnId!==owner.settledTurnId)throw Error("Gateway settled turn differs from actual owned parent");
  if(proof.purpose==="settled-compaction"){
    if(!owner.settledCompaction||owner.settledTurnId!==owner.settledCompaction.turnId||canonicalJson(snapshot.observed.filter((r:any)=>r.event.kind==="compaction"&&r.event.threadId===proof.threadId&&r.event.turnId===owner.settledCompaction!.turnId&&r.event.status==="completed").map((r:any)=>r.event.compactionId).sort())!==canonicalJson([...owner.settledCompaction.compactionIds].sort()))throw Error("Compaction handoff lacks actual native replacement lineage");
  }else{
@@ -141,7 +143,8 @@ export class SessionCheckpoint {
     if(!row||!this.store.db.prepare("SELECT id FROM h041_checkpoint_recoveries WHERE session_id=? AND checkpoint_id=?").get(sessionId,checkpointId))throw Error("Human acknowledged exact-session recovery required");
     const launch=validateCodexObservation(evidence.launch,sessionId);
     for(const observation of [evidence.thread,evidence.settlement,evidence.gateway])if(validateCodexObservation(observation,sessionId)!==launch)throw Error("Recovery observations have different owned launches");
-    if(evidence.launch.kind!=="launch"||evidence.thread.kind!=="thread"||evidence.thread.method!=="thread/start"||evidence.thread.threadId===session.nativeSessionId||evidence.settlement.kind!=="settlement"||!evidence.settlement.receipt.cleanupOk||evidence.gateway.kind!=="gateway_settled"||evidence.gateway.threadId!==evidence.thread.threadId||evidence.gateway.activeTurnId!==null)throw Error("Recovery requires actual fresh no-generation ACK and native/gateway settlement");
+    if(evidence.launch.kind!=="launch"||evidence.thread.kind!=="thread"||evidence.thread.method!=="thread/start"||evidence.thread.threadId===session.nativeSessionId||evidence.settlement.kind!=="settlement"||!evidence.settlement.receipt.cleanupOk||evidence.gateway.kind!=="gateway_settled"||evidence.gateway.threadId!==evidence.thread.threadId||evidence.gateway.activeTurnId!==null||evidence.gateway.lastSettledTurnId!==null)throw Error("Recovery requires actual fresh no-generation ACK and native/gateway settlement");
+    validateGatewayNoGeneration(evidence.noGeneration,sessionId,launch,evidence.settlement.receipt);
     const prior=JSON.parse(String(row.body)) as SessionCheckpointRecord;
     if(JSON.stringify(this.store.memory.inventory(sessionId,prior.originalInventory.through))!==JSON.stringify(prior.originalInventory))throw Error("Recovery original inventory changed");
     if(prior.acceptedVersionId){const accepted=this.store.db.prepare("SELECT body FROM h041_memory_versions WHERE session_id=? AND id=?").get(sessionId,prior.acceptedVersionId);if(!accepted||createHash("sha256").update(String(accepted.body)).digest("hex")!==prior.acceptedStateSha256)throw Error("Recovery accepted state changed");}

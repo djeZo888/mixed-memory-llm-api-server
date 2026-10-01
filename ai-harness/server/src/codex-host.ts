@@ -9,6 +9,9 @@ import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwe
 import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
+  onNativeThread?:CodexRuntime["onNativeThread"];
+  beforeNativeAction?:CodexRuntime["beforeNativeAction"];
+  onNativeChildObserved?:CodexRuntime["onNativeChildObserved"];
   nativeMetadataAuthority?: GatewayOptions["nativeMetadataAuthority"];
   onNativeOperation?: GatewayOptions["onNativeOperation"];
   retentionTurnKind?:CodexRuntime["retentionTurnKind"];
@@ -64,6 +67,9 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
+    onNativeThread:qualification?.onNativeThread,
+    beforeNativeAction:qualification?.beforeNativeAction,
+    onNativeChildObserved:qualification?.onNativeChildObserved,
     retentionTurnKind:qualification?.retentionTurnKind,
     ordinaryMemoryAdmission: qualification?.ordinaryMemoryAdmission ? async (input,signal) => {
       if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Ordinary memory lacks genuine current launch receipt");

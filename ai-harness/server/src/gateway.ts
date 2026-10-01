@@ -1,3 +1,4 @@
+import {observeGatewayNoGeneration,type GatewayNoGenerationProof} from "./codex-no-generation.js";
 import { emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
 import type { ProviderBoundaryCapture, ProviderFailure } from "./provider-diagnostics.js";
@@ -116,6 +117,7 @@ export interface Gateway {
   /** Observe durable session transitions until settlement/failure or host shutdown.
    * No separate timeout: existing request and queue deadlines own expiry. */
   observeSettlement(query: SettlementQuery, stop: AbortSignal): Promise<boolean>;
+  observeNoGeneration?<T>(sessionId:string,work:()=>Promise<T>):Promise<{value:T;proof:GatewayNoGenerationProof}>;
   sessionWork(sessionId: string): import("./gateway-ownership.js").RequestOwnership[];
   snapshot(): {
     queued: number;
@@ -1285,6 +1287,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     },
     confirmSettlement: async (query, waitMs = 0) => ownership.waitForSettlement(query, waitMs),
     observeSettlement: (query, stop) => ownership.waitForSettlement(query, stop),
+    observeNoGeneration: (sessionId,work)=>observeGatewayNoGeneration(sessionId,()=>ownership.snapshot(sessionId),work),
     sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,

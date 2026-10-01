@@ -29,13 +29,14 @@ EOF
 }
 fail() { printf 'run-server: %s\n' "$*" >&2; exit 1; }
 node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node_control_key_file=''; frontier_key_file=''; codex_receipt=''; codex_output=65536; codex_images=false
+codex_ordinary_entry=""; codex_ordinary_key=""
 owned_acceptance_policy=""
 codex_specialist_qualification=""
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy|--codex-specialist-qualification)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy|--codex-specialist-qualification|--codex-ordinary-entry|--codex-ordinary-entry-key)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -47,6 +48,8 @@ while (($#)); do
         --node-control-key-file) node_control_key_file=$2 ;;
         --engine-launcher) engine_launcher=$2 ;;
         --codex-preview-receipt) codex_receipt=$2 ;;
+        --codex-ordinary-entry) codex_ordinary_entry=$2 ;;
+        --codex-ordinary-entry-key) codex_ordinary_key=$2 ;;
         --codex-owned-acceptance-policy) owned_acceptance_policy=$2 ;;
         --codex-specialist-qualification)
           [[ "$2" == /* && "$2" != *$'\n'* && "$2" != *$'\r'* ]] || fail 'specialist qualification path must be absolute and single-line'
@@ -103,6 +106,9 @@ PY
 if [[ -n "$codex_specialist_qualification" ]]; then
   [[ -n "$codex_receipt" && -n "$owned_acceptance_policy" ]] || fail 'specialist qualification requires reviewed Codex preview and owned acceptance policy'
 fi
+if [[ -n "$codex_ordinary_entry" || -n "$codex_ordinary_key" ]]; then
+  [[ -n "$codex_receipt" && "$codex_ordinary_entry" == /* && "$codex_ordinary_key" == /* && -f "$codex_ordinary_entry" && -f "$codex_ordinary_key" ]] || fail 'ordinary entry requires preview and protected approval/key paths'
+fi
 entry_args=("$app_dir/server/dist/main.js")
 if [[ -n "$codex_receipt" ]]; then
   [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
@@ -124,6 +130,8 @@ exec env -i \
   HOME="$HOME" USER="$service_user" LOGNAME="$service_user" \
   PATH="$node_prefix/bin:/usr/local/bin:/usr/bin:/bin" LANG=C.UTF-8 NODE_ENV=production \
   XDG_RUNTIME_DIR="$runtime_dir" DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus" \
+  AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE="$codex_ordinary_entry" \
+  AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE="$codex_ordinary_key" \
   AI_HARNESS_DATA_DIR="$data_dir" AI_HARNESS_ENGINE_LAUNCHER="$engine_launcher" \
   AI_HARNESS_INFERENCE_KEY_FILE="$key_file" \
   AI_HARNESS_FRONTIER_KEY_FILE="$frontier_key_file" \

@@ -1,3 +1,4 @@
+import {validateCodexChildMetadata} from "./codex-child-metadata.js";
 import { CODEX_READ_ORIGINAL_SPEC, claimCodexReadOriginalProbe, readCodexOriginal, type CodexReadOriginalProbe, type CodexTextOnlyPolicy, assertCodexTextOnlyPolicy, codexTextOnlyThreadParams, type CodexParentArtifactScope, CODEX_PARENT_ARTIFACT_SPEC, claimCodexParentArtifactScope, reserveCodexParentArtifact, recordCodexPolicyThread, recordCodexPolicySettlement, codexPolicyOwnsSettledThread, recordCodexPolicyCheckpoint, recordCodexPolicySuccessfulTurn, recordCodexPolicySuccessfulCompaction, validateCodexPolicyFreshLaunch } from "./codex-probe.js";
 import { isHistoricalCodexReceipt, isVerifiedCodexLaunchReceipt, isVerifiedCodexSettlementReceipt, type CodexNativeLaunchReceipt, type CodexNativeSettlementReceipt } from "./codex-receipts.js";
 import { completedImageStatus } from "./image-status-consumption.js";
@@ -56,6 +57,9 @@ export interface CodexRuntime {
   textOnlyPolicy?(sessionId: string): CodexTextOnlyPolicy | undefined;
   authorizeNativeTurn?(input: { policy: CodexTextOnlyPolicy; launchReceipt: CodexNativeLaunchReceipt; threadId: string; params: Readonly<Record<string, unknown>>; method: "turn/start" | "thread/compact/start" }): Promise<void>;
   authorizeOriginalRead?(input: { policy: CodexTextOnlyPolicy; probe: CodexReadOriginalProbe; launchReceipt: CodexNativeLaunchReceipt; threadId: string; turnId: string; callId: string }, signal: AbortSignal): Promise<void>;
+  onNativeThread?(input:{sessionId:string;threadId:string;rolloutPath:string|null;launchReceipt:CodexNativeLaunchReceipt;method:"thread/start"|"thread/resume";observedSettings:Readonly<Record<string,unknown>>;readChildThread:(candidateId:string)=>Promise<Readonly<Record<string,unknown>>>}):Promise<void>;
+  beforeNativeAction?(input:{sessionId:string;threadId:string;method:"turn/start"|"thread/compact/start";launchReceipt:CodexNativeLaunchReceipt;params:Readonly<Record<string,unknown>>;readChildThread:(candidateId:string)=>Promise<Readonly<Record<string,unknown>>>}):Promise<void>;
+  onNativeChildObserved?(input:{sessionId:string;parentThreadId:string;parentTurnId:string;item:Readonly<Record<string,unknown>>}):void;
   onNativeThreadPolicy?(input: { policy: CodexTextOnlyPolicy; launchReceipt: CodexNativeLaunchReceipt; threadId: string; sandbox: Readonly<Record<string, unknown>>; requestedSettings: Readonly<Record<string, unknown>>; observedSettings: Readonly<Record<string, unknown>>; method: "thread/start" | "thread/resume" }): void;
   readOriginalProbe?(sessionId: string): CodexReadOriginalProbe | undefined;
   onNativeLaunchReceipt?(receipt: CodexNativeLaunchReceipt): void;
@@ -265,6 +269,8 @@ export class CodexEngine implements Engine {
     }
     this.terminal?.reject(error);
   }
+  private async readChildThread(candidateId:string):Promise<Readonly<Record<string,unknown>>> {if(!identifier(candidateId)||candidateId===this.nativeId||!this.connection||!this.nativeId||!this.launchReceipt||!codexReceiptProvenance(this.launchReceipt)||!this.active||this.closing||this.stopped||this.failed||this.cancelRequested||this.textPolicy?.mode!=="retention-parent"||this.retentionAction!=="child")fault("Owned live native child reader unavailable");const result=await this.connection.request("thread/read",{threadId:candidateId,includeTurns:false});if(this.closing||this.failed||!isRecord(result)||!isRecord(result.thread)||result.thread.id!==candidateId)fault("Late or foreign child read");return validateCodexChildMetadata(result.thread,this.nativeId,this.runtime.qualifiedChildModels??[this.runtime.model],this.runtime.provider);}
+  async readNativeThread():Promise<Readonly<Record<string,unknown>>> {await this.start();if(!this.nativeId||this.closing||this.failed)fault("Native thread read unavailable");const result=await this.connection!.request("thread/read",{threadId:this.nativeId,includeTurns:true});if(!isRecord(result)||!isRecord(result.thread)||result.thread.id!==this.nativeId)fault("Foreign native thread read");return Object.freeze(result);}
   async start() {
     if (this.launchPromise) return this.launchPromise;
     if (this.closing || this.stopped || this.failed)
@@ -378,6 +384,7 @@ export class CodexEngine implements Engine {
       assertCodexTextOnlyPolicy(this.textPolicy, o.sessionId);
       r.onNativeThreadPolicy?.({ policy: this.textPolicy, launchReceipt: this.launchReceipt!, threadId: this.nativeId, sandbox: Object.freeze(structuredClone(result.sandbox as Record<string, unknown>)), requestedSettings: Object.freeze(structuredClone(params)), observedSettings: Object.freeze({model:result.model, modelProvider:result.modelProvider,cwd:result.cwd,approvalPolicy:result.approvalPolicy,activePermissionProfile:structuredClone(result.activePermissionProfile ?? null),environments:structuredClone(result.thread.environments ?? null)}), method: this.nativeId === optionsNativeId ? "thread/resume" : "thread/start" });
     }
+    if(r.onNativeThread){if(!this.launchReceipt)fault("Native thread observer requires actual launch");await r.onNativeThread({sessionId:o.sessionId,threadId:this.nativeId,rolloutPath:typeof result.thread.path==="string"?result.thread.path:null,launchReceipt:this.launchReceipt,method:optionsNativeId?"thread/resume":"thread/start",observedSettings:Object.freeze(structuredClone(result)),readChildThread:id=>this.readChildThread(id)});if(this.closing||this.failed)fault("Closed during native thread observer");}
     o.onNativeSessionId(this.nativeId);
     this.observeLifecycle({kind:"thread",threadId:this.nativeId,rolloutPath:typeof result.thread.path==="string"?result.thread.path:null,method:optionsNativeId?"thread/resume":"thread/start"});
     if (resumeInstructions) o.onUpdate({
@@ -429,6 +436,7 @@ export class CodexEngine implements Engine {
         assertCodexTextOnlyPolicy(this.textPolicy, this.options.sessionId);
         if (this.closing || this.cancelRequested || this.failed) fault("Scoped turn cancelled before native dispatch");
       }
+      if(this.runtime.beforeNativeAction){await this.runtime.beforeNativeAction({sessionId:this.options.sessionId,threadId:this.nativeId!,method:"turn/start",launchReceipt:this.launchReceipt!,params:Object.freeze(structuredClone(turnParams)),readChildThread:id=>this.readChildThread(id)});if(this.closing||this.cancelRequested||this.failed)fault("Native dispatch revoked after capture admission");}
       const result = await this.connection!.request("turn/start", turnParams);
       if (!isRecord(result) || !isRecord(result.turn))
         fault("Invalid turn/start result");
@@ -989,6 +997,7 @@ export class CodexEngine implements Engine {
         phaseSource: "codex.item.phase",
       });
     } else if (value.type === "collabAgentToolCall") {
+      this.runtime.onNativeChildObserved?.({sessionId:this.options.sessionId,parentThreadId:this.nativeId!,parentTurnId:this.turnId!,item:Object.freeze(structuredClone(value))});
       if(this.textPolicy?.mode==="retention-parent"&&this.retentionAction!=="child")fault("Native child outside approved retention action");
       if (!this.runtime.delegationEnabled)
         fault("Native delegation unavailable");

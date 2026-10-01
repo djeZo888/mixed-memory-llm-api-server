@@ -4,6 +4,7 @@ export type CodexMethod =
   | "initialize"
   | "thread/start"
   | "thread/resume"
+  | "thread/read"
   | "turn/start"
   | "turn/interrupt"
   | "thread/compact/start";
@@ -11,6 +12,7 @@ const METHODS = new Set<string>([
   "initialize",
   "thread/start",
   "thread/resume",
+  "thread/read",
   "turn/start",
   "turn/interrupt",
   "thread/compact/start",
