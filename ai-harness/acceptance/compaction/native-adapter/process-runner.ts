@@ -65,6 +65,7 @@ export class OwnedApplicationRunner {
       if(ack.protocol!=='h041-owned-application-ipc-v1'||ack.configSha256!==this.input.configSha256)throw Error('actual_worker_ready_config_mismatch');
       if(signal?.aborted)throw Error('owned_application_ready_cancelled');
       await durableFile(join(this.input.hostPrivate,`${child.pid}-${sha256(id(this.identity))}-runner-start.json`),stableJson({...this.identity,source:'owned-application-os-identity',identitySource:this.identity.source,workerSha256:this.input.workerSha256,configSha256:this.input.configSha256,ready:ack}));
+      if(signal?.aborted)throw Error('owned_application_ready_cancelled');
     } catch(error){this.failed=true;try{await this.shutdownAndConfirm();}catch(cleanup){throw new AggregateError([error,cleanup],'owned_start_and_cleanup_failed');}throw error;}
   }
   async call(method:string,args:any={},signal?:AbortSignal) {
@@ -73,7 +74,7 @@ export class OwnedApplicationRunner {
     const cutoff=this.cutoff(cleanup);if(Date.now()>=cutoff)throw Error('owned_runner_dispatch_cutoff');
     const current=++this.sequence,child=this.child;
     return await new Promise<any>((resolve,reject)=>{
-      const abandon=()=>{this.pending.delete(current);if(!cleanup)this.failed=true;if(child.connected)child.send({cancel:current},()=>undefined);reject(Error('owned_runner_deadline_no_replay'));};
+      const abandon=()=>{done();this.pending.delete(current);if(!cleanup)this.failed=true;if(child.connected)child.send({cancel:current},()=>undefined);reject(Error('owned_runner_deadline_no_replay'));};
       const timer=setTimeout(abandon,Math.min(this.input.operationTimeoutMs??120000,cutoff-Date.now()));
       const done=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abandon);};
       this.pending.set(current,{resolve:v=>{done();resolve(v);},reject:e=>{done();reject(e);}});
