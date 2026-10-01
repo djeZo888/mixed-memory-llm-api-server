@@ -1,6 +1,33 @@
 # GPU fan boost and motherboard fan control
 
-## Current H040 policy — reviewed source candidate, 1 October
+## Current H042 policy — source candidate, 1 October
+
+The new CHA_FAN3 policy is **40% below70 C**, **80% from70 C through80 C**,
+and **100% strictly above80 C**. Escalation is immediate. A reduction from100%
+to80% requires30 continuous fresh seconds at <=80 C; a reduction from100% or80%
+to40% requires30 continuous fresh seconds below70 C. The two dwell periods are
+independent: crossing70 C resets the40% dwell, and crossing above80 C resets both.
+Startup, node boot change, sample gap/regression, missing/stale telemetry,
+transport error and stop demand100% and reset dwell. Stable69–78 C no longer
+holds100% indefinitely. Poll5seconds and maximum telemetry age15seconds remain.
+
+The target is unchanged: server Blackwell UUID, Zone4(CHA_FAN3), array_index3,
+PWMNum3, PWMSrc0, mode4, disabled CPU source bits000, and20/45/65/90/100 C knots.
+Only the first four curve duties change. Other fan zones, CHA_FAN1 and integrated
+GPU fans remain untouched. Durable intents, confirmed_expected_duty, independent
+readback reconciliation, lock/invariant checks and late-stop cancellation are
+preserved; cancellation now covers both40% and80% lowering. Configured curve
+duty is distinct from measured PWM, tach and RPM.
+
+This candidate is source-tested on Mac with inert imports and fake backends.
+The current installed controller and physical10–15second cycling are separate
+qualification questions. Installation, protected authentication, latch archival,
+start and stop each require an exact current finite root GO bound to worker2,
+the reviewed source/helper/unit/config graph and actual current preflight.
+Unknown start ownership quarantines without blind stop or retry.
+See [H042 fan05 result](../reports/h042-fan05.md) for actual execution disposition.
+
+## Retained H040 policy — reviewed source candidate, 1 October
 
 The latest specific user override assigns CHA_FAN3 **80% at >=70 C** and
 **100% strictly above80 C**. At exactly80 C the minimum is80%; an existing100%

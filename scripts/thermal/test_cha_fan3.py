@@ -9,7 +9,7 @@ from pathlib import Path
 import tempfile
 import unittest
 from types import SimpleNamespace
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 spec = importlib.util.spec_from_file_location('fan', Path(__file__).with_name('cha_fan3.py'))
 f = importlib.util.module_from_spec(spec)
@@ -68,38 +68,65 @@ class FakeNode:
         return observed(self.t)
 
 class PolicyTests(unittest.TestCase):
-    def test_threshold70_immediate(self):
-        self.assertEqual(f.Policy().decide(observed(70),40,0),80)
-    def test_specific_strict_above80_tier_and_retained_higher(self):
-        for t in (70,78,80):
-            self.assertEqual(f.Policy().decide(observed(t),40,0),80)
-        for t in (80.001,81,90):
-            self.assertEqual(f.Policy().decide(observed(t),40,0),100)
-        self.assertEqual(f.Policy().decide(observed(78),100,0),100)
-    def test_hold69_low(self): self.assertEqual(f.Policy().decide(observed(69),40,0),40)
-    def test_hold66_high(self): self.assertEqual(f.Policy().decide(observed(66),f.HIGH_DUTY,0),f.HIGH_DUTY)
-    def test_cool65_stable30(self):
+    def primed(self, temperature=69.9, current=40):
         p=f.Policy()
-        for t in range(0,30,5): self.assertEqual(p.decide(observed(),f.HIGH_DUTY,t),f.HIGH_DUTY)
-        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,30),40)
-    def test_warm_resets_cool(self):
-        p=f.Policy()
-        for t in range(0,25,5): p.decide(observed(),f.HIGH_DUTY,t)
-        p.decide(observed(66),f.HIGH_DUTY,25)
-        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,30),f.HIGH_DUTY)
-    def test_stale_raises_low(self): self.assertEqual(f.Policy().decide(None,40,0),f.HIGH_DUTY)
-    def test_stale_preserves_higher(self): self.assertEqual(f.Policy().decide(None,100,0),100)
-    def test_hot_preserves_higher(self): self.assertEqual(f.Policy().decide(observed(75),100,0),100)
-    def test_gap_resets_cool(self):
-        p=f.Policy();p.decide(observed(),f.HIGH_DUTY,0)
-        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,31),f.HIGH_DUTY)
-    def test_boot_resets_cool(self):
-        p=f.Policy()
-        for t in range(0,30,5):p.decide(observed(),f.HIGH_DUTY,t)
-        self.assertEqual(p.decide(observed(65,'new-boot'),f.HIGH_DUTY,30),f.HIGH_DUTY)
-    def test_restart_cool_reset(self):
-        p=f.Policy();p.decide(observed(),f.HIGH_DUTY,0)
-        self.assertEqual(f.Policy().decide(observed(),f.HIGH_DUTY,35),f.HIGH_DUTY)
+        self.assertEqual(p.decide(observed(temperature),current,0),100)
+        return p
+    def test_exact_boundaries_escalate_immediately(self):
+        for temperature, expected in ((69.9,40),(70,80),(80,80),(80.1,100)):
+            with self.subTest(temperature=temperature):
+                p=self.primed()
+                self.assertEqual(p.decide(observed(temperature),40,5),expected)
+    def test_start_boot_gap_missing_and_regression_require100(self):
+        p=self.primed()
+        self.assertEqual(p.decide(observed(69.9),40,16),100)
+        self.assertEqual(p.decide(observed(70,'new-boot'),40,20),100)
+        self.assertEqual(p.decide(None,40,25),100)
+        self.assertEqual(p.decide(observed(69.9,'new-boot'),40,30),100)
+        self.assertEqual(p.decide(observed(69.9,'new-boot'),40,29),100)
+    def test_each_tier_reduction_after30continuous_fresh_seconds(self):
+        for temperature, current, expected in ((69.9,100,40),(69.9,80,40),
+                                                (70,100,80),(78,100,80),(80,100,80)):
+            with self.subTest(temperature=temperature,current=current):
+                p=self.primed(temperature,current)
+                for at in (5,10,15,20,25,29.9):
+                    self.assertEqual(p.decide(observed(temperature),current,at),current)
+                self.assertEqual(p.decide(observed(temperature),current,30),expected)
+                self.assertEqual(p.decide(observed(temperature),expected,35),expected)
+    def test_warm_then_cool_requires_separate_below70_dwell(self):
+        p=self.primed(78,100)
+        for at in (5,10,15,20):p.decide(observed(78),100,at)
+        self.assertEqual(p.decide(observed(69.9),100,25),100)
+        self.assertEqual(p.decide(observed(69.9),100,30),80)
+        for at in (35,40,45,50):
+            self.assertEqual(p.decide(observed(69.9),80,at),80)
+        self.assertEqual(p.decide(observed(69.9),80,55),40)
+    def test_relevant_boundaries_reset_each_reduction_dwell(self):
+        p=self.primed(69.9,100)
+        for at in (5,10,15,20):p.decide(observed(69.9),100,at)
+        p.decide(observed(70),100,25)
+        self.assertEqual(p.decide(observed(69.9),100,30),80)
+        self.assertEqual(p.decide(observed(80.1),80,35),100)
+        for at in (40,45,50,55,60,65):
+            self.assertEqual(p.decide(observed(80),100,at),100)
+        self.assertEqual(p.decide(observed(80),100,70),80)
+    def test_missing_boot_gap_reset_both_dwells(self):
+        for reset in ('missing','boot','gap'):
+            with self.subTest(reset=reset):
+                p=self.primed(69.9,100)
+                for at in (5,10,15,20,25):p.decide(observed(69.9),100,at)
+                at=46 if reset=='gap' else 30
+                boot='new-boot' if reset=='boot' else BOOT
+                self.assertEqual(p.decide(None if reset=='missing' else observed(69.9,boot),40,at),100)
+                first=at+5 if reset=='missing' else at
+                if reset=='missing':p.decide(observed(69.9,boot),100,first)
+                for tick in range(first+5,first+30,5):
+                    self.assertEqual(p.decide(observed(69.9,boot),100,tick),100)
+                self.assertEqual(p.decide(observed(69.9,boot),100,first+30),40)
+    def test_restart_dwell_reset(self):
+        p=self.primed(78,100)
+        for at in range(5,31,5):p.decide(observed(78),100,at)
+        self.assertEqual(f.Policy().decide(observed(78),80,35),100)
 
 class TelemetryTests(unittest.TestCase):
     def test_valid_absolute_celsius(self): self.assertEqual(f.sample(dto(),1000)['temperature_c'],65)
@@ -443,16 +470,58 @@ class ControllerTests(unittest.TestCase):
         restarted=f.Controller(b,s);restarted.start()
         for t in range(95,125,5):restarted.step(FakeNode(),t);self.assertEqual(f.shape(b.s),100)
         restarted.step(FakeNode(),125);self.assertEqual(f.shape(b.s),40)
-        self.assertEqual(b.duties,[100,40,80,100,40,100,40])
-    def test_late_stop_after_intent_cancels_lowering_before_send(self):
-        c,b,s=self.make();c.start();write=s.write
-        def stop_after_intent(name,value):
-            write(name,value)
-            if name=='pending-write.json' and value['desired_duty']==40:c.stopping=lambda:True
-        s.write=stop_after_intent
-        c.command(b.snapshot(),100,40)
-        self.assertEqual(b.duties,[100]);self.assertEqual(f.shape(b.s),100)
-        self.assertTrue(s.read('pending-write.json')['cancelled_before_send'])
+        self.assertEqual(b.duties,[100,40,80,100,80,40,100,40])
+    def test_late_stop_after_intent_cancels_each_lowering_before_send(self):
+        for desired in (40,80):
+            with self.subTest(desired=desired):
+                c,b,s=self.make();c.start();write=s.write
+                def stop_after_intent(name,value):
+                    write(name,value)
+                    if name=='pending-write.json' and value['desired_duty']==desired:
+                        c.stopping=lambda:True
+                s.write=stop_after_intent
+                c.command(b.snapshot(),100,desired)
+                self.assertEqual(b.duties,[100]);self.assertEqual(f.shape(b.s),100)
+                self.assertEqual(c.expected,100)
+                self.assertTrue(s.read('pending-write.json')['cancelled_before_send'])
+    def test_controller_warmstable30s_reduces100_to80(self):
+        for temperature in (70,78,80):
+            with self.subTest(temperature=temperature):
+                c,b,s=self.make();c.start()
+                for tick in range(0,30,5):
+                    c.step(FakeNode(temperature),tick);self.assertEqual(f.shape(b.s),100)
+                c.step(FakeNode(temperature),30);self.assertEqual(f.shape(b.s),80)
+                for tick in range(35,96,5):
+                    c.step(FakeNode(temperature),tick);self.assertEqual(f.shape(b.s),80)
+                self.assertEqual(b.duties,[100,80])
+    def test_late_stop_during_connection_cancels_both_tiers_at_final_send_guard(self):
+        for desired in (40,80):
+            with self.subTest(desired=desired):
+                c,_,s=self.make();c.start()
+                b=f.BMC(Path('unused-inert-credential'))
+                b.csrf='fixture';b.before_put=c.actuator_guard;c.bmc=b
+                connection=Mock()
+                certificate=b'inert-fixture-certificate'
+                connection.sock.getpeercert.return_value=certificate
+                connection.connect.side_effect=lambda:setattr(c,'stopping',lambda:True)
+                with patch.object(b,'snapshot',return_value=snapshot(100)), \
+                     patch.object(f,'PIN',f.hashlib.sha256(certificate).hexdigest()), \
+                     patch.object(f.http.client,'HTTPSConnection',return_value=connection):
+                    c.command(snapshot(100),100,desired)
+                connection.request.assert_not_called()
+                connection.close.assert_called_once()
+                self.assertEqual(b.puts,0);self.assertEqual(c.expected,100)
+                self.assertTrue(s.read('pending-write.json')['cancelled_before_send'])
+    def test_controller_gap_and_boot_immediately_raise40_to100(self):
+        c,b,s=self.make();c.start()
+        for tick in range(0,31,5):c.step(FakeNode(69.9),tick)
+        self.assertEqual(f.shape(b.s),40)
+        c.step(FakeNode(69.9),46);self.assertEqual(f.shape(b.s),100)
+        for tick in range(51,77,5):c.step(FakeNode(69.9),tick)
+        self.assertEqual(f.shape(b.s),40)
+        node=FakeNode(69.9);node.read=lambda:observed(69.9,'changed-boot')
+        c.step(node,81);self.assertEqual(f.shape(b.s),100)
+
     def test_repeated80_to100_cycles_cannot_conflict_with_legacy_archive(self):
         c,b,s=self.make();c.start();now=0
         for _ in range(2):

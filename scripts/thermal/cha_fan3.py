@@ -33,7 +33,7 @@ STATE = Path('/var/lib/sova-cha-fan3')
 CREDS = Path('/run/sova-cha-fan3-credentials')
 BMC_FILE = Path('/home/user/.config/sova-private/bmc.json')
 NODE_FILE = Path('/home/user/.config/ai-harness/node-control-key')
-HOT, COOL, COOL_SECONDS, POLL, MAX_AGE = 70, 65, 30, 5, 15
+HOT, COOL_SECONDS, POLL, MAX_AGE = 70, 30, 5, 15
 HIGH_DUTY, HOT_DUTY, LOW_DUTY = 100, 80, 40
 VERY_HOT = 80  # The explicit CHA_FAN3 exception is strictly above 80 C.
 BOOT_RE = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\Z')
@@ -364,29 +364,42 @@ class Node:
 class Policy:
     def __init__(self):
         self.cool_since = None
+        self.warm_since = None
         self.last = None
         self.boot = None
     def decide(self, observed, current, now):
         if observed is None:
-            self.cool_since = self.last = None
+            self.cool_since = self.warm_since = self.last = None
             return HIGH_DUTY
         boot = observed['node_boot_id']
-        if boot != self.boot or self.last is None or now - self.last > MAX_AGE:
-            self.cool_since = None
+        reset = (boot != self.boot or self.last is None
+                 or not 0 <= now - self.last <= MAX_AGE)
+        if reset:
+            self.cool_since = self.warm_since = None
         self.boot, self.last = boot, now
         t = observed['temperature_c']
         if t > VERY_HOT:
-            self.cool_since = None
+            self.cool_since = self.warm_since = None
             return HIGH_DUTY
-        if t >= HOT:
+        if self.warm_since is None:
+            self.warm_since = now
+        if t < HOT:
+            if self.cool_since is None:
+                self.cool_since = now
+        else:
             self.cool_since = None
-            return max(HOT_DUTY, current)
-        if t > COOL:
-            self.cool_since = None
-            return current
-        if self.cool_since is None:
-            self.cool_since = now
-        return LOW_DUTY if now - self.cool_since >= COOL_SECONDS else current
+        # A new boot, startup or sample gap demands high even with a cool sample.
+        # This fresh sample begins new dwell; no outage time can count toward it.
+        if reset:
+            return HIGH_DUTY
+        target = HOT_DUTY if t >= HOT else LOW_DUTY
+        if target > current:
+            return target  # Escalations never wait for dwell.
+        if target == LOW_DUTY and now - self.cool_since >= COOL_SECONDS:
+            return LOW_DUTY
+        if current > HOT_DUTY and now - self.warm_since >= COOL_SECONDS:
+            return HOT_DUTY
+        return current
 
 class Store:
     def __init__(self, directory=STATE):
@@ -474,7 +487,7 @@ class Controller:
         return s, duty
     def actuator_guard(self, duty):
         self.store.assert_held()
-        if duty == LOW_DUTY and self.stopping():
+        if duty < HIGH_DUTY and self.stopping():
             raise LoweringCancelled()
     def command(self, s, current, desired):
         payload(s, desired)  # Reject a legacy/new forbidden target before intent writes.
