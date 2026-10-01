@@ -34,6 +34,8 @@ CREDS = Path('/run/sova-cha-fan3-credentials')
 BMC_FILE = Path('/home/user/.config/sova-private/bmc.json')
 NODE_FILE = Path('/home/user/.config/ai-harness/node-control-key')
 HOT, COOL, COOL_SECONDS, POLL, MAX_AGE = 70, 65, 30, 5, 15
+HIGH_DUTY, HOT_DUTY, LOW_DUTY = 100, 80, 40
+VERY_HOT = 80  # The explicit CHA_FAN3 exception is strictly above 80 C.
 BOOT_RE = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\Z')
 
 class Fault(Exception):
@@ -301,14 +303,14 @@ def configuration_diff(before, after):
 
 def payload(s, duty):
     shape(s)
-    if type(duty) is not int or duty not in (40, 80):
+    if type(duty) is not int or duty not in (LOW_DUTY, HOT_DUTY, HIGH_DUTY):
         raise Fault('duty_not_allowlisted')
     return {'PWMIndex': 3, 'PWMSrc': 0, 'PWMNum': 3,
             'CurrentPWMdata': ['20', str(duty), '45', str(duty), '65', str(duty), '90', str(duty), 100, 100]}
 
 def validate_payload(v):
     if not any(v == {'PWMIndex': 3, 'PWMSrc': 0, 'PWMNum': 3,
-                     'CurrentPWMdata': ['20', str(d), '45', str(d), '65', str(d), '90', str(d), 100, 100]} for d in (40, 80)):
+                     'CurrentPWMdata': ['20', str(d), '45', str(d), '65', str(d), '90', str(d), 100, 100]} for d in (LOW_DUTY, HOT_DUTY, HIGH_DUTY)):
         raise Fault('forbidden_bmc_payload')
 
 def sample(dto, now=None):
@@ -367,21 +369,24 @@ class Policy:
     def decide(self, observed, current, now):
         if observed is None:
             self.cool_since = self.last = None
-            return max(80, current)
+            return HIGH_DUTY
         boot = observed['node_boot_id']
         if boot != self.boot or self.last is None or now - self.last > MAX_AGE:
             self.cool_since = None
         self.boot, self.last = boot, now
         t = observed['temperature_c']
+        if t > VERY_HOT:
+            self.cool_since = None
+            return HIGH_DUTY
         if t >= HOT:
             self.cool_since = None
-            return max(80, current)
+            return max(HOT_DUTY, current)
         if t > COOL:
             self.cool_since = None
             return current
         if self.cool_since is None:
             self.cool_since = now
-        return 40 if now - self.cool_since >= COOL_SECONDS else current
+        return LOW_DUTY if now - self.cool_since >= COOL_SECONDS else current
 
 class Store:
     def __init__(self, directory=STATE):
@@ -468,9 +473,10 @@ class Controller:
         return s, duty
     def actuator_guard(self, duty):
         self.store.assert_held()
-        if duty == 40 and self.stopping():
+        if duty == LOW_DUTY and self.stopping():
             raise LoweringCancelled()
     def command(self, s, current, desired):
+        payload(s, desired)  # Reject a legacy/new forbidden target before intent writes.
         if desired == current:
             return s, current
         s, fresh_duty = self.inspect()
@@ -528,7 +534,8 @@ class Controller:
         pending = self.store.read('pending-write.json')
         if not pending or pending.get('state') == 'verified':
             return
-        if (pending.get('state') != 'prepared' or pending.get('desired_duty') not in (40, 80)
+        if (pending.get('state') != 'prepared' or type(pending.get('desired_duty')) is not int
+                or pending['desired_duty'] not in (LOW_DUTY, HOT_DUTY, HIGH_DUTY)
                 or type(pending.get('before_duty')) is not int
                 or not 0 <= pending['before_duty'] <= 100
                 or pending.get('invariant_sha256') != digest(self.baseline)):
@@ -546,7 +553,7 @@ class Controller:
         s, duty = self.inspect()
         if check_expected and self.expected is not None and duty != self.expected:
             raise Fault('competing_writer_or_overwrite')
-        self.expected = max(80, duty)
+        self.expected = HIGH_DUTY
         return self.command(s, duty, self.expected)[1]
     def terminal(self, error):
         # Persist intent before ONE safe-high attempt. Restart/ExecStopPost must not fight.
@@ -602,7 +609,7 @@ class Controller:
                 if not transient(high_error):
                     raise
                 error += ':safe_high_unavailable'
-            self.status('degraded_high' if duty is not None and duty >= 80 else 'degraded_unknown',
+            self.status('degraded_high' if duty == HIGH_DUTY else 'degraded_unknown',
                         duty, error=error, tach=tach)
             return False
 

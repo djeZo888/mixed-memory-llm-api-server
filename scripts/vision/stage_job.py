@@ -55,6 +55,14 @@ def receipt_hash(root, name):
             value.update(block)
 
 
+def fsync_attempt_directory(root, attempt):
+    """Persist newly created entries through the held, checked storage anchor."""
+    with root.directory(attempt) as directory:
+        directory.check()
+        os.fsync(directory.fileno())
+        directory.check()
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--guard-scripts", required=True)
@@ -140,6 +148,7 @@ def main():
                         "reviewedWindow": authority, "deadlineEpoch": args.deadline_epoch,
                         "pid": os.getpid(), "payloadHashes": {name: hashlib.sha256(body).hexdigest() for name, body in files.items()}}).encode())
                     stream.fsync()
+                fsync_attempt_directory(root, args.job)
             for role in ("build", "logs", "models"):
                 with storage_io.AnchoredRoot(binding.path(role), guard) as root:
                     if role == "models" and args.artifact_job:
@@ -159,6 +168,7 @@ def main():
                                 "attempt": args.job, "reviewedWindow": authority, "deadlineEpoch": args.deadline_epoch,
                                 "status": "PLANNED", "verifiedFiles": 0, "verifiedWeightFiles": 0, "artifacts": []}).encode())
                             stream.fsync()
+                    fsync_attempt_directory(root, args.job)
         print(json.dumps({"status": "STAGED_NOT_STARTED", "job": args.job, "reviewedWindow": authority, "files": {
             k: {"bytes": len(v), "sha256": hashlib.sha256(v).hexdigest()} for k, v in files.items()},
             "capacity": binding.verify()["capacity"]}))

@@ -1,6 +1,38 @@
 # GPU fan boost and motherboard fan control
 
-## Current external-fan state — 28 September
+## Current H040 policy — reviewed source candidate, 1 October
+
+The latest specific user override assigns CHA_FAN3 **80% at >=70 C** and
+**100% strictly above80 C**. At exactly80 C the minimum is80%; an existing100%
+setting is retained through78 C and any other warm reading until fresh <=65 C
+telemetry persists for30 continuous seconds. Missing/stale telemetry,
+startup/stop/failsafe and transport recovery conservatively request100%.
+Poll5seconds, maximum telemetry age15seconds, boot/sample-gap/error dwell reset,
+fixed mode4/source000/index3/PWMNum3/PWMSrc0 and20/45/65/90/100 C knots remain.
+The only new fixed-channel BMC payload duties are **40/80/100**. CPU/source and
+other-zone writes remain forbidden. CHA_FAN1 remains exclusively BMC/user-owned.
+
+Prepared40/80/100 intents reconcile through READ-ONLY actuator inspection of the
+unchanged full invariant and exact before/intended readback, never PUT replay.
+Verified receipts are left intact by reconciliation; a following normal command
+records its distinct fresh intent. Preserve all old state/receipts in a private
+predeployment snapshot before any owned stop/install. Unknown/mismatch retains
+uncertainty and the durable latch; do not clear it or write through it. Baselinev2,
+controller lock/CAS, late-stop guard, credential protection and honest configured
+curve-duty versus instantaneous-PWM/tach reporting are unchanged. Retained80
+proof is not proof of the new100% startup/failsafe or >80 C tier.
+
+The four integrated NVIDIA GPU UUIDs already use100% at >=70 C via unchanged
+NVML source; the fanless/server Blackwell is excluded and uses this CHA_FAN3
+path. No model role or physical slot mapping is changed by this source candidate.
+Deployment and physical qualification are **NOT_TESTED** here. After exact-source
+root GO, use the existing ai-harness service and unchanged unit: bounded startup100
+then fresh cool40; one normal stop/restart100 then fresh cool40; independent pinned
+configuration/tach readback and unrelated-zone comparison. No thermal stress or
+actual70 C/>80 C heat claim follows from synthetic threshold tests.
+See [H040 source report](../reports/h040-fan100-source.md).
+
+## Retained external-fan state — 28 September
 
 H025 deployed the GPU-driven CHA_FAN3 controller on ai-harness. It commands
 80% at server Blackwell temperature >=70 C, returns to 40% after <=65 C for

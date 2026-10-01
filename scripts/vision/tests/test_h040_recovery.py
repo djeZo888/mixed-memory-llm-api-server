@@ -170,6 +170,30 @@ class H040TransactionTests(unittest.TestCase):
             duplicate_network.assert_not_called()
         self.assert_preserved()
 
+    def test_staged_receipt_requires_file_and_containing_directory_fsync(self):
+        events = []
+        real_fsync = os.fsync
+        tracked = [("logs", "stage.claim.json"), ("build", "artifact_job.py"),
+                   ("build", "artifacts.lock.json"), ("logs", "status.json")]
+        def sync(fd):
+            info = os.fstat(fd)
+            for role, name in tracked:
+                path = self.f.paths[role] / ATTEMPT / name
+                if path.exists() and (path.stat().st_dev, path.stat().st_ino) == (info.st_dev, info.st_ino):
+                    events.append((role, name))
+            for role in ("logs", "build"):
+                path = self.f.paths[role] / ATTEMPT
+                if path.exists() and (path.stat().st_dev, path.stat().st_ino) == (info.st_dev, info.st_ino):
+                    events.append((role, "directory"))
+            real_fsync(fd)
+        with self.f.staged(), patch.object(stage.os, "fsync", side_effect=sync):
+            self.assertEqual(stage.main(), 0)
+        for role, name in tracked:
+            index = events.index((role, name))
+            self.assertIn((role, "directory"), events[index+1:])
+        self.assertGreaterEqual(events.count(("logs", "directory")), 2)
+        self.assert_preserved()
+
     def test_existing_stage_namespace_is_not_overwritten(self):
         with self.f.staged():
             stage.main()

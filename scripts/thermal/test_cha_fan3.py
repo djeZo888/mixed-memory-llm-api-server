@@ -13,7 +13,10 @@ from unittest.mock import patch
 
 spec = importlib.util.spec_from_file_location('fan', Path(__file__).with_name('cha_fan3.py'))
 f = importlib.util.module_from_spec(spec)
-spec.loader.exec_module(f)
+with patch('socket.create_connection') as network, patch('http.client.HTTPConnection') as http, \
+     patch('http.client.HTTPSConnection') as https:
+    spec.loader.exec_module(f)
+    assert not network.called and not http.called and not https.called, 'import must be inert'
 # Worker-local macOS lacks Linux boot_id; only the inert fixture host identity is stubbed.
 _real_read_text = Path.read_text
 def _fixture_read_text(path, *args, **kwargs):
@@ -51,11 +54,11 @@ class MemoryStore:
     def write(self,n,v): self.values[n]=copy.deepcopy(v)
     def assert_held(self): pass
 class FakeBMC:
-    def __init__(self,d=75): self.s=snapshot(d);self.puts=0;self.logins=1;self.reject=False;self.csrf='synthetic'
+    def __init__(self,d=75): self.s=snapshot(d);self.puts=0;self.logins=1;self.reject=False;self.csrf='synthetic';self.duties=[]
     def snapshot(self): return copy.deepcopy(self.s)
     def tach(self): return {'value':3000,'units':None,'name':'CHA_FAN3','at':f.utc()}
     def call(self,m,p,data):
-        f.validate_payload(data);self.puts+=1
+        f.validate_payload(data);self.puts+=1;self.duties.append(int(data['CurrentPWMdata'][1]))
         if not self.reject:
             for point in self.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]: point['Duty']=int(data['CurrentPWMdata'][1])
 class FakeNode:
@@ -67,30 +70,36 @@ class FakeNode:
 class PolicyTests(unittest.TestCase):
     def test_threshold70_immediate(self):
         self.assertEqual(f.Policy().decide(observed(70),40,0),80)
+    def test_specific_strict_above80_tier_and_retained_higher(self):
+        for t in (70,78,80):
+            self.assertEqual(f.Policy().decide(observed(t),40,0),80)
+        for t in (80.001,81,90):
+            self.assertEqual(f.Policy().decide(observed(t),40,0),100)
+        self.assertEqual(f.Policy().decide(observed(78),100,0),100)
     def test_hold69_low(self): self.assertEqual(f.Policy().decide(observed(69),40,0),40)
-    def test_hold66_high(self): self.assertEqual(f.Policy().decide(observed(66),80,0),80)
+    def test_hold66_high(self): self.assertEqual(f.Policy().decide(observed(66),f.HIGH_DUTY,0),f.HIGH_DUTY)
     def test_cool65_stable30(self):
         p=f.Policy()
-        for t in range(0,30,5): self.assertEqual(p.decide(observed(),80,t),80)
-        self.assertEqual(p.decide(observed(),80,30),40)
+        for t in range(0,30,5): self.assertEqual(p.decide(observed(),f.HIGH_DUTY,t),f.HIGH_DUTY)
+        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,30),40)
     def test_warm_resets_cool(self):
         p=f.Policy()
-        for t in range(0,25,5): p.decide(observed(),80,t)
-        p.decide(observed(66),80,25)
-        self.assertEqual(p.decide(observed(),80,30),80)
-    def test_stale_raises_low(self): self.assertEqual(f.Policy().decide(None,40,0),80)
+        for t in range(0,25,5): p.decide(observed(),f.HIGH_DUTY,t)
+        p.decide(observed(66),f.HIGH_DUTY,25)
+        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,30),f.HIGH_DUTY)
+    def test_stale_raises_low(self): self.assertEqual(f.Policy().decide(None,40,0),f.HIGH_DUTY)
     def test_stale_preserves_higher(self): self.assertEqual(f.Policy().decide(None,100,0),100)
     def test_hot_preserves_higher(self): self.assertEqual(f.Policy().decide(observed(75),100,0),100)
     def test_gap_resets_cool(self):
-        p=f.Policy();p.decide(observed(),80,0)
-        self.assertEqual(p.decide(observed(),80,31),80)
+        p=f.Policy();p.decide(observed(),f.HIGH_DUTY,0)
+        self.assertEqual(p.decide(observed(),f.HIGH_DUTY,31),f.HIGH_DUTY)
     def test_boot_resets_cool(self):
         p=f.Policy()
-        for t in range(0,30,5):p.decide(observed(),80,t)
-        self.assertEqual(p.decide(observed(65,'new-boot'),80,30),80)
+        for t in range(0,30,5):p.decide(observed(),f.HIGH_DUTY,t)
+        self.assertEqual(p.decide(observed(65,'new-boot'),f.HIGH_DUTY,30),f.HIGH_DUTY)
     def test_restart_cool_reset(self):
-        p=f.Policy();p.decide(observed(),80,0)
-        self.assertEqual(f.Policy().decide(observed(),80,35),80)
+        p=f.Policy();p.decide(observed(),f.HIGH_DUTY,0)
+        self.assertEqual(f.Policy().decide(observed(),f.HIGH_DUTY,35),f.HIGH_DUTY)
 
 class TelemetryTests(unittest.TestCase):
     def test_valid_absolute_celsius(self): self.assertEqual(f.sample(dto(),1000)['temperature_c'],65)
@@ -141,10 +150,19 @@ class ChannelTests(unittest.TestCase):
             s=snapshot();mutate(s)
             with self.assertRaises(f.Fault):f.shape(s)
     def test_no_other_payload_or_duties(self):
-        for d in (0,75,100):
+        for d in (0,75,81,True,40.0):
             with self.assertRaises(f.Fault):f.payload(snapshot(),d)
         p=f.payload(snapshot(),40);p['PWMIndex']=2
         with self.assertRaises(f.Fault):f.validate_payload(p)
+    def test_exact_three_new_tiers_keep_channel_sources_knots_and_other_zones(self):
+        before=snapshot()
+        for d in (40,80,100):
+            expected={'PWMIndex':3,'PWMSrc':0,'PWMNum':3,
+                'CurrentPWMdata':['20',str(d),'45',str(d),'65',str(d),'90',str(d),100,100]}
+            self.assertEqual(f.payload(before,d),expected);f.validate_payload(expected)
+        self.assertEqual(before,snapshot())
+        bad=f.payload(before,80);bad['CurrentPWMdata'][1]='81'
+        with self.assertRaises(f.Fault):f.validate_payload(bad)
     def test_unadvertised_route_before_network(self):
         with self.assertRaises(f.Fault):f.BMC(None).call('PUT','/api/fanctrl/source',{})
     def test_nontarget_lastsource_observation_is_not_source_configuration(self):
@@ -169,11 +187,11 @@ class ControllerTests(unittest.TestCase):
         for t in range(0,36,5):c.step(FakeNode(),t)
         self.assertEqual(b.puts,2);self.assertEqual(c.proof['readback_duty'],40)
         c.step(FakeNode(),40);self.assertEqual(b.puts,2)
-    def test_stale_after_low_raises80(self):
+    def test_stale_after_low_raises100(self):
         c,b,s=self.make();c.start()
         for t in range(0,31,5):c.step(FakeNode(),t)
         c.step(FakeNode(None),35)
-        self.assertEqual(c.proof['state'],'degraded_high');self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(c.proof['state'],'degraded_high');self.assertEqual(c.proof['readback_duty'],f.HIGH_DUTY)
         self.assertIsNone(c.proof['temperature_c'])
     def test_competitor_one_high_and_latch(self):
         c,b,s=self.make();c.start()
@@ -212,15 +230,15 @@ class ControllerTests(unittest.TestCase):
             original(*args)
             duty=f.shape(b.s);b.s=copy.deepcopy(after)
             for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=duty
-        with patch.object(b,'call',side_effect=concurrent):self.assertEqual(c.high(),80)
+        with patch.object(b,'call',side_effect=concurrent):self.assertEqual(c.high(),f.HIGH_DUTY)
         self.assertEqual(len(s.read('non-target-audit.json')['differences']),6)
         self.assertEqual(s.read('write-pre-snapshot.json'),before)
-        self.assertEqual(f.shape(s.read('write-post-snapshot.json')),80)
+        self.assertEqual(f.shape(s.read('write-post-snapshot.json')),f.HIGH_DUTY)
         for _ in range(40):c.inspect()
         self.assertLessEqual(len(s.values),6)
     def test_other_zone_change_before_safe_high(self):
         c,b,s=self.make(40);c.inspect();b.s[f.PATHS[1]][0]['PWMSrc']=1
-        self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+        self.assertEqual(c.high(),f.HIGH_DUTY);self.assertEqual(b.puts,1)
     def test_duplicate_target_and_malformed_shape_block(self):
         for mutate in (lambda x:x[f.PATHS[1]][0].update(PWMNum=3),
                        lambda x:x[f.PATHS[2]]['FanSourceList'].append({'PWM':'PWM4','Name':'other','Current':0}),
@@ -231,7 +249,7 @@ class ControllerTests(unittest.TestCase):
     def test_fresh_pre_put_duty_drift_blocks(self):
         c,b,s=self.make(40);old=b.snapshot();c.inspect()
         for point in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:point['Duty']=60
-        with self.assertRaisesRegex(f.Fault,'competing_writer'):c.command(old,40,80)
+        with self.assertRaisesRegex(f.Fault,'competing_writer'):c.command(old,40,f.HIGH_DUTY)
         self.assertEqual(b.puts,0)
     def test_readback_mismatch_latches_bounded(self):
         c,b,s=self.make();b.reject=True
@@ -241,8 +259,8 @@ class ControllerTests(unittest.TestCase):
     def test_start100_retained_no_write(self):
         c,b,s=self.make(100);c.start();self.assertEqual(b.puts,0);self.assertEqual(c.proof['readback_duty'],100)
     def test_high_stop_never_restores75(self):
-        c,b,s=self.make(40);self.assertEqual(c.high(),80)
-        self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+        c,b,s=self.make(40);self.assertEqual(c.high(),f.HIGH_DUTY)
+        self.assertEqual(c.high(),f.HIGH_DUTY);self.assertEqual(b.puts,1)
     def test_transient_outage_then_recovery(self):
         c,b,s=self.make(40);c.start();c.recovering=False
         for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
@@ -253,17 +271,17 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(c.proof['state'],'degraded_unknown')
         self.assertIsNone(s.read('blocked.json'))
         self.assertTrue(c.cycle(FakeNode()))
-        self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(c.proof['readback_duty'],f.HIGH_DUTY)
         self.assertEqual(c.proof['state'],'healthy')
         self.assertIsNone(s.read('blocked.json'))
     def test_transient_can_prove_high_once(self):
         c,b,s=self.make(40);c.start();c.recovering=False
         for p in b.s[f.PATHS[1]][3]['CurrentPWMdata'][:4]:p['Duty']=40
         c.expected=40;original=b.snapshot
-        with patch.object(b,'snapshot',side_effect=[f.Fault('bmc_transport_unavailable'),original(),original(),snapshot(80)]):
+        with patch.object(b,'snapshot',side_effect=[f.Fault('bmc_transport_unavailable'),original(),original(),snapshot(f.HIGH_DUTY)]):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(c.proof['state'],'degraded_high')
-        self.assertEqual(c.proof['readback_duty'],80)
+        self.assertEqual(c.proof['readback_duty'],f.HIGH_DUTY)
     def test_invariant_fault_is_not_recoverable(self):
         c,b,s=self.make();c.start();c.recovering=False
         b.s[f.PATHS[2]]['PWM4_1']=1
@@ -275,7 +293,7 @@ class ControllerTests(unittest.TestCase):
         with patch.object(b,'call',side_effect=ambiguous):
             self.assertFalse(c.cycle(FakeNode()))
         self.assertEqual(b.puts,1)
-        self.assertEqual(s.read('uncertain-write.json')['desired_duty'],80)
+        self.assertEqual(s.read('uncertain-write.json')['desired_duty'],f.HIGH_DUTY)
         self.assertEqual(s.read('pending-write.json')['state'],'verified')
         self.assertIsNone(s.read('blocked.json'))
         self.assertTrue(c.cycle(FakeNode()))
@@ -295,7 +313,7 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make(40);c.inspect()
         s.write('pending-write.json',{'state':'prepared','before_duty':80,'desired_duty':40,
                 'invariant_sha256':f.digest(c.baseline)})
-        c.start();self.assertEqual(c.proof['readback_duty'],80)
+        c.start();self.assertEqual(c.proof['readback_duty'],f.HIGH_DUTY)
         self.assertEqual(b.puts,1)
     def test_ambiguous_put_conflicting_duty_hard_block(self):
         c,b,s=self.make(60);c.inspect()
@@ -309,20 +327,20 @@ class ControllerTests(unittest.TestCase):
         node=FakeNode()
         def read():c.stopping=lambda:True;return observed()
         node.read=read;c.step(node,30)
-        self.assertEqual(b.puts,1);self.assertEqual(c.proof['readback_duty'],80)
-        self.assertEqual(c.high(),80);self.assertEqual(b.puts,1)
+        self.assertEqual(b.puts,1);self.assertEqual(c.proof['readback_duty'],f.HIGH_DUTY)
+        self.assertEqual(c.high(),f.HIGH_DUTY);self.assertEqual(b.puts,1)
     def test_actuator_guard_after_durable_intent(self):
         c,b,s=self.make();c.start();original=s.write;lost=[False]
         def write(n,v):original(n,v);lost[0]=n=='pending-write.json'
         def held():
             if lost[0]:raise f.Fault('controller_lock_replaced')
         s.write=write;s.assert_held=held
-        with self.assertRaises(f.Fault):c.command(b.snapshot(),80,40)
+        with self.assertRaises(f.Fault):c.command(b.snapshot(),f.HIGH_DUTY,40)
         self.assertEqual(b.puts,1)
     def test_status_retains_acquisition_times(self):
         c,b,s=self.make();c.start();c.readback_at='2000-01-01T00:00:00+00:00'
         tach={'value':3000,'units':None,'at':'2000-01-01T00:00:01+00:00'}
-        c.status('healthy',80,observed(),tach=tach)
+        c.status('healthy',f.HIGH_DUTY,observed(),tach=tach)
         self.assertEqual(c.proof['readback_at'],'2000-01-01T00:00:00+00:00')
         self.assertEqual(c.proof['tach_at'],tach['at'])
         c.status('degraded_unknown',None,error='request_timeout')
@@ -336,6 +354,73 @@ class ControllerTests(unittest.TestCase):
         c,b,s=self.make();c.start();c.step(FakeNode(),0)
         self.assertIsNone(c.proof['actual_tach_units']);self.assertLess(len(json.dumps(c.proof)),4096)
         self.assertIn('not_measured_pwm',c.proof['readback_kind'])
+    def test_prepared_legacy80_reconciles_read_only_then_fresh100(self):
+        for actual in (40,80):
+            with self.subTest(actual=actual):
+                c,b,s=self.make(actual);c.inspect();baseline=copy.deepcopy(c.baseline)
+                pending={'state':'prepared','before_duty':40,'desired_duty':80,
+                         'invariant_sha256':f.digest(c.baseline),'historical_field':'retained'}
+                s.write('pending-write.json',pending);s.write('uncertain-write.json',{'old':'retained'})
+                c.policy.cool_since=0;c.reconcile_pending()
+                self.assertEqual(b.puts,0);self.assertIsNone(c.policy.cool_since)
+                proven=s.read('pending-write.json');self.assertEqual(proven['state'],'verified')
+                self.assertEqual(proven['desired_duty'],80);self.assertEqual(proven['historical_field'],'retained')
+                c.reconcile_pending();self.assertEqual(s.read('pending-write.json'),proven)
+                c.start();self.assertEqual(b.duties,[100])
+                self.assertEqual(s.read('uncertain-write.json'),{'old':'retained'})
+                self.assertEqual(c.baseline,baseline)
+    def test_prepared100_and_invalid_or_conflicting_intents_never_replayed(self):
+        for desired in (40,80,100):
+            c,b,s=self.make(desired);c.inspect()
+            pending={'state':'prepared','before_duty':40,'desired_duty':desired,'invariant_sha256':f.digest(c.baseline)}
+            s.write('pending-write.json',pending);c.reconcile_pending();self.assertEqual(b.puts,0)
+        for desired in (80.0,True,75):
+            c,b,s=self.make(40);c.inspect()
+            pending={'state':'prepared','before_duty':40,'desired_duty':desired,'invariant_sha256':f.digest(c.baseline)}
+            s.write('pending-write.json',pending)
+            with self.assertRaisesRegex(f.Fault,'write_record_invalid'):c.high()
+            self.assertEqual(b.puts,0);self.assertEqual(s.read('pending-write.json'),pending)
+        c,b,s=self.make(60);c.inspect()
+        pending={'state':'prepared','before_duty':40,'desired_duty':80,'invariant_sha256':f.digest(c.baseline)}
+        s.write('pending-write.json',pending);c.terminal('ambiguous_write_conflicting_readback')
+        self.assertEqual(b.puts,0);self.assertEqual(s.read('pending-write.json'),pending)
+        latch=s.read('blocked.json')
+        with self.assertRaisesRegex(f.Fault,'operator_review_required'):f.Controller(b,s).start()
+        self.assertEqual(s.read('blocked.json'),latch);self.assertEqual(b.puts,0)
+    def test_hot_tiers_through_controller_stop_restart_and_new_cool_dwell(self):
+        c,b,s=self.make();c.start()
+        for t in range(0,31,5):c.step(FakeNode(),t)
+        c.step(FakeNode(69),35);self.assertEqual(f.shape(b.s),40)
+        c.step(FakeNode(70),40);self.assertEqual(f.shape(b.s),80)
+        c.step(FakeNode(80),45);self.assertEqual(f.shape(b.s),80)
+        c.step(FakeNode(80.001),50);self.assertEqual(f.shape(b.s),100)
+        c.step(FakeNode(78),55);self.assertEqual(f.shape(b.s),100)
+        for t in range(60,91,5):c.step(FakeNode(),t)
+        self.assertEqual(f.shape(b.s),40)
+        duty=c.high();c.status('stopped_high',duty,tach=b.tach());self.assertEqual(duty,100)
+        restarted=f.Controller(b,s);restarted.start()
+        for t in range(95,125,5):restarted.step(FakeNode(),t);self.assertEqual(f.shape(b.s),100)
+        restarted.step(FakeNode(),125);self.assertEqual(f.shape(b.s),40)
+        self.assertEqual(b.duties,[100,40,80,100,40,100,40])
+    def test_late_stop_after_intent_cancels_lowering_before_send(self):
+        c,b,s=self.make();c.start();write=s.write
+        def stop_after_intent(name,value):
+            write(name,value)
+            if name=='pending-write.json' and value['desired_duty']==40:c.stopping=lambda:True
+        s.write=stop_after_intent
+        c.command(b.snapshot(),100,40)
+        self.assertEqual(b.duties,[100]);self.assertEqual(f.shape(b.s),100)
+        self.assertTrue(s.read('pending-write.json')['cancelled_before_send'])
+    def test_repeated80_to100_cycles_cannot_conflict_with_legacy_archive(self):
+        c,b,s=self.make();c.start();now=0
+        for _ in range(2):
+            for t in range(now,now+31,5):c.step(FakeNode(),t)
+            c.step(FakeNode(70),now+35);self.assertEqual(f.shape(b.s),80)
+            c.step(FakeNode(81),now+40);self.assertEqual(f.shape(b.s),100)
+            now+=45
+        self.assertEqual(b.duties,[100,40,80,100,40,80,100])
+        self.assertIsNone(s.read('blocked.json'))
+        self.assertIsNone(s.read('legacy-80-write.json'))
 
 class StoreTests(unittest.TestCase):
     def test_bound_credentials_require_private_regular_single_link(self):
@@ -371,7 +456,7 @@ class StoreTests(unittest.TestCase):
             try:
                 self.assertIsNone(s.read('baseline.json'))
                 c=f.Controller(FakeBMC(),s);c.start()
-                self.assertEqual(s.read('status.json')['readback_duty'],80)
+                self.assertEqual(s.read('status.json')['readback_duty'],f.HIGH_DUTY)
                 self.assertIsNone(s.read('blocked.json'))
                 with self.assertRaisesRegex(f.Fault,'protected_file_unavailable'):
                     f.protected(Path(p)/'missing-credential')

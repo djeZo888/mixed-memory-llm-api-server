@@ -8,13 +8,13 @@
   "helperAndManifestSha256": {
     "scripts/vision/artifact_job.py": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
     "scripts/vision/launch_job.py": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
-    "scripts/vision/stage_job.py": "2621ae2dac075265dc2a546d72dea4369789dc830f491db6b307f6b3da323d74",
+    "scripts/vision/stage_job.py": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
     "configs/vision/h039-artifacts.lock.json": "822cd4c8e8cebbbd190fc046838899c8e576752ab67fa73dcf6d88d7a02ceb94"
   },
   "validation": {
     "syntheticArtifactTests": {
       "status": "PASS",
-      "tests": 41,
+      "tests": 42,
       "exitCode": 0
     },
     "pythonCompilation": "PASS",
@@ -93,5 +93,9 @@
     "Collect one immediate actual unit/PID/status receipt and close paid CLI without download polling."
   ],
   "actualNativeExit": "NOT_OBSERVED_WRAPPER_RECORDS_AFTER_CLOSE",
-  "actualOuterExit": "NOT_OBSERVED_WRAPPER_RECORDS_AFTER_CLOSE"
+  "actualOuterExit": "NOT_OBSERVED_WRAPPER_RECORDS_AFTER_CLOSE",
+  "currentCandidateBase": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+  "importedOriginalCommit": "337a92c41cc79659221c59a52c6016aeab47f4c1",
+  "stageEntryDurability": "Checked anchored attempt directory fsync after stage claim and after worker/manifest/initial-status file fsync, before STAGED_NOT_STARTED.",
+  "currentPhaseVmAccess": "NONE; previous readiness observation retained as dated evidence"
 }
