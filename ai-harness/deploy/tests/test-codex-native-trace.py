@@ -29,4 +29,11 @@ class Fixtures(unittest.TestCase):
   self.capture.feed(self.line(),final=True);published=[];producer={'pid':1};receipts={'read_private':lambda p:{'containerId':'c','producer':producer,'nonce':'n','environment':trace.PAIR},'write_once':lambda p,n,v:published.append(v)}
   self.capture.publish(receipts,producer,'c',143,True,True);v=published[0];self.assertEqual(v['environment'],trace.PAIR);self.assertEqual(v['engineExitStatus'],143);self.assertTrue(v['requestedStop']);self.assertTrue(v['complete'])
   with self.assertRaises(ValueError):self.capture.publish(receipts,producer,'foreign',0,False,True)
+class SettlementPublication(unittest.TestCase):
+ def test_trace_failure_does_not_erase_actual_raw_engine_and_cleanup_receipt(self):
+  p=Path(__file__).resolve().parents[1]/'engine/redact-acp.py';spec=importlib.util.spec_from_file_location('redact_fixture',p);module=importlib.util.module_from_spec(spec);spec.loader.exec_module(module);calls=[]
+  class Broken:
+   def publish(self,*a):raise ValueError('synthetic capture failure')
+  result=module.publish_cleanup_evidence('channel',{'publish_settlement':lambda *a:calls.append(a)},Broken(),'producer','container','id',143,True,True,0,1,True)
+  self.assertFalse(result);self.assertEqual(len(calls),1);self.assertEqual(calls[0][4:],(143,True,True,0,1,True))
 if __name__=='__main__':unittest.main()

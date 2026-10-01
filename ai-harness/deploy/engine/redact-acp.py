@@ -38,6 +38,16 @@ def write_all(fd, data):
         data = data[os.write(fd, data):]
 
 
+def publish_cleanup_evidence(config,receipts,trace,producer,container,native_id,raw_exit,requested_stop,cli_reaped,rm_exit,exists_exit,pipes_joined):
+    trace_ok=True
+    if trace is not None:
+        try:trace.publish(receipts,producer,native_id,raw_exit,requested_stop,cli_reaped and rm_exit==0 and exists_exit==1 and pipes_joined)
+        except (ValueError,OSError,TypeError):trace_ok=False
+    settlement_ok=True
+    try:receipts['publish_settlement'](config,producer,container,native_id,raw_exit,requested_stop,cli_reaped,rm_exit,exists_exit,pipes_joined)
+    except (ValueError,OSError,TypeError):settlement_ok=False
+    return trace_ok and settlement_ok
+
 def main():
     if sys.argv[1:] in (["--help"], ["-h"]):
         os.write(1, b"Private ACP supervisor: invoked by run-engine.sh with local Podman run arguments.\n"
@@ -170,15 +180,11 @@ def main():
         if any(worker.is_alive() for worker in filters) or pipe_failed.is_set():
             cleanup_ok = False
         if receipt_config is not None:
-            try:
-                if trace is not None:
-                    trace.publish(receipts,producer,native_id,process.returncode if process is not None else None,requested_stop,cleanup_ok and not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
-                receipts['publish_settlement'](receipt_config, producer, container, native_id,
-                    process.returncode if process is not None else None, requested_stop,
-                    process is not None and process.poll() is not None, rm_exit, exists_exit,
-                    not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
-            except (ValueError, OSError, TypeError):
-                cleanup_ok = False
+            published=publish_cleanup_evidence(receipt_config,receipts,trace,producer,container,native_id,
+                process.returncode if process is not None else None,requested_stop,
+                process is not None and process.poll() is not None,rm_exit,exists_exit,
+                not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
+            cleanup_ok=cleanup_ok and published
         if not cleanup_ok:
             # Fixed text only; stderr may be closed after the server cancels.
             try:
