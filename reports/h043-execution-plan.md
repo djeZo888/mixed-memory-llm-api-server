@@ -1,6 +1,6 @@
 # H043 execution plan
 
-**Current state: paused.** All eleven H043 native worker sessions have closed. The demonstration proposal below requires human confirmation before another session or live action. The original three-hour plan in this opening section is retained history; its fan repair priority is superseded.
+**Confirmed for H044 on 2 October.** The human approved the demonstration proposal and instructed execution to start using GPT-6.1 Sol Ultra for every worker session. Its prior pause is revoked; current authority is at the top of AGENTS.md. All eleven H043 native worker sessions remain closed. The original three-hour plan in this opening section is retained history; its fan repair priority is superseded.
 
 The user authorized a further three-hour session to complete remaining Codex features, image-to-text integration and CHA_FAN3 repair, including independent parallel subtasks on both Macs. The window runs21:19:33 UTC1October–00:19:33 UTC2October (23:19:33–02:19:33 Ljubljana), with closure/reporting from00:04:33 UTC. Continue this chat; do not create a chat handoff. Start source from reviewed combined4f1a060ae4cc682244d1be40c4c5f5fd2919a7fa and adopt retained artifacts rather than replaying bootstrap.
 
@@ -16,9 +16,9 @@ Preserve runtime and context pins0.158.0/064c/480000/400000/65536; original hist
 
 Before integration, root verifies actual integer native/wrapper/outer exits, recorded birth/PGID/descendant absence, exact bundle/source/diff hashes and command-log receipts. Source PASS, physical/readback/lifecycle/native PASS, partial and NOT_TESTED remain distinct. Original errors/receipts/issued approvals are immutable; use separate corrections. The final report states what completed, fixed and remains unresolved and retains this conversation's context.
 
-## Demonstration proposal — awaiting human confirmation
+## Confirmed demonstration plan — H044
 
-The human changed priorities during H043 and clarified the deadline as **2 October 2026 at 10:00 Ljubljana / 08:00 UTC**. All current sessions are closed and execution is paused. This proposal does not authorize new execution. Confirmation would authorize demonstration work from that reply through 10:00 Ljubljana, replacing the earlier three-hour work cap for this new scope. Freeze features at **09:00 Ljubljana / 07:00 UTC**; use the next 45 minutes for rehearsal and necessary corrections, and reserve **09:45–10:00** for closure, collection and a factual report in this conversation. Worker execution must close before that final reserve. Leave the qualified normal services available for the demonstration; expiry of a test approval does not expire ordinary chats or disable the product. Every operational qualification still needs its own fresh source-bound finite window. Preserve historical H043 approvals without extending or replaying them.
+The human changed priorities during H043 and clarified the deadline as **2 October 2026 at 10:00 Ljubljana / 08:00 UTC**, then explicitly confirmed this plan. Demonstration work is authorized from that confirmation through 10:00 Ljubljana, replacing the earlier three-hour work cap for this new scope. Freeze features at **09:00 Ljubljana / 07:00 UTC**; use the next 45 minutes for rehearsal and necessary corrections, and reserve **09:45–10:00** for closure, collection and a factual report in this conversation. Worker execution must close before that final reserve. Leave the qualified normal services available for the demonstration; expiry of a test approval does not expire ordinary chats or disable the product. Every operational qualification still needs its own fresh source-bound finite window. Preserve historical H043 approvals without extending or replaying them.
 
 | Priority lane | Concrete demonstration outcome | Parallel assignment after confirmation |
 | --- | --- | --- |
