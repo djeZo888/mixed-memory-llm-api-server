@@ -46,7 +46,9 @@ export function extractPersistedSummary(rollout: Buffer, binding: CompactionBind
   if (!Number.isFinite(at) || at < start || at > end || typeof message !== 'string' || !message.trim() ||
       Buffer.byteLength(message) > 4 * 1024 * 1024 || message.includes('\0')) throw Error('summary_empty_invalid_or_unmatched');
   if (typeof binding.summaryPrefix !== 'string' || !binding.summaryPrefix.trim()) throw Error('pinned_summary_prefix_unavailable');
-  if (!message.startsWith(binding.summaryPrefix) || !message.slice(binding.summaryPrefix.length).trim()) throw Error('summary_prefix_only_or_unmatched');
+  // Pinned compact.rs joins SUMMARY_PREFIX, exactly one newline and the body.
+  const prefix = binding.summaryPrefix.endsWith('\n') ? binding.summaryPrefix : binding.summaryPrefix + '\n';
+  if (!message.startsWith(prefix) || !message.slice(prefix.length).trim()) throw Error('summary_prefix_only_or_unmatched');
   return Object.freeze({ message, contextSha256: sha256(message), rolloutSha256: sha256(rollout),
     compactedAt: compacted.timestamp, ...binding, projection: 'persisted-message-only' as const });
 }
@@ -67,4 +69,11 @@ export function summaryThreadParams(workspace: string, frozenPolicy: string) {
 export function summaryProbeText(summary: string, frozenPolicy: string, request: unknown) {
   if (!summary.trim() || !frozenPolicy.trim()) throw Error('empty_projection_or_policy');
   return stableJson({ policy: frozenPolicy, persistedCompactedMessage: summary, questions: request });
+}
+
+/** Seal the independently approved input graph before any async boundary. */
+export function reviewSnapshot<T>(value: T): T {
+  const snapshot = structuredClone(value);
+  const freeze = (v: any): void => { if (v && typeof v === 'object') { for (const x of Object.values(v)) freeze(x); Object.freeze(v); } };
+  freeze(snapshot); return snapshot;
 }

@@ -3,7 +3,7 @@ import { randomUUID } from 'node:crypto';
 import { CodexConnection, isRecord, CodexProtocolError } from '../../../server/src/codex-connection.js';
 import type { RootlessCodexProcess } from '../../../server/src/codex-engine.js';
 import type { TemporaryHost } from './bootstrap.js';
-import type { ProbeManifest } from './dispatch-guard.js';
+import { normalizeNativeInput, bindReviewedEnvelope, type ProbeManifest } from './dispatch-guard.js';
 import { emptyProbeMounts, durableFile } from './checkpoint.js';
 import { identifier, requireIdentity, sha256, stableJson, summaryProbeText, summaryThreadParams } from './projection.js';
 
@@ -13,12 +13,13 @@ import { identifier, requireIdentity, sha256, stableJson, summaryProbeText, summ
  */
 export async function summaryProbe(host: TemporaryHost, input: {
   parentNativeThreadId: string; summary: string; contextSha256: string; frozenPolicy: string;
+  windowId: string; compactedRecordSha256: string; collectorSourceSha256: string; collectorManifestUtf8: string;
   request: unknown; manifest: ProbeManifest; actionId: string; runId: string; signal: AbortSignal;
 }) {
   requireIdentity(input.parentNativeThreadId);
-  if (host.closing || sha256(input.summary) !== input.contextSha256 || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
+  if (host.launchHeld() || !input.summary.trim() || !/^[a-f0-9]{64}$/.test(input.contextSha256) || input.signal.aborted) throw Error('summary_checkpoint_mismatch_or_aborted');
   const ownedAbort = new AbortController();
-  const totalDeadlineMs = Math.max(1, Math.min(120000, host.expiresAt - Date.now()));
+  const totalDeadlineMs = Math.max(1, Math.min(120000, host.dispatchCutoffAt - Date.now()));
   const signal = AbortSignal.any([input.signal, ownedAbort.signal, AbortSignal.timeout(totalDeadlineMs)]);
   const text = summaryProbeText(input.summary, input.frozenPolicy, input.request);
   if (input.manifest.userText !== text || input.manifest.contextSha256 !== input.contextSha256) throw Error('reviewed_summary_manifest_mismatch');
@@ -36,11 +37,13 @@ export async function summaryProbe(host: TemporaryHost, input: {
   let finishHandle!: () => void;
   const finished = new Promise<void>(resolve => { finishHandle = resolve; });
   host.directProbes.set(sessionId, { abort: () => ownedAbort.abort(), finished });
-  let terminalSeen: any;
+  let terminalSeen: any, intentionalCleanup = false;
   let resolveTerminal!: () => void, rejectTerminal!: (error: Error) => void;
   const terminal = new Promise<void>((resolve, reject) => { resolveTerminal = resolve; rejectTerminal = reject; });
   void terminal.catch(() => undefined);
-  const fail = () => { failure = 'native_protocol_or_settlement_failure'; rejectTerminal(new CodexProtocolError(failure)); };
+  const fail = (error?: Error) => {
+    if (intentionalCleanup && terminalSeen && error?.message === 'App Server stream ended') return;
+    failure = 'native_protocol_or_settlement_failure'; rejectTerminal(new CodexProtocolError(failure)); };
   const abort = () => {
     failure = 'probe_deadline_or_cancelled'; host.gateway.revokeSession(sessionId);
     // Only an observed owned turn can be interrupted. ACK does not settle work.
@@ -93,16 +96,16 @@ export async function summaryProbe(host: TemporaryHost, input: {
   try {
     host.guard.register({ sessionId, actionId: input.actionId, runId: input.runId, mode: 'summary-only',
       parentNativeThreadId: input.parentNativeThreadId, manifest: input.manifest, signal,
-      expiresAt: Math.min(host.expiresAt, Date.now() + 120000), identity: () => ({ nativeThreadId, nativeTurnId }) });
+      expiresAt: Math.min(host.dispatchCutoffAt, Date.now() + 120000), identity: () => ({ nativeThreadId, nativeTurnId }) });
     signal.addEventListener('abort', abort, { once: true });
-    if (signal.aborted) throw Error('probe_deadline_or_cancelled');
+    if (signal.aborted || host.launchHeld()) throw Error('trusted_probe_launch_held_or_cancelled');
     child = await host.host.runtime.launchRootless({ sessionId, ...mounts, codexHome: join(mounts.profileDir, 'codex-home'),
       gatewayUrl: host.host.runtime.gatewayUrl, gatewayToken: token, modelPolicyVersion: host.host.runtime.modelPolicyVersion });
     if (signal.aborted) throw Error('probe_deadline_or_cancelled');
     connection = new CodexConnection(child.stdout, child.stdin, observe, fail, 15000);
     void child.exited.then(() => { if (!terminalSeen) connection?.fail(new CodexProtocolError('owned_native_process_died')); });
     const home = join(mounts.profileDir, 'codex-home');
-    const initialized = await connection.request('initialize', { clientInfo: { name: 'h039-native-adapter', version: '1' },
+    const initialized = await connection.request('initialize', { clientInfo: { name: 'h040-native-adapter', version: '1' },
       capabilities: { experimentalApi: true, requestAttestation: false } });
     if (!isRecord(initialized) || initialized.codexHome !== home || initialized.platformOs !== 'linux' ||
         initialized.platformFamily !== 'unix' || typeof initialized.userAgent !== 'string' || !initialized.userAgent.includes('0.158.0')) throw Error('probe_native_initialization_unqualified');
@@ -117,33 +120,55 @@ export async function summaryProbe(host: TemporaryHost, input: {
     await terminal;
   } catch { failure ??= 'probe_native_failed'; }
   finally {
-    host.gateway.revokeSession(sessionId); // Admission first; no new owned work.
-    await interrupt;
-    if (child) nativeGone = await child.terminateAndConfirm().catch(() => false);
-    gatewaySettled = await host.gateway.confirmSettlement({ sessionId, nativeThreadId, activeTurnId: nativeTurnId }, 15000).catch(() => false);
-    signal.removeEventListener('abort', abort);
-    host.guard.retire(sessionId);
-    host.directProbes.delete(sessionId); finishHandle();
+    try {
+      host.gateway.revokeSession(sessionId); // Admission first; no new owned work.
+      await interrupt;
+      intentionalCleanup = !!terminalSeen && !failure;
+      if (child) nativeGone = await child.terminateAndConfirm().catch(() => false);
+      gatewaySettled = await host.gateway.confirmSettlement({ sessionId, nativeThreadId, activeTurnId: nativeTurnId }, 15000).catch(() => false);
+      if (child) host.observer.gateway(sessionId, nativeThreadId, nativeTurnId ?? null, gatewaySettled);
+    } catch { failure = 'probe_settlement_capture_failed'; }
+    finally {
+      signal.removeEventListener('abort', abort);
+      try { host.guard.retire(sessionId); } finally { host.directProbes.delete(sessionId); finishHandle(); }
+    }
   }
   if (!nativeGone || !gatewaySettled) failure = 'probe_owned_settlement_unconfirmed';
   const receipt = { sessionId, actionId: input.actionId, runId: input.runId, nativeThreadId: nativeThreadId ?? null,
     nativeTurnId: nativeTurnId ?? null, parentNativeThreadId: input.parentNativeThreadId,
     startedAt, settledAt: new Date().toISOString(), nativeGone, gatewaySettled, automaticReplay: false };
   await durableFile(join(host.layout.hostPrivate, `${sessionId}-native-output.json`), stableJson({ receipt, nativeEvents, failure, finalText }) + '\n');
-  if (failure) return { ...receipt, outcome: 'failed', failure, settlement: { state: nativeGone && gatewaySettled ? 'settled' : 'unknown', receiptSha256: sha256(stableJson(receipt)), automaticReplay: false } };
+  if (failure) return { ...receipt, outcome: 'failed', failure, settlement: { state: nativeGone && gatewaySettled ? 'released' : 'quarantined', receiptSha256: sha256(stableJson(receipt)), automaticReplay: false } };
   let answer: unknown;
   try { answer = JSON.parse(finalText!); } catch {
     const failure = { ...receipt, outcome: 'failed', failure: 'probe_answer_invalid_json',
-      settlement: { state: 'settled', receiptSha256: sha256(stableJson(receipt)), automaticReplay: false } };
+      settlement: { state: 'released', receiptSha256: sha256(stableJson(receipt)), automaticReplay: false } };
     await durableFile(join(host.layout.hostPrivate, `${sessionId}-answer-FAILED.json`), stableJson(failure) + '\n');
     return failure;
   }
   const capture = host.guard.receipt(sessionId);
-  return { ...receipt, outcome: 'completed', answer, isolation: { ...capture,
-    toolsDenied: true, toolCalls: [], originalRecordIds: [],
+  const operation = host.observer.operation(sessionId);
+  if (operation.method !== 'turn/start' || operation.nativeThreadId !== nativeThreadId || operation.nativeTurnId !== nativeTurnId) throw Error('probe_trace_identity_mismatch');
+  const probeSettledOperationUtf8 = stableJson({ source: 'native-probe-settlement', runId: input.runId, actionId: input.actionId, windowId: input.windowId,
+    parentNativeThreadId: input.parentNativeThreadId, nativeThreadId, nativeTurnId, parentStateSha256: input.contextSha256,
+    status: 'completed', settlement: 'released', nativeProcessGone: nativeGone, gatewaySettled,
+    firstRequestSha256: capture.captureSha256, normalizedRequestSha256: capture.normalizedSha256, startedAt: operation.request.observedAt, completedAt: operation.gateway.observedAt });
+  const probeSettledOperationSha256 = sha256(probeSettledOperationUtf8);
+  const projectionReceiptUtf8 = stableJson({ source: 'native-fresh-persisted-message-projection', logicalManifestFormat: 'h040-sorted-json-v1', runId: input.runId, actionId: input.actionId, windowId: input.windowId,
+    parentNativeThreadId: input.parentNativeThreadId, nativeThreadId, nativeTurnId, parentStateSha256: input.contextSha256,
+    compactedRecordSha256: input.compactedRecordSha256, summarySha256: sha256(input.summary), querySha256: sha256(stableJson(input.request)), policySha256: sha256(input.frozenPolicy),
+    collectorSourceSha256: input.collectorSourceSha256, firstRequestSha256: capture.captureSha256, normalizedRequestSha256: capture.normalizedSha256, scopeReceiptSha256: null,
+    inputManifestSha256: sha256(stableJson(normalizeNativeInput(JSON.parse(capture.firstRequestUtf8).input).map(m => sha256(stableJson(m))))),
+    envelopeSha256: sha256(stableJson(bindReviewedEnvelope(input.manifest.envelope, nativeThreadId!, nativeTurnId!))), settledOperationSha256: probeSettledOperationSha256 });
+  await durableFile(join(host.layout.hostPrivate, `${sessionId}-probe-settlement.json`), probeSettledOperationUtf8);
+  await durableFile(join(host.layout.hostPrivate, `${sessionId}-projection.json`), projectionReceiptUtf8);
+  return { ...receipt, outcome: 'completed', answer,
+    durationMs: { state: 'measured', value: Date.parse(operation.gateway.observedAt) - Date.parse(operation.request.observedAt), source: 'host-native-probe-operation-observation', receiptSha256: probeSettledOperationSha256, reason: null }, isolation: { ...capture,
+    collectorManifestUtf8: input.collectorManifestUtf8, projectionReceiptUtf8, projectionReceiptSha256: sha256(projectionReceiptUtf8), probeSettledOperationUtf8, probeSettledOperationSha256,
+    scopeReceiptUtf8: null, scopeReceiptSha256: null, toolsDenied: true, toolCalls: [], originalRecordIds: [],
     // Configuration/input checks do not attest actual container mounts or egress.
     filesDenied: null, networkDenied: null, accessiblePaths: null, answerKeyExposed: null, parentHistoryExposed: null,
     mountAttestation: null, egressAttestation: null, qualifiedForkReceiptSha256: null,
     projection: 'fresh-thread-persisted-message-only', inputReceiptSha256: capture.captureSha256 },
-    settlement: { state: 'settled', receiptSha256: sha256(stableJson(receipt)), automaticReplay: false } };
+    settlement: { state: 'released', receiptSha256: probeSettledOperationSha256, automaticReplay: false } };
 }
