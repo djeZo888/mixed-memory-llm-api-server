@@ -931,13 +931,11 @@ export class Broker {
   private async shutdown() {
     this.closing = true;
     const recoveries=[...this.recoveries.values()];for(const r of recoveries)r.abort.abort(new Error("Recovery cancelled by shutdown"));
-    await Promise.all(recoveries.map(r=>r.settled));
     const active = [...this.active.values()];
-    await Promise.all(active.map((a) => this.cancel(a.run.sessionId)));
+    const cancellations = active.map((a) => this.cancel(a.run.sessionId));
     // Deliver launcher shutdown now; waiting for an unresponsive prompt first
     // would prevent PREP's bounded exact-container cleanup from ever starting.
-    await Promise.all(
-      [...this.runners.keys()].map(async (id) => {
+    const runnerClosures = [...this.runners.keys()].map(async (id) => {
         try {
           await this.closeRunner(id);
         } catch {
@@ -946,8 +944,8 @@ export class Broker {
             "shutdown_settlement_unknown",
           );
         }
-      }),
-    );
-    await Promise.all(active.map((a) => a.settled));
+      });
+    // Begin Stop for every owner before waiting on any slow recovery/runner.
+    await Promise.all([...recoveries.map(r=>r.settled), ...cancellations, ...runnerClosures, ...active.map(a=>a.settled)]);
   }
 }

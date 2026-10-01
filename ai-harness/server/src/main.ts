@@ -355,11 +355,11 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     clearInterval(freezeTimer);
     await freezeServer?.close();
     owned?.close();
-    codexHost.stopSettlementObservation();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),
     ]);
+    codexHost.stopSettlementObservation();
     await gateway!.close();
     await application.app.close();
     freeze.close();

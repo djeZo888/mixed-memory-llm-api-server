@@ -112,7 +112,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     confirmGatewaySettlement: async query => (await gateway()?.observeSettlement(query, settlementObservation.signal)) === true,
   };
   return { runtime,
-    // Invoke before broker.close(): stopping observation is not settlement proof.
+    // Stop only after broker/recovery owners have settled; stopping is not settlement proof.
     stopSettlementObservation: () => settlementObservation.abort(),
     responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,
     frontierQualified: qualification.frontierResponsesQualified, frontierAcceptance: qualification.frontierAcceptance,
