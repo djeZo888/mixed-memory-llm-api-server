@@ -1,6 +1,6 @@
 {
   "task": "H039-20261001",
-  "phase": "existing_sessions_adopted_source_reviews_in_progress",
+  "phase": "ai_vm_shutdown_requested_mac_source_work_only",
   "baseCommit": "8d1b870ddd41b6c92691cf1c3a080ae1380e1f16",
   "globalDeadlineUtc": "2026-10-01T02:25:00Z",
   "model": "gpt-6.1-sol",
@@ -23,8 +23,8 @@
       },
       "startedUtc": "2026-10-01T00:23:51.882485+00:00",
       "hardDeadlineUtc": "2026-10-01T01:53:51.882485+00:00",
-      "observedUtc": "2026-10-01T00:24:13.386212+00:00",
-      "statusAtObservation": "native session running; result not yet collected",
+      "observedUtc": "2026-10-01T00:56:41Z",
+      "statusAtObservation": "closed native/outer exit0; reviewed source integrated",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/A-native-compaction",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/A-native-compaction/repo",
       "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/A-native-compaction/LAUNCH-RECEIPT.json",
@@ -40,6 +40,16 @@
         "observedUtc": "2026-10-01T00:53:28.798170+00:00",
         "duplicateNativeSessionLaunched": false,
         "status": "existing native session adopted; source result pending"
+      },
+      "result": {
+        "sourceCommit": "a6aeb4ff522a12e247bbf4e17b8e90dd1a87f187",
+        "integrationCommit": "006cfb4b888ee73cc2207884104062db98866274",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "focusedTestsPass": 95,
+        "broadTestsPass": 1008,
+        "nativeOptInSkipped": 4,
+        "nativeOperationalAcceptance": "NOT_TESTED"
       }
     },
     {
@@ -59,8 +69,8 @@
       },
       "startedUtc": "2026-10-01T00:24:02.043829+00:00",
       "hardDeadlineUtc": "2026-10-01T01:54:02.043829+00:00",
-      "observedUtc": "2026-10-01T00:24:26.133490+00:00",
-      "statusAtObservation": "native session running; result not yet collected",
+      "observedUtc": "2026-10-01T01:17:00Z",
+      "statusAtObservation": "existing native source session active; source review fixes in progress; ai-vm work frozen",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/B-retention-suite",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/B-retention-suite/repo",
       "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/B-retention-suite/LAUNCH-RECEIPT.json",
@@ -95,8 +105,8 @@
       },
       "startedUtc": "2026-10-01T00:23:52.694982+00:00",
       "hardDeadlineUtc": "2026-10-01T01:08:52.694982+00:00",
-      "observedUtc": "2026-10-01T00:24:13.403235+00:00",
-      "statusAtObservation": "native session running; result not yet collected",
+      "observedUtc": "2026-10-01T01:18:49.300631+00:00",
+      "statusAtObservation": "original download failed; recovery source reviewed; launch-only staging failed; same session resumed for user-authorized shutdown",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-vision-artifacts/repo",
       "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/C-vision-artifacts/LAUNCH-RECEIPT.json",
@@ -134,7 +144,41 @@
         "resumeSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
         "hardDeadlineUtc": "2026-10-01T01:08:52Z",
         "scope": "source-recovery proposal; no retry before root review",
-        "result": "pending"
+        "result": "source integrated b57909ef; 22 source tests PASS; native deadline terminated -15 / outer143",
+        "actualNativeExitCode": -15,
+        "actualOuterExitCode": 143,
+        "finishedUtc": "2026-10-01T01:08:37Z",
+        "finalSourceCommit": "b57909ef38863e9b25ac045b4d83aa546f05765a",
+        "renewedGoHashMatch": true,
+        "initialHashMismatchResolved": true
+      },
+      "launchPhase": {
+        "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-download-launch-02",
+        "sameSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "finishedUtc": "2026-10-01T01:14:13Z",
+        "stageExitCode": 1,
+        "stageInvocations": 1,
+        "outcome": "FAIL_STAGE_NOT_LAUNCHED",
+        "failureCause": "unknown; stderr not retained",
+        "downloadLaunched": false,
+        "recoveryUnit": "h039-vision-20261001-c-01a0f4d8-recovery-01.service",
+        "unitObservedState": "not-found",
+        "newAttemptNamespaceCreated": false,
+        "originalFailureReceiptsAndRootPreserved": true
+      },
+      "shutdownPhase": {
+        "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/C-shutdown-03",
+        "sameSessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+        "nativePid": 17831,
+        "outerPid": 17829,
+        "startedUtc": "2026-10-01T01:17:19Z",
+        "hardDeadlineUtc": "2026-10-01T01:27:00Z",
+        "verifiedModel": "gpt-6.1-sol",
+        "verifiedReasoningEffort": "ultra",
+        "settingsEvidence": "persisted native turn_context at 01:17:21.612Z",
+        "result": "pending actual shutdown receipt"
       }
     },
     {
@@ -154,8 +198,8 @@
       },
       "startedUtc": "2026-10-01T00:24:02.043830+00:00",
       "hardDeadlineUtc": "2026-10-01T01:54:02.043830+00:00",
-      "observedUtc": "2026-10-01T00:24:26.134656+00:00",
-      "statusAtObservation": "native session running; result not yet collected",
+      "observedUtc": "2026-10-01T00:59:11Z",
+      "statusAtObservation": "closed native/outer exit0; reviewed fixture preparation integrated",
       "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/D-vision-bridge",
       "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/D-vision-bridge/repo",
       "privateLocalReceipt": "/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/D-vision-bridge/LAUNCH-RECEIPT.json",
@@ -171,10 +215,57 @@
         "observedUtc": "2026-10-01T00:53:28.798170+00:00",
         "duplicateNativeSessionLaunched": false,
         "status": "existing native session adopted; source result pending"
+      },
+      "result": {
+        "sourceCommit": "c0c9e3b84eb02cd90bfa243cdf52dc583c12e6b2",
+        "nativeExitCode": 0,
+        "outerExitCode": 0,
+        "finalFocusedTestsPass": 29,
+        "finalBuild": "PASS",
+        "runtimeGpuNativeToolAcceptance": "NOT_TESTED"
       }
+    },
+    {
+      "task": "E-compaction-adapter",
+      "host": "mac-worker2",
+      "branch": "h039/e-compaction-adapter",
+      "baseCommit": "006cfb4b888ee73cc2207884104062db98866274",
+      "actualSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted native turn_context",
+      "cliVersion": "0.159.2",
+      "pids": {
+        "outer": 21725,
+        "wrapper": 21726,
+        "native": 21727
+      },
+      "startedUtc": "2026-10-01T01:01:04Z",
+      "hardDeadlineUtc": "2026-10-01T01:35:00Z",
+      "remoteTaskPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/E-compaction-adapter",
+      "remoteRepoPath": "/Users/agent/CodexProjects/llm-orchestration/H039-20261001/E-compaction-adapter/repo",
+      "statusAtObservation": "source-only adapter scaffold preparation in progress; no shared deployment or live inference GO; ai-vm work frozen",
+      "observedUtc": "2026-10-01T01:17:00Z",
+      "backgroundJob": null,
+      "collectFiles": [
+        "OUTBOX.md",
+        "output/RESULTS.json",
+        "LAST_MESSAGE.md",
+        "WRAPPER-TERMINAL.json",
+        "OUTER-TERMINAL.json"
+      ]
     }
   ],
   "adoptionRule": "Collect actual current PID/session terminal and OUTBOX before new dispatch. A launch receipt is not task completion. Preserve any bounded download job; do not duplicate it.",
   "adoptedUtc": "2026-10-01T00:53:28.798170+00:00",
-  "adoptionEvidence": "Fresh SSH PID checks and terminal/OUTBOX receipts; root private ADOPTION-INITIAL.json and read-only reviews"
+  "adoptionEvidence": "Fresh SSH PID checks and terminal/OUTBOX receipts; root private ADOPTION-INITIAL.json and read-only reviews",
+  "currentObservedUtc": "2026-10-01T01:18:49.300631+00:00",
+  "aiVmHold": {
+    "reason": "direct user instruction: second Ada 48 GB installation",
+    "requestedUtc": "2026-10-01T01:17:19Z",
+    "shutdownOwner": "C-vision-artifacts / same native session",
+    "newDownloadsDeploymentsInferenceAllowed": false,
+    "automaticRestartAllowed": false,
+    "result": "shutdown phase in progress"
+  }
 }

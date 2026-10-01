@@ -220,3 +220,10 @@ current `26a545dee9e51077e0d1984275928b0b4a891c7847c7755f97106dddb91838c6`).
 The launch/stage scripts and immutable manifest do match. INBOX explicitly
 instructs stop/re-export if source changed. Recovery remains
 **READY_FOR_ROOT_REVIEW**, unstaged and unlaunched; no paid wait for updated GO.
+
+
+## Root continuation and hardware hold
+
+The earlier approval comparison is retained as the worker's historical receipt. Root renewed the exact pins after independently passing all 22 source tests; the final helper hash matched. The recovery source CLI reached its deadline with actual native exit -15 and outer exit 143. A bounded launch-only phase resumed the same session and closed with actual native/outer exit 0 at 01:14:13 UTC. Its task outcome was **FAIL_STAGE_NOT_LAUNCHED**: the single guarded stage invocation exited 1. Stderr was not retained, so the staging cause remains unknown. No recovery unit, staged files, status or attempt claim appeared. The original artifact root, failed receipts and verified/partial files remained preserved in an independent 01:14:53 UTC check.
+
+The user then authorized normal ai-vm guest shutdown for installation of a second Ada 48 GB. Root froze all further ai-vm downloads, deployment and inference, and resumed the same C session for orderly shutdown only. Mac source preparation continues. The shutdown result is recorded in the current worker roster; no restart or download retry is authorized during the hardware hold.

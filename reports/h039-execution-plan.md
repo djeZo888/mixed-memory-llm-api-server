@@ -6,6 +6,10 @@ The user permits Sova downtime and retirement of the smaller Ada Qwen. Creative
 image acceptance remains deferred. No Proxmox, driver, fan or upstream Codex
 upgrade is included.
 
+## Current hardware hold
+
+The user subsequently authorized orderly ai-vm guest shutdown to install a second Ada 48 GB. The assigned artifact attempt has ended with a guarded staging failure and no running download. C owns the shutdown. Freeze new VM work and leave the guest down until the user confirms installation is complete; Mac source tasks can finish within their recorded deadlines. Live compaction/vision qualification remains deferred. See the current roster for actual terminal and shutdown receipts.
+
 ## Bounded parallel work
 
 Root coordinates, reviews and publishes. Actual implementation is performed by

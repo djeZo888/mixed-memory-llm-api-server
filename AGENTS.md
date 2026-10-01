@@ -13,6 +13,8 @@ isolated source only; C is the sole ai-vm artifact-storage writer. Shared live
 deployment follows root candidate review. Latest user authority supersedes the
 older H038 no-new-model rule for these two approved artifacts only.
 
+Latest user steering: shut ai-vm down after its currently assigned work ends so a second Ada 48 GB can be installed. The bounded artifact attempt ended in staging failure with no active download. C owns orderly guest shutdown. Freeze all new ai-vm downloads, deployment and inference; finish source-only Mac work. Read the current worker roster for the actual shutdown receipt. Leave the guest down until the user confirms hardware installation is complete; no automatic restart. This authorization covers normal guest shutdown, not host/Proxmox, driver or fan changes.
+
 The H038 text below is retained deployment evidence, not current task authority.
 
 Read the [H037 plan](reports/h037-execution-plan.md) and

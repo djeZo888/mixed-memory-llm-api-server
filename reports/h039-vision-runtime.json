@@ -540,5 +540,28 @@
       "finalTests": 22
     }
   },
-  "artifactDownload": "FAILED_ORIGINAL_ATTEMPT_NOT_COMPLETE"
+  "artifactDownload": "FAILED_ORIGINAL_ATTEMPT_NOT_COMPLETE",
+  "rootContinuation": {
+    "observedUtc": "2026-10-01T01:18:49.300631+00:00",
+    "initialApprovalHashMismatch": "FAIL_RESOLVED; renewed source pins match actual files",
+    "recoveryNativeTerminal": {
+      "actualExitCode": -15,
+      "outerActualExitCode": 143,
+      "deadlineTermination": true
+    },
+    "launchOnlyNativeTerminal": {
+      "actualExitCode": 0,
+      "outerActualExitCode": 0,
+      "finishedUtc": "2026-10-01T01:14:13Z"
+    },
+    "stageOutcome": "FAIL_STAGE_NOT_LAUNCHED",
+    "stageActualExitCode": 1,
+    "stageFailureCause": "unknown; stderr not retained",
+    "recoveryUnitObserved": "not-found",
+    "stagedFilesObserved": false,
+    "artifactAttemptReceiptsObserved": false,
+    "originalRootAndFailureReceiptsPreserved": true,
+    "automaticRetryAllowed": false,
+    "userAuthorizedGuestShutdown": "in progress; no further VM work before hardware installation"
+  }
 }

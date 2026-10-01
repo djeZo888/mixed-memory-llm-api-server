@@ -15,6 +15,14 @@ Working branch: `feature/h037-codex-default-ada-image`.
 draft and unmerged; default branch is `main`. The checkpoint before this handoff
 is `c73a853abbf46ecede65d0dae04dd2e5ac8e5c37`.
 
+## Current continuation — hardware hold
+
+The original four native sessions and recorded download job were adopted before new dispatch. [The adoption checkpoint](h039-adoption-checkpoint.md) and [current roster](h039-worker-sessions.json) record subsequent source reviews and actual terminal receipts. A's four compaction lifecycle fixes and D's technical-vision fixtures are integrated locally. B's retention verifier and E's isolated native adapter remain source preparation; repeated native retention, persistence recovery and automatic-trigger acceptance are **NOT_TESTED**.
+
+The original vision download failed after one verified Qwen shard. The reviewed recovery stager then failed before any new unit or namespace was created; its cause is unknown. Original verified/partial artifacts and failure receipts are preserved. No download is running.
+
+The user authorized orderly **ai-vm guest shutdown** to add a second Ada 48 GB. C owns that shutdown; all further ai-vm download, deployment and inference work is frozen. Mac source tasks may finish. Check the current roster for the actual shutdown result before accessing the VM. Leave it down and do not restart or resume VM work until the user confirms installation is complete. This instruction authorizes guest shutdown only; host/Proxmox, driver and fan changes remain outside scope.
+
 ## Requirements that take precedence
 
 - Reliable lengthy technical conversations/projects through repeated context
@@ -77,7 +85,7 @@ The Mac CLIs are 0.159.2. Updating them does not update Sova's separately pinned
 | Technical vision bridge | H039 C/D preparation; GPU/runtime/normal chat acceptance still pending |
 | Creative image chat workflows | Deferred by user, not a current compaction blocker |
 | Upstream Codex update | Separate source/protocol qualification task; do not casually pull main into production |
-| PR CI and merge | Resolve failed installer fixture evidence, then review and merge; no current merge authorization from this handoff alone |
+| PR CI and merge | Latest checked installer/worker/client checks passed; encoded-space documentation links caused repository-sanity failure and are locally corrected. Recheck published CI; PR remains draft without merge authorization |
 
 ### Exact compaction gaps
 
@@ -95,12 +103,7 @@ choosing the recovery mechanism. One new automatic-trigger case is justified
 only after the smaller suite passes. Never repeat the old 950K benchmark or the
 unchanged four-fact large paste.
 
-The previously failed installer fixture was
-`test_quiescent_transaction_with_incomplete_dpkg_audit_retains_inhibitor`:
-[run/job](https://github.com/djeZo888/mixed-memory-llm-api-server/actions/runs/36781380288/job/110112205715).
-It reported a disposable process fixture deadline and unavailable package
-inspection; root cause is unproven. Check current PR checks before deciding
-whether a new source repair or one controlled rerun is warranted.
+The older `test_quiescent_transaction_with_incomplete_dpkg_audit_retains_inhibitor` failure is retained in [its run/job](https://github.com/djeZo888/mixed-memory-llm-api-server/actions/runs/36781380288/job/110112205715); its initial process-deadline/package-inspection cause remains unproven. At PR head `86cf570`, installer fixtures, worker regressions and client checks passed; repository-sanity failed on encoded spaces in local documentation links. Root corrected the active links and passed the local checker plus four existing provenance/archive tests. Current source integration still needs coherent candidate validation and published CI.
 
 ## How the tandem actually works
 
@@ -137,12 +140,7 @@ reading its actual unit/receipt/manifest, preserving partial artifacts.
 
 Root-local private launch records live under
 `/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/`.
-Four native sessions were observed running at 00:24 UTC, each verified from
-persisted native context as GPT 6.1 Sol Ultra. Tasks A/B/D expire around
-01:54 UTC / 03:54 Ljubljana; C expires 01:08:52 UTC / 03:08:52 Ljubljana
-and should close earlier once its durable job is launched. The VM download
-unit was not yet observed when these launch receipts were recorded; collect
-C's actual OUTBOX/manifest rather than assuming completion.
+All four original sessions were adopted. A and D closed with actual native/outer exit 0 and their reviewed source was integrated locally. B remains a bounded source session. C's original download failed; its source-recovery phase hit its deadline, and its later launch-only phase closed with a recorded staging failure and no download. The same C session now owns user-authorized guest shutdown. E is a separately recorded source-only adapter task on mac-worker2 with a 01:35 UTC deadline. Read the linked current roster for exact phases, identities, terminal outcomes and hardware hold. Do not infer task success from a CLI exit or live PID.
 
 Public session metadata appears in the linked JSON; private events and passwords
 remain outside Git. Git publication uses mac-worker2's already authenticated
@@ -150,13 +148,4 @@ GitHub helper from an isolated repository; credentials are not copied to root.
 
 ## New-chat starting brief
 
-> Continue Sova from reports/h039-handoff.md and
-> reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image.
-> First collect/adopt the four recorded bounded Mac worker sessions and any
-> download job actually recorded by task C; do not assume its launch or create duplicates. Compaction reliability is priority one.
-> Review source/fixtures before coordinated live integration. Technical vision
-> preparation runs in parallel. Sova may stay offline; the smaller Ada Qwen may
-> be retired. Keep original chats/files/credentials and failed evidence. Root
-> orchestrates; mac-worker1 and mac-worker2 implement using GPT 6.1 Sol Ultra.
-> Read the future vision and TODO plans. Report actual passes and gaps; creative
-> image acceptance and upstream Codex upgrades remain deferred.
+> Continue Sova from reports/h039-handoff.md and reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image. First adopt the recorded sessions, actual terminal receipts and preserved download state. The user requested ai-vm shutdown for a second Ada 48 GB installation; leave the guest down until they confirm completion. Mac source preparation can finish. Compaction reliability remains priority one. Review and qualify the coherent source candidate before live work. Preserve chats, files, credentials, partial artifacts and failed evidence. Root coordinates and publishes; actual native Mac workers implement with GPT 6.1 Sol Ultra. Creative image acceptance and upstream Codex upgrades remain deferred. PR #11 remains draft and unmerged.
