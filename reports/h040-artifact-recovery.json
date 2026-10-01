@@ -1,0 +1,101 @@
+{
+  "schema": "h040-artifact-source-review-v1",
+  "outcome": "READY_FOR_ROOT_REVIEW",
+  "actualSession": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "sourceBase": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
+  "helperAndManifestSha256": {
+    "scripts/vision/artifact_job.py": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+    "scripts/vision/launch_job.py": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+    "scripts/vision/stage_job.py": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+    "configs/vision/h039-artifacts.lock.json": "822cd4c8e8cebbbd190fc046838899c8e576752ab67fa73dcf6d88d7a02ceb94"
+  },
+  "validation": {
+    "syntheticArtifactTests": {
+      "status": "PASS",
+      "tests": 42,
+      "exitCode": 0
+    },
+    "pythonCompilation": "PASS",
+    "gitWhitespace": "PASS",
+    "historicalStageCause": "UNKNOWN_NOT_REPRODUCED_IN_SYNTHETIC_FIXTURE",
+    "nativeDownload": "NOT_TESTED",
+    "completeWeightIntegrity": "NOT_TESTED",
+    "runtimeFit": "NOT_TESTED"
+  },
+  "originalFailure": {
+    "status": "FAILED",
+    "failureCode": "TimeoutError",
+    "verifiedFiles": 13,
+    "verifiedWeightFiles": 1,
+    "verifiedQwenShardBytes": 5276436216,
+    "remainingExpectedWeightBytes": 15947130632,
+    "root": "/data/models-large/h039-vision-20261001-c-01a0f4d8",
+    "device": 2081,
+    "inode": 140247041,
+    "receiptHashes": {
+      "status.json": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
+      "manifest.json": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509"
+    }
+  },
+  "proposedAttempt": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01",
+  "proposedUnit": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01.service",
+  "deadlineUtc": "2026-10-01T04:26:10Z",
+  "networkTimeoutSeconds": 180,
+  "restart": "no",
+  "automaticRetries": 0,
+  "vmWritesThisPhase": 0,
+  "stagingInvocationsThisPhase": 0,
+  "launchInvocationsThisPhase": 0,
+  "finalReadOnlyObservation": {
+    "utc": "2026-10-01T02:47:18.527153+00:00",
+    "lifecycleTransitionInProgress": true,
+    "proposedAttempt": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01",
+    "attemptPathsExist": {
+      "build": false,
+      "logs": false,
+      "claim": false,
+      "stageClaim": false
+    },
+    "unit": {
+      "MainPID": "0",
+      "LoadState": "not-found",
+      "ActiveState": "inactive",
+      "SubState": "dead"
+    },
+    "storage": {
+      "dataUuid": "8daf56f1-5649-4163-9d87-919c2d271875",
+      "modelUuid": "a6d4ab58-84e1-4e48-9a67-13ad1c6f6e0a",
+      "capacity": {
+        "root_available_bytes": 5372747776,
+        "data_available_bytes": 1789512151040,
+        "model_available_bytes": 1726444642304,
+        "shared_model_filesystem": false
+      }
+    },
+    "originalRoot": {
+      "device": 2081,
+      "inode": 140247041
+    },
+    "originalReceiptHashes": {
+      "status.json": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
+      "manifest.json": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509"
+    }
+  },
+  "rootGates": [
+    "Review commit, all helper/manifest/payload hashes and concrete argv/deadline through INBOX to this exact session.",
+    "A/root lifecycle handoff must be explicit; latest 02:47 observation is transition_in_progress=true, not free.",
+    "Recheck actual unit, stage/attempt claims, status and namespaces; adopt existing/unknown work rather than duplicate.",
+    "Recheck installed canonical lease, registered storage UUIDs/capacity, original root identity and exact preserved receipt hashes.",
+    "Capture actual stage exit and sanitized JSON failureType/code; retain private raw stderr digest/byte count only, never publish raw HTTP/credential logs.",
+    "If staging succeeds, hash-verify actual staged bytes and execute exactly one --reviewed-retry launcher; recompute RuntimeMaxSec from actual VM clock against fixed 04:26:10 UTC.",
+    "Collect one immediate actual unit/PID/status receipt and close paid CLI without download polling."
+  ],
+  "actualNativeExit": "NOT_OBSERVED_WRAPPER_RECORDS_AFTER_CLOSE",
+  "actualOuterExit": "NOT_OBSERVED_WRAPPER_RECORDS_AFTER_CLOSE",
+  "currentCandidateBase": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+  "importedOriginalCommit": "337a92c41cc79659221c59a52c6016aeab47f4c1",
+  "stageEntryDurability": "Checked anchored attempt directory fsync after stage claim and after worker/manifest/initial-status file fsync, before STAGED_NOT_STARTED.",
+  "currentPhaseVmAccess": "NONE; previous readiness observation retained as dated evidence"
+}

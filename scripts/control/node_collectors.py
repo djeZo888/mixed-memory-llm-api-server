@@ -144,6 +144,43 @@ class GpuCollector:
             'sampling_since': self.since}]}
 
 
+class ImageGpuCollector:
+    """One bounded slot follows protected selection, without image readiness.
+
+    The unselected placement remains discoverable inventory; it is never a
+    fallback. Keeping one slot preserves the existing collector/thread limit.
+    """
+    def __init__(self, *, binding=None, run=command, boot=boot_identity, clock=time.monotonic):
+        self.binding, self.run, self.boot, self.clock = binding, run, boot, clock
+        self.current = None
+        self.gpu_uuid = None
+        self.last_proof = None
+
+    def __call__(self, seconds):
+        from .node_observation import production_binding, IMAGE_OWNER
+        from lifecycle.runtime_io import image_gpu_uuid
+        deadline = self.clock() + seconds
+        self.last_proof = None
+        binding = (self.binding or production_binding)(seconds)
+        path = binding.path('services', 'image21-runtime-20260923/config.json')
+        config = binding.read_json('services', path)
+        if (type(config.get('schema_version')) is not int or config['schema_version'] != 1
+                or config.get('owner') != IMAGE_OWNER):
+            raise ValueError('image_selection_unknown')
+        gpu = image_gpu_uuid(config)
+        if self.current is None or self.gpu_uuid != gpu:
+            self.current = GpuCollector(gpu, run=self.run, boot=self.boot)
+        self.gpu_uuid = gpu
+        remaining = deadline - self.clock()
+        if remaining <= 0:
+            raise TimeoutError('image_gpu_deadline')
+        result = self.current(remaining)
+        if binding.read_json('services', path) != config or self.clock() >= deadline:
+            raise ValueError('image_selection_changed')
+        self.last_proof = self.current.last_proof
+        return result
+
+
 def service_collector(service_id, *, run=command, boot=boot_identity):
     if service_id not in SERVICES:
         raise ValueError('unknown_service')
@@ -328,13 +365,18 @@ class HardwareEvidenceCollector:
                 remaining()
                 policy.observe_inventory(inventory, boot_age_seconds=raw['boot_age_seconds'] + age_ms / 1000)
             for collector in self.gpus:
-                if collector.gpu_uuid not in GPU_UUIDS or collector.last_proof is None:
+                proof = collector.last_proof
+                if proof is None:
                     continue
-                raw, captured = collector.last_proof
+                raw, captured = proof
+                if (type(raw) is not dict or type(raw.get('gpu_uuid')) is not str
+                        or not UUID.fullmatch(raw['gpu_uuid']) or raw['gpu_uuid'] not in GPU_UUIDS):
+                    raise ValueError('hardware_proof_identity_unknown')
+                target = raw['gpu_uuid']
                 if time.monotonic() - captured > 15:
                     continue
                 remaining()
-                policy.validate_required(collector.gpu_uuid, current_boot_id=raw['boot_id'],
+                policy.validate_required(target, current_boot_id=raw['boot_id'],
                     observed_at=raw['observed_at'], observation_id=raw['observation_id'])
         return {'state': 'persisted'}
 
@@ -345,13 +387,15 @@ def production_callbacks(identity_reader=None, *, control_key=None):
     reader = identity_reader or CanonicalIdentityReader()
     inventory = InventoryCollector()
     gpus = [GpuCollector(gpu) for gpu in GPU_UUIDS]
+    image_gpu = ImageGpuCollector()
     result = {'boot': collect_boot, 'inventory': inventory,
               'cpu': CpuCollector(), 'memory': collect_memory}
     result.update({service: PassiveServiceCollector(service, reader,
         control_key=control_key if service == 'control' else None) for service in (*SERVICES, 'node')})
     result.update(resource_callbacks())
     result.update({'gpu:' + collector.gpu_uuid: collector for collector in gpus})
+    result['image_gpu'] = image_gpu
     result['gpu_metrics'] = DiscoveredGpuCollector(inventory)
     result['qwen-ada200k'] = AdaPassiveCollector(reader)
-    result['hardware_evidence'] = HardwareEvidenceCollector(inventory, gpus)
+    result['hardware_evidence'] = HardwareEvidenceCollector(inventory, [*gpus, image_gpu])
     return result

@@ -48,7 +48,7 @@ class DedicatedImagePeerTests(unittest.TestCase):
         self.manager.sglang_probe = Mock(side_effect=AssertionError('native probe forbidden'))
         self.state = {'schema_version': 1, 'owner': IMAGE_OWNER, 'phase': 'warm', 'warm': True,
             'run_id': RUN_ID, 'container': {'id': CID, 'image_id': self.image_id}}
-        self.config = {'schema_version': 1, 'owner': IMAGE_OWNER, 'image_id': self.image_id,
+        self.config = {'schema_version': 1, 'owner': IMAGE_OWNER, 'image_id': self.image_id, 'gpu_uuid': ADA,
             'network_id': NETWORK_ID, 'source_commit': IMAGE_RUNTIME,
             'checkpoint_revision': IMAGE_REVISION,
             'checkpoint_path': self.binding.path('models', 'qwen-image-2.1-' + IMAGE_REVISION)}
@@ -69,7 +69,7 @@ class DedicatedImagePeerTests(unittest.TestCase):
             'Id': CID, 'Name': '/llm-image-backend', 'Image': self.image_id,
             'Config': {'User': '1000:1001', 'Image': self.image_id,
                 'Entrypoint': ['/opt/image-venv/bin/python'],
-                'Cmd': ['-I', '-B', '/runtime/native_server.py', RUN_ID], 'Labels': {
+                'Cmd': ['-I', '-B', '/runtime/native_server.py', RUN_ID, ADA], 'Labels': {
                 'io.llm-image.owner': IMAGE_OWNER, 'io.llm-image.invocation': RUN_ID,
                 'io.llm-image.gpu': ADA},
                 'Env': ['CUDA_VISIBLE_DEVICES=' + ADA, 'NVIDIA_VISIBLE_DEVICES=' + ADA]},

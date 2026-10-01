@@ -1,0 +1,233 @@
+{
+  "schema": "h040-e-compaction-collector-source-v1",
+  "generatedAtUtc": "2026-10-01T03:36:49.116193+00:00",
+  "status": "SOURCE_COLLECTOR_PREPARED_DISABLED",
+  "nativeAcceptance": "NOT_TESTED",
+  "activation": "BLOCKED_CONCRETE_INTERFACES",
+  "worker": "mac-worker2",
+  "nativeSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+  "actualSettings": {
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "macCliVersion": "0.159.2",
+    "evidence": "filtered actual turn_context/session_meta and codex --version; no private messages printed"
+  },
+  "window": {
+    "authority": "H040",
+    "startsUtc": "2026-10-01T02:26:10Z",
+    "globalCapUtc": "2026-10-01T04:26:10Z",
+    "sourceTargetUtc": "2026-10-01T03:45:00Z",
+    "sourceHardUtc": "2026-10-01T03:55:00Z",
+    "settlementReserveMinimumMs": 75000,
+    "settlementReserveRecommendedMs": 180000
+  },
+  "baseTarget": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
+  "sourceCommit": "866809c86277573f1f16831dc20fdeacdbf33021",
+  "ownedChangedPaths": [
+    "ai-harness/acceptance/compaction/native-adapter/README.md",
+    "ai-harness/acceptance/compaction/native-adapter/adapter.ts",
+    "ai-harness/acceptance/compaction/native-adapter/artifacts.ts",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts",
+    "ai-harness/acceptance/compaction/native-adapter/collector.ts",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts",
+    "ai-harness/acceptance/compaction/native-adapter/native-observer.ts",
+    "ai-harness/acceptance/compaction/native-adapter/owned-close.ts",
+    "ai-harness/acceptance/compaction/native-adapter/parent.ts",
+    "ai-harness/acceptance/compaction/native-adapter/probe.ts",
+    "ai-harness/acceptance/compaction/native-adapter/projection.ts",
+    "ai-harness/acceptance/compaction/native-adapter/source-closure.ts",
+    "ai-harness/server/test/h040-native-adapter-collector.test.ts",
+    "ai-harness/server/test/h040-native-adapter-contract.test.ts",
+    "ai-harness/server/test/h040-native-adapter-gateway.test.ts",
+    "ai-harness/server/test/h040-native-adapter-integration.test.ts",
+    "ai-harness/server/test/h040-native-adapter-lifecycle.test.ts",
+    "ai-harness/server/test/h040-native-adapter-protocol.test.ts"
+  ],
+  "ownedFileSha256": {
+    "ai-harness/acceptance/compaction/native-adapter/README.md": "11c8d685f1d0fd192e86563f583a71e80562571f60b7821e9798f717f9fb604b",
+    "ai-harness/acceptance/compaction/native-adapter/adapter.ts": "ffc9ba5fc89523796fed04147522b3ca8849dc4934d7672eadae79bd89ac9fde",
+    "ai-harness/acceptance/compaction/native-adapter/artifacts.ts": "342fa21e73761c457a14d44146016c35cbb21e053eeba036949fba1b425df52a",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts": "c760a7cd0615b88ef7e7e213c0c3e4e76005f91ec54ff669478b9379e0202e47",
+    "ai-harness/acceptance/compaction/native-adapter/collector.ts": "7a48c7d0e45b84e5728921d2939665c4de7d78fdc8488c7af5e6c20c1af21f83",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts": "f47e612dc7f97239eaf4dd86e117cc53f5349d725a6ef8f42d0bbd5072f84840",
+    "ai-harness/acceptance/compaction/native-adapter/native-observer.ts": "bc13c44740b4c943a5bc21c177e2c68e28825f3552f2d1c3867356d07d1d7935",
+    "ai-harness/acceptance/compaction/native-adapter/owned-close.ts": "4d6429b21077c59d1beeea07a29c318c32baefaf0d5b2ed2019565d1ddc100a2",
+    "ai-harness/acceptance/compaction/native-adapter/parent.ts": "67bd368b4a3a7d01c851b6cdea787091993e9d637aa1ff6afb65f1fe98a960bf",
+    "ai-harness/acceptance/compaction/native-adapter/probe.ts": "277458bf48589422f2d6b35ff327749d5d6573e14a5e25a87a40f77f58b994c1",
+    "ai-harness/acceptance/compaction/native-adapter/projection.ts": "468a13410dad82eee1d86175800c430385028140086c90472f13257954717e89",
+    "ai-harness/acceptance/compaction/native-adapter/source-closure.ts": "14619bf79be60c800c0e266eaf65a5ccd1ab4ee6ad45c8c0c0894f885aff96e8",
+    "ai-harness/server/test/h040-native-adapter-collector.test.ts": "14c681da416374ddc17a8440ab3d24fcd801087b271750796c48def6f64c1c44",
+    "ai-harness/server/test/h040-native-adapter-contract.test.ts": "93d652e45ab4fd409e34d26854bc607b20df2d4634980ac64ab88f23500bce6c",
+    "ai-harness/server/test/h040-native-adapter-gateway.test.ts": "ee4679cea36a2d64a4ad9209bee9a9f6e5f468e48966497cf9daf442c31c7d80",
+    "ai-harness/server/test/h040-native-adapter-integration.test.ts": "e743ec8ab3157c583a3cea0de1d1f5ee329a5a29e668ab35bb8e61f398d7481a",
+    "ai-harness/server/test/h040-native-adapter-lifecycle.test.ts": "8004e6b9ffe8436e353a0dae527cd91304dfbba0f7a920e34e7262e77cc60510",
+    "ai-harness/server/test/h040-native-adapter-protocol.test.ts": "34fb4c1e3bb866af4ec5625afdf31e463624616e3fc3248a966ff5805b077553"
+  },
+  "tests": [
+    {
+      "cmd": "./node_modules/.bin/tsc -p ../acceptance/compaction/native-adapter/tsconfig.json",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "scope": "strict standalone SOURCE compile"
+    },
+    {
+      "cmd": "./node_modules/.bin/tsc -p ../acceptance/compaction/native-adapter/tsconfig.json --noEmit false --outDir ../../../output/build",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "scope": "strict emitted SOURCE build, not a deployable/native-qualified package",
+      "log": "standalone-build.txt"
+    },
+    {
+      "cmd": "./node_modules/.bin/tsx --test --test-timeout=15000 test/h040-native-adapter*.test.ts",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "tests": 32,
+      "passed": 32,
+      "failed": 0,
+      "scope": "SOURCE/SYNTHETIC peers, real parser/gateway/Store/filesystem/guard and independent B contract",
+      "log": "source-tests.txt"
+    },
+    {
+      "cmd": "git diff --check",
+      "exitCode": 0,
+      "log": "diff-check.txt"
+    }
+  ],
+  "resolvedPreparationFailures": [
+    {
+      "failure": "Wrong source test creation working-directory path; file not created",
+      "resolution": "Corrected owned test path"
+    },
+    {
+      "failure": "TS2339 union isolation access during implementation",
+      "resolution": "Explicit completed/isolation narrowing; final strict compile/build pass"
+    },
+    {
+      "failure": "Synthetic peer incorrectly acknowledged initialized notification; real CodexConnection rejected invalid response",
+      "resolution": "Notification correctly ignored; fixtures pass"
+    },
+    {
+      "failure": "Synthetic request omitted required tool_choice/parallel_tool_calls; production translator rejected it",
+      "resolution": "Fixture now follows real Responses contract"
+    },
+    {
+      "failure": "80ms timeout fixture under concurrent fsync expired before ACK (28/29 combined run)",
+      "resolution": "Explicit bounded2s post-ACK fixture budget; final32/32 pass"
+    }
+  ],
+  "nativeResults": {
+    "linuxBootstrap": "NOT_TESTED",
+    "compactionRetention": "NOT_TESTED",
+    "installedNoToolsConfig": "NOT_TESTED",
+    "physicalScope": "NOT_TESTED",
+    "effectiveScope": "NOT_TESTED",
+    "runtimeBinaryTokenizerRevision": "NOT_TESTED",
+    "retrieval": "NOT_TESTED",
+    "acceptedColdRestart": "NOT_TESTED",
+    "childContext": "NOT_TESTED",
+    "productionBrowserUi": "NOT_TESTED"
+  },
+  "interop": {
+    "BLocation": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-retention-integration/repo",
+    "BHeadReadback": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
+    "BContractFileHashReadbackAfterTests": {
+      "ai-harness/acceptance/compaction/h040-summary-stage.config.json": "07823235f2bed12b60215de0a9a7a3c08c5117963e25f60ea0960aaba1430f12",
+      "ai-harness/acceptance/compaction/qualification.mjs": "6b29f255dd958c3ed3cc0c50974dfe18b2a27a872876f63c86ed20829b836329",
+      "ai-harness/acceptance/compaction/qualification.schema.json": "e9c1d22bcd1b4d9564dad7d7730a4099e86d5e302510606cbf9ac21bba54bf5e",
+      "ai-harness/acceptance/compaction/config.json": "335194c79a93fe74273b40f2c5a767a7965579dbae917752e2edd5dfa6432d26",
+      "ai-harness/acceptance/compaction/evidence.mjs": "92a33937d861a4b25a01402bad6f7e56dfae2755adeda8bb4195b3ec47c2170e",
+      "ai-harness/acceptance/compaction/controller.mjs": "c181e5a179beefc1006a11019d4ddd2794a9d66b360d418e8b6dfda223f360f3",
+      "ai-harness/acceptance/compaction/scorer.mjs": "7abdc84108e1785c3d601d1c604ee2d9fc21e43ce8b1baf3e96252d0f9f6677e",
+      "ai-harness/acceptance/compaction/evidence.schema.json": "d0fea42375a8e63832f84df4baf1b557366950bdce815bc6b8cd09ce5c684e63"
+    },
+    "scope": "actual E adapter.compact SOURCE fixture through current B extractCheckpoint(requireNativeMetadata), makeRecord/evidence schema; canonical constructor/typed normalization/three-ID envelope placeholders and full-state capture. No native PASS. Root must review final coherent B snapshot."
+  },
+  "proposedBootstrapReviewTuple": {
+    "entry": "ai-harness/acceptance/compaction/native-adapter/adapter.ts:createNativeAdapter(input)",
+    "defaultEnabled": false,
+    "defaultCapabilities": [],
+    "linuxPin": {
+      "version": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "contextWindow": 480000,
+      "autoCompactTokenLimit": 400000,
+      "maxOutputTokens": 65536
+    },
+    "profile": "h040-summary-stage-v1",
+    "qualifiedAliases": [
+      "qwen3.8-27b"
+    ],
+    "nativeDelegationQualified": false,
+    "imageJobsQualified": false,
+    "allProviderTools": "exact[]; reject never rewrite",
+    "bind": {
+      "gatewayHost": "127.0.0.1",
+      "gatewayPort": 8081,
+      "frontendHost": "127.0.0.1",
+      "frontendPort": 18081,
+      "nativeGatewayUrl": "http://10.0.2.2:8081/v1"
+    },
+    "rootReviewFields": [
+      "enabled",
+      "approvedBy=root",
+      "candidateCommit=actualCandidateCommit",
+      "notAfterUtc",
+      "settlementReserveMs",
+      "authorization.task=H040/windowId/startsUtc/capUtc",
+      "policy=FIXED_POLICY",
+      "stagePolicy=STAGE_POLICY",
+      "files=actual sourceClosure",
+      "productionStateReceiptSha256",
+      "projection.format/frozenPolicySha256/specSha256/collectorSourceSha256"
+    ],
+    "hostInputKeys": [
+      "actualCandidateCommit",
+      "privateBase",
+      "productionDataDir",
+      "repository",
+      "launcherPath",
+      "qwenReceiptPath",
+      "inferenceKeyPath",
+      "controlKeyPath",
+      "productionStateReceiptPath"
+    ],
+    "adapterInputKeys": [
+      "bootstrap",
+      "frozenPolicy",
+      "compactionSummaryPrefix(exact399byte source SHA)",
+      "projectionSpec.format/prefixInput/envelope/collectorManifestUtf8"
+    ],
+    "sourceClosure": "all server/src + entire compaction E/B TS/MJS/JSON graph, package/lock, engine/codex/security/image tools, reviewed launcher and protected Qwen receipt; portable collector manifest separately hashed",
+    "productionReceipt": "fresh<=60s root-owned normal-stop/no-writer/native+gateway-settled/preserved-state observation; no production data/history/file mutation or port sweep",
+    "firstLaterGate": "root concrete review/GO after minimum interfaces/transport proof; one disposable56fact small manual cycle, actualtools[] pre-generation rejection and genuine owned scope/settlement evidence",
+    "activationInterfacesAvailable": false
+  },
+  "remainingBlocks": [
+    "A compiled CodexReceiptPolicy/nativeReceiptPolicy consumer and actual typed launchReceipt/settlementReceipt API absent on this base; receipt opt-in entry cannot honestly activate. Early A design is a proposal, not producer evidence.",
+    "Normal main CodexEngine has no reviewed no-tools thread/start override. Stage now rejects any nonempty parent/probe tools before dispatch. Need A/root trusted main no-tools config seam with normal experimentalApi:false or independently qualified installed policy.",
+    "Actual Linux private receipt transport, producer/source/policy hashes, binary/image revision and safe effective model-facing policy must be observed and root-reviewed. Physical RW mounts/slirp gateway exception cannot become empty-roots/network-deny claims.",
+    "Installed no-tools/empty-history/config support and the exact full first-request scaffold/envelope are NOT_TESTED; runtime/binary/model/tokenizer revisions and native per-phase token provenance remain absent.",
+    "Fresh current protected Qwen tuple and physical placement successor need root/A review/current admission; stage uses only qwen3.8-27b through fixed gateway8081/current verifier to30004, no q0 fallback, child or image qualification.",
+    "Read-original dynamic server-call/consumption/settlement seam is absent here. frozenOriginals safely prepares actual scoped bytes but retrieval remains disabled; no oracle/tool-trace substitution.",
+    "Cold resume needs independently accepted latest continuation, actual application/process restart, exact same parent native ID/no replay and actual artifacts. Child dimension needs actual canary placement/child first-request/scope/settlement. Methods remain disabled.",
+    "Root must integrate/seal actual A/B/E source closure, correct scope semantics and review the concrete candidate/config/lease/quiescence before any installation or one small native stage. Default enabled:false/capabilities:[] cannot pass B native gates."
+  ],
+  "externalActions": {
+    "deployment": false,
+    "inference": false,
+    "modelGpuFanMutation": false,
+    "upgrade": false,
+    "GitHub": false,
+    "extraSessionsOrAgents": false
+  },
+  "outerExitReceipt": {
+    "status": "PENDING_ROOT_RECEIPT_AFTER_NATIVE_CLOSE",
+    "nativeExitCode": null,
+    "outerExitCode": null
+  },
+  "bundle": {
+    "path": "../output/candidate.bundle",
+    "baseTarget": "3f39cb9c91f7dad335822d981a5895d5d6aed874",
+    "targetCommit": "populated in external RESULTS after report commit"
+  }
+}

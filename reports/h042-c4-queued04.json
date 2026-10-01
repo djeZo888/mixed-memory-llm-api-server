@@ -1,0 +1,434 @@
+{
+  "schema": "h042-c4-queued04-source-report-v1",
+  "phase": "E-c4-queued04",
+  "reportedUtc": "2026-10-01T19:36:11.315090+00:00",
+  "sourceOnly": true,
+  "status": "PARTIAL",
+  "mandatoryFocusedValidation": "PASS",
+  "fullServerSuite": "FAIL",
+  "baseCommit": "8590500b3fca2b12b96cf5570e81ec700d93430e",
+  "sourceCommit": "cf69318c920634f694c1cde08f86a1430aa1cea3",
+  "expectedChangedFiles": [
+    "ai-harness/deploy/admin/qualification_carrier_host.py",
+    "ai-harness/deploy/admin/test_qualification_carrier_host.py",
+    "ai-harness/server/src/broker.ts",
+    "ai-harness/server/test/app.test.ts",
+    "ai-harness/server/test/h042-retained-store-reopen.test.ts",
+    "reports/h042-c4-queued04.md",
+    "reports/h042-c4-queued04.json"
+  ],
+  "sourceFileSHA256": {
+    "ai-harness/deploy/admin/qualification_carrier_host.py": "e4f6bc3b65105cdee61bd2d1a7492cb86d53a26f3b605e4ac835886cb63818ab",
+    "ai-harness/deploy/admin/test_qualification_carrier_host.py": "5232744224b04a01536b63a0f511be6cc1a928aac12ae7bec131e8cc4672aa4d",
+    "ai-harness/server/src/broker.ts": "4c163a4956988b0539900bd89bd8cf3ca66cbb55991e948e0e17c6a13a5a5420",
+    "ai-harness/server/test/app.test.ts": "78f2504fe3ec91c1ea70bdfc5d523ea91d877a00b22c5189d7034661966725c5",
+    "ai-harness/server/test/h042-retained-store-reopen.test.ts": "36d2387a03d58f389abf4e0046c6b4528a2c4cdb2cd0b8fd8cb31345c398ce27"
+  },
+  "inputBundleSHA256": "23949bcfa3cad76503f833d87da769c129091a78b659eff9657f0cef63df7b53",
+  "contractSHA256": "cd226da8bccb6a3ee3ae074d656814a2e1b9f5b858a170895964de92d2f0810e",
+  "runtimePins": {
+    "native": "0.158.0",
+    "upstream": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "autoCompaction": 400000,
+    "output": 65536,
+    "changed": false
+  },
+  "nativeCarrier": "NOT_TESTED",
+  "carrierDefaultDisabled": true,
+  "oldOwnersReconciled": false,
+  "admissionAuthorityActivated": false,
+  "linuxContact": false,
+  "liveCarrierCalls": 0,
+  "launchUtc": "2026-10-01T19:12:16.484023+00:00",
+  "sealTargetUtc": "2026-10-01T19:47:16.484023+00:00",
+  "hardEndUtc": "2026-10-01T19:52:16.484023+00:00",
+  "currentNativeSessionId": "01a0f8e1-b4fc-7c00-847f-628e4c67cd12",
+  "currentClosure": "ROOT_PENDING_AFTER_VOLUNTARY_EXIT",
+  "priorHardware03Closure": "PASS startup-proof receipt actual exits and owned process/birth/PGID absence",
+  "queuedPatch": {
+    "gzipSha256": "460b92ef66c0cf5f38413a1469a8fe2d31150902e4bb0652e9362e2a65009797",
+    "decodedSha256": "d47c8af5f211e69123cf69274e6a4401e4c0d75f0db9159d87ca698623467db1",
+    "originalCommit": "ca42389b3b1b5c52239bc7ca095840b01dc8d55c",
+    "base": "8590500b3fca2b12b96cf5570e81ec700d93430e",
+    "beforeFileSha256": {
+      "ai-harness/server/src/broker.ts": "604e0549a7c4022e763d679affb471efe7927702fd8f93cb658f1bcef1875125",
+      "ai-harness/server/test/app.test.ts": "155f41cbe1dfe54b2f15e01d14c7d0d1a2230f1ed4eb3b9c364bd6897e464b4c"
+    },
+    "commands": [
+      {
+        "host": "mac-worker2.local",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/repo",
+        "argv": [
+          "git",
+          "apply",
+          "--check",
+          "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/output/queued-adopted.patch"
+        ],
+        "start": "2026-10-01T19:13:39.294289+00:00",
+        "end": "2026-10-01T19:13:39.304483+00:00",
+        "exit": 0,
+        "log": "queued-apply-check.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mac-worker2.local",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/repo",
+        "argv": [
+          "git",
+          "apply",
+          "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/output/queued-adopted.patch"
+        ],
+        "start": "2026-10-01T19:13:39.304867+00:00",
+        "end": "2026-10-01T19:13:39.315257+00:00",
+        "exit": 0,
+        "log": "queued-apply.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mac-worker2.local",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/repo",
+        "argv": [
+          "git",
+          "apply",
+          "--reverse",
+          "--check",
+          "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/output/queued-adopted.patch"
+        ],
+        "start": "2026-10-01T19:13:39.315634+00:00",
+        "end": "2026-10-01T19:13:39.325666+00:00",
+        "exit": 0,
+        "log": "queued-reverse-check.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      {
+        "host": "mac-worker2.local",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H042-20261001/E-c4-queued04/repo",
+        "argv": [
+          "git",
+          "diff",
+          "--full-index",
+          "--binary",
+          "--",
+          "ai-harness/server/src/broker.ts",
+          "ai-harness/server/test/app.test.ts"
+        ],
+        "start": "2026-10-01T19:13:39.326071+00:00",
+        "end": "2026-10-01T19:13:39.338228+00:00",
+        "exit": 0,
+        "log": "queued-owned-diff.log",
+        "logSha256": "d2c35d10110802fea4f150e78c5dc32958116e092d98e14ae6aa9b5c5076a32b"
+      }
+    ],
+    "afterFileSha256": {
+      "ai-harness/server/src/broker.ts": "4c163a4956988b0539900bd89bd8cf3ca66cbb55991e948e0e17c6a13a5a5420",
+      "ai-harness/server/test/app.test.ts": "0182d96beb1cc625872a8673dfae2882e5c7330bd24ba7adbaa9aa6e08ea676d"
+    },
+    "structuralProof": {
+      "brokerDeferredPromise": true,
+      "regressionCount": true
+    },
+    "testsRun": false
+  },
+  "checks": [
+    {
+      "name": "focused-production-memory",
+      "actualExitCode": 0,
+      "receipt": "focused-production-memory.receipt.json",
+      "log": "focused-production-memory.log",
+      "logSHA256": "73294bae1100e8817e1eb1a4aff91401792025416b5c7d0163e436629e30d53d",
+      "tests": 27,
+      "passed": 27,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "focused-python-engine-check",
+      "actualExitCode": 0,
+      "receipt": "focused-python-engine-check.receipt.json",
+      "log": "focused-python-engine-check.log",
+      "logSHA256": "7bc695986bda59918d4051c80a456345305599338ac0e30ef54813d322f982ae",
+      "tests": 16,
+      "passed": 16,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "focused-python-final",
+      "actualExitCode": 0,
+      "receipt": "focused-python-final.receipt.json",
+      "log": "focused-python-final.log",
+      "logSHA256": "7fee23582b7a9a25996d42e2cac864c363aacb3d3516d45c74181319e15a1dde"
+    },
+    {
+      "name": "focused-python-key-privacy",
+      "actualExitCode": 0,
+      "receipt": "focused-python-key-privacy.receipt.json",
+      "log": "focused-python-key-privacy.log",
+      "logSHA256": "7bc695986bda59918d4051c80a456345305599338ac0e30ef54813d322f982ae"
+    },
+    {
+      "name": "focused-python-strict",
+      "actualExitCode": 0,
+      "receipt": "focused-python-strict.receipt.json",
+      "log": "focused-python-strict.log",
+      "logSHA256": "7bd048b50f6dd3aa53427945937ada00b432f007ff3de06b07ad1096242e5dc2"
+    },
+    {
+      "name": "focused-python",
+      "actualExitCode": 0,
+      "receipt": "focused-python.receipt.json",
+      "log": "focused-python.log",
+      "logSHA256": "3235a2c04e544b28d7dc4e8c8fd7915977b18a98da2f98a605078743e728b762"
+    },
+    {
+      "name": "focused-queued",
+      "actualExitCode": 0,
+      "receipt": "focused-queued.receipt.json",
+      "log": "focused-queued.log",
+      "logSHA256": "f66564cf933c69aefd3e2eeb7ad62da04b06572b6d629364c688ced8a05c94d8",
+      "tests": 3,
+      "passed": 3,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "pre-seal-proof",
+      "actualExitCode": 0,
+      "receipt": "pre-seal-proof.receipt.json",
+      "log": "pre-seal-proof.log",
+      "logSHA256": "8358cc4d3e62904ccaa331b20edfb96fa40bc47e82d5b65acc424c76ca9f1da7"
+    },
+    {
+      "name": "queued-apply-check",
+      "actualExitCode": 0,
+      "receipt": "queued-apply-check.receipt.json",
+      "log": "queued-apply-check.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "queued-apply",
+      "actualExitCode": 0,
+      "receipt": "queued-apply.receipt.json",
+      "log": "queued-apply.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "queued-final-diff",
+      "actualExitCode": 0,
+      "receipt": "queued-final-diff.receipt.json",
+      "log": "queued-final.diff",
+      "logSHA256": "845962cd130ee6a8c1ccd7de6e82964be486644c4ca8a2d3459825bf55696e10"
+    },
+    {
+      "name": "queued-owned-diff",
+      "actualExitCode": 0,
+      "receipt": "queued-owned-diff.receipt.json",
+      "log": "queued-owned-diff.log",
+      "logSHA256": "d2c35d10110802fea4f150e78c5dc32958116e092d98e14ae6aa9b5c5076a32b"
+    },
+    {
+      "name": "queued-reverse-check",
+      "actualExitCode": 0,
+      "receipt": "queued-reverse-check.receipt.json",
+      "log": "queued-reverse-check.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "real-store-reopen-final",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-final.receipt.json",
+      "log": "real-store-reopen-final.log",
+      "logSHA256": "a4111b1e2a0ad23117aa6647e381a8a45fb82c060d65c8fd83885f7f1555e2eb"
+    },
+    {
+      "name": "real-store-reopen-fk-fixture-fix",
+      "actualExitCode": 0,
+      "receipt": "real-store-reopen-fk-fixture-fix.receipt.json",
+      "log": "real-store-reopen-fk-fixture-fix.log",
+      "logSHA256": "eca4f05079d8181cbbaadfa03b592aa212ffac4eae0d29b3b88b741edb7dffdc",
+      "tests": 103,
+      "passed": 103,
+      "failed": 0,
+      "skipped": 0
+    },
+    {
+      "name": "real-store-reopen-order-fix",
+      "actualExitCode": 0,
+      "receipt": "real-store-reopen-order-fix.receipt.json",
+      "log": "real-store-reopen-order-fix.log",
+      "logSHA256": "3260ce8b5977cfe1141b791de83a7e28d592b736dcf9fe034483d38c886c082f"
+    },
+    {
+      "name": "real-store-reopen-retry",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-retry.receipt.json",
+      "log": "real-store-reopen-retry.log",
+      "logSHA256": "2d8ea398565fe23440d6b302d48e8c6049482b1013ad196c9ff284f427614fb8"
+    },
+    {
+      "name": "real-store-reopen-sealed",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-sealed.receipt.json",
+      "log": "real-store-reopen-sealed.log",
+      "logSHA256": "fe89180c88b3474d045060c864f8daa095e9c9ec9d41b9cdc7deb19bd0b178e6"
+    },
+    {
+      "name": "real-store-reopen",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen.receipt.json",
+      "log": "real-store-reopen.log",
+      "logSHA256": "90c49c38f8046d0605eeff994002b74b020c9e6ef1187d4175a1a4b5e206e525"
+    },
+    {
+      "name": "seal-source",
+      "actualExitCode": 0,
+      "receipt": "seal-source.receipt.json",
+      "log": "seal-source.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "server-build",
+      "actualExitCode": 0,
+      "receipt": "server-build.receipt.json",
+      "log": "server-build.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "server-full-suite-final",
+      "actualExitCode": 1,
+      "receipt": "server-full-suite-final.receipt.json",
+      "log": "server-full-suite-final.log",
+      "logSHA256": "d1a35bffa3b9b1993a6f73a7f2af2e30b8ffd5eba1e5ab4273a7cc58a01551c6",
+      "tests": 1548,
+      "passed": 1541,
+      "failed": 3,
+      "skipped": 4
+    },
+    {
+      "name": "server-full-suite",
+      "actualExitCode": 1,
+      "receipt": "server-full-suite.receipt.json",
+      "log": "server-full-suite.log",
+      "logSHA256": "9360d92899571b68f0e0ec38109f987451e501854ae4bc897b215e429876cfdc",
+      "tests": 1545,
+      "passed": 1538,
+      "failed": 3,
+      "skipped": 4
+    },
+    {
+      "name": "server-typecheck",
+      "actualExitCode": 0,
+      "receipt": "server-typecheck.receipt.json",
+      "log": "server-typecheck.log",
+      "logSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "name": "source-commit",
+      "actualExitCode": 0,
+      "receipt": "source-commit.receipt.json",
+      "log": "source-commit.log",
+      "logSHA256": "9af814367ba52c282d58c9cf3f89aed6ad02682098e6a8e0ca5181143c5c0def"
+    },
+    {
+      "name": "startup-proof",
+      "actualExitCode": 0,
+      "receipt": "startup-proof.receipt.json",
+      "log": "startup-proof.log",
+      "logSHA256": "8efc51c029337b07f71f2ae5ab952188820255f8df40a264d9b7a65a74060e70"
+    }
+  ],
+  "failedChecksPreserved": [
+    {
+      "name": "real-store-reopen-final",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-final.receipt.json",
+      "log": "real-store-reopen-final.log",
+      "logSHA256": "a4111b1e2a0ad23117aa6647e381a8a45fb82c060d65c8fd83885f7f1555e2eb"
+    },
+    {
+      "name": "real-store-reopen-retry",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-retry.receipt.json",
+      "log": "real-store-reopen-retry.log",
+      "logSHA256": "2d8ea398565fe23440d6b302d48e8c6049482b1013ad196c9ff284f427614fb8"
+    },
+    {
+      "name": "real-store-reopen-sealed",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen-sealed.receipt.json",
+      "log": "real-store-reopen-sealed.log",
+      "logSHA256": "fe89180c88b3474d045060c864f8daa095e9c9ec9d41b9cdc7deb19bd0b178e6"
+    },
+    {
+      "name": "real-store-reopen",
+      "actualExitCode": 1,
+      "receipt": "real-store-reopen.receipt.json",
+      "log": "real-store-reopen.log",
+      "logSHA256": "90c49c38f8046d0605eeff994002b74b020c9e6ef1187d4175a1a4b5e206e525"
+    },
+    {
+      "name": "server-full-suite-final",
+      "actualExitCode": 1,
+      "receipt": "server-full-suite-final.receipt.json",
+      "log": "server-full-suite-final.log",
+      "logSHA256": "d1a35bffa3b9b1993a6f73a7f2af2e30b8ffd5eba1e5ab4273a7cc58a01551c6",
+      "tests": 1548,
+      "passed": 1541,
+      "failed": 3,
+      "skipped": 4
+    },
+    {
+      "name": "server-full-suite",
+      "actualExitCode": 1,
+      "receipt": "server-full-suite.receipt.json",
+      "log": "server-full-suite.log",
+      "logSHA256": "9360d92899571b68f0e0ec38109f987451e501854ae4bc897b215e429876cfdc",
+      "tests": 1545,
+      "passed": 1538,
+      "failed": 3,
+      "skipped": 4
+    }
+  ],
+  "fullSuiteSkippedOriginalLines": [
+    "\ufe63 pinned native explicit compaction has canonical lifecycle and fresh resume preserves thread/history (0.47025ms) # SKIP",
+    "\ufe63 pinned native forwards actual image argument shapes to strict MCP and preserves rejection continuation (0.073958ms) # SKIP",
+    "\ufe63 pinned native MiMo roundtrips reasoning and one tool through the adapter with explicit serial policy (0.06125ms) # SKIP",
+    "\ufe63 pinned native default advertises/rejects view_image; both candidate profiles omit it (0.076042ms) # SKIP"
+  ],
+  "fullSuiteFailures": [
+    {
+      "file": "test/h041-compaction-completion09.test.ts",
+      "reason": "listen EINVAL on long protected output Unix socket path"
+    },
+    {
+      "file": "test/h042-cold-adopt02-carrier.test.ts",
+      "reason": "listen EINVAL on long protected output Unix socket path"
+    },
+    {
+      "file": "test/image-broker.test.ts",
+      "reason": "listen EINVAL on long protected output Unix socket path"
+    }
+  ],
+  "limits": [
+    "Store quarantine schema is id/reason only: no per-quarantine timestamp exists to validate or invent. Exact source INSERT OR REPLACE reason/rowid/order is bound.",
+    "Active run cross-run image-status reference projection is fail-closed/unqualified; separate image workflow proof is outside this task.",
+    "JSON source encoding rejects duplicate keys, unsafe integers, nonfinite data and unsupported representations; no generic body/context rewrite permission.",
+    "Only already-initialized schema startup repairs qualify; migrations/unrelated recovery writes fail closed.",
+    "The four native opt-in tests stayed skipped/default-disabled. No native lifecycle, inference, Linux, authority, fan, credential or deployment action occurred.",
+    "First focused queued/production-memory tests used existing default system-temp scratch before command runner TMPDIR was pinned to output; those tests clean their temporary directories. Final/full fixtures and retained private evidence are under output."
+  ],
+  "failedAttemptExplanation": {
+    "real-store-reopen": "Checkpoint dict iteration followed serialized hash-key order instead of before.order; fixed in verifier.",
+    "real-store-reopen-retry": "The correction command had wrong cwd and did not apply; original retry failure/log retained.",
+    "real-store-reopen-final": "Expanded run PK corruption fixture hit foreign-key enforcement before reaching verifier.",
+    "real-store-reopen-sealed": "Repeated the unresolved detached PK fixture failure; retained without hiding.",
+    "detachedPKFixtureCorrection": "Only that independent corrupted copy disables foreign_keys to construct the negative input; positive production Store retains default FK enforcement.",
+    "exploratoryCommands": "Misnamed production-memory.ts read and wrong-cwd edit stderr are preserved in original-command event extracts/raw output; no invented per-command timestamps."
+  },
+  "remainingWork": [
+    "Root verify bundle/diff/seven-file/log hashes and actual native/wrapper/outer exits, current settings, exact birth/PGID descendant absence before integration.",
+    "Three existing UDS fixtures need a separately authorized sufficiently short protected isolated workspace or owned fixture change; full suite is not PASS.",
+    "Native C4 normal restoration and old owner settlement remain NOT_TESTED/unproved; this source result grants no live GO."
+  ]
+}

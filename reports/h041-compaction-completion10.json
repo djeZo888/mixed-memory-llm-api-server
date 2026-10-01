@@ -1,0 +1,232 @@
+{
+  "schema": "h041-source10b-results-v1",
+  "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+  "settings": {
+    "model": "gpt-6.1-sol",
+    "reasoning": "ultra",
+    "actor": "worker2",
+    "machine": "mac-worker2",
+    "nativePid": 52728,
+    "codexPin": "0.158.0",
+    "sourcePin": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "autoCompact": 400000,
+    "output": 65536
+  },
+  "candidateCommit": "78ed0123c8d08f6f785fb71798abf18dc3880afe",
+  "adoptedSourceCommit": "5d836b7e31ba10fc64268ad414dc8a5d9fd60cb2",
+  "importedReviewedACommit": "78ed0123c8d08f6f785fb71798abf18dc3880afe",
+  "importedOriginalA": "8a1428a/root-e2ba9b9d",
+  "originalAncestryBase": "213634e",
+  "ownedTrackedSourceChanges": [],
+  "privateOwnedSourceSha256": {
+    "fan_recovery.py": "112977024266840a48ee997ab9c6aaf66edbf2d5f52aee6325e3ca625cec89e2",
+    "test_fan_recovery.py": "d69e7357348c69a1d5ec40906969caffdb64163420eb4cc8a54e2679c0eb9c41",
+    "fan-source.py": "85b39446d385975cc9b368dc082986bf8cf783c208a47be4a00cb789ea49297f",
+    "fan-unit.unchanged.service": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b"
+  },
+  "commands": [
+    {
+      "name": "source10-fan-recovery-initial",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "../output/test_fan_recovery.py"
+      ],
+      "startedAt": "2026-10-01T16:53:57.102Z",
+      "completedAt": "2026-10-01T16:53:57.483Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "source10-fan-recovery-initial.log",
+      "logSha256": "43cdc77dcada4316ca525107798d47ae4d004b1f38340639d39945b24c6ad278",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "source10-fan-recovery-current-corrected",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "../output/test_fan_recovery.py"
+      ],
+      "startedAt": "2026-10-01T16:54:49.857Z",
+      "completedAt": "2026-10-01T16:54:50.229Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "source10-fan-recovery-current-corrected.log",
+      "logSha256": "0bdec094ab0ecfa2a203e066be3b7e7500557a0f248269de38e116afdd7235b0",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "source10-private-helper-syntax",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "-m",
+        "py_compile",
+        "../output/fan_recovery.py"
+      ],
+      "startedAt": "2026-10-01T16:54:50.269Z",
+      "completedAt": "2026-10-01T16:54:50.315Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "source10-private-helper-syntax.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "source10-owned-adapter-strict",
+      "cwd": ".",
+      "argv": [
+        "ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T16:54:50.354Z",
+      "completedAt": "2026-10-01T16:54:52.091Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "source10-owned-adapter-strict.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    }
+  ],
+  "actualTests": {
+    "firstFanSource": {
+      "tests": 14,
+      "pass": 12,
+      "failure": 1,
+      "error": 1,
+      "exit": 1
+    },
+    "correctedFanSource": {
+      "tests": 14,
+      "pass": 14,
+      "exit": 0
+    },
+    "syntaxExit": 0,
+    "adapterStrictExit": 0
+  },
+  "failures": [
+    {
+      "name": "source10-fan-recovery-initial",
+      "cwd": ".",
+      "argv": [
+        "python3",
+        "../output/test_fan_recovery.py"
+      ],
+      "startedAt": "2026-10-01T16:53:57.102Z",
+      "completedAt": "2026-10-01T16:53:57.483Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-10b/output/source10-fan-recovery-initial.log",
+      "logSha256": "43cdc77dcada4316ca525107798d47ae4d004b1f38340639d39945b24c6ad278",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    }
+  ],
+  "nativeAcceptance": "NOT_TESTED",
+  "ordinaryAcceptance": "NOT_TESTED",
+  "automaticAcceptance": "NOT_TESTED",
+  "fanLiveQualification": "NOT_TESTED",
+  "enabled": false,
+  "capabilities": [],
+  "prospectiveNativeExit": null,
+  "prospectiveOuterExit": null,
+  "priorClosures": {
+    "09": {
+      "nativeExit": 1,
+      "outerExit": 1,
+      "capacityErrorAt": "2026-10-01T16:34:10Z"
+    },
+    "10": {
+      "nativeExit": 1,
+      "outerExit": 1,
+      "capacityErrorAt": "2026-10-01T16:36:00Z"
+    }
+  },
+  "earlier09Full": {
+    "source": "immutable adopted 09 source/root independent review",
+    "tests": 1410,
+    "pass": 1406,
+    "fail": 0,
+    "skip": 4,
+    "exit": 0,
+    "qualifiesCurrentImportedGraph": false
+  },
+  "sourceBuildManifest": {
+    "status": "NOT_TESTED after A8a import",
+    "priorManifest": "retained09 output only; no replacement baseline alias"
+  },
+  "remainingBlocks": [
+    "Fan recovery remains NOT_READY/no GO: fresh successful complete whole-state/BMC/GPU/owner preflight missing; existing root originals stale partial only",
+    "Private helper first-start failure before observed process birth cannot guarantee owned queued automatic-restart cleanup; ambiguous owner is quarantined instead of inferred",
+    "Private helper own postmutation directory snapshots do not yet freeze complete source/backup-parent namespaces; further independent review required",
+    "Full one-start/90-second recover+cleanup orchestration not exercised; 14 tests cover temp-file CAS and independent observation, not Linux/live qualification",
+    "Fan helper/template not enabled; replacement/source/unit/meta/host/failed-unit/invariant/whole-state identities require exact current root packet",
+    "A ceb847 manual-entry/process-runner successor not supplied/adopted; actual AbortSignal forwarding gap in manual loader remains",
+    "A8a imported once; E consumer for actual cold parent adoptSession not yet wired; original full-state/accepted artifact/policy gates remain",
+    "AUTO V2 empty-marker downgrade and missing expected-parent ancestry checks remain; installed V2 producer, independent effective config/scope/readiness and full ordinary consumer/native proof remain NOT_TESTED",
+    "Final coherent changed server/full/web/browser/build graph not run after latest A import; existing 09 receipts belong exactly their prior code",
+    "User wrap-up cancels new work/GO; native startup/stage/full/ordinary/AUTO/production delivery and fan live action deferred to next chat"
+  ],
+  "wrapUp": {
+    "source": "current root INBOX explicit human wrap-up16:51UTC",
+    "exportTarget": "2026-10-01T16:58:00Z",
+    "closeTarget": "2026-10-01T17:00:00Z",
+    "completeTask": false
+  },
+  "resources": {
+    "liveReadback": "NOT_TESTED by E/no Linux authority",
+    "latestRootObservedFan": "failed exit78/MainPID0; corrected ONE thermal GET16:40 tach3360 unitsnull; stale planning only",
+    "EActions": "local source/temp-file synthetic checks only; no hardware/network/actuator/native/container/service action"
+  }
+}

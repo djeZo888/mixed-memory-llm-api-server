@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "qualification": "synthetic",
+  "limitation": "These are recorder/controller scenarios, not native fault-injection or rollback qualification.",
+  "cases": [
+    {"id": "empty-summary", "outcome": "completed", "summaryState": "empty", "expect": "FAIL", "settlement": "released"},
+    {"id": "truncated-summary", "outcome": "completed", "summaryState": "truncated", "expect": "FAIL", "settlement": "released"},
+    {"id": "invalid-summary", "outcome": "completed", "summaryState": "invalid", "expect": "FAIL", "settlement": "released"},
+    {"id": "timeout", "outcome": "failed", "summaryState": "unknown", "expect": "FAIL", "settlement": "quarantined"},
+    {"id": "cancelled", "outcome": "cancelled", "summaryState": "unknown", "expect": "FAIL", "settlement": "released"},
+    {"id": "process-death", "outcome": "interrupted", "summaryState": "unknown", "expect": "FAIL", "settlement": "quarantined"},
+    {"id": "duplicate-action", "outcome": "failed", "summaryState": "unknown", "expect": "FAIL", "settlement": "released", "expectNoReplay": true},
+    {"id": "restart", "outcome": "interrupted", "summaryState": "unknown", "expect": "FAIL", "settlement": "quarantined", "expectNoReplay": true},
+    {"id": "missing-usage", "outcome": "completed", "summaryState": "complete", "expect": "PASS", "settlement": "released", "expectedTokenValues": null},
+    {"id": "boundary-admission", "outcome": "failed", "summaryState": "unknown", "expect": "FAIL", "settlement": "released", "profile": {"context": 480000, "reservedOutput": 65536, "admittedCompleteInput": 414464, "rejectedCompleteInput": 414465}, "nativeAdmission": "NOT_TESTED"},
+    {"id": "unattributed-auto-trigger", "outcome": "completed", "summaryState": "complete", "expect": "FAIL", "settlement": "released", "triggerClaim": "auto", "availableEvidence": "generic-native-event"}
+  ]
+}

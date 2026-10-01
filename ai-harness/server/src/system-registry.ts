@@ -3,6 +3,7 @@ import { isIPv4 } from "node:net";
 import { readFileSync } from "node:fs";
 import { loadFrontierSelection } from "./active-frontier.js";
 import { NODE_IDS, SERVICE_IDS, type NodeId } from "./node-contract.js";
+import { CODEX_PIN } from "./codex-engine.js";
 
 export type RegistryNode = {
   id: string;
@@ -21,6 +22,8 @@ export type RegistryService = {
   engines?: RegistryEngine[];
   engine_health?: { hostname: string; port: number; host_header: string; path: "/api/health" };
   model?: { display_name: string; instance_name: string; expected_alias: string; selection_group: "frontier" | null };
+  placement?: { gpu_uuid: string; selection_authority: string; selection_config_sha256: string | null };
+  retirement_key?: "retired200K";
 };
 export type RegistryEngine = {
   id: "minimax" | "codex";
@@ -50,6 +53,7 @@ export type RegistryTransport = {
 export type RegistryCredential = { id: string; systemd_credential: string };
 export type SystemRegistry = {
   schema_version: 1;
+  new_chat_engine?: "codex" | "minimax";
   /** Runtime selection from active-frontier.json, separate from descriptive labels. */
   selected_frontier?: string;
   credentials: RegistryCredential[];
@@ -76,8 +80,9 @@ function list<T>(v: unknown, max: number, parse: (x: unknown) => T): T[] {
 function unique(values: string[]) { if (new Set(values).size !== values.length) fail(); }
 const endpointRefs = ["frontier-private", "qwen-gpu0-private", "qwen-gpu1-private", "image-private", "control-private", "harness-local", "search-local", "status-uds"];
 export function validateSystemRegistry(raw: unknown): SystemRegistry {
-  const v = object(raw, ["schema_version", "credentials", "transports", "nodes", "services", "components"], ["selected_frontier"]);
+  const v = object(raw, ["schema_version", "credentials", "transports", "nodes", "services", "components"], ["selected_frontier", "new_chat_engine"]);
   if (v.schema_version !== 1) fail();
+  if (v.new_chat_engine !== undefined && v.new_chat_engine !== "codex" && v.new_chat_engine !== "minimax") fail();
   const credentials = list(v.credentials, 16, entry => {
     const c = object(entry, ["id", "systemd_credential"]);
     const credentialId = id(c.id);
@@ -121,7 +126,7 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   if (!nodes.length) fail();
   unique(nodes.map(n => n.id));
   const services = list(v.services, 128, entry => {
-    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"], ["model", "engines", "engine_health"]);
+    const s = object(entry, ["id", "node_id", "display_name", "observation_key", "owner", "capabilities", "endpoint_ref"], ["model", "engines", "engine_health", "placement", "retirement_key"]);
     if (s.endpoint_ref !== null && !endpointRefs.includes(s.endpoint_ref as string)) fail();
     const capabilities = list(s.capabilities, 32, id); unique(capabilities);
     let model: RegistryService["model"];
@@ -131,6 +136,16 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
       model = { display_name: label(m.display_name), instance_name: label(m.instance_name), expected_alias: id(m.expected_alias), selection_group: m.selection_group as "frontier" | null };
     }
     let engines: RegistryEngine[] | undefined;
+    let placement: RegistryService["placement"];
+    if (s.placement !== undefined) {
+      const p = object(s.placement, ["gpu_uuid", "selection_authority", "selection_config_sha256"]);
+      if (s.id !== "image" || s.node_id !== "ai-vm" || s.endpoint_ref !== "image-private" ||
+          typeof p.gpu_uuid !== "string" || !/^GPU-[a-f0-9]{8}(?:-[a-f0-9]{4}){3}-[a-f0-9]{12}$/.test(p.gpu_uuid) ||
+          p.selection_authority !== "/data/services/image21-runtime-20260923/config.json.gpu_uuid" ||
+          (p.selection_config_sha256 !== null && (typeof p.selection_config_sha256 !== "string" || !/^[a-f0-9]{64}$/.test(p.selection_config_sha256)))) fail();
+      placement = { gpu_uuid: p.gpu_uuid as string, selection_authority: p.selection_authority as string, selection_config_sha256: p.selection_config_sha256 as string | null };
+    }
+    if (s.retirement_key !== undefined && (s.id !== "qwen-ada200k" || s.node_id !== "ai-vm" || s.observation_key !== "qwen-ada200k" || s.retirement_key !== "retired200K")) fail();
     let engine_health: RegistryService["engine_health"];
     if (s.engine_health !== undefined && s.engines === undefined) fail();
     if (s.engines !== undefined) {
@@ -154,7 +169,8 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
           !host || !privateAddress(host[1]) || (host[2] && (Number(host[2]) < 1 || Number(host[2]) > 65535)) || h.path !== "/api/health") fail();
       engine_health = { hostname: h.hostname as string, port: h.port as number, host_header: h.host_header as string, path: "/api/health" };
     }
-    return { ...(model ? { model } : {}), ...(engines ? { engines, engine_health } : {}), id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
+    return { ...(model ? { model } : {}), ...(engines ? { engines, engine_health } : {}), ...(placement ? { placement } : {}),
+      ...(s.retirement_key ? { retirement_key: s.retirement_key } : {}), id: id(s.id), node_id: id(s.node_id), display_name: label(s.display_name), observation_key: id(s.observation_key), owner: label(s.owner), capabilities, endpoint_ref: s.endpoint_ref } as RegistryService;
   });
   const components = list(v.components, 128, entry => {
     const c = object(entry, ["id", "node_id", "display_name", "type", "owner", "parent_id", "independently_restartable", "observation"]);
@@ -198,6 +214,7 @@ export function validateSystemRegistry(raw: unknown): SystemRegistry {
   }
   if (v.selected_frontier !== undefined && !services.some(s => s.model?.selection_group === "frontier" && s.model.expected_alias === v.selected_frontier)) fail();
   return { schema_version: 1, credentials, transports, nodes, services, components,
+    ...(v.new_chat_engine === undefined ? {} : { new_chat_engine: v.new_chat_engine as "codex" | "minimax" }),
     ...(v.selected_frontier === undefined ? {} : { selected_frontier: id(v.selected_frontier) }) };
 }
 /** Inventory retains both identities; selection never creates another queue or readiness. */
@@ -206,10 +223,21 @@ export function selectRegistryFrontier(registry: SystemRegistry, model: string):
   if (!valid.services.some(s => s.model?.selection_group === "frontier" && s.model.expected_alias === model)) throw Error("Selected frontier missing from registry");
   return validateSystemRegistry({ ...valid, selected_frontier: model });
 }
-export function loadSystemRegistry(): SystemRegistry {
+function loadBaseSystemRegistry(): SystemRegistry {
   // Fixed path relative to source/dist, shipped and reviewed with the release.
   // No request parameter, browser endpoint, environment URL or credential path.
   const text = readFileSync(new URL("../../config/system-registry.json", import.meta.url), "utf8");
   if (Buffer.byteLength(text) > 128 * 1024) fail();
-  return selectRegistryFrontier(validateSystemRegistry(JSON.parse(text)), loadFrontierSelection().model);
+  return validateSystemRegistry(JSON.parse(text));
+}
+export function loadSystemRegistry(): SystemRegistry {
+  let registry = loadBaseSystemRegistry();
+  try { registry = selectRegistryFrontier(registry, loadFrontierSelection().model); }
+  catch { delete registry.selected_frontier; }
+  for (const service of registry.services) for (const engine of service.engines ?? [])
+    if (engine.id === "codex") engine.expected_version = CODEX_PIN.version;
+  return registry;
+}
+export function loadNewChatEngine(): "codex" | "minimax" {
+  return loadBaseSystemRegistry().new_chat_engine ?? fail();
 }

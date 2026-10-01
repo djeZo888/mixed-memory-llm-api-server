@@ -164,7 +164,8 @@ class CollectorsTests(unittest.TestCase):
         self.assertIn('mimo-v2.6-pro-rl', callbacks)
         from control.passive import BoundedObservers
         BoundedObservers(callbacks).close()
-        self.assertEqual(len([name for name in callbacks if name.startswith('gpu:')]),4)
+        self.assertEqual(len([name for name in callbacks if name.startswith('gpu:')]),3)
+        self.assertIn('image_gpu', callbacks)
         self.assertIn('gpu_metrics',callbacks)
 
     def test_node_source_closure_and_credentials_protected_before_start(self):

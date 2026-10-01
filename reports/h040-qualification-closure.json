@@ -1,0 +1,149 @@
+{
+  "schemaVersion": 1,
+  "task": "H040-B-qualification-closure",
+  "generatedUtc": "2026-10-01T04:03:29.753838Z",
+  "status": "PASS",
+  "qualification": "source-preparation-only",
+  "nativeAcceptance": "NOT_TESTED",
+  "semanticNativeAcceptance": "NOT_TESTED",
+  "session": {
+    "id": "01a0f4d8-c54d-79a0-8746-55a0c250f734",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "nativeCliVersion": "0.159.2",
+    "nodeVersion": "v24.21.0",
+    "adopted": true,
+    "safeIdentityEvidence": "Process CODEX_THREAD_ID matches; persisted turn_context 2026-10-01T03:50:55.053Z records exact current cwd/model/ultra",
+    "cwd": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/B-qualification-closure/repo",
+    "hardDeadlineUtc": "2026-10-01T04:05:00Z",
+    "priorPhaseClosureReportedByRoot": {
+      "nativeExitCode": 0,
+      "outerExitCode": 0,
+      "atUtc": "2026-10-01T03:46:42Z"
+    },
+    "currentNativeExitCode": -15,
+    "currentOuterExitCode": 143,
+    "exitLimitation": "Root collected actual wrapper/native terminal receipts after closure; original worker report had null prospective values.",
+    "deadlineTermination": true,
+    "actualClosureUtc": "2026-10-01T04:04:45.099427+00:00"
+  },
+  "baseCommit": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
+  "commit": "82cbd49bf9e1fa0199ba091478b2cad3a01c3db3",
+  "commitLimitation": "Root verified the exported bundle HEAD; worker deadline arrived before postcommit OUTBOX/RESULTS.",
+  "ownedFiles": [
+    "ai-harness/acceptance/compaction/qualification.mjs",
+    "ai-harness/acceptance/compaction/controller.mjs",
+    "ai-harness/acceptance/compaction/scorer.mjs",
+    "ai-harness/server/test/h040-compaction-qualification-closure.test.ts",
+    "ai-harness/server/test/h040-compaction-retention.integration.test.ts",
+    "ai-harness/server/test/h040-compaction-retention.controller.test.ts",
+    "reports/h040-qualification-closure.md",
+    "reports/h040-qualification-closure.json"
+  ],
+  "sourceHashes": {
+    "ai-harness/acceptance/compaction/qualification.mjs": "f66dce01368f75479632ac152ce5831bc9806fe16d2a5f65a340aadff8ee3019",
+    "ai-harness/acceptance/compaction/controller.mjs": "7d9bef19eb5330553e695118c1d786b59e97facc24423766bcaf1f62a35aa84f",
+    "ai-harness/acceptance/compaction/scorer.mjs": "08118849ceaf025b880d10a40d6c8d12e4137f197688785eec20acf829fbf16d",
+    "ai-harness/server/test/h040-compaction-qualification-closure.test.ts": "41c06f17da6fc72d718431e4005f5c83878a00acdd65939b5388efb70c45d0cf",
+    "ai-harness/server/test/h040-compaction-retention.integration.test.ts": "a204ca33f81a60de9d32b174954a9995e1c89a2f54d5e9582089eb40322f6faf",
+    "ai-harness/server/test/h040-compaction-retention.controller.test.ts": "0572663e64885d50714d6793e24fe066ccc4289ea5db37330630ff9681347d0a"
+  },
+  "authorityExpansion": "../INBOX.md explicitly added controller/scorer and narrowly related B tests for the original raw-artifact preservation gap. No schema/evidence file change was needed.",
+  "changes": [
+    "Any native fault vetoes aggregate native/semantic PASS; explicit native fault/dimension FAIL retains precedence, unknown fault remains NOT_TESTED.",
+    "Original E owned-store-registered-continuation-artifacts receipt retained byte-exact with receipt raw SHA/UTF8 byte count, source artifact raw SHA/byte count/capture/registered run/message IDs and independent acceptance/store/session/action/native/checkpoint bindings.",
+    "Controller freezes a private independently accepted original baseline; adapter gets copies, semantic JSON hashes remain separate.",
+    "Cold-resume verifier checks raw after-restart bytes and UTF8 byte counts against ORIGINAL capture; missing baseline remains NOT_TESTED; rewritten/substituted bytes or bindings FAIL."
+  ],
+  "tests": {
+    "status": "PASS",
+    "finalPassed": 67,
+    "finalFailed": 0,
+    "finalSkipped": 0,
+    "scope": "37 affected H039 +24 original/updated B H040 +5 new qualification +1 new raw preservation =67. Native/protocol/receipt boundaries remain synthetic.",
+    "justification": "Shared controller and cold-resume scorer changed under expanded ownership; affected retention checks cover preservation and unchanged historical interpretation. No broad unrelated or external E test replay."
+  },
+  "commands": [
+    {
+      "command": "./node_modules/.bin/tsx --test --test-timeout=15000 --test-reporter=tap test/h040-compaction-qualification-closure.test.ts",
+      "cwd": "ai-harness/server",
+      "phase": "before aggregate fix",
+      "exitCode": 1,
+      "status": "FAIL",
+      "passed": 3,
+      "failed": 2,
+      "receipt": "../output/qualification-before-fix.tap",
+      "meaning": "Actual regression reproduced aggregate PASS despite NOT_TESTED/UNKNOWN native cleanup."
+    },
+    {
+      "command": "same focused qualification test after aggregate fix",
+      "exitCode": 0,
+      "status": "PASS",
+      "passed": 5,
+      "failed": 0,
+      "receipt": "../output/qualification-after-fix.tap"
+    },
+    {
+      "command": "./node_modules/.bin/tsx --test --test-timeout=15000 --test-reporter=tap test/h040-compaction-qualification-closure.test.ts test/h039-compaction-retention.test.ts test/h040-compaction-retention*.test.ts",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "status": "PASS",
+      "passed": 67,
+      "failed": 0,
+      "skipped": 0,
+      "receipt": "../output/final-67-retention.tap"
+    },
+    {
+      "command": "npm run build",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "status": "PASS",
+      "receipt": "../output/server-build.log"
+    },
+    {
+      "command": "node --check qualification.mjs/controller.mjs/scorer.mjs",
+      "exitCode": 0,
+      "status": "PASS"
+    },
+    {
+      "command": "git diff --check",
+      "exitCode": 0,
+      "status": "PASS"
+    }
+  ],
+  "retainedIntermediateFailures": [
+    {
+      "receipt": "../output/qualification-and-retention-final.tap",
+      "status": "FAIL",
+      "exitCode": 1,
+      "passed": 64,
+      "failed": 2,
+      "reason": "Two old synthetic controller fixtures supplied no original raw receipt; updated fixtures now supply before-restart capture rather than weakening verifier."
+    }
+  ],
+  "unchanged": [
+    "Evidence and qualification schemas, mandatory dimensions and archived H039 interpretation",
+    "Existing controller owned-close receipt verification and reserve",
+    "E/A/native-adapter/runtime/feature disabled gates/config/source and root handoff/roster",
+    "Corpus/oracle and original histories/credentials/failures"
+  ],
+  "limitations": [
+    "All native-label records in tests are explicitly synthetic aggregation fixtures, not native evidence/attestation or live model output.",
+    "No VM/deployment/model/inference/fan/GitHub/new session/credential/upstream work. No externally referenced E tests run.",
+    "No live native or semantic qualification, physical release, raw collector transport fidelity or atomic rollback proven.",
+    "Native E actual restart remains disabled/unqualified. Root must review and implement the new after-restart producer binding fields before qualification."
+  ],
+  "nextRootGates": [
+    "Review exact B bundle at base with coherent A/E disabled source and dispatch final combined validation.",
+    "Preserve original E receipt source and byte domain; E future afterrestart native-owned-workspace-artifacts receipt must carry actual runId/sessionId/captureId/checkpointStateSha256/acceptedArtifactReceiptSha256/acceptedArtifactReceiptBytes/acceptedStoreRunId/acceptedContinuationActionId, alongside existing nativeThread/action/window/afterHost/artifactUtf8. No declared attestation replaces actual captures.",
+    "Keep native disabled until independently observed trusted receipt transport/runtime/source/mount/model-tool/gateway scope and whole requests qualify; root alone owns later live GO."
+  ],
+  "sourceStatus": "PASS",
+  "phaseOutcome": "PARTIAL_DEADLINE_TERMINATED",
+  "bundle": {
+    "sha256": "accadc60b2c979270267130c32da7aaf9ce7915ad8a8b0009bae55ae09f5b3e5",
+    "sourceCommit": "82cbd49bf9e1fa0199ba091478b2cad3a01c3db3",
+    "baseCommit": "040ebf1b592eb8a2ee27127fe889f422dd89c077",
+    "exportedBeforeDeadline": true
+  }
+}

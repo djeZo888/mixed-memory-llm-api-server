@@ -1,0 +1,221 @@
+{
+  "schema": "h042-closed-worker-roster-v1",
+  "overallStartedUtc": "2026-10-01T17:44:17Z",
+  "overallDeadlineUtc": "2026-10-01T20:44:17Z",
+  "closureReserveUtc": "2026-10-01T20:29:17Z",
+  "allEightFreshNativeSessionsClosed": true,
+  "allActualExitCodesIntegerZero": true,
+  "allRecordedOwnedProcessesAbsent": true,
+  "unlaunchedPublicationWorker": "E-publication05 held; no native session",
+  "rootPublication": "Git-only orchestration via saved mac-worker2 gh credential helper; source e5ecf127d327f371ba34f758ed73591fa1574083 remote matched20:31:20.417868Z",
+  "liveGOIssued": false,
+  "linuxStagingOrNativeInvocations": 0,
+  "BMCAuthenticationPUTAndServiceStarts": 0,
+  "gpuWorkloads": "NOT_TESTED",
+  "phases": [
+    {
+      "phase": "A-startup01",
+      "actualSessionId": "01a0f895-f578-7700-9572-562018de39a2",
+      "status": "CLOSED_SOURCE_PASS_NATIVE_NOT_TESTED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T18:28:29.749134+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T18:28:38.731513+00:00",
+      "review": "root-review/A-STARTUP01-INTEGRITY.json",
+      "host": "mac-worker1",
+      "startedUtc": "2026-10-01T17:49:32.294760+00:00",
+      "exportTargetUtc": "2026-10-01T18:27:32.294760+00:00",
+      "hardDeadlineUtc": "2026-10-01T18:32:32.294760+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "integratedCommit": "69faf4573fbd1134f96fb3b53826f0a70b553107"
+    },
+    {
+      "phase": "E-cleanup01",
+      "actualSessionId": "01a0f895-f956-7b73-87bc-551f2af5c498",
+      "status": "CLOSED_SOURCE_PASS_NATIVE_NOT_TESTED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T18:06:30.358489+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T18:06:37Z",
+      "review": "root-review/E-CLEANUP01-INTEGRITY.json",
+      "host": "mac-worker2",
+      "startedUtc": "2026-10-01T17:49:33.241398+00:00",
+      "exportTargetUtc": "2026-10-01T18:24:33.241398+00:00",
+      "hardDeadlineUtc": "2026-10-01T18:29:33.241398+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED"
+    },
+    {
+      "phase": "E-cold-adopt02",
+      "actualSessionId": "01a0f8ab-146a-7a51-9cfb-b0128f871cf3",
+      "status": "CLOSED_SOURCE_PASS_NATIVE_NOT_TESTED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T18:32:40.835Z",
+      "ownedProcessAbsenceUtc": "2026-10-01T18:33:14.648508+00:00",
+      "review": "root-review/E-COLD-ADOPT02-INTEGRITY.json",
+      "host": "mac-worker2",
+      "startedUtc": "2026-10-01T18:12:36.432507+00:00",
+      "exportTargetUtc": "2026-10-01T18:47:36.432507+00:00",
+      "hardDeadlineUtc": "2026-10-01T18:52:36.432507+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "integratedSourceCommit": "4b58037b",
+      "integratedReportCommit": "36904383",
+      "absenceTimestampSource": "root-review/E-COLD-ADOPT02-INTEGRITY.json absenceUtc"
+    },
+    {
+      "phase": "A-startup02",
+      "actualSessionId": "01a0f8cd-2c9b-7e32-a7e5-441f60c4d13c",
+      "status": "CLOSED_SOURCE_PARTIAL_NATIVE_BLOCKED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T19:29:39.784417+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T19:30:05.028804+00:00",
+      "review": "root-review/A-STARTUP02-FINAL-INTEGRITY.json",
+      "host": "mac-worker1",
+      "startedUtc": "2026-10-01T18:49:50.882063+00:00",
+      "exportTargetUtc": "2026-10-01T19:27:50.882063+00:00",
+      "hardDeadlineUtc": "2026-10-01T19:32:50.882063+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "completeExportTargetMissedSeconds": 46.989
+    },
+    {
+      "phase": "E-hardware03",
+      "actualSessionId": "01a0f8cc-4a26-7743-95ab-20a125407d5e",
+      "status": "CLOSED_READ_ONLY_REPORT_REVIEWED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T19:06:54.031721+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T19:06:55.583519+00:00",
+      "review": "root-review/E-HARDWARE03-INTEGRITY.json",
+      "host": "mac-worker2",
+      "startedUtc": "2026-10-01T18:48:52.854137+00:00",
+      "exportTargetUtc": "2026-10-01T19:13:52.854137+00:00",
+      "hardDeadlineUtc": "2026-10-01T19:18:52.854137+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "integratedCommit": "8590500b3fca2b12b96cf5570e81ec700d93430e"
+    },
+    {
+      "phase": "E-c4-queued04",
+      "actualSessionId": "01a0f8e1-b4fc-7c00-847f-628e4c67cd12",
+      "status": "CLOSED_FOCUSED_SOURCE_PASS_FULL_SUITE_PARTIAL_NATIVE_NOT_TESTED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T19:41:39.692573+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T19:44:01.037610+00:00",
+      "review": "root-review/E-C4-QUEUED04-INTEGRITY.json",
+      "host": "mac-worker2",
+      "startedUtc": "2026-10-01T19:12:16.484023+00:00",
+      "exportTargetUtc": "2026-10-01T19:47:16.484023+00:00",
+      "hardDeadlineUtc": "2026-10-01T19:52:16.484023+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "integratedCommits": [
+        "cb531f54",
+        "3022c1e1"
+      ]
+    },
+    {
+      "phase": "A-startup03",
+      "actualSessionId": "01a0f8fb-6aa3-7210-924f-f8444fe95932",
+      "status": "CLOSED_SOURCE_SYNTHETIC_PARTIAL_NATIVE_BLOCKED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T20:13:43.225295+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T20:13:58.116749+00:00",
+      "review": "root-review/A-STARTUP03-FINAL-INTEGRITY.json",
+      "host": "mac-worker1",
+      "startedUtc": "2026-10-01T19:40:21.422069+00:00",
+      "exportTargetUtc": "2026-10-01T20:15:21.422069+00:00",
+      "hardDeadlineUtc": "2026-10-01T20:20:21.422069+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "preReceiptFailureCleanupProved": false
+    },
+    {
+      "phase": "E-fan05",
+      "actualSessionId": "01a0f901-2be4-7cf3-b8ac-b743552b6d1d",
+      "status": "CLOSED_SOURCE_ONLY_FAN_NOT_FIXED",
+      "actualExitCodes": [
+        0,
+        0
+      ],
+      "closedUtc": "2026-10-01T20:25:52.750755+00:00",
+      "ownedProcessAbsenceUtc": "2026-10-01T20:26:12.918914+00:00",
+      "review": "root-review/E-FAN05-FINAL-INTEGRITY.json",
+      "host": "mac-worker2",
+      "startedUtc": "2026-10-01T19:46:38.533871+00:00",
+      "exportTargetUtc": "2026-10-01T20:21:38.533871+00:00",
+      "hardDeadlineUtc": "2026-10-01T20:26:38.533871+00:00",
+      "freshSession": true,
+      "model": "gpt-6.1-sol",
+      "reasoningEffort": "ultra",
+      "workerCLI": "0.159.2",
+      "linuxLifecycleOrNativeAcceptance": "NOT_TESTED",
+      "integratedCommits": [
+        "c2226418",
+        "59943578",
+        "e5ecf127"
+      ],
+      "sourceChecks": {
+        "controllerTests": 70,
+        "distinctTests": 152,
+        "finalCombinedPrivateGraph": 82,
+        "helperTests": 46,
+        "latestTestsExitCode": 0,
+        "observerTests": 36
+      },
+      "exportTargetMissed": true,
+      "exportCompletedUtc": "2026-10-01T20:22:54.483176+00:00",
+      "finalManifestUtc": "2026-10-01T20:25:31.170679+00:00",
+      "liveActions": 0,
+      "physicalRepair": "NOT_FIXED / NOT_TESTED"
+    }
+  ],
+  "privateOriginals": "/Users/agent/Documents/LLMServer/orchestration/tasks/H042-20261001/",
+  "remainingLiveQualifications": [
+    "minimal no-generation startup and owned shutdown",
+    "context compaction native/manual/AUTO/retention",
+    "CHA_FAN3 recovery and physical stability",
+    "Ada image and OCR placements/cable workload stability"
+  ]
+}

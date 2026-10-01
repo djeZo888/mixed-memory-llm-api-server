@@ -128,7 +128,7 @@ test(
       );
       await rm(root, { recursive: true, force: true });
     });
-    application = await createApp(options);
+    application = await createApp({ newChatEngine: "minimax", ...options });
     await application.app.listen({ host: "127.0.0.1", port: 0 });
     const created = await application.app.inject({
       method: "POST",
@@ -248,7 +248,7 @@ test(
       401,
     );
 
-    application = await createApp(options);
+    application = await createApp({ newChatEngine: "minimax", ...options });
     assert.deepEqual(application.store.messages(sessionId), firstHistory);
     assert.equal((await prompt()).statusCode, 202);
     await application.broker.idle();

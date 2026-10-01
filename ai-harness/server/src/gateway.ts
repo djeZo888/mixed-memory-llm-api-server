@@ -1,8 +1,10 @@
+import {observeGatewayNoGeneration,type GatewayNoGenerationProof} from "./codex-no-generation.js";
 import { emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
 import type { ProviderBoundaryCapture, ProviderFailure } from "./provider-diagnostics.js";
 import { translateResponses, ResponsesStream, responsesFailureCode, CODEX_CONTEXT, type ResponsesDiagnostic } from "./codex-responses.js";
 import { GatewayOwnership, type OwnershipOptions, type SettlementQuery } from "./gateway-ownership.js";
+import { parseCodexTurnMetadata, validateCodexMetadataAuthority, type CodexMetadataAuthority, type CodexTurnMetadata, type CodexNativeOperationReceipt } from "./codex-turn-metadata.js";
 import { MIMO_MODEL, prepareMimo, countMimo, mimoGenerationRequest, MimoStreamValidator, MimoError, type MimoAdmission } from "./mimo.js";
 import { mimoUrl, MIMO_PRODUCTION_OUTPUT, type MimoFrontierOptions } from "./mimo-frontier.js";
 import {
@@ -44,6 +46,10 @@ export interface GatewayUpstream {
   alias: string;
 }
 export interface GatewayOptions {
+  /** Trusted host-only carrier challenge; never derived from a request body. */
+  taskAdmission?: (input:{sessionId:string;requestId:string;lane:string;phase:'pre-hold'|'pre-dispatch'},signal:AbortSignal)=>Promise<void>;
+  nativeMetadataAuthority?: (input:{requestId:string;sessionId:string;metadata:CodexTurnMetadata}) => CodexMetadataAuthority|undefined;
+  onNativeOperation?: (receipt:CodexNativeOperationReceipt) => void;
   ownership?: OwnershipOptions;
   /** Explicit host acceptance capture only; raw bytes never enter normal logs. */
   diagnostics?: {
@@ -113,6 +119,7 @@ export interface Gateway {
   /** Observe durable session transitions until settlement/failure or host shutdown.
    * No separate timeout: existing request and queue deadlines own expiry. */
   observeSettlement(query: SettlementQuery, stop: AbortSignal): Promise<boolean>;
+  observeNoGeneration?<T>(sessionId:string,work:()=>Promise<T>):Promise<{value:T;proof:GatewayNoGenerationProof}>;
   sessionWork(sessionId: string): import("./gateway-ownership.js").RequestOwnership[];
   snapshot(): {
     queued: number;
@@ -734,6 +741,12 @@ export function createGateway(options: GatewayOptions): Gateway {
     const ownedRequest = ownership.begin(sessionId);
     const requestedModel = (request.body as any)?.model;
     const model = typeof requestedModel === "string" && [MODEL, MIMO_MODEL, FRONTIER_MODEL].includes(requestedModel) ? requestedModel : MODEL;
+    const reportedMetadata=isResponses?parseCodexTurnMetadata(request.headers["x-codex-turn-metadata"]):undefined;
+    let nativeOperation:Omit<CodexNativeOperationReceipt,"phase"|"lane">|undefined;
+    if(reportedMetadata)try{
+      const authority=options.nativeMetadataAuthority?.({requestId:ownedRequest.id,sessionId,metadata:reportedMetadata});
+      if(authority){const provenance=validateCodexMetadataAuthority(authority,sessionId,reportedMetadata);ownership.annotateNative(ownedRequest,reportedMetadata);nativeOperation={requestId:ownedRequest.id,sessionId,model,metadata:reportedMetadata,provenance,nativeSemanticAcceptance:"NOT_TESTED"};options.onNativeOperation?.({...nativeOperation,phase:"received"});}
+    }catch{/* Missing/unqualified attribution remains unknown; never inferred from prompt/body prose. */}
     const capture = (phase: ProviderBoundaryCapture["phase"], bytes: Buffer, lane?: string) => {
       try { options.diagnostics?.capture?.({ requestId: ownedRequest.id, sessionId, model, phase, bytes, lane }); } catch { /* Diagnostics cannot change ownership. */ }
     };
@@ -895,6 +908,8 @@ export function createGateway(options: GatewayOptions): Gateway {
       reply.raw.removeListener("close", disconnect);
       throw new ApiError(503, "frontier_held", "Frontier dispatch is held");
     }
+    try { await options.taskAdmission?.({sessionId,requestId:ownedRequest.id,lane:lane.upstream.alias,phase:'pre-hold'},cancelled.signal); }
+    catch(error){settleLane(lane,true);recordState('rejected');reply.raw.removeListener('close',disconnect);throw error;}
     while (
       options.dispatchHeld?.(lane.upstream.alias) &&
       !disconnected &&
@@ -991,7 +1006,16 @@ export function createGateway(options: GatewayOptions): Gateway {
         throw error;
       }
     }
+    // Counting and durable capture can yield long enough to expire the carrier.
+    // Rechallenge immediately before acceptance; every foreign hold still wins.
+    if(options.taskAdmission)try{
+      await options.taskAdmission({sessionId,requestId:ownedRequest.id,lane:lane.upstream.alias,phase:'pre-dispatch'},cancelled.signal);
+      if(cancelled.signal.aborted||tokens.get(token)!==sessionId)throw new ApiError(499,'cancelled','Request cancelled before dispatch');
+      if(options.dispatchHeld?.(lane.upstream.alias)||options.dispatchHeld?.('harness'))throw new ApiError(503,'task_dispatch_held','Task dispatch is held');
+      if(selectedAdmission.available(lane).dispatch!=='allow')throw new ApiError(503,'lane_unavailable','Lane unavailable before dispatch');
+    }catch(error){settleLane(lane,true);recordState('rejected');reply.raw.removeListener('close',disconnect);throw error;}
     ownership.transition(ownedRequest, "accepted", lane.upstream.alias);
+    if(nativeOperation)try{options.onNativeOperation?.({...nativeOperation,lane:lane.upstream.alias,phase:"accepted"});}catch{/* Observer never owns settlement. */}
     lane.dispatched = true;
     lane.ownerSettled = false;
     const payload = mimoPayload ?? JSON.stringify({ ...body, model: lane.upstream.alias });
@@ -1030,7 +1054,7 @@ export function createGateway(options: GatewayOptions): Gateway {
                 ? { completionTokens }
                 : {}),
               source:
-                "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
+                nativeOperation ? `gateway.native-reported.${nativeOperation.metadata.request_kind}.prompt_tokens` : "gateway.latest-request.prompt_tokens (main/child/compaction attribution unknown)",
             });
         } catch {
           /* A telemetry consumer must not alter inference transport. */
@@ -1054,6 +1078,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       const settle = (confirmed: boolean) => {
         if (settled) return;
         settled = true;
+        if(nativeOperation)try{options.onNativeOperation?.({...nativeOperation,lane:lane.upstream.alias,phase:confirmed?"settled":"uncertain"});}catch{/* Native operation observation is separate from semantic acceptance. */}
         clearTimeout(timeout);
         settlementAbort.abort();
         active.delete(upstream);
@@ -1274,6 +1299,7 @@ export function createGateway(options: GatewayOptions): Gateway {
     },
     confirmSettlement: async (query, waitMs = 0) => ownership.waitForSettlement(query, waitMs),
     observeSettlement: (query, stop) => ownership.waitForSettlement(query, stop),
+    observeNoGeneration: (sessionId,work)=>observeGatewayNoGeneration(sessionId,()=>ownership.admissionObservation(sessionId),work),
     sessionWork: (sessionId) => ownership.snapshot(sessionId),
     snapshot: () => ({
       queued: admission.queued,
@@ -1311,7 +1337,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       admission.notifyAvailabilityChanged();
       frontierAdmission?.notifyAvailabilityChanged();
     },
-    close: () => app.close(),
+    close: () => {ownership.stopObservation();return app.close();},
   };
 }
 

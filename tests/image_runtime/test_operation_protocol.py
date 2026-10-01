@@ -69,7 +69,7 @@ class OperationProtocol(unittest.TestCase):
 
     def make_runtime(self):
         runtime = object.__new__(service.Runtime)
-        runtime.config = {'owner': service.OWNER, 'image_id': IMAGE, 'gpu_uuid': service.GPU_UUID}
+        runtime.config = {'owner': service.OWNER, 'image_id': IMAGE, 'gpu_uuid': service.H032_GPU_UUID}
         runtime.storage_anchor = self.anchor
         runtime.services_anchor = self.anchor
         runtime.guards = self.full_guards
@@ -208,9 +208,9 @@ class OperationProtocol(unittest.TestCase):
         # verify_resident()'s tuple type before exercising real save/finally;
         # this finite source fixture is not a historical or live recovery claim.
         return {'container_id': CID, 'started_at': '2026-09-29T09:55:35.757660444Z',
-                'gpu_processes': [(service.GPU_UUID, '1664791', '32224')],
+                'gpu_processes': [(service.H032_GPU_UUID, '1664791', '32224')],
                 'device_current': {'free_bytes': 17064525824, 'total_bytes': 51527024640,
-                                   'uuid': service.GPU_UUID},
+                                   'uuid': service.H032_GPU_UUID},
                 'host_current': {'MemAvailable': 916447969280, 'MemTotal': 946820820992,
                                  'SwapFree': 922480640, 'SwapTotal': 3157258240}}
 
@@ -429,18 +429,18 @@ class OperationProtocol(unittest.TestCase):
         def stamp(age):
             return datetime.datetime.fromtimestamp(wall - age, datetime.timezone.utc).isoformat()
         empty = {'schema_version': 1, 'targets': {}}
-        positive = {'schema_version': 1, 'targets': {service.GPU_UUID: {
+        positive = {'schema_version': 1, 'targets': {service.H032_GPU_UUID: {
             'boot_id': BOOT, 'hardware_latched': True, 'reason': 'hardware_fault',
             'hardware_fault_code': 'gpu_fallen_off_bus',
             'evidence': [{'observed_at': stamp(0), 'observation_id': 'positive-proof'}]}}}
-        cases = [('fresh', empty, 0, service.GPU_UUID, False, None),
-                 ('last_valid', empty, 15, service.GPU_UUID, False, None),
-                 ('stale', empty, 15.001, service.GPU_UUID, False, 'hardware_validation_stale'),
-                 ('future', empty, -1, service.GPU_UUID, False, 'hardware_validation_stale'),
+        cases = [('fresh', empty, 0, service.H032_GPU_UUID, False, None),
+                 ('last_valid', empty, 15, service.H032_GPU_UUID, False, None),
+                 ('stale', empty, 15.001, service.H032_GPU_UUID, False, 'hardware_validation_stale'),
+                 ('future', empty, -1, service.H032_GPU_UUID, False, 'hardware_validation_stale'),
                  ('unknown', empty, 0, '', False, 'hardware_target_unknown'),
                  ('wrong_target', empty, 0, 'GPU-foreign', False, 'hardware_target_unknown'),
-                 ('changed_boot', empty, 0, service.GPU_UUID, True, 'image_boot_changed'),
-                 ('positive', positive, 0, service.GPU_UUID, False, 'hardware_fault')]
+                 ('changed_boot', empty, 0, service.H032_GPU_UUID, True, 'image_boot_changed'),
+                 ('positive', positive, 0, service.H032_GPU_UUID, False, 'hardware_fault')]
         for name, value, age, output, boot_change, error in cases:
             with self.subTest(proof=name):
                 self.boot = BOOT
@@ -448,7 +448,7 @@ class OperationProtocol(unittest.TestCase):
                 self.anchor.atomic_json(STATE_SUFFIX, value)
                 def command(argv, **kwargs):
                     self.assert_common_available()
-                    self.assertEqual(argv, ['/usr/bin/nvidia-smi', '--id=' + service.GPU_UUID,
+                    self.assertEqual(argv, ['/usr/bin/nvidia-smi', '--id=' + service.H032_GPU_UUID,
                                             '--query-gpu=uuid', '--format=csv,noheader,nounits'])
                     self.assertEqual(kwargs['timeout'], 2)
                     if boot_change:
@@ -470,7 +470,7 @@ class OperationProtocol(unittest.TestCase):
                         with runtime.critical(hardware=True):
                             pass
                         saved = self.anchor.read_json(STATE_SUFFIX)
-                        self.assertEqual(saved['validated'][service.GPU_UUID]['observed_at'], stamp(age))
+                        self.assertEqual(saved['validated'][service.H032_GPU_UUID]['observed_at'], stamp(age))
                     native.assert_called_once()
         self.boot = BOOT
 
@@ -501,7 +501,7 @@ class OperationProtocol(unittest.TestCase):
         runtime.check_ports = Mock()
         runtime.require_ada_idle = Mock()
         runtime.host_headroom = Mock(return_value={'MemTotal': 1000, 'MemAvailable': 900})
-        runtime.current_device = Mock(return_value={'uuid': service.GPU_UUID,
+        runtime.current_device = Mock(return_value={'uuid': service.H032_GPU_UUID,
             'total_bytes': 49 * 1024**3, 'free_bytes': 45 * 1024**3})
         runtime.make_work = Mock()
         runtime.create_argv = Mock(return_value=['docker', 'create', 'fixture'])

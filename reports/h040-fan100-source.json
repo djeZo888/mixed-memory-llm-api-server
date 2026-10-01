@@ -1,0 +1,93 @@
+{
+  "outcome": "READY_FOR_ROOT_REVIEW",
+  "candidateBase": "a0bfe59f5dfd83a7436061b46e25d8626feb9102",
+  "sessionId": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "cliVersion": "0.159.2",
+  "sourceHashes": {
+    "scripts/thermal/cha_fan3.py": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+    "scripts/thermal/sova-cha-fan3.service": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+    "scripts/thermal/fan_boost.py": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
+    "scripts/vision/artifact_job.py": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+    "scripts/vision/launch_job.py": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+    "scripts/vision/stage_job.py": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+    "configs/vision/h039-artifacts.lock.json": "822cd4c8e8cebbbd190fc046838899c8e576752ab67fa73dcf6d88d7a02ceb94"
+  },
+  "policy": {
+    "integratedGpuHotC": 70,
+    "integratedGpuHotDuty": 100,
+    "chaFan3HotC": 70,
+    "chaFan3HotMinimumDuty": 80,
+    "chaFan3VeryHotCStrictlyGreaterThan": 80,
+    "chaFan3VeryHotDuty": 100,
+    "startupStopFailsafeStaleRecoveryDuty": 100,
+    "lowDuty": 40,
+    "coolAtOrBelowC": 65,
+    "continuousCoolSeconds": 30,
+    "pollSeconds": 5,
+    "maximumFreshAgeSeconds": 15,
+    "newBmcDutyAllowlist": [
+      40,
+      80,
+      100
+    ]
+  },
+  "target": {
+    "gpuUuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+    "zone": "Zone4(CHA_FAN3)",
+    "arrayIndex": 3,
+    "PWMNum": 3,
+    "PWMSrc": 0,
+    "mode": 4,
+    "sourceBits": [
+      0,
+      0,
+      0
+    ],
+    "knotsC": [
+      20,
+      45,
+      65,
+      90,
+      100
+    ],
+    "lastKnotDuty": 100
+  },
+  "validation": {
+    "integratedFanTests": {
+      "tests": 25,
+      "actualExit": 0,
+      "status": "PASS"
+    },
+    "chaFan3Tests": {
+      "tests": 69,
+      "actualExit": 0,
+      "status": "PASS"
+    },
+    "artifactTests": {
+      "tests": 42,
+      "actualExit": 0,
+      "status": "PASS"
+    },
+    "pythonCompilation": "PASS",
+    "gitWhitespace": "PASS",
+    "liveDeployment": "NOT_TESTED",
+    "physicalFanActuation": "NOT_TESTED",
+    "actual70COrAbove80CHeat": "NOT_TESTED"
+  },
+  "artifactDirectoryDurability": "Checked anchored attempt directory fsync after stage claim and after worker/manifest/initial-status file fsync, before STAGED_NOT_STARTED.",
+  "nativeOuterExits": "NOT_OBSERVED - external wrapper after closure",
+  "remoteAccess": 0,
+  "credentialContentsRead": false,
+  "rootGates": [
+    "Review coherent bundle/commit, latest explicit thermal exception, exact source hashes and unchanged unit.",
+    "Name one ai-harness existing-service lifecycle owner; verify expected controller source/PID/unit and lock owner, no unknown owner or latch.",
+    "Privately snapshot/fsync all existing baseline/status/pending/uncertain/latch receipts BEFORE stopping; preserve historical80/40 evidence. Read credential metadata only outside existing service.",
+    "Normal owned stop; prove old PID/lock released, retain actual old-source stop receipt, do not mistake old80 for new100. Do not add a second controller.",
+    "Stage/hash-verify exact reviewed source; install only owned CHA source at existing path. Unit/NVML source/5UUID config and service enablement remain unchanged.",
+    "One normal start: verify new source/current PID, configured100 and independent pinned readback/tach; then fresh cool <=65C for30seconds to40 with timestamps <=15s.",
+    "One normal new-source stop/restart100, then a new continuous cool dwell to40; independently compare target/source/mode/knots and unrelated zones before/after.",
+    "If unknown, manual conflict, mismatch, latch, unavailable actuator or unclear tach response, retain evidence/report ACTUATION_UNCERTAIN/NOT_TESTED; no clearing state, replay, heat stress or new inference."
+  ]
+}

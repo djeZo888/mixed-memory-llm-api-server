@@ -1,3 +1,7 @@
+import {isQualificationTaskAdmission,type QualificationTaskAdmission} from './qualification-task-admission.js';
+import {composeCodexProductObservers,type CodexProductObservers} from "./codex-product-observation.js";
+import {createCodexRecoveryHost} from "./codex-recovery.js";
+import {loadCodexOrdinaryEntry,type CodexOrdinaryEntry} from "./codex-ordinary-entry.js";
 import { readFileSync } from "node:fs";
 import { loadCodexSpecialists } from "./codex-specialist-qualification.js";
 import { createHostOwnedAcceptance } from "./owned-acceptance.js";
@@ -8,7 +12,7 @@ import { FrontierLedger } from "./frontier-ledger.js";
 import { readProtectedCredential } from "./protected-credential.js";
 export { readProtectedCredential } from "./protected-credential.js";
 import path from "node:path";
-import { pathToFileURL } from "node:url";
+import { fileURLToPath,pathToFileURL } from "node:url";
 import { createApp } from "./app.js";
 import { createGateway, type LaneState, type GatewayOptions } from "./gateway.js";
 import { ImageUpstream } from "./image-upstream.js";
@@ -26,6 +30,7 @@ import { nodeClient } from "./node-client.js";
 import { openDispatchFreeze, serveDispatchFreeze } from "./dispatch-freeze.js";
 import { serviceAvailability } from "./service-availability.js";
 import { createBackendReadiness } from "./backend-readiness.js";
+import { loadNewChatEngine } from "./system-registry.js";
 
 function required(name: string): string {
   const value = process.env[name];
@@ -40,9 +45,9 @@ function port(name: string, fallback: number) {
     throw new Error(`${name} must be a TCP port`);
   return +value;
 }
-/** Explicit reviewed release entrypoint. Ordinary main.start() remains MiniMax-only.
+/** Explicit reviewed release entrypoint. The trusted new-chat default must qualify.
  * The receipt is a protected host file outside task mounts and binds current instances. */
-export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string) {
+export async function startCodexPreview(receiptPath: string, outputLimit = 65536, imageJobsQualified = false, frontierResponsesQualified = false, acceptance?: { frontier: (sessionId: string) => boolean; image?: (sessionId: string) => boolean; diagnostics?: GatewayOptions["diagnostics"] }, ownedAcceptancePath?: string, specialistQualificationPath?: string, trustedObservers?:CodexProductObservers) {
   let qualification: CodexHostQualification | undefined;
   try {
     const receipt = await loadQwenReceipt(receiptPath);
@@ -63,16 +68,21 @@ export async function startCodexPreview(receiptPath: string, outputLimit = 65536
       capabilities: specialists.capabilities,
       onResponsesError: createResponsesDiagnostics(path.join(required("AI_HARNESS_DATA_DIR"), "codex-responses-errors.jsonl")) };
   } catch { /* A failed optional preview must not remove MiniMax or stored histories. */ }
-  if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified; MiniMax startup continues\n");
-  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath });
+  const ordinary=qualification?loadCodexOrdinaryEntry(process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE||undefined,process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE||undefined,{serverDir:path.dirname(path.dirname(fileURLToPath(import.meta.url))),deploymentDir:path.dirname(required("AI_HARNESS_ENGINE_LAUNCHER"))}):undefined;
+  if(qualification)qualification=composeCodexProductObservers(qualification,ordinary,trustedObservers);
+  if (!qualification) process.stderr.write("Codex preview unavailable: deployment identity/allocation unqualified\n");
+  return start({ enablePreview: !!qualification, qualification, pilotOutputLimit: outputLimit, providerDiagnostics: acceptance?.diagnostics, ownedAcceptancePath,ordinary,beforeNativeReplacementCommit:trustedObservers?.beforeNativeReplacementCommit,beforeNativeRecovery:trustedObservers?.beforeNativeRecovery,onNativeRecoveryObserved:trustedObservers?.onNativeRecoveryObserved,taskAdmission:trustedObservers?.taskAdmission });
 }
-export async function start(codex: { enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string } = {}) {
+export async function start(codex: {taskAdmission?:QualificationTaskAdmission} & import("./codex-recovery-observation.js").CodexRecoveryObservers & { beforeNativeReplacementCommit?:import("./broker.js").NativeReplacementCommitVerifier; enablePreview?: boolean; qualification?: CodexHostQualification; pilotOutputLimit?: number; providerDiagnostics?: GatewayOptions["diagnostics"]; ownedAcceptancePath?: string;ordinary?:CodexOrdinaryEntry } = {}) {
+  const newChatEngine = loadNewChatEngine();
   if (Number(process.versions.node.split(".")[0]) !== 24)
     throw new Error("Node 24 is required");
   const dataDir = required("AI_HARNESS_DATA_DIR"),
     launcher = required("AI_HARNESS_ENGINE_LAUNCHER"),
     keyFile = required("AI_HARNESS_INFERENCE_KEY_FILE");
   const freeze = openDispatchFreeze();
+  const task=codex.taskAdmission;if(task&&!isQualificationTaskAdmission(task))throw Error("Genuine protected task admission required");
+  const held=(alias:string)=>task?task.held(alias):freeze.held(alias);
   const key = await readProtectedCredential(keyFile);
   const approvalKeyFile = process.env.AI_HARNESS_BROWSER_APPROVAL_KEY_FILE;
   const approvalProxyKey = approvalKeyFile
@@ -89,6 +99,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
   const owned = codex.ownedAcceptancePath ? createHostOwnedAcceptance(codex.ownedAcceptancePath, id => activeRunId(id)) : undefined;
   if (owned && codex.qualification) codex.qualification = { ...codex.qualification, frontierAcceptance: owned.frontier, imageAcceptance: owned.image, onResponsesDiagnostic: owned.onDiagnostic };
   const codexHost = composeCodexHost(path.join(path.dirname(launcher), "run-codex.sh"), () => gateway, codex.qualification);
+  if(task){const launch=codexHost.runtime.launchRootless;codexHost.runtime.launchRootless=async input=>{await task.verify({sessionId:input.sessionId,requestId:"launch:"+input.sessionId,lane:"qwen3.8-27b"});return launch(input);};}
   const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime });
   const availability = (id: string) => {
     const observed = serviceAvailability(
@@ -99,7 +110,7 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
           : undefined,
       id,
     );
-    return freeze.held(id) && observed.dispatch !== "reject"
+    return held(id) && observed.dispatch !== "reject"
       ? {
           ...observed,
           dispatch: "hold" as const,
@@ -107,11 +118,16 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
         }
       : observed;
   };
+  let recoveryHost:ReturnType<typeof createCodexRecoveryHost>|undefined;
   const application = await createApp({
+    newChatEngine,
+    beforeNativeReplacementCommit:codex.beforeNativeReplacementCommit,
+    beforeNativeRecovery:codex.beforeNativeRecovery,onNativeRecoveryObserved:codex.onNativeRecoveryObserved,
     dataDir,
     launcher,
     engineFactory: createEngine,
     ...codexOptions,
+    memoryRecoveryHost:codex.ordinary?input=>(recoveryHost??=createCodexRecoveryHost({store:application.store,files:application.files,runtime:codexHost.runtime,gateway:()=>gateway,launcher,dispatchHeld:()=>held("harness"),observers:codex}))(input):undefined,
     imageAcceptance: codex.qualification?.imageAcceptance,
     imageReferenceAcceptance: owned?.imageReference,
     onRunAccepted: owned?.onRunAccepted,
@@ -123,7 +139,8 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     }),
     approvalProxyKey,
     availability,
-    dispatchHeld: () => freeze.held("harness"),
+    dispatchHeld: () => held("harness"),
+    ...(task?{onNewOwnedSession:async(input)=>{await task.registerSession({sessionId:input.sessionId,role:'parent'});},beforeDispatchAdmission:async(input,signal)=>{await task.verify({...input,lane:"qwen3.8-27b"},signal);}}:{}),
     availabilitySummary: () =>
       nodeAvailability?.states() ?? {
         qwenGpu0: "unknown",
@@ -215,6 +232,13 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     gateway = createGateway({
       ownership,
       responses: codexHost.responses,
+      nativeMetadataAuthority: codex.qualification?.nativeMetadataAuthority,
+      onNativeOperation: receipt => {
+        const row=application.store.db.prepare("SELECT id FROM runs WHERE session_id=? AND status='running' ORDER BY rowid DESC LIMIT 1").get(receipt.sessionId);
+        if(row){application.store.checkpoints.recordNativeEvidence(receipt.sessionId,String(row.id),"native_operation",receipt);
+          if(receipt.metadata.request_kind==="compaction")application.store.checkpoints.observeCompaction(receipt.sessionId,String(row.id),"gateway:"+receipt.requestId,receipt.phase==="uncertain"?"failed":receipt.phase==="settled"?"completed":"start");}
+        codex.qualification?.onNativeOperation?.(receipt);
+      },
       diagnostics: owned ? { capture: owned.capture, onFailure: owned.onFailure } : codex.providerDiagnostics,
       imageAcceptance: codex.qualification?.imageAcceptance,
       qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,
@@ -225,7 +249,8 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
       images: application.images,
       codexImageJobsQualified: codex.qualification?.imageJobsQualified === true,
       availability,
-      dispatchHeld: (alias) => freeze.held(alias),
+      dispatchHeld: (alias) => held(alias),
+      ...(task?{taskAdmission:async(input,signal)=>{await task.verify(input,signal);}}:{}),
       initialLaneStates: states,
       onLaneState: (alias, state) => {
         application.store.db
@@ -339,11 +364,11 @@ export async function start(codex: { enablePreview?: boolean; qualification?: Co
     clearInterval(freezeTimer);
     await freezeServer?.close();
     owned?.close();
-    codexHost.stopSettlementObservation();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),
     ]);
+    codexHost.stopSettlementObservation();
     await gateway!.close();
     await application.app.close();
     freeze.close();

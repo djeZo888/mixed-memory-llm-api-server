@@ -83,3 +83,13 @@ test('current owner requalification changes eligible lane without restarting or 
  aliases=['qwen3.8-27b'];const first=f.send();await until(()=>f.seen.length===1);assert.equal(f.seen[0].body.model,'qwen3.8-27b');const queued=f.send();await until(()=>f.gateway.snapshot().queued===1);
  f.done(0);await(await first).text();await until(()=>f.seen.length===2);f.done(1);await(await queued).text();assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),true);
 });
+
+test('trusted admission refreshes before held queue and again after count before bytes',async t=>{
+ let held=true;const phases:string[]=[];const f=await fixture({enabled:true,countQwen:async()=>{held=true;return {inputTokens:1,contextWindow:480000};}},{dispatchHeld:()=>held,taskAdmission:async input=>{assert.equal(input.sessionId,'s');assert.ok(input.requestId);phases.push(input.phase);held=false;}});t.after(f.close);const reply=f.send();await until(()=>f.seen.length===1);assert.deepEqual(phases,['pre-hold','pre-dispatch']);f.done(0);await(await reply).text();
+});
+test('foreign hold after count rejects actual gateway request before provider acceptance',async t=>{
+ let held=false;const phases:string[]=[];const f=await fixture({enabled:true,countQwen:async()=>{held=true;return {inputTokens:1,contextWindow:480000};}},{dispatchHeld:()=>held,taskAdmission:async input=>{phases.push(input.phase);}});t.after(f.close);assert.equal((await f.send()).status,503);assert.deepEqual(phases,['pre-hold','pre-dispatch']);assert.equal(f.seen.length,0);assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),true);assert.ok(!f.states.some(s=>s.state==='accepted'));
+});
+test('pre-hold challenge rejection releases unaccepted owner without count or provider bytes',async t=>{
+ let counts=0;const f=await fixture({enabled:true,countQwen:async()=>{counts++;return {inputTokens:1,contextWindow:480000};}},{taskAdmission:async()=>{throw Error('lost carrier');}});t.after(f.close);assert.equal((await f.send()).status,500);assert.equal(counts,0);assert.equal(f.seen.length,0);assert.equal(await f.gateway.confirmSettlement({sessionId:'s'}),true);
+});

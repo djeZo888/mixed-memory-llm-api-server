@@ -1,0 +1,96 @@
+{
+  "schema": "h039-isolated-vision-candidate-v1",
+  "activation": "DISABLED_SOURCE_PREPARATION",
+  "container": {
+    "image": "vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40",
+    "indexDigest": "sha256:8a69ffad015f138d7170c4ddc429e230a3bc1c1719f67e14324749df200a4b90",
+    "imagePulled": false,
+    "imageBuilt": false,
+    "sourceSupportInspectedAt": "8bc31bd21075c5ca8a070e6da84e96e2eaf816ad",
+    "imageSourceCorrespondence": "NOT_TESTED"
+  },
+  "placement": {
+    "proposedGpuUuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+    "observedPciBusId": "00000000:01:00.0",
+    "computeCapability": "8.9",
+    "observedMemoryMiB": 49140,
+    "currentOwner": "IMAGE21-RUNTIME-20260923",
+    "currentContainer": "llm-image-backend",
+    "availableForVision": false,
+    "requiresRootCoordinatedReassignment": true,
+    "externalAdaObserved": false,
+    "minimumMeasuredFreeFraction": 0.07
+  },
+  "profiles": {
+    "16k": {
+      "qwenTotalTokens": 16384,
+      "ocrTotalTokens": 8192,
+      "maxOutputTokens": 4096,
+      "concurrencyPerService": 1,
+      "pagesPerRequest": 1,
+      "cropsPerInference": 1,
+      "maxImagePixels": 2097152
+    },
+    "32k": {
+      "qwenTotalTokens": 32768,
+      "ocrTotalTokens": 8192,
+      "maxOutputTokens": 4096,
+      "concurrencyPerService": 1,
+      "pagesPerRequest": 1,
+      "cropsPerInference": 1,
+      "maxImagePixels": 2097152,
+      "requires16kProfilePass": true
+    }
+  },
+  "models": [
+    {
+      "repo": "Qwen/Qwen3.5-9B",
+      "revision": "c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "dtype": "bfloat16",
+      "role": "interpretation",
+      "candidateModelPath": "/models/qwen3.5-9b-c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "hostArtifactPath": "/data/models-large/h039-vision-20261001-c-01a0f4d8/qwen3.5-9b-c202236235762e1c871ad0ccb60c8ee5ba337b9a",
+      "candidatePort": 18191,
+      "gpuMemoryUtilization": 0.72
+    },
+    {
+      "repo": "PaddlePaddle/PaddleOCR-VL-1.6",
+      "revision": "c5630abae1d940eafe0697512a0325494b02ab42",
+      "dtype": "bfloat16",
+      "role": "ocr",
+      "candidateModelPath": "/models/paddleocr-vl-1.6-c5630abae1d940eafe0697512a0325494b02ab42",
+      "hostArtifactPath": "/data/models-large/h039-vision-20261001-c-01a0f4d8/paddleocr-vl-1.6-c5630abae1d940eafe0697512a0325494b02ab42",
+      "candidatePort": 18192,
+      "gpuMemoryUtilization": 0.18
+    }
+  ],
+  "parserOutput": {
+    "transport": "text and JSON envelope",
+    "rawOcr": "exact recognition text",
+    "requiredEnvelopeFields": [
+      "sourceId",
+      "page",
+      "cropCoordinates",
+      "model",
+      "revision",
+      "observations",
+      "evidence",
+      "uncertainties"
+    ],
+    "derivedInterpretationSeparate": true,
+    "fullPageParser": "NOT_PREPARED_REQUIRES_UNAPPROVED_LAYOUT_MODEL",
+    "automaticAuxiliaryModelDownload": false
+  },
+  "gates": [
+    "root_candidate_review",
+    "artifact_hashes_complete",
+    "image_owner_reassignment",
+    "exact_container_architecture_and_kernel_validation",
+    "both_BF16_services_resident",
+    "peak_VRAM_at_least_7_percent_free",
+    "bounded_crop_and_page_profiles",
+    "timeout_cancellation_and_duplicate_settlement",
+    "technical_accuracy_corpus",
+    "ordinary_Codex_tool_followup"
+  ]
+}

@@ -9,7 +9,7 @@ test("API rejects pinned slash commands without mutations; ordinary tasks and na
   const dataDir = await realpath(await mkdtemp(path.join(tmpdir(), "h001-slash-")));
   const prompts: string[] = [];
   let launches = 0, tokens = 0, enqueues = 0;
-  const h = await createApp({
+  const h = await createApp({ newChatEngine: "minimax",
     dataDir,
     allowedOrigins: ["http://localhost"],
     launcher: "/fixture/not-executed",

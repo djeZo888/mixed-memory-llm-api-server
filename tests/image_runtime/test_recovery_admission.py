@@ -40,7 +40,7 @@ class RecoveryProtocol(unittest.TestCase):
         self.foreign_after_restart = False
         self.hardware_error = None
         self.native = {'Id': CID, 'State': {'StartedAt': 'old-start', 'Pid': 10, 'Running': True}}
-        self.records = {'config.json': {}, 'state.json': {
+        self.records = {'config.json': {'gpu_uuid': service.H032_GPU_UUID}, 'state.json': {
             'schema_version': 1, 'owner': service.OWNER, 'phase': 'warm',
             'warm': True, 'run_id': PRIOR, 'container': {'id': CID, 'image_id': 'fixture'}}}
         self.instances = []
@@ -73,7 +73,7 @@ class RecoveryProtocol(unittest.TestCase):
     def make_runtime(self):
         test = self
         runtime = object.__new__(Runtime)
-        runtime.config = {}
+        runtime.config = {'gpu_uuid': service.H032_GPU_UUID}
         runtime.guards = lambda: self.assertFalse(self.common)
         runtime.probe_hardware = lambda: self.assertFalse(self.common)
         runtime.systemd_identity = lambda: self.invocation

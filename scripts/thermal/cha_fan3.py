@@ -33,7 +33,9 @@ STATE = Path('/var/lib/sova-cha-fan3')
 CREDS = Path('/run/sova-cha-fan3-credentials')
 BMC_FILE = Path('/home/user/.config/sova-private/bmc.json')
 NODE_FILE = Path('/home/user/.config/ai-harness/node-control-key')
-HOT, COOL, COOL_SECONDS, POLL, MAX_AGE = 70, 65, 30, 5, 15
+HOT, COOL_SECONDS, POLL, MAX_AGE = 70, 30, 5, 15
+HIGH_DUTY, HOT_DUTY, LOW_DUTY = 100, 80, 40
+VERY_HOT = 80  # The explicit CHA_FAN3 exception is strictly above 80 C.
 BOOT_RE = re.compile(r'[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}\Z')
 
 class Fault(Exception):
@@ -301,14 +303,14 @@ def configuration_diff(before, after):
 
 def payload(s, duty):
     shape(s)
-    if type(duty) is not int or duty not in (40, 80):
+    if type(duty) is not int or duty not in (LOW_DUTY, HOT_DUTY, HIGH_DUTY):
         raise Fault('duty_not_allowlisted')
     return {'PWMIndex': 3, 'PWMSrc': 0, 'PWMNum': 3,
             'CurrentPWMdata': ['20', str(duty), '45', str(duty), '65', str(duty), '90', str(duty), 100, 100]}
 
 def validate_payload(v):
     if not any(v == {'PWMIndex': 3, 'PWMSrc': 0, 'PWMNum': 3,
-                     'CurrentPWMdata': ['20', str(d), '45', str(d), '65', str(d), '90', str(d), 100, 100]} for d in (40, 80)):
+                     'CurrentPWMdata': ['20', str(d), '45', str(d), '65', str(d), '90', str(d), 100, 100]} for d in (LOW_DUTY, HOT_DUTY, HIGH_DUTY)):
         raise Fault('forbidden_bmc_payload')
 
 def sample(dto, now=None):
@@ -362,26 +364,42 @@ class Node:
 class Policy:
     def __init__(self):
         self.cool_since = None
+        self.warm_since = None
         self.last = None
         self.boot = None
     def decide(self, observed, current, now):
         if observed is None:
-            self.cool_since = self.last = None
-            return max(80, current)
+            self.cool_since = self.warm_since = self.last = None
+            return HIGH_DUTY
         boot = observed['node_boot_id']
-        if boot != self.boot or self.last is None or now - self.last > MAX_AGE:
-            self.cool_since = None
+        reset = (boot != self.boot or self.last is None
+                 or not 0 <= now - self.last <= MAX_AGE)
+        if reset:
+            self.cool_since = self.warm_since = None
         self.boot, self.last = boot, now
         t = observed['temperature_c']
-        if t >= HOT:
+        if t > VERY_HOT:
+            self.cool_since = self.warm_since = None
+            return HIGH_DUTY
+        if self.warm_since is None:
+            self.warm_since = now
+        if t < HOT:
+            if self.cool_since is None:
+                self.cool_since = now
+        else:
             self.cool_since = None
-            return max(80, current)
-        if t > COOL:
-            self.cool_since = None
-            return current
-        if self.cool_since is None:
-            self.cool_since = now
-        return 40 if now - self.cool_since >= COOL_SECONDS else current
+        # A new boot, startup or sample gap demands high even with a cool sample.
+        # This fresh sample begins new dwell; no outage time can count toward it.
+        if reset:
+            return HIGH_DUTY
+        target = HOT_DUTY if t >= HOT else LOW_DUTY
+        if target > current:
+            return target  # Escalations never wait for dwell.
+        if target == LOW_DUTY and now - self.cool_since >= COOL_SECONDS:
+            return LOW_DUTY
+        if current > HOT_DUTY and now - self.warm_since >= COOL_SECONDS:
+            return HOT_DUTY
+        return current
 
 class Store:
     def __init__(self, directory=STATE):
@@ -435,6 +453,7 @@ class Controller:
     def __init__(self, bmc, store):
         self.bmc, self.store = bmc, store
         self.expected = None
+        self.desired = None
         self.baseline = store.read('baseline.json')
         self.proof = store.read('status.json') or {}
         if type(self.proof.get('readback_duty')) is int:
@@ -468,10 +487,13 @@ class Controller:
         return s, duty
     def actuator_guard(self, duty):
         self.store.assert_held()
-        if duty == 40 and self.stopping():
+        if duty < HIGH_DUTY and self.stopping():
             raise LoweringCancelled()
     def command(self, s, current, desired):
+        payload(s, desired)  # Reject a legacy/new forbidden target before intent writes.
+        self.desired = desired
         if desired == current:
+            self.expected = current  # Caller just independently inspected this readback.
             return s, current
         s, fresh_duty = self.inspect()
         if fresh_duty != current:
@@ -492,6 +514,7 @@ class Controller:
             if readback != desired:
                 raise Fault('bmc_write_readback_mismatch')
             self.store.write('pending-write.json', dict(intent, state='verified', readback_at=utc()))
+            self.expected = readback
             return after, readback
         except LoweringCancelled:
             self.expected = current
@@ -509,7 +532,7 @@ class Controller:
         self.proof = {'schema_version': 1, 'gpu_uuid': GPU, 'host_boot_id': self.host_boot,
           'pid': os.getpid(), 'source_sha256': self.source_sha, 'started_at': self.started_at,
           'updated_at': utc(), 'state': state, 'errors': [error] if error else [],
-          'desired_duty': self.expected, 'readback_duty': duty,
+          'desired_duty': self.desired, 'confirmed_expected_duty': self.expected, 'readback_duty': duty,
           'readback_kind': 'first_four_curve_duties_not_measured_pwm',
           'readback_at': self.readback_at if duty is not None else previous.get('readback_at'),
           'last_known_readback_duty': duty if duty is not None else previous.get('last_known_readback_duty'),
@@ -528,7 +551,8 @@ class Controller:
         pending = self.store.read('pending-write.json')
         if not pending or pending.get('state') == 'verified':
             return
-        if (pending.get('state') != 'prepared' or pending.get('desired_duty') not in (40, 80)
+        if (pending.get('state') != 'prepared' or type(pending.get('desired_duty')) is not int
+                or pending['desired_duty'] not in (LOW_DUTY, HOT_DUTY, HIGH_DUTY)
                 or type(pending.get('before_duty')) is not int
                 or not 0 <= pending['before_duty'] <= 100
                 or pending.get('invariant_sha256') != digest(self.baseline)):
@@ -542,12 +566,12 @@ class Controller:
         self.policy = Policy()  # Outage never counts toward the cool dwell.
 
     def high(self, check_expected=False):
+        self.desired = HIGH_DUTY
         self.reconcile_pending()
         s, duty = self.inspect()
         if check_expected and self.expected is not None and duty != self.expected:
             raise Fault('competing_writer_or_overwrite')
-        self.expected = max(80, duty)
-        return self.command(s, duty, self.expected)[1]
+        return self.command(s, duty, HIGH_DUTY)[1]
     def terminal(self, error):
         # Persist intent before ONE safe-high attempt. Restart/ExecStopPost must not fight.
         self.store.write('blocked.json', {'at': utc(), 'reason': error, 'high_attempt_reserved': True})
@@ -573,7 +597,7 @@ class Controller:
         except Exception as e:
             error = str(e) if isinstance(e, Fault) else 'telemetry_unavailable'
         desired = self.policy.decide(observed, current, time.monotonic() if now is None else now)
-        self.expected = desired
+        self.desired = desired
         _, duty = self.command(s, current, desired)
         self.status('healthy' if observed else 'degraded_high', duty, observed, error, self.bmc.tach())
 
@@ -602,7 +626,7 @@ class Controller:
                 if not transient(high_error):
                     raise
                 error += ':safe_high_unavailable'
-            self.status('degraded_high' if duty is not None and duty >= 80 else 'degraded_unknown',
+            self.status('degraded_high' if duty == HIGH_DUTY else 'degraded_unknown',
                         duty, error=error, tach=tach)
             return False
 

@@ -40,7 +40,7 @@ test("engine-aware preview rollback keeps Codex history/files readable, rejects 
       async close() {},
     }),
   };
-  let app = await createApp({ ...base, enginePolicy: { codex: codexPolicy } });
+  let app = await createApp({ newChatEngine: "minimax", ...base, enginePolicy: { codex: codexPolicy } });
   const session = await app.broker.createSession(undefined, "codex");
   const stored = app.store.getSession(session.id);
   app.store.addMessage(session.id, "user", "Original Codex history");
@@ -55,7 +55,7 @@ test("engine-aware preview rollback keeps Codex history/files readable, rejects 
     "text/plain",
   );
   await app.app.close();
-  app = await createApp({
+  app = await createApp({ newChatEngine: "minimax",
     ...base,
     enginePolicy: { codex: { ...codexPolicy, enabled: false } },
   });

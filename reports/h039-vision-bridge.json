@@ -1,0 +1,212 @@
+{
+  "task": "H039-D-vision-bridge",
+  "status": "PASS",
+  "qualification": "source_preparation_only",
+  "recordedUtc": "2026-10-01T00:58:50.819311+00:00",
+  "implementationCommit": "1d2551f638bdd00c021a26be898bb758c89db87c",
+  "session": {
+    "id": "01a0f4d8-c550-78a3-86bf-184759a1c9d3",
+    "host": "mac-worker2",
+    "cliVersion": "0.159.2",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "startedUtc": "2026-10-01T00:24:02.043830+00:00",
+    "hardDeadlineUtc": "2026-10-01T01:54:02.043830+00:00",
+    "branch": "h039/d-vision-bridge",
+    "identityEvidence": "Native thread.started event, task-local launch argv/deadline receipt, and live codex --version; no additional sessions launched"
+  },
+  "scope": {
+    "isolatedCheckoutOnly": true,
+    "newOwnedSourceOnly": true,
+    "sharedVmWrites": false,
+    "sharedInference": false,
+    "activation": false,
+    "gatewayEngineRegistryProviderBootstrapChanges": false,
+    "rootHandoffRosterEdits": false,
+    "paidSubagents": 0,
+    "publicationOrMerge": false,
+    "preservedPinnedServerCodex": "0.158.0"
+  },
+  "changedFiles": [
+    "ai-harness/docs/technical-vision.md",
+    "ai-harness/server/src/technical-vision-client.ts",
+    "ai-harness/server/src/technical-vision-contracts.ts",
+    "ai-harness/server/src/technical-vision-lifecycle.ts",
+    "ai-harness/server/src/technical-vision-schema.ts",
+    "ai-harness/server/src/technical-vision-sources.ts",
+    "ai-harness/server/src/technical-vision-tool.ts",
+    "ai-harness/server/src/technical-vision-validation.ts",
+    "ai-harness/server/test/fixtures/technical-vision/result-generation0.json",
+    "ai-harness/server/test/technical-vision-client.test.ts",
+    "ai-harness/server/test/technical-vision-contracts.test.ts",
+    "ai-harness/server/test/technical-vision-fixtures.ts",
+    "ai-harness/server/test/technical-vision-sources.test.ts",
+    "ai-harness/server/test/technical-vision-tool.test.ts",
+    "reports/h039-vision-bridge.md",
+    "reports/h039-vision-bridge.json"
+  ],
+  "tests": [
+    {
+      "name": "targeted generation0/source/tool/evidence suite",
+      "status": "PASS",
+      "command": "node_modules/.bin/tsx --test --test-timeout=15000 test/technical-vision-*.test.ts",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "tests": 29,
+      "pass": 29,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 0,
+      "todo": 0,
+      "privateReceipt": "../output/h039-vision-targeted-review-fix.log",
+      "sourceCommit": "1d2551f638bdd00c021a26be898bb758c89db87c"
+    },
+    {
+      "name": "server build",
+      "status": "PASS",
+      "command": "npm run build",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "privateReceipt": "../output/h039-vision-build-review-fix.log",
+      "sourceCommit": "1d2551f638bdd00c021a26be898bb758c89db87c"
+    },
+    {
+      "name": "server typecheck",
+      "status": "PASS",
+      "command": "npm run typecheck",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "privateReceipt": "../output/h039-vision-typecheck-final.log",
+      "sourceCommit": "175a796c8b728b0362781d1379479f35b80e2db9",
+      "scope": "Prior candidate standalone typecheck retained; final corrective build compiles/typechecks source"
+    },
+    {
+      "name": "server full suite",
+      "status": "PASS",
+      "command": "npm test",
+      "cwd": "ai-harness/server",
+      "exitCode": 0,
+      "tests": 1016,
+      "pass": 1012,
+      "fail": 0,
+      "cancelled": 0,
+      "skipped": 4,
+      "todo": 0,
+      "privateReceipt": "../output/h039-server-full-final.log",
+      "sourceCommit": "175a796c8b728b0362781d1379479f35b80e2db9",
+      "scope": "Prior candidate full-suite PASS retained; intentionally not rerun after the enum correction per root review instruction"
+    },
+    {
+      "name": "staged diff whitespace check",
+      "status": "PASS",
+      "command": "git diff --cached --check",
+      "exitCode": 0,
+      "sourceCommit": "175a796c8b728b0362781d1379479f35b80e2db9"
+    }
+  ],
+  "retainedFailedEvidence": [
+    {
+      "name": "initial typecheck",
+      "status": "FAIL",
+      "resolved": true,
+      "detail": "Literal default max parameter and Buffer inference errors in new modules; corrected before all passing checks. The initial log is retained outside Git.",
+      "privateReceipt": "../output/h039-typecheck-initial.log"
+    },
+    {
+      "name": "root independent candidate review: coercing enum validator",
+      "status": "FAIL",
+      "resolved": true,
+      "sourceCommit": "175a796c8b728b0362781d1379479f35b80e2db9",
+      "reportedBy": "Root independent reviewer via INBOX",
+      "detail": "String(v) admitted array enum values, bypassing failed-state settlement and live revision guards. Corrected helper now requires typeof v === string. Regressions cover all six helper paths (mode, mediaType, text kind, relationship kind, job state, error code), plus the HTTP client failed-state bypass.",
+      "correctedCommit": "1d2551f638bdd00c021a26be898bb758c89db87c"
+    }
+  ],
+  "notTested": [
+    "Live Qwen3.5-9B BF16 and PaddleOCR-VL-1.6 artifact revisions, provenance, runtime support or accuracy",
+    "Combined Ada residency, cache/activation peaks, crops, concurrency, approximately 7 percent VRAM reserve",
+    "Real PDF decoding/converter process ownership: only the injected renderer contract is exercised",
+    "Electrical net reconstruction, CAD reasoning and technical answer-key accuracy: the PNG is blank and result JSON is synthetic",
+    "Durable external service restart, persistence and native process/GPU cancellation settlement",
+    "Normal native Codex technical_image_analyze tool call and follow-up; tool registration/activation",
+    "Four pre-existing opt-in native tests skipped by the existing suite"
+  ],
+  "skippedNativeTests": [
+    "pinned native explicit compaction has canonical lifecycle and fresh resume preserves thread/history",
+    "pinned native forwards actual image argument shapes to strict MCP and preserves rejection continuation",
+    "pinned native MiMo roundtrips reasoning and one tool through the adapter with explicit serial policy",
+    "pinned native default advertises/rejects view_image; both candidate profiles omit it"
+  ],
+  "contract": {
+    "schemaVersion": 1,
+    "generation0Supported": true,
+    "interpreter": "Qwen/Qwen3.5-9B",
+    "precision": "BF16",
+    "parser": "PaddlePaddle/PaddleOCR-VL-1.6",
+    "serviceOrigin": "Root/C must select an explicit reviewed port on 10.156.100.60; no default activated",
+    "modelsLoadedByThisTask": false,
+    "endpoints": [
+      "GET /v1/technical-vision/capabilities",
+      "POST /v1/technical-vision/jobs",
+      "POST /v1/technical-vision/requests/REQUEST_ID/status",
+      "POST /v1/technical-vision/jobs/JOB_ID/status",
+      "POST /v1/technical-vision/jobs/JOB_ID/cancel"
+    ],
+    "deduplicationScope": [
+      "workspaceId",
+      "sessionId",
+      "runId",
+      "requestId"
+    ],
+    "sourceFormats": [
+      "PNG",
+      "JPEG",
+      "explicit PDF pages through trusted host adapter"
+    ],
+    "electricalNetReconstruction": "not_qualified"
+  },
+  "integrationHooks": [
+    {
+      "owner": "C/root service owner",
+      "change": "Implement the documented version-1 API with pinned tandem identity, atomic durable idempotency ledger, bounded queue and frozen image views"
+    },
+    {
+      "owner": "root/host bootstrap owner",
+      "file": "ai-harness/server/src/main.ts",
+      "change": "Construct TechnicalVisionClient, createTechnicalVisionSourceResolver and createTechnicalImageAnalyzeTool with host credential callback, reviewed identity and trusted original per-run scope; inject a qualified sandboxed PDF renderer"
+    },
+    {
+      "owner": "root/A or gateway owner",
+      "file": "ai-harness/server/src/gateway.ts",
+      "change": "Add a separately gated authenticated route to invoke; use lookup for ambiguous POST responses, status for one terminal/follow-up delivery and cancel only for explicit owned Stop; persist original creator scope"
+    },
+    {
+      "owner": "root/native policy and catalog owners",
+      "files": [
+        "ai-harness/server/src/policy.ts",
+        "ai-harness/server/src/codex-responses.ts",
+        "ai-harness/server/src/codex-provider.ts"
+      ],
+      "change": "Review/register exact technical_image_analyze definition under candidate mcp__technical_vision with protected rootless adapter configuration; default gate remains closed"
+    },
+    {
+      "owner": "root/registry capability owner",
+      "files": [
+        "ai-harness/server/src/system-registry.ts",
+        "ai-harness/server/src/codex-capabilities.ts"
+      ],
+      "change": "Add availability/qualification metadata only after root candidate review and real runtime/workflow evidence"
+    }
+  ],
+  "suggestedNextStep": "Root review implementation/evidence commits and API with C/A; then schedule one owned service/PDF/native integration candidate and measured live acceptance. Do not activate from generation0 PASS.",
+  "initialImplementationCommit": "175a796c8b728b0362781d1379479f35b80e2db9",
+  "reviewCorrection": {
+    "status": "PASS",
+    "commit": "1d2551f638bdd00c021a26be898bb758c89db87c",
+    "focusedTests": 29,
+    "build": "PASS",
+    "fullSuiteRerun": false,
+    "instruction": "Root requested focused/build only and retention of prior full-suite receipt",
+    "nativeSessionAndDeadlineUnchanged": true
+  }
+}

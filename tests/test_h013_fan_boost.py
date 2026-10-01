@@ -100,12 +100,19 @@ class SafetyTests(unittest.TestCase):
         self.setup_controller()
         self.at(0, 69)
         self.assertFalse(self.store.saves)
-        self.jobs.apis[U].n = 4
-        self.jobs.apis[U].policies[3] = 0
-        self.jobs.apis[U].targets[3] = 30
+        self.assertEqual(len(m.INTEGRATED),4)
+        self.assertNotIn(m.EXTERNAL,self.jobs.apis)
+        for count, api in enumerate(self.jobs.apis.values(),1):
+            api.n=count;api.policies=dict.fromkeys(range(count),0);api.targets=dict.fromkeys(range(count),30)
         self.at(2, 70)
-        self.assertEqual([x[1] for x in self.jobs.apis[U].calls if x[0] == 'boost'], [0,1,2,3])
+        for api in self.jobs.apis.values():
+            self.assertEqual([x[1] for x in api.calls if x[0]=='boost'],list(range(api.n)))
+            self.assertEqual(list(api.targets.values()),[100]*api.n)
         self.assertTrue(all(self.store.owned.values()))
+    def test_above_threshold_all_four_integrated_uuids_remain100(self):
+        self.setup_controller();self.at(0,90)
+        self.assertEqual(set(self.jobs.apis),set(m.KNOWN)-{m.EXTERNAL})
+        for api in self.jobs.apis.values():self.assertEqual(list(api.targets.values()),[100]*api.n)
     def test_exact_cool_threshold_and_30_seconds(self):
         self.setup_controller()
         self.at(0, 70)

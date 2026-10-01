@@ -18,13 +18,13 @@ import math
 import os
 from pathlib import Path
 import signal
+import re
 import stat
 import sys
 import threading
 import time
 
 
-GPU_UUID = "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
 DEVICE_INTERVAL = 0.2
 HOST_INTERVAL = 1.0
 MAX_PROC_BYTES = 128 * 1024
@@ -42,7 +42,10 @@ class Utilization(ctypes.Structure):
 class NVML:
     """Small typed ABI; optional library injection is only for local fixtures."""
 
-    def __init__(self, library=None):
+    def __init__(self, gpu_uuid, library=None):
+        if type(gpu_uuid) is not str or not re.fullmatch(r"GPU-[0-9a-f]{8}(?:-[0-9a-f]{4}){3}-[0-9a-f]{12}", gpu_uuid):
+            raise ValueError("image_gpu_selection_invalid")
+        self.gpu_uuid = gpu_uuid
         self.library = library if library is not None else ctypes.CDLL("libnvidia-ml.so.1")
         self.handle = ctypes.c_void_p()
         self.initialized = False
@@ -79,7 +82,7 @@ class NVML:
         if result["init"]["code"] != 0:
             return result
         self.initialized = True
-        result["handle"] = self.call("nvmlDeviceGetHandleByUUID", GPU_UUID.encode("ascii"),
+        result["handle"] = self.call("nvmlDeviceGetHandleByUUID", self.gpu_uuid.encode("ascii"),
                                      ctypes.byref(self.handle))
         if result["handle"]["code"] != 0:
             return result
@@ -87,7 +90,7 @@ class NVML:
         result["identity"] = self.call("nvmlDeviceGetUUID", self.handle, uuid, len(uuid))
         if result["identity"]["code"] == 0:
             observed = uuid.value.decode("ascii", errors="replace")
-            result["identity"].update(value=observed, matches_required_uuid=observed == GPU_UUID)
+            result["identity"].update(value=observed, matches_required_uuid=observed == self.gpu_uuid)
         return result
 
     def memory(self):
@@ -221,7 +224,7 @@ def output_stream(fd, path):
     return os.fdopen(os.dup(fd), "w", buffering=65536, encoding="utf-8")
 
 
-def run(stream, cgroup, stop, *, library=None):
+def run(stream, cgroup, stop, *, gpu_uuid, library=None):
     """Return a status code; startup/query errors remain explicit in JSONL."""
     def emit(value):
         stream.write(json.dumps(value, separators=(",", ":"), allow_nan=False) + "\n")
@@ -235,14 +238,14 @@ def run(stream, cgroup, stop, *, library=None):
         if stop.is_set():
             return 0
         try:
-            nvml = NVML(library)
+            nvml = NVML(gpu_uuid, library)
         except OSError as error:
             emit({"event": "startup_failed", "utc": timestamp(), "monotonic_s": time.monotonic(),
                   "error": "nvml_library_unavailable", "errno": error.errno})
             return 2
         startup = nvml.start()
         emit({"event": "start", "utc": timestamp(), "monotonic_s": started,
-              "gpu_uuid": GPU_UUID, "device_interval_s": DEVICE_INTERVAL,
+              "gpu_uuid": gpu_uuid, "device_interval_s": DEVICE_INTERVAL,
               "host_interval_s": HOST_INTERVAL, "cgroup": str(cgroup) if cgroup else None,
               "nvml": startup, "scope": "sampled_device_totals_not_process_or_allocator_peaks",
               "pcie_counter_window_ms": 20,
@@ -302,6 +305,7 @@ def run(stream, cgroup, stop, *, library=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--gpu-uuid", required=True)
     parser.add_argument("--output-fd", type=int, required=True)
     parser.add_argument("--output-path", required=True)
     parser.add_argument("--cgroup", help="fixed launcher-owned cgroup v2 directory under /sys/fs/cgroup")
@@ -317,7 +321,7 @@ def main(argv=None):
     handlers = {number: signal.signal(number, interrupted) for number in (signal.SIGTERM, signal.SIGINT)}
     try:
         with output_stream(args.output_fd, args.output_path) as stream:
-            return run(stream, cgroup, stop)
+            return run(stream, cgroup, stop, gpu_uuid=args.gpu_uuid)
     except (OSError, ValueError) as error:
         print(json.dumps({"event": "sampler_failed", "error": type(error).__name__}), file=sys.stderr)
         return 2

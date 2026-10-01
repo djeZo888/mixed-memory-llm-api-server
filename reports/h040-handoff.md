@@ -1,0 +1,37 @@
+# H040 current handoff
+
+Continue from this file and [the actual adopted roster](h040-worker-sessions.json). H039 is retained history. The user confirmed ai-vm back up after installing the second Ada and authorized resumed work. The former shutdown request was fulfilled at01:33:22UTC; do not power the resumed guest off again from that old instruction. Current finite window ends04:26:10UTC/06:26:10Ljubljana. Compaction reliability remains first.
+
+## Adopt work before dispatch
+
+All H040 native source phases are closed. A/E/B reviewed disabled source is integrated. Final coherent source candidate **31e46f7a8be002e700e3cefb9d65ba8657eb4c07** passed260 runtime cases plus12Python receipt/sixlauncher/threeegress cases; server build, strict adapter and strict changed-test compilation passed. The last one-fixture correction was independently reviewed with all170source hashes/14currentcheck logs; actualA native0/outer0 at04:23:17. Unchanged136fan/artifact source cases reuse reviewed exact hashes. Earlier25/two strict errors are retained as historical failures. See [source validation](h040-source-validation.json). Native acceptance remains NOT_TESTED and activation disabled.
+
+B-qualification-closure exported committed source/reports/bundle82cbd49, then hit its deadline at04:04:45: actualnative-15/outer143, no finalOUTBOX/RESULTS. Preserve this PARTIAL outcome. Its67source cases passed; final combined checks qualify the integrated disabled fixes preventing unknown cleanup aggregatePASS and retaining independent original continuation-artifact bytes. No B session is active and no automatic resume is permitted. Every later phase adopted the existing session only after its required actualclosure; no replacement native session was launched.
+
+Adopt the completed **h039-vision-20261001-c-01a0f4d8-h040-recovery-01** artifact receipt before new work. It launched03:56:46 and completed VERIFIED04:15:45,36files/fiveweights,21,259,856,084total bytes, finalizerexited0/success. Read-only04:19:23 found exactunitinactive/dead/MainPID0 and no partialfiles; originalrootdevice2081/inode140247041 and originalfailedreceipthashes unchanged. No paidCLIwait, secondattempt or automaticretry. See [completion](h040-artifact-completion.md). Runtime/vision accuracy remains NOT_TESTED.
+
+## Current runtime and placement
+
+Guest boot424b2823-b27c-4b3c-88b3-0ae9f4e7106d. The one completed normal Qwen start is actually slow Gen3x4 Blackwell93: operation9c9388619ab643898ba56f6a0164585d, gen56, identitye49ade04d1d884d66c6c7629d3c84bd2d23410c6b5b3f4bf9ed9c42f8b42a6a1. Keep existing normal route qwen3.8-27b/qwen-gpu1/qwen, backend10.156.100.60:30004/v1; refresh operation/identity/readiness before use. Peer Qwen remains stopped with its old-boot concurrent-acceptance failure retained. MiMo/image/vision are not loaded. Reported40Gbps replacement cable is not sustained stability proof.
+
+Human placement: returnedAda5d=imagegen/edit; stableAda14=Qwen3.5-9B BF16 plus PaddleOCR-VL-1.6 visual-to-text; Qwen480k pair=slowGen3x4BW93+physical Gen5slot5; MiMo2.6=systemRAM+physical Gen5slot2. The two fast Blackwell UUID endings1488237 andc163cc are not mapped to individual physical slots. The human question remains pending. Guest/QEMU ordinals are insufficient. No new GPU starts/placement changes until that mapping and protected source successors are reviewed. This H040 window has no remaining assigned download or inference job; keep the resumed guest up unless the user requests a new shutdown.
+
+## Thermal outcome
+
+Latest specific authority: four integrated cards >=70C=>100% on every available fan; CHA_FAN3 >=70C=>80% minimum, strictly>80C=>100%; retain100 until fresh<=65C continuously30seconds=>40%. Conservative unknown/start/stop100 is allowed. Configured startup100/cool40 and exactly one new-source Stop/restart100/freshcool40 passed. Final CHA controller source77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3, unchanged unit04f861f9..., enabled/healthyPID259107, configured40/tach3600 at03:33:23; no blocked/uncertain state. Full27-file private fsynced backup preceded oldstop. Other fan zones and integrated fan source/config are unchanged. Native hot thresholds and measured PWM remain NOT_TESTED; no additional lifecycle or heat-stress cycle is needed. See [actual fan outcome](h040-fan-artifact-live.md).
+
+## Artifact history and current ownership
+
+Original FAILEDTimeoutError, original13verifiedfiles/5,276,436,216-byte shard, original statusSHAdc8d1cdb... and manifestSHA40245a49... remain preserved; the active recovery reuses that original modelroot. About15,947,130,632weightbytes remained at launch. Both official revisions remain pinned. Sealed C source193652 corrected attempt-directory fsync and passed136 relevant source fixtures.
+
+All failed preflights remain: the first unnamed AssertionError cause is UNKNOWN; root separately identified substring self-match and own-held-lease observer defects. Corrected nonblocking acquisition and one root dispatcher denied lifecycle_busy before staging. Directstage02 made one actual invocation/exit1, admitted0/launch0. Passive kernel sampling identified periodic rootPID1643/llm-node.service holding the canonical lease about0.9seconds every5seconds; this does not establish earlier instantaneous ownership.
+
+Separately reviewed known-owner-release03 waited passively at most8seconds for that exact existing owner, never acquired/retried/stopped it, then invoked the unchanged atomic sealed stager once. Actualstage0/STAGED_NOT_STARTED and launcher0/STARTED_NOT_VERIFIED; actualsupervisor PID2153402/active/running. Total H040 stageinvocations2/admitted1, launchinvocations1; no duplicate attempt or automatic retry. All prior original receipt hashes were unchanged at the immediate read. Final exact status is VERIFIED with exited0/success; see the completion report. Future runtime work must adopt these verified files and preserved histories.
+
+## Remaining qualification and preservation
+
+Keep Codex0.158.0/upstream064c pinned, context480000/compaction400000/output65536 and normal Qwen/MiMo routing. Adapter default disabled/capabilities[]/runtimeunknown. Genuine host-only receipt transport is prepared, but actual Linux transport, model-facing no-tools/file/network scope, qualified entry module and actual owned-close producer remain unqualified. Physical housekeeping mounts/gateway are not empty-root/network-deny evidence. One small manual56-fact stage may run only after concrete actual gates pass; full72facts/62critical, threecycles, scoped retrieval, continuation, coldresume, child and automatic400k triggering remain NOT_TESTED.
+
+Technical vision artifact verification is complete. It still needs an owned runnable jobservice, measured combined stable-Ada runtime fit and ordinary D-client/tool acceptance. Image placement/protected configuration successor also waits for reviewed ownership. No creative-image acceptance, upstream upgrade, driver/Proxmox work, old950k/occupied480k benchmark or merge is authorized here. Preserve unknown owners, histories, failed/partial receipts and credentials.
+
+Root private checkpoints/reviews and all terminal/log receipts are in orchestration/tasks/H040-20261001. Prior PR11 head12b83de had all8CI PASS, which is historical only. H040 source/report packet is reviewed for draft PR11 publication. Root records exact pushed branch readback and new-head CI in private PUBLICATION/CI receipts before reporting publication success. Always verify the current PR head; no merge is authorized.

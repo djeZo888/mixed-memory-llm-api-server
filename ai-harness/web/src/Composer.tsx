@@ -5,7 +5,7 @@ import { ContextMeter } from './ContextMeter';
 import { contextForThread } from './context';
 import { isActive } from './types';
 import { imageJobActive } from './image-jobs';
-import { canStageEditReference, imageReferencesAvailable } from './image-capabilities';
+import { canStageEditReference } from './image-capabilities';
 import { uploadAccept, uploadKey } from './uploads';
 import { availabilityNotice } from './availability';
 
@@ -47,7 +47,7 @@ export function Composer({
   const codex = state.thread?.session.engineKind === 'codex';
   const codexUnavailable = codex && state.healthLoaded && state.codexAvailable !== true;
   const imageUploads =
-    codex ? codexSpecialistAvailable(state) : (state.visionAvailable || imageReferencesAvailable(state.imageCapabilities));
+    codex ? codexSpecialistAvailable(state) : state.visionAvailable;
   const reusableFiles = [
     ...(state.thread?.attachments ?? []),
     ...(state.thread?.artifacts ?? []),

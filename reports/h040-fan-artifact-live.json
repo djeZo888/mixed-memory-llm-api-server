@@ -1,0 +1,1504 @@
+{
+  "schema": "h040-fan-artifact-live-v1",
+  "phase": "C-fan-artifact-live",
+  "generatedUtc": "2026-10-01T03:33:34.172027+00:00",
+  "session": {
+    "id": "01a0f4d8-a09f-7922-b970-ce7c401cc220",
+    "model": "gpt-6.1-sol",
+    "reasoning": "ultra",
+    "cliVersion": "0.159.2",
+    "nativeExit": null,
+    "outerExit": null,
+    "exitAuthority": "External supervisors after closure; no prospective exit claimed"
+  },
+  "checkout": "/Users/agent/CodexProjects/llm-orchestration/H040-20261001/C-fan-artifact-live/repo",
+  "candidateBase": "469f3815cadac4fa696a8dbeba1b805905173f60",
+  "rootReviewedSource": "193652ee635b8e20068a427255c1b7997e78212e",
+  "integratedRoot": "4a3ae24",
+  "ownedChangedFiles": [
+    "reports/h040-fan-artifact-live.md",
+    "reports/h040-fan-artifact-live.json"
+  ],
+  "scope": {
+    "artifactStageInvocations": 0,
+    "artifactLaunchInvocations": 0,
+    "newArtifactNamespace": false,
+    "modelGpuLifecycleWrites": 0,
+    "inferenceCalls": 0,
+    "newSourceEdits": 0,
+    "fanLifecycleCommands": [
+      "stop old source",
+      "start new source",
+      "one stop new source",
+      "one restart new source"
+    ],
+    "newSourceStopRestartInvocations": 1,
+    "unitChanges": 0,
+    "driverProxmoxChanges": 0,
+    "extraAgents": 0,
+    "protectedCredentialUse": "Existing pinned read-only BMC helper and owned service privately authenticate; only credential metadata exported"
+  },
+  "deadlines": {
+    "nativeHardUtc": "2026-10-01T03:40:00Z",
+    "artifactAbsoluteUtc": "2026-10-01T04:26:10Z",
+    "artifactAbsoluteEpoch": 1790828770
+  },
+  "artifact": {
+    "outcome": "FAIL_ADMISSION_NOT_STAGED_NOT_LAUNCHED",
+    "job": "h039-vision-20261001-c-01a0f4d8",
+    "attempt": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01",
+    "unit": "h039-vision-20261001-c-01a0f4d8-h040-recovery-01.service",
+    "root": "/data/models-large/h039-vision-20261001-c-01a0f4d8",
+    "helperHashes": {
+      "scripts/vision/artifact_job.py": "5f3bed3b745089dd2b558f800e1c09adaa5d0c626d2c3f2248ffb299ef314607",
+      "scripts/vision/launch_job.py": "a5577ae3a271beeaaca3733b0fe2cbd7d476332f4586dac56286e9f8a6314330",
+      "scripts/vision/stage_job.py": "6d865884c6e3c3901862c4c7a2e8cc270167a28c05a95da7eecfcbc35ce5cc33",
+      "configs/vision/h039-artifacts.lock.json": "822cd4c8e8cebbbd190fc046838899c8e576752ab67fa73dcf6d88d7a02ceb94"
+    },
+    "sealedPayloadSha256": "8cfc3b6f73f04fc060c2cbbd3e00a182404a98aa2a6e8829c2a02a01b3940866",
+    "originalStatus": "FAILED_TIMEOUTERROR_PRESERVED",
+    "originalVerifiedFiles": 13,
+    "originalVerifiedWeightFiles": 1,
+    "firstQwenShardBytes": 5276436216,
+    "currentWeightsVerification": "NOT_TESTED_THIS_PHASE; pending/partial is not verified",
+    "originalReceiptHashes": {
+      "status.json": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
+      "manifest.json": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509"
+    },
+    "originalRootDevice": 2081,
+    "originalRootInode": 140247041,
+    "originalPreflight": {
+      "startUtc": "2026-10-01T03:21:25.705813+00:00",
+      "endUtc": "2026-10-01T03:21:26.053629+00:00",
+      "exit": 1,
+      "stdoutJson": {
+        "status": "PREFLIGHT_DENIED",
+        "failureType": "AssertionError"
+      },
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0
+    },
+    "scannerIssue": "Root diagnostic identified substring scan matching inline sudo ancestor; original unnamed AssertionError does not identify its failing gate. Corrected scanner uses parsed argv exact --job and artifact script argument. Original receipt unchanged.",
+    "localEncodingFailure": {
+      "atUtc": "2026-10-01T03:27:04.295860+00:00",
+      "localCoordinatorExit": 1,
+      "failureType": "ValueError",
+      "reason": "embedded_null_byte_in_ssh_argument",
+      "sshInvocationOccurred": false,
+      "correctedRemotePreflightInvocations": 0,
+      "stageInvocations": 0,
+      "launchInvocations": 0
+    },
+    "oneCorrectedPreflight": {
+      "startUtc": "2026-10-01T03:27:04.322202+00:00",
+      "endUtc": "2026-10-01T03:27:04.633242+00:00",
+      "exit": 1,
+      "stdoutJson": {
+        "status": "PREFLIGHT_DENIED",
+        "failureType": "LeaseBusy",
+        "gate": "sanitized_exception"
+      },
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0
+    },
+    "denialObservation": {
+      "boot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+      "rootDevice": 2081,
+      "rootInode": 140247041,
+      "originalHashes": {
+        "status.json": "dc8d1cdb22804ecbcdb278506ea74fd7a230886339e545e461ab7a90d8b0c217",
+        "manifest.json": "40245a49f41f21ff3ba5a8bc35b946df877b86e0412a45f425b8e752db736509"
+      },
+      "transition": true,
+      "namespaceExists": {
+        "build": false,
+        "logs": false
+      },
+      "unitShowExit": 0,
+      "unit": [
+        "MainPID=0",
+        "LoadState=not-found",
+        "ActiveState=inactive"
+      ],
+      "jobsExit": 0,
+      "jobsOutput": "",
+      "actualArtifactScriptPids": [],
+      "exit": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0
+    },
+    "currentCanonicalFree": "FAIL LeaseBusy at corrected admission; no bypass/retry",
+    "supervisorReceipt": "NOT_TESTED_NO_LAUNCH",
+    "previousH039StagerExit1": "UNKNOWN_OMITTED_STDERR_PRESERVED; not relabeled as timeout or lease cause"
+  },
+  "fan": {
+    "sourceInstallation": "PASS",
+    "liveQualification": "PASS_BOUNDED_CONFIGURED_STARTUP_STOP_RESTART_COOL_RELEASE",
+    "coordinatorExit": 1,
+    "coordinatorFailure": {
+      "event": "stopped_on_failure",
+      "utc": "2026-10-01T03:25:36.676180+00:00",
+      "failureType": "AssertionError",
+      "reason": "pending_unverified",
+      "archive": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01"
+    },
+    "coordinatorSha256": "75cc58200efc5831f5366421859a301ce6b7e10db53b3e10e1db06ff8cdff804",
+    "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrBytes": 0,
+    "oldSourceSha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+    "newSourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+    "unchangedUnitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+    "unchangedIntegratedNvmlSha256": "783964f08c0e11e4ade8116254cb5e5e4fc7210cc90cffa67a350243fbf33edd",
+    "sourcePath": "/usr/local/lib/sova-cha-fan3/cha_fan3.py",
+    "installedMode": "0644 root:root preserved",
+    "archive": {
+      "event": "backup_fsynced",
+      "utc": "2026-10-01T03:24:54.640033+00:00",
+      "archive": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01",
+      "archiveMode": "0700",
+      "filesMode": "0600",
+      "manifestSha256": "5634599bf792dfb22b7fafd5c477fe25527b5d32d13ab140d7a02fd56c7c1964",
+      "files": [
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/baseline.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/baseline.json",
+          "sha256": "4194771d2cd5f38528bc44bddb2013c5476720126daa020daa2b61e36232ff6b",
+          "bytes": 1398,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034777,
+          "mtimeNs": 1790626146021163850
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/blocked-invariant-192148.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/blocked-invariant-192148.json",
+          "sha256": "f43036a98de9e8397b1c7632fafc7b09d3f2c9afd37a20558cf9feb62c135d40",
+          "bytes": 109,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034760,
+          "mtimeNs": 1790623308132823496
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/blocked-startup-191802.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/blocked-startup-191802.json",
+          "sha256": "34d615e3d3b7d1c1840749062a709849214516e9b39955db4749b8028fe293f9",
+          "bytes": 104,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034757,
+          "mtimeNs": 1790623082165419352
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/blocked-stop-193017.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/blocked-stop-193017.json",
+          "sha256": "9fa953f3b60d2795d1f2233b1e803baa85c7b529f197801f24d4f08d7de44cb1",
+          "bytes": 114,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034762,
+          "mtimeNs": 1790623817293936437
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/blocked.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/blocked.json",
+          "sha256": "38e0b9de817f645c4bec37c0d4a3e58baecccb040f5718dc069a72c7385a0bed",
+          "bytes": 5,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034778,
+          "mtimeNs": 1790626146034163876
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/controller.lock",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/controller.lock",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034756,
+          "mtimeNs": 1790623082109419002
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/invariant-mismatch.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/invariant-mismatch.json",
+          "sha256": "85ff88f18b083fdb24e0d9c0349d4115d652b5ee5d49580f0c177e012e7eaa30",
+          "bytes": 476,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034768,
+          "mtimeNs": 1790625130065081626
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-baseline.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-baseline.json",
+          "sha256": "07757682dbcb5624ff32c3443939ceb211b7c6f9472aad973f598ffddeed7ef6",
+          "bytes": 10668,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034766,
+          "mtimeNs": 1790626145393162560
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-blocked.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-blocked.json",
+          "sha256": "7885330f6494e80b1906ba43f81b18ada1f7590d763a8ddd001b6a30f506096d",
+          "bytes": 215,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034769,
+          "mtimeNs": 1790626145399162572
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-final-snapshot.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-final-snapshot.json",
+          "sha256": "91ae7f3bc9731bb30a3c897d6527c6749256582257dc7c31883be56afb319318",
+          "bytes": 10721,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034776,
+          "mtimeNs": 1790626146014163835
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-fresh-snapshot.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-fresh-snapshot.json",
+          "sha256": "91ae7f3bc9731bb30a3c897d6527c6749256582257dc7c31883be56afb319318",
+          "bytes": 10721,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034775,
+          "mtimeNs": 1790626145422162619
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-invariant-mismatch.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-invariant-mismatch.json",
+          "sha256": "c776f9feb89ac23f96e6f4f4ae4e48a3f2b33ee797e9040d9c64934a1a548b86",
+          "bytes": 582,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034771,
+          "mtimeNs": 1790626145407162588
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-pending-write.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-pending-write.json",
+          "sha256": "483795333e17d9a8b61a32f0cd48099ccd19a693724966ad0da9ce64cbfe2d83",
+          "bytes": 348,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034772,
+          "mtimeNs": 1790626145411162596
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-prior-status.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-prior-status.json",
+          "sha256": "71077fc1412901e6c258bb17d401e76d26be12bf224092396487e2b1ffba046c",
+          "bytes": 1077,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034774,
+          "mtimeNs": 1790626145418162611
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-status.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-status.json",
+          "sha256": "9301e502f9d509bb369208fcade94a6ef4f86999fa6540e9fdb47d5c7f607c75",
+          "bytes": 1150,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034770,
+          "mtimeNs": 1790626145403162580
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v1-uncertain-write.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v1-uncertain-write.json",
+          "sha256": "b59cab18c804eb74b7aa7ac5afd937becf7ddff3a29e34ef72780828bafe9432",
+          "bytes": 112,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034773,
+          "mtimeNs": 1790626145415162605
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/migration-v2-receipt.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/migration-v2-receipt.json",
+          "sha256": "d0186191fb83ee64c0ff4c32b660813e2ceef4a9896141c8a90b149431985ce0",
+          "bytes": 161,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034753,
+          "mtimeNs": 1790626146030163868
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/non-target-audit.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/non-target-audit.json",
+          "sha256": "70f877e378bd6a97e042a15d410746f761693bd74dbf10b5277c17438e88ac19",
+          "bytes": 270,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034761,
+          "mtimeNs": 1790820858922452951
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/pending-write.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/pending-write.json",
+          "sha256": "ae0c9b56efec94da8a86b1c5920d71452ff47f006c13c4809d16c47a4baf7d6b",
+          "bytes": 242,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034780,
+          "mtimeNs": 1790820858927452978
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/status-invariant-192148.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/status-invariant-192148.json",
+          "sha256": "2ec39e18a8dcefd7fbc60be0a99f48bb3956b5b851393d7328975c8bf8fa733a",
+          "bytes": 1044,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034763,
+          "mtimeNs": 1790623308628826557
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/status-startup-191802.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/status-startup-191802.json",
+          "sha256": "5e3c4168ff565cf78ea7b09afbf61111e4072a9f3da0491b138f2f3258d3ffae",
+          "bytes": 953,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034758,
+          "mtimeNs": 1790623082221419702
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/status-stop-193017.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/status-stop-193017.json",
+          "sha256": "08aaafae393e348b8f3013badfc092390570330aef461eb8ed4ff1fbe115e3ea",
+          "bytes": 1021,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034765,
+          "mtimeNs": 1790623817368936893
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/status.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/status.json",
+          "sha256": "90c1d75e4c388667f852cb3f9d386c1ece1fb39edac82144e4ab640badc82566",
+          "bytes": 1064,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034822,
+          "mtimeNs": 1790825093356704377
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/write-post-snapshot.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/write-post-snapshot.json",
+          "sha256": "b577ee4ecc4ffd3d5c7ce85fb2a9269b91f3df67aedeaf31efbe3eff31fd6290",
+          "bytes": 10721,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034781,
+          "mtimeNs": 1790820858916452919
+        },
+        {
+          "originalPath": "/var/lib/sova-cha-fan3/write-pre-snapshot.json",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/state/write-pre-snapshot.json",
+          "sha256": "10b495bbe1b3503402036f58c67aee55eb7b55cdbe29e82fe8d3e83a124989a3",
+          "bytes": 10721,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o600",
+          "device": 2050,
+          "inode": 25034831,
+          "mtimeNs": 1790820858465450512
+        },
+        {
+          "originalPath": "/usr/local/lib/sova-cha-fan3/cha_fan3.py",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/old-source.py",
+          "sha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+          "bytes": 30502,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o644",
+          "device": 2050,
+          "inode": 15219096,
+          "mtimeNs": 1790626160945195195
+        },
+        {
+          "originalPath": "/etc/systemd/system/sova-cha-fan3.service",
+          "archivedPath": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01/old-unit.service",
+          "sha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+          "bytes": 1160,
+          "uid": 0,
+          "gid": 0,
+          "mode": "0o644",
+          "device": 2050,
+          "inode": 25429553,
+          "mtimeNs": 1790624523451001415
+        }
+      ],
+      "originalStatePreserved": true
+    },
+    "preflight": {
+      "status": "PREFLIGHT_PASS",
+      "at": "2026-10-01T03:22:37.575526+00:00",
+      "hostBoot": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+      "sourceSha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+      "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+      "service": {
+        "MainPID": "1504",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "enabled"
+      },
+      "controllerStatus": {
+        "actual_tach": 3600,
+        "actual_tach_units": null,
+        "bmc_logins": 1,
+        "bmc_put_attempts": 16,
+        "channel": "Zone4(CHA_FAN3)/PWMNum3",
+        "desired_duty": 40,
+        "errors": [],
+        "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "last_known_readback_duty": 40,
+        "last_write_at": "2026-10-01T02:14:18.553067+00:00",
+        "mode": 4,
+        "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "pid": 1504,
+        "readback_at": "2026-10-01T03:22:32.842937+00:00",
+        "readback_duty": 40,
+        "readback_kind": "first_four_curve_duties_not_measured_pwm",
+        "sampled_at": "2026-10-01T03:22:28.528606+00:00",
+        "schema_version": 1,
+        "source_bits": [
+          0,
+          0,
+          0
+        ],
+        "source_sha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+        "started_at": "2026-09-30T01:30:55.248662+00:00",
+        "state": "healthy",
+        "tach_at": "2026-10-01T03:22:33.273417+00:00",
+        "telemetry_age_seconds": 4.328,
+        "temperature_c": 33.0,
+        "updated_at": "2026-10-01T03:22:33.273450+00:00"
+      },
+      "lock": {
+        "device": 2050,
+        "inode": 25034756,
+        "held": true
+      },
+      "credentialsMetadata": {
+        "/home/user/.config/sova-private/bmc.json": {
+          "uid": 1000,
+          "mode": "0o600",
+          "size": 73
+        },
+        "/home/user/.config/ai-harness/node-control-key": {
+          "uid": 1000,
+          "mode": "0o600",
+          "size": 64
+        }
+      },
+      "configuredCurveDuty": 40,
+      "tach": {
+        "value": 3600,
+        "units": null,
+        "name": "CHA_FAN3",
+        "at": "2026-10-01T03:22:37.572550+00:00"
+      },
+      "node": {
+        "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "sampled_at": "2026-10-01T03:22:33.645909+00:00",
+        "temperature_c": 33.0,
+        "telemetry_age_seconds": 3.939
+      },
+      "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+      "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e",
+      "exit": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0
+    },
+    "actualCommands": [
+      {
+        "event": "service_command",
+        "utc": "2026-10-01T03:24:58.542094+00:00",
+        "argv": [
+          "/usr/bin/systemctl",
+          "stop",
+          "sova-cha-fan3.service"
+        ],
+        "startUtc": "2026-10-01T03:24:54.642072+00:00",
+        "exit": 0,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrBytes": 0,
+        "properties": {
+          "MainPID": "0",
+          "Result": "success",
+          "ExecMainStatus": "0",
+          "ActiveState": "inactive",
+          "SubState": "dead",
+          "UnitFileState": "enabled"
+        }
+      },
+      {
+        "event": "service_command",
+        "utc": "2026-10-01T03:25:04.327906+00:00",
+        "argv": [
+          "/usr/bin/systemctl",
+          "start",
+          "sova-cha-fan3.service"
+        ],
+        "startUtc": "2026-10-01T03:25:00.278034+00:00",
+        "exit": 0,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrBytes": 0,
+        "properties": {
+          "MainPID": "258047",
+          "Result": "success",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running",
+          "UnitFileState": "enabled"
+        }
+      }
+    ],
+    "oldSourceStopReceipt": {
+      "event": "old_source_stop_receipt",
+      "utc": "2026-10-01T03:24:58.547818+00:00",
+      "status": {
+        "actual_tach": 3600,
+        "actual_tach_units": null,
+        "bmc_logins": 1,
+        "bmc_put_attempts": 0,
+        "channel": "Zone4(CHA_FAN3)/PWMNum3",
+        "desired_duty": 80,
+        "errors": [],
+        "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "last_known_readback_duty": 80,
+        "last_write_at": null,
+        "mode": 4,
+        "node_boot_id": null,
+        "pid": 258033,
+        "readback_at": "2026-10-01T03:24:57.925178+00:00",
+        "readback_duty": 80,
+        "readback_kind": "first_four_curve_duties_not_measured_pwm",
+        "sampled_at": null,
+        "schema_version": 1,
+        "source_bits": [
+          0,
+          0,
+          0
+        ],
+        "source_sha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+        "started_at": "2026-10-01T03:24:57.091179+00:00",
+        "state": "stopped_high",
+        "tach_at": "2026-10-01T03:24:58.343938+00:00",
+        "telemetry_age_seconds": null,
+        "temperature_c": null,
+        "updated_at": "2026-10-01T03:24:58.343984+00:00"
+      },
+      "oldPidReleased": true,
+      "lockReleased": true
+    },
+    "independentReadbacks": [
+      {
+        "event": "independent_readback",
+        "utc": "2026-10-01T03:25:00.261366+00:00",
+        "label": "old-source-stop80",
+        "exit": 0,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrBytes": 0,
+        "readback": {
+          "at": "2026-10-01T03:25:00.094680+00:00",
+          "sourceSha256": "029652d9567fb9db8fe927db0544fc1a04b12dc97755f03f6cccea642ea778c2",
+          "configuredCurveDuty": 80,
+          "tach": {
+            "value": 3600,
+            "units": null,
+            "name": "CHA_FAN3",
+            "at": "2026-10-01T03:25:00.091176+00:00"
+          },
+          "node": {
+            "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+            "sampled_at": "2026-10-01T03:24:59.390500+00:00",
+            "temperature_c": 33.0,
+            "telemetry_age_seconds": 0.712
+          },
+          "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+        }
+      },
+      {
+        "event": "independent_readback",
+        "utc": "2026-10-01T03:25:06.639824+00:00",
+        "label": "new-source-first-start100",
+        "exit": 0,
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "stderrBytes": 0,
+        "readback": {
+          "at": "2026-10-01T03:25:06.458679+00:00",
+          "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+          "configuredCurveDuty": 100,
+          "tach": {
+            "value": 4920,
+            "units": null,
+            "name": "CHA_FAN3",
+            "at": "2026-10-01T03:25:06.455734+00:00"
+          },
+          "node": {
+            "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+            "sampled_at": "2026-10-01T03:25:04.271306+00:00",
+            "temperature_c": 33.0,
+            "telemetry_age_seconds": 2.195
+          },
+          "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+        }
+      }
+    ],
+    "coolDwellSamples": [
+      {
+        "utc": "2026-10-01T03:25:06.645615+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:24:59.390500+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 4.479,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 4200,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:04.315129+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:25:11.648448+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:25:09.336141+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 1.675,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:11.581099+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:25:16.651916+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:25:14.401734+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 1.598,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5160,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:16.384262+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:25:21.655944+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:25:19.405378+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 1.411,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:21.263411+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:25:26.662731+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:25:24.432882+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 1.266,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 4920,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:26.164495+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:25:31.669737+00:00",
+        "label": "first-start",
+        "pid": 258047,
+        "state": "healthy",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:25:29.432536+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 1.209,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:25:31.006500+00:00"
+      }
+    ],
+    "startup100": "PASS independent pinned configured100 readback at03:25:06; positive rising tach, units unreported",
+    "coolRelease40": "PASS restart bounded freshcool dwell and independent40; initial release observed after retained earlier coordinator exit1",
+    "newSourceStopRestart100": "PASS_ONE_NORMAL_STOP_RESTART; independent pinned configured100 stop/restart then fresh<=65C continuous30s observed cool40; heat NOT_TESTED",
+    "postFailureReadOnly": {
+      "at": "2026-10-01T03:27:32.853576+00:00",
+      "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+      "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+      "properties": {
+        "MainPID": "258047",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "enabled"
+      },
+      "controllerStatus": {
+        "actual_tach": 3600,
+        "actual_tach_units": null,
+        "bmc_logins": 1,
+        "bmc_put_attempts": 2,
+        "channel": "Zone4(CHA_FAN3)/PWMNum3",
+        "desired_duty": 40,
+        "errors": [],
+        "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "last_known_readback_duty": 40,
+        "last_write_at": "2026-10-01T03:25:36.265356+00:00",
+        "mode": 4,
+        "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "pid": 258047,
+        "readback_at": "2026-10-01T03:27:30.595862+00:00",
+        "readback_duty": 40,
+        "readback_kind": "first_four_curve_duties_not_measured_pwm",
+        "sampled_at": "2026-10-01T03:27:30.068346+00:00",
+        "schema_version": 1,
+        "source_bits": [
+          0,
+          0,
+          0
+        ],
+        "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "started_at": "2026-10-01T03:25:00.326780+00:00",
+        "state": "healthy",
+        "tach_at": "2026-10-01T03:27:31.038742+00:00",
+        "telemetry_age_seconds": 0.536,
+        "temperature_c": 33.0,
+        "updated_at": "2026-10-01T03:27:31.038773+00:00"
+      },
+      "pendingWrite": {
+        "at": "2026-10-01T03:25:36.132603+00:00",
+        "before_duty": 100,
+        "desired_duty": 40,
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "readback_at": "2026-10-01T03:25:36.883328+00:00",
+        "state": "verified"
+      },
+      "blocked": null,
+      "uncertain": null,
+      "baselineSha256": "4194771d2cd5f38528bc44bddb2013c5476720126daa020daa2b61e36232ff6b",
+      "readback": {
+        "at": "2026-10-01T03:27:33.317474+00:00",
+        "configuredCurveDuty": 40,
+        "tach": {
+          "value": 3600,
+          "units": null,
+          "name": "CHA_FAN3",
+          "at": "2026-10-01T03:27:33.766755+00:00"
+        },
+        "node": {
+          "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+          "sampled_at": "2026-10-01T03:27:30.068346+00:00",
+          "temperature_c": 33.0,
+          "telemetry_age_seconds": 3.707
+        },
+        "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+      },
+      "exit": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0,
+      "role": "Historical settled proof BEFORE reviewed continuation; currentPID is in completion"
+    },
+    "targetInvariantUnchanged": true,
+    "allNonTargetZonesUnchanged": true,
+    "baselineBytesUnchanged": true,
+    "tachInterpretation": "Actual positive readings rose from3600 to4920/5040 at100. Independent immediate restart cool40 sample was360 (03:31:49), distinct from prior service5040 sample; one final read-only check at03:33:23 proved settled40/tach3600, pendingverified/no latch/uncertain and unchanged invariants. Units are unreported. Configured curve duties are not measured instantaneousPWM, and hot thermal safety is NOT_TESTED.",
+    "physicalHeatAt70OrAbove80": "NOT_TESTED",
+    "policy": {
+      "integratedAtOrAbove70": 100,
+      "chaAtOrAbove70Minimum": 80,
+      "chaStrictlyAbove80": 100,
+      "startupStopStaleRecovery": 100,
+      "coolAtOrBelow65For30Seconds": 40,
+      "newWriteDuties": [
+        40,
+        80,
+        100
+      ]
+    },
+    "priorCoordinatorFailureRetained": {
+      "event": "stopped_on_failure",
+      "utc": "2026-10-01T03:25:36.676180+00:00",
+      "failureType": "AssertionError",
+      "reason": "pending_unverified",
+      "archive": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01"
+    },
+    "reviewedContinuation": {
+      "authority": "Phase INBOX ROOT fan bounded continuation; only remaining ONE stop/restart authorized after settled observation",
+      "actualExit": 0,
+      "coordinatorSha256": "ec116da3359b96f847c0ada4c0d58c9cf245fb97c6e42b8a86c5b27361109f28",
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0,
+      "preflight": {
+        "event": "continuation_preflight_pass",
+        "utc": "2026-10-01T03:31:01.490847+00:00",
+        "status": {
+          "actual_tach": 3600,
+          "actual_tach_units": null,
+          "bmc_logins": 1,
+          "bmc_put_attempts": 2,
+          "channel": "Zone4(CHA_FAN3)/PWMNum3",
+          "desired_duty": 40,
+          "errors": [],
+          "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+          "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+          "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "last_known_readback_duty": 40,
+          "last_write_at": "2026-10-01T03:25:36.265356+00:00",
+          "mode": 4,
+          "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+          "pid": 258047,
+          "readback_at": "2026-10-01T03:30:55.643397+00:00",
+          "readback_duty": 40,
+          "readback_kind": "first_four_curve_duties_not_measured_pwm",
+          "sampled_at": "2026-10-01T03:30:51.031446+00:00",
+          "schema_version": 1,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+          "started_at": "2026-10-01T03:25:00.326780+00:00",
+          "state": "healthy",
+          "tach_at": "2026-10-01T03:30:56.193187+00:00",
+          "telemetry_age_seconds": 4.619,
+          "temperature_c": 33.0,
+          "updated_at": "2026-10-01T03:30:56.193222+00:00"
+        },
+        "lock": {
+          "device": 2050,
+          "inode": 25034756,
+          "ownerPid": 258047
+        },
+        "rootContinuation": "INBOX reviewed remaining ONE stop/restart; prior exit1 retained"
+      },
+      "actualCommands": [
+        {
+          "event": "service_command",
+          "utc": "2026-10-01T03:31:06.562075+00:00",
+          "argv": [
+            "/usr/bin/systemctl",
+            "stop",
+            "sova-cha-fan3.service"
+          ],
+          "startUtc": "2026-10-01T03:31:01.493089+00:00",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "properties": {
+            "MainPID": "0",
+            "Result": "success",
+            "ExecMainStatus": "0",
+            "ActiveState": "inactive",
+            "SubState": "dead",
+            "UnitFileState": "enabled"
+          }
+        },
+        {
+          "event": "service_command",
+          "utc": "2026-10-01T03:31:10.587266+00:00",
+          "argv": [
+            "/usr/bin/systemctl",
+            "start",
+            "sova-cha-fan3.service"
+          ],
+          "startUtc": "2026-10-01T03:31:08.110522+00:00",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "properties": {
+            "MainPID": "259107",
+            "Result": "success",
+            "ExecMainStatus": "0",
+            "ActiveState": "active",
+            "SubState": "running",
+            "UnitFileState": "enabled"
+          }
+        }
+      ],
+      "newSourceStopReceipt": {
+        "event": "new_source_stop_receipt",
+        "utc": "2026-10-01T03:31:06.564879+00:00",
+        "status": {
+          "actual_tach": 3600,
+          "actual_tach_units": null,
+          "bmc_logins": 1,
+          "bmc_put_attempts": 0,
+          "channel": "Zone4(CHA_FAN3)/PWMNum3",
+          "desired_duty": 100,
+          "errors": [],
+          "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+          "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+          "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "last_known_readback_duty": 100,
+          "last_write_at": null,
+          "mode": 4,
+          "node_boot_id": null,
+          "pid": 259088,
+          "readback_at": "2026-10-01T03:31:05.849045+00:00",
+          "readback_duty": 100,
+          "readback_kind": "first_four_curve_duties_not_measured_pwm",
+          "sampled_at": null,
+          "schema_version": 1,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+          "started_at": "2026-10-01T03:31:04.941499+00:00",
+          "state": "stopped_high",
+          "tach_at": "2026-10-01T03:31:06.408256+00:00",
+          "telemetry_age_seconds": null,
+          "temperature_c": null,
+          "updated_at": "2026-10-01T03:31:06.408289+00:00"
+        },
+        "oldPidReleased": true,
+        "lockReleased": true
+      },
+      "restartStatus": {
+        "event": "restart_status",
+        "utc": "2026-10-01T03:31:10.593921+00:00",
+        "status": {
+          "actual_tach": 4920,
+          "actual_tach_units": null,
+          "bmc_logins": 1,
+          "bmc_put_attempts": 0,
+          "channel": "Zone4(CHA_FAN3)/PWMNum3",
+          "desired_duty": 100,
+          "errors": [],
+          "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+          "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+          "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "last_known_readback_duty": 100,
+          "last_write_at": null,
+          "mode": 4,
+          "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+          "pid": 259107,
+          "readback_at": "2026-10-01T03:31:10.138232+00:00",
+          "readback_duty": 100,
+          "readback_kind": "first_four_curve_duties_not_measured_pwm",
+          "sampled_at": "2026-10-01T03:31:06.142981+00:00",
+          "schema_version": 1,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+          "started_at": "2026-10-01T03:31:08.163838+00:00",
+          "state": "healthy",
+          "tach_at": "2026-10-01T03:31:10.573013+00:00",
+          "telemetry_age_seconds": 4.002,
+          "temperature_c": 33.0,
+          "updated_at": "2026-10-01T03:31:10.573046+00:00"
+        }
+      },
+      "independentReadbacks": [
+        {
+          "event": "independent_readback",
+          "utc": "2026-10-01T03:31:01.487722+00:00",
+          "label": "continuation-settled-cool40",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "readback": {
+            "at": "2026-10-01T03:31:01.215881+00:00",
+            "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+            "configuredCurveDuty": 40,
+            "tach": {
+              "value": 3600,
+              "units": null,
+              "name": "CHA_FAN3",
+              "at": "2026-10-01T03:31:01.212720+00:00"
+            },
+            "node": {
+              "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+              "sampled_at": "2026-10-01T03:31:01.109939+00:00",
+              "temperature_c": 33.0,
+              "telemetry_age_seconds": 0.11
+            },
+            "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+            "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+          }
+        },
+        {
+          "event": "independent_readback",
+          "utc": "2026-10-01T03:31:08.104527+00:00",
+          "label": "new-source-stop100",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "readback": {
+            "at": "2026-10-01T03:31:07.898857+00:00",
+            "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+            "configuredCurveDuty": 100,
+            "tach": {
+              "value": 4320,
+              "units": null,
+              "name": "CHA_FAN3",
+              "at": "2026-10-01T03:31:07.896008+00:00"
+            },
+            "node": {
+              "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+              "sampled_at": "2026-10-01T03:31:06.142981+00:00",
+              "temperature_c": 33.0,
+              "telemetry_age_seconds": 1.76
+            },
+            "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+            "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+          }
+        },
+        {
+          "event": "independent_readback",
+          "utc": "2026-10-01T03:31:12.310573+00:00",
+          "label": "new-source-restart100",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "readback": {
+            "at": "2026-10-01T03:31:11.920122+00:00",
+            "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+            "configuredCurveDuty": 100,
+            "tach": {
+              "value": 4920,
+              "units": null,
+              "name": "CHA_FAN3",
+              "at": "2026-10-01T03:31:11.916858+00:00"
+            },
+            "node": {
+              "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+              "sampled_at": "2026-10-01T03:31:11.158777+00:00",
+              "temperature_c": 33.0,
+              "telemetry_age_seconds": 0.765
+            },
+            "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+            "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+          }
+        },
+        {
+          "event": "independent_readback",
+          "utc": "2026-10-01T03:31:49.669069+00:00",
+          "label": "restart-cool40",
+          "exit": 0,
+          "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "stderrBytes": 0,
+          "readback": {
+            "at": "2026-10-01T03:31:49.364210+00:00",
+            "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+            "configuredCurveDuty": 40,
+            "tach": {
+              "value": 360,
+              "units": null,
+              "name": "CHA_FAN3",
+              "at": "2026-10-01T03:31:49.361590+00:00"
+            },
+            "node": {
+              "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+              "sampled_at": "2026-10-01T03:31:46.352040+00:00",
+              "temperature_c": 32.0,
+              "telemetry_age_seconds": 3.016
+            },
+            "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+            "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+          }
+        }
+      ],
+      "completion": {
+        "event": "completed",
+        "utc": "2026-10-01T03:31:49.678650+00:00",
+        "outcome": "REMAINING_SINGLE_STOP_RESTART_VERIFIED",
+        "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+        "properties": {
+          "MainPID": "259107",
+          "Result": "success",
+          "ExecMainStatus": "0",
+          "ActiveState": "active",
+          "SubState": "running",
+          "UnitFileState": "enabled"
+        },
+        "status": {
+          "actual_tach": 5040,
+          "actual_tach_units": null,
+          "bmc_logins": 1,
+          "bmc_put_attempts": 1,
+          "channel": "Zone4(CHA_FAN3)/PWMNum3",
+          "desired_duty": 40,
+          "errors": [],
+          "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+          "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+          "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+          "last_known_readback_duty": 40,
+          "last_write_at": "2026-10-01T03:31:44.116762+00:00",
+          "mode": 4,
+          "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+          "pid": 259107,
+          "readback_at": "2026-10-01T03:31:44.824979+00:00",
+          "readback_duty": 40,
+          "readback_kind": "first_four_curve_duties_not_measured_pwm",
+          "sampled_at": "2026-10-01T03:31:41.231080+00:00",
+          "schema_version": 1,
+          "source_bits": [
+            0,
+            0,
+            0
+          ],
+          "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+          "started_at": "2026-10-01T03:31:08.163838+00:00",
+          "state": "healthy",
+          "tach_at": "2026-10-01T03:31:45.420957+00:00",
+          "telemetry_age_seconds": 2.266,
+          "temperature_c": 32.0,
+          "updated_at": "2026-10-01T03:31:45.420990+00:00"
+        },
+        "actualHeatAcceptance": "NOT_TESTED",
+        "tachUnits": "UNREPORTED_BY_BMC",
+        "archive": "/var/lib/sova-cha-fan3-h040-20261001-c-01a0f4d8-live-01"
+      }
+    },
+    "restartCoolDwellSamples": [
+      {
+        "utc": "2026-10-01T03:31:12.316589+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:06.142981+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 4.002,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 4920,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:10.573046+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:17.319558+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:11.158777+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 2.721,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:14.308904+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:22.324832+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:16.160830+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 2.576,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:19.072003+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:27.331818+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:21.237278+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 2.329,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:23.952840+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:32.336251+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:26.245296+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 2.373,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:29.037458+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:37.341641+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:31.201366+00:00",
+        "temperatureC": 33.0,
+        "ageSeconds": 2.487,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 4680,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:34.036024+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:42.348357+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 100,
+        "sampledAt": "2026-10-01T03:31:36.258749+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 2.227,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:38.864417+00:00"
+      },
+      {
+        "utc": "2026-10-01T03:31:47.354791+00:00",
+        "pid": 259107,
+        "state": "healthy",
+        "pendingState": "verified",
+        "configuredCurveDuty": 40,
+        "sampledAt": "2026-10-01T03:31:41.231080+00:00",
+        "temperatureC": 32.0,
+        "ageSeconds": 2.266,
+        "nodeBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "tach": 5040,
+        "tachUnits": null,
+        "updatedAt": "2026-10-01T03:31:45.420990+00:00"
+      }
+    ],
+    "currentProperties": {
+      "MainPID": "259107",
+      "Result": "success",
+      "ActiveState": "active",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "currentControllerStatus": {
+      "actual_tach": 3600,
+      "actual_tach_units": null,
+      "bmc_logins": 1,
+      "bmc_put_attempts": 1,
+      "channel": "Zone4(CHA_FAN3)/PWMNum3",
+      "desired_duty": 40,
+      "errors": [],
+      "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+      "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+      "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+      "last_known_readback_duty": 40,
+      "last_write_at": "2026-10-01T03:31:44.116762+00:00",
+      "mode": 4,
+      "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+      "pid": 259107,
+      "readback_at": "2026-10-01T03:33:18.479764+00:00",
+      "readback_duty": 40,
+      "readback_kind": "first_four_curve_duties_not_measured_pwm",
+      "sampled_at": "2026-10-01T03:33:16.712787+00:00",
+      "schema_version": 1,
+      "source_bits": [
+        0,
+        0,
+        0
+      ],
+      "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+      "started_at": "2026-10-01T03:31:08.163838+00:00",
+      "state": "healthy",
+      "tach_at": "2026-10-01T03:33:19.038426+00:00",
+      "telemetry_age_seconds": 1.773,
+      "temperature_c": 33.0,
+      "updated_at": "2026-10-01T03:33:19.038458+00:00"
+    },
+    "finalSettledReadOnly": {
+      "at": "2026-10-01T03:33:22.434689+00:00",
+      "sourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+      "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+      "properties": {
+        "MainPID": "259107",
+        "Result": "success",
+        "ActiveState": "active",
+        "SubState": "running",
+        "UnitFileState": "enabled"
+      },
+      "controllerStatus": {
+        "actual_tach": 3600,
+        "actual_tach_units": null,
+        "bmc_logins": 1,
+        "bmc_put_attempts": 1,
+        "channel": "Zone4(CHA_FAN3)/PWMNum3",
+        "desired_duty": 40,
+        "errors": [],
+        "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528",
+        "host_boot_id": "80fac106-8dc6-4500-95ac-cf8a9985cc2b",
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "last_known_readback_duty": 40,
+        "last_write_at": "2026-10-01T03:31:44.116762+00:00",
+        "mode": 4,
+        "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+        "pid": 259107,
+        "readback_at": "2026-10-01T03:33:18.479764+00:00",
+        "readback_duty": 40,
+        "readback_kind": "first_four_curve_duties_not_measured_pwm",
+        "sampled_at": "2026-10-01T03:33:16.712787+00:00",
+        "schema_version": 1,
+        "source_bits": [
+          0,
+          0,
+          0
+        ],
+        "source_sha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+        "started_at": "2026-10-01T03:31:08.163838+00:00",
+        "state": "healthy",
+        "tach_at": "2026-10-01T03:33:19.038426+00:00",
+        "telemetry_age_seconds": 1.773,
+        "temperature_c": 33.0,
+        "updated_at": "2026-10-01T03:33:19.038458+00:00"
+      },
+      "pendingWrite": {
+        "at": "2026-10-01T03:31:44.040281+00:00",
+        "before_duty": 100,
+        "desired_duty": 40,
+        "invariant_sha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "readback_at": "2026-10-01T03:31:44.831773+00:00",
+        "state": "verified"
+      },
+      "blocked": null,
+      "uncertain": null,
+      "baselineSha256": "4194771d2cd5f38528bc44bddb2013c5476720126daa020daa2b61e36232ff6b",
+      "readback": {
+        "at": "2026-10-01T03:33:22.944395+00:00",
+        "configuredCurveDuty": 40,
+        "tach": {
+          "value": 3600,
+          "units": null,
+          "name": "CHA_FAN3",
+          "at": "2026-10-01T03:33:23.444211+00:00"
+        },
+        "node": {
+          "node_boot_id": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+          "sampled_at": "2026-10-01T03:33:21.718551+00:00",
+          "temperature_c": 33.0,
+          "telemetry_age_seconds": 1.732
+        },
+        "invariantSha256": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+        "nonTargetSha256": "dfed0617b19ace69e4faba8f4fed16ef350be46e98cf79a8c504b05d594a2f6e"
+      },
+      "exit": 0,
+      "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrBytes": 0
+    }
+  },
+  "validation": {
+    "freshHashVerification": "PASS",
+    "privateBackupFileDirectoryFsync": "PASS",
+    "sourceAtomicInstallFileParentFsync": "PASS",
+    "sourceInstallAndUnitPreservation": "PASS",
+    "newTests": "NOT_RUN_LIVE_PHASE_UNCHANGED_REVIEWED_SOURCE",
+    "reusedPriorSyntheticResults": {
+      "integratedNvml": 25,
+      "chaFan3": 69,
+      "artifact": 42,
+      "status": "PASS_PRIOR_SOURCE_PHASE_ROOT_REVIEWED_NOT_NEW_LIVE_TESTS"
+    },
+    "nativeCompaction": "NOT_TESTED",
+    "nativeVisionRuntimeFitWeights": "NOT_TESTED",
+    "gpuPlacement": "HELD_PENDING_SLOT2_SLOT5_UUID_MAPPING",
+    "configuredFanTransitions": "PASS_ACTUAL_PINNED_READBACK"
+  },
+  "remainingRootGates": [
+    "Root to resolve canonical lifecycle busy/transition after this actual worker closure before any separately reviewed artifact attempt; no new namespace/claim/unit exists and no stage/launch was invoked.",
+    "Preserve all initial preflight/local-encoding/coordinator failures and original H039 TimeoutError/unknown stager failure; continuation does not rewrite historical exits.",
+    "Actual heat thresholds>=70/strictly>80, instantaneousPWM/tachunits, artifact completion/hash verification, combined vision runtimefit and native compaction remain NOT_TESTED.",
+    "Physical slot2/slot5 mapping remains pending; no new GPU starts by C.",
+    "Root alone integrates/publishes reports; no GitHub operation by C."
+  ],
+  "commitIdentityFailure": {
+    "atUtc": "2026-10-01T03:34:46.380980+00:00",
+    "command": "git commit -m docs(h040): record bounded fan deployment and denied artifact admission",
+    "exit": 128,
+    "reason": "checkout_has_no_author_identity",
+    "resolution": "Per-command identity reused from existing HEAD author; no global or local Git config change"
+  }
+}

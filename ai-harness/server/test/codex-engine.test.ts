@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import test, { mock } from "node:test";
 import { readFileSync } from "node:fs";
-import Ajv from "ajv";
+import { Ajv } from "ajv";
+import { createCodexReadOriginalProbe, createCodexTextOnlyPolicy, createCodexParentArtifactScope, CODEX_H041_WINDOW } from "../src/codex-probe.js";
+import {CODEX_MEMORY_CATALOG_SHA256} from "../src/codex-memory.js";
+import { receiptFixture } from "./helpers/codex-receipt-fixture.js";
 import { PassThrough } from "node:stream";
 import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
 import {
@@ -14,6 +17,8 @@ import type {
   EngineUpdate,
   NativeEngineState,
 } from "../src/contracts.js";
+// Synthetic H041 authorization clock; never a native window acceptance.
+mock.timers.enable({ apis: ["Date"], now: CODEX_H041_WINDOW.startAtMs + 60000 });
 const schemaNames = {
   initialize: "InitializeParams",
   "thread/start": "ThreadStartParams",
@@ -47,11 +52,23 @@ function deferred<T>() {
 function fixture(
   config: {
     nativeId?: string;
+    memory?: boolean;
+    memoryCatalog?: boolean;
+    probe?: boolean;
+    textOnly?: boolean;
+    artifacts?: boolean;
+    registerArtifact?: CodexRuntime["registerCheckpointArtifact"];
+    admission?: () => Promise<void>;
+    originalAdmission?: (signal: AbortSignal) => Promise<void>;
+    receipts?: "valid" | "missing" | "tampered";
+    probeSandboxMismatch?: boolean;
     delegation?: boolean;
     qualifiedChildModels?: readonly string[];
     gateway?: () => Promise<boolean>;
     terminate?: () => Promise<boolean>;
     interrupt?: "reject" | "timeout";
+    compactStart?: "ack-only" | "timeout";
+    requestTimeoutMs?: number;
   } = {},
 ) {
   const stdin = new PassThrough(),
@@ -87,17 +104,36 @@ function fixture(
     onUpdate: (update) => updates.push(update),
     onExit: () => calls.push("revoke"),
   };
+  if(config.memory) options.sessionMemory={
+    sessionId:"session-1",resolve:()=>({id:"owned",kind:"message",sourceKey:"message",sha256:"b".repeat(64),bytes:8,availability:"complete"}),
+    read:(id,offset,limit)=>{if(id!=="owned")throw Error("foreign");return {reference:{id:"owned",kind:"message",sourceKey:"message",sha256:"b".repeat(64),bytes:8,availability:"complete"},text:"retained",offset,nextOffset:8,eof:true};},
+    search:()=>({hits:[],nextAfter:0,incomplete:false,skipped:[]}),view:()=>({sessionId:"session-1",current:null,references:[],referencesOmitted:false,authority:"synthetic"}),
+    continuationText:()=>"",propose:()=>{throw Error("not needed");},assertContinuationAllowed:()=>{},catalog:()=>config.memoryCatalog?CODEX_MEMORY_CATALOG_SHA256:undefined,bindCatalog:()=>{calls.push("memory-catalog");},recordConsumption:()=>{calls.push("memory-consumed");}
+  };
   const runtime: CodexRuntime = {
     pin: CODEX_PIN,
     delegationEnabled: config.delegation,
     qualifiedChildModels: config.qualifiedChildModels,
     protocolQualified: true,
+    nativeReceiptsRequired: config.probe || config.textOnly || config.artifacts || config.memory,
+    ordinaryMemoryAdmission: config.memory ? async (_,signal)=>{calls.push("memory-admission");await config.originalAdmission?.(signal);} : undefined,
+    textOnlyPolicy: config.probe || config.textOnly || config.artifacts ? () => createCodexTextOnlyPolicy({sessionId:"session-1",runId:"probe-run",mode:config.probe?"read-original":config.artifacts?"parent-artifacts":"text-only-parent",configSha256:"b".repeat(64),modelCatalogSha256:"b".repeat(64)}) : undefined,
+    authorizeNativeTurn: config.probe || config.textOnly || config.artifacts ? async () => { calls.push("native-admission"); await config.admission?.(); } : undefined,
+    authorizeOriginalRead: config.probe ? async (_, signal) => { calls.push("original-admission"); await config.originalAdmission?.(signal); } : undefined,
+    onNativeThreadPolicy: config.probe || config.textOnly || config.artifacts ? () => { calls.push("thread-policy"); } : undefined,
+    parentArtifactScope: config.artifacts ? () => createCodexParentArtifactScope({sessionId:"session-1",runId:"probe-run",checkpointId:"cp",names:["recall.json","state.json"],maxBytes:4096}) : undefined,
+    registerCheckpointArtifact: config.artifacts ? config.registerArtifact ?? (async input => {calls.push("artifact-registered");return {artifactId:"actual-synthetic-file-id",sha256:input.sha256};}) : undefined,
+    onCheckpointArtifactSettled: config.artifacts ? () => { calls.push("artifact-consumed"); } : undefined,
+    readOriginalProbe: config.probe ? () => createCodexReadOriginalProbe({sessionId: "session-1", runId: "probe-run", checkpointId: "frozen-cp", baseInstructions: "Host-authored isolated recovery probe", originals: [{reference: "old-1", bytes: Buffer.from("retained original requirement")}]}) : undefined,
+    onNativeLaunchReceipt: config.probe ? () => { calls.push("launch-receipt"); } : undefined,
+    onNativeSettlementReceipt: config.probe ? () => { calls.push("settlement-receipt"); } : undefined,
+    onOriginalReadSettled: config.probe ? () => { calls.push("read-consumed"); } : undefined,
     modelPolicyVersion: "fixture-policy",
     model: "qwen3.8-27b",
     provider: "sova",
     contextLimit: 480000,
     gatewayUrl: options.gatewayUrl,
-    requestTimeoutMs: 200,
+    requestTimeoutMs: config.requestTimeoutMs ?? 200,
     cancelTimeoutMs: 30,
     async launchRootless(input) {
       calls.push("launch");
@@ -113,12 +149,16 @@ function fixture(
           "gatewayUrl",
           "gatewayToken",
           "modelPolicyVersion",
+          ...(config.probe || config.textOnly || config.artifacts ? ["receiptRunId"] : []),
         ].sort(),
       );
+      const receipts = config.probe || config.textOnly || config.artifacts || config.memory ? receiptFixture() : undefined;
       return {
         stdin,
         stdout,
         exited: exit.promise,
+        launchReceipt: receipts ? Promise.resolve(config.receipts === "missing" ? undefined : config.receipts === "tampered" ? structuredClone(receipts.launch) : receipts.launch) : undefined,
+        settlementReceipt: receipts ? Promise.resolve(receipts.settlement) : undefined,
         async terminateAndConfirm() {
           calls.push("terminate");
           return config.terminate ? config.terminate() : true;
@@ -154,7 +194,8 @@ function fixture(
       response(req.id, {
         thread: {
           id: "thread-1",
-          turns: [
+          ...(config.probe || config.textOnly || config.artifacts ? {environments:[]} : {}),
+          turns: req.params.excludeTurns ? [] : [
             {
               items: [
                 { type: "agentMessage", text: "old history should not replay" },
@@ -166,10 +207,12 @@ function fixture(
         modelProvider: runtime.provider,
         cwd: options.workspace,
         approvalPolicy: "never",
+        ...(config.probe || config.textOnly || config.artifacts ? { sandbox: { type: config.probeSandboxMismatch ? "dangerFullAccess" : "readOnly" } } : {}),
       });
     if (req.method === "thread/compact/start") {
-      events("turn/started", { turn: { id: "turn-1", status: "inProgress" } });
-      response(req.id, {});
+      if (config.compactStart !== "ack-only")
+        events("turn/started", { turn: { id: "turn-1", status: "inProgress" } });
+      if (config.compactStart !== "timeout") response(req.id, {});
     }
     if (req.method === "turn/start") {
       assert.equal(states.at(-1)!.ownership, "uncertain");
@@ -318,7 +361,7 @@ test("latest request estimates retained context and compaction invalidate contex
   );
   assert.equal(
     f.updates
-      .filter((v) => v.type === "context" && v.used !== null)
+      .filter((v): v is Extract<EngineUpdate, {type:"context"}> => v.type === "context" && v.used !== null)
       .every(
         (v) => v.estimated && v.source === "codex.latest-request.totalTokens",
       ),
@@ -586,7 +629,7 @@ test("actual pinned native delegation event replay preserves child terminal befo
   }
   assert.equal(await pending, "completed");
   const summaries = f.updates
-    .filter((u) => u.type === "progress" && u.subagents)
+    .filter((u): u is Extract<EngineUpdate, {type:"progress"}> => u.type === "progress" && !!u.subagents)
     .map((u) => u.subagents!);
   assert.ok(summaries.some((s) => s.active === 1));
   assert.equal(summaries.at(-1)?.completed, 1);
@@ -655,7 +698,7 @@ test("historical close failure allows new owned work after cold resume without i
   f.complete();
   assert.equal(await pending, "completed");
   assert.ok(f.requests.some(r => r.method === "thread/resume"));
-  const children = f.updates.filter(u => u.type === "progress" && u.kind === "subagent");
+  const children = f.updates.filter((u): u is Extract<EngineUpdate, {type:"progress"}> => u.type === "progress" && u.kind === "subagent");
   assert.ok(children.length > 0);
   assert.ok(children.every(u => u.subagentId === "fresh-child"));
   assert.equal(children.at(-1)?.subagents?.completed, 1);
@@ -755,6 +798,257 @@ test("private compaction uses exact pinned RPC; missing/failed compaction never 
     }
   }
 });
+
+for (const actions of [["compact", "compact"], ["prompt", "prompt"], ["compact", "prompt"], ["prompt", "compact"]] as const) {
+  test(`shared startup permits only one owned operation: ${actions.join(" / ")}`, async () => {
+    const f = fixture();
+    const pending = actions.map(action => action === "compact" ? f.engine.compact() : f.engine.prompt("fixture summary request"));
+    pending.forEach(p => { void p.catch(() => undefined); });
+    try {
+      await tick();
+      const dispatched = f.requests.filter(r => r.method === "turn/start" || r.method === "thread/compact/start");
+      assert.equal(dispatched.length, 1, "startup wait must not bypass operation serialization");
+      assert.equal(f.calls.filter(c => c === "launch").length, 1);
+      if (dispatched[0].method === "thread/compact/start") {
+        f.item("compact", "contextCompaction", {}, "started");
+        f.item("compact", "contextCompaction");
+      }
+      f.complete();
+      const results = await Promise.allSettled(pending);
+      assert.equal(results.filter(r => r.status === "fulfilled" && r.value === "completed").length, 1);
+      assert.equal(results.filter(r => r.status === "rejected").length, 1);
+      assert.equal(f.calls.filter(c => c === "terminate").length, 1);
+      assert.equal(f.states.at(-1)!.ownership, "idle");
+    } finally {
+      await f.engine.close();
+    }
+  });
+}
+
+test("native compaction retry preserves operation identity and awaits terminal plus gateway settlement without usage", async () => {
+  const proof = deferred<boolean>();
+  const f = fixture({ nativeId: "thread-1", gateway: () => proof.promise });
+  let settled = false;
+  const pending = f.engine.compact().then(outcome => { settled = true; return outcome; });
+  void pending.catch(() => undefined);
+  await tick();
+  f.item("compact", "contextCompaction", {}, "started");
+  f.events("error", { turnId: "turn-1", willRetry: true, error: { message: "synthetic private retry detail" } });
+  await tick();
+  assert.equal(settled, false);
+  assert.equal(f.states.at(-1)!.ownership, "active");
+  assert.equal(f.calls.includes("terminate"), false);
+  assert.equal(f.updates.some(u => u.type === "compaction" && u.status === "failed"), false);
+  assert.ok(f.updates.some(u => u.type === "progress" && u.kind === "native_retry"));
+  assert.doesNotMatch(JSON.stringify(f.updates), /synthetic private retry detail|old history should not replay/);
+  f.item("compact", "contextCompaction");
+  f.item("compact", "contextCompaction"); // Exact duplicate is harmless.
+  const terminal = { turn: { id: "turn-1", status: "completed", items: [], itemsView: "notLoaded", error: null } };
+  f.events("turn/completed", terminal);
+  f.events("turn/completed", terminal);
+  await tick();
+  assert.equal(settled, false, "native completion does not prove owned inference settled");
+  assert.equal(f.states.at(-1)!.ownership, "uncertain");
+  proof.resolve(true);
+  assert.equal(await pending, "completed");
+  assert.equal(f.updates.filter(u => u.type === "compaction" && u.status === "completed").length, 1);
+  assert.ok(f.updates.filter(u => u.type === "context").every(u => u.type === "context" && u.used === null));
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+  assert.equal(f.requests.filter(r => r.method === "thread/resume").length, 1);
+  assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+  assert.equal(f.requests.filter(r => r.method === "turn/start").length, 0);
+});
+
+test("cold resume requests metadata only without replacing native history or uploading a synthetic history", async () => {
+  const f = fixture({ nativeId: "thread-1" });
+  await f.engine.start();
+  const resume = f.requests.find(r => r.method === "thread/resume");
+  assert.equal(resume.params.excludeTurns, true);
+  assert.equal(resume.params.threadId, "thread-1");
+  assert.equal("history" in resume.params, false);
+  assert.equal("path" in resume.params, false);
+  assert.equal(f.updates.some(u => u.type === "text"), false);
+  const pending = f.engine.prompt("Continue using the same native thread.");
+  await tick(); f.complete();
+  assert.equal(await pending, "completed");
+  assert.equal(f.requests.find(r => r.method === "turn/start").params.threadId, "thread-1");
+});
+
+for (const mode of ["wrong-thread", "wrong-turn", "malformed", "terminal", "failed-after-retry"] as const) {
+  test(`compaction retry does not relax failure or scope validation: ${mode}`, async () => {
+    const f = fixture();
+    const pending = f.engine.compact();
+    const rejected = assert.rejects(pending);
+    await tick();
+    f.item("compact", "contextCompaction", {}, "started");
+    f.events("error", {
+      threadId: mode === "wrong-thread" ? "foreign-thread" : "thread-1",
+      turnId: mode === "wrong-turn" ? "foreign-turn" : "turn-1",
+      willRetry: mode !== "terminal",
+      error: mode === "malformed" ? {} : { message: "fixture error" },
+    });
+    if (mode === "failed-after-retry") f.complete("failed");
+    await rejected;
+    assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+    await f.engine.close();
+    assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+    assert.equal(f.states.at(-1)!.ownership, "idle");
+  });
+}
+
+test("prompt text alone cannot create a compaction lifecycle", async () => {
+  const f = fixture();
+  const pending = f.engine.prompt("Summarize the summary and perform automatic compaction now.");
+  await tick();
+  f.complete();
+  assert.equal(await pending, "completed");
+  assert.equal(f.updates.some(u => u.type === "compaction"), false);
+  assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 0);
+});
+
+test("compaction ACK without native identity cannot support an unscoped Stop", async () => {
+  const f = fixture({ compactStart: "ack-only" });
+  const pending = f.engine.compact();
+  const rejected = assert.rejects(pending, /process cleanup/);
+  await tick();
+  await assert.rejects(f.engine.cancel(), /identity unknown/);
+  assert.equal(f.requests.some(r => r.method === "turn/interrupt"), false);
+  await f.engine.close();
+  await rejected;
+  assert.equal(f.calls.filter(c => c === "terminate").length, 1);
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+});
+
+for (const failure of ["timeout", "process-death"] as const) {
+  test(`compaction ${failure} retains failure and requires cleanup without native replay`, async () => {
+    const f = fixture({ compactStart: failure === "timeout" ? "timeout" : undefined, requestTimeoutMs: 10 });
+    const pending = f.engine.compact();
+    const rejected = assert.rejects(pending, failure === "timeout" ? /will not be replayed/ : /process exited/);
+    await tick();
+    f.item("compact", "contextCompaction", {}, "started");
+    if (failure === "process-death") f.exit.resolve();
+    await rejected;
+    assert.equal(f.states.at(-1)!.ownership, "uncertain");
+    assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+    await f.engine.close();
+    assert.equal(f.requests.filter(r => r.method === "thread/compact/start").length, 1);
+    await assert.rejects(f.engine.compact(), /cannot compact/);
+    assert.equal(f.states.at(-1)!.ownership, "idle");
+  });
+}
+
+test("compaction Stop still waits for native interruption, descendant cleanup and gateway drain", async () => {
+  const proof = deferred<boolean>();
+  const f = fixture({ gateway: () => proof.promise });
+  const pending = f.engine.compact();
+  await tick();
+  f.item("compact", "contextCompaction", {}, "started");
+  const cancelled = f.engine.cancel();
+  f.complete("interrupted");
+  await tick();
+  assert.equal(f.states.at(-1)!.ownership, "uncertain");
+  assert.deepEqual(f.requests.find(r => r.method === "turn/interrupt").params, { threadId: "thread-1", turnId: "turn-1" });
+  proof.resolve(true);
+  await cancelled;
+  assert.equal(await pending, "cancelled");
+  assert.ok(f.updates.some(u => u.type === "compaction" && u.status === "failed"));
+  assert.equal(f.states.at(-1)!.ownership, "idle");
+});
+
+for (const outcome of ["retry-success", "failed", "process-death", "interrupted"] as const) {
+  test(`real adapter and durable broker retain original history/files and action across restart: ${outcome}`, async t => {
+    const { createApp } = await import("../src/app.js");
+    const { mkdtemp, readFile, writeFile, rm } = await import("node:fs/promises");
+    const { tmpdir } = await import("node:os");
+    const { join } = await import("node:path");
+    const dir = await mkdtemp(join(tmpdir(), "h039-adapter-retention-"));
+    const retained = [{ id: "old-message", type: "agentMessage", text: "Original native history is not a new answer." }];
+    const retainedBefore = structuredClone(retained);
+    const requests: any[] = [];
+    const template = fixture().runtime;
+    const runtime: CodexRuntime = {
+      ...template,
+      revokeGatewaySession() {},
+      async confirmGatewaySettlement() { return true; },
+      async launchRootless(input) {
+        const stdin = new PassThrough(), stdout = new PassThrough(), exit = deferred<void>();
+        const emit = (value: unknown) => stdout.write(JSON.stringify(value) + "\n");
+        const event = (method: string, params: Record<string, unknown>) => emit({ method, params: { threadId: "thread-1", ...params } });
+        const turn = (status: string) => event("turn/completed", { turn: { id: "compact-turn", status, items: [], itemsView: "notLoaded", error: null } });
+        stdin.on("data", data => {
+          const r = JSON.parse(data.toString()); requests.push(r);
+          const reply = (result: unknown) => emit({ id: r.id, result });
+          if (r.method === "initialize") reply({ userAgent: "codex/0.158.0", codexHome: input.codexHome, platformOs: "linux", platformFamily: "unix" });
+          if (r.method === "thread/resume") reply({ thread: { id: "thread-1", turns: r.params.excludeTurns ? [] : [{ items: retained }] }, model: runtime.model, modelProvider: runtime.provider, cwd: input.workspace, approvalPolicy: "never" });
+          if (r.method === "thread/compact/start") {
+            reply({});
+            event("turn/started", { turn: { id: "compact-turn", status: "inProgress" } });
+            event("item/started", { turnId: "compact-turn", item: { id: "compact-item", type: "contextCompaction" } });
+            if (outcome === "retry-success") {
+              event("error", { turnId: "compact-turn", willRetry: true, error: { message: "fixture transient detail" } });
+              event("item/completed", { turnId: "compact-turn", item: { id: "compact-item", type: "contextCompaction" } });
+              turn("completed");
+            } else if (outcome === "failed") turn("failed");
+            else if (outcome === "process-death") exit.resolve();
+          }
+          if (r.method === "turn/interrupt") { reply({}); turn("interrupted"); }
+        });
+        return { stdin, stdout, exited: exit.promise, async terminateAndConfirm() { return true; } };
+      },
+    };
+    const appOptions = {
+      newChatEngine: "minimax" as const,
+      dataDir: dir, launcher: "/never", gatewayUrl: runtime.gatewayUrl,
+      allowedOrigins: ["http://localhost"], issueToken: () => "synthetic-fixture-token", revokeToken() {},
+      engineFactory: () => { throw Error("Unexpected non-Codex engine"); },
+      codexEngineFactory: (o: EngineOptions) => new CodexEngine(o, runtime),
+      enginePolicy: { codex: { enabled: true, protocolQualified: true, engineVersion: CODEX_PIN.version, modelPolicyVersion: runtime.modelPolicyVersion } },
+    };
+    let app = await createApp(appOptions);
+    t.after(async () => { await app.app.close(); await rm(dir, { recursive: true, force: true }); });
+    const session = await app.broker.createSession(undefined, "codex");
+    app.store.setNative(session.id, "thread-1", "codex");
+    app.store.addMessage(session.id, "user", "Original accepted requirement: keep 24 V return separate.");
+    app.store.addMessage(session.id, "assistant", "Original failed check remains unqualified.");
+    const workspace = app.files.workspace(app.store.getSession(session.id).workspaceId);
+    await writeFile(join(workspace, "retained.txt"), "Original source evidence\n");
+    await app.files.registerArtifact(session.id, "retained.txt", "retained.txt", "text/plain");
+    const before = app.store.snapshot(session.id);
+    const submit = () => app.app.inject({ method: "POST", headers: { host: "localhost" }, url: `/api/sessions/${session.id}/compact`, payload: { actionId: "retained-action" } });
+    const first = await submit();
+    assert.equal(first.statusCode, 202);
+    for (let i = 0; !requests.some(r => r.method === "thread/compact/start"); i++) {
+      assert.ok(i < 1000, "fixture compaction did not dispatch"); await tick();
+    }
+    if (outcome === "interrupted") await app.broker.cancel(session.id);
+    for (let i = 0; !["idle", "failed", "interrupted"].includes(app.store.getSession(session.id).status); i++) {
+      assert.ok(i < 1000, "fixture operation did not settle"); await tick();
+    }
+    const after = app.store.snapshot(session.id);
+    // The broker conservatively retains CodexProtocolError as interrupted, even after cleanup.
+    const status = outcome === "retry-success" ? "completed" : outcome === "interrupted" ? "cancelled" : "interrupted";
+    assert.equal(after.runs[0]!.status, status);
+    assert.deepEqual(after.messages, before.messages, "resume history and compaction must not replace visible originals");
+    assert.deepEqual(after.artifacts, before.artifacts);
+    assert.equal(await readFile(join(workspace, "retained.txt"), "utf8"), "Original source evidence\n");
+    assert.equal(app.store.getSession(session.id).nativeSessionId, "thread-1");
+    assert.deepEqual(retained, retainedBefore);
+    assert.equal(app.store.getSession(session.id).nativeState!.ownership, "idle");
+    if (outcome === "retry-success") assert.equal(app.store.getSession(session.id).context!.used, null);
+    else assert.ok(after.events.some(e => e.type === "error" && e.data.code === "compaction_failed"));
+    await app.app.close();
+    app = await createApp(appOptions);
+    const duplicate = await submit();
+    assert.equal(duplicate.json().runId, first.json().runId);
+    assert.equal(app.store.snapshot(session.id).runs[0]!.status, status);
+    assert.deepEqual(app.store.snapshot(session.id).messages, before.messages);
+    assert.deepEqual(app.store.snapshot(session.id).artifacts, before.artifacts);
+    assert.equal(requests.filter(r => r.method === "thread/compact/start").length, 1);
+    assert.equal(requests.filter(r => r.method === "thread/resume").length, 1);
+    assert.equal(requests.find(r => r.method === "thread/resume").params.excludeTurns, true);
+    assert.equal(requests.some(r => r.method === "turn/start"), false);
+  });
+}
 
 test("actual native child trajectory rejects an unfinished child command before success", async () => {
   const f = fixture({ delegation: true });
@@ -1114,4 +1408,142 @@ test('successful native image_status completion emits a typed consumption signal
   f.complete();await pending;
   assert.deepEqual(f.updates.filter(u=>u.type==='image_status_result'),[{type:'image_status_result',toolCallId:'call_a166a1a2f52e487780836616',jobId:'job-one',artifactId:'artifact-one'}]);
   await f.engine.close();
+});
+
+// H040 source fixtures only: no native process, provider request or Linux attestation.
+function originalCall(f: ReturnType<typeof fixture>, args: Record<string, unknown> = {reference:'old-1',offset:0,limit:8192}, callId='original-call') {
+ f.item(callId,'dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'inProgress',contentItems:null,success:null},'started');
+ f.stdout.write(JSON.stringify({id:'server-'+callId,method:'item/tool/call',params:{threadId:'thread-1',turnId:'turn-1',callId,namespace:null,tool:'read_original',arguments:args}})+'\n');
+}
+test('isolated probe registers only on a fresh receipt-qualified ephemeral thread; actual read needs canonical item consumption',async()=>{
+ const f=fixture({probe:true});await f.engine.start();
+ assert.equal(f.requests.find(x=>x.method==='initialize').params.capabilities.experimentalApi,true);
+ const thread=f.requests.find(x=>x.method==='thread/start');assert.equal(thread.params.ephemeral,true);assert.equal(thread.params.sandbox,'read-only');assert.equal(thread.params.dynamicTools[0].name,'read_original');assert.equal(thread.params.baseInstructions,'Host-authored isolated recovery probe');
+ const pending=f.engine.prompt('host-approved question');await tick();originalCall(f);await tick();await tick();
+ const response=f.requests.find(x=>x.id==='server-original-call');assert.equal(response.result.success,true);assert.equal(response.result.contentItems[0].text,'retained original requirement');assert.ok(!f.calls.includes('read-consumed'));
+ f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{reference:'old-1',offset:0,limit:8192},status:'completed',contentItems:response.result.contentItems,success:true});assert.ok(f.calls.includes('read-consumed'));
+ f.complete();assert.equal(await pending,'completed');assert.ok(f.calls.includes('settlement-receipt'));assert.ok(f.calls.includes('gateway-proof'));
+ assert.ok(f.updates.filter(x=>x.type==='context').every(x=>x.type!=='context'||x.used===null));
+});
+for(const receipts of ['missing','tampered'] as const) test('probe refuses '+receipts+' host launch receipt before initialization',async()=>{
+ const f=fixture({probe:true,receipts});await assert.rejects(f.engine.start(),/receipt unavailable/);assert.equal(f.requests.length,0);await f.engine.close().catch(()=>undefined);
+});
+test('probe cannot activate saved tools on an existing native thread or enable delegation',()=>{
+ assert.throws(()=>fixture({probe:true,nativeId:'old-native'}),/fresh receipt/);assert.throws(()=>fixture({probe:true,delegation:true}),/fresh receipt/);
+});
+test('probe rejects observed native sandbox mismatch while model scope remains separately unqualified',async()=>{
+ const f=fixture({probe:true,probeSandboxMismatch:true});await assert.rejects(f.engine.start(),/trusted model policy mismatch/);await f.engine.close();
+});
+test('ordinary production chat has no dynamic registration or experimental opt-in',async()=>{
+ const f=fixture();await f.engine.start();assert.equal(f.requests.find(x=>x.method==='initialize').params.capabilities.experimentalApi,false);assert.equal(f.requests.find(x=>x.method==='thread/start').params.dynamicTools,undefined);await f.engine.close();
+});
+test('unknown original reference returns bounded failure, consumed only by canonical failed item',async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');await tick();originalCall(f,{reference:'file:///host/oracle',offset:0,limit:1});await tick();await tick();
+ const response=f.requests.find(x=>x.id==='server-original-call');assert.equal(response.result.success,false);assert.equal(response.result.contentItems[0].text,'Original excerpt unavailable within this frozen scope');
+ f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{reference:'file:///host/oracle',offset:0,limit:1},status:'failed',contentItems:response.result.contentItems,success:false});f.complete();assert.equal(await pending,'completed');
+});
+for(const mode of ['wrong-thread','no-start','early-completion','changed-completion','duplicate-start'] as const) test('probe rejects unowned or unsettled dynamic lifecycle '+mode,async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejected=assert.rejects(pending);await tick();
+ const args={reference:'old-1',offset:0,limit:8};
+ if(mode==='wrong-thread'||mode==='no-start') f.stdout.write(JSON.stringify({id:'call',method:'item/tool/call',params:{threadId:mode==='wrong-thread'?'unowned':'thread-1',turnId:'turn-1',callId:'original-call',namespace:null,tool:'read_original',arguments:args}})+'\n');
+ else if(mode==='early-completion') {f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'inProgress'},'started');f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'completed',contentItems:[{type:'inputText',text:'fabricated'}],success:true});}
+ else if(mode==='duplicate-start'){originalCall(f,args);f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:{...args,offset:1},status:'inProgress'},'started');}
+ else {originalCall(f,args);await tick();await tick();f.item('original-call','dynamicToolCall',{namespace:null,tool:'read_original',arguments:args,status:'completed',contentItems:[{type:'inputText',text:'fabricated'}],success:true});}
+ await rejected;assert.ok(!f.calls.includes('read-consumed'));await f.engine.close();assert.ok(f.calls.includes('terminate'));
+});
+test('turn completion cannot substitute for an unfinished dynamic read',async()=>{
+ const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejected=assert.rejects(pending);await tick();originalCall(f);await tick();f.complete();await rejected;assert.ok(!f.calls.includes('read-consumed'));
+});
+
+test('pinned optional namespace can be omitted; conflicting namespace stays rejected',async()=>{
+ for (const namespace of [undefined,'oracle']) {
+  const f=fixture({probe:true});const pending=f.engine.prompt('question');const rejection=namespace ? assert.rejects(pending) : undefined;await tick();
+  const args={reference:'old-1',offset:0,limit:8};f.item('original-call','dynamicToolCall',{tool:'read_original',arguments:args,status:'inProgress'},'started');
+  f.stdout.write(JSON.stringify({id:'optional-ns',method:'item/tool/call',params:{threadId:'thread-1',turnId:'turn-1',callId:'original-call',...(namespace?{namespace}:{}),tool:'read_original',arguments:args}})+'\n');await tick();await tick();
+  if(namespace){await rejection;assert.equal(f.requests.find(x=>x.id==='optional-ns'),undefined);await f.engine.close();}
+  else {const response=f.requests.find(x=>x.id==='optional-ns').result;f.item('original-call','dynamicToolCall',{tool:'read_original',arguments:args,status:'completed',contentItems:response.contentItems,success:true});f.complete();assert.equal(await pending,'completed');}
+ }
+});
+
+test("H041 synthetic text-only parent sends consumed native config without changing ordinary defaults", async () => {
+  const f = fixture({textOnly:true}); await f.engine.start();
+  const start = f.requests.find(x => x.method === "thread/start").params;
+  assert.equal(start.sandbox, "read-only"); assert.equal(start.ephemeral, false);
+  assert.deepEqual(start.environments, []); assert.equal(start.config["features.shell_tool"], false);
+  assert.equal(start.config["tools.experimental_request_user_input.enabled"], false);
+  assert.equal(start.config["mcp_servers.search.enabled"], false);
+  assert.equal(start.dynamicTools, undefined); assert.ok(f.calls.includes("thread-policy"));
+  await assert.rejects(f.engine.prompt("synthetic", [{path:"/arbitrary",mimeType:"image/png",name:"x"}]), /attachments/);
+  await f.engine.close();
+});
+test("H041 synthetic rejected admission never dispatches a native turn", async () => {
+  const f=fixture({textOnly:true,admission:async()=>{throw Error("observed tools gate rejected");}});
+  await assert.rejects(f.engine.prompt("synthetic"), /gate rejected/);
+  assert.equal(f.requests.filter(x=>x.method==="turn/start").length,0); await f.engine.close();
+});
+test("H041 synthetic late original admission cannot publish after close", async () => {
+  const gate=deferred<void>(); const f=fixture({probe:true,originalAdmission:()=>gate.promise});
+  const pending=f.engine.prompt("synthetic"); const rejected=assert.rejects(pending); await tick();
+  originalCall(f); await tick(); await f.engine.close(); gate.resolve(); await tick(); await rejected;
+  assert.equal(f.requests.filter(x=>x.id==="server-original-call").length,0); assert.ok(!f.calls.includes("read-consumed"));
+});
+
+test("H041 synthetic bounded artifact registration needs canonical native consumption",async()=>{
+  const f=fixture({artifacts:true});const pending=f.engine.prompt("synthetic");await tick();
+  const params=f.requests.find(x=>x.method==="thread/start").params;
+  assert.equal(params.sandbox,"read-only");assert.deepEqual(params.environments,[]);
+  assert.deepEqual(params.dynamicTools.map((x:{name:string})=>x.name),["write_checkpoint_artifact"]);
+  const args={name:"recall.json",json:'{"retained":true}'};
+  f.item("artifact-call","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"inProgress"},"started");
+  f.stdout.write(JSON.stringify({id:"server-artifact",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"artifact-call",tool:"write_checkpoint_artifact",arguments:args}})+"\n");await tick();await tick();
+  const response=f.requests.find(x=>x.id==="server-artifact").result;
+  assert.equal(response.success,true);assert.ok(f.calls.includes("artifact-registered"));assert.ok(!f.calls.includes("artifact-consumed"));
+  f.item("artifact-call","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"completed",contentItems:response.contentItems,success:true});
+  assert.ok(f.calls.includes("artifact-consumed"));f.complete();assert.equal(await pending,"completed");
+});
+test("H041 synthetic artifact registrar cannot claim a different byte digest",async()=>{
+  const f=fixture({artifacts:true,registerArtifact:async()=>({artifactId:"fixture",sha256:"wrong"})});
+  const pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();
+  const args={name:"state.json",json:"{}"};f.item("a","dynamicToolCall",{tool:"write_checkpoint_artifact",arguments:args,status:"inProgress"},"started");
+  f.stdout.write(JSON.stringify({id:"server-a",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"a",tool:"write_checkpoint_artifact",arguments:args}})+"\n");
+  await rejected;assert.ok(!f.calls.includes("artifact-consumed"));await f.engine.close();
+});
+test("H041 synthetic observed builtin tool violates text-only parent policy",async()=>{
+  const f=fixture({textOnly:true});const pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();
+  f.item("shell","commandExecution",{command:"synthetic"},"started");await rejected;await f.engine.close();
+});
+
+test("H041 synthetic manual compaction requires method-aware admission before RPC",async()=>{
+ const f=fixture({textOnly:true,admission:async()=>{throw Error("compaction gate rejected");}});
+ await assert.rejects(f.engine.compact(),/compaction gate rejected/);
+ assert.equal(f.requests.filter(x=>x.method==="thread/compact/start").length,0);await f.engine.close();
+});
+
+// New ordinary retrieval source fixtures preserve normal tools/sandbox and prove canonical consumption only.
+function memoryCall(f:ReturnType<typeof fixture>,reference="owned") {
+ const args={reference,offset:0,limit:8192};f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"inProgress"},"started");
+ f.stdout.write(JSON.stringify({id:"server-memory",method:"item/tool/call",params:{threadId:"thread-1",turnId:"turn-1",callId:"memory-call",tool:"read_original",arguments:args}})+"\n");return args;
+}
+test("H041 ordinary synthetic retrieval preserves operational policy and counts only canonical consumption",async()=>{
+ const f=fixture({memory:true}),pending=f.engine.prompt("synthetic");await tick();const params=f.requests.find(x=>x.method==="thread/start").params;
+ assert.equal(params.sandbox,"danger-full-access");assert.equal(params.environments,undefined);assert.equal(params.config,undefined);assert.equal(params.baseInstructions,undefined);
+ assert.deepEqual(params.dynamicTools.map((t:{name:string})=>t.name),["read_original","search_originals","propose_session_state"]);
+ const args=memoryCall(f);await tick();await tick();const response=f.requests.find(x=>x.id==="server-memory").result;assert.equal(response.success,true);assert.ok(!f.calls.includes("memory-consumed"));
+ f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"completed",success:true,contentItems:response.contentItems});assert.ok(f.calls.includes("memory-consumed"));f.complete();assert.equal(await pending,"completed");
+});
+test("H041 ordinary synthetic foreign original returns unsuccessful result without accepting state",async()=>{
+ const f=fixture({memory:true}),pending=f.engine.prompt("synthetic");await tick();const args=memoryCall(f,"foreign");await tick();await tick();const response=f.requests.find(x=>x.id==="server-memory").result;assert.equal(response.success,false);assert.ok(!f.calls.includes("memory-consumed"));f.item("memory-call","dynamicToolCall",{tool:"read_original",arguments:args,status:"failed",success:false,contentItems:response.contentItems});f.complete();await pending;
+});
+test("H041 old native thread without retained dynamic catalog does not silently add retrieval",async()=>{
+ const f=fixture({memory:true,nativeId:"thread-1"});await f.engine.start();const resume=f.requests.find(x=>x.method==="thread/resume");assert.equal(resume.params.dynamicTools,undefined);await f.engine.close();
+});
+test("H041 ordinary late retrieval admission cannot serialize after owned cancellation",async()=>{
+ const gate=deferred<void>(),f=fixture({memory:true,originalAdmission:()=>gate.promise}),pending=f.engine.prompt("synthetic");const rejected=assert.rejects(pending);await tick();memoryCall(f);await tick();await f.engine.close();gate.resolve();await tick();await rejected;assert.equal(f.requests.filter(x=>x.id==="server-memory").length,0);assert.ok(!f.calls.includes("memory-consumed"));
+});
+test("H041 native terminal original retains all emitted output before 8192 display projection",async()=>{
+ const f=fixture(),pending=f.engine.prompt("synthetic");await tick();const output="x".repeat(20000)+"µA tail";
+ f.item("cmd","commandExecution",{command:"synthetic",cwd:"/task/workspace",processId:"p",status:"inProgress"},"started");
+ f.item("cmd","commandExecution",{command:"synthetic",cwd:"/task/workspace",processId:"p",status:"completed",aggregatedOutput:output,exitCode:0});
+ const raw=f.updates.find(u=>u.type==="tool_original");assert.ok(raw?.type==="tool_original");assert.equal(raw.outputUtf8,output);assert.equal(JSON.parse(raw.rawUtf8).aggregatedOutput,output);
+ const projection=f.updates.filter(u=>u.type==="progress"&&u.toolCallId==="cmd").at(-1);assert.ok(projection?.type==="progress");assert.ok((projection.detail?.length??0)<=8192);f.complete();await pending;
 });

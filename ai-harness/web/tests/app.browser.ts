@@ -207,6 +207,7 @@ test('v0.0.2 fixture: progress settles, lifecycle stays singular and reply files
   ).toBeVisible();
   const initialReply = page.locator('[data-run-id="fixture/initial-run"]');
   await expect(initialReply.locator('.progress-panel')).not.toHaveAttribute('open', '');
+  await initialReply.getByText('Additional image previews (1)', { exact: true }).click();
   await expect(initialReply.getByRole('img', { name: 'pipeline.svg' })).toBeVisible();
   await expect(initialReply.getByRole('img', { name: 'pipeline.svg' })).toHaveJSProperty(
     'naturalWidth',

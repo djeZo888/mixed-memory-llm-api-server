@@ -1,60 +1,61 @@
-# ai-harness work — H036
+# H042 current continuation — 1 October 2026
 
-Read root [AGENTS](../AGENTS.md), the [H036 plan](../reports/h036-execution-plan.md)
-and [current checkpoint](../reports/h036-completion-checkpoint.md) first. H036's
-already-authorized scope supersedes historical limits only for its specified
-work. Root coordinates/reviews/publishes; assigned workers use fresh bounded
-native sessions in isolated copies. One owner handles deployment/live admission;
-W2 currently owns acceptance and diagnosis. H036 has no new hard user deadline.
+The user authorized a new three-hour compaction continuation beginning17:44:17UTC, ending20:44:17UTC with closure reserve from20:29:17UTC. Follow [../reports/h042-execution-plan.md](../reports/h042-execution-plan.md) and docs/h041-worker-orchestration.md from the integration root. Mac-orchestrator delegates/reviews; mac-worker1/mac-worker2 execute through SSH, each bounded task in a fresh GPT6.1SolUltra codex exec session and isolated checkout. Start with minimal no-generation startup and verified owned shutdown. Adopt saved state/credentials, preserve pins/histories. All old operational approvals remain expired; only a new exact finite root GO can authorize shared live actions. Historical sections below are retained evidence.
 
-MiniMax remains default; Codex is a per-chat preview. Release/merge remain held
-for VM reachability and settlement. Native Qwen compaction completed; automatic
-triggering is inferred because RAW_AUTO metadata is absent. Initial paste run
-`d17d4942` completed; compaction/follow-up owner `346c89f0` has unknown final/tool
-result and settlement. MiMo 480K readiness and a tiny first-turn read passed;
-second-turn completion is unknown. Profile fix `47d386` / root `4d927fee` is
-reviewed and source-tested but UNDEPLOYED; fresh both-engine delegation is pending.
-Native MiniMax image transport works with PARTIAL recognition; Codex native vision
-is UNSUPPORTED. Document/OCR support is separate. Preserve all original failures.
+# H041 wrap-up / stand-down — 1 October 2026
 
-On connectivity recovery, first verify maintenance and actual owned jobs. The
-last browser acceptance window was OPEN; do not assume its scheduled watcher ran.
-Do not replay uncertain work. Root finalizes capability gates, public readiness
-and publication from exact receipts; reuse already-passed evidence. Preserve
-session identities and actual outer-wrapper exits, chats, files and protected
-uncertainty. Keep source changes, live work and deployment ownership coordinated.
+The latest human requested stopping this eight-hour continuation, preserving important work and publishing a concise handoff. All worker phases are closed; old worker SIDs are retired and every old GO is expired, spent or withdrawn. No automatic continuation, implementation, live tests or fan/model actions are authorized by the historical sections below. A new user continuation should read the [compact final handoff](../reports/h041-final-handoff.md) first, use NEW bounded worker sessions via SSH and preserve the original histories/credentials. Root orchestrates; mac-worker1/mac-worker2 execute. Earlier authority is retained as history and does not override this stop.
 
-The historical [v0.0.3 image acceptance](docs/acceptance-v0.0.3.md) covers three
-bounded native edits; H036 records later child-edit and result-handoff passes.
-Neither grants new inference or deployment. Preserve explore/verifier/custom
-restrictions, known seed/geometry limits, original files and runtime identities.
-The following earlier authorizations are historical context, not open windows.
+# Current H041 authority — 1 October 2026
 
-The user authorized implementation and deployment of [v0.0.1](PLAN-v0.0.1.md)
-and the [v0.0.2 work](PLAN-v0.0.2.md) on 2026-09-22. This supersedes earlier
-frontend/harness exclusions for this directory and bounded ai-harness work.
-Root-authorized v0.0.2 deployment and focused live acceptance supersede the
-earlier fixture-only task restriction. The
-[v0.0.2 acceptance report](docs/acceptance-v0.0.2.md) records current outcomes
-and distinguishes actual deployment/live evidence from synthetic fixtures.
-The bounded campaign and readback are complete; their grants do not authorize
-further inference, deployment or unrelated history inspection.
-Production changes and live inference remain separately assigned and root
-coordinated within the current task's source/runtime/origin grant. Fixture
-evidence alone grants no production access. Owned UI acceptance must preserve
-other users' conversations/files and shared services; it grants no ai-vm contact.
-Preserve all ai-vm production services, weights, runtimes, GPU placement and warm
-dual-Qwen 480K configuration.
+The user explicitly requested further Codex implementation to finish, prioritizing context compaction, with worker1/worker2 doing implementation and root delegating/orchestrating. Read [H041 plan](../reports/h041-execution-plan.md). This new compaction authorization supersedes expired H040 deadlines. Adopt prior sessions and receipts before work. Initial segment08:05:07–10:05:07UTC; phase deadlines are bounded and do not declare unfinished work complete. Root may assign subsequent finite phases within the user's continuation scope. Worker1 owns codex runtime/receipt/scope/deployment source and later reviewed sharedLinuxdelivery; worker2 owns native-adapter/controller/scorer and H041acceptance integration. ClosedBacceptance source is transferred to worker2/E; preserve Bpartial history. No overlapping source edits. Root reviews concrete source/config before live GO; initialworker1liveaccessreadonly. Use existing normal loaded Qwen afterfreshidentityverification; no new GPUstarts/placement, models/downloads/fan/driver/Proxmox/upstream/creativeimage work. Preserve pins0.158/064c and480000/400000/65536, routes, originals and credentials. Earliersections are retainedhistory.
 
-Mac-Orchestrator plans/reviews/synchronizes. Implementation, builds and tests
-run through fresh remote Codex CLI tasks on mac-worker1 and mac-worker2 with
-isolated copies; only assigned worker tasks contact the VMs. Retain session IDs
-and evidence. Coordinate shared service changes and live inference centrally.
+# Latest human steering
 
-No GLM lifecycle work, new models, Proxmox changes, extra Linux login users,
-general installer, unsolicited sudoers changes, or secrets in Git.
-Use the existing user account. The user has enabled on-demand passwordless sudo
-for necessary host setup; keep ordinary project files and runtime services owned
-by the existing unprivileged user. Do not equate mock or
-static tests with live deployment acceptance. Keep native engine patches small
-and reproducible against the pinned source. No direct pushes to main.
+Read the GPU placement and thermal authority in [H040 plan](../reports/h040-execution-plan.md). At >=70 C, the four integrated GPU cards command100%; the latest CHA_FAN3 exception commands80% at70 C and100% strictly above80 C; this specifically supersedes the earlier no-fan-change restriction. Slot2/slot5 UUID mapping is pending; no new GPU starts until verified. Stable Ada is visual-to-text, returned Ada is image gen/edit.
+
+# Current H040 continuation
+
+The user resumed planned work after ai-vm restart/second Ada installation. Read root [H040 plan](../reports/h040-execution-plan.md) and current [worker roster](../reports/h040-worker-sessions.json). Earlier H039 hold/deadlines are historical. E owns native-adapter source, B owns the sibling verifier/controller; no cross-owner edits. Root reviews one coherent candidate before live deployment/inference. Preserve pinned0.158.0 and Qwen/MiMo routing/480K/400K/65536.
+
+# ai-harness — H039
+
+Read root [current H039 plan](../reports/h039-execution-plan.md) and
+[handoff](../reports/h039-handoff.md). Task A owns narrow native-compaction
+lifecycle source, B isolated retention acceptance, D new technical-vision
+contract/tool files. Do not cross-edit other owners' files or deploy while source
+tasks run. Root coordinates integration. Older H038 deployment evidence below
+does not prohibit the user's newly authorized H039 preparation. Compaction is
+the first priority; creative image acceptance is deferred.
+
+Read root [AGENTS](../AGENTS.md), the [current plan](../reports/h038-execution-plan.md)
+and [Codex upstream audit](../reports/h037-upstream-codex-audit.md). Previous
+[H036 instructions](docs/h036-agent-instructions.txt) are historical.
+
+Worker2 owns harness implementation, host staging, protected configuration and
+qualification. Worker1 owns ai-vm delivery. Root reviews and coordinates both.
+Do not run inference while the backend owner requires an idle source transition.
+Use fresh bounded native CLI sessions on the assigned Mac with GPT 6.1 Sol Ultra.
+
+Keep 480K context, 400K Codex compaction and 65,536 output. The existing provider,
+admission, catalog and tool policy bytes are unchanged. Set the new-chat default
+from trusted system-registry configuration; preserve existing engine identities,
+MiniMax selection, chats, native history, uploads and generated files.
+
+Pin actual image selection/config hashes and current MiMo owner receipts after
+backend delivery. Reuse the existing protected/scoped qualification mechanism;
+missing image/frontier evidence closes that capability without inventing readiness.
+Source tests and old external-Ada evidence do not qualify the new image placement.
+Public activation requires root's review of the concrete final tuple and live results.
+
+H038 closes at16:45:26UTC on30September2026 with text/frontier acceptance passed.
+Image startup and registry binding are repaired; image chat workflows still require
+fresh generation, guarded follow-up edit, native child handoff and settled evidence.
+Read reports/h038-checkpoint.md. Reuse all accepted work and resident models. Do not
+open another paid execution window without user authorization. Keep image gate closed
+until actual workflow and artifact review pass.
+
+Codex remains native 0.158.0. The major upstream main upgrade is a separate task.
+Native Codex vision is unsupported; MiniMax recognition is partial; PDF/OCR and
+specialist image generation are separate. Preserve Full HD and known editing
+limits. Do not repeat long-context tests or alter model/runtime/GPU recipes.

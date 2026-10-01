@@ -11,7 +11,7 @@ async function setup(t:any, enabled=true, edits=true, trusted: Partial<AppOption
  const engine:EngineFactory=()=>({async start(){},async prompt(text,attachments){prompts.push({text,attachments});},async cancel(){},async close(){}});
  const policy={codex:{enabled:true,protocolQualified:true,imageToolEnabled:enabled,engineVersion:'fixture',modelPolicyVersion:'fixture'}};
  const backend={async capabilities(){return {};},profiles(){return edits?[{operation:'edit' as const,referenceCount:1,size:'64x64',model:'fixture'}]:[];},async readiness(){return {ready:true,idle:true};},async execute(){throw Error('No image job permitted');}};
- const a=await createApp({dataDir:root,allowedOrigins:['http://localhost'],launcher:'/unused',gatewayUrl:'http://fixture.invalid',issueToken:()=> 'fixture',revokeToken(){},engineFactory:engine,codexEngineFactory:engine,enginePolicy:policy,imageBackend:backend,visionAvailable:false,...trusted});
+ const a=await createApp({ newChatEngine: "minimax",dataDir:root,allowedOrigins:['http://localhost'],launcher:'/unused',gatewayUrl:'http://fixture.invalid',issueToken:()=> 'fixture',revokeToken(){},engineFactory:engine,codexEngineFactory:engine,enginePolicy:policy,imageBackend:backend,visionAvailable:false,...trusted});
  t.after(async()=>{await a.app.close();await rm(root,{recursive:true,force:true});});
  const session=await a.broker.createSession(undefined,'codex');
  const request=(path:string,payload?:any)=>a.app.inject({method:payload?'POST':'GET',url:path,headers:{host:'localhost'},payload});

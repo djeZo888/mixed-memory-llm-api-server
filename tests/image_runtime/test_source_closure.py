@@ -84,7 +84,7 @@ class ImageSourceClosure(unittest.TestCase):
         binding = Mock()
         binding.path.return_value = str(service.BASE)
         binding.read_json.return_value = {'schema_version': 1, 'owner': service.OWNER,
-                                          'image_id': 'sha256:' + 'a' * 64}
+                                          'image_id': 'sha256:' + 'a' * 64, 'gpu_uuid': service.H032_GPU_UUID}
         with patch.object(service.os, 'geteuid', return_value=0), \
                 patch.object(service.RegisteredStorageBinding, 'load', return_value=binding), \
                 patch.object(service, 'load_runtime_binding', return_value={'image': {'image_id': 'sha256:' + 'b' * 64}}), \

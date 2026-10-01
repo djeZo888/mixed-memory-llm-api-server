@@ -1,0 +1,1365 @@
+{
+  "schemaVersion": 1,
+  "phase": "H041-COMPACTION-CONTINUATION-02",
+  "actor": "worker2/E",
+  "host": "mac-worker2",
+  "status": "PARTIAL_SOURCE_INTEGRATION",
+  "exportedUtc": "2026-10-01T10:19:53.182509+00:00",
+  "settings": {
+    "startedUtc": "2026-10-01T09:13:58.030786+00:00",
+    "hardDeadlineUtc": "2026-10-01T10:30:00+00:00",
+    "resumeSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+    "model": "gpt-6.1-sol",
+    "reasoningEffort": "ultra",
+    "argv": [
+      "/opt/homebrew/bin/codex",
+      "exec",
+      "resume",
+      "--json",
+      "--skip-git-repo-check",
+      "-m",
+      "gpt-6.1-sol",
+      "-c",
+      "model_reasoning_effort=\"ultra\"",
+      "-c",
+      "approval_policy=\"never\"",
+      "-c",
+      "sandbox_mode=\"danger-full-access\"",
+      "-o",
+      "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/LAST_MESSAGE.md",
+      "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "-"
+    ]
+  },
+  "adoptedSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "currentTerminalReceipts": {
+    "nativeExit": null,
+    "outerExit": null,
+    "producer": "actual wrapper after closure"
+  },
+  "previousTerminalReceipts": {
+    "nativeExit": -15,
+    "outerExit": 143,
+    "closedUtc": "2026-10-01T09:09:45+00:00",
+    "provenance": "root verified and retained; no reinterpretation"
+  },
+  "baseCommit": "e46a7e4fb50efdd762b750fa64376f83003451ed",
+  "candidateCommit": "2d4a36b434f21c4e704f24cf79a07b5f2cda1840",
+  "sourceCommits": [
+    "22e7884e86c0bc99eed3e7c7c92e957867592706",
+    "2d4a36b434f21c4e704f24cf79a07b5f2cda1840"
+  ],
+  "reviewedRuntimeEquivalent": "91d3adf1729aeb87eccbb47317339a5c350d7989",
+  "duplicateAImport": false,
+  "ownedChangedPaths": [
+    "ai-harness/acceptance/compaction/authorization.d.mts",
+    "ai-harness/acceptance/compaction/authorization.mjs",
+    "ai-harness/acceptance/compaction/controller.mjs",
+    "ai-harness/acceptance/compaction/evidence.mjs",
+    "ai-harness/acceptance/compaction/evidence.schema.json",
+    "ai-harness/acceptance/compaction/h041-full-retention.config.json",
+    "ai-harness/acceptance/compaction/h041-summary-stage.config.json",
+    "ai-harness/acceptance/compaction/model-scope.d.mts",
+    "ai-harness/acceptance/compaction/model-scope.mjs",
+    "ai-harness/acceptance/compaction/native-adapter/README.md",
+    "ai-harness/acceptance/compaction/native-adapter/adapter.ts",
+    "ai-harness/acceptance/compaction/native-adapter/application-proxy.ts",
+    "ai-harness/acceptance/compaction/native-adapter/application-worker.ts",
+    "ai-harness/acceptance/compaction/native-adapter/artifact-sink.ts",
+    "ai-harness/acceptance/compaction/native-adapter/artifacts.ts",
+    "ai-harness/acceptance/compaction/native-adapter/automatic.ts",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts",
+    "ai-harness/acceptance/compaction/native-adapter/build-closure.d.mts",
+    "ai-harness/acceptance/compaction/native-adapter/build-closure.mjs",
+    "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+    "ai-harness/acceptance/compaction/native-adapter/build.tsconfig.json",
+    "ai-harness/acceptance/compaction/native-adapter/collector.ts",
+    "ai-harness/acceptance/compaction/native-adapter/consumed-tools.ts",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts",
+    "ai-harness/acceptance/compaction/native-adapter/entry.ts",
+    "ai-harness/acceptance/compaction/native-adapter/native-evidence.ts",
+    "ai-harness/acceptance/compaction/native-adapter/native-observer.ts",
+    "ai-harness/acceptance/compaction/native-adapter/parent-projection.ts",
+    "ai-harness/acceptance/compaction/native-adapter/parent.ts",
+    "ai-harness/acceptance/compaction/native-adapter/probe.ts",
+    "ai-harness/acceptance/compaction/native-adapter/process-runner.ts",
+    "ai-harness/acceptance/compaction/native-adapter/projection-receipt.ts",
+    "ai-harness/acceptance/compaction/native-adapter/qualification.ts",
+    "ai-harness/acceptance/compaction/native-adapter/restart.ts",
+    "ai-harness/acceptance/compaction/native-adapter/retrieval.ts",
+    "ai-harness/acceptance/compaction/native-adapter/source-closure.ts",
+    "ai-harness/acceptance/compaction/ordinary.d.mts",
+    "ai-harness/acceptance/compaction/ordinary.mjs",
+    "ai-harness/acceptance/compaction/owned-close-verifier.d.mts",
+    "ai-harness/acceptance/compaction/owned-close-verifier.mjs",
+    "ai-harness/acceptance/compaction/scorer.mjs",
+    "ai-harness/server/test/fixtures/h041-application-worker.mjs",
+    "ai-harness/server/test/h039-native-adapter-gateway.test.ts",
+    "ai-harness/server/test/h039-native-adapter-protocol.test.ts",
+    "ai-harness/server/test/h040-native-adapter-contract.test.ts",
+    "ai-harness/server/test/h041-compaction-ordinary.test.ts",
+    "ai-harness/server/test/h041-native-adapter-completion.test.ts",
+    "ai-harness/server/test/h041-native-adapter-integration.test.ts"
+  ],
+  "ownedSourceSha256": {
+    "ai-harness/acceptance/compaction/authorization.d.mts": "329a62b7ad913e1702d934259a53ddf893b727ffcdf5ab578272612b0634974d",
+    "ai-harness/acceptance/compaction/authorization.mjs": "5a295911e6bfc6987f87d02807acccb4717a210582c538e9f635afec7a592cf8",
+    "ai-harness/acceptance/compaction/controller.mjs": "b9b81bd561c5f1b6794c8557b8744c8e6c3ae5001a8896337f9a46dbffd111d0",
+    "ai-harness/acceptance/compaction/evidence.mjs": "cdd9598b04eb32bfdfe89a414e3886a430006282671f1197082c17820d5ff636",
+    "ai-harness/acceptance/compaction/evidence.schema.json": "14afe2ff25daa0aa958eeba003496b37c438392b66b5008b30db23a850c265c8",
+    "ai-harness/acceptance/compaction/h041-full-retention.config.json": "bd873c882101d62d5e1d60ff8089459873505d8477b2641b0d9b2b0bc635e947",
+    "ai-harness/acceptance/compaction/h041-summary-stage.config.json": "fb64a1a949a261058bf409528d31c123d7a47745355648f464f12d7646219781",
+    "ai-harness/acceptance/compaction/model-scope.d.mts": "1d267805df620e0822414e65ea54cc672aa716d1f36690a5b425c0a684a5d261",
+    "ai-harness/acceptance/compaction/model-scope.mjs": "08325502e67c75d76a173899b5555b7f2315bab6281ed1b21c473353e297c890",
+    "ai-harness/acceptance/compaction/native-adapter/README.md": "1aae0753369be48e40ae036bfbbc0deeece83b8335ae55ec2034ea98ce9e011c",
+    "ai-harness/acceptance/compaction/native-adapter/adapter.ts": "8f80eae5cacdba69793232019c990b6f0bc286f8825ac9d38c1a55098669e93e",
+    "ai-harness/acceptance/compaction/native-adapter/application-proxy.ts": "f24b57850cdb169a55bffa0610b32fbf99824e2b2329e53c0df507281e0ad5ec",
+    "ai-harness/acceptance/compaction/native-adapter/application-worker.ts": "05fa441bf7bffa5359513ce58f22286ae11fb93bc54dc06cf24c92c3d32bb75b",
+    "ai-harness/acceptance/compaction/native-adapter/artifact-sink.ts": "fa3ba24e7e137730399bb5b877a62f8eb189a067b7bcbbead9bed9296920b601",
+    "ai-harness/acceptance/compaction/native-adapter/artifacts.ts": "139ccc762b3eedf6d2082e2770f989fc64cb5ffc21579d0d01a06ec97471def6",
+    "ai-harness/acceptance/compaction/native-adapter/automatic.ts": "220da88107871f8686ed62af8b3d43114d122488da291e65a27d3cb5fe6884a2",
+    "ai-harness/acceptance/compaction/native-adapter/bootstrap.ts": "66e1cecf90ebfac99d4016ff0580284846de1420c33644fc96879a27e6c3c940",
+    "ai-harness/acceptance/compaction/native-adapter/build-closure.d.mts": "35510ff3b3400bf88e3051bc7a38b38aa4fd9140d6c883068819a5c8d1bf1d5d",
+    "ai-harness/acceptance/compaction/native-adapter/build-closure.mjs": "b59bcf71c76f98178fd000bec8261e0f4faaa252db04a71b32360ab012958fb6",
+    "ai-harness/acceptance/compaction/native-adapter/build.mjs": "83438615fdad94917f626ff834c05c4b4ab1c236b21de17654ea54dba0666f2a",
+    "ai-harness/acceptance/compaction/native-adapter/build.tsconfig.json": "31d8ebf18d70121e0ad1fc128a53fe7d0fa0c347f76ac713505003f6eb4dc3c5",
+    "ai-harness/acceptance/compaction/native-adapter/collector.ts": "c96e3f7dde2a7aed9a79ff79a07c8b7dd2c108ead4c46e6c96c41feb86151a91",
+    "ai-harness/acceptance/compaction/native-adapter/consumed-tools.ts": "65fd355eaad26730bcc8b2032a26b7df99e01b24691f7281eb42b96f9c767e50",
+    "ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts": "c0330c9ff3d50aeeec110b384072362e08ebac140a029f6ed39e52834deb13b3",
+    "ai-harness/acceptance/compaction/native-adapter/entry.ts": "814c4ad98094a67c78642c10594df2529a07b2cebbaf9d835b6f4a8246aba5c9",
+    "ai-harness/acceptance/compaction/native-adapter/native-evidence.ts": "0bfcc4dd9be3fe75a134c93bc45780c4a462349020563d839a911b8fcf6c8b07",
+    "ai-harness/acceptance/compaction/native-adapter/native-observer.ts": "f1a808172d2d4a83baf27136e19f97e6fd498c94c12ee86e9134a75260a9c9e2",
+    "ai-harness/acceptance/compaction/native-adapter/parent-projection.ts": "eecfc4c09304f06f77e1f9fa979bd3c54781c04cf53266252938f5f7b6f4ef3e",
+    "ai-harness/acceptance/compaction/native-adapter/parent.ts": "67f3c18e4828990612ad3939eeb6e0c27f4fedffdc2252bf97fadfbe2c6f5114",
+    "ai-harness/acceptance/compaction/native-adapter/probe.ts": "4656e6a47c2d6184c810b1f5dc2f67ec44e9e227963a57657061924a3932e03c",
+    "ai-harness/acceptance/compaction/native-adapter/process-runner.ts": "04866669743d77baa65f1f9296a98a0210e68b67d4aa0142ba5a82277c65375f",
+    "ai-harness/acceptance/compaction/native-adapter/projection-receipt.ts": "7e44ee727f2cc19c405e51da927cdcb3490031e4d4ddbf82cd6f1861c6945402",
+    "ai-harness/acceptance/compaction/native-adapter/qualification.ts": "69860358184e0e5c0ddcb32775799ad0bdbd9406fc0ba8013c40da1e57dc631d",
+    "ai-harness/acceptance/compaction/native-adapter/restart.ts": "b5ee0276313fad00a10c78fe4ff48cb900785e0a0869532f2b55dd6cb9087edb",
+    "ai-harness/acceptance/compaction/native-adapter/retrieval.ts": "70b4a44f37f2f4519ee5fb0b0879a4c0f01a5e741087c8754c503252fdffc64f",
+    "ai-harness/acceptance/compaction/native-adapter/source-closure.ts": "ca76679c6f718bdeacb8960d6dbf5c09186a0af4e81567ad8eb77a0bd490b514",
+    "ai-harness/acceptance/compaction/ordinary.d.mts": "09ab852ad88e9e1ad5b9fc586243f21bd832ef5c10fad536f862f4079d82814d",
+    "ai-harness/acceptance/compaction/ordinary.mjs": "1c9864e2ae929ad324cbbd08dd2f706a04c342368ff247740b70d63bd7f95f3f",
+    "ai-harness/acceptance/compaction/owned-close-verifier.d.mts": "ab582eeab4fe06d80bf81f32603781b039464dab2014695f272b98e3776720f0",
+    "ai-harness/acceptance/compaction/owned-close-verifier.mjs": "71bf44d1340f24f28229269a29cae7482c12bf14862a5b6b5d481dae7cb88ed2",
+    "ai-harness/acceptance/compaction/scorer.mjs": "0fea8b405bdda66136eb3bf667b56480b2a96ec3fc54abeb5c308c636bfda361",
+    "ai-harness/server/test/fixtures/h041-application-worker.mjs": "d3e12c2bc73c285fe905e26b81bdb351869dedb6a719825651fbbe9d6501927d",
+    "ai-harness/server/test/h039-native-adapter-gateway.test.ts": "8b99a6b7c1fea1ed6342d23e2fb52211f1596d55e8e4b6a575f9736d44db39d8",
+    "ai-harness/server/test/h039-native-adapter-protocol.test.ts": "bf3ab2fb92a36e3afd15856b433d40e713a363e81eea5eba031ae377f59a3115",
+    "ai-harness/server/test/h040-native-adapter-contract.test.ts": "6da96d2d1d172c113d08898687bc8f167a4701af9ab096f682c0169d2b26b106",
+    "ai-harness/server/test/h041-compaction-ordinary.test.ts": "70c1e7da2781151501bee2b0de3a130785240fc3751098cbd1e4410b5e32c0a8",
+    "ai-harness/server/test/h041-native-adapter-completion.test.ts": "57afeefd11213599b3fecc03a3aaaaa3ad4aa394141ce09f26dbeb6470fd18be",
+    "ai-harness/server/test/h041-native-adapter-integration.test.ts": "14609fa90c13a75990acc69134b1a1f4f06c5305bd7e95dfc3cadf50ce348438"
+  },
+  "sourcePhaseAuthority": {
+    "id": "H041-COMPACTION-CONTINUATION-02",
+    "issuedUtc": "2026-10-01T09:11:06.096969+00:00",
+    "expiresUtc": "2026-10-01T11:11:06.096969+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T10:30:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "production compaction durability and acceptance integration; current source-only phases; later concrete reviewed Linux GO required"
+  },
+  "sourceRecognizedLaterDeliveryAuthority": {
+    "id": "H041-COMPACTION-DELIVERY-03",
+    "issuedUtc": "2026-10-01T10:07:11.972488+00:00",
+    "expiresUtc": "2026-10-01T13:07:11.972488+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "finish source/integration and prepare finite reviewed Linux/native compaction delivery; actual phase-specific source/config/actor GO still required",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge"
+  },
+  "liveGo": false,
+  "pins": {
+    "codexVersion": "0.158.0",
+    "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "autoCompaction": 400000,
+    "output": 65536,
+    "route": "existing normal Qwen; no live readback in this phase"
+  },
+  "nativeStatus": "NOT_TESTED",
+  "nativeCapabilities": [],
+  "defaultEnabled": false,
+  "fullSupportedEntry": "DISABLED: genuine child producer unavailable; sealed A bridge pending",
+  "sourceTestsAreNativeQualification": false,
+  "build": {
+    "manifest": "output/build-sealed/source-build-manifest.json",
+    "manifestSha256": "447b848eddf58bd212a642dd04fa0c25f1a0a09912f877c17f0096b1eb6b502e",
+    "format": "h041-source-build-v2",
+    "platform": "darwin",
+    "nodeVersion": "v24.21.0",
+    "compilerExit": 0,
+    "sourceCount": 131,
+    "runtimeCount": 97,
+    "helperCount": 36,
+    "dependencyCount": 4034,
+    "unavailableImports": [
+      {
+        "importer": "ai-harness/acceptance/compaction/native-adapter/entry.js",
+        "target": "ai-harness/server/src/codex-policy-handoff.js"
+      }
+    ],
+    "linuxInstalledQualification": "NOT_TESTED"
+  },
+  "commands": [
+    {
+      "name": "legacy-repaired",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-protocol.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:19:37.860Z",
+      "completedAt": "2026-10-01T09:19:55.170Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/legacy-repaired.log",
+      "logSha256": "d65dbaa5bf2f7124feff7665c4b7b17958b1a1af7feb20e807b80d055affef73",
+      "counts": {
+        "tests": 10,
+        "pass": 9,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "SYNTHETIC adapter owns a total terminal deadline after ACK, even without controller timeout"
+      ]
+    },
+    {
+      "name": "strict-repairs",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:23:55.065Z",
+      "completedAt": "2026-10-01T09:23:56.436Z",
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-repairs.log",
+      "logSha256": "8572e9565e40fcbf4c83166d6b7479edc51b87f1f9ac003eeb0aee38a53cbef0",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "strict-wiring",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:31:01.891Z",
+      "completedAt": "2026-10-01T09:31:03.252Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-wiring.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "strict-process-entry",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:35:02.551Z",
+      "completedAt": "2026-10-01T09:35:03.920Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-process-entry.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "build-v2",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "../output/build-v2"
+      ],
+      "startedAt": "2026-10-01T09:40:16.464Z",
+      "completedAt": "2026-10-01T09:40:19.990Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/build-v2.log",
+      "logSha256": "fca32dce5947c59e90dd0d595688a3b1607569c94b3adc9b841b52306f927dbe",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-1",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:40:15.299Z",
+      "completedAt": "2026-10-01T09:40:21.137Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-1.log",
+      "logSha256": "9d4172b617b2f21e725de72ab5bac0528803b4d55ae09b0ac001d69d706bbdf7",
+      "counts": {
+        "tests": 122,
+        "pass": 120,
+        "fail": 2,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "no-tools probe fields are explicit; import cannot start a native app",
+        "SYNTHETIC receipt-shaped process cannot enter genuine native evidence; cleanup is attempted"
+      ]
+    },
+    {
+      "name": "completion-tests",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-completion.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:44:58.718Z",
+      "completedAt": "2026-10-01T09:45:00.213Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/completion-tests.log",
+      "logSha256": "b63a312e7dffd09602060f46411cfaedf59cd5e3988853943d9eaa9439406b0a",
+      "counts": {
+        "tests": 6,
+        "pass": 6,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-2",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:49:22.016Z",
+      "completedAt": "2026-10-01T09:49:28.639Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-2.log",
+      "logSha256": "edcf3d7141d47b9c09d0e1a14d88df6a71733842605dae0d578387f727c9fea1",
+      "counts": {
+        "tests": 128,
+        "pass": 127,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "SYNTHETIC foreign identity, tools, unstarted items, cleanup failures and deadline stop without retry"
+      ]
+    },
+    {
+      "name": "strict-c02",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:59:57.347Z",
+      "completedAt": "2026-10-01T09:59:58.721Z",
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-c02.log",
+      "logSha256": "adc17dc6bd213d3adbc56668b22322e3eec43eaa4eef8a61c4a6401882ee2a8f",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "strict-c02-corrected",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T10:02:23.255Z",
+      "completedAt": "2026-10-01T10:02:24.788Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-c02-corrected.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-3",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:02:22.099Z",
+      "completedAt": "2026-10-01T10:02:28.931Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-3.log",
+      "logSha256": "c6aa1739f4c518089093dadc0e8bdd0709cd93819291ec0f567fe11232d24211",
+      "counts": {
+        "tests": 128,
+        "pass": 128,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    },
+    {
+      "name": "ordinary-source-checks",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-compaction-ordinary.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:03:14.757Z",
+      "completedAt": "2026-10-01T10:03:15.005Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/ordinary-source-checks.log",
+      "logSha256": "f46b6e2dd735e39e9c3c9c7658028cbc5bfc6a14d217fa56757df3c6f53a9adc",
+      "counts": {
+        "tests": 3,
+        "pass": 3,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    },
+    {
+      "name": "build-c02",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "../output/build-c02"
+      ],
+      "startedAt": "2026-10-01T10:03:15.056Z",
+      "completedAt": "2026-10-01T10:03:17.155Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/build-c02.log",
+      "logSha256": "8fd047fa1942187c8c391982b7e021d035a283e3aba50c21cc9b80880093b249",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "completion-final",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-completion.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:14:30.848Z",
+      "completedAt": "2026-10-01T10:14:32.370Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/completion-final.log",
+      "logSha256": "2b6034904144222658592d4f551df20519e2de45265b1939dcfb2e5de13aab4a",
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    },
+    {
+      "name": "strict-final",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T10:14:48.935Z",
+      "completedAt": "2026-10-01T10:14:50.406Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-final.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "build-final",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "../output/build-final"
+      ],
+      "startedAt": "2026-10-01T10:14:48.936Z",
+      "completedAt": "2026-10-01T10:14:51.135Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/build-final.log",
+      "logSha256": "0965d871fd26a492d2b9baab3b971392cec5152fb0d5ec7ca99b9365814f48a2",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "completion-sealed",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h041-native-adapter-completion.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:16:00.207Z",
+      "completedAt": "2026-10-01T10:16:01.697Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/completion-sealed.log",
+      "logSha256": "cf0d87482096358a492bea9a32e96c07e1dd0410c3e7b7f5073f0e645abc423f",
+      "counts": {
+        "tests": 8,
+        "pass": 8,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    },
+    {
+      "name": "strict-sealed",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T10:16:01.751Z",
+      "completedAt": "2026-10-01T10:16:03.234Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-sealed.log",
+      "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "build-sealed",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo",
+      "argv": [
+        "node",
+        "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+        "../output/build-sealed"
+      ],
+      "startedAt": "2026-10-01T10:16:01.751Z",
+      "completedAt": "2026-10-01T10:16:03.957Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/build-sealed.log",
+      "logSha256": "75274df6cf86f2156af06364fd58f3d89bc48a52d42993d3730313b203017285",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-sealed",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h039-native-adapter-checkpoint.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:16:14.003Z",
+      "completedAt": "2026-10-01T10:16:14.115Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-sealed.log",
+      "logSha256": "16e0bda1205147da350f82f5e4ed54dea93a3c1352d1b1abbb85d09eabc22924",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-final",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:16:29.140Z",
+      "completedAt": "2026-10-01T10:16:36.486Z",
+      "exit": {
+        "code": 0,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-final.log",
+      "logSha256": "200d2e7546f0ab80445d516f9758215aecfa26c83742319587b312b00d755c40",
+      "counts": {
+        "tests": 130,
+        "pass": 130,
+        "fail": 0,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": []
+    }
+  ],
+  "commandsLedgerSha256": "604856d159cf83f99481018312bd673123513b7efa3b6b311fcea3be9730d96d",
+  "actualFailedCommands": [
+    {
+      "name": "legacy-repaired",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-protocol.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:19:37.860Z",
+      "completedAt": "2026-10-01T09:19:55.170Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/legacy-repaired.log",
+      "logSha256": "d65dbaa5bf2f7124feff7665c4b7b17958b1a1af7feb20e807b80d055affef73",
+      "counts": {
+        "tests": 10,
+        "pass": 9,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "SYNTHETIC adapter owns a total terminal deadline after ACK, even without controller timeout"
+      ]
+    },
+    {
+      "name": "strict-repairs",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:23:55.065Z",
+      "completedAt": "2026-10-01T09:23:56.436Z",
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-repairs.log",
+      "logSha256": "8572e9565e40fcbf4c83166d6b7479edc51b87f1f9ac003eeb0aee38a53cbef0",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-1",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:40:15.299Z",
+      "completedAt": "2026-10-01T09:40:21.137Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-1.log",
+      "logSha256": "9d4172b617b2f21e725de72ab5bac0528803b4d55ae09b0ac001d69d706bbdf7",
+      "counts": {
+        "tests": 122,
+        "pass": 120,
+        "fail": 2,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "no-tools probe fields are explicit; import cannot start a native app",
+        "SYNTHETIC receipt-shaped process cannot enter genuine native evidence; cleanup is attempted"
+      ]
+    },
+    {
+      "name": "coherent-affected-2",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "test/h039-native-adapter-checkpoint.test.ts",
+        "test/h039-native-adapter-gateway.test.ts",
+        "test/h039-native-adapter-projection.test.ts",
+        "test/h039-native-adapter-protocol.test.ts",
+        "test/h039-native-adapter-source-closure.test.ts",
+        "test/h040-native-adapter-collector.test.ts",
+        "test/h040-native-adapter-contract.test.ts",
+        "test/h040-native-adapter-gateway.test.ts",
+        "test/h040-native-adapter-integration.test.ts",
+        "test/h040-native-adapter-lifecycle.test.ts",
+        "test/h040-native-adapter-protocol.test.ts",
+        "test/h039-compaction-retention.test.ts",
+        "test/h040-compaction-qualification-closure.test.ts",
+        "test/h040-compaction-retention.collector.test.ts",
+        "test/h040-compaction-retention.controller.test.ts",
+        "test/h040-compaction-retention.integration.test.ts",
+        "test/h041-native-adapter-completion.test.ts",
+        "test/h041-native-adapter-integration.test.ts"
+      ],
+      "startedAt": "2026-10-01T09:49:22.016Z",
+      "completedAt": "2026-10-01T09:49:28.639Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-2.log",
+      "logSha256": "edcf3d7141d47b9c09d0e1a14d88df6a71733842605dae0d578387f727c9fea1",
+      "counts": {
+        "tests": 128,
+        "pass": 127,
+        "fail": 1,
+        "cancelled": 0,
+        "skipped": 0,
+        "todo": 0
+      },
+      "failedCases": [
+        "SYNTHETIC foreign identity, tools, unstarted items, cleanup failures and deadline stop without retry"
+      ]
+    },
+    {
+      "name": "strict-c02",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsc",
+        "-p",
+        "../acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "startedAt": "2026-10-01T09:59:57.347Z",
+      "completedAt": "2026-10-01T09:59:58.721Z",
+      "exit": {
+        "code": 2,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/strict-c02.log",
+      "logSha256": "adc17dc6bd213d3adbc56668b22322e3eec43eaa4eef8a61c4a6401882ee2a8f",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    },
+    {
+      "name": "coherent-affected-sealed",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server",
+      "argv": [
+        "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/repo/ai-harness/server/node_modules/.bin/tsx",
+        "--test",
+        "--test-reporter=tap",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h039-native-adapter-checkpoint.test.ts"
+      ],
+      "startedAt": "2026-10-01T10:16:14.003Z",
+      "completedAt": "2026-10-01T10:16:14.115Z",
+      "exit": {
+        "code": 1,
+        "signal": null
+      },
+      "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion/output/coherent-affected-sealed.log",
+      "logSha256": "16e0bda1205147da350f82f5e4ed54dea93a3c1352d1b1abbb85d09eabc22924",
+      "counts": {
+        "tests": null,
+        "pass": null,
+        "fail": null,
+        "cancelled": null,
+        "skipped": null,
+        "todo": null
+      },
+      "failedCases": []
+    }
+  ],
+  "unloggedObservedFailure": {
+    "knownCommandPrefix": [
+      "node",
+      "../../../../output/run-command.mjs"
+    ],
+    "cwdRelative": "ai-harness/server",
+    "exitCode": 1,
+    "failure": "wrong helper relative path / MODULE_NOT_FOUND",
+    "fullArgvCapture": null,
+    "logSha256": null,
+    "note": "Actual tool failure preserved; no runner log existed because helper did not launch."
+  },
+  "finalChecks": {
+    "affectedSourceTests": {
+      "tests": 130,
+      "pass": 130,
+      "fail": 0,
+      "cancelled": 0,
+      "command": "coherent-affected-final"
+    },
+    "ordinarySourceTests": {
+      "tests": 3,
+      "pass": 3,
+      "command": "ordinary-source-checks"
+    },
+    "completionSubset": {
+      "tests": 8,
+      "pass": 8,
+      "includedInAffected": true
+    },
+    "strictStandalone": "strict-sealed exit0",
+    "emittedBuild": "build-sealed exit0",
+    "diffCheck": "git diff --check exit0"
+  },
+  "priorPhaseEvidence": {
+    "affectedCorrected": {
+      "tests": 123,
+      "pass": 110,
+      "fail": 12,
+      "cancelled": 1,
+      "qualification": "SOURCE failed/partial retained"
+    },
+    "changedFocused": {
+      "tests": 105,
+      "pass": 105,
+      "qualification": "SOURCE retained; not new closure"
+    },
+    "commands": [
+      {
+        "name": "affected-compaction",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server",
+        "argv": [
+          "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server/node_modules/.bin/tsx",
+          "--test",
+          "--test-timeout=15000",
+          "ai-harness/server/test/h039-native-adapter-checkpoint.test.ts",
+          "ai-harness/server/test/h039-native-adapter-gateway.test.ts",
+          "ai-harness/server/test/h039-native-adapter-projection.test.ts",
+          "ai-harness/server/test/h039-native-adapter-protocol.test.ts",
+          "ai-harness/server/test/h039-native-adapter-source-closure.test.ts"
+        ],
+        "startedAt": "2026-10-01T08:56:37.508Z",
+        "completedAt": "2026-10-01T08:56:37.634Z",
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/affected-compaction.log",
+        "logSha256": "1f256f5c3be710b995efabd81699b0a9989d9836c29ec331105e6fc1736513ea",
+        "counts": {
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "cancelled": null,
+          "skipped": null,
+          "todo": null
+        },
+        "failedCases": []
+      },
+      {
+        "name": "strict-adapter",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server",
+        "argv": [
+          "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server/node_modules/.bin/tsc",
+          "-p",
+          "../acceptance/compaction/native-adapter/tsconfig.json"
+        ],
+        "startedAt": "2026-10-01T08:56:36.377Z",
+        "completedAt": "2026-10-01T08:56:37.736Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/strict-adapter.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "cancelled": null,
+          "skipped": null,
+          "todo": null
+        },
+        "failedCases": []
+      },
+      {
+        "name": "emitted-build",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo",
+        "argv": [
+          "node",
+          "ai-harness/acceptance/compaction/native-adapter/build.mjs",
+          "../output/build"
+        ],
+        "startedAt": "2026-10-01T08:56:58.983Z",
+        "completedAt": "2026-10-01T08:57:01.059Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/emitted-build.log",
+        "logSha256": "9528c39ed932e3a7a4de746cd41ca9890ac8be9974c094a12231b75520ad6bf1",
+        "counts": {
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "cancelled": null,
+          "skipped": null,
+          "todo": null
+        },
+        "failedCases": []
+      },
+      {
+        "name": "affected-compaction-corrected",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server",
+        "argv": [
+          "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server/node_modules/.bin/tsx",
+          "--test",
+          "--test-timeout=15000",
+          "test/h039-native-adapter-checkpoint.test.ts",
+          "test/h039-native-adapter-gateway.test.ts",
+          "test/h039-native-adapter-projection.test.ts",
+          "test/h039-native-adapter-protocol.test.ts",
+          "test/h039-native-adapter-source-closure.test.ts",
+          "test/h040-native-adapter-collector.test.ts",
+          "test/h040-native-adapter-contract.test.ts",
+          "test/h040-native-adapter-gateway.test.ts",
+          "test/h040-native-adapter-integration.test.ts",
+          "test/h040-native-adapter-lifecycle.test.ts",
+          "test/h040-native-adapter-protocol.test.ts",
+          "test/h039-compaction-retention.test.ts",
+          "test/h040-compaction-qualification-closure.test.ts",
+          "test/h040-compaction-retention.collector.test.ts",
+          "test/h040-compaction-retention.controller.test.ts",
+          "test/h040-compaction-retention.integration.test.ts",
+          "test/h041-native-adapter-integration.test.ts"
+        ],
+        "startedAt": "2026-10-01T08:56:57.846Z",
+        "completedAt": "2026-10-01T09:02:20.392Z",
+        "exit": {
+          "code": 1,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/affected-compaction-corrected.log",
+        "logSha256": "41a57230e89c262507cbf873a69e23cbd0a2dfe1f4329b93444dec5d3a8e4bb2",
+        "counts": {
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "cancelled": null,
+          "skipped": null,
+          "todo": null
+        },
+        "failedCases": []
+      },
+      {
+        "name": "changed-h040-h041",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server",
+        "argv": [
+          "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server/node_modules/.bin/tsx",
+          "--test",
+          "--test-reporter=tap",
+          "--test-timeout=15000",
+          "test/h040-native-adapter-collector.test.ts",
+          "test/h040-native-adapter-contract.test.ts",
+          "test/h040-native-adapter-gateway.test.ts",
+          "test/h040-native-adapter-integration.test.ts",
+          "test/h040-native-adapter-lifecycle.test.ts",
+          "test/h040-native-adapter-protocol.test.ts",
+          "test/h040-compaction-qualification-closure.test.ts",
+          "test/h040-compaction-retention.collector.test.ts",
+          "test/h040-compaction-retention.controller.test.ts",
+          "test/h040-compaction-retention.integration.test.ts",
+          "test/h041-native-adapter-integration.test.ts",
+          "test/h039-compaction-retention.test.ts"
+        ],
+        "startedAt": "2026-10-01T09:03:06.555Z",
+        "completedAt": "2026-10-01T09:03:12.193Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/changed-h040-h041.log",
+        "logSha256": "9ba296f9ab83f1395aa2029f6e59acd13351a5ebf17920c6e3ff114624bdd027",
+        "counts": {
+          "tests": 105,
+          "pass": 105,
+          "fail": 0,
+          "cancelled": 0,
+          "skipped": 0,
+          "todo": 0
+        },
+        "failedCases": []
+      },
+      {
+        "name": "strict-final",
+        "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server",
+        "argv": [
+          "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/repo/ai-harness/server/node_modules/.bin/tsc",
+          "-p",
+          "../acceptance/compaction/native-adapter/tsconfig.json"
+        ],
+        "startedAt": "2026-10-01T09:04:53.772Z",
+        "completedAt": "2026-10-01T09:04:55.127Z",
+        "exit": {
+          "code": 0,
+          "signal": null
+        },
+        "log": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration/output/strict-final.log",
+        "logSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "counts": {
+          "tests": null,
+          "pass": null,
+          "fail": null,
+          "cancelled": null,
+          "skipped": null,
+          "todo": null
+        },
+        "failedCases": []
+      }
+    ],
+    "commandsLedgerSha256": "ca5bbb4980f9b214b4cba3d0cc8af58f209bf58394f1778a5bb1478d66895d32",
+    "adoptedWipManifestSha256": "7aa9a5ed99b20f4eee8bbc4c757f52df6370b7d333ae69501e857ecfc1f312b0",
+    "patchSha256": "8ea5443a502a8ce24bacc185da26799d23b6b0b0fe8b8024f548d325f20eede1",
+    "untrackedArchiveSha256": "25a8ea2519f338c437940d7ef6d7193af7fd0dd2cbf72f4f3645fc946e09c440"
+  },
+  "inputSha256": {
+    "AUTHORITY.json": "23d1896d26f77ddd07d6fb174268c92690054b3ecde41c5157f9758e2d029708",
+    "DELIVERY-03-AUTHORITY.json": "001caec056737ebeaad302833bad5d8d9f123ca44f620f97462527ba91d785ee",
+    "CANDIDATE.json": "3fae99f0e4411efdd19a301efa9b92468e82364aaa21ac425647a15404b6ab29",
+    "ROOT-PLAN.md": "76a163982a77e264e34a601ecec9ae25fcbc0c24636b6d193e65dc71e89be3fc",
+    "A-INTERFACE.early.md": "3dee62071513c89e84210f06c84831666651ca8ed17fcb50741731d292086160",
+    "A-API.for-E.md": "afceef0123923715e441bfd0b83aa0dad3fa7cae1e63984151d695dd536304a5",
+    "A-INTERFACE.0954.md": "e602aafea7c05e2bb56b6529800de75575265025e79dfd820c70e755e6aaffc9",
+    "native-clean-child-source-review.md": "8be40cf34878b949d767e4b2babadd70b416ce488d7a016520fe7ce03434e717",
+    "native-clean-child-source-review.json": "51c29eb12f89eb56041833d0d4c60795f49b2a5fb53d3ac80452007596c18b4a",
+    "ordinary-native-acceptance.packet.template.json": "96727cc723eb77d8a36c035ba14c064169b22c7805825d9da6052db62c1e8642"
+  },
+  "remainingRootGates": [
+    "Consume root-sealed A durable policy handoff and separately branded continuation02/delivery03 factories. Current base lacks server/src/codex-policy-handoff; installed build verification rejects its recorded unavailable import.",
+    "Confirm exact protected Store checkpoint/ownership contract against sealed A source. Required baseline cold resume follows latest manual compaction before continuation and cannot substitute an older artifact checkpoint; A must support a separate compacted-parent ownership purpose.",
+    "Implement genuine delegatedChild producer from a distinct retention-parent policy from INITIAL full parent creation. It must descend from the same compact.nativeThreadId, arm exact gateway admission BEFORE spawn, capture awaited native ancestry/thread-read and actual first request, and settle native child plus parent/gateway. Existing notification ordering can miss child first input; freshBriefControl is only a negative isolated-thread control.",
+    "Root reviews combined A/E candidate, protected source/build/import/dependency/helper/image/config closure, actor/action budgets and no-generation Linux producer packet. Rebuild the emitted graph against sealed A on worker1 Linux; this darwin artifact is source only.",
+    "Worker1 alone obtains fresh actual route/runtime/model/tokenizer/installed no-tools/mount/egress/transport qualification and preserved-production quiescence/owned fixed8081 lease under concrete root GO. No source flag grants native readiness.",
+    "After actual transport qualification, root may authorize one 9-action56-fact49-critical manual stage; only actual stage PASS can precede full72-fact62-critical3-cycle summary/retrieval/technical continuation/baseline and accepted coldresume/native child suite. Stop on critical failure, preserve failed output, no replay.",
+    "Ordinary production entry/raw tool tail/source-addressable retrieval/Unicode literal search/human-state CAS/real browser reconnect/recovery and actual400000 automatic metadata remain separate mandatory NOT_TESTED deltas. Only reviewed full PASS permits targeted automatic case; no manual-to-auto relabel or fault-to-PASS recovery."
+  ],
+  "limitations": [
+    "No live/native runtime, inference, deployment, Linux or production browser/UI action performed.",
+    "Source evidence proves rejection/ownership/parsing/process behavior only; synthetic IDs/receipts are labeled and do not grant native PASS.",
+    "No atomic rollback claim: actual native replacement precedes persistence; restoration remains reviewed no-writer reconciliation.",
+    "Generic unreviewed computed-import coverage is not a native qualification; full installed source closure and executed graph remain required."
+  ],
+  "exports": {
+    "interface": "output/INTERFACE.md",
+    "results": "output/RESULTS.json",
+    "outbox": "OUTBOX.md",
+    "bundle": "output/candidate.bundle",
+    "diff": "output/candidate.diff",
+    "privateEntry": "output/private-entry.template.mjs",
+    "qualificationConfig": "output/qualification-config.template.json"
+  }
+}

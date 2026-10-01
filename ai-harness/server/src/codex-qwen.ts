@@ -1,6 +1,7 @@
 /** Source-qualified nonthinking Qwen counter; host identity proof remains required.
  * Mirrors scripts/benchmark/accounting.py (no benchmark is invoked or polled).
  */
+import {immutableCountObservation,type CodexHostObservations} from "./codex-host-observation.js";
 import { admissionContext, emitAdmission, admissionReason, QwenAdmissionError, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import type { GatewayUpstream } from "./gateway.js";
 import { ApiError } from "./errors.js";
@@ -18,7 +19,7 @@ export interface QwenLaneVerifier {
     (alias: string, context?: QwenAdmissionContext): Promise<QwenCountQualification>;
     withVerifiedLane?<T>(alias: string, operation: (qualification: QwenCountQualification) => Promise<T>, context?: QwenAdmissionContext, signal?: AbortSignal): Promise<T>;
 }
-export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: QwenAdmissionObserver) {
+export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: QwenAdmissionObserver, capture?:CodexHostObservations) {
     return async (body: Readonly<Record<string, unknown>>, lane: GatewayUpstream, key: string, signal: AbortSignal, context: QwenAdmissionContext = admissionContext("count")): Promise<{
         inputTokens: number;
         contextWindow: 480000;
@@ -26,6 +27,7 @@ export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: 
         const qualified = (q: QwenCountQualification) => { if (!q.instanceId || q.alias !== lane.alias || q.modelRevision !== QWEN_CODEX_PIN.modelRevision || q.runtimeRevision !== QWEN_CODEX_PIN.runtimeRevision || q.templateSha256 !== QWEN_CODEX_PIN.templateSha256 || q.contextWindow !== 480000)
             throw new ApiError(503, "codex_qwen_identity_unqualified", "Qwen tokenizer/template/runtime allocation not qualified"); return q; };
         const started = performance.now();
+        let actualCountBody:string|undefined;
         try {
         if (body.model !== lane.alias || body.reasoning_effort !== "none")
             throw new ApiError(400, "codex_qwen_profile", "Expected explicit Qwen nonthinking profile");
@@ -34,7 +36,10 @@ export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: 
         // Strip ONLY generation transport fields. Preserve history, tools, template,
         // sampling/output reservation and final served alias identically to inference.
         const countBody = Object.fromEntries(Object.entries(body).filter(([k]) => !["stream", "stream_options"].includes(k)));
-        const response = await fetch(lane.url.replace(/\/$/, "") + "/tokenize", { method: "POST", redirect: "error", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: JSON.stringify(countBody), signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) });
+        actualCountBody=JSON.stringify(countBody);
+        const bound=capture?.maxCountBodyBytes??16*1024*1024;
+        if(capture&&(!Number.isSafeInteger(bound)||bound<1||bound>16*1024*1024||Buffer.byteLength(actualCountBody)>bound))throw Error("Trusted count observation bound exceeded");
+        const response = await fetch(lane.url.replace(/\/$/, "") + "/tokenize", { method: "POST", redirect: "error", headers: { authorization: `Bearer ${key}`, "content-type": "application/json" }, body: actualCountBody, signal: AbortSignal.any([signal, AbortSignal.timeout(15000)]) });
         if (!response.ok || !response.body) {
             await response.body?.cancel();
             throw new ApiError(503, "codex_qwen_count_unavailable", "Qwen native token count unavailable");
@@ -76,6 +81,12 @@ export function createCodexQwenCounter(verifyLane: QwenLaneVerifier, observer?: 
             const after = qualified(await verifyLane(lane.alias, context));
             if (after.instanceId !== before.instanceId)
                 throw new ApiError(503, "codex_qwen_identity_changed", "Qwen instance changed during count");
+        }
+        if(capture?.onVerifiedCount){
+            const event=immutableCountObservation(actualCountBody!,context,lane.alias,result);
+            let timer:ReturnType<typeof setTimeout>|undefined;const captureAbort=new AbortController();const captureSignal=AbortSignal.any([signal,captureAbort.signal]);
+            try{await Promise.race([Promise.resolve().then(()=>capture.onVerifiedCount!(event,captureSignal)),new Promise<never>((_,reject)=>{timer=setTimeout(()=>reject(Error("Trusted count observation timed out")),5000);})]);signal.throwIfAborted();}
+            catch{throw Error("Trusted count observation failed");}finally{clearTimeout(timer);captureAbort.abort();}
         }
         emitAdmission(observer, { schema: 1, ...context, lane: lane.alias, step: "tokenize", outcome: "pass", reason: "ok", elapsedMs: performance.now() - started });
         return result;

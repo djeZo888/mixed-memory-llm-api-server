@@ -56,6 +56,11 @@ def main():
         lines = Path('/proc/self/cgroup').read_text().splitlines()
         if len(lines) != 1 or not lines[0].startswith('0::/' + prefix + '/'):
             raise ValueError('task process outside protected slice')
+        # A path/nonce channel survives the scope through the host environment;
+        # it is never a container mount or native stdout/stderr frame.
+        import runpy
+        receipts = runpy.run_path(str(Path(__file__).resolve().with_name('codex_receipts.py')))
+        receipts['publish_egress'](prefix)
         os.execv(sys.executable, [sys.executable, *args])
     os.execv('/usr/bin/systemd-run', ['/usr/bin/systemd-run', '--user', '--scope', '--quiet',
              '--collect', '--expand-environment=no', '--slice=' + SLICE, sys.executable, str(Path(__file__).resolve()),
@@ -65,6 +70,6 @@ def main():
 if __name__ == '__main__':
     try:
         main()
-    except (ValueError, OSError, KeyError) as error:
+    except (ValueError, OSError, KeyError, TypeError) as error:
         print(f'task-egress: refused ({type(error).__name__}); root policy/slice acceptance required', file=sys.stderr)
         sys.exit(64)

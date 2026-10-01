@@ -1,3 +1,4 @@
+import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
 import { createHash, randomUUID } from "node:crypto";
 import type { Store, Run, StoredSession } from "./store.js";
@@ -15,7 +16,11 @@ import type {
 import { CONTEXT_LIMIT } from "./contracts.js";
 import { assertEngineAvailable, createEngineRouter, type EnginePolicy } from "./engine-router.js";
 import { ApiError } from "./errors.js";
-export interface BrokerOptions {
+export interface NativeReplacementCommitInput {readonly sessionId:string;readonly runId:string;readonly checkpoint:Readonly<import("./session-checkpoint.js").SessionCheckpointRecord>}
+export type NativeReplacementCommitVerifier=(input:NativeReplacementCommitInput)=>Promise<void>;
+export interface BrokerOptions extends CodexRecoveryObservers {
+  /** Trusted host source seam only, absent by default; never accepted from API/model input. */
+  beforeNativeReplacementCommit?:NativeReplacementCommitVerifier;
   store: Store;
   files: Files;
   engineFactory: EngineFactory;
@@ -29,6 +34,9 @@ export interface BrokerOptions {
   maxQueued?: number;
   /** Protected durable host gate; never supplied by browser/task requests. */
   dispatchHeld?: () => boolean;
+  /** Awaited protected task challenge in the actual product process. */
+  onNewOwnedSession?: (input:{sessionId:string;workspaceId:string;engineKind:EngineKind})=>Promise<void>;
+  beforeDispatchAdmission?: (input:{sessionId:string;requestId:string;phase:'enqueue'|'queued-start'},signal:AbortSignal)=>Promise<void>;
   cancelImages?: (sessionId: string) => void;
   /** Read-only app state, refreshed immediately before a user-requested turn. */
   imageContext?: (sessionId: string, currentRunId: string) => string;
@@ -72,6 +80,8 @@ export class Broker {
   private active = new Map<string, Active>();
   private runners = new Map<string, Runner>();
   private closing = false;
+  private recoveries = new Map<string,{abort:AbortController;settled:Promise<void>}>();
+  private admissionPending = new Map<string,{abort:AbortController;settled:Promise<void>}>();
   constructor(readonly options: BrokerOptions) {
     this.store = options.store;
     this.files = options.files;
@@ -81,6 +91,14 @@ export class Broker {
       active: this.active.size,
       queued: [...this.queues.values()].reduce((n, q) => n + q.length, 0),
     };
+  }
+  async admitEnqueue(sessionId:string,requestId:string){
+    if(this.closing)throw new ApiError(503,'shutting_down','Server is shutting down');
+    this.store.getSession(sessionId); // Ownership lookup before challenge.
+    const abort=new AbortController(),key='enqueue:'+requestId;
+    const settled=Promise.resolve().then(()=>this.options.beforeDispatchAdmission?.({sessionId,requestId,phase:'enqueue'},abort.signal));
+    this.admissionPending.set(key,{abort,settled});try{await settled;}finally{this.admissionPending.delete(key);}
+    if(this.closing||this.options.dispatchHeld?.())throw new ApiError(503,'dispatch_frozen','Protected dispatch is held');
   }
   notifyDispatchChanged() {
     if (!this.options.dispatchHeld?.())
@@ -95,6 +113,31 @@ export class Broker {
     if (this.closing || active?.cancelled)
       throw new Error("Dispatch cancelled while frozen");
   }
+  async recoverMemory(sessionId: string, checkpointId: string, host: NonNullable<import("./app.js").AppOptions["memoryRecoveryHost"]>) {
+    const session=this.store.getSession(sessionId);
+    if(this.closing || this.options.dispatchHeld?.() || this.active.has(session.workspaceId) || this.queues.get(session.workspaceId)?.length)
+      throw new ApiError(409,"memory_recovery_busy","Workspace has active work");
+    const reservation=this.store.reserveWorkspaceRecovery(sessionId,checkpointId); let verified=false;
+    const abort=new AbortController();let finished!:()=>void;const settled=new Promise<void>(r=>{finished=r;});this.recoveries.set(reservation.id,{abort,settled});
+    try {
+      const evidence=await host({sessionId,checkpointId,memory:this.store.memory.bridge(sessionId),reservation,signal:abort.signal});
+      const assertCommitOwner=()=>{
+        abort.signal.throwIfAborted();
+        const current=this.store.getSession(sessionId);
+        this.store.assertWorkspaceRecovery(reservation,sessionId,checkpointId);
+        if(this.closing||this.options.dispatchHeld?.()||this.store.isQuarantined(current.workspaceId)||current.nativeState.ownership!=="idle"||current.nativeState.activeTurnId!==null||this.active.has(current.workspaceId)||this.queues.get(current.workspaceId)?.length||this.store.db.prepare("SELECT id FROM runs WHERE workspace_id=? AND status IN ('queued','running','cancelling') LIMIT 1").get(current.workspaceId))throw Error("Recovery commit owner unavailable");
+      };
+      assertCommitOwner();
+      if(this.options.beforeNativeRecovery)await boundedRecoveryObservation(abort.signal,signal=>this.options.beforeNativeRecovery!(Object.freeze({sessionId,checkpointId,stage:"before-commit"}),signal));
+      // No await between final exact ownership recheck and synchronous Store CAS.
+      assertCommitOwner();
+      const result=this.store.checkpoints.recoverWithFreshParent(sessionId,checkpointId,evidence);
+      verified=true; return result;
+    } finally {
+      try{this.store.finishWorkspaceRecovery(reservation,verified);}finally{this.recoveries.delete(reservation.id);finished();}
+      queueMicrotask(()=>this.pump(session.workspaceId));
+    }
+  }
   currentImageRun(sessionId: string) {
     const active = [...this.active.values()].find(
       (a) => a.run.sessionId === sessionId && !a.cancelled,
@@ -107,6 +150,7 @@ export class Broker {
     assertEngineAvailable(engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
     const s = this.store.createSession(workspaceId, engineKind, engineKind === "codex" ? this.options.enginePolicy!.codex : {});
     await this.files.prepare(s.id, s.workspaceId);
+    await this.options.onNewOwnedSession?.({sessionId:s.id,workspaceId:s.workspaceId,engineKind:s.engineKind});
     return this.store.publicSession(s);
   }
   enqueue(
@@ -131,6 +175,8 @@ export class Broker {
       if (existing) return existing;
     }
     const admit = (s: StoredSession) => {
+      if(this.store.workspaceRecoveryBlocked(s.workspaceId)) throw new ApiError(409,"memory_recovery_busy","Workspace has an active or unresolved recovery owner");
+      if (s.engineKind === "codex") this.store.memory.bridge(s.id).assertContinuationAllowed();
       assertEngineAvailable(s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
       if (kind === "handoff")
         assertEngineAvailable(handoffEngineKind ?? s.engineKind, this.options.enginePolicy, this.options.codexEngineFactory);
@@ -238,11 +284,21 @@ export class Broker {
     try { this.options.onRunAccepted?.(s.id, run.id); } catch { /* Optional acceptance must fail closed without cancelling ordinary work. */ }
     queueMicrotask(() => this.pump(s.workspaceId));
   }
-  private pump(workspaceId: string) {
+  private pump(workspaceId: string, admittedRun?:string) {
+    if(this.options.beforeDispatchAdmission&&!admittedRun){
+      const run=this.queues.get(workspaceId)?.[0];
+      if(!run||this.closing||this.active.has(workspaceId)||this.admissionPending.has(workspaceId))return;
+      const abort=new AbortController();let settled:Promise<void>;
+      settled=Promise.resolve().then(async()=>{try{await this.options.beforeDispatchAdmission!({sessionId:run.sessionId,requestId:run.id,phase:'queued-start'},abort.signal);
+        if(!this.closing&&!abort.signal.aborted&&this.queues.get(workspaceId)?.[0]===run&&!this.options.dispatchHeld?.())this.pump(workspaceId,run.id);
+      }catch{/* No native start; queued owner is retained until Stop or fresh reviewed admission. */}finally{this.admissionPending.delete(workspaceId);}});
+      this.admissionPending.set(workspaceId,{abort,settled});return;
+    }
     if (
       this.closing ||
       this.options.dispatchHeld?.() ||
-      this.active.has(workspaceId)
+      this.active.has(workspaceId) ||
+      this.store.workspaceRecoveryBlocked(workspaceId)
     )
       return;
     const queue = this.queues.get(workspaceId);
@@ -282,6 +338,7 @@ export class Broker {
   private async runner(
     s: StoredSession,
     onUpdate: (update: EngineUpdate) => void,
+    run: Run,
   ) {
     // Update callbacks are per turn; an existing runner reads a mutable dispatcher.
     let runner = this.runners.get(s.id) as
@@ -311,7 +368,9 @@ export class Broker {
       dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
       workspace: this.files.workspace(s.workspaceId),
+      onNativeLifecycle: e => this.store.checkpoints.recordNativeObservation(s.id,run.id,e),
       nativeSessionId: s.nativeSessionId,
+      ...(s.engineKind === "codex" ? { sessionMemory: this.store.memory.bridge(s.id) } : {}),
       launcher: this.options.launcher,
       gatewayUrl: s.engineKind === "codex" ? this.options.codexGatewayUrl ?? this.options.gatewayUrl : this.options.gatewayUrl,
       gatewayToken: token,
@@ -346,6 +405,7 @@ export class Broker {
     let summary = "";
     const summaryParts = new Map<string, string>();
     let success = false;
+    let verificationRejected = false;
     let cleanupConfirmed = false;
     let promptRejectedDuringCancellation = false;
     let failureStatus: Status = "failed";
@@ -363,7 +423,13 @@ export class Broker {
       );
       const update = (u: EngineUpdate) => {
         if (this.active.get(s.workspaceId) !== active) return;
-        if (u.type === "text") {
+        if (u.type === "tool_original") {
+          const owner = this.store.getSession(s.id);
+          if (owner.engineKind !== "codex" || owner.nativeSessionId !== u.nativeThreadId || owner.nativeState.activeTurnId !== u.nativeTurnId)
+            throw Error("Unowned terminal original");
+          this.store.memory.retain(s.id,"tool",`${run.id}:tool:${u.nativeItemId}`,Buffer.from(u.rawUtf8),u.nativeTruncated ? "native_truncated" : "complete");
+          if (u.outputUtf8 !== undefined) this.store.memory.retain(s.id,"tool",`${run.id}:output:${u.nativeItemId}`,Buffer.from(u.outputUtf8),u.nativeTruncated ? "native_truncated" : "complete");
+        } else if (u.type === "text") {
           if (!u.text && !u.replace) return;
           const thought = u.channel === "thought";
           const id = messageId(u.nativeMessageId, thought);
@@ -465,6 +531,7 @@ export class Broker {
           if (u.kind === "compaction")
             this.store.setStatus(s.id, "compacting", run.id);
         } else if (u.type === "compaction") {
+          if (s.engineKind === "codex") this.store.checkpoints.observeCompaction(s.id,run.id,u.compactionId,u.status);
           const label =
             u.status === "start"
               ? "Compaction started"
@@ -534,7 +601,8 @@ export class Broker {
       };
       if (this.closing)
         throw new Error("Server is shutting down before engine launch");
-      const engine = await this.runner(s, update);
+      if (s.engineKind === "codex") this.store.checkpoints.prepare(s.id,run.id,run.kind,s.nativeSessionId);
+      const engine = await this.runner(s, update, run);
       const cancelBeforePrompt = async () => {
         try {
           await engine.cancel();
@@ -598,7 +666,7 @@ export class Broker {
               ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\n`
               : "";
             promptOutcome = await engine.prompt(
-              priorContext + (currentImageContext
+              (s.engineKind === "codex" ? this.store.memory.bridge(s.id).continuationText() : "") + priorContext + (currentImageContext
                 ? `${currentImageContext}\n\nCurrent user request (run ${run.id}):\n${requestText}`
                 : `${handoff ? "Current user request:\n" : ""}${requestText}`),
               attachments,
@@ -617,6 +685,13 @@ export class Broker {
       await active.cancelPromise;
       if (active.cancelFailed)
         throw new CancellationSettlementError(active.cancelled);
+      if(s.engineKind==="codex"&&this.options.beforeNativeReplacementCommit){
+        const checkpoint=this.store.checkpoints.status(s.id).find(c=>c.runId===run.id);
+        if(checkpoint?.compactions.some(c=>c.status==="completed")){
+          try{await this.options.beforeNativeReplacementCommit(Object.freeze({sessionId:s.id,runId:run.id,checkpoint:Object.freeze(structuredClone(checkpoint))}));}
+          catch{verificationRejected=true;this.store.checkpoints.rejectReplacementVerification(s.id,run.id,checkpoint.id);throw Object.assign(new Error("Native replacement verification rejected"),{code:"native_replacement_verification_failed"});}
+        }
+      }
       await Promise.all(artifactJobs);
       for (const assistantId of assistantIds)
         this.store.emit(
@@ -662,6 +737,10 @@ export class Broker {
         active.cancelled ? "cancelled" : "completed",
         active.cancelled ? undefined : finalCandidate,
       );
+      if (s.engineKind === "codex") {
+        this.store.memory.indexHistory(s.id);
+        this.store.checkpoints.finish(s.id,run.id,active.cancelled ? "cancelled" : "completed");
+      }
       success = true;
     } catch (error) {
       // Stop can reject the native prompt before its accepted inference drains.
@@ -723,7 +802,7 @@ export class Broker {
       if (cancellationRace && !cleanupConfirmed) emitFailure();
       if (cleanupConfirmed) {
         this.store.releaseQuarantineAfterVerifiedCleanup(run.workspaceId);
-        if (active.cancelled) {
+        if (active.cancelled && !verificationRejected) {
           this.store.updateRun(run.id, "cancelled");
           failureStatus = "idle";
         }
@@ -750,6 +829,9 @@ export class Broker {
           run.id,
         );
     } finally {
+      if(verificationRejected){this.store.updateRun(run.id,"failed");failureStatus="failed";}
+      if (!success && this.store.db.prepare("SELECT id FROM h041_session_checkpoints WHERE session_id=? AND run_id=?").get(run.sessionId,run.id))
+        this.store.checkpoints.finish(run.sessionId,run.id,active.cancelled && !verificationRejected ? "cancelled" : "failed");
       if (!success)
         for (const assistantId of assistantIds)
           this.store.emit(
@@ -893,12 +975,13 @@ export class Broker {
   }
   private async shutdown() {
     this.closing = true;
+    const admissions=[...this.admissionPending.values()];for(const a of admissions)a.abort.abort(new Error("Admission cancelled by shutdown"));
+    const recoveries=[...this.recoveries.values()];for(const r of recoveries)r.abort.abort(new Error("Recovery cancelled by shutdown"));
     const active = [...this.active.values()];
-    await Promise.all(active.map((a) => this.cancel(a.run.sessionId)));
+    const cancellations = active.map((a) => this.cancel(a.run.sessionId));
     // Deliver launcher shutdown now; waiting for an unresponsive prompt first
     // would prevent PREP's bounded exact-container cleanup from ever starting.
-    await Promise.all(
-      [...this.runners.keys()].map(async (id) => {
+    const runnerClosures = [...this.runners.keys()].map(async (id) => {
         try {
           await this.closeRunner(id);
         } catch {
@@ -907,8 +990,8 @@ export class Broker {
             "shutdown_settlement_unknown",
           );
         }
-      }),
-    );
-    await Promise.all(active.map((a) => a.settled));
+      });
+    // Begin Stop for every owner before waiting on any slow recovery/runner.
+    await Promise.all([...recoveries.map(r=>r.settled),...admissions.map(a=>a.settled.catch(()=>undefined)), ...cancellations, ...runnerClosures, ...active.map(a=>a.settled)]);
   }
 }

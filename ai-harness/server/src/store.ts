@@ -1,4 +1,6 @@
 import { DatabaseSync } from "node:sqlite";
+import { SessionMemory } from "./session-memory.js";
+import { SessionCheckpoint } from "./session-checkpoint.js";
 import { createHash, randomUUID } from "node:crypto";
 import path from "node:path";
 import { EventEmitter } from "node:events";
@@ -75,11 +77,36 @@ export interface FileRecord {
 }
 const now = () => new Date().toISOString();
 const decode = <T>(v: unknown): T => JSON.parse(String(v));
+export interface WorkspaceRecoveryReservation { readonly id: string; readonly sessionId: string; readonly checkpointId: string; readonly workspaceId: string; }
 export class Store {
+  private readonly recoveryReservations = new WeakSet<WorkspaceRecoveryReservation>();
   readonly db: DatabaseSync;
+  readonly memory!: SessionMemory;
+  readonly checkpoints!: SessionCheckpoint;
   readonly events = new EventEmitter();
+  workspaceRecoveryBlocked(workspaceId: string): boolean {
+    return !!this.db.prepare("SELECT id FROM h041_workspace_recovery_reservations WHERE workspace_id=? AND state IN ('held','uncertain')").get(workspaceId);
+  }
+  reserveWorkspaceRecovery(sessionId: string, checkpointId: string): WorkspaceRecoveryReservation {
+    const session = this.getSession(sessionId);
+    if (this.workspaceRecoveryBlocked(session.workspaceId) || this.isQuarantined(session.workspaceId) || this.db.prepare("SELECT id FROM runs WHERE workspace_id=? AND status IN ('queued','running','cancelling') LIMIT 1").get(session.workspaceId))
+      throw new ApiError(409, "memory_recovery_busy", "Workspace has an active or unresolved recovery owner");
+    const reservation = Object.freeze({id:randomUUID(),sessionId,checkpointId,workspaceId:session.workspaceId});
+    this.db.prepare("INSERT INTO h041_workspace_recovery_reservations VALUES(?,?,?,?, 'held',?)").run(reservation.id,sessionId,checkpointId,session.workspaceId,now());
+    this.recoveryReservations.add(reservation); return reservation;
+  }
+  assertWorkspaceRecovery(reservation: WorkspaceRecoveryReservation, sessionId: string, checkpointId: string) {
+    if (!this.recoveryReservations.has(reservation) || reservation.sessionId!==sessionId || reservation.checkpointId!==checkpointId || !this.db.prepare("SELECT id FROM h041_workspace_recovery_reservations WHERE id=? AND session_id=? AND checkpoint_id=? AND workspace_id=? AND state='held'").get(reservation.id,sessionId,checkpointId,this.getSession(sessionId).workspaceId))
+      throw new ApiError(409,"memory_recovery_busy","Exact owned recovery reservation required");
+  }
+  finishWorkspaceRecovery(reservation: WorkspaceRecoveryReservation, verified: boolean) {
+    this.assertWorkspaceRecovery(reservation,reservation.sessionId,reservation.checkpointId);
+    const session=this.getSession(reservation.sessionId), safe=session.nativeState.ownership==='idle' && session.nativeState.activeTurnId===null && !this.isQuarantined(session.workspaceId);
+    this.db.prepare("UPDATE h041_workspace_recovery_reservations SET state=? WHERE id=? AND state='held'").run(safe?(verified?'verified':'failed_safe'):'uncertain',reservation.id);
+    this.recoveryReservations.delete(reservation);
+  }
   constructor(
-    databasePath: string,
+    readonly databasePath: string,
     private readonly workspaceRoot?: string,
     private readonly options?: { mode: "offline-recovery" },
   ) {
@@ -102,6 +129,8 @@ export class Store {
    CREATE INDEX IF NOT EXISTS events_session ON events(session_id,id);`);
     // Companion tables preserve old release positional INSERT compatibility on rollback.
     this.db.exec(`
+      CREATE TABLE IF NOT EXISTS h041_workspace_recovery_reservations(id TEXT PRIMARY KEY,session_id TEXT NOT NULL,checkpoint_id TEXT NOT NULL,workspace_id TEXT NOT NULL,state TEXT NOT NULL,created_at TEXT NOT NULL);
+      CREATE UNIQUE INDEX IF NOT EXISTS h041_workspace_recovery_held ON h041_workspace_recovery_reservations(workspace_id) WHERE state IN ('held','uncertain');
       CREATE TABLE IF NOT EXISTS h004_file_sources(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,source_path TEXT NOT NULL);
       CREATE TABLE IF NOT EXISTS h003_image_outputs(workspace_id TEXT NOT NULL,path TEXT NOT NULL,job_id TEXT NOT NULL,PRIMARY KEY(workspace_id,path));
       CREATE TABLE IF NOT EXISTS h003_image_file_meta(file_id TEXT PRIMARY KEY REFERENCES files(id) ON DELETE CASCADE,data TEXT NOT NULL);
@@ -135,6 +164,9 @@ export class Store {
     }
     this.recoverLegacyFiles();
     this.recoverLegacyActivities();
+    this.memory = new SessionMemory(this);
+    this.checkpoints = new SessionCheckpoint(this);
+    this.checkpoints.recoverInterrupted();
     // A process restart never replays a queued prompt or a tool effect.
     this.db.exec("BEGIN IMMEDIATE");
     try {

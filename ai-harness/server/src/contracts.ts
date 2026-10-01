@@ -146,6 +146,7 @@ export interface Environment {
   now: string;
 }
 export type EngineUpdate =
+  | { type: "tool_original"; nativeThreadId: string; nativeTurnId: string; nativeItemId: string; toolType: string; rawUtf8: string; outputUtf8?: string; nativeTruncated?: boolean }
   | ({ type: "image_status_result" } & import("./image-status-consumption.js").ImageStatusConsumption)
   | {
       type: "text";
@@ -194,6 +195,9 @@ export type EngineUpdate =
   | { type: "context"; used: number | null; estimated: boolean; source: string }
   | { type: "artifact"; path: string; name?: string; mimeType?: string };
 export interface EngineOptions {
+  onNativeLifecycle?: (e:import("./codex-observation.js").CodexNativeObservation) => void;
+  /** Host-owned ordinary memory. Distinct from finite private acceptance policy. */
+  sessionMemory?: import("./session-memory.js").SessionMemoryBridge;
   sessionId: string;
   engineKind?: EngineKind;
   engineVersion?: string;

@@ -186,7 +186,7 @@ class Attempts(unittest.TestCase):
                 ('check_ports', 'backend_preflight', 'native_port_already_owned'),
                 ('require_ada_idle', 'backend_preflight', 'ada_compute_process_already_present')):
             runtime = object.__new__(service.Runtime)
-            runtime.config = {}
+            runtime.config = {'gpu_uuid': service.H032_GPU_UUID}
             for method in ('guards', 'require_hardware', 'check_network', 'check_ports',
                            'require_ada_idle', 'host_headroom', 'make_work', 'save'):
                 setattr(runtime, method, Mock())

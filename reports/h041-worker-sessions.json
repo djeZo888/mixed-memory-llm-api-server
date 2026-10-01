@@ -1,0 +1,1363 @@
+{
+  "task": "H041-20261001",
+  "authority": "User explicitly requested finishing further Codex implementation focused on context compaction using worker1 and worker2; root orchestrates",
+  "startedUtc": "2026-10-01T08:05:07Z",
+  "initialSegmentCapUtc": "2026-10-01T10:05:07Z",
+  "sourceBaseCommit": "213634e39955929674d21dbe04d192cf1a3b2e9c",
+  "model": "gpt-6.1-sol",
+  "reasoningEffort": "ultra",
+  "settlementReserveMs": 120000,
+  "sessions": [
+    {
+      "task": "A-runtime-integration",
+      "host": "mac-worker1",
+      "actualSessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "status": "CLOSED_PARTIAL_DEADLINE",
+      "sourceCandidate": "91d3adf1729aeb87eccbb47317339a5c350d7989",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-runtime-integration",
+      "outerPid": 27348,
+      "startedUtc": "2026-10-01T08:09:24.841053+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "6addaebbde6c73eb28f4cf60a1d4f9cb0027de4f",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-runtime-integration",
+      "hardDeadlineUtc": "2026-10-01T08:55:00+00:00",
+      "nativePid": 27350,
+      "wrapperPid": 27349,
+      "cliVersion": "codex-cli 0.159.2",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T08:09:27.256Z",
+      "earlyInterfaceCommit": "91d3adf1729aeb87eccbb47317339a5c350d7989",
+      "earlyInterfaceStatus": "source-only exported to E; finalreview/closure pending",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T08:54:45.108653+00:00",
+      "sourceCases": 195
+    },
+    {
+      "task": "E-compaction-integration",
+      "host": "mac-worker2",
+      "actualSessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "status": "CLOSED_PARTIAL_DEADLINE_WIP_PRESERVED",
+      "sourceCandidate": "e46a7e4fb50efdd762b750fa64376f83003451ed",
+      "remotePhasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration",
+      "outerPid": 30483,
+      "startedUtc": "2026-10-01T08:09:25.252311+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "6addaebbde6c73eb28f4cf60a1d4f9cb0027de4f",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-integration",
+      "hardDeadlineUtc": "2026-10-01T09:10:00+00:00",
+      "nativePid": 30485,
+      "wrapperPid": 30484,
+      "cliVersion": "codex-cli 0.159.2",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted same-session turn_context 2026-10-01T08:09:31.564Z",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T09:09:45.039571+00:00",
+      "focusedCases": 105,
+      "affectedRegression": {
+        "total": 123,
+        "pass": 110,
+        "fail": 12,
+        "cancelled": 1
+      },
+      "nativeAcceptance": "NOT_TESTED"
+    }
+  ],
+  "adoptedH040SourceCases": 281,
+  "priorPublishedCi": "all8PASS at213634e; historical until newpush",
+  "artifact": "VERIFIED36files/fiveweights; no newdownload",
+  "nativeAcceptance": "NOT_TESTED",
+  "sharedLiveOwner": "worker1 after root concreteGO",
+  "slotMapping": "stillunknown; no newGPUstart",
+  "bPartial": "preserved native-15/outer143; closedBsourceownership transferred toE foracceptance integration",
+  "subsequentPhases": [
+    {
+      "task": "A-current-preflight",
+      "host": "mac-worker1",
+      "outerPid": 29329,
+      "startedUtc": "2026-10-01T08:57:37.019937+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "91d3adf1729aeb87eccbb47317339a5c350d7989",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-current-preflight",
+      "hardDeadlineUtc": "2026-10-01T09:10:00+00:00",
+      "authority": "READ_ONLY_CURRENT_PREFLIGHT_NO_LIVE_GO",
+      "status": "CLOSED_PARTIAL_DEADLINE",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T09:09:45.152332+00:00",
+      "verifiedModel": "gpt-6.1-sol",
+      "verifiedReasoningEffort": "ultra",
+      "settingsEvidence": "persisted turn_context 2026-10-01T08:57:38.967Z",
+      "packetSyntheticCases": 20,
+      "packetSourceReviewed": true,
+      "operationalGo": false
+    }
+  ],
+  "continuation02Authority": {
+    "id": "H041-COMPACTION-CONTINUATION-02",
+    "issuedUtc": "2026-10-01T09:11:06.096969+00:00",
+    "expiresUtc": "2026-10-01T11:11:06.096969+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T10:30:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "production compaction durability and acceptance integration; current source-only phases; later concrete reviewed Linux GO required"
+  },
+  "closedPhases0910": [
+    {
+      "task": "A-current-preflight",
+      "host": "mac-worker1",
+      "terminal": {
+        "WRAPPER-TERMINAL.json": {
+          "nativePid": 29331,
+          "actualExitCode": -15,
+          "finishedUtc": "2026-10-01T09:09:45.145824+00:00",
+          "deadlineTermination": true
+        },
+        "OUTER-TERMINAL.json": {
+          "wrapperPid": 29330,
+          "actualExitCode": 143,
+          "finishedUtc": "2026-10-01T09:09:45.152332+00:00"
+        }
+      },
+      "activeSameSession": false,
+      "head": "91d3adf1729aeb87eccbb47317339a5c350d7989",
+      "status": "?? ai-harness/server/node_modules\n",
+      "outputs": [
+        "prior-closure.json",
+        "harness-controls.log",
+        "vm-slot.receipt.json",
+        "harness-normal.log",
+        "adopted-harness-readback.receipt.json",
+        "adopted-linux-transport-qualification.mjs",
+        "harness-data.py",
+        "adopted-vm-readback-initial.receipt.json",
+        "linux-transport-qualification.mjs",
+        "run-check.py",
+        "packet-cleanup.test.mjs",
+        "adopted-LINUX-QUALIFICATION.md",
+        "harness-owner.log",
+        "adopted-harness-readback-initial.receipt.json",
+        "adopted-vm-readback.log",
+        "adopted-INTERFACE.md",
+        "harness-normal.receipt.json",
+        "LINUX-QUALIFICATION.md",
+        "packet-syntax.log",
+        "harness-controls.py",
+        "packet-cleanup.log",
+        "harness-controls.receipt.json",
+        "packet-syntax.receipt.json",
+        "prior-packet-cleanup-fixtures.log",
+        "packet-cleanup.receipt.json",
+        "prior-RESULTS.json",
+        "adopted-vm-readback-initial.log",
+        "run-remote.py",
+        "harness-data.receipt.json",
+        "adopted-harness-readback.log",
+        "harness-data.log",
+        "harness-owner.py",
+        "adopted-harness-readback-second.log",
+        "adopted-harness-readback-second.receipt.json",
+        "prior-INTERFACE-COMMIT.json",
+        "adopted-vm-readback.receipt.json",
+        "vm-slot.log",
+        "prior-packet-cleanup-fixtures.receipt.json",
+        "adopted-harness-readback-initial.log",
+        "harness-normal.py",
+        "vm-slot.py",
+        "harness-owner.receipt.json"
+      ]
+    },
+    {
+      "task": "E-compaction-integration",
+      "host": "mac-worker2",
+      "terminal": {
+        "WRAPPER-TERMINAL.json": {
+          "nativePid": 30485,
+          "actualExitCode": -15,
+          "finishedUtc": "2026-10-01T09:09:45.036472+00:00",
+          "deadlineTermination": true
+        },
+        "OUTER-TERMINAL.json": {
+          "wrapperPid": 30484,
+          "actualExitCode": 143,
+          "finishedUtc": "2026-10-01T09:09:45.039571+00:00"
+        }
+      },
+      "activeSameSession": false,
+      "head": "e46a7e4fb50efdd762b750fa64376f83003451ed",
+      "status": " M ai-harness/acceptance/compaction/controller.mjs\n M ai-harness/acceptance/compaction/native-adapter/README.md\n M ai-harness/acceptance/compaction/native-adapter/adapter.ts\n M ai-harness/acceptance/compaction/native-adapter/artifacts.ts\n M ai-harness/acceptance/compaction/native-adapter/bootstrap.ts\n M ai-harness/acceptance/compaction/native-adapter/dispatch-guard.ts\n M ai-harness/acceptance/compaction/native-adapter/native-observer.ts\n M ai-harness/acceptance/compaction/native-adapter/probe.ts\n M ai-harness/acceptance/compaction/native-adapter/source-closure.ts\n M ai-harness/acceptance/compaction/scorer.mjs\n M ai-harness/server/test/h040-native-adapter-contract.test.ts\n?? ai-harness/acceptance/compaction/authorization.d.mts\n?? ai-harness/acceptance/compaction/authorization.mjs\n?? ai-harness/acceptance/compaction/h041-full-retention.config.json\n?? ai-harness/acceptance/compaction/h041-summary-stage.config.json\n?? ai-harness/acceptance/compaction/model-scope.d.mts\n?? ai-harness/acceptance/compaction/model-scope.mjs\n?? ai-harness/acceptance/compaction/native-adapter/artifact-sink.ts\n?? ai-harness/acceptance/compaction/native-adapter/build.mjs\n?? ai-harness/acceptance/compaction/native-adapter/build.tsconfig.json\n?? ai-harness/acceptance/compaction/native-adapter/entry.ts\n?? ai-harness/acceptance/compaction/native-adapter/native-evidence.ts\n?? ai-harness/acceptance/compaction/native-adapter/parent-projection.ts\n?? ai-harness/acceptance/compaction/native-adapter/process-runner.ts\n?? ai-harness/acceptance/compaction/native-adapter/projection-receipt.ts\n?? ai-harness/acceptance/compaction/native-adapter/qualification.ts\n?? ai-harness/acceptance/compaction/native-adapter/retrieval.ts\n?? ai-harness/acceptance/compaction/owned-close-verifier.mjs\n?? ai-harness/server/node_modules\n?? ai-harness/server/test/h041-native-adapter-integration.test.ts\n",
+      "outputs": [
+        "changed-h040-h041.log",
+        "emitted-build.log",
+        "seal-2.log",
+        "seal-0.log",
+        "seal-1.log",
+        "strict-final.log",
+        "commands.jsonl",
+        "qualification-config.template.json",
+        "affected-compaction-corrected.log",
+        "affected-compaction.log",
+        "strict-adapter.log",
+        "build",
+        "private-entry.template.mjs",
+        "INTERFACE.md",
+        "run-command.mjs"
+      ]
+    }
+  ],
+  "updatedUtc": "2026-10-01T16:49:38.416645+00:00",
+  "activePhases": [
+    {
+      "task": "A-compaction-completion-10",
+      "host": "mac-worker1",
+      "outerPid": 52944,
+      "startedUtc": "2026-10-01T16:35:56.547706+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "bf7e79e87ff4984d5394921559afdb6f5a560ccb",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-10",
+      "hardDeadlineUtc": "2026-10-01T17:45:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-compaction-completion-10b",
+      "host": "mac-worker2",
+      "outerPid": 52726,
+      "startedUtc": "2026-10-01T16:38:11.152213+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "5d836b7e31ba10fc64268ad414dc8a5d9fd60cb2",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-10b",
+      "hardDeadlineUtc": "2026-10-01T17:45:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "delivery03Authority": {
+    "id": "H041-COMPACTION-DELIVERY-03",
+    "issuedUtc": "2026-10-01T10:07:11.972488+00:00",
+    "expiresUtc": "2026-10-01T13:07:11.972488+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "finish source/integration and prepare finite reviewed Linux/native compaction delivery; actual phase-specific source/config/actor GO still required",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge"
+  },
+  "delivery03SourcePhases": [
+    {
+      "task": "A-production-entry-03",
+      "host": "mac-worker1",
+      "outerPid": 32130,
+      "startedUtc": "2026-10-01T10:30:20.083940+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "5c6dd26edff337dfd43173adc2cd30b5eedc2159",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-production-entry-03",
+      "hardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-full-retention-03",
+      "host": "mac-worker2",
+      "outerPid": 34288,
+      "startedUtc": "2026-10-01T10:30:20.567746+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "3e04f536b0d7bcde1a6657e974254213ecd72b29",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-full-retention-03",
+      "hardDeadlineUtc": "2026-10-01T10:50:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "delivery03SourceSettings": [
+    {
+      "task": "A-production-entry-03",
+      "contexts": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-production-entry-03/repo",
+          "timestamp": "2026-10-01T10:30:22.612Z"
+        }
+      ],
+      "native-pid": 32132,
+      "wrapper-pid": 32131,
+      "outer-pid": 32130
+    },
+    {
+      "task": "E-full-retention-03",
+      "contexts": [
+        {
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-full-retention-03/repo",
+          "timestamp": "2026-10-01T10:30:22.956Z"
+        }
+      ],
+      "native-pid": 34290,
+      "wrapper-pid": 34289,
+      "outer-pid": 34288
+    }
+  ],
+  "continuation02ActualClosures": [
+    {
+      "task": "A-production-compaction",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T10:29:45.057331+00:00",
+      "sourceCommit": "578b429ec36bcbcc269c8a7f201263ad6d0fbcd9",
+      "reportCommit": "5c6dd26edff337dfd43173adc2cd30b5eedc2159",
+      "status": "PARTIAL_SOURCE_DEADLINE",
+      "sourceCases": 322,
+      "buildStrictExit": 0,
+      "nativeAcceptance": "NOT_TESTED"
+    },
+    {
+      "task": "E-compaction-completion",
+      "nativeExit": 0,
+      "outerExit": 0,
+      "finishedUtc": "2026-10-01T10:21:52.162444+00:00",
+      "sourceCommit": "2d4a36b434f21c4e704f24cf79a07b5f2cda1840",
+      "reportCommit": "3e04f536b0d7bcde1a6657e974254213ecd72b29",
+      "status": "PARTIAL_SOURCE_INTEGRATION",
+      "affectedCases": 130,
+      "ordinarySourceCases": 3,
+      "buildStrictExit": 0,
+      "nativeAcceptance": "NOT_TESTED"
+    }
+  ],
+  "liveGo": false,
+  "remainingCurrent": [
+    "E concrete normal-session qualification producer/runner and browser/restart/recovery proof binding",
+    "AUTO complete canonical metadata and actual native usage/effective400000 threshold plus ordinary count bridge",
+    "final exact combined worker checks and Linux build/complete closure",
+    "current Linux owner/preservation/stop-restore/fixed8081 plan and actual zero-generation qualification",
+    "9-action stage then39-action full retention then ordinary and one genuine400000 AUTO qualification",
+    "new-head draftPR CI; no merge"
+  ],
+  "delivery04Authority": {
+    "id": "H041-COMPACTION-DELIVERY-04",
+    "issuedUtc": "2026-10-01T11:26:45.729698+00:00",
+    "expiresUtc": "2026-10-01T15:26:45.729698+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "finish reviewed source and combined checks; prepare exact preserved-state Linux zero-generation packet; subsequent concrete actor/source/config GO required for native execution",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-DELIVERY-03",
+    "priorCapsUnchanged": true
+  },
+  "closedSource04": [
+    {
+      "host": "mac-worker1",
+      "task": "A-production-linux-preflight-04",
+      "sourceCommit": "3130aa6e6afb7bc660d3c14ea9a9fe1995555027",
+      "reportCommit": "02250df10a5cbb4499e3b20a15407158db083831",
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T11:24:45.186704+00:00",
+      "sameSessionNativeProcessPresent": false,
+      "status": "CLOSED_PARTIAL_DEADLINE_SOURCE_SEALED",
+      "nativeAcceptance": "NOT_TESTED",
+      "sourceRuntimeCases": 342,
+      "sourceWebCases": 8
+    },
+    {
+      "host": "mac-worker2",
+      "task": "E-full-producer-04",
+      "sourceCommit": "78ccaa95581ca8751c4549788972c59c73bf5f5e",
+      "reportCommit": "9266b438af3de752f5db8ef0fb3b7b4fe28f3b82",
+      "nativeExit": 0,
+      "outerExit": 0,
+      "finishedUtc": "2026-10-01T11:24:19.150608+00:00",
+      "sameSessionNativeProcessPresent": false,
+      "status": "CLOSED_CLEAN_SOURCE_ONLY",
+      "nativeAcceptance": "NOT_TESTED",
+      "affectedSourceCases": 153
+    }
+  ],
+  "preparedSource05": {
+    "status": "CLOSED_SOURCE_ONLY",
+    "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "liveGo": false
+  },
+  "source05Launched": [
+    {
+      "task": "A-delivery-preparation-05",
+      "host": "mac-worker1",
+      "outerPid": 34790,
+      "startedUtc": "2026-10-01T11:30:03.778474+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "02250df10a5cbb4499e3b20a15407158db083831",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-delivery-preparation-05",
+      "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-delivery-combined-05",
+      "host": "mac-worker2",
+      "outerPid": 36801,
+      "startedUtc": "2026-10-01T11:30:04.125755+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "9266b438af3de752f5db8ef0fb3b7b4fe28f3b82",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05",
+      "hardDeadlineUtc": "2026-10-01T12:15:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source05ActualSettings": [
+    {
+      "task": "A-delivery-preparation-05",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T11:30:06.459Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-delivery-preparation-05/repo"
+        }
+      ],
+      "native-pid": 34792,
+      "wrapper-pid": 34791,
+      "outer-pid": 34790
+    },
+    {
+      "task": "E-delivery-combined-05",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T11:30:06.615Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-delivery-combined-05/repo"
+        }
+      ],
+      "native-pid": 36803,
+      "wrapper-pid": 36802,
+      "outer-pid": 36801
+    }
+  ],
+  "source05ReviewedIntegrated": {
+    "interfaceActualCommit": "d5eda2b25cbef6e965e2e26c117dc03a54c00747",
+    "interfaceRootCommit": "aa7995d78617cbe43ced6e3610161c65fb7b6a7a",
+    "runtimeActualCommit": "86bebb212ce1a5f6d0a9e74c9d5a638413182ac5",
+    "runtimeRootCommit": "cd4f5f51da56eb2cfec80cea51c4a29bb04346ff",
+    "decision": "SAFE_DISABLED_SOURCE_INTEGRATION",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "readbackSource05": {
+    "modelFilesMatched": 71,
+    "weightsMatched": 66,
+    "localContentSha256": "aed9192933cbf04db119b8442e78ef0aead5244d9377331426f1e6d8d8c88312",
+    "hubRevision": null,
+    "tokenizerRevision": null,
+    "nativeAcceptance": "NOT_TESTED",
+    "historicalNativeUncertain": 2,
+    "gatewayAcceptedUnresolved": 1,
+    "productionLifecycle": "NOT_RUN"
+  },
+  "closedSource05": [
+    {
+      "host": "mac-worker1",
+      "phase": "A-delivery-preparation-05",
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 34792,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:14:26.081000+00:00",
+        "deadlineTermination": false
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 34791,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:14:26.089511+00:00"
+      },
+      "sameSessionProcessAbsent": true,
+      "head": "419444227ef1db6b3f21d4db5ad4ad9ba6846f69"
+    },
+    {
+      "host": "mac-worker2",
+      "phase": "E-delivery-combined-05",
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 36803,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:13:17.954442+00:00",
+        "deadlineTermination": false
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 36802,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T12:13:17.971073+00:00"
+      },
+      "sameSessionProcessAbsent": true,
+      "head": "d46bab70b725c8ec06b7e68aa6a5a5e6bed2960d"
+    }
+  ],
+  "source05StopFix": {
+    "actualCommit": "537012c86551eaed26678e42c15ee561427b6ea8",
+    "integratedCommit": "d1b0eec872b3fe6ecb7703f1ebb80083b35a86c6",
+    "exactFilesMatched": 3,
+    "sourceCases": 36,
+    "sourceExit": 0,
+    "strictExit": 0,
+    "sourceLogSha256": "af635e2e1a7bdffec6893ffc2060a38ea3702c768faa6ce01e0e3aaef07d6297",
+    "reviewMdSha256": "f33184370f8a9b9c6519d9fe1db5139fd341fede4373d3c386c8b313a25f03db",
+    "reviewJsonSha256": "7d624bca166e3d8b6595f72b967ca9d80fecfb351f2a196871075812e666c738",
+    "decision": "SAFE_DISABLED_SOURCE_INTEGRATION",
+    "lateIndependentFailureStopEdge": "NEEDS_NEGATIVE_CHECK",
+    "nativeAcceptance": "NOT_TESTED",
+    "EReceivedFullBundle": true
+  },
+  "preparedSource06": {
+    "status": "RUNNING_SOURCE_ONLY",
+    "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "liveGo": false
+  },
+  "source06Launched": [
+    {
+      "task": "A-ordinary-qualified-source-06",
+      "host": "mac-worker1",
+      "outerPid": 36845,
+      "startedUtc": "2026-10-01T12:23:06.276890+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "419444227ef1db6b3f21d4db5ad4ad9ba6846f69",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-ordinary-qualified-source-06",
+      "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-ordinary-qualified-consumer-06",
+      "host": "mac-worker2",
+      "outerPid": 39614,
+      "startedUtc": "2026-10-01T12:23:06.509151+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "d46bab70b725c8ec06b7e68aa6a5a5e6bed2960d",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-ordinary-qualified-consumer-06",
+      "hardDeadlineUtc": "2026-10-01T13:10:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source06ActualSettings": [
+    {
+      "task": "A-ordinary-qualified-source-06",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T12:23:08.408Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-ordinary-qualified-source-06/repo"
+        }
+      ],
+      "native-pid": 36847,
+      "wrapper-pid": 36846,
+      "outer-pid": 36845,
+      "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
+    },
+    {
+      "task": "E-ordinary-qualified-consumer-06",
+      "contexts": [
+        {
+          "timestamp": "2026-10-01T12:23:09.439Z",
+          "model": "gpt-6.1-sol",
+          "effort": "ultra",
+          "cwd": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-ordinary-qualified-consumer-06/repo"
+        }
+      ],
+      "native-pid": 39619,
+      "wrapper-pid": 39618,
+      "outer-pid": 39614,
+      "currentHead": "114beeb1caccd343d6d54865f1feef19fba193fb"
+    }
+  ],
+  "currentRootReviewedHead": "aeb3fcdc010226811c246f92d2f86f1e99d0ffef",
+  "sourceCombinedChecks": "PARTIAL historical05; source06 exact combined rerun pending",
+  "liveAcceptance": "NOT_TESTED",
+  "closedSource06": {
+    "A-ordinary-qualified-source-06": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 36847,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T13:09:44.921326+00:00",
+        "deadlineTermination": true
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 36846,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T13:09:44.927023+00:00"
+      },
+      "activeSameSessionPids": [],
+      "head": "cfa58e8b067fa6f723d0d651dada78dacef307da"
+    },
+    "E-ordinary-qualified-consumer-06": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 39619,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T13:09:04.088406+00:00",
+        "deadlineTermination": false
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 39618,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T13:09:04.105400+00:00"
+      },
+      "activeSameSessionPids": [],
+      "head": "42c603b9683e666ed5aa8a83aed5405031d57b71"
+    }
+  },
+  "source06Integrated": {
+    "A": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "E": "93ead1ab6b7efd50c1e83610ecce9f4420549ce8",
+    "root": "67ec0419152f145dcc55219f2ff0025230003686",
+    "disabled": true,
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source07Authority": {
+    "id": "H041-COMPACTION-COMPLETION-07",
+    "issuedUtc": "2026-10-01T13:12:07.088123+00:00",
+    "expiresUtc": "2026-10-01T15:26:45.729698+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T14:15:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "A exact guarded no-turn transport and manual qualification carrier; E complete actual ordinary recovery browser SSE and AUTO consumers; root explicit scoped GO required before any native/Linux lifecycle/inference",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-SOURCE-ORDINARY-QUALIFICATION-06",
+    "priorCapsUnchanged": true,
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "privateLinuxStagingOwner": "worker1",
+    "prepared": true,
+    "launched": true,
+    "reviewedCombinedHead": "67ec0419152f145dcc55219f2ff0025230003686",
+    "combinedBundleSha256": "7faf4e7b2d01ea49f907c5e319355848a39debda2a4dc325ba41227a58555b38",
+    "actualLaunchesFile": "SOURCE-07-LAUNCHES.json",
+    "sourceExportTargetUtc": "2026-10-01T14:10:00+00:00"
+  },
+  "source07Launched": true,
+  "scopedNoTurnGo07": {
+    "status": "WITHDRAWN_BEFORE_FURTHER_DISPATCH",
+    "issuedUtc": "2026-10-01T13:27:30.126250+00:00",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "c46e0116b1b34944c8fccfb07330019f1cf55d7ab5aaa1a8a1da1d4ebce80cec",
+    "approvalSHA256": "d08d15d31d8ee890cb94ddd34243ed0da4f339e4fa45905d1852ed340ccccccb",
+    "actualResult": "FAIL_PRE_NATIVE_DEPENDENCY_HARDLINK_CLOSURE",
+    "actualCommandStartUtc": "2026-10-01T13:28:55.588783+00:00",
+    "actualCommandEndUtc": "2026-10-01T13:28:56.732299+00:00",
+    "actualCommandExit": 1,
+    "noNativeLaunched": true,
+    "noAckOrNativeReceipts": true,
+    "generationGo": false,
+    "lifecycleGo": false,
+    "withdrawnUtc": "2026-10-01T13:30:40.668262+00:00",
+    "successor": "task-private identical dependencycopy and narrow primarynotification handling reviewedbefore any new GO"
+  },
+  "source07EManualEarly": {
+    "sourceCommit": "87445e6816142d7dd3ca4a990c197c1a4aaa5bcd",
+    "integratedCommit": "242edba9766d0e0b3b6d3460e36ba97047e7b252",
+    "sourceCases": 47,
+    "sourceStrict": "PASS",
+    "nativeAcceptance": "NOT_TESTED",
+    "remainingGate": "fresh same-route owner/manifest/native-NULL/74 file STAT correlation to retained71+3 content proof"
+  },
+  "source07ANoTurnSuccessor": {
+    "status": "PREPARED_UNDER_REVIEW_NO_GO",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "bf0d54fe53009a2301a06e6b427716a16d6eaa34222aa8f511e8ea9d48ac9019",
+    "copiedDependencies": 4036,
+    "originalUnchanged": true,
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source07ARecoveryEarly": {
+    "sourceCommit": "75645df0ea95a7b1028cf97ea54c2813848036ad",
+    "sourceCases": 19,
+    "review": "RUNNING",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source07ActualClosures": [
+    {
+      "host": "mac-worker1",
+      "task": "A-compaction-completion-07",
+      "wrapper": {
+        "nativePid": 39744,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T14:14:44.915431+00:00",
+        "deadlineTermination": true
+      },
+      "outer": {
+        "wrapperPid": 39743,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T14:14:44.922039+00:00"
+      }
+    },
+    {
+      "host": "mac-worker2",
+      "task": "E-compaction-completion-07",
+      "wrapper": {
+        "nativePid": 41840,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T14:11:03.891403+00:00",
+        "deadlineTermination": false
+      },
+      "outer": {
+        "wrapperPid": 41839,
+        "actualExitCode": 0,
+        "finishedUtc": "2026-10-01T14:11:03.907833+00:00"
+      }
+    }
+  ],
+  "source07Closed": true,
+  "source07FinalSource": {
+    "A": "868800efa7d459499b050321d187054f29664eee",
+    "E": "04cd5b4c13e9b8f31fa91c215958791390e40e38",
+    "nativeAcceptance": "NOT_TESTED",
+    "sourcePartial": true
+  },
+  "source07DistinctTransport07d": {
+    "status": "EXECUTED_ONCE_FAIL_BEFORE_ACK",
+    "issuedUtc": "2026-10-01T14:04:36.982716+00:00",
+    "dispatchBeforeUtc": "2026-10-01T14:12:00+00:00",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "ff5ff269ed98e0ac48af9b5eb3df3731aaa87f3aed910d3ecef732646e3f89c8",
+    "scriptSHA256": "0dc940d2a70b85985be0f83113591b2eb7e0b8b65d89e5055c6c33f3b90a2b80",
+    "signedMacCaptureAgeMs": -27.283935546875,
+    "producerLocalCaptureAgeMs": 66.445068359375,
+    "readbackElapsedMonotonicMs": 1221.4177080000002,
+    "nativeAcceptance": "NOT_TESTED",
+    "generationGo": false,
+    "lifecycleGo": false,
+    "scope": "initialize/initialized/ephemeral readOnly thread/start/owned close only, normal unit and all original data unchanged",
+    "priorFailed07Preserved": true,
+    "inputReuse": "Exact07c packet/roots still fresh and never launched; old approval/key not installed",
+    "actualStartedUtc": "2026-10-01T14:07:49.281600+00:00",
+    "actualFinishedUtc": "2026-10-01T14:07:50.552069+00:00",
+    "actualExit": 1,
+    "initializeAck": false,
+    "threadAck": false,
+    "rawProtocolBytes": 0,
+    "originalOOBReceiptsAbsent": true,
+    "qualifiedCleanup": false,
+    "legacyWholeBaselineEqual": true,
+    "ownedReadbackUtc": "2026-10-01T14:10:09.588224+00:00",
+    "ownedContainersFound": 0,
+    "profileMembersFound": 0,
+    "workspaceMembersFound": 0,
+    "readbackIsNativeSettlement": false,
+    "blindRetryAllowed": false
+  },
+  "source08Authority": {
+    "id": "H041-COMPACTION-COMPLETION-08",
+    "issuedUtc": "2026-10-01T14:26:57.602860+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+    "sourceExportTargetUtc": "2026-10-01T15:20:00+00:00",
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "reviewedCombinedHead": "92dec23409cf760238729520bad11631a3545f12",
+    "combinedBundleSha256": "29dc57c6292d249b83bda1f1f2c9097658ac610fe828ee1822e68fd642ff8b63",
+    "liveGo": false
+  },
+  "source08Launched": [
+    {
+      "task": "A-compaction-completion-08",
+      "host": "mac-worker1",
+      "outerPid": 42261,
+      "startedUtc": "2026-10-01T14:26:59.851434+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "4baa8b5b40fd615b54639fae9667980e8df2f768",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-compaction-completion-08",
+      "host": "mac-worker2",
+      "outerPid": 44347,
+      "startedUtc": "2026-10-01T14:27:00.361852+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "e6b82d52e1187a46bc40a4c1345ab76a38d4af6d",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-08",
+      "hardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "delivery05Authority": {
+    "id": "H041-COMPACTION-DELIVERY-05",
+    "issuedUtc": "2026-10-01T14:30:02.674394+00:00",
+    "expiresUtc": "2026-10-01T18:30:02.674394+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T15:25:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "distinct finite compaction completion successor after reviewed source08; unused original stage/full/ordinary budgets carry forward, no repeated qualified actions or blind retry; concrete root exact GO required before native/lifecycle/generation/production",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-DELIVERY-04",
+    "priorCapsUnchanged": true,
+    "prepared": true,
+    "issuedBy": "root within explicit ongoing human compaction completion request",
+    "budgetAccounting": "No generation or manual/AUTO compaction has run; all original budgets remain unused. Earlier failed no-turn attempts remain distinct preserved attempts. No additional generation budget created."
+  },
+  "source07FinalReviewed": {
+    "aSource": "868800efa7d459499b050321d187054f29664eee",
+    "aIntegrated": "69a537149c648ec41511d7332330e7177a07a0d2",
+    "eSources": [
+      "3c28dcbe1b29a88d3dfafe1f839c86e91c7e794b",
+      "04cd5b4c13e9b8f31fa91c215958791390e40e38"
+    ],
+    "eIntegrated": [
+      "c6258a5",
+      "145d907"
+    ],
+    "activation": "disabled",
+    "nativeAcceptance": "NOT_TESTED",
+    "remainingBeforeLive": [
+      "runtime cancellation regression",
+      "current manifest protection and finite stat freshness",
+      "concrete carrier task-only admission guardian",
+      "native TRACE producer and original consumer/causal/config binding"
+    ]
+  },
+  "source08ActualSettings": [
+    {
+      "host": "mac-worker1",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "nativePid": 42263,
+      "wrapperPid": 42262,
+      "turnContextUtc": "2026-10-01T14:27:02.178Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    },
+    {
+      "host": "mac-worker2",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "nativePid": 44349,
+      "wrapperPid": 44348,
+      "turnContextUtc": "2026-10-01T14:27:02.328Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    }
+  ],
+  "source08ATraceEarly": {
+    "source": "37865992bf259f4bf2ea7d720387348151b38e73",
+    "integrated": "d32199a977e19053a13a3a92f8eee554169182d3",
+    "activation": "default disabled",
+    "sourceChecks": "50 TS +8 trace capture +12 supervisor +1 initialization barrier; build/shell0",
+    "nativeAvailability": "NOT_TESTED",
+    "beforeTraceUse": [
+      "trace failure must preserve independent factual settlement",
+      "actual normal trustedObservers fixed-mode/callback bridge"
+    ],
+    "updatedHelperSources": 8
+  },
+  "source08EBindingsEarly": {
+    "source": "4d15e3f9ad45f2c578c7f284aeb008c579e7c6c6",
+    "integrated": "6f34dd48e7372270756e1f2bb3839b02f9833783",
+    "activation": "disabled",
+    "sourceChecks": "five source cases/strict0",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source08NoTurn08b": {
+    "status": "BLOCKED_UNEXECUTED_NO_APPROVAL",
+    "callerSha256": "7f94a64ebbebb41112be5ff16e3966fa4e2b5b1fddda50b6e4eb82517f9b61af",
+    "inputSha256": "574c6720166561a38788e7ef63984250bf546701176a439e959e69f62adc0d48",
+    "packetSha256": "558a6615395732d8bfff99ea8071da3a2beb25c315ed38eb63d456d9a9a5f580",
+    "blocker": "protectedAncestry called on regular source file after app imports; requires directory/file preflight before imports",
+    "reusableGraph": "4497 exact source/dependency paths,600 protected ancestors,5 distinct0700 roots; all355 retained IDs/records and83 owners match"
+  },
+  "source08CurrentSourceChecks": {
+    "eCurrentPredecessorFull": {
+      "total": 1386,
+      "pass": 1382,
+      "fail": 0,
+      "skip": 4
+    },
+    "installedBrowserBuiltExit": 0,
+    "scope": "source-only current predecessor, final coherent graph check pending"
+  },
+  "source08ModelStat": {
+    "producerSha256": "f023975a6041ab9ad2713356e78e78ecc9c7b875bbea276b38f469ccf6a00ebf",
+    "outputSha256": "d2a6760a0f9cc3d077aa31c61d090a79177711f5990c7498abb3daa48ca9618e",
+    "observedUtc": "2026-10-01T14:59:30.069919+00:00",
+    "protection": "actual FD/lstat rootuid0 regular nlink1 no groupworldwrite",
+    "sourceParser": "SOURCE_VALID historical parserclock; live current expiry rejected, genuine independent provider route still required",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source08NoTurn08c": {
+    "status": "ISSUED_SCOPED_ONE_NO_TURN_INVOCATION",
+    "issuedUtc": "2026-10-01T15:19:45.318796+00:00",
+    "dispatchBeforeUtc": "2026-10-01T15:22:00+00:00",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "574c6720166561a38788e7ef63984250bf546701176a439e959e69f62adc0d48",
+    "scriptSHA256": "3f52a907789317030ec9b8872a98979b9aa4ffa9c93b630531af32f4bf7b8d96",
+    "approvalSHA256": "4fec9e6c0925b033bf594b148dc0cce140edb5f9f8f482f59ca243ea17073dc3",
+    "nativeAcceptance": "NOT_TESTED",
+    "generationGo": false,
+    "lifecycleGo": false,
+    "scope": "initialize/initialized/ephemeral readOnly thread/start/owned close only; no generation/count/tokenize/compact/normal lifecycle",
+    "sourceReviews": {
+      "root-review-runtime/source08c-no-turn-packet/REVIEW.json": "68d28bd2a797b7b317e0c0b8838530460f8fab514981c626f29ce0c8d423fdf4",
+      "root-review-acceptance/source08c-no-turn-caller/REVIEW.json": "96a2a537d925995e8ffb3ecca49a0894dab25b867d2be73875432a1c066df15a"
+    },
+    "priorFailuresAndBlocked08bPreserved": true
+  },
+  "source09Prepared": {
+    "launched": true,
+    "adoptedActual08Closure": true,
+    "sameSessions": true,
+    "hardDeadlineUtc": "2026-10-01T16:35:00+00:00"
+  },
+  "source08RemainingConcrete": {
+    "A": [
+      "guardian lifecycle before mutation",
+      "physical original alias/mount/writer scope",
+      "exact normal restore tuple/readiness",
+      "truthful no-replay startup deltas"
+    ],
+    "E": [
+      "always settle owned worker on runtime/pre-open failure"
+    ],
+    "native": "all compaction retention/ordinary/AUTO/production NOT_TESTED"
+  },
+  "source08ActualClosures": {
+    "A-compaction-completion-08": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 42263,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T15:24:45.136626+00:00",
+        "deadlineTermination": true
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 42262,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T15:24:45.142604+00:00"
+      }
+    },
+    "E-compaction-completion-08": {
+      "WRAPPER-TERMINAL.json": {
+        "nativePid": 44349,
+        "actualExitCode": -15,
+        "finishedUtc": "2026-10-01T15:24:45.113213+00:00",
+        "deadlineTermination": true
+      },
+      "OUTER-TERMINAL.json": {
+        "wrapperPid": 44348,
+        "actualExitCode": 143,
+        "finishedUtc": "2026-10-01T15:24:45.120578+00:00"
+      }
+    }
+  },
+  "source08Closed": true,
+  "source09Authority": {
+    "id": "H041-COMPACTION-COMPLETION-09",
+    "issuedUtc": "2026-10-01T15:20:22.245393+00:00",
+    "expiresUtc": "2026-10-01T18:30:02.674394+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "Complete concrete carrier and normal caller cleanup, coherent combined checks, current native delivery05 packet; only exact root approved actions thereafter. Root orchestrates, both same adopted Mac sessions implement/test.",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "existing resident normal Qwen after fresh owner/readiness verification; no new GPU/model start/placement/download/upstream/driver/fan/Proxmox/PR merge",
+    "priorAuthorizationId": "H041-COMPACTION-COMPLETION-08",
+    "priorCapsUnchanged": true,
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-05",
+    "privateLinuxStagingOwner": "worker1",
+    "prepared": true,
+    "launched": true,
+    "reviewedCombinedHead": "23417c021ac4b454d34580a19bfc68389f9ebd1f",
+    "combinedBundleSha256": "eb496428814d43a6c398098599a2d33a091a636a0783b986681a1ff44d534643",
+    "actualLaunchesFile": "SOURCE-09-LAUNCHES.json",
+    "sourceExportTargetUtc": "2026-10-01T16:30:00+00:00"
+  },
+  "source09Launched": [
+    {
+      "task": "A-compaction-completion-09",
+      "host": "mac-worker1",
+      "outerPid": 47477,
+      "startedUtc": "2026-10-01T15:26:36.245344+00:00",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "candidate": "485a1067ccdf6fd8c9a6335e57de2bda8c919d53",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/A-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    },
+    {
+      "task": "E-compaction-completion-09",
+      "host": "mac-worker2",
+      "outerPid": 47533,
+      "startedUtc": "2026-10-01T15:26:36.805277+00:00",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "candidate": "6dedf474491dafe23f131fc7c3ab3e9285c152fd",
+      "phasePath": "/Users/agent/CodexProjects/llm-orchestration/H041-20261001/E-compaction-completion-09",
+      "hardDeadlineUtc": "2026-10-01T16:35:00+00:00",
+      "authority": "SOURCE_ONLY_NO_LIVE_GO"
+    }
+  ],
+  "source09ActualSettings": [
+    {
+      "host": "mac-worker1",
+      "sessionId": "01a0f4d8-9d87-78d0-94cc-5a73d9056be2",
+      "nativePid": 47479,
+      "wrapperPid": 47478,
+      "turnContextUtc": "2026-10-01T15:26:38.668Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    },
+    {
+      "host": "mac-worker2",
+      "sessionId": "01a0f4fa-aee1-7cb0-8b3d-9fa0577a26c9",
+      "nativePid": 47535,
+      "wrapperPid": 47534,
+      "turnContextUtc": "2026-10-01T15:26:38.947Z",
+      "model": "gpt-6.1-sol",
+      "effort": "ultra"
+    }
+  ],
+  "source08NoTurn08cActual": {
+    "schema": "h041-source08-no-turn-actual-command-v1",
+    "startedUtc": "2026-10-01T15:21:49.707025+00:00",
+    "finishedUtc": "2026-10-01T15:21:51.359740+00:00",
+    "exit": 13,
+    "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "stderrSHA256": "72f6f8ae48b27575b190ff897eaff2bb1ec5775ef2884cefc3928436852be41c",
+    "prerequisiteSHA256": "64fbf065ad9d5c75117e6ef0028f4c3e6e072c502d4fc46a4014cb9e1043cf4f",
+    "nativeCompactionAcceptance": "NOT_TESTED",
+    "ordinaryAcceptance": "NOT_TESTED",
+    "status": "EXECUTED_ONCE_EXIT13_NO_ACCEPTANCE_RESULT",
+    "approvalSpent": true,
+    "rootApprovalSHA256": "4fec9e6c0925b033bf594b148dc0cce140edb5f9f8f482f59ca243ea17073dc3",
+    "physicalCause": "UNKNOWN_PENDING_ORIGINAL_STDERR",
+    "cleanup": "UNKNOWN_PENDING_OWNED_RESOURCE_EVIDENCE"
+  },
+  "source08FinalReviewed": {
+    "A06d": "e74b37775b7f457d1f6672418009b7aa539e59a0",
+    "E_a73e": "6a20713",
+    "E_671aa": "d9b4f66",
+    "E_6ded": "23417c0",
+    "activation": "DISABLED_NATIVE_NOT_TESTED",
+    "A_E_parserDuplicate": "1b9 deferred because current E4d stronger; df876 empty source cherry-pick skipped"
+  },
+  "midWayFanDiagnosis09": {
+    "observedUtc": "2026-10-01T15:54:20/15:55:52Z",
+    "readOnlySamples": 90,
+    "serviceState": "failed/MainPID0/exit78",
+    "blockedAt": "2026-10-01T14:41:50.122913+00:00",
+    "persistedStatusUtc": "2026-10-01T14:41:54.225648+00:00",
+    "currentDutyTach": "UNKNOWN; old100/3600 are stale",
+    "sourceDefect": "expected duty can advance before actual verified command",
+    "sourceFixOwner": "worker2, separate narrow fan-source commit",
+    "rootReviewOnly": "no live fan install/unit/latch/actuator changes",
+    "nativeCompaction": "NOT_TESTED",
+    "privateEvidence": "H041 task root-fan-live09/passive.receipt.json",
+    "freshGetUtc": "2026-10-01T16:00:56/16:01:04Z",
+    "currentConfiguredDuty": 100,
+    "currentTargetInvariant": "ba1a1788472328c23053180eef4b29f4dcd9ffcd9c7c15d1ab9ecffe5e1b529c",
+    "matchingFreshGpu93TemperatureC": 34,
+    "actualTachReadings": [
+      4560,
+      5040,
+      2760
+    ],
+    "tachUnits": null,
+    "physicalCyclingCause": "UNKNOWN",
+    "sourceFix": "ac46fb0785dc791e47117cdab5ff9736f4b14841",
+    "rootIntegration": "add32dc88483b1645538853e70a790b6401f5115",
+    "sourceCases": 72,
+    "liveInstall": "NOT_EXECUTED",
+    "packetOwner": "worker2 source/private recovery packet; worker1 sole later live executor",
+    "wholeState16_30": {
+      "actualExit": 1,
+      "beforeRegularStateFiles": 24,
+      "emptyLockObserved": true,
+      "customGets": 4,
+      "configuredDuty": 100,
+      "failure": "bmc_transport_unavailable during thermal GET",
+      "freshCompleteRecoveryGate": false,
+      "sourceInstall": false,
+      "serviceStart": false
+    },
+    "thermalDiagnostic16_40": {
+      "actualExit": 0,
+      "http": 200,
+      "tcpTlsFixedDerPin": "PASS",
+      "tach": 3360,
+      "units": null,
+      "sourceUnitFailedOwnerUnchanged": true,
+      "freshWholeRecoveryGate": false,
+      "physicalCyclingCause": "UNKNOWN",
+      "physicalCure": "NOT_TESTED",
+      "priorInstrumentationFailurePreserved": true
+    }
+  },
+  "source09Closed": true,
+  "source10Authority": {
+    "id": "H041-COMPACTION-COMPLETION-10",
+    "issuedUtc": "2026-10-01T16:32:38.877295+00:00",
+    "expiresUtc": "2026-10-01T18:30:02.674394+00:00",
+    "sourcePhaseHardDeadlineUtc": "2026-10-01T17:45:00+00:00",
+    "settlementReserveMs": 120000,
+    "userAuthority": "explicit compaction completion request using worker1 and worker2; root subsequent finite phases within that request",
+    "liveGo": false,
+    "previousAuthorizationsRetained": true,
+    "scope": "Finish corrected exact native startup, reviewed one-start fan recovery, coherent source and complete manual/ordinary/AUTO delivery under continuing human request. Source work only unless separate exact scoped root GO. Same worker sessions after actual previous closure.",
+    "liveOwner": "worker1 only after concrete root GO",
+    "sourceActors": [
+      "worker1",
+      "worker2"
+    ],
+    "budgets": {
+      "summaryStageMaximumNativeActions": 9,
+      "fullRetentionMaximumNativeActions": 39,
+      "ordinarySupplementMaximumGenerationTurns": 10,
+      "ordinarySupplementMaximumManualCompactions": 2,
+      "ordinarySupplementMaximumAutomaticCompactions": 1,
+      "ordinarySupplementMaximumApplicationRestarts": 1
+    },
+    "reuseRequired": "omit supplemental actions when exact executed production consumer evidence already qualifies the step; no blind retry or replay",
+    "pins": {
+      "codexVersion": "0.158.0",
+      "sourceRevision": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+      "context": 480000,
+      "compaction": 400000,
+      "output": 65536
+    },
+    "resources": "Existing resident normal Qwen after fresh owner/readiness verification. Narrow latest human CHA_FAN3 diagnosis/fix/recovery only after exact review. No new GPU/model start/placement/download/upstream/driver/Proxmox/PR merge.",
+    "priorAuthorizationId": "H041-COMPACTION-COMPLETION-09",
+    "priorCapsUnchanged": true,
+    "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-05",
+    "privateLinuxStagingOwner": "worker1",
+    "prepared": true,
+    "launched": false,
+    "reviewedCombinedHead": "c4f439951d39c2041a55ca7738bc5924bf1aea5f",
+    "combinedBundleSha256": "fbbb1ab45afe74fbc471be5f5a7a77e1c35d8623ed9ac358830a149a88e5c033",
+    "actualLaunchesFile": "SOURCE-10-LAUNCHES.json",
+    "sourceExportTargetUtc": "2026-10-01T17:40:00+00:00"
+  },
+  "source09ActualClosures": {
+    "A": {
+      "nativeExit": -15,
+      "outerExit": 143,
+      "finishedUtc": "2026-10-01T16:34:45.146778+00:00",
+      "head": "bf7e79e87ff4984d5394921559afdb6f5a560ccb"
+    },
+    "E": {
+      "nativeExit": 1,
+      "outerExit": 1,
+      "finishedUtc": "2026-10-01T16:34:10.543662+00:00",
+      "head": "5d836b7e31ba10fc64268ad414dc8a5d9fd60cb2"
+    }
+  },
+  "source10CapacityFailure": {
+    "host": "mac-worker2",
+    "phase": "E-compaction-completion-10",
+    "nativeExit": 1,
+    "outerExit": 1,
+    "finishedUtc": "2026-10-01T16:36:00.650092+00:00",
+    "reason": "Selected model is at capacity",
+    "noWorkStarted": true,
+    "sameSessionResumedAs": "E-compaction-completion-10b"
+  },
+  "source09ReviewedLatest": {
+    "A8a": "8a1428ab8c60102d7e8863f8cbb5b886eed20cd6",
+    "integrated": "e2ba9b9d",
+    "E5d": "5d836b7e31ba10fc64268ad414dc8a5d9fd60cb2",
+    "A_combined_full": {
+      "total": 1410,
+      "pass": 1405,
+      "fail": 1,
+      "skip": 4,
+      "actualExit": 1
+    },
+    "E_own_final_full": {
+      "total": 1410,
+      "pass": 1406,
+      "fail": 0,
+      "skip": 4,
+      "actualExit": 0,
+      "partialExportManifestPreserved": true
+    },
+    "activation": "DEFAULT_DISABLED",
+    "nativeAcceptance": "NOT_TESTED",
+    "E_integrated": "aeb3fcdc"
+  },
+  "scopedNoTurnGo09d": {
+    "status": "ISSUED_SCOPED_ONE_NO_TURN_INVOCATION",
+    "issuedUtc": "2026-10-01T16:37:41.505198+00:00",
+    "dispatchBeforeUtc": "2026-10-01T16:46:00+00:00",
+    "candidateCommit": "f1452d0d17181aa3b00b7b59e3bf3e106bca68c7",
+    "inputSHA256": "12085222707abcd6693d1804ee985148962143527648d01e037766bad17a0506",
+    "scriptSHA256": "f26f0f6dea1934a2e0cf598e0fb326e1fa3169f90d5f97e2f8e9837c9c865716",
+    "approvalSHA256": "43b9fddb07cef73faebcb35e85c1b19186aa1774096157231d27b6a6731e3020",
+    "nativeAcceptance": "NOT_TESTED",
+    "generationGo": false,
+    "lifecycleGo": false,
+    "scope": "initialize/initialized/ephemeral readOnly thread/start/actual owned close only; no generation/count/tokenize/compact/normal lifecycle",
+    "sourceReviews": {
+      "root-review-runtime/source09d-no-turn-packet/REVIEW.json": "2f3d8b75c30ebb4f8b08d4cf2b46e40075facd47dca63a3892c21e5549db40e4"
+    },
+    "priorFailuresAndBlocked08bPreserved": true,
+    "actualResult": "PREENTRY_REJECTED_NO_NATIVE_LAUNCH_NO_RETRY_EXPIRED",
+    "actualStartedUtc": "2026-10-01T16:44:02.565829+00:00",
+    "actualFinishedUtc": "2026-10-01T16:44:02.979162+00:00",
+    "actualWrapperExit": 1,
+    "rejection": "Node ancestor /home/user/.local mode0775 group-writable",
+    "sourceSHA256": "763e9af291b94398b8dd2d7f434adc04345d555a7ede3fee41d2b15f6dc09ead",
+    "sourceCallerExecuted": false,
+    "next": "Distinct09e protected exact-byte Node copy + corrected wrapper tuple; new review/fresh GO only"
+  },
+  "finalWrapup": {
+    "status": "ALL_22_PHASES_CLOSED_USER_WRAPUP",
+    "finishedWorkerUtc": "2026-10-01T16:58:53.159310+00:00",
+    "processAbsenceVerifiedUtc": "2026-10-01T17:00:17Z",
+    "retireOldSessions": true,
+    "activePhases": [],
+    "oldOperationalGo": "ALL_EXPIRED_SPENT_OR_WITHDRAWN",
+    "authoritativeFinalLedger": "reports/h041-worker-outcomes.json",
+    "handoff": "reports/h041-final-handoff.md",
+    "nativeAcceptance": "NOT_TESTED",
+    "goalComplete": false,
+    "finalClosures": [
+      {
+        "host": "mac-worker1",
+        "phase": "A-compaction-completion-10",
+        "wrapper": {
+          "nativePid": 52946,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:58:53.152980+00:00",
+          "deadlineTermination": false
+        },
+        "outer": {
+          "wrapperPid": 52945,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:58:53.159310+00:00"
+        },
+        "sameSessionAndOwnedPidsAbsentVerifiedUtc": "2026-10-01T17:00:17Z",
+        "sourceChecksAreNotNativeAcceptance": true
+      },
+      {
+        "host": "mac-worker2",
+        "phase": "E-compaction-completion-10b",
+        "wrapper": {
+          "nativePid": 52728,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:57:40.848533+00:00",
+          "deadlineTermination": false
+        },
+        "outer": {
+          "wrapperPid": 52727,
+          "actualExitCode": 0,
+          "finishedUtc": "2026-10-01T16:57:40.856355+00:00"
+        },
+        "sameSessionAndOwnedPidsAbsentVerifiedUtc": "2026-10-01T17:00:17Z",
+        "sourceChecksAreNotNativeAcceptance": true
+      }
+    ],
+    "additionalPublicationSshOperation": "reports/h041-publication-cleanup.json"
+  }
+}

@@ -11,13 +11,18 @@ visual results belong to the task's current receipts and handoff.
 `llm-image-backend`. `service.py` runs as root to validate protected configuration,
 use installed storage guards and perform narrowly scoped Docker mutations. The
 native container runs as UID1000:GID1001, with Docker restart policy `no`, CPU8-15,
-a96GiB memory cap and equal memory/swap limits. It uses only Ada UUID
-`GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23`. Text model ownership, contexts,
+a96GiB memory cap and equal memory/swap limits. Its full GPU UUID comes only
+from protected `config.json` field `gpu_uuid`; missing/unknown selection closes
+image admission without an ordinal fallback. The historical external placement
+and the reviewed internal Ada placement are registrations, not automatic choices.
+H037's proposed internal selection requires actual retirement of the separate
+200K owner and root review of source/config successors before live deployment.
+Text model ownership, contexts,
 containers and state remain with the existing text lifecycle.
 
 The protected runtime root is
 `/data/services/image21-runtime-20260923`. Its `config.json` binds the immutable
-image ID, checkpoint receipt, owned Docker network ID and installed Python source
+image ID, checkpoint receipt, owned Docker network ID, explicit GPU UUID and installed Python source
 hashes. The source pins are SGLang `0cd8be351d0825488f4b81c8931167bbab618eca`
 and Qwen-Image2.1 checkpoint
 `790c92633540aa0cb11d9abf19eb46d861714758`. Actual dependency/image identities are

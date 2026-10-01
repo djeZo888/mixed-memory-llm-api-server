@@ -17,6 +17,7 @@ import { contentDisposition, imageMime } from "./file-metadata.js";
 import { environment } from "./locale.js";
 import { REVIEWED_SKILLS } from "./policy.js";
 import { codexAvailable, assertEngineAvailable } from "./engine-router.js";
+import { loadNewChatEngine } from "./system-registry.js";
 import type { Event } from "./contracts.js";
 import type { AvailabilityProvider } from "./service-availability.js";
 // MiniMax ae65651 packages/tui/src/acp/commands.ts: exact, case-sensitive
@@ -35,6 +36,10 @@ const unsupportedSlashCommands = new Set<string>([
   ...REVIEWED_SKILLS,
 ]);
 export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
+  /** Root-reviewed ordinary recovery host. Absent by default; no browser body can qualify this seam. */
+  memoryRecoveryHost?: (input:{sessionId:string;checkpointId:string;signal:AbortSignal;reservation:import("./store.js").WorkspaceRecoveryReservation;memory:import("./session-memory.js").SessionMemoryBridge}) => Promise<import("./session-checkpoint.js").FreshParentRecoveryEvidence>;
+  /** Trusted host/fixture configuration only; existing session identity is separate. */
+  newChatEngine?: "codex" | "minimax";
   dataDir: string;
   allowedOrigins?: string[];
   webDist?: string;
@@ -66,6 +71,7 @@ export async function createApp(options: AppOptions): Promise<{
   broker: Broker;
   images?: ImageBroker;
 }> {
+  const newChatEngine = options.newChatEngine ?? loadNewChatEngine();
   const origins = new Set(
     (
       options.allowedOrigins ?? [
@@ -153,6 +159,8 @@ export async function createApp(options: AppOptions): Promise<{
     const files = new Files(temporary.root, store);
     await files.init();
     const broker = new Broker({
+      beforeNativeReplacementCommit:options.beforeNativeReplacementCommit,
+      beforeNativeRecovery:options.beforeNativeRecovery,onNativeRecoveryObserved:options.onNativeRecoveryObserved,
       ...options,
       store,
       files,
@@ -259,7 +267,7 @@ export async function createApp(options: AppOptions): Promise<{
       environment: environment(),
       status: "ok",
       visionAvailable: options.visionAvailable === true,
-      engines: { default: "minimax",
+      engines: { default: newChatEngine,
         minimax: { configured: true, available: true, preview: false,
           version: null, versionSource: "not-observed", readiness: "not-probed",
           protocolQualified: null, capabilities: { text: true }, capabilityDetails: {},
@@ -280,7 +288,7 @@ export async function createApp(options: AppOptions): Promise<{
     app.post("/api/sessions", async (req) => {
       const body = object(req.body);
       only(body, ["engineKind"]);
-      const engineKind = body.engineKind ?? "minimax";
+      const engineKind = body.engineKind ?? newChatEngine;
       assertEngineAvailable(engineKind, options.enginePolicy, options.codexEngineFactory);
       return { session: await broker.createSession(undefined, engineKind) };
     });
@@ -431,6 +439,7 @@ export async function createApp(options: AppOptions): Promise<{
           throw error;
         }
       }
+      await broker.admitEnqueue(id(req),String(req.id));
       const runId = broker.enqueue(
         id(req),
         "message",
@@ -451,9 +460,53 @@ export async function createApp(options: AppOptions): Promise<{
       const body = object(req.body);
       only(body, ["actionId"]);
       const actionId = requireId(body.actionId);
+      await broker.admitEnqueue(id(req),String(req.id));
       return reply.code(202).send({
         runId: broker.enqueue(id(req), "compact", "", [], [], actionId),
       });
+    });
+    app.get("/api/sessions/:id/memory", async (req) => {
+      store.memory.indexHistory(id(req));
+      return { ...store.memory.view(id(req)), versions: store.memory.versions(id(req)), proposals: store.db.prepare("SELECT id,body FROM h041_memory_proposals WHERE session_id=? ORDER BY rowid DESC LIMIT 16").all(id(req)).map(row=>({id:String(row.id),state:JSON.parse(String(row.body))})), recovery: store.checkpoints.status(id(req)) };
+    });
+    app.get("/api/sessions/:id/memory/originals/:originalId", async (req) => {
+      const q = object(req.query); only(q,["offset","limit"]);
+      return store.memory.read(id(req),requireId((req.params as {originalId:unknown}).originalId),Number(q.offset ?? 0),Number(q.limit ?? 8192));
+    });
+    app.post("/api/sessions/:id/memory/search", async (req) => {
+      const body = object(req.body); only(body,["query","reference","after","limit"]);
+      if (typeof body.query !== "string") throw new ApiError(400,"invalid_memory","Literal query required");
+      return store.memory.search(id(req),body.query,{ ...(body.reference === undefined ? {} : {reference:requireId(body.reference)}), ...(body.after === undefined ? {} : {after:Number(body.after)}), ...(body.limit === undefined ? {} : {limit:Number(body.limit)}) });
+    });
+    app.post("/api/sessions/:id/memory/files/:fileId", async (req) => {
+      only(object(req.body),[]); return files.retainOriginal(id(req),requireId((req.params as {fileId:unknown}).fileId));
+    });
+    app.post("/api/sessions/:id/memory/messages/:messageId", async (req) => {
+      only(object(req.body),[]); return store.memory.resolveMessage(id(req),requireId((req.params as {messageId:unknown}).messageId));
+    });
+    app.post("/api/sessions/:id/memory/proposals", async (req) => {
+      const body = object(req.body); only(body,["state"]); return store.memory.propose(id(req),body.state);
+    });
+    const assertMemoryHuman = (headers: Record<string, unknown>) => {
+      const received = headers["x-ai-harness-approval-proxy"], expected = options.approvalProxyKey;
+      if (!expected || typeof received !== "string" || Buffer.byteLength(received) !== Buffer.byteLength(expected) || !timingSafeEqual(Buffer.from(received),Buffer.from(expected)))
+        throw new ApiError(403,"memory_acceptance_forbidden","Accepted memory requires the trusted human browser proxy");
+    };
+    app.post("/api/sessions/:id/memory/accept", async (req) => {
+      assertMemoryHuman(req.headers); const body = object(req.body); only(body,["proposalId","expectedVersion"]);
+      if (body.expectedVersion !== null && typeof body.expectedVersion !== "string") throw new ApiError(400,"invalid_memory","Expected current version or null required");
+      return store.memory.acceptHuman(id(req),requireId(body.proposalId),body.expectedVersion);
+    });
+    app.post("/api/sessions/:id/memory/recovery/:checkpointId/acknowledge", async (req) => {
+      assertMemoryHuman(req.headers); const body = object(req.body); only(body,["note"]);
+      if (typeof body.note !== "string") throw new ApiError(400,"invalid_memory","Recovery note required");
+      return store.checkpoints.acknowledge(id(req),requireId((req.params as {checkpointId:unknown}).checkpointId),body.note);
+    });
+    app.post("/api/sessions/:id/memory/recovery/:checkpointId/recover", async (req) => {
+      assertMemoryHuman(req.headers);only(object(req.body),[]);const sessionId=id(req),checkpointId=requireId((req.params as {checkpointId:unknown}).checkpointId);
+      if(!options.memoryRecoveryHost)throw new ApiError(503,"memory_recovery_unqualified","Fresh no-replay recovery host is not qualified");
+      if(broker.currentImageRun(sessionId))throw new ApiError(409,"memory_recovery_busy","Session has active work");
+      return broker.recoverMemory(sessionId,checkpointId,options.memoryRecoveryHost);
     });
     app.post("/api/sessions/:id/handoff", async (req, reply) => {
       const body = object(req.body);

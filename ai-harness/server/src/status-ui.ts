@@ -21,11 +21,18 @@ function modelDetails(s){
   const c=s.configured_model,o=s.observed_model||{};
   return ["Configured model: "+c.display_name+" · instance: "+c.instance_name,
     "Expected alias: "+c.expected_alias+" · selection: "+s.selection,
+    "Native model readiness: "+currentMetric(o,o.ready===true?"ready":o.ready===false?"not ready":"Unknown"),
     "Observed configured context: "+(s.configured_context_tokens??"unknown")+" tokens",
+    "Observed native output ceiling: "+(s.max_output_tokens==null?"unknown":s.max_output_tokens+" tokens"),
+    ...(s.configured_profile?["Configured Sova policy: "+s.configured_profile.contextWindow+" context / "+s.configured_profile.maxOutputTokens+" output ceiling / "+s.configured_profile.autoCompactTokenLimit+" compaction trigger · capacity comparison: "+s.capacity_status+(s.capacity_reason?" · "+s.capacity_reason:"")]:[]),
+    ...(s.configured_placement?["Configured GPU UUID: "+s.configured_placement.gpu_uuid+" · placement: "+s.placement_status,"Selection config SHA256: "+(s.observed_placement?.selectionConfigSha256||"unknown")+" · boot: "+(s.observed_placement?.bootId||"unknown")]:[]),
+    ...(s.observed_image_capabilities?["Image owner capabilities: "+(s.observed_image_capabilities.join(", ")||"unknown")]:[]),
+    "Active roster: "+String(s.active_roster??"unknown")+" · retirement: "+(s.retirement_status||"not_applicable"),
     ...(s.selection_conflict?["Selection conflict: nonselected instance reports ready"]:[]),
     "Observed model: "+(o.model_alias||"unknown")+" · identity: "+s.identity_status,
     "Observed instance: "+(o.node_id||"unknown")+" / "+(o.service_id||"unknown")+" · deployment: "+(o.deployment_id||"unknown"),
     "Reported required GPU UUIDs: "+((o.required_gpu_uuids||[]).join(", ")||"unknown"),
+    "Configured GPU UUIDs: "+((s.configured_gpu_uuids||[]).join(", ")||"unspecified")+" · identity: "+(s.gpu_identity_status||"unknown"),
     "Endpoint reference: "+(s.endpoint_ref||"none")];
 }
 function renderEngines(nodes){

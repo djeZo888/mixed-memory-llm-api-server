@@ -494,7 +494,7 @@ const server = http.createServer(async (request, response) => {
       return json(response, 200, { disconnected: true });
     }
     if (url.pathname === '/api/health')
-      return json(response, 200, { version: '0.0.2', status: 'ok', visionAvailable: vision });
+      return json(response, 200, { version: '0.0.2', status: 'ok', visionAvailable: vision, engines: { default: 'minimax', codex: { available: false } } });
     if (url.pathname === '/api/image-capabilities') {
       calls.push({ action: 'image-capabilities' });
       return json(response, 200, imageCapabilities);
