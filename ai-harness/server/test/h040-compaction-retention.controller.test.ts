@@ -3,7 +3,7 @@ import test from 'node:test';
 import { actionIdFor, activeFacts, scoreContinuation, sha256, stableJson } from '../../acceptance/compaction/scorer.mjs';
 import { fixture, runAcceptance, actionPlan, settlementReserve, verifyOwnedClose } from '../../acceptance/compaction/controller.mjs';
 
-const packet = await fixture(), hash = sha256('SYNTHETIC controller host boundary'), runId = 'synthetic-full-h040';
+const packet = await fixture(), hash = sha256('SYNTHETIC controller host boundary'), runId = '00000000-0000-4000-8000-000000000040' as const;
 const parent = 'synthetic-parent';
 const clone = structuredClone;
 const typed = (m: any) => ({ type: 'message', role: m.role, content: [{ type: m.role === 'assistant' ? 'output_text' : 'input_text', text: m.content }] });
@@ -130,7 +130,7 @@ function syntheticAdapter(options: any = {}) {
 async function simulate(options = {}) {
   const input = clone(packet); input.config.enabled = true; input.config.profile = 'h040-full-retention-v1'; input.config.maximumNativeActions = 39;
   const f = syntheticAdapter(options);
-  const result = await runAcceptance({ packet: input, adapter: f.adapter, qualification: 'synthetic', runId,
+  const result = await runAcceptance({ normalizeResponses: undefined, packet: input, adapter: f.adapter, qualification: 'synthetic', runId,
     sink: { async private() {}, async record() {} } });
   return { ...f, result };
 }
@@ -162,14 +162,14 @@ test('stage configuration has one manual cycle and does not silently downgrade t
   const stage = { ...packet.config, profile: 'h040-summary-stage-v1', cycles: [1], maximumNativeActions: 9 };
   const plan = actionPlan(stage); assert.equal(plan.facts, 56); assert.equal(plan.critical, 49); assert.equal(plan.fullNativeAcceptance, 'NOT_TESTED');
   const bad = clone(packet); bad.config.enabled = true; bad.config.cycles = [1];
-  await assert.rejects(runAcceptance({ packet: bad, adapter: syntheticAdapter().adapter, qualification: 'synthetic', sink: {} }), /policy change/);
+  await assert.rejects(runAcceptance({ normalizeResponses: undefined, packet: bad, adapter: syntheticAdapter().adapter, qualification: 'synthetic', sink: {} }), /policy change/);
 });
 test('native review cannot exceed H040 authority or reinterpret an unreviewed profile', async () => {
   const input = clone(packet); input.config.enabled = true;
   input.config.review = { approvedBy: 'root', candidateCommit: 'a'.repeat(40), adapterSha256: hash, notAfterUtc: '2026-10-01T04:26:11Z' };
   let invoked = false;
   const adapter = { interfaceVersion: 'h039-compaction-adapter-v1', kind: 'native', async runtime() { invoked = true; } };
-  await assert.rejects(runAcceptance({ packet: input, adapter, sink: {} }), /H040 execution window/);
+  await assert.rejects(runAcceptance({ normalizeResponses: undefined, packet: input, adapter, sink: {} }), /H040 execution window/);
   assert.equal(invoked, false);
 });
 test('native reserve defaults to 75 seconds and cannot be weakened by an unreviewed config', () => {
@@ -190,7 +190,7 @@ test('frozen reserve/deadline blocks dispatch at 74 seconds remaining and reserv
   f.adapter.append = async () => { appended = true; };
   Date.now = () => initial + (advanced ? 6000 : 0);
   try {
-    const result = await runAcceptance({ packet: input, adapter: f.adapter, qualification: 'synthetic', runId, sink: { async private() {}, async record() {} } });
+    const result = await runAcceptance({ normalizeResponses: undefined, packet: input, adapter: f.adapter, qualification: 'synthetic', runId, sink: { async private() {}, async record() {} } });
     assert.equal(result.status, 'FAIL'); assert.equal(appended, false); assert.equal(result.settlementReserveMs, 75000); assert.equal(f.calls.at(-1), 'close');
   } finally { Date.now = now; }
 });
@@ -201,7 +201,7 @@ test('owned timeout aborts the current method before shared close and never retr
   f.adapter.close = async () => { assert.equal(aborted, true); f.calls.push('close'); };
   const keepAlive = setTimeout(() => {}, 100);
   try {
-    const result = await runAcceptance({ packet: input, adapter: f.adapter, qualification: 'synthetic', runId, sink: { async private() {}, async record() {} } });
+    const result = await runAcceptance({ normalizeResponses: undefined, packet: input, adapter: f.adapter, qualification: 'synthetic', runId, sink: { async private() {}, async record() {} } });
     assert.equal(result.status, 'FAIL'); assert.equal(appends, 1); assert.equal(f.calls.at(-1), 'close');
   } finally { clearTimeout(keepAlive); }
 });

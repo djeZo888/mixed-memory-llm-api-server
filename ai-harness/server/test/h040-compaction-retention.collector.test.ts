@@ -59,7 +59,7 @@ async function captured(t: any, wrongNativeWindow = false) {
 }
 test('actual E collector preserves full raw state, originals, ownership and independent B native-window verification', { skip: !ready && 'E collector not in this candidate; set H040_E_SOURCE_ROOT to reviewed read-only sibling' }, async t => {
   const p = await captured(t), extraction = extractCheckpoint(p.checkpoint, p.expected);
-  assert.equal(extraction.status, 'PASS'); // synthetic host/protocol consistency ONLY
+  assert.equal(extraction.status, 'PASS'); assert.ok('summaryText' in extraction); // synthetic host/protocol consistency ONLY
   assert.equal(extraction.nativeWindowId, 'synthetic-parent:0');
   assert.notEqual(extraction.nativeWindowId, p.expected.windowId);
   assert.equal(extraction.summaryText.includes('ORIGINAL_HISTORY'), false); assert.equal(p.checkpoint.messages, undefined);

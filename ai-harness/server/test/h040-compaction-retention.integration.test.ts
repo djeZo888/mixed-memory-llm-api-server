@@ -23,7 +23,7 @@ const { createNativeAdapter } = await import(pathToFileURL(join(eRoot, 'adapter.
 const packet = await fixture();
 const syntheticHash = sha256('SYNTHETIC host/protocol boundary only');
 const clone = structuredClone;
-const runId = 'synthetic-h040-interop', windowId = 'h040-synthetic-window';
+const runId = '00000000-0000-4000-8000-000000000041' as const, windowId = 'h040-synthetic-window';
 const parent = 'synthetic-parent', probeThreadId = 'synthetic-probe', probeTurnId = 'synthetic-probe-turn';
 const policy = 'Recall supplied state only; do not infer permissions or completed checks.';
 const summary = 'SUMMARY_PREFIX\nTechnical state: logic rail 3.3 V; bench check unfinished. Preserve superseding corrections.';
@@ -77,6 +77,7 @@ async function projected() {
   const p = persisted(), request = recallRequest(packet.truth, 1, 'summary-only');
   const envelope = bindReviewedEnvelope(envelopeTemplate, { probeThreadId, probeTurnId });
   const spec = await frozenSpec(), extraction = extractCheckpoint(p.checkpoint, p.expected);
+  assert.ok('summaryText' in extraction);
   const derived = deriveFreshProjection({ extraction, request, spec, envelope, toolDefinitions: [], normalizeResponses: translateResponses });
   assert.equal(derived.status, 'PASS');
   return { ...p, request, spec, extraction, derived, envelope,
@@ -149,7 +150,8 @@ test('real E persisted-summary extraction does not substitute summary SHA for B 
   const e = eProjection.extractPersistedSummary(Buffer.from(p.checkpoint.stateUtf8), { nativeThreadId: parent, nativeTurnId: p.expected.nativeTurnId,
     actionId: p.expected.actionId, beforeBytes: Buffer.byteLength(p.baseline.stateUtf8), beforeSha256: p.baseline.stateSha256,
     dispatchedAt: '2026-10-01T02:30:02Z', settledAt: '2026-10-01T02:30:04Z', summaryPrefix: 'SUMMARY_PREFIX\n' });
-  assert.equal(e.message, extractCheckpoint(p.checkpoint, p.expected).summaryText);
+  const extraction = extractCheckpoint(p.checkpoint, p.expected); assert.ok('summaryText' in extraction);
+  assert.equal(e.message, extraction.summaryText);
   assert.equal(e.rolloutSha256, p.checkpoint.stateSha256); assert.notEqual(e.contextSha256, p.checkpoint.stateSha256);
   assert.equal(extractCheckpoint(p.checkpoint, { ...p.expected, contextSha256: e.contextSha256 }).status, 'FAIL');
   assert.equal(extractCheckpoint({ contextSha256: e.contextSha256 }, p.expected).status, 'NOT_TESTED');
@@ -244,7 +246,7 @@ test('real E disabled adapter advertises no fabricated native capabilities or ru
     assert.equal(runtime[key].value, null); assert.ok(runtime[key].reason);
   }
   await assert.rejects(adapter.open({ signal: AbortSignal.abort() }));
-  await assert.rejects(runAcceptance({ packet, adapter, sink: {} }), /disabled/);
+  await assert.rejects(runAcceptance({ packet, adapter, sink: {}, normalizeResponses: undefined }), /disabled/);
 });
 
 function acceptedResume() {
@@ -259,7 +261,7 @@ function acceptedResume() {
   const baseline = captureAcceptedArtifactBaseline({ artifactReceiptUtf8: originalReceiptUtf8, artifactReceiptSha256: sha256(originalReceiptUtf8),
     sessionId: 'synthetic-store-session', runId: 'synthetic-store-continuation-run', actionId: continuationActionId, nativeThreadId: parent, parentState: checkpoint },
     checkpoint, { runId, sessionId: 'synthetic-store-session', actionId: continuationActionId, nativeThreadId: parent });
-  assert.equal(baseline.status, 'PASS');
+  assert.equal(baseline.status, 'PASS'); assert.ok('baseline' in baseline);
   const actionId = actionIdFor(runId, 3, 'cold-resume-after-continuation'), accepted = { checkpoint, artifactHashes, actionId: continuationActionId, artifactBaseline: baseline.baseline };
   const restartReceiptUtf8 = JSON.stringify({ source: 'native-owned-host-cold-resume', runId, actionId, windowId, nativeThreadId: parent,
     checkpointStateSha256: checkpoint.stateSha256, beforeHostId: 'synthetic-application-1', afterHostId: 'synthetic-application-2',
@@ -280,9 +282,9 @@ test('after-continuation cold resume binds actual application lifecycle and late
   assert.notEqual(p.accepted.checkpoint.stateSha256, p.compacted.stateSha256);
   const old = clone(p.accepted); old.checkpoint = p.compacted;
   assert.equal(verifyAcceptedContinuationResume(p.result, old, p.expected).status, 'FAIL');
-  const routine = clone(p.result); delete routine.restartEvidence.restartReceiptUtf8;
+  const routine: Omit<typeof p.result, 'restartEvidence'> & { restartEvidence: Omit<typeof p.result.restartEvidence, 'restartReceiptUtf8'> & { restartReceiptUtf8?: string } } = clone(p.result); delete routine.restartEvidence.restartReceiptUtf8;
   assert.equal(verifyAcceptedContinuationResume(routine, p.accepted, p.expected).status, 'NOT_TESTED');
-  const missing = clone(p.result); delete missing.artifactReceiptUtf8;
+  const missing: Omit<typeof p.result, 'artifactReceiptUtf8'> & { artifactReceiptUtf8?: string } = clone(p.result); delete missing.artifactReceiptUtf8;
   assert.equal(verifyAcceptedContinuationResume(missing, p.accepted, p.expected).status, 'NOT_TESTED');
   const changed = clone(p.result); changed.artifacts['sensor-policy.json'].deployment = 'AUTHORIZED';
   assert.equal(verifyAcceptedContinuationResume(changed, p.accepted, p.expected).status, 'FAIL');
@@ -320,7 +322,7 @@ test('per-dimension evidence keeps synthetic/partial actual PASS distinct from n
     observation: { outcome: 'completed', actionId: actionIdFor(runId, 1, 'summary-only'), nativeThreadId: probeThreadId, nativeTurnId: probeTurnId,
       isolation: { captureSha256: syntheticHash }, settlement: { state: 'released', receiptSha256: syntheticHash, automaticReplay: false } },
     originals: { beforeSha256: syntheticHash, afterSha256: syntheticHash, recoverable: true, receiptSha256: syntheticHash },
-    grade: scoreRecall(packet.truth, 1, answer), isolation: { status: 'PASS', errors: [] } });
+    grade: scoreRecall(packet.truth, 1, answer), isolation: { status: 'PASS', errors: [] }, runtime: undefined, compactionObservation: undefined, retrieval: undefined });
   const q = summarizeQualification([record], packet.truth), schema = JSON.parse(await readFile(new URL('../../acceptance/compaction/qualification.schema.json', import.meta.url), 'utf8'));
   assert.deepEqual(validateShape(q, schema), []);
   assert.equal(q.dimensions.criticalFacts.actualStatus, 'PASS'); assert.equal(q.dimensions.criticalFacts.nativeStatus, 'NOT_TESTED');

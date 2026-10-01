@@ -52,8 +52,8 @@ function passingObservations(qualification = 'native') {
         settlement: { state: 'released', receiptSha256: hash, automaticReplay: false } },
       compactionObservation: compact, originals, grade,
       isolation: { status: 'PASS', errors: [], firstRequestSha256: hash, inputManifestSha256: hash, scopeReceiptSha256: hash },
-      ...(mode === 'durable-retrieval' ? { retrieval: { used: true, callIds: [`synthetic-read-${cycle}`],
-        sourceIds: packet.corpus.records.filter((r: any) => r.cycle <= cycle).map((r: any) => r.id), traceSha256: hash } } : {}) });
+      retrieval: mode === 'durable-retrieval' ? { used: true, callIds: [`synthetic-read-${cycle}`],
+        sourceIds: packet.corpus.records.filter((r: any) => r.cycle <= cycle).map((r: any) => r.id), traceSha256: hash } : undefined });
     assert.deepEqual(validateRecord(record), []);
     assert.equal(record.status, 'PASS', `${cycle}:${mode}`);
     return record;
@@ -63,7 +63,7 @@ function passingObservations(qualification = 'native') {
 function cleanupFault(grade: any) {
   const record = makeRecord({ packet, runId, cycle: 3, mode: 'fault', qualification: 'native', runtime,
     observation: { outcome: 'unknown', failure: grade.status === 'FAIL' ? 'cleanup-unconfirmed' : 'cleanup-receipt-unqualified',
-      settlement: { state: 'unknown', receiptSha256: null, automaticReplay: false } }, originals, grade });
+      settlement: { state: 'unknown', receiptSha256: null, automaticReplay: false } }, originals, grade, compactionObservation: undefined, isolation: undefined, retrieval: undefined });
   assert.deepEqual(validateRecord(record), []);
   return record;
 }

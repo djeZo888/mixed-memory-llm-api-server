@@ -40,7 +40,7 @@ test('SYNTHETIC actual E adapter.compact result passes B shape/scorer with nativ
     const run = store.createRun(store.getSession(s.id), kind as any, text, [], action); runId = run.id; store.updateRun(run.id, 'running');
     queueMicrotask(async () => {
       const stdin = new PassThrough(), stdout = new PassThrough(), child = observer.wrap(s.id, { stdin, stdout, exited: new Promise(() => {}), terminateAndConfirm: async () => true });
-      connection = new CodexConnection(child.stdout, child.stdin, (_method, p) => { if (p.turn?.id) store.setNativeState(s.id, 'codex', { ownership: _method === 'turn/completed' ? 'idle' : 'active', activeTurnId: _method === 'turn/completed' ? null : p.turn.id, eventCursor: 0 }); }, () => {}, 1000);
+      connection = new CodexConnection(child.stdout, child.stdin, (_method, p) => { const turn = p.turn; if (turn && typeof turn === 'object' && 'id' in turn && typeof turn.id === 'string') store.setNativeState(s.id, 'codex', { ownership: _method === 'turn/completed' ? 'idle' : 'active', activeTurnId: _method === 'turn/completed' ? null : turn.id, eventCursor: 0 }); }, () => {}, 1000);
       stdin.on('data', async bytes => {
         const rpc = JSON.parse(bytes.toString()); stdout.write(JSON.stringify({ id: rpc.id, result: {} }) + '\n');
         const notify = (method: string, params: any) => stdout.write(JSON.stringify({ method, params }) + '\n');
