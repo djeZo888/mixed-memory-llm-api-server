@@ -10,6 +10,8 @@ import { createCodexQwenCounter, type QwenCountQualification } from "./codex-qwe
 import type { Gateway, GatewayOptions } from "./gateway.js";
 
 export interface CodexHostQualification {
+  nativeTraceMode?: "post-sampling-token-usage-v1";
+  onNativeTraceReceipt?: CodexRuntime["onNativeTraceReceipt"];
   observations?:CodexHostObservations;
   onNativeThread?:CodexRuntime["onNativeThread"];
   beforeNativeAction?:CodexRuntime["beforeNativeAction"];
@@ -69,6 +71,8 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
+    nativeTraceMode:qualification?.nativeTraceMode,
+    onNativeTraceReceipt:qualification?.onNativeTraceReceipt,
     onNativeThread:qualification?.onNativeThread,
     beforeNativeAction:qualification?.beforeNativeAction,
     onNativeChildObserved:qualification?.onNativeChildObserved,

@@ -3,7 +3,7 @@ import { constants, openSync, closeSync, fstatSync, readFileSync, lstatSync, mkd
 import { createHash, randomBytes } from "node:crypto";
 import { join, dirname, resolve, sep } from "node:path";
 import { assertAuthenticatedCodexHandoff, type AuthenticatedCodexHandoff } from "./codex-policy-handoff.js";
-export const CODEX_RECEIPT_SOURCES = ["run-codex.sh", "engine/task-egress.py", "engine/redact-acp.py", "engine/codex_receipts.py", "security/chromium-seccomp.json", "codex/config.toml", "codex/models.json"] as const;
+export const CODEX_RECEIPT_SOURCES = ["run-codex.sh", "engine/task-egress.py", "engine/redact-acp.py", "engine/codex_receipts.py", "engine/codex_native_trace.py", "security/chromium-seccomp.json", "codex/config.toml", "codex/models.json"] as const;
 export interface CodexReceiptPolicy {
   /** Root-reviewed actual Linux systemd-scope/file-channel acceptance, absent by default. */
   readonly linuxTransportQualified: true;
@@ -40,7 +40,7 @@ const hex = (v: unknown, n = 64) => typeof v === "string" && new RegExp(`^[0-9a-
 const object = (v: unknown): v is Record<string, any> => !!v && typeof v === "object" && !Array.isArray(v);
 const exact = (v: unknown, keys: string[]) => object(v) && Object.keys(v).sort().join() === keys.sort().join();
 const digest = (v: Uint8Array) => createHash("sha256").update(v).digest("hex");
-export interface CodexReceiptBinding { nonce: string; runId: string; sessionId: string; startedAtMs: number; uid: number; profileDir: string; workspace: string; deploymentDir: string; imageJobsQualified: boolean; gid: number; sources: Record<string, string> }
+export interface CodexReceiptBinding { nonce: string; runId: string; sessionId: string; startedAtMs: number; uid: number; profileDir: string; workspace: string; deploymentDir: string; imageJobsQualified: boolean; gid: number; sources: Record<string, string>; nativeTraceMode?: "post-sampling-token-usage-v1" }
 function identity(v: unknown): v is CodexReceiptIdentity {
   return object(v) && exact(v, ["pid", "startTicks", "uid", "bootId", "cgroupPath"]) && Number.isSafeInteger(v.pid) && v.pid > 0 && Number.isSafeInteger(v.uid) && v.uid > 0 && typeof v.startTicks === "string" && /^\d+$/.test(v.startTicks) && typeof v.bootId === "string" && /^[0-9a-f-]{36}$/.test(v.bootId) && typeof v.cgroupPath === "string" && v.cgroupPath.length < 1024;
 }
@@ -96,17 +96,17 @@ export function revalidateRetainedCodexReceipts(input: {
   transportReadObjects.add(launch);transportReadObjects.add(settlement);historicalReceipts.add(launch);historicalReceipts.add(settlement);
   return {launch,settlement};
 }
-export function createCodexReceiptChannel(input: { sessionId: string; runId: string; profileDir: string; workspace: string; launcherPath: string; imageJobsQualified?: boolean }, policy: CodexReceiptPolicy) {
+export function createCodexReceiptChannel(input: { sessionId: string; runId: string; profileDir: string; workspace: string; launcherPath: string; imageJobsQualified?: boolean; nativeTraceMode?: "post-sampling-token-usage-v1" }, policy: CodexReceiptPolicy) {
   const uid = process.getuid?.(); if (process.platform !== 'linux' || !uid || policy.linuxTransportQualified !== true) throw Error('Native receipt transport unqualified');
   const deployment = resolve(input.launcherPath,'..'); const sources: Record<string,string> = {};
   if (Object.keys(policy.sourceSha256).sort().join() !== [...CODEX_RECEIPT_SOURCES].sort().join()) throw Error('Incomplete reviewed receipt source closure');
-  for (const relative of CODEX_RECEIPT_SOURCES) { const path=join(deployment,relative), info=lstatSync(path); if (!info.isFile() || info.isSymbolicLink() || info.mode & 0o022 || ![0,uid].includes(info.uid) || realpathSync(path)!==path) throw Error('Unsafe receipt source'); for (let parent=dirname(path); parent!==dirname(deployment); parent=dirname(parent)) { const s=lstatSync(parent); if (!s.isDirectory() || s.isSymbolicLink() || s.mode&0o022 || ![0,uid].includes(s.uid)) throw Error('Unsafe receipt source ancestry'); } const actual=digest(readFileSync(path)); if (!hex(policy.sourceSha256[relative]) || actual!==policy.sourceSha256[relative]) throw Error('Receipt source hash mismatch'); sources[relative]=actual; }
+  Object.assign(sources,assertCodexReceiptSourceClosure(deployment,policy.sourceSha256,uid));
   const root=`/run/user/${uid}/ai-harness-codex-receipts`; if (![input.profileDir,input.workspace].every(p => p!==root && !root.startsWith(p+sep) && !p.startsWith(root+sep) && !deployment.startsWith(p+sep) && p!==deployment)) throw Error('Receipt/source channel overlaps model mount');
   try { mkdirSync(root,{mode:0o700}); } catch (e) { if ((e as NodeJS.ErrnoException).code!=='EEXIST') throw e; } protectedDirectory(root,uid);
   const directory=mkdtempSync(join(root,'run-'));protectedDirectory(directory,uid);
-  const binding: CodexReceiptBinding={nonce:randomBytes(32).toString('hex'),runId:input.runId,sessionId:input.sessionId,startedAtMs:Date.now(),uid,profileDir:input.profileDir,workspace:input.workspace,deploymentDir:deployment,imageJobsQualified:input.imageJobsQualified===true,gid:process.getgid!(),sources};
+  const binding: CodexReceiptBinding={nonce:randomBytes(32).toString('hex'),runId:input.runId,sessionId:input.sessionId,startedAtMs:Date.now(),uid,profileDir:input.profileDir,workspace:input.workspace,deploymentDir:deployment,imageJobsQualified:input.imageJobsQualified===true,gid:process.getgid!(),sources,...(input.nativeTraceMode?{nativeTraceMode:input.nativeTraceMode}:{})};
   writeFileSync(join(directory,'request.json'),JSON.stringify(binding),{flag:'wx',mode:0o600});
-  return { directory, binding, async wait(name: 'launch'|'settlement', timeoutMs: number, ended: ()=>boolean): Promise<unknown|undefined> {
+  return { directory, binding, async wait(name: 'launch'|'settlement'|'trace', timeoutMs: number, ended: ()=>boolean): Promise<unknown|undefined> {
     const deadline=Date.now()+timeoutMs;
     while (Date.now()<deadline) { try { protectedDirectory(directory,uid); const ready=lstatSync(join(directory,name+'.ready')); if (!ready.isFile() || ready.isSymbolicLink() || ready.uid!==uid || (ready.mode&0o777)!==0o600 || ready.nlink!==1 || ready.size!==0) return undefined; const value = readCodexReceiptFile(join(directory,name+'.json'),uid); if (object(value)) transportReadObjects.add(value); return value; } catch(e) { if ((e as NodeJS.ErrnoException).code!=='ENOENT') return undefined; } if (ended()) return undefined; await new Promise<void>(r=>{const t=setTimeout(r,25);t.unref();}); } return undefined;
   } };
@@ -141,3 +141,33 @@ export function createCodexReceiptLifecycle(input: {
     })();
   } };
 }
+
+/** Separate capture receipt; genuine launch/settlement are mandatory and never
+ * inferred from this JSON. Original selected stderr lives only in host channel. */
+export interface CodexNativeTraceReceipt {
+ schema:"codex-native-trace-v1";nonce:string;sessionId:string;runId:string;mode:"post-sampling-token-usage-v1";
+ producer:CodexReceiptIdentity;containerId:string;environment:{RUST_LOG:string;LOG_FORMAT:string};sources:Record<string,string>;
+ events:ReadonlyArray<{file:string;sha256:string;bytes:number;stderrSequence:number;stderrOffset:number;chain:string;turnId:string;nativeTimestamp:unknown;observedAtMs:number;observedMonotonicNs:number}>;
+ stderrBytes:number;stderrSHA256:string;stderrChain:string;complete:true;cleanupOk:boolean;engineExitStatus:number|null;requestedStop:boolean;
+}
+const verifiedTrace=new WeakSet<object>();
+const traceLines=new WeakMap<object,ReadonlyArray<Readonly<{bytes:Buffer;parsed:Readonly<Record<string,unknown>>}>>>();
+export function validateCodexTraceReceipt(value:unknown,binding:CodexReceiptBinding,launch:CodexNativeLaunchReceipt,settlement:CodexNativeSettlementReceipt):CodexNativeTraceReceipt {
+ if(!object(value)||!transportReadObjects.has(value)||!isVerifiedCodexLaunchReceipt(launch)||!isVerifiedCodexSettlementReceipt(settlement)||isHistoricalCodexReceipt(launch)||!codexReceiptProvenance(launch)||!codexReceiptProvenance(settlement)||binding.nativeTraceMode!=="post-sampling-token-usage-v1"||!exact(value,["schema","nonce","sessionId","runId","mode","producer","containerId","environment","sources","events","stderrBytes","stderrSHA256","stderrChain","complete","cleanupOk","engineExitStatus","requestedStop"])||value.schema!=="codex-native-trace-v1"||value.nonce!==launch.nonce||value.sessionId!==launch.sessionId||value.runId!==launch.runId||value.mode!==binding.nativeTraceMode||JSON.stringify(value.producer)!==JSON.stringify(launch.producer)||value.containerId!==launch.container.id||JSON.stringify(value.sources)!==JSON.stringify(launch.sources)||JSON.stringify(value.environment)!==JSON.stringify({RUST_LOG:"off,codex_core::session::turn=trace",LOG_FORMAT:"json"})||value.complete!==true||value.cleanupOk!==settlement.cleanupOk||value.engineExitStatus!==settlement.engineExitStatus||value.requestedStop!==settlement.requestedStop||!Number.isSafeInteger(value.stderrBytes)||value.stderrBytes<0||value.stderrBytes>16*1024*1024||!hex(value.stderrSHA256)||!hex(value.stderrChain)||!Array.isArray(value.events)||value.events.length>64)throw Error("Unbound native trace capture");
+ const directory=dirname(receiptProvenance.get(value)!.rawPath),lines:Array<Readonly<{bytes:Buffer;parsed:Readonly<Record<string,unknown>>}>>=[];let lastSequence=0,lastEnd=0;
+ for(const [index,event] of value.events.entries()){
+  if(!exact(event,["file","sha256","bytes","stderrSequence","stderrOffset","chain","turnId","nativeTimestamp","observedAtMs","observedMonotonicNs"])||event.file!==`trace-event-${String(index).padStart(4,"0")}.raw`||!hex(event.sha256)||!hex(event.chain)||!Number.isSafeInteger(event.bytes)||event.bytes<2||event.bytes>65536||!Number.isSafeInteger(event.stderrSequence)||event.stderrSequence<=lastSequence||!Number.isSafeInteger(event.stderrOffset)||event.stderrOffset<lastEnd||event.stderrOffset+event.bytes>value.stderrBytes||typeof event.turnId!=="string"||event.turnId.length<1||event.turnId.length>512||!Number.isSafeInteger(event.observedAtMs)||!Number.isSafeInteger(event.observedMonotonicNs))throw Error("Invalid native trace index");
+  const path=join(directory,event.file),fd=openSync(path,constants.O_RDONLY|constants.O_NOFOLLOW);let raw:Buffer;
+  try{const info=fstatSync(fd);if(!info.isFile()||info.uid!==binding.uid||(info.mode&0o777)!==0o600||info.nlink!==1||info.size!==event.bytes)throw Error("Unsafe original native trace");raw=readFileSync(fd);if(raw.length!==event.bytes||digest(raw)!==event.sha256||raw.at(-1)!==10)throw Error("Changed original native trace");}finally{closeSync(fd);}
+  const parsed=JSON.parse(new TextDecoder("utf-8",{fatal:true}).decode(raw));if(!object(parsed)||parsed.target!=="codex_core::session::turn"||parsed.level!=="TRACE"||!object(parsed.fields)||parsed.fields.message!=="post sampling token usage"||parsed.fields.turn_id!==event.turnId||JSON.stringify(parsed.timestamp??null)!==JSON.stringify(event.nativeTimestamp))throw Error("Original trace selector mismatch");freeze(parsed);lines.push(Object.freeze({bytes:raw,parsed}));lastSequence=event.stderrSequence;lastEnd=event.stderrOffset+event.bytes;
+ }
+ verifiedTrace.add(value);traceLines.set(value,Object.freeze(lines));return value as CodexNativeTraceReceipt;
+}
+export const isVerifiedCodexTraceReceipt=(v:unknown):v is CodexNativeTraceReceipt=>!!v&&typeof v==="object"&&verifiedTrace.has(v);
+export function getCodexTraceUtf8(value:CodexNativeTraceReceipt){return verifiedTrace.has(value)?rawReceiptBytes.get(value):undefined;}
+export function getCodexTraceEvents(value:CodexNativeTraceReceipt){return verifiedTrace.has(value)?traceLines.get(value)?.map(v=>Object.freeze({bytes:Buffer.from(v.bytes),parsed:v.parsed})):undefined;}
+
+/** Read-only exact source preflight; grants no transport qualification or lease. */
+export function assertCodexReceiptSourceClosure(deployment:string,sourceSha256:Readonly<Record<string,string>>,uid=process.getuid?.()):Record<string,string>{if(uid===undefined)throw Error("Source owner unavailable");if(Object.keys(sourceSha256).sort().join()!==[...CODEX_RECEIPT_SOURCES].sort().join())throw Error("Incomplete reviewed receipt source closure");const policy={sourceSha256},sources:Record<string,string>={};
+  for (const relative of CODEX_RECEIPT_SOURCES) { const path=join(deployment,relative), info=lstatSync(path); if (!info.isFile() || info.isSymbolicLink() || info.mode & 0o022 || ![0,uid].includes(info.uid) || realpathSync(path)!==path) throw Error('Unsafe receipt source'); for (let parent=dirname(path); parent!==dirname(deployment); parent=dirname(parent)) { const s=lstatSync(parent); if (!s.isDirectory() || s.isSymbolicLink() || s.mode&0o022 || ![0,uid].includes(s.uid)) throw Error('Unsafe receipt source ancestry'); } const actual=digest(readFileSync(path)); if (!hex(policy.sourceSha256[relative]) || actual!==policy.sourceSha256[relative]) throw Error('Receipt source hash mismatch'); sources[relative]=actual; }
+return sources;}

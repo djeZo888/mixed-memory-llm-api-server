@@ -61,14 +61,18 @@ def main():
     for number in (signal.SIGTERM, signal.SIGINT, signal.SIGHUP):
         signal.signal(number, on_signal)
 
+    trace = None
+
     def copy_stream(source, destination):
         redactor = Redactor(token)
         try:
             while True:
                 chunk = os.read(source.fileno(), 65536)
                 if not chunk:
+                    if destination == 2 and trace is not None: trace.feed(b"",final=True)
                     write_all(destination, redactor.feed(b"", final=True))
                     return
+                if destination == 2 and trace is not None: trace.feed(chunk)
                 write_all(destination, redactor.feed(chunk))
         except (OSError, ValueError):
             # No raw-stream fallback and no exception text containing payloads.
@@ -90,6 +94,9 @@ def main():
             receipts = runpy.run_path(str(Path(__file__).resolve().with_name('codex_receipts.py')))
             receipt_config = receipts['channel']()
             producer = receipts['process_identity']()
+            if receipt_config and receipt_config[1].get('nativeTraceMode'):
+                module=runpy.run_path(str(Path(__file__).resolve().with_name('codex_native_trace.py')))
+                trace=module['TraceCapture'](receipt_config)
         process = subprocess.Popen(args, stdin=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                    start_new_session=True)
         for source, destination in ((process.stdout, 1), (process.stderr, 2)):
@@ -164,6 +171,8 @@ def main():
             cleanup_ok = False
         if receipt_config is not None:
             try:
+                if trace is not None:
+                    trace.publish(receipts,producer,native_id,process.returncode if process is not None else None,requested_stop,cleanup_ok and not any(worker.is_alive() for worker in filters) and not pipe_failed.is_set())
                 receipts['publish_settlement'](receipt_config, producer, container, native_id,
                     process.returncode if process is not None else None, requested_stop,
                     process is not None and process.poll() is not None, rm_exit, exists_exit,

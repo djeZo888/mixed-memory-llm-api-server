@@ -489,10 +489,13 @@ test("unknown native settlement preserves failure while verified launcher cleanu
 });
 
 test("cancellation during initialization does not issue a prompt; later explicit turn remains usable", async (t) => {
-  const h = await harness(t, { initDelay: 100 });
+  const h = await harness(t, { initGate: true });
   const pending = h.engine.prompt("should not execute");
-  await delay(20);
+  let seen=false;
+  for(let i=0;i<1000;i++){try{seen=(await h.calls()).some(call=>call.method==="initialize");}catch{/* fixture journal not created yet */}if(seen)break;await delay(5);}
+  assert.ok(seen,"actual fixture initialize request must be observed before cancellation");
   await h.engine.cancel();
+  await writeFile(join(h.profileDir,"initialize-release"),"released");
   await pending;
   assert.equal(
     (await h.calls()).filter((call) => call.method === "prompt").length,

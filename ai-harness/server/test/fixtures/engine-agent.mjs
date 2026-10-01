@@ -138,6 +138,14 @@ connection = new acp.AgentSideConnection(
   () => ({
     async initialize(params) {
       await save({ method: "initialize", params });
+      if (config.initGate) {
+        const gate = join(args[1], "initialize-release");
+        const until = Date.now() + 10000;
+        while (!(await readFile(gate).then(()=>true,()=>false))) {
+          if (Date.now() >= until) throw Error("Synthetic initialization gate not released");
+          await new Promise(resolve => setTimeout(resolve, 5));
+        }
+      }
       if (config.initDelay)
         await new Promise((resolve) => setTimeout(resolve, config.initDelay));
       return {
