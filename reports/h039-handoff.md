@@ -17,11 +17,11 @@ is `c73a853abbf46ecede65d0dae04dd2e5ac8e5c37`.
 
 ## Current continuation — hardware hold
 
-The original four native sessions and recorded download job were adopted before new dispatch. [The adoption checkpoint](h039-adoption-checkpoint.md) and [current roster](h039-worker-sessions.json) record subsequent source reviews and actual terminal receipts. A's four compaction lifecycle fixes and D's technical-vision fixtures are integrated locally. B's retention verifier and E's isolated native adapter remain source preparation; repeated native retention, persistence recovery and automatic-trigger acceptance are **NOT_TESTED**.
+The original four native sessions and recorded download job were adopted before new dispatch. [The adoption checkpoint](h039-adoption-checkpoint.md) and [current roster](h039-worker-sessions.json) record subsequent source reviews and actual terminal receipts. Reviewed A/B/C/D/E source is integrated. A's four compaction lifecycle fixes, B's 72-fact three-cycle verifier, the disabled E native adapter and C/D vision preparation passed one coherent [source validation](h039-source-validation.json): build and strict adapter compile, 1,091 server fixtures with four native skips, 22 artifact fixtures, Markdown links and four provenance fixtures. All native workers are closed with collected terminal receipts. Repeated native retention, persistence recovery and automatic-trigger acceptance remain **NOT_TESTED**; the trusted collector and B/E runtime integration are unqualified.
 
 The original vision download failed after one verified Qwen shard. The reviewed recovery stager then failed before any new unit or namespace was created; its cause is unknown. Original verified/partial artifacts and failure receipts are preserved. No download is running.
 
-The user authorized orderly **ai-vm guest shutdown** to add a second Ada 48 GB. C owns that shutdown; all further ai-vm download, deployment and inference work is frozen. Mac source tasks may finish. Check the current roster for the actual shutdown result before accessing the VM. Leave it down and do not restart or resume VM work until the user confirms installation is complete. This instruction authorizes guest shutdown only; host/Proxmox, driver and fan changes remain outside scope.
+The user authorized orderly **ai-vm guest shutdown** to add a second Ada 48 GB. C completed that shutdown with accepted poweroff at 01:33:22 UTC / 03:33 Ljubljana; all further ai-vm download, deployment and inference work is frozen. Mac source tasks may finish. Check the current roster for the actual shutdown result before accessing the VM. Leave it down and do not restart or resume VM work until the user confirms installation is complete. This instruction authorizes guest shutdown only; host/Proxmox, driver and fan changes remain outside scope.
 
 ## Requirements that take precedence
 
@@ -31,7 +31,7 @@ The user authorized orderly **ai-vm guest shutdown** to add a second Ada 48 GB. 
   original sources separately. Do not promise universal lossless summarization.
 - Technical image-to-text specialist: approved Qwen3.5-9B BF16 plus
   PaddleOCR-VL-1.6 on one 48 GB Ada, subject to measured combined runtime fit.
-  Prepare/download now. The user is bringing the external Ada online and trying
+  Artifact preparation is retained; further downloads wait for hardware confirmation. The user is bringing the external Ada online and trying
   20 Gbps for stability; do not assume it is present.
 - The smaller Ada 200K Qwen may be removed, and keeping Sova available is not
   required. Verify actual roles: H038 already retired that Qwen and assigned
@@ -78,7 +78,7 @@ The Mac CLIs are 0.159.2. Updating them does not update Sova's separately pinned
 | Python/C++/Node coding, search/browser, PDF extraction/OCR and basic creation | Retained passes; no native pixel understanding claim |
 | Ordinary persistence, cold resume, browser reload, event replay, queued Stop and duplicate protection | Retained scoped passes; restart during active owned work still needs specific qualification |
 | Context compaction | Native mechanism exists; small recall passed but one factual error exists; large AUTO metadata and isolated summary-only quality remain unqualified |
-| Repeated technical retention / authoritative project memory | H039 A/B source work and new small live suite are first priority |
+| Repeated technical retention / authoritative project memory | H039 source checks passed; qualified collector and small live suite remain first priority after hardware return |
 | Missing usage events | Must remain unknown until measured; no fabricated zero |
 | Active-process Stop, restart during streams, saturation/lane fallback, overlapping parent/child admission | Focused follow-up qualification still needed; do not extrapolate queued Stop evidence |
 | Mid-turn steering | Queued follow-ups exist; true active native steering remains pending |
@@ -103,7 +103,7 @@ choosing the recovery mechanism. One new automatic-trigger case is justified
 only after the smaller suite passes. Never repeat the old 950K benchmark or the
 unchanged four-fact large paste.
 
-The older `test_quiescent_transaction_with_incomplete_dpkg_audit_retains_inhibitor` failure is retained in [its run/job](https://github.com/djeZo888/mixed-memory-llm-api-server/actions/runs/36781380288/job/110112205715); its initial process-deadline/package-inspection cause remains unproven. At PR head `86cf570`, installer fixtures, worker regressions and client checks passed; repository-sanity failed on encoded spaces in local documentation links. Root corrected the active links and passed the local checker plus four existing provenance/archive tests. Current source integration still needs coherent candidate validation and published CI.
+The older `test_quiescent_transaction_with_incomplete_dpkg_audit_retains_inhibitor` failure is retained in [its run/job](https://github.com/djeZo888/mixed-memory-llm-api-server/actions/runs/36781380288/job/110112205715); its initial process-deadline/package-inspection cause remains unproven. At PR head `86cf570`, installer fixtures, worker regressions and client checks passed; repository-sanity failed on encoded spaces in local documentation links. Root corrected the active links and passed the local checker plus four existing provenance/archive tests. The combined source candidate passed build/compile and all local fixtures; publication still requires fresh CI.
 
 ## How the tandem actually works
 
@@ -140,7 +140,7 @@ reading its actual unit/receipt/manifest, preserving partial artifacts.
 
 Root-local private launch records live under
 `/Users/agent/Documents/LLMServer/orchestration/tasks/H039-20261001/`.
-All four original sessions were adopted. A and D closed with actual native/outer exit 0 and their reviewed source was integrated locally. B remains a bounded source session. C's original download failed; its source-recovery phase hit its deadline, and its later launch-only phase closed with a recorded staging failure and no download. The same C session now owns user-authorized guest shutdown. E is a separately recorded source-only adapter task on mac-worker2 with a 01:35 UTC deadline. Read the linked current roster for exact phases, identities, terminal outcomes and hardware hold. Do not infer task success from a CLI exit or live PID.
+All four original sessions were adopted. A/B/D/E source tasks and A's combined source-validation phase are closed with actual native/outer exit 0; reviewed source is integrated. C's original download failed, its source-recovery phase hit its deadline, and its later launch-only phase closed with a staging failure and no download. The same C session completed user-authorized guest shutdown and closed with actual exit 0. Original failure/partial evidence remains preserved. Read the linked current roster for exact phases, identities, terminal outcomes and hardware hold. Do not infer task success from a CLI exit or live PID.
 
 Public session metadata appears in the linked JSON; private events and passwords
 remain outside Git. Git publication uses mac-worker2's already authenticated
@@ -148,7 +148,7 @@ GitHub helper from an isolated repository; credentials are not copied to root.
 
 ## New-chat starting brief
 
-> Continue Sova from reports/h039-handoff.md and reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image. First adopt the recorded sessions, actual terminal receipts and preserved download state. The user requested ai-vm shutdown for a second Ada 48 GB installation; leave the guest down until they confirm completion. Mac source preparation can finish. Compaction reliability remains priority one. Review and qualify the coherent source candidate before live work. Preserve chats, files, credentials, partial artifacts and failed evidence. Root coordinates and publishes; actual native Mac workers implement with GPT 6.1 Sol Ultra. Creative image acceptance and upstream Codex upgrades remain deferred. PR #11 remains draft and unmerged.
+> Continue Sova from reports/h039-handoff.md and reports/h039-worker-sessions.json on feature/h037-codex-default-ada-image. First adopt the recorded sessions, actual terminal receipts and preserved download state. The user requested ai-vm shutdown for a second Ada 48 GB installation; leave the guest down until they confirm completion. Mac source preparation can finish. Compaction reliability remains priority one. Reuse the passing coherent source checks; qualify the trusted collector and B/E native interface before live retention work. Preserve chats, files, credentials, partial artifacts and failed evidence. Root coordinates and publishes; actual native Mac workers implement with GPT 6.1 Sol Ultra. Creative image acceptance and upstream Codex upgrades remain deferred. PR #11 remains draft and unmerged.
 
 
 The worker's [shutdown receipt](h039-ai-vm-shutdown.json) records accepted guest poweroff at **01:33:22 UTC / 03:33 Ljubljana**, command exit 0, fsynced guarded receipt and two subsequent SSH connection-closed probes. Independent hypervisor/physical stopped state was not checked. Leave ai-vm down for the user's hardware installation; no automatic restart or further VM work before their confirmation.

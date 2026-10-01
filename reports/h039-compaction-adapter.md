@@ -26,3 +26,6 @@ Remaining concrete blockers:
 - Temporary app API preparation does not prove production browser/UI.
 
 The JSON contains exact owned paths, actual settings, tests/failures and proposed source-closure review tuple. Root must recompute absolute imported-source hashes on the future Linux candidate and add the actual protected Qwen receipt; no installed runtime hashes or counts were fabricated. This finite source task closes without waiting for B or hardware.
+
+
+Root continuation: B subsequently corrected its legal IDs, whole-request/typed-input binding and full-state/message-only projection in source commit `4581a186`, independently reviewed with 37 passing offline cases. E's preceding blocker list is retained as its observed source snapshot. The finalized collector interface and actual native transport compatibility remain unqualified; no E capability was enabled. Root also obtained the exact audited 399-byte native prefix metadata (SHA-256 `e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e`) through a separate read-only source review; this does not relabel E's failed host-key read or qualify the installed runtime.

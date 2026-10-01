@@ -75,9 +75,11 @@ Remaining concrete blockers: scoped dynamic retrieval is unavailable because
 the pinned CodexConnection rejects all server calls; there is no qualified
 read-original tool/settlement seam. Main continuation artifact collection and
 accepted-grade/cold checkpoint handoff are unqualified and fail honestly.
-Cold resume and clean-child first-request qualification are unavailable. B
-must finalize legal IDs and derive checkpoint messages/expected typed input
-from exact bytes, including instructions. Runtime binary/tokenizer observation,
+Cold resume and clean-child first-request qualification are unavailable. After E
+closed, B finalized legal IDs, complete raw request/typed-input binding and
+message-only projection from separately bound full state in source commit
+`4581a186`. The trusted collector, actual native envelope compatibility and B/E
+integration remain unqualified. Runtime binary/tokenizer observation,
 exact installed compiled-input manifest and actual mount/egress attestation
 must be obtained separately. Unknown counts and revisions remain unknown.
 

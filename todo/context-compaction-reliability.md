@@ -1,7 +1,7 @@
 # Context compaction reliability
 
 **Priority: first. Plan and source audit recorded on 1 October 2026.**
-H039 source preparation is underway; no fresh native retention or deployment acceptance is implied. ai-vm is held for user-authorized shutdown and installation of a second Ada 48 GB. Mac source work can finish; live checks wait until the user confirms the hardware is ready.
+Reviewed H039 source preparation passed combined build/compile and 1,091 server fixtures with four optional native skips. All native workers closed. No fresh native retention or deployment acceptance is implied. ai-vm accepted poweroff at 01:33:22 UTC for installation of a second Ada 48 GB; live checks wait until the user confirms the hardware is ready.
 Image generation qualification is deferred by the user.
 
 ## Objective and current evidence
@@ -35,7 +35,7 @@ Sources:
 [H038 checkpoint](../reports/h038-checkpoint.md),
 [H039 native audit](../reports/h039-compaction-native.md),
 [H039 current checkpoint](../reports/h039-adoption-checkpoint.md).
-Retain original failed and partial outcomes.
+[Combined H039 source checks](../reports/h039-source-validation.json) also cover the 72-fact verifier and disabled native adapter. The trusted full-state collector, B/E runtime integration, scoped retrieval, accepted-continuation cold resume and automatic triggering remain unqualified. Retain original failed and partial outcomes.
 
 ## Two distinct acceptance requirements
 
