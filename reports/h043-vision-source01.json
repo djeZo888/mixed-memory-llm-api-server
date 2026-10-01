@@ -5,9 +5,9 @@
   "status": "IMPLEMENTED_DISABLED_SOURCE_CANDIDATE",
   "sourceOnly": true,
   "baseCommit": "4f1a060ae4cc682244d1be40c4c5f5fd2919a7fa",
-  "sourceCommit": "fef5a2459b5b98c96d683e64c3abc859a4a7a138",
+  "sourceCommit": "a5e2caa9cf02a259caefbfed4fa365caa2183150",
   "reportCommitReference": "final self commit recorded in external output/RESULTS.json",
-  "observedUtc": "2026-10-01T21:54:13.011349+00:00",
+  "observedUtc": "2026-10-01T21:57:47.026430+00:00",
   "activation": "DISABLED_SOURCE_PREPARATION",
   "ownedFileCount": 13,
   "implemented": [
@@ -30,8 +30,8 @@
   ],
   "checks": [
     {
-      "name": "python-final-06",
-      "testCount": 14,
+      "name": "python-service-parity-07",
+      "testCount": 15,
       "exitCode": 0,
       "argv": [
         "python3",
@@ -45,15 +45,15 @@
         "-v"
       ],
       "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/V-vision-source01/repo",
-      "startUtc": "2026-10-01T21:48:45.250651+00:00",
-      "endUtc": "2026-10-01T21:48:47.763391+00:00",
-      "logSha256": "2d93e0c30df015a24a3766bade9f0ffa3cea13643ab90d49ae56cd33d55c36f5",
-      "receipt": "logs/python-final-06.receipt.json",
-      "log": "logs/python-final-06.log"
+      "startUtc": "2026-10-01T21:56:00.076036+00:00",
+      "endUtc": "2026-10-01T21:56:02.581422+00:00",
+      "logSha256": "c0509f11ef0805e4a2416457066cbb54e5eb8ce11af4208968ce203bfc965359",
+      "receipt": "logs/python-service-parity-07.receipt.json",
+      "log": "logs/python-service-parity-07.log"
     },
     {
-      "name": "python-backend-final-04",
-      "testCount": 9,
+      "name": "python-backend-parity-05",
+      "testCount": 10,
       "exitCode": 0,
       "argv": [
         "python3",
@@ -67,11 +67,11 @@
         "-v"
       ],
       "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/V-vision-source01/repo",
-      "startUtc": "2026-10-01T21:50:03.477585+00:00",
-      "endUtc": "2026-10-01T21:50:08.276980+00:00",
-      "logSha256": "6ecc73c2f23dd5df7830f44a4b8871347e06c8635f4c33c92653f1ec7ee30b25",
-      "receipt": "logs/python-backend-final-04.receipt.json",
-      "log": "logs/python-backend-final-04.log"
+      "startUtc": "2026-10-01T21:56:01.231891+00:00",
+      "endUtc": "2026-10-01T21:56:06.541603+00:00",
+      "logSha256": "8814c94e4e18e5dca3bb06ba4b64ed8e687b98841b91e5f11cc9c078b53e45be",
+      "receipt": "logs/python-backend-parity-05.receipt.json",
+      "log": "logs/python-backend-parity-05.log"
     },
     {
       "name": "python-runtime-plan-final-02",
@@ -96,7 +96,7 @@
       "log": "logs/python-runtime-plan-final-02.log"
     },
     {
-      "name": "technical-vision-ts-final-04",
+      "name": "technical-vision-ts-parity-06",
       "testCount": 33,
       "exitCode": 0,
       "argv": [
@@ -110,11 +110,11 @@
         "test/technical-vision-host.test.ts"
       ],
       "cwd": "/Users/agent/CodexProjects/llm-orchestration/H043-20261001/V-vision-source01/repo/ai-harness/server",
-      "startUtc": "2026-10-01T21:50:04.627939+00:00",
-      "endUtc": "2026-10-01T21:50:06.259037+00:00",
-      "logSha256": "0be63185a1e3eef8c71acfcc9816741ef864fdbe1c8a6de10a7c6d24dcf24bce",
-      "receipt": "logs/technical-vision-ts-final-04.receipt.json",
-      "log": "logs/technical-vision-ts-final-04.log"
+      "startUtc": "2026-10-01T21:57:10.538685+00:00",
+      "endUtc": "2026-10-01T21:57:12.204186+00:00",
+      "logSha256": "9df36fe09ecd5da032bbc4799c33b14908072ab650bae97875016f4d9d039af6",
+      "receipt": "logs/technical-vision-ts-parity-06.receipt.json",
+      "log": "logs/technical-vision-ts-parity-06.log"
     },
     {
       "name": "typecheck-final-03",
@@ -149,7 +149,7 @@
     }
   ],
   "testSummary": {
-    "pythonPassed": 26,
+    "pythonPassed": 28,
     "typescriptPassed": 33,
     "failedInFinalChecks": 0,
     "typecheckExit": 0,
@@ -177,6 +177,13 @@
       "log": "logs/python-focused-04.log",
       "receipt": "logs/python-focused-04.receipt.json",
       "resolution": "Injected checkpoint persistence failure initially did not latch faulted immediately; corrected durable-state retention/fault latch. Header send BrokenPipe traces also retained and fixed at response boundary."
+    },
+    {
+      "name": "technical-vision-ts-parity-05",
+      "exitCode": 1,
+      "log": "logs/technical-vision-ts-parity-05.log",
+      "receipt": "logs/technical-vision-ts-parity-05.receipt.json",
+      "resolution": "Dependency relink used wrong working-directory-relative path; no TS child launched. Original failed launcher header retained, corrected relink then full suite passed."
     }
   ],
   "otherPreservedFailures": [
@@ -260,5 +267,9 @@
     "selectedFiles": "output/source-selected/",
     "commands": "output/logs/",
     "finalHeads": "output/RESULTS.json"
+  },
+  "rootReview02": {
+    "messageSha256": "ab427464689d16c6ec005af8d57e1aae7c5e9d6ed26c1f4b00b9104d8d5671cb",
+    "handled": "Python public UTF16 text caps/controls/base64 guards now match existing TS validation. Raw model/OCR response remains private unchanged. Complete but unrepresentable public OCR becomes settled analysis_failed; producer regressions passed."
   }
 }

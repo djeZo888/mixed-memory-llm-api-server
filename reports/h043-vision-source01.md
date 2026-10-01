@@ -3,7 +3,7 @@
 Implemented a disabled durable technical-vision HTTP service, actual bounded
 Qwen/Paddle backend, and trusted owner-facing host interface. This phase remained
 source-only in the root-approved isolated checkout. Base `4f1a060ae4cc682244d1be40c4c5f5fd2919a7fa`; source commit
-`fef5a2459b5b98c96d683e64c3abc859a4a7a138`. The separate report commit/final HEAD and package hashes are recorded
+`a5e2caa9cf02a259caefbfed4fa365caa2183150`. The separate report commit/final HEAD and package hashes are recorded
 in `output/RESULTS.json`, avoiding a self-referential commit hash in Git.
 
 The service implements all five H039 v1 routes with private bearer auth, strict
@@ -49,7 +49,7 @@ ID in the existing event/database transaction. A lost sink acknowledgement can
 offer that same event again; no impossible exactly-once network claim is made.
 The exclusive host crash lock requires owned reconciliation before takeover.
 
-Final checks: **26 Python tests and 33 focused TS tests passed**, typecheck and
+Final checks: **28 Python tests and 33 focused TS tests passed**, typecheck and
 build exited **0**. The integrated fixture uses real Python service + concrete
 backend + fake local model HTTP + existing TS client + trusted host and verifies
 literal OCR and byte-exact frozen PNGs. It is not a prediction-accuracy test.
@@ -102,6 +102,14 @@ native PDF and technical accuracy/crop reconciliation. Source fsync/rename and
 injected failures do not qualify Linux power-loss/noncooperative syscall behavior.
 No Linux contact, model work, fan/thermal/lifecycle change or new paid delegate
 occurred; existing owners, credentials, runtime pins and histories stay preserved.
+
+Final root review02 parity correction: public text fields now enforce TS UTF16
+length limits (description65536, defaults8192), ASCII-control and embedded-base64
+guards. Raw OCR/model HTTP responses remain unchanged in private history; complete
+responses that cannot become valid public evidence fail settled with analysis_failed.
+Boundary/control/base64/astral regressions and literal8193-character private-history
+regression passed. A TS relink attempt used the wrong relative cwd and launched no
+test child; its failure is retained and the corrected full suite passed.
 
 Official read-only references and failed research opens are exported in
 `output/official-source-references.json`. The
