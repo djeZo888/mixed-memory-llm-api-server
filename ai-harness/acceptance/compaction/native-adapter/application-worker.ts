@@ -26,7 +26,7 @@ process.on('message',(message:any)=>{
       if(message.method==='close'){for(const [id,op]of operations)if(id!==message.id)op.abort.abort();await Promise.all([...operations.entries()].filter(([id])=>id!==message.id).map(([,op])=>op.done));}
       if(message.method==='adoptRestart') {
         if(adapter)throw Error('restart_worker_not_fresh');
-        const ticket=await qualifyRestart(message.args,config);adapter=await loadReviewedLocalEntry(configPath,ticket);
+        const ticket=await qualifyRestart(message.args,config);abort.signal.throwIfAborted();adapter=await loadReviewedLocalEntry(configPath,ticket,abort.signal);
         const result=await adapter.adoptRestart({ticket,signal:abort.signal});await send({result});return;
       }
       if(!adapter)adapter=await loadReviewedLocalEntry(configPath);

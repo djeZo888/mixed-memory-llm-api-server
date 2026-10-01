@@ -97,6 +97,11 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
   const freezeDb = new DatabaseSync(DISPATCH_STATE, { readOnly: true });
   const freeze = { held: (alias: string) => {try{return hooks?.carrier ? hooks.carrier.held(freezeDb.prepare('SELECT key,fingerprint,action,acknowledged,scope FROM dispatch_holds').all(),alias) : DispatchFreeze.prototype.held.call({ db: freezeDb } as DispatchFreeze, alias);}catch{return true;}}, close: () => freezeDb.close() };
   const registerTaskSession=async(sessionId:string,role:'parent'|'probe'|'child',parentSessionId?:string,signal?:AbortSignal)=>{await hooks?.carrier?.registerSession({sessionId,role,parentSessionId},signal);};
+  const adoptTaskSession=async(ticket:RestartTicket,signal?:AbortSignal)=>{
+    if(!hooks?.carrier||!isRestartTicket(ticket)||ticket!==restart)throw Error('exact_restart_carrier_and_ticket_required');
+    assertRestartBootstrap(ticket,input);
+    return hooks.carrier.adoptSession({sessionId:ticket.state.parentId,role:'parent',previousWorker:ticket.input.beforeProcess},ticket.input.afterProcess,signal,captures);
+  };
   const authorizeTaskAction=async(sessionId:string,requestId:string,signal?:AbortSignal)=>{if(hooks?.carrier)await hooks.carrier.verify(sessionId,requestId,signal,captures);};
   let gateway: Gateway | undefined, closed = false;
   const originalProbes = new Map<string,CodexReadOriginalProbe>(), originalSettlements: any[] = [], artifactSettlements: any[] = [];
@@ -169,7 +174,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
       schema: 1, candidateCommit: review.candidateCommit, policy: FIXED_POLICY, layout,
       reviewSha256: sha256(stableJson(review)), productionStateReceiptSha256: review.productionStateReceiptSha256,
       productionBrowserQualification: 'NOT_TESTED', runtimeBinaryQualification: 'NOT_TESTED' }) + '\n');
-    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, authorizeTaskAction, registerTaskSession, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
+    return { application, gateway, host, guard, observer, counts, originalProbes, originalSettlements, artifactSettlements, evidence, qualification: hooks?.qualification, authorizeTaskAction, registerTaskSession, adoptTaskSession, hostId:randomUUID(), launchHeld, launcherPath: input.launcherPath, withCaptureHold, layout, close, expiresAt: expiry, dispatchCutoffAt, verifyLane, directProbes, get closing() { return closed; } };
   } catch (error) {
     return failedBootstrap(error, () => durableFile(join(layout.hostPrivate, 'bootstrap-FAILED.json'), stableJson({
       outcome: 'failed', code: (error as NodeJS.ErrnoException).code === 'EADDRINUSE' ? 'EADDRINUSE' : 'bootstrap_failed', automaticRetry: false }) + '\n'), close);

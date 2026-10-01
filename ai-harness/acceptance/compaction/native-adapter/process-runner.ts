@@ -116,7 +116,8 @@ export class OwnedApplicationRunner {
     if(signal?.aborted){await this.shutdownAndConfirm();throw Error('owned_restart_cancelled_before_adoption');}
     const resumed=await this.call('adoptRestart',{...handoff,checkpoint:input.checkpoint,acceptedContinuation:input.acceptedContinuation,closed,beforeProcess:before,afterProcess:after,oldExit:exited,runId:input.runId,actionId:input.actionId,windowId:input.windowId},signal);
     if(resumed.nativeThreadId!==input.checkpoint.nativeThreadId||resumed.afterStateUtf8!==input.checkpoint.stateUtf8||resumed.replayedActionIds?.length!==0)throw Error('accepted_parent_changed_or_replayed');
-    const receiptUtf8=stableJson({source:'owned-application-process-restart',runId:input.runId,actionId:input.actionId,windowId:input.windowId,before,after,oldExit:exited,oldCloseReceiptUtf8:closed.closeReceiptUtf8,stateSha256:handoff.stateSha256,nativeThreadId:resumed.nativeThreadId,checkpointStateSha256:input.checkpoint.stateSha256});
+    if(resumed.carrierAdoptionReceiptSha256!==undefined&&!/^[a-f0-9]{64}$/.test(resumed.carrierAdoptionReceiptSha256))throw Error('actual_carrier_adoption_receipt_digest_required');
+    const receiptUtf8=stableJson({source:'owned-application-process-restart',runId:input.runId,actionId:input.actionId,windowId:input.windowId,before,after,oldExit:exited,oldCloseReceiptUtf8:closed.closeReceiptUtf8,stateSha256:handoff.stateSha256,nativeThreadId:resumed.nativeThreadId,checkpointStateSha256:input.checkpoint.stateSha256,...(resumed.carrierAdoptionReceiptSha256===undefined?{}:{carrierAdoptionReceiptSha256:resumed.carrierAdoptionReceiptSha256})});
     await durableFile(join(this.input.hostPrivate,`${after.pid}-${sha256(id(after))}-cold-restart.json`),receiptUtf8);
     return {...resumed,beforeProcessId:id(before),afterProcessId:id(after),processRestartReceiptUtf8:receiptUtf8,processRestartReceiptSha256:sha256(receiptUtf8)};
   }

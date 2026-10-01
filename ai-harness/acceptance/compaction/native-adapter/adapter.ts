@@ -1,4 +1,4 @@
-import type { RestartTicket } from './restart.js';
+import {isRestartTicket,assertRestartBootstrap,type RestartTicket} from './restart.js';
 import { privateFile } from './checkpoint.js';
 import { consumedTool, validateConsumedFollowup } from './consumed-tools.js';
 import { parentManifest, type ParentProjectionSpec } from './parent-projection.js';
@@ -238,10 +238,13 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
     },
     async adoptRestart({ticket,signal}: {ticket:RestartTicket;signal:AbortSignal}) {
       if(host||opened||!hooks?.adoptPolicy||signal.aborted)throw Error('fresh_process_durable_adoption_required');
+      if(!isRestartTicket(ticket))throw Error('owned_qualified_restart_required');
+      assertRestartBootstrap(ticket,input!.bootstrap);
       const state=ticket.state;
       opened=true;acceptanceOwnerRunId=state.runId;parentId=state.parentId;latest=state.latest;
       host=await bootstrap(input!.bootstrap,hooks,ticket);
       await hooks.adoptPolicy({handoff:state.policyHandoff,checkpoint:state.checkpoint,producer:state.producer,sessionId:state.parentId,nativeThreadId:state.parentNativeThreadId,hostPrivate:state.layout.hostPrivate,application:host.application});
+      const carrierAdoption=await host.adoptTaskSession(ticket,signal);
       collector=new NativeCollector({store:host.application.store,files:host.application.files,gateway:host.gateway,observer:host.observer,guard:host.guard,hostPrivate:host.layout.hostPrivate,withCaptureHold:host.withCaptureHold});
       for(const action of state.seenActions)seenActions.add(action);
       const actual=await openNativeParent(host,parentId!,signal,state.parentNativeThreadId);
@@ -249,7 +252,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
       const after=await collector.captureState(parentId!,'actual-reopened-parent-without-answer-replay');
       if(after.stateUtf8!==state.checkpoint.stateUtf8||actual.nativeThreadId!==state.parentNativeThreadId)throw Error('native_parent_changed_after_process_restart');
       if(state.acceptedContinuation)lastContinuation={actionId:state.acceptedContinuation.actionId,runId:state.acceptedContinuation.artifactBaseline.storeRunId,artifactReceiptUtf8:state.acceptedContinuation.artifactBaseline.artifactReceiptUtf8,artifactReceiptSha256:state.acceptedContinuation.artifactBaseline.artifactReceiptSha256,parentState:after};
-      return {nativeThreadId:actual.nativeThreadId,afterStateUtf8:after.stateUtf8,parentState:after,replayedActionIds:[],layout:host.layout,beforeHostId:state.beforeHostId,afterHostId:host.hostId};
+      return {nativeThreadId:actual.nativeThreadId,afterStateUtf8:after.stateUtf8,parentState:after,replayedActionIds:[],layout:host.layout,beforeHostId:state.beforeHostId,afterHostId:host.hostId,carrierAdoptionReceiptSha256:sha256(JSON.stringify(carrierAdoption))};
     },
     async captureAcceptedArtifacts({acceptedContinuation,checkpoint:expected,signal}:any) {
       if(!host||!parentId||!collector||signal.aborted||!await settled(host)||!lastContinuation||lastContinuation.actionId!==acceptedContinuation?.actionId)throw Error('actual_reopened_accepted_artifact_owner_required');

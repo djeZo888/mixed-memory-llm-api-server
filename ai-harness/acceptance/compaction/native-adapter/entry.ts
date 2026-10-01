@@ -18,11 +18,13 @@ import { qualifyEntry } from './qualification.js';
 import type { BootstrapHooks } from './bootstrap.js';
 import type { CodexHostQualification } from '../../../server/src/codex-host.js';
 import { createArtifactSink } from './artifact-sink.js';
-export async function loadReviewedLocalEntry(configPath: string,restart?:import('./restart.js').RestartTicket) {
+export async function loadReviewedLocalEntry(configPath: string,restart?:import('./restart.js').RestartTicket,signal?:AbortSignal) {
+  signal?.throwIfAborted();
   const config = JSON.parse((await privateFile(configPath)).toString('utf8'));
   if (stableJson(config.bootstrap) !== stableJson(config.adapterInput?.bootstrap)) throw Error('entry_and_adapter_bootstrap_tuple_must_match');
   const qualified = await qualifyEntry(config,restart);
-  const carrier=config.carrier?await carrierForConfig(configPath):undefined;
+  const carrier=config.carrier?await carrierForConfig(configPath,undefined,signal):undefined;
+  signal?.throwIfAborted();
   const task=config.bootstrap.review.authorization.task;
   const selected=selectPolicyFactories(probeApi,task,qualified.profile==='h041-full-retention-v1'),factory=selected.factory;
   if(typeof factory!=='function')throw Error('separately_branded_frozen_authority_policy_unavailable');
