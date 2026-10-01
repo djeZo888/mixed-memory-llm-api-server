@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T15:29:06.728563+00:00",
+  "updatedUtc": "2026-10-01T15:59:54.560166+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-09",
@@ -1142,5 +1142,18 @@
     "E_6ded": "23417c0",
     "activation": "DISABLED_NATIVE_NOT_TESTED",
     "A_E_parserDuplicate": "1b9 deferred because current E4d stronger; df876 empty source cherry-pick skipped"
+  },
+  "midWayFanDiagnosis09": {
+    "observedUtc": "2026-10-01T15:54:20/15:55:52Z",
+    "readOnlySamples": 90,
+    "serviceState": "failed/MainPID0/exit78",
+    "blockedAt": "2026-10-01T14:41:50.122913+00:00",
+    "persistedStatusUtc": "2026-10-01T14:41:54.225648+00:00",
+    "currentDutyTach": "UNKNOWN; old100/3600 are stale",
+    "sourceDefect": "expected duty can advance before actual verified command",
+    "sourceFixOwner": "worker2, separate narrow fan-source commit",
+    "rootReviewOnly": "no live fan install/unit/latch/actuator changes",
+    "nativeCompaction": "NOT_TESTED",
+    "privateEvidence": "H041 task root-fan-live09/passive.receipt.json"
   }
 }
