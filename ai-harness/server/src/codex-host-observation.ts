@@ -32,6 +32,7 @@ const digest=(b:Uint8Array|string)=>createHash("sha256").update(b).digest("hex")
 export function observeOwnedCodexProcess(process:OwnedCodexProcess,input:Pick<CodexLaunchInput,"sessionId">,observer:CodexHostObservations):OwnedCodexProcess {
  const max=observer.maxRawBytesPerProcess??64*1024*1024;
  if(!Number.isSafeInteger(max)||max<1||max>64*1024*1024)throw Error("Invalid native observation bound");
+ const decoder=new TextDecoder("utf-8",{fatal:true,ignoreBOM:true});
  let bytes=0,sequence=0,failure:Error|undefined,reject!:(error:Error)=>void;
  const observationFailure=new Promise<never>((_,no)=>{reject=no;});void observationFailure.catch(()=>undefined);
  const fail=()=>{if(!failure){failure=new Error("Trusted native observation failed");reject(failure);void process.terminateAndConfirm().catch(()=>undefined);}return failure;};
@@ -47,7 +48,7 @@ export function observeOwnedCodexProcess(process:OwnedCodexProcess,input:Pick<Co
  const write=process.stdin.write;
  process.stdin.write=function(chunk:any,encoding?:BufferEncoding|((error?:Error|null)=>void),callback?:(error?:Error|null)=>void){capture("input",chunk,typeof encoding==="string"?encoding:undefined);const bound=write.bind(this);return typeof encoding==="string"?bound(chunk,encoding,callback):bound(chunk,encoding);};
  const push=process.stdout.push;
- process.stdout.push=function(chunk:any,encoding?:BufferEncoding){if(chunk!==null)try{capture("output",chunk);}catch{return false;}return push.call(this,chunk,encoding);};
+ process.stdout.push=function(chunk:any,encoding?:BufferEncoding){try{if(chunk!==null){capture("output",chunk);decoder.decode(chunk,{stream:true});}else decoder.decode();}catch{fail();return false;}return push.call(this,chunk,encoding);};
  process.observationFailure=observationFailure;
  try{synchronous(()=>observer.onNativeProcess?.(Object.freeze({sessionId:input.sessionId,process})));}catch{throw fail();}
  return process;
