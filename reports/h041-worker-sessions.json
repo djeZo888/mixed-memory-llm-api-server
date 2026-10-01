@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T13:13:21.927941+00:00",
+  "updatedUtc": "2026-10-01T13:28:48.570177+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-07",
@@ -693,11 +693,21 @@
     "parentNativeAuthorizationId": "H041-COMPACTION-DELIVERY-04",
     "privateLinuxStagingOwner": "worker1",
     "prepared": true,
-    "launched": false,
+    "launched": true,
     "reviewedCombinedHead": "67ec0419152f145dcc55219f2ff0025230003686",
     "combinedBundleSha256": "7faf4e7b2d01ea49f907c5e319355848a39debda2a4dc325ba41227a58555b38",
     "actualLaunchesFile": "SOURCE-07-LAUNCHES.json",
     "sourceExportTargetUtc": "2026-10-01T14:10:00+00:00"
   },
-  "source07Launched": true
+  "source07Launched": true,
+  "scopedNoTurnGo07": {
+    "status": "ROOT_SCOPED_NO_TURN_GO_ISSUED",
+    "issuedUtc": "2026-10-01T13:27:30.126250+00:00",
+    "candidateCommit": "5c4013dcb99b388a6127256080c3d7477ab77334",
+    "inputSHA256": "c46e0116b1b34944c8fccfb07330019f1cf55d7ab5aaa1a8a1da1d4ebce80cec",
+    "approvalSHA256": "d08d15d31d8ee890cb94ddd34243ed0da4f339e4fa45905d1852ed340ccccccb",
+    "actualResult": "PENDING",
+    "generationGo": false,
+    "lifecycleGo": false
+  }
 }
