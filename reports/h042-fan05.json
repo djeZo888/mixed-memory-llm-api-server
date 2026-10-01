@@ -1,0 +1,79 @@
+{
+  "actions": {
+    "bmcAuthLifecycleCalls": 0,
+    "bmcGetCalls": 0,
+    "bmcPutCalls": 0,
+    "inference": 0,
+    "linuxInstallations": 0,
+    "stateArchiveOrClear": 0,
+    "systemdStarts": 0,
+    "systemdStops": 0
+  },
+  "actor": "worker2",
+  "authority": {
+    "currentLiveGo": "MISSING",
+    "currentReadonlyGo": "MISSING",
+    "initial": "SOURCE+READ_ONLY",
+    "oldGo": "EXPIRED"
+  },
+  "base": "8590500b3fca2b12b96cf5570e81ec700d93430e",
+  "candidateSourceSha256": "a67ec7a2bcd45dc4b0b7ad0b593cfe3b72f9c7c24a6b2d387d62007901aebb13",
+  "closure": "IN_PROGRESS",
+  "credentialHandling": "Metadata-only reads; originals remain protected outside Git, no values or credential digests exported",
+  "independentControllerReview": "PASS no blocking finding",
+  "installedSourceSha256": "77a451e94ea50534bcd3cb9c012bca54752f1e38f1fc5961c2b48c7003870aa3",
+  "liveBlockers": [
+    "Current exact GO absent",
+    "Independent protected BMC/currentGPU preflight absent",
+    "Private Linux helper/config staging not authorized",
+    "Preserved controller can refresh an expired BMC session; one-session/no-refresh authority requires a reviewed failclosed mitigation before start"
+  ],
+  "liveController": "NOT_TESTED",
+  "phase": "H042 E-fan05",
+  "physicalOscillationRepair": "NOT_TESTED",
+  "pinsPreserved": {
+    "autoCompaction": 400000,
+    "context": 480000,
+    "native": "0.158.0",
+    "output": 65536,
+    "upstream": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3"
+  },
+  "policy": {
+    "coolBoundary": "<70",
+    "faultDuty": 100,
+    "immediateEscalation": true,
+    "independentDwells": true,
+    "lowerDwellSeconds": 30,
+    "temperature70Through80": 80,
+    "temperatureAbove80": 100,
+    "temperatureBelow70": 40,
+    "warmBoundary": "<=80"
+  },
+  "preflight": "NOT_TESTED noGO/protected existing session",
+  "privateHelper": "IN_PROGRESS; checked WIP references adopted outsideGit only",
+  "privateObserver": "SOURCE_TESTED; update in progress",
+  "readOnlyLinux": {
+    "atUtc": "2026-10-01T19:51:56+00:00",
+    "execMainStatus": 78,
+    "fanProcessObserved": false,
+    "host": "aiharness",
+    "logSha256": "58715a722188c3a325af26867b9c1b592fadd5398eb785c352401791c7fe7106",
+    "mainPid": 0,
+    "nRestarts": 0,
+    "originalBlocker": "competing_writer_or_overwrite retained",
+    "pendingWrite": "verified100 retained",
+    "priorExecMainPid": 259107,
+    "receipt": "../output/readonly-inventory-01.receipt.json",
+    "service": "failed",
+    "stateFileCount": 25
+  },
+  "sourceTests": {
+    "count": 70,
+    "exitCode": 0,
+    "host": "mac-worker2.local",
+    "logSha256": "aa4c3bd99240ab95e11825784ea3be620d8a9b1c9cde9bba2ffbe573dbced88d",
+    "receipt": "../output/controller-tests-02.receipt.json"
+  },
+  "unitSha256": "04f861f9c59caee51b6fc4f1e48b58cd5516c5705afd1dd230a1d5b788114a3b",
+  "updatedUtc": "2026-10-01T19:59:46.786618+00:00"
+}
