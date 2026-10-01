@@ -210,7 +210,7 @@
       ]
     }
   ],
-  "updatedUtc": "2026-10-01T14:56:28.385576+00:00",
+  "updatedUtc": "2026-10-01T15:11:49.952383+00:00",
   "activePhases": [
     {
       "task": "A-compaction-completion-08",
@@ -933,5 +933,38 @@
       "actual normal trustedObservers fixed-mode/callback bridge"
     ],
     "updatedHelperSources": 8
+  },
+  "source08EBindingsEarly": {
+    "source": "4d15e3f9ad45f2c578c7f284aeb008c579e7c6c6",
+    "integrated": "6f34dd48e7372270756e1f2bb3839b02f9833783",
+    "activation": "disabled",
+    "sourceChecks": "five source cases/strict0",
+    "nativeAcceptance": "NOT_TESTED"
+  },
+  "source08NoTurn08b": {
+    "status": "BLOCKED_UNEXECUTED_NO_APPROVAL",
+    "callerSha256": "7f94a64ebbebb41112be5ff16e3966fa4e2b5b1fddda50b6e4eb82517f9b61af",
+    "inputSha256": "574c6720166561a38788e7ef63984250bf546701176a439e959e69f62adc0d48",
+    "packetSha256": "558a6615395732d8bfff99ea8071da3a2beb25c315ed38eb63d456d9a9a5f580",
+    "blocker": "protectedAncestry called on regular source file after app imports; requires directory/file preflight before imports",
+    "reusableGraph": "4497 exact source/dependency paths,600 protected ancestors,5 distinct0700 roots; all355 retained IDs/records and83 owners match"
+  },
+  "source08CurrentSourceChecks": {
+    "eCurrentPredecessorFull": {
+      "total": 1386,
+      "pass": 1382,
+      "fail": 0,
+      "skip": 4
+    },
+    "installedBrowserBuiltExit": 0,
+    "scope": "source-only current predecessor, final coherent graph check pending"
+  },
+  "source08ModelStat": {
+    "producerSha256": "f023975a6041ab9ad2713356e78e78ecc9c7b875bbea276b38f469ccf6a00ebf",
+    "outputSha256": "d2a6760a0f9cc3d077aa31c61d090a79177711f5990c7498abb3daa48ca9618e",
+    "observedUtc": "2026-10-01T14:59:30.069919+00:00",
+    "protection": "actual FD/lstat rootuid0 regular nlink1 no groupworldwrite",
+    "sourceParser": "SOURCE_VALID historical parserclock; live current expiry rejected, genuine independent provider route still required",
+    "nativeAcceptance": "NOT_TESTED"
   }
 }
