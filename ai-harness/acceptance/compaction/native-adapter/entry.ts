@@ -17,9 +17,9 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   const config = JSON.parse((await privateFile(configPath)).toString('utf8'));
   if (stableJson(config.bootstrap) !== stableJson(config.adapterInput?.bootstrap)) throw Error('entry_and_adapter_bootstrap_tuple_must_match');
   const qualified = await qualifyEntry(config,restart);
-  const continuation=config.bootstrap.review.authorization.task==='H041-COMPACTION-CONTINUATION-02';
-  const factory=continuation?(probeApi as any).createCodexContinuationPolicy:createCodexTextOnlyPolicy;
-  if(typeof factory!=='function')throw Error('separately_branded_continuation02_policy_unavailable');
+  const task=config.bootstrap.review.authorization.task;
+  const factory=task==='H041-COMPACTION-DELIVERY-03'?(probeApi as any).createCodexDeliveryPolicy:task==='H041-COMPACTION-CONTINUATION-02'?(probeApi as any).createCodexContinuationPolicy:createCodexTextOnlyPolicy;
+  if(typeof factory!=='function')throw Error('separately_branded_frozen_authority_policy_unavailable');
   const handoffApi=qualified.profile==='h041-full-retention-v1'?await import(new URL('../../../server/src/codex-policy-handoff.js',import.meta.url).href):undefined;
   if(handoffApi&&(!handoffApi.retainCodexPolicyHandoff||!handoffApi.adoptCodexPolicyHandoff))throw Error('actual_sealed_A_durable_handoff_exports_required');
   const policies = new Map<string,CodexTextOnlyPolicy>();
@@ -95,6 +95,8 @@ export async function loadReviewedEntry(configPath:string) {
   const manifest=JSON.parse((await privateFile(config.sourceBuildManifestPath)).toString('utf8'));
   const expected=manifest.runtimeFiles['ai-harness/acceptance/compaction/native-adapter/application-worker.js'];
   if(!expected||sha256(await readFile(workerPath))!==expected)throw Error('actual_reviewed_application_worker_build_required');
-  return applicationProxy({workerPath,workerSha256:expected,configPath,configSha256:sha256(await privateFile(configPath)),hostPrivate:config.runnerPrivate,review:config.bootstrap.review},qualification);
+  const proxy=applicationProxy({workerPath,workerSha256:expected,configPath,configSha256:sha256(await privateFile(configPath)),hostPrivate:config.runnerPrivate,review:config.bootstrap.review},qualification);
+  await proxy.qualifyWorker();
+  return proxy;
 }
 export default createNativeAdapter();

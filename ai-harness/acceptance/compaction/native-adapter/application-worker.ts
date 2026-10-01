@@ -9,7 +9,7 @@ if(!configPath||!process.send||!process.connected)throw Error('owned_private_ipc
 const configBytes=await privateFile(configPath),config=JSON.parse(configBytes.toString('utf8'));
 let adapter:Awaited<ReturnType<typeof loadReviewedLocalEntry>>|undefined,closed=false,shuttingDown=false;
 const operations=new Map<number,{abort:AbortController;done:Promise<void>}>();
-const allowed=new Set(['runtime','open','append','originals','compact','probe','continue','childContext','freshBriefControl','prepareRestart','captureAcceptedArtifacts','adoptRestart','close','shutdown']);
+const allowed=new Set(['qualification','runtime','open','append','originals','compact','probe','continue','childContext','freshBriefControl','prepareRestart','captureAcceptedArtifacts','adoptRestart','close','shutdown']);
 process.on('message',(message:any)=>{
   if(Number.isSafeInteger(message?.cancel)){operations.get(message.cancel)?.abort.abort();return;}
   if(!Number.isSafeInteger(message?.id)||!allowed.has(message.method)||shuttingDown)return;
@@ -30,6 +30,7 @@ process.on('message',(message:any)=>{
         const result=await adapter.adoptRestart({ticket,signal:abort.signal});await send({result});return;
       }
       if(!adapter)adapter=await loadReviewedLocalEntry(configPath);
+      if(message.method==='qualification'){await send({result:{enabled:adapter.enabled,capabilities:adapter.capabilities,profile:config.profile,qualificationSha256:config.qualificationSha256}});return;}
       const method=(adapter as any)[message.method];if(typeof method!=='function')throw Error('unsupported_owned_worker_method');
       const result=await method({...message.args,signal:abort.signal});if(message.method==='close')closed=true;
       await send({result});

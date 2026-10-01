@@ -3,13 +3,14 @@ import { join } from 'node:path';
 import { OwnedApplicationRunner,type RunnerInput } from './process-runner.js';
 import { durableFile } from './checkpoint.js';
 import { sha256,stableJson } from './projection.js';
-import { STAGE_CAPABILITIES,FULL_CAPABILITIES,type EntryQualification } from './qualification.js';
+import { isQualifiedEntry,STAGE_CAPABILITIES,FULL_CAPABILITIES,type EntryQualification } from './qualification.js';
 /** Parent owns oracle/checkpoints/baselines; child owns the entire temporary app.
  * Accepted artifact baselines never come from after-restart bytes. */
 export function applicationProxy(input:RunnerInput,qualification:EntryQualification) {
   const runner=new OwnedApplicationRunner(input),observedSettlements:any[]=[];
-  let started=false,runId:string|undefined,session:any;
+  let ready=false,started=false,runId:string|undefined,session:any;
   const invoke=async(method:string,args:any={})=>{
+    if(!ready)throw Error('actual_worker_capability_qualification_required');
     if(!started){await runner.start(args.signal);started=true;}
     const {signal,...wire}=args;
     const result=await runner.call(method,wire,signal);
@@ -32,7 +33,16 @@ export function applicationProxy(input:RunnerInput,qualification:EntryQualificat
     await durableFile(join(input.hostPrivate,`${randomUUID()}-restart-lifecycle.json`),restartReceiptUtf8);
     return {resumed,restartEvidence,baseline,checkpoint,startedAt};
   };
-  return {interfaceVersion:'h039-compaction-adapter-v1',kind:'native',enabled:true,capabilities:[...(qualification.profile==='h041-full-retention-v1'?FULL_CAPABILITIES:STAGE_CAPABILITIES)],
+  const approvedCapabilities=[...(qualification.profile==='h041-full-retention-v1'?FULL_CAPABILITIES:STAGE_CAPABILITIES)];
+  return {interfaceVersion:'h039-compaction-adapter-v1',kind:'native',get enabled(){return ready;},get capabilities(){return ready?[...approvedCapabilities]:[];},
+    qualifyWorker:async()=>{
+      if(!isQualifiedEntry(qualification))throw Error('genuine_entry_qualification_required');
+      if(ready||started)throw Error('owned_worker_qualification_duplicate');
+      try{await runner.start();started=true;const actual=await runner.call('qualification');
+        if(actual?.enabled!==true||actual.profile!==qualification.profile||actual.qualificationSha256!==qualification.qualificationSha256||stableJson(actual.capabilities)!==stableJson(approvedCapabilities))throw Error('actual_supported_worker_capabilities_required');
+        ready=true;
+      }catch(error){if(started)await runner.shutdownAndConfirm().catch(()=>undefined);throw error;}
+    },
     runtime:async()=>({name:'codex',...qualification.runtime,promptRevision:'kpm-technical-v1'}),
     open:async(args:any)=>{runId=args.runId;session=await invoke('open',args);return session;},
     append:(args:any)=>invoke('append',args),originals:(args:any)=>invoke('originals',args),compact:(args:any)=>invoke('compact',args),probe:(args:any)=>invoke('probe',args),continue:(args:any)=>invoke('continue',args),childContext:(args:any)=>invoke('childContext',args),cleanChild:(args:any)=>invoke('childContext',args),

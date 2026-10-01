@@ -33,7 +33,7 @@ export interface BootstrapInput {
   review: { enabled: boolean; approvedBy: string; candidateCommit: string; notAfterUtc: string; settlementReserveMs: number;
     policy: typeof FIXED_POLICY; stagePolicy: typeof STAGE_POLICY; files: Record<string, string>; productionStateReceiptSha256: string;
     projection: { format: 'h040-fresh-persisted-message-v1'; frozenPolicySha256: string; specSha256: string; collectorSourceSha256: string };
-    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02'; windowId: string; startsUtc: string; capUtc: string } };
+    authorization: { task: 'H040' | 'H041' | 'H041-COMPACTION-CONTINUATION-02' | 'H041-COMPACTION-DELIVERY-03'; windowId: string; startsUtc: string; capUtc: string } };
   actualCandidateCommit: string; privateBase: string; productionDataDir: string; repository: string;
   launcherPath: string; qwenReceiptPath: string; inferenceKeyPath: string; controlKeyPath: string;
   productionStateReceiptPath: string;

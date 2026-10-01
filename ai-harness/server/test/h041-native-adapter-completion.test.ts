@@ -5,6 +5,7 @@ import {tmpdir} from 'node:os';
 import {join} from 'node:path';
 import {PassThrough} from 'node:stream';
 import {fileURLToPath} from 'node:url';
+import {applicationProxy} from '../../acceptance/compaction/native-adapter/application-proxy.js';
 import {OwnedApplicationRunner,observeApplicationIdentity} from '../../acceptance/compaction/native-adapter/process-runner.js';
 import {NativeEvidence} from '../../acceptance/compaction/native-adapter/native-evidence.js';
 import {consumedTool,validateConsumedFollowup} from '../../acceptance/compaction/native-adapter/consumed-tools.js';
@@ -60,4 +61,19 @@ test('SOURCE emitted graph must include every imported executable, not any entry
  const contents={[entry]:"import './dependency.js';\n",[worker]:"import './dependency.js';\n",[dependency]:'export const SOURCE=1;\n'};for(const [p,b]of Object.entries(contents))await writeFile(join(root,p),b);
  const files=Object.fromEntries(Object.entries(contents).map(([p,b])=>[p,sha256(b)]));const graph=await executedImportGraph(root,files);assert.ok(graph.imports[entry].includes(dependency));
  const missing={...files};delete missing[dependency];await assert.rejects(executedImportGraph(root,missing),/manifest|layout/);await writeFile(join(root,dependency),'changed');await assert.rejects(executedImportGraph(root,files),/changed/);
+});
+
+test('SOURCE delivery03 is separately frozen; old authorization caps are preserved',()=>{
+ const a=AUTHORIZATIONS['H041-COMPACTION-DELIVERY-03'];const r={authorization:{...a,windowId:'source-delivery03'},notAfterUtc:a.capUtc,settlementReserveMs:120000};
+ const now=Date.parse(a.startsUtc)+1;assert.equal(reviewedAuthorization(r,now).dispatchCutoffAt,Date.parse(a.capUtc)-120000);
+ assert.throws(()=>reviewedAuthorization({...r,notAfterUtc:'2026-10-01T13:07:12Z'},now));
+ assert.throws(()=>reviewedAuthorization({...r,authorization:{...authority,windowId:'source-02'}},now));
+ assert.equal(AUTHORIZATIONS.H041.capUtc,'2026-10-01T10:05:07Z');assert.equal(authority.capUtc,'2026-10-01T11:11:06.096969+00:00');
+});
+test('SOURCE outer full profile cannot advertise worker capabilities before real worker loader qualification',async()=>{
+ const proxy=applicationProxy({} as any,{profile:'h041-full-retention-v1'} as any);
+ assert.equal(proxy.enabled,false);assert.deepEqual(proxy.capabilities,[]);
+ await assert.rejects(proxy.qualifyWorker(),/genuine_entry_qualification_required/);
+ await assert.rejects(proxy.open({runId:'SOURCE'}),/worker_capability_qualification_required/);
+ assert.equal(proxy.enabled,false);assert.deepEqual(proxy.capabilities,[]);
 });
