@@ -35,7 +35,7 @@ is `c73a853abbf46ecede65d0dae04dd2e5ac8e5c37`.
 - Organizations/users/permissions, horizontal scaling, Project mode and a
   headless Linux agent API are future work, not prerequisites to this release.
 
-The detailed [future vision](../docs/Vision%20for%20future%20regarding%20this%20project.md)
+The detailed [future vision](<../docs/Vision for future regarding this project.md>)
 and [TODO index](../todo/README.md) are already published. The separate
 [status/sensor/safety plan](../todo/status-service-improvements.md) is documentation
 only: 2,000 ms polling, secret references/encrypted credential handling,

@@ -103,4 +103,4 @@ jobs and unavailable backends. Do not enable a capability without live evidence.
 See the [handoff](h039-handoff.md),
 [compaction plan](../todo/context-compaction-reliability.md),
 [vision plan](../todo/technical-image-understanding.md), and
-[future vision](../docs/Vision%20for%20future%20regarding%20this%20project.md).
+[future vision](<../docs/Vision for future regarding this project.md>).

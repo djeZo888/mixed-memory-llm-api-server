@@ -10,10 +10,10 @@ Current release evidence remains in the [project README](../README.md).
 - **[technical image understanding](technical-image-understanding.md)** —
   drawings, schematics, diagrams and technical documents through a specialist
   image-to-text tool; model research recorded, deployment pending.
-- **[Project mode and durable project memory](../docs/Vision%20for%20future%20regarding%20this%20project.md#4-project-mode-orchestrator-and-bounded-workers)**
+- **[Project mode and durable project memory](<../docs/Vision for future regarding this project.md#4-project-mode-orchestrator-and-bounded-workers>)**
   — accepted future direction; minimal task briefings, separate worker contexts,
   ownership and reviewed integration.
-- **[agentic API and headless Linux workers](../docs/Vision%20for%20future%20regarding%20this%20project.md#5-headless-linux-workers-and-a-public-agentic-api)**
+- **[agentic API and headless Linux workers](<../docs/Vision for future regarding this project.md#5-headless-linux-workers-and-a-public-agentic-api>)**
   — accepted future direction; durable remote shell/file jobs and scoped tools.
 - **[status service improvements](status-service-improvements.md)** — planned:
   readable tabs and tables, configurable multi-host sensors, encrypted BMC
@@ -37,7 +37,7 @@ Current release evidence remains in the [project README](../README.md).
 - **[current image workflow qualification](../reports/h038-checkpoint.md)**
   — deferred on 1 October in favor of compaction; the H038 gate remains closed
   and its prior successful and failed evidence is preserved.
-- **[programmatic CAD and specialist extensions](../docs/Vision%20for%20future%20regarding%20this%20project.md#7-cad-through-geometry-and-programmatic-tools)**
+- **[programmatic CAD and specialist extensions](<../docs/Vision for future regarding this project.md#7-cad-through-geometry-and-programmatic-tools>)**
   — research direction; geometry APIs, deterministic validation and qualified
   format handling.
 - **general installer** — deferred until the deployed system and its supported
@@ -47,7 +47,7 @@ Current release evidence remains in the [project README](../README.md).
 rewriting their historical outcomes. Future tasks may be listed here before
 their detailed plans exist.
 
-The [future vision](../docs/Vision%20for%20future%20regarding%20this%20project.md)
+The [future vision](<../docs/Vision for future regarding this project.md>)
 records organization-centered permissions, selectable service placement and
 AI-authored first-party development. Codex/MiniMax interoperability is no longer
 a requirement; do not remove the existing engine or conversations without a
