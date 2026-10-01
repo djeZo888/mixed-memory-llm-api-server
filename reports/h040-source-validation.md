@@ -1,0 +1,13 @@
+# H040 coherent source validation
+
+Candidate under test: `982b53d9caeba111ced9ee2fc84574ab8e60ebd8`. Source-only validation; native acceptance NOT_TESTED.
+
+Final actual checks and hashes will be recorded in [the JSON receipt](h040-source-validation.json). The tests use the committed [native prefix fixture](../ai-harness/server/test/fixtures/h040-native-prefix.json), repository-local [controller](../ai-harness/acceptance/compaction/controller.mjs) and [native adapter](../ai-harness/acceptance/compaction/native-adapter/README.md). No external E source root, native process, inference or deployment is qualified.
+
+Final status: **FAIL**. The combined15-file TypeScript suite passed260/260 with zero skips;12 Python receipt fixtures, six launcher regressions and three egress fixtures passed (281 source cases total). Server build, strict native-adapter compile, shell syntax, four B mjs syntax checks, git diff check and the repository Markdown local-link checker each exited0. The checker ran once with these same local link destinations; final status text added no links.
+
+Standalone strict test compilation exited2 with25 diagnostics across H040 B/E fixtures. Examples are inferred mjs signatures requiring omitted fields, un-narrowed union properties, UUID-template run IDs, required-property deletion and empty-object id access. This is a real retained compile failure despite passing executable fixtures. No source repair or test retry occurred. Owners/root must decide the narrow fix or justified check scope before publication.
+
+The exact399-byte committed prefix hashes to e9b088e794a6bb9082ac053fcc760bd818d7e720ee4bcdc72c6e480de7b7cb0e. All fifteen resolved test files, actual repository-local B modules/E adapter and candidate source/input hashes are recorded in the JSON. H040_E_SOURCE_ROOT was removed from child environments; no external sibling fixtures were used. Every hashed candidate file matches its committed Git object and remained unchanged after checks. Existing dependency symlink was reused, no installs.
+
+Prior136 fan/artifact source cases were not replayed; their reviewed source hashes were compared and recorded separately. Earlier phase failures remain in their original reports/private outputs. Native/Linux/runtime placement/scoped retrieval/semantic compaction/isolation and atomic rollback are NOT_TESTED. No default native activation, source/VM/deployment/GPU/fan/model/credential changes, publication, GitHub contact or new session occurred. Actual native/outer exits remain null pending root wrapper receipts after closure.
