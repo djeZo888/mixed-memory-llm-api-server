@@ -12,6 +12,6 @@ export function selectRestartCheckpoint(store:Store,sessionId:string,nativeThrea
   if(run.kind!=='compact'||!record.compactions.length||record.compactions.some(c=>c.status!=='completed')||typeof checkpoint.settledOperationUtf8!=='string'||sha256(checkpoint.settledOperationUtf8)!==checkpoint.settledOperationSha256)throw Error('actual_latest_compaction_baseline_required_before_artifacts');
   const operation=JSON.parse(checkpoint.settledOperationUtf8);
   if(operation.nativeThreadId!==nativeThreadId||operation.status!=='completed'||operation.settlement!=='released'||operation.postStateSha256!==checkpoint.stateSha256||!record.compactions.some(c=>c.id===operation.compactionId))throw Error('latest_store_compaction_and_full_state_binding_required');
- }else if(accepted.artifactBaseline?.storeRunId!==run.id||accepted.checkpoint?.stateSha256!==checkpoint.stateSha256||accepted.artifactBaseline?.nativeThreadId!==nativeThreadId)throw Error('latest_accepted_continuation_checkpoint_required');
+ }else if(accepted.artifactBaseline?.storeRunId!==run.id||accepted.artifactBaseline?.checkpointStateSha256!==checkpoint.stateSha256||accepted.artifactBaseline?.sessionId!==sessionId||accepted.artifactBaseline?.actionId!==accepted.actionId||accepted.artifactBaseline?.nativeThreadId!==nativeThreadId)throw Error('latest_accepted_continuation_checkpoint_required');
  return {purpose,storeRunId:run.id,checkpointId:record.id};
 }

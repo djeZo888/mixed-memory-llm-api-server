@@ -3,6 +3,7 @@ import { createCodexTextOnlyPolicy, createCodexParentArtifactScope, type CodexTe
 import { getCodexReceiptUtf8 } from '../../../server/src/codex-receipts.js';
 import * as probeApi from '../../../server/src/codex-probe.js';
 import * as receiptApi from '../../../server/src/codex-receipts.js';
+import {DelegatedChildProducer} from './delegated-child.js';
 import {selectRestartCheckpoint} from './restart-selection.js';
 import { mkdir } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -23,10 +24,12 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
   if(typeof factory!=='function')throw Error('separately_branded_frozen_authority_policy_unavailable');
   const handoffApi=qualified.profile==='h041-full-retention-v1'?await import(new URL('../../../server/src/codex-policy-handoff.js',import.meta.url).href):undefined;
   if(handoffApi&&(!handoffApi.retainCodexPolicyHandoff||!handoffApi.adoptCodexPolicyHandoff))throw Error('actual_sealed_A_durable_handoff_exports_required');
+  const delegated=new DelegatedChildProducer();
   const policies = new Map<string,CodexTextOnlyPolicy>();
   let sink: ReturnType<typeof createArtifactSink> | undefined;
   const hooks: BootstrapHooks = {
     qualification: qualified,
+    delegatedChild:input=>delegated.run({...input,review:config.bootstrap.review,parentPrefix:config.adapterInput.parentProjectionSpec.prefixInput}),
     evidence: { receiptUtf8: getCodexReceiptUtf8 },
     retainPolicy: async input=>{
       if(!handoffApi)throw Error('durable_policy_handoff_unavailable');
@@ -59,6 +62,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
         },
         ...(qualified.profile === 'h041-full-retention-v1' ? {
           nativeDelegationQualified:true,
+          onNativeThread:delegated.observe,beforeNativeAction:delegated.arm,
           retentionTurnKind:sessionId=>{const scope=context.guard.activeScope(sessionId);if(!scope)return 'summary';return scope.purpose==='child'?'child':scope.purpose==='continuation'?'artifacts':'summary';},
           parentArtifactScope: (sessionId: string) => {
             if(!['parent-artifacts','retention-parent'].includes(policies.get(sessionId)?.mode??''))return undefined;
@@ -85,6 +89,7 @@ export async function loadReviewedLocalEntry(configPath: string,restart?:import(
       };
       // New fields must be consumed by A's actual runtime; bootstrap checks the
       // policy function on the resulting runtime, so ignored options fail closed.
+      (context.guard as any).delegatedFollowup=(sessionId:string,input:unknown,prefix:unknown[])=>delegated.followup(sessionId,input,prefix);
       return extra;
     },
   };

@@ -25,7 +25,7 @@ export const BLOCKERS = Object.freeze([
   'Installed native/config/tool/scope/current-route qualification NOT_TESTED; source APIs alone grant no native PASS',
   'Actual runtime/model/tokenizer six-pin producer capture and complete installed source/build/helper/dependency closure required',
   'Actual durable prior-policy bridge and separately branded continuation02 policy must be consumed before app restart',
-  'Actual delegated-child lineage/first request is unavailable in current private parent-artifacts policy; freshBriefControl proves only an isolated thread',
+  'Actual native spawn/tool schema, whole first request, child/parent/gateway settlement and frozen delegated scope policy require live qualification',
   'All mandatory full/ordinary/automatic dimensions remain unrun pending root concrete review and live GO',
 ]);
 export interface AdapterInput {
@@ -71,7 +71,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
         settled: () => settled(h), databaseExport: async file => { h.application.store.db.prepare('VACUUM INTO ?').run(file); } });
     });
   }
-  async function main(h: TemporaryHost, signal: AbortSignal, kind: 'message' | 'compact', text: string, actionId: string, dispatchMode: 'main' | 'parent-artifacts' = 'main', purpose: 'append' | 'continuation' | 'compaction' = 'append') {
+  async function main(h: TemporaryHost, signal: AbortSignal, kind: 'message' | 'compact', text: string, actionId: string, dispatchMode: 'main' | 'parent-artifacts' = 'main', purpose: 'append' | 'continuation' | 'compaction' | 'child' = 'append') {
     signal = AbortSignal.any([signal, AbortSignal.timeout(Math.max(1, Math.min(120000, h.dispatchCutoffAt - Date.now())))]);
     if (faulted || busy || signal.aborted || h.closing || Date.now() >= h.dispatchCutoffAt) throw Error('adapter_failed_busy_or_deadline');
     if (seenActions.has(actionId)) throw Error('duplicate_action_no_replay');
@@ -83,7 +83,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
     signal.addEventListener('abort', abort, { once: true });
     try {
       runId = h.application.broker.enqueue(parentId!, kind, text, [], [], kind === 'compact' ? actionId : undefined);
-      h.guard.register({ sessionId: parentId!, actionId, runId, mode: dispatchMode, purpose, manifest, validateFollowup: dispatchMode==='parent-artifacts' ? body=>{const current=h.application.store.getSession(parentId!);validateConsumedFollowup(body,manifest!.input,{tool:'write_checkpoint_artifact',threadId:current.nativeSessionId!,turnId:current.nativeState.activeTurnId!,runId:h.host.runtime.textOnlyPolicy!(parentId!)!.runId,frames:h.observer.frames(parentId!),settled:h.artifactSettlements});} : undefined, toolPolicy: dispatchMode === 'parent-artifacts' ? (hooks?.qualification.profile==='h041-full-retention-v1'?(input!.bootstrap.review as any).retentionParentPolicy?.artifactPolicy:(input!.bootstrap.review as any).parentArtifactPolicy) : undefined, signal,
+      h.guard.register({ sessionId: parentId!, actionId, runId, mode: dispatchMode, purpose, manifest, validateFollowup: dispatchMode==='parent-artifacts' ? body=>{if(purpose==='child')return h.guard.delegatedFollowup!(parentId!,body,manifest!.input);const current=h.application.store.getSession(parentId!);validateConsumedFollowup(body,manifest!.input,{tool:'write_checkpoint_artifact',threadId:current.nativeSessionId!,turnId:current.nativeState.activeTurnId!,runId:h.host.runtime.textOnlyPolicy!(parentId!)!.runId,frames:h.observer.frames(parentId!),settled:h.artifactSettlements});} : undefined, toolPolicy: dispatchMode === 'parent-artifacts' ? (hooks?.qualification.profile==='h041-full-retention-v1'?(input!.bootstrap.review as any).retentionParentPolicy?.[purpose==='child'?'childPolicy':'artifactPolicy']:(input!.bootstrap.review as any).parentArtifactPolicy) : undefined, signal,
         expiresAt: Math.min(h.dispatchCutoffAt, Date.now() + 120000), identity: () => {
           const s = h.application.store.getSession(parentId!);
           const active = h.application.store.db.prepare("SELECT id FROM runs WHERE session_id=? AND status IN ('running','cancelling')").all(parentId!);
@@ -260,7 +260,7 @@ function assembleAdapter(input?: AdapterInput, fixture?: { host: TemporaryHost; 
     async childContext(args:any) {
       const h=sessionOwner(args.session);
       if(!hooks?.delegatedChild)throw Error('actual_native_delegated_child_lineage_capability_unavailable');
-      return hooks.delegatedChild({...args,host:h,parentId,collector});
+      try{return await hooks.delegatedChild({...args,host:h,parentId,collector,runId:acceptanceOwnerRunId,runParent:(text:string,id:string,purpose:any)=>main(h,args.signal,'message',text,id,'parent-artifacts',purpose)});}catch(error){faulted=true;throw error;}
     },
     async freshBriefControl({session,actionId,brief,hostOnlyParentCanary,childNonce,signal}:any) {
       const h=sessionOwner(session);if(!hooks||hooks.qualification.profile!=='h041-full-retention-v1'||typeof brief!=='string'||!brief.includes(childNonce)||typeof hostOnlyParentCanary!=='string'||brief.includes(hostOnlyParentCanary))throw Error('frozen_clean_child_contract_required');

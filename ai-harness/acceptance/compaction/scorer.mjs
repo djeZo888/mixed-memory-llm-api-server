@@ -1,5 +1,5 @@
-import {verifyChildLineage} from './child-lineage.mjs';
-import { verifyObservedModelScope } from './model-scope.mjs';
+import {verifyChildLineage,bindChildEnvelope,childRequestMetadata} from './child-lineage.mjs';
+import { verifyObservedModelScope,verifyObservedDelegatedScope } from './model-scope.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 
@@ -247,7 +247,7 @@ export function verifyRetrieval(corpus, truth, cycle, answer, trace) {
 
 function scopeProof(probe, threadId, turnId, actionId, tools, expected = {}) {
   if (typeof probe?.scopeReceiptUtf8 === 'string') {
-    try { if (JSON.parse(probe.scopeReceiptUtf8).source === 'h041-observed-model-scope') return verifyObservedModelScope(probe, { ...expected, probeThreadId: threadId, probeTurnId: turnId, actionId }); } catch {}
+    try { if(JSON.parse(probe.scopeReceiptUtf8).source==='h041-observed-delegated-model-scope')return verifyObservedDelegatedScope(probe,{...expected,probeThreadId:threadId,probeTurnId:turnId,actionId});if (JSON.parse(probe.scopeReceiptUtf8).source === 'h041-observed-model-scope') return verifyObservedModelScope(probe, { ...expected, probeThreadId: threadId, probeTurnId: turnId, actionId }); } catch {}
   }
   if (typeof probe.scopeReceiptUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['effective-native-scope-receipt-absent'] };
   let scope;
@@ -422,7 +422,7 @@ export function verifyDurableHoldout(truth, cycle, evidence, expected) {
 export function verifyCleanChild(probe, approved = {}) {
   if (!probe || !Array.isArray(probe.compiledMessages)) return { status: 'NOT_TESTED', errors: ['child-first-request-capture-absent'] };
   if (!Array.isArray(approved.messageHashes) || !approved.messageHashes.length || !approved.parentCanary || !approved.childNonce) return { status: 'NOT_TESTED', errors: ['independent-minimal-brief-manifest-absent'] };
-  if(approved.requireNativeDelegation){const lineage=verifyChildLineage(probe.nativeLineage,{parentId:approved.parentThreadId,childId:probe.childId,firstDispatchAt:probe.firstDispatchAt});if(lineage.status!=='PASS')return lineage;}
+  if(approved.requireNativeDelegation){const lineage=verifyChildLineage(probe.nativeLineage,{parentId:approved.parentThreadId,childId:probe.childId,firstDispatchAt:probe.firstDispatchAt,providerModel:(()=>{try{return JSON.parse(probe.normalizedRequestUtf8).model;}catch{return undefined;}})()});if(lineage.status!=='PASS')return lineage;}
   const placement = probe.parentPlacement;
   if (!placement || typeof placement.stateUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['parent-canary-placement-not-captured'] };
   if (typeof probe.firstRequestUtf8 !== 'string') return { status: 'NOT_TESTED', errors: ['child-provider-request-bytes-absent'] };
@@ -434,9 +434,10 @@ export function verifyCleanChild(probe, approved = {}) {
   try {
     const messages = normalizeNativeInput(wire?.input);
     const envelope = Object.fromEntries(Object.entries(wire).filter(([k]) => !['input', 'tools'].includes(k)));
-    if (!object(approved.envelope)) return { status: 'NOT_TESTED', errors: ['independent-child-request-envelope-absent'] };
+    let childEnvelope=approved.envelope;if(approved.requireNativeDelegation){const metadata=childRequestMetadata(wire,approved.parentThreadId,probe.parentTurnId);childEnvelope=bindChildEnvelope(approved.envelope,{childId:probe.childId,childTurnId:probe.nativeTurnId,parentId:approved.parentThreadId,parentTurnId:probe.parentTurnId});if(metadata.turn_id!==probe.nativeTurnId||metadata.thread_id!==probe.childId)errors.push('child-native-turn-binding');}
+    if (!object(childEnvelope)) return { status: 'NOT_TESTED', errors: ['independent-child-request-envelope-absent'] };
     if (probe.captureSha256 !== sha256(probe.firstRequestUtf8) || !same(messages, probe.compiledMessages) || !same(wire.tools, []) ||
-      !exactKeys(envelope, Object.keys(approved.envelope)) || Object.entries(approved.envelope).some(([k,v]) => !same(envelope[k],v))) errors.push('child-provider-request-binding');
+      !exactKeys(envelope, Object.keys(childEnvelope)) || Object.entries(childEnvelope).some(([k,v]) => !same(envelope[k],v))) errors.push('child-provider-request-binding');
   } catch { errors.push('unqualified-child-native-input'); }
   if (placement.capturedBy !== 'host' || placement.nativeThreadId !== approved.parentThreadId ||
     placement.stateSha256 !== sha256(placement.stateUtf8) || !placement.stateUtf8.includes(approved.parentCanary) ||

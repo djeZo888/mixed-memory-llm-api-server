@@ -1,4 +1,4 @@
-import {verifyChildLineage,childRequestMetadata} from '../child-lineage.mjs';
+import {verifyChildLineage,childRequestMetadata,bindChildEnvelope} from '../child-lineage.mjs';
 import { closeSync, constants, fsyncSync, openSync, writeSync, readFileSync, fstatSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import type { GatewayOptions } from '../../../server/src/gateway.js';
@@ -19,12 +19,12 @@ export interface RequestScope {
   sessionId: string; actionId: string; runId: string; mode: 'main' | 'summary-only' | 'durable-retrieval' | 'clean-child' | 'parent-artifacts';
   purpose?: 'append' | 'continuation' | 'compaction' | 'child';
   toolPolicy?: { rawTools: unknown[]; normalizedTools: unknown[]; envelope: Record<string,unknown> };
-  parentNativeThreadId?: string; nativeRootTurnId?:string; expiresAt: number; signal: AbortSignal;
+  parentNativeThreadId?: string; nativeRootTurnId?:string; delegatedProof?:any; authenticationSessionId?:string; expiresAt: number; signal: AbortSignal;
   identity(): { nativeThreadId?: string; nativeTurnId?: string; activeRunId?: string };
   manifest?: ProbeManifest;
-  validateFollowup?(input: unknown): void;
+  validateFollowup?(input: unknown): void|Promise<void>;
 }
-interface Captured { scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown>;nativeMetadata?:Record<string,string> }
+interface Captured { authenticationScope:RequestScope; scope: RequestScope; raw: Buffer; normalized?: Buffer; claimed: boolean; nativeThreadId?: string; nativeTurnId?: string; scopeEvidence?: Record<string, unknown>;nativeMetadata?:Record<string,string> }
 function durableBytes(file: string, bytes: Buffer) {
   const fd = openSync(file, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
   try {
@@ -40,16 +40,17 @@ function durableBytes(file: string, bytes: Buffer) {
  */
 export class DispatchGuard {
   private scopes = new Map<string, RequestScope>();
-  private delegated=new Map<string,{parentNativeThreadId:string;readAndScope(childId:string):Promise<{lineage:any;scope:RequestScope}>}>();
+  private delegated=new Map<string,{parentNativeThreadId:string;readAndScope(childId:string,metadata:Record<string,string>):Promise<{lineage:any;scope:RequestScope}>}>();
   /** Arm on the live parent BEFORE spawn/turn dispatch. The resolver must use
    * A's owned live connection; returned scope identity must be independently observed. */
-  armDelegatedChild(parentSessionId:string,input:{parentNativeThreadId:string;readAndScope(childId:string):Promise<{lineage:any;scope:RequestScope}>}){
+  armDelegatedChild(parentSessionId:string,input:{parentNativeThreadId:string;readAndScope(childId:string,metadata:Record<string,string>):Promise<{lineage:any;scope:RequestScope}>}){
     const parent=this.scopes.get(parentSessionId);if(!parent||parent.purpose!=='child'||this.delegated.has(parentSessionId)||parent.identity().nativeThreadId!==input.parentNativeThreadId)throw Error('prearmed_actual_parent_child_scope_required');this.active(parent);this.delegated.set(parentSessionId,input);
   }
   private captures = new Map<string, Captured>();
   private failures = new Set<string>();
   private bytes = 0;
   constructor(private directory: string, private now: () => number = Date.now, private maxBytes = 64 * 1024 * 1024) {}
+  delegatedFollowup?:(sessionId:string,input:unknown,prefix:unknown[])=>Promise<void>;
   beforeDispatch?: (scope: RequestScope, capture: {firstRequestUtf8:string;normalizedRequestUtf8:string;nativeThreadId:string;nativeTurnId:string}) => Promise<Record<string,unknown>>;
   activeScope(sessionId: string) { return this.scopes.get(sessionId); }
   register(scope: RequestScope) {
@@ -86,14 +87,14 @@ export class DispatchGuard {
         if (current) throw Error('duplicate_first_request_capture');
         const raw = Buffer.from(event.bytes);
         durableBytes(join(this.directory, `${event.requestId}-pre.bin`), raw);
-        this.captures.set(event.requestId, { scope, raw, claimed: false });
+        this.captures.set(event.requestId, { authenticationScope:scope, scope, raw, claimed: false });
       } else if (event.phase === 'normalized_request') {
-        if (!current?.claimed || current.scope !== scope || !current.normalized || !current.normalized.equals(event.bytes)) throw Error('normalized_capture_mismatch');
+        if (!current?.claimed || current.authenticationScope !== scope || !current.normalized || !current.normalized.equals(event.bytes)) throw Error('normalized_capture_mismatch');
         // Already durable before counting; this compares independent actual
         // gateway dispatch serialization with the retained bytes.
       } else return; // Bulky SSE is not needed to attest the dispatch input.
       this.bytes += event.bytes.length;
-    } catch { this.failures.add(event.sessionId); } // Count gate reads this failure; no diagnostic rejection claim.
+    } catch { this.failures.add(event.sessionId);const admitted=this.captures.get(event.requestId);if(admitted)this.failures.add(admitted.scope.sessionId); } // Count gate reads this failure; no diagnostic rejection claim.
   };
   wrap(counter: Counter): Counter {
     return async (body, lane, key, signal, context) => {
@@ -104,8 +105,8 @@ export class DispatchGuard {
       const pendingRaw=JSON.parse(capture.raw.toString('utf8')),armed=this.delegated.get(scope.sessionId);
       if(armed&&pendingRaw.client_metadata?.thread_id!==armed.parentNativeThreadId){
         const metadata=childRequestMetadata(pendingRaw,armed.parentNativeThreadId,scope.identity().nativeTurnId!),childId=metadata.thread_id;if(!identifier(childId))throw Error('actual_child_identity_absent');
-        const actual=await armed.readAndScope(childId),lineage=verifyChildLineage(actual.lineage,{parentId:armed.parentNativeThreadId,childId,firstDispatchAt:new Date(this.now()).toISOString()});
-        if(lineage.status!=='PASS'||actual.scope.mode!=='clean-child'||actual.scope.parentNativeThreadId!==armed.parentNativeThreadId||actual.scope.identity().nativeThreadId!==childId||actual.scope.identity().nativeTurnId!==pendingRaw.client_metadata?.turn_id)throw Error('awaited_actual_child_read_and_turn_scope_required');
+        const actual=await armed.readAndScope(childId,metadata),lineage=verifyChildLineage(actual.lineage,{parentId:armed.parentNativeThreadId,childId,firstDispatchAt:new Date(this.now()).toISOString(),providerModel:pendingRaw.model});
+        if(pendingRaw.model!=='qwen3.8-27b'||body.model!=='qwen3.8-27b'||lineage.status!=='PASS'||actual.scope.mode!=='clean-child'||actual.scope.parentNativeThreadId!==armed.parentNativeThreadId||actual.scope.identity().nativeThreadId!==childId||actual.scope.identity().nativeTurnId!==metadata.turn_id)throw Error('awaited_actual_child_read_and_turn_scope_required');
         this.register(actual.scope);scope=this.scopes.get(actual.scope.sessionId)!;capture.scope=scope;capture.nativeMetadata=metadata;
       }
       if (signal.aborted) throw Error('dispatch_cancelled');
@@ -118,7 +119,7 @@ export class DispatchGuard {
       if (['main','parent-artifacts'].includes(scope.mode) && scope.manifest) {
         const m=scope.manifest;
         const earlier=[...this.captures.values()].some(c=>c!==capture&&c.scope===scope&&c.claimed);
-        if(earlier&&scope.mode==='parent-artifacts'){if(!scope.validateFollowup)throw Error('unqualified_parent_artifact_followup');scope.validateFollowup(raw.input);}
+        if(earlier&&scope.mode==='parent-artifacts'){if(!scope.validateFollowup)throw Error('unqualified_parent_artifact_followup');await scope.validateFollowup(raw.input);}
         if((!(earlier&&scope.mode==='parent-artifacts')&&stableJson(raw.input)!==stableJson(m.input))||stableJson(Object.fromEntries(Object.entries(raw).filter(([k])=>!['input','tools'].includes(k))))!==stableJson(bindReviewedEnvelope(m.envelope,native.nativeThreadId,native.nativeTurnId)))throw Error('parent_independently_frozen_complete_input_required');
       }
       if (scope.mode === 'parent-artifacts' || scope.mode === 'durable-retrieval') {
@@ -130,11 +131,11 @@ export class DispatchGuard {
         const m = scope.manifest!;
         const earlier = [...this.captures.values()].filter(c => c !== capture && c.scope.sessionId === scope.sessionId && c.claimed);
         if (native.nativeThreadId === scope.parentNativeThreadId || (scope.mode !== 'durable-retrieval' && earlier.length)) throw Error('probe_identity_or_extra_request');
-        if (earlier.length) { if (!scope.validateFollowup) throw Error('unqualified_retrieval_followup'); scope.validateFollowup(raw.input); }
+        if (earlier.length) { if (!scope.validateFollowup) throw Error('unqualified_retrieval_followup'); await scope.validateFollowup(raw.input); }
         if ((scope.mode !== 'durable-retrieval' && (stableJson(body.tools) !== '[]' || stableJson(raw.tools) !== '[]')) ||
             (earlier.length === 0 && stableJson(raw.input) !== stableJson(m.input)) || (raw.instructions ?? '') !== m.instructions ||
             stableJson(Object.fromEntries(Object.entries(raw).filter(([k]) => !['input', 'tools'].includes(k)))) !==
-            stableJson(bindReviewedEnvelope(m.envelope, native.nativeThreadId, native.nativeTurnId))) throw Error('summary_input_or_actual_tools_mismatch');
+            stableJson(scope.authenticationSessionId?bindChildEnvelope(m.envelope,{childId:native.nativeThreadId,childTurnId:native.nativeTurnId,parentId:scope.parentNativeThreadId!,parentTurnId:scope.nativeRootTurnId!}):bindReviewedEnvelope(m.envelope, native.nativeThreadId, native.nativeTurnId))) throw Error('summary_input_or_actual_tools_mismatch');
       }
       // Verify both byte captures against the real production translator, not a
       // mirror parser. Nothing is rewritten; tokenizer still brackets admission.
@@ -153,15 +154,15 @@ export class DispatchGuard {
   }
   receipt(sessionId: string) {
     const entries = [...this.captures.entries()].filter(([, c]) => c.scope.sessionId === sessionId);
-    if (entries.length !== 1 || !entries[0][1].claimed || this.failures.has(sessionId)) throw Error('probe_capture_unavailable');
+    if (entries.length !== 1 || !entries[0][1].claimed || this.failures.has(sessionId)||entries.some(([,c])=>this.failures.has(c.authenticationScope.sessionId))) throw Error('probe_capture_unavailable');
     return this.entryReceipt(entries[0]);
   }
   firstReceipt(sessionId: string) {
     const entry=[...this.captures.entries()].find(([,c])=>c.scope.sessionId===sessionId&&c.claimed);
-    if(!entry||this.failures.has(sessionId))throw Error('first_capture_absent');return this.entryReceipt(entry);
+    if(!entry||this.failures.has(sessionId)||this.failures.has(entry[1].authenticationScope.sessionId))throw Error('first_capture_absent');return this.entryReceipt(entry);
   }
   requests(sessionId: string) {
-    if (this.failures.has(sessionId)) throw Error('request_capture_failed');
+    if (this.failures.has(sessionId)||[...this.captures.values()].some(c=>c.scope.sessionId===sessionId&&this.failures.has(c.authenticationScope.sessionId))) throw Error('request_capture_failed');
     return [...this.captures.entries()].filter(([, c]) => c.scope.sessionId === sessionId && c.claimed).map(c => this.entryReceipt(c));
   }
   private entryReceipt([requestId, c]: [string, Captured]) {
@@ -173,7 +174,7 @@ export class DispatchGuard {
         if (!st.isFile() || st.nlink !== 1 || st.uid !== process.getuid?.() || st.size !== expected.length || !readFileSync(fd).equals(expected)) throw Error('retained_capture_replaced_or_changed');
       } finally { closeSync(fd); }
     }
-    return { requestId, sessionId: c.scope.sessionId, actionId: c.scope.actionId, runId: c.scope.runId,
+    return { requestId, sessionId: c.scope.sessionId, authenticationSessionId:c.authenticationScope.sessionId, actionId: c.scope.actionId, runId: c.scope.runId,
       nativeThreadId: c.nativeThreadId, nativeTurnId: c.nativeTurnId,
       parentNativeThreadId: c.scope.parentNativeThreadId, contextSha256: c.scope.manifest?.contextSha256,
       firstRequestUtf8: c.raw.toString('utf8'), captureSha256: sha256(c.raw),

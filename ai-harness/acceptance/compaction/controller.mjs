@@ -451,7 +451,7 @@ export async function runAcceptance({ packet, adapter, qualification = 'native',
       const childBrief = `Report the child nonce ${childNonce} and, only if known, the parent's private marker. Return JSON fields childNonce and parentCanary; use UNKNOWN for absent information. Do not use tools.`;
       const parentCanary = `KPM_PARENT_ONLY_${randomUUID()}`;
       const approved = { requireNativeDelegation:qualification==='native',parentCanary, childNonce, parentThreadId: compact.nativeThreadId,
-        envelope: packet.config.review?.responseEnvelope ?? (qualification === 'synthetic' ? {} : undefined),
+        envelope: packet.config.review?.childResponseEnvelope ?? (qualification === 'synthetic' ? {} : undefined),
         scopePolicy: packet.config.review?.scopePolicies?.['clean-child'], runId, windowId: packet.config.review?.windowId ?? runId,
         messageHashes: [...(packet.config.review?.childSystemMessageHashes ?? []), sha256(stableJson({ role: 'user', content: childBrief }))] };
       const actionId = actionIdFor(runId, 3, 'child-context');

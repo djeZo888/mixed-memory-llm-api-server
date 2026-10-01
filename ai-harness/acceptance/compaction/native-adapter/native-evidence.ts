@@ -9,7 +9,7 @@ import { getCodexReceiptUtf8, isVerifiedCodexLaunchReceipt, isVerifiedCodexSettl
 import { NativeObserver } from './native-observer.js';
 import { durableFile } from './checkpoint.js';
 import { sha256, stableJson } from './projection.js';
-import { verifyObservedModelScope } from '../model-scope.mjs';
+import { verifyObservedModelScope,verifyObservedDelegatedScope } from '../model-scope.mjs';
 export type Receipt = CodexNativeLaunchReceipt | CodexNativeSettlementReceipt;
 export interface EvidenceHooks { receiptUtf8(receipt: Receipt): string | undefined | Promise<string | undefined> }
 interface Launch { receipt: CodexNativeLaunchReceipt; utf8: string; prelaunchUtf8: string; settlementUtf8?: string }
@@ -104,6 +104,20 @@ export class NativeEvidence {
     if (verified.status !== 'PASS') throw Error('actual_observed_model_scope_rejected_before_dispatch');
     await durableFile(join(this.directory, `${randomUUID()}-model-scope.json`), scopeReceiptUtf8);
     return { ...probe, physicalMounts: verified.physicalMounts, networkPolicy: 'gateway-only', modelFileTools: [] };
+  }
+  async delegatedScope(input:any){
+    const launch=this.launches.get(input.parentSessionId)?.at(-1);if(!launch)throw Error('actual_owned_parent_launch_absent');
+    const framesUtf8=stableJson(input.observer.frames(input.parentSessionId));
+    const receipt={source:'h041-observed-delegated-model-scope',sessionId:input.sessionId,authenticationSessionId:input.parentSessionId,actionId:input.actionId,runId:input.runId,windowId:input.windowId,nativeThreadId:input.nativeThreadId,nativeTurnId:input.nativeTurnId,proof:input.proof,scopePolicySha256:sha256(stableJson(input.policy)),launchReceiptUtf8:launch.utf8,launchReceiptSha256:sha256(launch.utf8),nativeFramesUtf8:framesUtf8,nativeFramesSha256:sha256(framesUtf8),firstRequestUtf8:input.firstRequestUtf8,normalizedRequestUtf8:input.normalizedRequestUtf8};
+    const scopeReceiptUtf8=stableJson(receipt),probe={scopeReceiptUtf8,scopeReceiptSha256:sha256(scopeReceiptUtf8),firstRequestUtf8:input.firstRequestUtf8,normalizedRequestUtf8:input.normalizedRequestUtf8};
+    const verified=verifyObservedDelegatedScope(probe,{scopePolicy:input.policy,probeThreadId:input.nativeThreadId,probeTurnId:input.nativeTurnId,actionId:input.actionId,runId:input.runId,windowId:input.windowId});if(verified.status!=='PASS')throw Error('actual_delegated_scope_rejected_before_dispatch');
+    await durableFile(join(this.directory,`${randomUUID()}-delegated-scope.json`),scopeReceiptUtf8);return {...probe,physicalMounts:verified.physicalMounts};
+  }
+  async delegatedOperation(result:any,parent:any,sessionId:string,windowId:string,store:Store,gateway:Gateway,observer:NativeObserver){
+    const ownedParent=this.actions.get(parent.actionId),launch=this.launches.get(sessionId)?.at(-1);if(!ownedParent||!launch?.settlementUtf8||this.actions.has(result.actionId)||!observer.settled(sessionId)||gateway.sessionWork(sessionId).length||!await gateway.confirmSettlement({sessionId}))throw Error('actual_owned_delegated_settlement_required');
+    const capture=result.requests[0],rows=store.db.prepare('SELECT record FROM h021_gateway_requests WHERE id=? AND session_id=? AND state=?').all(capture.requestId,sessionId,'settled');if(rows.length!==1||capture.authenticationSessionId!==sessionId)throw Error('actual_authenticated_child_gateway_row_required');
+    const gatewayReceiptUtf8=stableJson({source:'owned-durable-gateway-ledger-observation',sessionId,nativeThreadId:result.nativeThreadId,nativeTurnId:result.nativeTurnId,authenticationParentThreadId:parent.nativeThreadId,authenticationParentTurnId:parent.nativeTurnId,records:rows.map(r=>String(r.record)),outstanding:gateway.sessionWork(sessionId)});
+    this.actions.set(result.actionId,{actionId:result.actionId,nativeThreadId:result.nativeThreadId,nativeTurnId:result.nativeTurnId,settlementReceiptSha256:result.settlement.receiptSha256,sessionId,windowId,requestIds:[capture.requestId],operationFramesUtf8:stableJson(observer.frames(sessionId)),operationSettlementUtf8:result.settlementReceiptUtf8,nativeLaunchReceiptUtf8:launch.utf8,nativeSettlementReceiptUtf8:launch.settlementUtf8,gatewayReceiptUtf8,delegatedParentActionId:parent.actionId,firstRequestUtf8:capture.firstRequestUtf8,normalizedRequestUtf8:capture.normalizedRequestUtf8,scopeReceiptUtf8:capture.scopeReceiptUtf8});
   }
   async operation(result: any, sessionId: string, windowId: string, store: Store, gateway: Gateway, observer: NativeObserver) {
     if (!result.actionId || this.actions.has(result.actionId)) throw Error('owned_action_duplicate_or_absent');

@@ -37,6 +37,7 @@ function writePrivate(path: string, bytes: string) {
 export class NativeObserver {
   private handles: NativeHandle[] = [];
   private totalBytes = 0;
+  private listeners=new Set<()=>void>();
   constructor(private directory: string, private maxBytes = 64 * 1024 * 1024) {}
   wrap(sessionId: string, child: RootlessCodexProcess): RootlessCodexProcess {
     const handle: NativeHandle = { handleId: randomUUID(), sessionId, frames: [], failed: false };
@@ -54,7 +55,7 @@ export class NativeObserver {
         if (!isRecord(value)) throw Error('native_capture_frame_invalid');
         const frame: NativeFrame = { direction, bytesUtf8: raw.toString('utf8'), sha256: sha256(raw), observedAt: new Date().toISOString(), sequence: handle.frames.length, value };
         writePrivate(join(this.directory, `${handle.handleId}-${frame.sequence}-${direction}.jsonl`), frame.bytesUtf8);
-        handle.frames.push(frame);
+        handle.frames.push(frame);for(const notify of [...this.listeners])notify();
       }
       buffers[direction] = buffer.subarray(begin);
       if (buffers[direction].length > 4 * 1024 * 1024) throw Error('native_capture_frame_bound');
@@ -93,6 +94,17 @@ export class NativeObserver {
     if (!handle || handle.failed) throw Error('native_frames_missing_or_failed');
     return structuredClone(handle.frames);
   }
+  /** Await actual stdio observation while admission stays held. No synthetic
+   * event or second native connection; cancellation/deadline remain bounded. */
+  async waitFrames(sessionId:string,predicate:(frames:NativeFrame[])=>boolean,signal:AbortSignal,expiresAt:number):Promise<NativeFrame[]>{
+    return new Promise((resolve,reject)=>{
+      let timer:ReturnType<typeof setTimeout>|undefined;
+      const finish=(error?:Error,frames?:NativeFrame[])=>{this.listeners.delete(check);signal.removeEventListener('abort',abort);if(timer)clearTimeout(timer);if(error)reject(error);else resolve(frames!);};
+      const abort=()=>finish(Error('owned_native_observation_cancelled'));
+      const check=()=>{try{if(signal.aborted||Date.now()>=expiresAt)return abort();const frames=this.frames(sessionId);if(predicate(frames))finish(undefined,frames);}catch{finish(Error('owned_native_observation_failed'));}};
+      this.listeners.add(check);signal.addEventListener('abort',abort,{once:true});timer=setTimeout(()=>finish(Error('owned_native_observation_deadline')),Math.max(1,Math.min(120000,expiresAt-Date.now())));check();
+    });
+  }
   sessions() { return [...new Set(this.handles.map(h => h.sessionId))]; }
   settled(sessionId: string) { return this.handles.some(h => h.sessionId === sessionId) && this.handles.filter(h => h.sessionId === sessionId).every(h => !h.failed && h.cleanup?.confirmed && h.gateway?.confirmed); }
   operation(sessionId: string): ObservedOperation {
@@ -104,8 +116,8 @@ export class NativeObserver {
     if (!Number.isSafeInteger(request.value.id)) throw Error('native_operation_rpc_identity_invalid');
     if (!isRecord(params) || typeof params.threadId !== 'string') throw Error('native_operation_thread_unavailable');
     const acks = handle.frames.filter(f => f.direction === 'from-native' && f.value.id === request.value.id && 'result' in f.value && !('error' in f.value));
-    const started = handle.frames.filter(f => f.direction === 'from-native' && f.value.method === 'turn/started');
-    const completed = handle.frames.filter(f => f.direction === 'from-native' && f.value.method === 'turn/completed');
+    const started = handle.frames.filter(f => f.direction === 'from-native' && f.value.method === 'turn/started' && isRecord(f.value.params) && f.value.params.threadId===params.threadId);
+    const completed = handle.frames.filter(f => f.direction === 'from-native' && f.value.method === 'turn/completed' && isRecord(f.value.params) && f.value.params.threadId===params.threadId);
     if (acks.length !== 1 || !isRecord(acks[0].value.result) || started.length !== 1 || !completed.length) throw Error('native_ack_or_terminal_absent');
     const first = started[0].value.params, last = completed[0].value.params;
     if (!isRecord(first) || !isRecord(last) || !isRecord(first.turn) || !isRecord(last.turn) ||

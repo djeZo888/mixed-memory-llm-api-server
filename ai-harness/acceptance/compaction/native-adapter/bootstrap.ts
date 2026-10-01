@@ -130,6 +130,7 @@ export async function bootstrap(input: BootstrapInput, hooks?: BootstrapHooks,re
     const parent = application.store.db.prepare('SELECT id FROM sessions WHERE native_session_id=?').get(scope.parentNativeThreadId!);
     if (!parent) throw Error('observed_parent_session_mapping_required');
     const mode = scope.mode === 'durable-retrieval' ? 'read-original' : scope.mode === 'clean-child' ? 'clean-child' : 'summary-only';
+    if(scope.authenticationSessionId){return evidence.delegatedScope({sessionId:scope.sessionId,parentSessionId:scope.authenticationSessionId,runId:scope.runId,actionId:scope.actionId,windowId:review.authorization.windowId,...capture,proof:scope.delegatedProof,policy:hooks.qualification.scopePolicies[mode],observer});}
     return evidence.scope({sessionId:scope.sessionId,parentSessionId:String(parent.id),runId:scope.runId,actionId:scope.actionId,windowId:review.authorization.windowId,
       ...capture,policy:hooks.qualification.scopePolicies[mode],observer});
   };

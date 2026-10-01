@@ -20,6 +20,7 @@ test('SOURCE frozen continuation02 cannot enlarge expiry or revive initial H041'
  for(const bad of [{...good,notAfterUtc:'2026-10-01T11:11:07Z'},{...good,settlementReserveMs:119999},{...good,authorization:{...good.authorization,startsUtc:'2026-10-01T09:11:06Z'}},{...good,authorization:{...AUTHORIZATIONS.H041,windowId:'historical'},notAfterUtc:authority.capUtc}])assert.throws(()=>reviewedAuthorization(bad,now));
 });
 test('SOURCE actual owned Node timeout preserves shutdown reachability and observed exit',async t=>{
+ t.mock.method(Date,'now',()=>Date.parse(authority.startsUtc)+1000);
  const root=await directory(t),configPath=join(root,'config.json'),marker=join(root,'shutdown'),workerPath=fileURLToPath(new URL('./fixtures/h041-application-worker.mjs',import.meta.url));
  const config=JSON.stringify({marker,handoff:join(root,'handoff')});await writeFile(configPath,config,{mode:0o600});
  const runner=new OwnedApplicationRunner({workerPath,workerSha256:sha256(await readFile(workerPath)),configPath,configSha256:sha256(config),hostPrivate:root,review:review(),operationTimeoutMs:1000});
@@ -29,6 +30,7 @@ test('SOURCE actual owned Node timeout preserves shutdown reachability and obser
  const remaining=await observeApplicationIdentity(identity.pid).catch(()=>undefined);assert.ok(!remaining||remaining.startTicks!==identity.startTicks);
 });
 test('SOURCE actual process replacement waits old exit and uses new OS identity; no native qualification',async t=>{
+ t.mock.method(Date,'now',()=>Date.parse(authority.startsUtc)+1000);
  const root=await directory(t),configPath=join(root,'config.json'),workerPath=fileURLToPath(new URL('./fixtures/h041-application-worker.mjs',import.meta.url));const config=JSON.stringify({marker:join(root,'shutdown'),handoff:join(root,'handoff')});await writeFile(configPath,config,{mode:0o600});
  const runner=new OwnedApplicationRunner({workerPath,workerSha256:sha256(await readFile(workerPath)),configPath,configSha256:sha256(config),hostPrivate:root,review:review(),operationTimeoutMs:3000});
  await runner.start();const checkpoint={stateUtf8:'SOURCE parent bytes',stateSha256:sha256('SOURCE parent bytes'),nativeThreadId:'SYNTHETIC-parent'};

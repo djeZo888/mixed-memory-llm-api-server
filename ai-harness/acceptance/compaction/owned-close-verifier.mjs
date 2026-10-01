@@ -1,3 +1,4 @@
+import {childRequestMetadata} from './child-lineage.mjs';
 import { createHash } from 'node:crypto';
 const sha = s => createHash('sha256').update(s).digest('hex');
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
@@ -27,6 +28,7 @@ export function verifyObservedOwnedClose(result, expected) {
       const launch = JSON.parse(a.nativeLaunchReceiptUtf8), producer = byNonce.get(launch.nonce);
       if (!producer || producer.launchReceiptUtf8 !== a.nativeLaunchReceiptUtf8 || producer.settlementReceiptUtf8 !== a.nativeSettlementReceiptUtf8 || launch.sessionId !== a.sessionId) throw Error('unmatched producer');
       const gateway = JSON.parse(a.gatewayReceiptUtf8);
+      if(a.delegatedParentActionId){const parent=r.settledOwnedActions.find(x=>x.actionId===a.delegatedParentActionId);if(!parent||parent.sessionId!==a.sessionId||parent.nativeLaunchReceiptUtf8!==a.nativeLaunchReceiptUtf8||parent.nativeSettlementReceiptUtf8!==a.nativeSettlementReceiptUtf8)throw Error('actual same producer parent settlement');const metadata=childRequestMetadata(JSON.parse(a.firstRequestUtf8),parent.nativeThreadId,parent.nativeTurnId);if(metadata.thread_id!==a.nativeThreadId||metadata.turn_id!==a.nativeTurnId||gateway.authenticationParentThreadId!==parent.nativeThreadId||gateway.authenticationParentTurnId!==parent.nativeTurnId)throw Error('actual child authenticated parent mapping');}
       if (typeof a.operationSettlementUtf8 !== 'string' || sha(a.operationSettlementUtf8) !== a.settlementReceiptSha256 || !Array.isArray(a.requestIds) || !a.requestIds.length || new Set(a.requestIds).size !== a.requestIds.length || typeof a.operationFramesUtf8 !== 'string') throw Error('actual action request/settlement bytes absent');
       const frames=JSON.parse(a.operationFramesUtf8);
       if (!frames.some(f=>f.direction==='from-native' && f.value?.method==='turn/completed' && f.value.params?.threadId===a.nativeThreadId && f.value.params?.turn?.id===a.nativeTurnId && f.value.params.turn.status==='completed') || frames.some(f=>sha(f.bytesUtf8)!==f.sha256 || !same(JSON.parse(f.bytesUtf8),f.value))) throw Error('actual native turn trace mismatch');
