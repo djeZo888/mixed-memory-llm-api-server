@@ -1,11 +1,12 @@
 {
   "schema": "h044-image04-source-report-v1",
-  "recordedUtc": "2026-10-02T01:25:56.267901+00:00",
+  "recordedUtc": "2026-10-02T01:28:56.632501+00:00",
   "baseCommit": "30643f62be6244d221363c92817d7509a73c145c",
-  "sourceCommit": "10f56669c3f82e6f552e29fdd12778847ea19da4",
+  "sourceCommit": "d15fb38cc3fa20dd6780f4801eb3586799f89728",
   "status": "SOURCE_PASS_LIVE_NOT_TESTED",
   "sourceWriter": "IMPLEMENTED_GUARDED_PROTECTED_SIX_RAW_ARCHIVE_CAS_ROLLBACK",
   "sourceDetails": [
+    "Privileged RawTransaction core itself requires the exact registered ProductionSession/resources; caller callbacks/readiness cannot enter root mutation",
     "Closed actual production Runtime610397 loader prevalidates37raw source files and imported canonical paths",
     "Canonical LifecycleLease identity plus private registered capability validation; actual RegisteredStorageBinding/Storage/MountedStorageGuard/AnchoredRoot/GuardedFile identity and live descriptor checks",
     "Actual Storage.root_payload_guard before/after; image model reservation uses existing recovery.lock and operation.lock, not an invented ModelLease class",
@@ -24,12 +25,12 @@
   "serviceActions": 0,
   "pushMergeIntegration": false,
   "tests": {
-    "count": 61,
+    "count": 62,
     "actualExit": 0,
     "reaped": true,
     "ownedCommandGroupAbsent": true,
-    "receiptSha256": "3edf61b7a63a554bbe967e8173f8efe9ee51c7f3872cb27a30747f494a472bde",
-    "originalStderrSha256": "cb1a2e3772c34facb4d0b4ef99e3b15c9301ef5ee64a138368daac5f553112a6",
+    "receiptSha256": "2332a609cda3b9e7c793d16ba2d5811ba0f3f01260ae891d853f313dde2910f1",
+    "originalStderrSha256": "127bc1df34c607c817064ec88fb01740eb12310f3ba2dc9176e9552f863bb9ea",
     "TMPDIR": "/private/tmp/h044-I-i-wh3cmf00",
     "kind": "Offline canonical classes/registered lease and actual mounted guard with synthetic discovery; actual Darwin filesystem swap/archive/rollback fault tests"
   },
@@ -63,7 +64,7 @@
   "normalGeneration": "CLOSED; separate R current protected review and genuine live receipt required; no all-three/edit/creative-child gate opened; rawPreCropArtifact NOT_CAPTURED",
   "pins": "Sova Codex0.158.0/upstream064c6b8c737f5b41d171fdda80bd9ef10ad06eb3/context480000/auto400000/output65536 preserved; MacCLI0.159.2 separate",
   "sourceGraphPacketSha256": "05e680da5f46a6a6928eca3ed7eaa830d5b41f4fe32a8d5e4be9c31ea7f267f2",
-  "operationalRequestSha256": "b26704816f60eb11c1d02f0af52d6ec047a2bbd03ba3edd1595d7dab470220ae",
+  "operationalRequestSha256": "4104686ad4f684adf5ae66837cfb2e3e72451a85c47adce8c0ff4d51a7ca48fa",
   "rootFeedback": [
     {
       "name": "ROOT-DECISION-UPDATE-PAUSE01.json",

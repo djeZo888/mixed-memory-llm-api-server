@@ -1,6 +1,6 @@
 # H044 I-image04 source result
 
-Implemented guarded protected-six-file raw archive/CAS/rollback writer on base `30643f62be6244d221363c92817d7509a73c145c`; source commit `10f56669c3f82e6f552e29fdd12778847ea19da4`. All61 focused offline checks pass with actual child exit0, reap and command-group absence. Linux/native/lifecycle/normalgeneration remain **NOT_TESTED**. No Linux contact, model/service/GPU/fan action, download, push or integration occurred.
+Implemented guarded protected-six-file raw archive/CAS/rollback writer on base `30643f62be6244d221363c92817d7509a73c145c`; source commit `d15fb38cc3fa20dd6780f4801eb3586799f89728`. All62 focused offline checks pass with actual child exit0, reap and command-group absence. Linux/native/lifecycle/normalgeneration remain **NOT_TESTED**. No Linux contact, model/service/GPU/fan action, download, push or integration occurred.
 
 The production factory prevalidates the exact closed source closure and canonical imported classes, uses the real LifecycleLease active registry, RegisteredStorageBinding, MountedStorageGuard, AnchoredRoot, existing recovery/operation singleton GuardedFiles, and actual Storage.root_payload_guard. No fabricated ModelLease/RootPayloadGuard class or type-name/module-spoof readiness check supplies authority. Runtime, source, model receipt, hardware and resource guards run normally.
 
