@@ -8,6 +8,25 @@ import {CodexChildren} from '../src/codex-children.js';
 import {validateCodexChildMetadata} from '../src/codex-child-metadata.js';
 import {assertEngineAvailable} from '../src/engine-router.js';
 const gates={deep:true,technical:true,creative:true};
+test('primary scoped company research wins over optional visuals while quick lookups stay ordinary',()=>{
+ for(const text of [
+  'Research company Example Motors as much as you can.',
+  'Research company Example Motors comprehensively; include charts and drawings if useful.',
+  'Please investigate the company Example Motors in depth; if useful create images and drawings.',
+  'Can you research business Example thoroughly and make an SVG chart to illustrate the results?',
+ ]) {
+  const selected=route({text});assert.equal(selected.intent,'deep');
+  assert.doesNotThrow(()=>codexAutomaticDirective(selected,{...gates,creative:false}));
+  assert.throws(()=>codexAutomaticDirective(selected,{...gates,deep:false}),/temporarily unavailable/);
+ }
+ for(const text of ['Who founded Example Motors?','Research company Example Motors address.',
+  'What is a research company?','Research company Everything Ltd address.','Find the phone number of Example Motors.',
+  'Create an SVG diagram of the data.','Make an HTML chart.'])assert.equal(route({text}).intent,'ordinary',text);
+ for(const text of ['Generate images of motorcycles.','Please draw drawings of a forest.',
+  'Create pictures of a research company.','Generate an image showing HTML source code.',
+  'Generate a photorealistic image and also create SVG charts.',
+  'Generate an image of a motorcycle; add an SVG chart of the stats.'])assert.equal(route({text}).intent,'creative',text);
+});
 test('ordinary/deep/analysis/generation and one-parent follow-up select deterministic intent',()=>{
  for(const [text,intent] of [['Write a function','ordinary'],['Do deep research on this problem','deep'],['Use greater intelligence for this','deep'],['Analyze this drawing','technical'],['Generate an image of a bird','creative']] as const)assert.equal(route({text}).intent,intent);
  assert.equal(route({text:'What does this show?',hasImages:true}).intent,'technical');

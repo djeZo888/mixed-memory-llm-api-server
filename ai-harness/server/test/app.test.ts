@@ -2141,7 +2141,11 @@ async function sse(
 
 test("real HTTP SSE heartbeat/replay/Last-Event-ID are monotonic; browser disconnect does not cancel", async (t) => {
   const fixture = engines(true),
-    h = await setup(t, fixture),
+    h = await setup(t, fixture, {
+      newChatEngine: "codex", codexEngineFactory: fixture.factory,
+      enginePolicy: { codex: { enabled: true, protocolQualified: true,
+        engineVersion: "0.158.0", modelPolicyVersion: "completion-source-fixture" } },
+    }),
     s = await h.session();
   await h.app.listen({ host: "127.0.0.1", port: 0 });
   const address = h.app.server.address();
@@ -2165,13 +2169,15 @@ test("real HTTP SSE heartbeat/replay/Last-Event-ID are monotonic; browser discon
     payload: { text: "must outlive the browser" },
   });
   await until(() => fixture.calls.length === 1);
-  fixture.calls[0]!.update({ type: "text", text: "first chunk " });
+  fixture.calls[0]!.update({ type: "text", text: "first chunk ", nativeMessageId: "owned-answer" });
   await until(() => stream.events().some((e) => e.type === "assistant_delta"));
   const cursor = stream.events().at(-1)!.id;
   stream.close();
   await delay(30);
   assert.equal(fixture.cancelled.length, 0);
-  fixture.calls[0]!.update({ type: "text", text: "after disconnect" });
+  fixture.calls[0]!.update({ type: "text", text: "after disconnect", nativeMessageId: "owned-answer" });
+  fixture.calls[0]!.update({ type: "phase", nativeMessageId: "owned-answer", nativeTurnId: "owned-turn",
+    channel: "final", streamState: "completed", phaseSource: "source-regression-owned-terminal" });
   fixture.calls[0]!.resolve();
   await h.broker.idle();
   const resumed = await sse(address.port, `/api/sessions/${s.id}/events`, {
@@ -2185,6 +2191,17 @@ test("real HTTP SSE heartbeat/replay/Last-Event-ID are monotonic; browser discon
     h.store.messages(s.id).at(-1)!.content,
     "first chunk after disconnect",
   );
+  const saved = h.store.snapshot(s.id);
+  const savedAnswer = saved.messages.find(message => message.role === "assistant")!;
+  assert.equal(saved.messages.filter(message => message.role === "assistant").length, 1);
+  assert.equal(savedAnswer.phase, "final");
+  assert.equal(savedAnswer.streamState, "completed");
+  assert.equal(saved.runs.at(-1)!.status, "completed");
+  assert.equal(saved.runs.at(-1)!.finalMessageId, savedAnswer.id);
+  assert.equal(saved.session.status, "idle");
+  const projected = await inject(h.app, `/api/sessions/${s.id}`);
+  assert.equal(projected.statusCode, 200);
+  assert.deepEqual(projected.json().messages, saved.messages);
   const explicit = await sse(
     address.port,
     `/api/sessions/${s.id}/events?after=${cursor}`,

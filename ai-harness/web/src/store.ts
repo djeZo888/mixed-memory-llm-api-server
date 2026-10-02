@@ -94,6 +94,7 @@ export class HarnessStore {
   private completedRuns = new Map<string, Set<string>>();
   private handoffs = new Map<string, number>();
   private closeStream?: () => void;
+  private disconnectedRefresh?: ReturnType<typeof setInterval>;
   private read?: AbortController;
   private boot?: AbortController;
   private healthRead?: AbortController;
@@ -189,6 +190,8 @@ export class HarnessStore {
     }
   }
   dispose() {
+    clearInterval(this.disconnectedRefresh);
+    this.disconnectedRefresh = undefined;
     this.closed = true;
     this.lifetime++;
     this.generation++;
@@ -219,6 +222,8 @@ export class HarnessStore {
   }
   select = (id: string | null) => {
     if (id && this.deleted.has(id)) return;
+    clearInterval(this.disconnectedRefresh);
+    this.disconnectedRefresh = undefined;
     this.generation++;
     this.closeStream?.();
     this.closeStream = undefined;
@@ -316,12 +321,24 @@ export class HarnessStore {
         },
         open: () => {
           if (this.current(id, generation)) {
+            clearInterval(this.disconnectedRefresh);
+            this.disconnectedRefresh = undefined;
             this.update({ connection: 'connected' });
             void this.resync();
           }
         },
         disconnected: () => {
-          if (this.current(id, generation)) this.update({ connection: 'reconnecting' });
+          if (!this.current(id, generation)) return;
+          this.update({ connection: 'reconnecting' });
+          // EventSource can stay closed without another open/done event. Read
+          // canonical saved state independently; resync already serializes GETs
+          // and reconciles buffered deltas by event ID. Never cancel the run.
+          if (!this.disconnectedRefresh) {
+            void this.resync();
+            this.disconnectedRefresh = setInterval(() => {
+              if (this.current(id, generation)) void this.resync();
+            }, 5000);
+          }
         },
       });
     } catch (error) {

@@ -482,10 +482,11 @@ function AssistantReply({
       (message.phase !== 'intermediate' && message.phase !== 'thinking'),
   );
   const modelResponses = responses.filter((message) => message.origin !== 'image_service' && message.origin !== 'technical_vision');
-  const finalReady = modelResponses.some(
-    (message) => message.phase === 'final' && message.streamState === 'completed',
-  );
   const run = thread.runs.find((run) => run.id === reply.runId);
+  const settledFinal = (message: Message) => message.phase === 'final' &&
+    message.streamState === 'completed' &&
+    (!reply.runId || (run?.status === 'completed' && run.finalMessageId === message.id));
+  const finalReady = modelResponses.some(settledFinal);
   const attachments = new Set(thread.attachments.map((file) => file.id));
   const uploadCount = new Set(run?.attachmentIds?.filter((id) => attachments.has(id))).size;
   const zip =
@@ -533,7 +534,7 @@ function AssistantReply({
         {responses.map((message) => {
           if (message.origin === 'technical_vision') return <TechnicalVisionResult key={message.id} message={message} thread={thread} action={technicalVisionAction} />;
           const imageResult = message.origin === 'image_service';
-          const final = !imageResult && message.phase === 'final';
+          const final = !imageResult && settledFinal(message);
           return (
             <section
               key={message.id}

@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
 import { HarnessStore } from '../src/store';
 import { ApiError } from '../src/api';
@@ -12,6 +12,36 @@ async function ready() {
   return { ...fixture, store };
 }
 describe('real store callback flows', () => {
+  it('recovers saved completion after disconnect without another stream open and stops polling on disposal', async () => {
+    const { store, transport, streams } = await ready();
+    await store.remove('chat/b');
+    vi.useFakeTimers();
+    try {
+      const snap = snapshot();
+      snap.messages = [{ id: 'saved-final', role: 'assistant', content: 'Verified saved report.',
+        runId: 'run/saved', phase: 'final', streamState: 'completed', createdAt: snap.session.createdAt }];
+      snap.runs = [{ id: 'run/saved', kind: 'message', status: 'completed',
+        finalMessageId: 'saved-final', createdAt: snap.session.createdAt, updatedAt: snap.session.updatedAt,
+        artifactIds: [], subagents: { known: false, active: null, completed: null, failed: null, cancelled: null } }];
+      snap.events = [event(1, 'done', { runId: 'run/saved' })];
+      transport.snapshot.mockResolvedValue(snap);
+      streams[0].callbacks.disconnected();
+      store.select('chat/b'); // A rejected selection must preserve chat/a recovery.
+      expect(store.getSnapshot().selectedId).toBe('chat/a');
+      await vi.advanceTimersByTimeAsync(1);
+      expect(store.getSnapshot().thread?.messages.map(m => m.content)).toEqual(['Verified saved report.']);
+      expect(store.getSnapshot().thread?.runs[0].status).toBe('completed');
+      streams[0].callbacks.event(event(1, 'done', { runId: 'run/saved' }));
+      expect(store.getSnapshot().thread?.messages).toHaveLength(1);
+      await vi.advanceTimersByTimeAsync(5000);
+      const reads = transport.snapshot.mock.calls.length;
+      expect(reads).toBeGreaterThan(2);
+      store.dispose();
+      await vi.advanceTimersByTimeAsync(15000);
+      expect(transport.snapshot.mock.calls.length).toBe(reads);
+      expect(transport.cancel).not.toHaveBeenCalled();
+    } finally { store.dispose(); vi.useRealTimers(); }
+  });
   it('resyncs on reconnect and done while buffering newer deltas', async () => {
     const { store, transport, streams } = await ready();
     const stream = streams[0].callbacks;

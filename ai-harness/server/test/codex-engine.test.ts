@@ -6,7 +6,7 @@ import { createCodexReadOriginalProbe, createCodexTextOnlyPolicy, createCodexPar
 import {CODEX_MEMORY_CATALOG_SHA256} from "../src/codex-memory.js";
 import { receiptFixture } from "./helpers/codex-receipt-fixture.js";
 import { PassThrough } from "node:stream";
-import { loadCodexResumeInstructions } from "../src/codex-instructions.js";
+import { CODEX_CHAT_COMPLETION_INSTRUCTIONS, loadCodexResumeInstructions } from "../src/codex-instructions.js";
 import {
   CodexEngine,
   CODEX_PIN,
@@ -308,7 +308,7 @@ test("pinned initialize/start/input schema; commentary/final/absent phase with o
   assert.equal("config" in start.params, false);
   assert.deepEqual(
     f.requests.find((r) => r.method === "turn/start").params.input,
-    [{ type: "text", text: "hello", text_elements: [] }],
+    [{ type: "text", text: CODEX_CHAT_COMPLETION_INSTRUCTIONS + "\n\nhello", text_elements: [] }],
   );
   await f.engine.close();
 });
@@ -1547,3 +1547,18 @@ test("H041 native terminal original retains all emitted output before 8192 displ
  const raw=f.updates.find(u=>u.type==="tool_original");assert.ok(raw?.type==="tool_original");assert.equal(raw.outputUtf8,output);assert.equal(JSON.parse(raw.rawUtf8).aggregatedOutput,output);
  const projection=f.updates.filter(u=>u.type==="progress"&&u.toolCallId==="cmd").at(-1);assert.ok(projection?.type==="progress");assert.ok((projection.detail?.length??0)<=8192);f.complete();await pending;
 });
+
+for (const task of ["Research company Example Motors thoroughly; synthesize sources and gaps.", "Save a report under artifacts/report.txt and read it back."]) {
+ test(`normal controlling turn retains completion policy and original request: ${task}`, async () => {
+  const f=fixture({nativeId:"thread-1"});const pending=f.engine.prompt(task);await tick();
+  const input=f.requests.find(r=>r.method==="turn/start").params.input;
+  assert.equal(input.length,1);assert.equal(input[0].text,CODEX_CHAT_COMPLETION_INSTRUCTIONS+"\n\n"+task);
+  f.item("verified-final","agentMessage",{phase:null,text:"Verified result and concrete evidence gaps."},"started");
+  f.item("verified-final","agentMessage",{phase:null,text:"Verified result and concrete evidence gaps."});
+  f.events("turn/completed",{turn:{id:"turn-1",status:"completed",itemsView:"summary",items:[{id:"verified-final",type:"agentMessage",phase:null,text:"Verified result and concrete evidence gaps."}]}});
+  assert.equal(await pending,"completed");assert.equal(f.states.at(-1)?.ownership,"idle");
+  assert.equal(f.requests.filter(r=>r.method==="turn/start").length,1,"never replay tool effects or blindly retry a native completion");
+  assert.equal(f.updates.filter(u=>u.type==="phase"&&u.channel==="final").length,1);
+  await f.engine.close();
+ });
+}

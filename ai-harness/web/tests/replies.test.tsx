@@ -43,6 +43,29 @@ const replyImageJob = (patch: Partial<ImageJob> = {}): ImageJob => ({
 });
 
 describe('reply-level conversation presentation', () => {
+  it('waits for the exact completed run and message before labeling a final answer', () => {
+    const message = replyMessage('answer', 'assistant', 'The saved report is ready.', {
+      runId: 'run/one', phase: 'final', streamState: 'streaming',
+    });
+    let thread = replyThread({ messages: [message], runs: [replyRun('run/one')] });
+    const { rerender } = render(<ConversationReplies thread={thread} />);
+    expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    thread.messages[0] = { ...message, streamState: 'completed' };
+    thread.runs = [];
+    rerender(<ConversationReplies thread={{ ...thread }} />);
+    expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    for (const status of ['failed', 'cancelled', 'running'] as const) {
+      thread.runs = [replyRun('run/one', { status, finalMessageId: 'answer' })];
+      rerender(<ConversationReplies thread={{ ...thread }} />);
+      expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    }
+    thread.runs = [replyRun('run/one', { status: 'completed', finalMessageId: 'another' })];
+    rerender(<ConversationReplies thread={{ ...thread }} />);
+    expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    thread.runs = [replyRun('run/one', { status: 'completed', finalMessageId: 'answer' })];
+    rerender(<ConversationReplies thread={{ ...thread }} />);
+    expect(screen.getByLabelText('Final answer')).toBeInTheDocument();
+  });
   it('delivers a deferred image service result without changing the old final across replay and reload', () => {
     const runId = 'run/image';
     const oldFinal = replyMessage('old-final', 'assistant', 'The image is awaiting approval.', {
@@ -208,6 +231,7 @@ describe('reply-level conversation presentation', () => {
               { runId: 'run/image', phase: 'final', streamState: 'completed' },
             ),
           ],
+          runs: [replyRun('run/image', { status: 'completed', finalMessageId: 'model-final' })],
           artifacts: [
             replyArtifact('original-artifact', 'image.png', {
               runId: 'run/image',
@@ -289,6 +313,11 @@ describe('reply-level conversation presentation', () => {
       ),
     );
     rerender(<ConversationReplies thread={thread} />);
+    expect(screen.queryByLabelText('Final answer')).not.toBeInTheDocument();
+    thread = applyEvent(thread, runEvent(4, 'run', { run: replyRun('run/one', {
+      status: 'completed', finalMessageId: 'final',
+    }) }, 'run/one'));
+    rerender(<ConversationReplies thread={thread} />);
     const progress = screen.getByText('Progress', { selector: 'summary span' }).closest('details');
     expect(progress).not.toHaveAttribute('open');
     expect(screen.getByLabelText('Final answer')).toHaveClass('message-final');
@@ -331,7 +360,7 @@ describe('reply-level conversation presentation', () => {
         replyMessage('empty-progress', 'assistant', ' \t\n', { runId, phase: 'intermediate' }),
         replyMessage('empty-reply', 'assistant', ' ', { runId: 'empty-run', phase: 'thinking' }),
       ],
-      runs: [replyRun(runId, { status: 'completed' })],
+      runs: [replyRun(runId, { status: 'completed', finalMessageId: 'm_836fc402e6662753916074e38b210d93c3087357767e0a1891b3e0f98ddcddef' })],
     });
     const { rerender } = render(<ConversationReplies thread={thread} />);
     expect(screen.getByLabelText('Final answer')).toHaveTextContent('Completed answer');

@@ -16,6 +16,12 @@ function fail(): never { throw Error("Untrusted Codex resume instruction policy"
 const trustedOwner = (uid: number) => uid === 0 || uid === process.getuid?.();
 const record = (value: unknown): value is Record<string, unknown> => !!value && typeof value === "object" && !Array.isArray(value);
 
+/** Normal chat completion policy, delivered on every controlling user turn.
+ * Native task_complete proves termination, not that the requested work was done.
+ * This is instruction, never a prose classifier or a replacement terminal receipt.
+ */
+export const CODEX_CHAT_COMPLETION_INSTRUCTIONS = "Complete the current user's requested work in this turn. For research, continue gathering the required evidence, then provide a substantive synthesis with sources and explicit evidence gaps. After tool results, return to the user's original question; a progress update or promise to collect more information is not the answer. For file or action requests, perform the authorized action and verify the saved result before reporting completion. If a required operation is unavailable, give a useful partial result and identify the concrete blocker and unfinished work. Do not end with only an intention to act or silently leave the requested deliverable pending. Browser presence is irrelevant: keep working until the answer or an honest blocked result is ready. Preserve tool failures and uncertainty; never invent success, sources, files or tool results.";
+
 export function validateCodexResumeInstructions(value: unknown): CodexResumeInstructions {
   if (!record(value) || typeof value.text !== "string" ||
       value.sha256 !== CODEX_RESUME_INSTRUCTIONS_SHA256 || value.toolPolicySha256 !== CODEX_TOOL_POLICY_SHA256 ||

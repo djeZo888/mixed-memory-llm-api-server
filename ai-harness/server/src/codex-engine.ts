@@ -7,7 +7,7 @@ import { completedImageStatus } from "./image-status-consumption.js";
 import type { CodexCapabilities } from "./codex-capabilities.js";
 import { CodexChildren } from "./codex-children.js";
 import { CodexSchemaErrorGuard, type CodexSchemaErrorFailure } from "./codex-schema-errors.js";
-import { validateCodexResumeInstructions, type CodexResumeInstructions } from "./codex-instructions.js";
+import { CODEX_CHAT_COMPLETION_INSTRUCTIONS, validateCodexResumeInstructions, type CodexResumeInstructions } from "./codex-instructions.js";
 import { codexInput } from "./codex-input.js";
 import { createHash } from "node:crypto";
 import {observeCodexLifecycle,type CodexLifecycleEvent} from "./codex-observation.js";
@@ -436,7 +436,12 @@ export class CodexEngine implements Engine {
       if (!this.runtime.automaticRouting && routing.intent !== "ordinary") fault("Automatic specialist routing is unavailable");
       directive = this.runtime.automaticRouting?.(routing,this.options.sessionId) ?? "";
     }
-    const input = await codexInput((directive ? directive + "\n\n" : "") + text, this.options.workspace, attachments);
+    // The specialist image contracts and finite probe policies have their own
+    // terminal semantics. Normal text work must synthesize tool evidence before
+    // ending; keep the original request unchanged after this controlling policy.
+    const completion = !this.textPolicy && (!routing || routing.intent === "ordinary" || routing.intent === "deep")
+      ? CODEX_CHAT_COMPLETION_INSTRUCTIONS + "\n\n" : "";
+    const input = await codexInput(completion + (directive ? directive + "\n\n" : "") + text, this.options.workspace, attachments);
     if (this.promptClaimed || this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
     if(this.options.nativeAutomaticRoute && (!routing || routing.intent!==this.options.nativeAutomaticRoute.intent || routing.target!==this.options.nativeAutomaticRoute.target))fault("Controlling route changed after native launch selection");
