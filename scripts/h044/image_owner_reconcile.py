@@ -694,6 +694,9 @@ class RawTransaction:
         self.files=files; self.archive=archive; self.guard=check; self.anchors=anchors or {}
         self.original={k:v.raw for k,v in files.items()}; self.current=dict(self.original)
         self.identities={k:signature(v.before) for k,v in files.items()}
+        # Only original or this transaction's staged inodes can be rolled back.
+        # Identical bytes on a foreign replacement inode do not establish ownership.
+        self.owned_identities={k:{signature(v.before)[:-1]} for k,v in files.items()}
         self.staged={}; self.committed=[]; self.journal=[]; self.archived=False
 
     def join(self):
@@ -773,6 +776,7 @@ class RawTransaction:
                     and info.st_uid==file.before.st_uid,'stage_byte_readback_failed')
             identity=signature(info)
         finally: os.close(fd)
+        self.owned_identities[key].add(identity[:-1])
         return name,identity
 
     def promote(self,key,stage,raw):
@@ -857,6 +861,8 @@ class RawTransaction:
                         named=os.stat(file.name,dir_fd=file.directory,follow_symlinks=False)
                         require(signature(info)==signature(named),'rollback_named_fd_changed')
                     finally: os.close(fd)
+                    require(signature(info)[:-1] in self.owned_identities[key],
+                            'rollback_foreign_inode_refused')
                     if actual==self.original[key]:
                         self.current[key]=actual; self.identities[key]=signature(named); continue
                     require(actual in (raw,self.current[key]),'rollback_foreign_bytes_refused')
@@ -899,8 +905,10 @@ def validate_current_raw(raw,runtime_config,*,expected=EXPECTED):
         and type(recovery.get('pid')) is int and recovery['pid']>0
         and type(recovery.get('process')) is dict and recovery['process'].get('pid')==recovery['pid']
         and type(recovery['process'].get('start_ticks')) is int and recovery['process']['start_ticks']>0
-        and recovery.get('phase')=='reset' and recovery.get('child_start') is None,
-        'actual_oldboot_reset_phase_schema_required')
+        and ((recovery.get('phase')=='reset' and recovery.get('child_start') is None)
+            or (recovery.get('phase')=='restart' and op.get('recovery')==recovery.get('token')
+                and recovery.get('child_start') in (None,INVOCATION))),
+        'actual_oldboot_recovery_phase_schema_required')
     for owner_record in (op,recovery):
         require(type(owner_record.get('token')) is str and len(owner_record['token'])==32
             and all(c in '0123456789abcdef' for c in owner_record['token']), 'actual_owner_token_schema_required')
