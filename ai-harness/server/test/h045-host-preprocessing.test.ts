@@ -7,6 +7,9 @@ import { join } from "node:path";
 import { Readable } from "node:stream";
 import sharp from "sharp";
 import { createApp } from "../src/app.js";
+import { composeCodexHost } from "../src/codex-host.js";
+import { codexDeployment } from "../src/codex-deployment.js";
+import { ApiError } from "../src/errors.js";
 import { codexAutomaticDirective, type CodexAutomaticRoute } from "../src/codex-automatic-routing.js";
 import { completedTechnicalVisionAttachments } from "../src/technical-vision-host.js";
 import type { EngineFactory } from "../src/contracts.js";
@@ -33,9 +36,15 @@ async function setup(t: TestContext, preTurnMs = 2500, generation = false) {
     async cancel() { calls.forEach(c => c.release()); },
     async close() { calls.forEach(c => c.release()); },
   });
+  const host = composeCodexHost("/fixture/launcher", () => undefined, {
+    protocolQualified: true, rootlessQualified: true, nativeDelegationQualified: true, frontierResponsesQualified: true,
+    verifyLane: async () => { throw Error("No live lane may be accessed by this fixture"); },
+  });
+  const deployment = codexDeployment({enablePreview:true, runtime:host.runtime});
   const options = {
+    ...deployment,
     dataDir: dir, engineFactory: factory, codexEngineFactory: factory,
-    enginePolicy: { codex: { enabled: true, protocolQualified: true, engineVersion: "0.158.0", modelPolicyVersion: "fixture", imageGenerationEnabled: generation } },
+    enginePolicy: { codex: { ...deployment.enginePolicy!.codex!, imageGenerationEnabled: generation } },
     launcher: "/fixture/launcher", gatewayUrl: "http://127.0.0.1:8081/v1", issueToken: () => "fixture-token", revokeToken: () => {},
     newChatEngine: "codex" as const, allowedOrigins: ["http://localhost"],
     technicalVision: { fixture: { service, client: { expectedService: service, fixtureOrigin: fixture.fixtureOrigin, key: () => "fixture-host-only-key", requestMs: 70 } }, observerMs: 60000, preTurnMs },
@@ -191,11 +200,11 @@ test("every attached image requires its own completed delivery before text dispa
   assert.equal(s.fixture.counters().submitCalls, 2);
 });
 
-test("failure after native launch retains the uncertain-native recovery gate", async t => {
+for (const error of [new Error("fixture native outcome unknown"), new ApiError(503, "deep_unavailable", "Deep analysis unavailable after native launch")]) test(`failure after native launch retains the uncertain-native recovery gate: ${error.message}`, async t => {
   const s = await setup(t);
   s.app.broker.options.codexEngineFactory = opts => ({
     async start() { opts.onNativeSessionId("fixture-native-started"); },
-    async prompt() { throw new Error("fixture native outcome unknown"); },
+    async prompt() { throw error; },
     async cancel() {}, async close() {},
   });
   const runId = await s.send("Ordinary native request", false); await until(() => s.app.store.runSnapshot(runId).status === "failed");
@@ -211,7 +220,7 @@ for (const text of ["Read a new image", "Read an unrelated image", "Read this dr
     await until(() => s.calls.length === 1); s.calls[0].release();
     await until(() => s.app.store.runSnapshot(first).status === "completed");
     const next = await s.send(text, false); await until(() => s.app.store.runSnapshot(next).status === "failed");
-    assert.equal(s.launches[1]?.intent, "technical"); assert.equal(s.calls.length, 1);
+    assert.equal(s.launches.length, 1); assert.equal(s.calls.length, 1);
     assert.equal(s.fixture.counters().submitCalls, 1);
   });
 }
@@ -221,7 +230,7 @@ test("no persisted evidence or callback assertion can authorize an attachment-fr
   s.app.broker.options.technicalVisionContext = async () => '{"completed":true,"terminalDelivered":true}';
   const next = await s.send("Read this drawing again", false);
   await until(() => s.app.store.runSnapshot(next).status === "failed");
-  assert.equal(s.launches[0]?.intent, "technical"); assert.equal(s.calls.length, 0);
+  assert.equal(s.launches.length, 0); assert.equal(s.calls.length, 0);
 });
 
 test("tampered persisted acknowledgement cannot authorize same-image followup", async t => {
@@ -233,13 +242,22 @@ test("tampered persisted acknowledgement cannot authorize same-image followup", 
   s.app.store.db.prepare("UPDATE h043_vision_host SET record=? WHERE handle=?").run(JSON.stringify(r), r.handle);
   const next = await s.send("Explain further and interpret that diagram", false);
   await until(() => s.app.store.runSnapshot(next).status === "failed");
-  assert.equal(s.launches[1]?.intent, "technical"); assert.equal(s.calls.length, 1);
+  assert.equal(s.launches.length, 1); assert.equal(s.calls.length, 1);
 });
 
-for (const [text, code] of [["Do deep research", "deep_unavailable"], ["Generate an image", "creative_unavailable"]]) {
-  test(`known policy denial is pre-native and next text remains usable: ${code}`, async t => {
+for (const [text, code] of [["Do deep research", "deep_unavailable"], ["Read this drawing", "technical_unavailable"], ["Generate an image", "creative_unavailable"]]) {
+  test(`actual host capability denial is pre-native and next text remains usable: ${code}`, async t => {
     const s = await setup(t);
-    Object.assign(s.app.broker.options.enginePolicy!.codex!, {delegationEnabled:false, imageGenerationEnabled:false, imageToolEnabled:false});
+    // Production mismatch: native delegation is enabled, but frontier responses
+    // and native technical/creative qualification remain unavailable.
+    const host = composeCodexHost("/fixture/launcher", () => undefined, {
+      protocolQualified:true, rootlessQualified:true, nativeDelegationQualified:true,
+      verifyLane:async () => { throw Error("No live lane may be accessed"); },
+    });
+    const deployment = codexDeployment({enablePreview:true, runtime:host.runtime});
+    assert.equal(deployment.enginePolicy!.codex!.delegationEnabled, true);
+    assert.equal(deployment.automaticRoutePreflight, host.runtime.automaticRouting);
+    Object.assign(s.app.broker.options, {enginePolicy:deployment.enginePolicy, automaticRoutePreflight:deployment.automaticRoutePreflight});
     let tokens = 0, factories = 0;
     s.app.broker.options.issueToken = () => { tokens++; return "fixture-token"; };
     const factory = s.app.broker.options.codexEngineFactory!;
@@ -275,12 +293,14 @@ test("same-image interpretation preserves explicit deep and creative gates", asy
 
 test("an explicit route denial never clears existing uncertain native ownership", async t => {
   const s = await setup(t);
-  s.app.broker.options.enginePolicy!.codex!.delegationEnabled = false;
+  let preflights = 0;
+  s.app.broker.options.automaticRoutePreflight = () => { preflights++; throw new ApiError(503, "deep_unavailable", "Deep analysis unavailable"); };
   s.app.store.setNativeState(s.session.id, "codex", {ownership:"uncertain", activeTurnId:"unsettled-turn", eventCursor:1});
   const run = await s.send("Do deep research", false);
   await until(() => s.app.store.runSnapshot(run).status === "interrupted");
   assert.equal(s.app.store.checkpoints.status(s.session.id)[0]?.status, "recovery_required");
   assert.equal(s.app.store.getSession(s.session.id).nativeState.ownership, "uncertain");
+  assert.equal(preflights, 0);
   assert.ok(!s.app.store.replay(s.session.id, 0).some(e => e.type === "error" && e.data.code === "deep_unavailable"));
   const next = await s.inject(`/api/sessions/${s.session.id}/messages`, {text:"Write a greeting",submissionId:"still-uncertain"});
   assert.equal(next.statusCode, 409);
@@ -295,5 +315,31 @@ test("an unrelated completed turn cannot lend old image coverage to a new refere
   s.calls[1].release(); await until(() => s.app.store.runSnapshot(unrelated).status === "completed");
   const reference = await s.send("Read this drawing again", false);
   await until(() => s.app.store.runSnapshot(reference).status === "failed");
-  assert.equal(s.launches[2]?.intent, "technical"); assert.equal(s.calls.length, 2);
+  assert.equal(s.launches.length, 2); assert.equal(s.calls.length, 2);
+});
+
+for (const error of [new Error("unknown preflight failure"), new ApiError(409, "automatic_route_untrusted", "Untrusted route"), new ApiError(503, "other_unavailable", "Unexpected unavailable"), new ApiError(409, "deep_unavailable", "Wrong status")]) {
+  test(`unexpected preflight error retains quarantine: ${error.message}`, async t => {
+    const s = await setup(t);
+    s.app.broker.options.automaticRoutePreflight = () => { throw error; };
+    const run = await s.send("Do deep research", false);
+    await until(() => s.app.store.runSnapshot(run).status === "failed");
+    assert.equal(s.launches.length, 0);
+    assert.equal(s.app.store.checkpoints.status(s.session.id).length, 0);
+    assert.equal(s.app.store.isQuarantined(s.app.store.getSession(s.session.id).workspaceId), true);
+    assert.ok(s.app.store.replay(s.session.id, 0).some(e => e.type === "error" && e.data.code === "engine_cleanup_unknown"));
+    const next = await s.inject(`/api/sessions/${s.session.id}/messages`, {text:"Write a greeting",submissionId:"guarded-error"});
+    assert.equal(next.statusCode, 409);
+  });
+}
+
+test("preflight validates an authentic route before calling the trusted callback", async t => {
+  const s = await setup(t);
+  let preflights = 0;
+  s.app.broker.options.automaticRoutePreflight = () => { preflights++; };
+  (s.app.broker as any).automaticRoute = () => ({intent:"deep", target:"mimo-v2.6-pro-rl"});
+  const run = await s.send("Do deep research", false);
+  await until(() => s.app.store.runSnapshot(run).status === "failed");
+  assert.equal(preflights, 0); assert.equal(s.launches.length, 0);
+  assert.equal(s.app.store.isQuarantined(s.app.store.getSession(s.session.id).workspaceId), true);
 });

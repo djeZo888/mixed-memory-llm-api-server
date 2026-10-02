@@ -1,5 +1,5 @@
 import { completedTechnicalVisionAttachments } from "./technical-vision-host.js";
-import { codexAutomaticDirective, createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent } from "./codex-automatic-routing.js";
+import { assertCodexAutomaticRoute, createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent, type CodexAutomaticRoute } from "./codex-automatic-routing.js";
 import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -21,6 +21,8 @@ import { ApiError } from "./errors.js";
 export interface NativeReplacementCommitInput {readonly sessionId:string;readonly runId:string;readonly checkpoint:Readonly<import("./session-checkpoint.js").SessionCheckpointRecord>}
 export type NativeReplacementCommitVerifier=(input:NativeReplacementCommitInput)=>Promise<void>;
 export interface BrokerOptions extends CodexRecoveryObservers {
+  /** Trusted synchronous host capability gate; never launches native work. */
+  automaticRoutePreflight?: (route: CodexAutomaticRoute, sessionId: string) => string | void;
   technicalVisionAvailable?: () => boolean;
   technicalVisionContext?: (sessionId: string, runId: string, fileIds: string[]) => Promise<string>;
   cancelTechnicalVision?: (sessionId: string) => Promise<void>;
@@ -687,25 +689,25 @@ export class Broker {
           return;
         }
       }
-      // Only explicit protected policy denials are known here. Host vision
-      // availability is not native technical qualification; leave that gate alone.
+      // Reuse the runtime's synchronous capability gate after host evidence/reference
+      // mapping, before creating any native checkpoint, token or runner.
       const nativeState = this.store.getSession(s.id).nativeState;
       if (s.engineKind === "codex" && run.kind === "message" && !this.runners.has(s.id) &&
-          nativeState.ownership === "idle" && nativeState.activeTurnId === null) {
+          nativeState.ownership === "idle" && nativeState.activeTurnId === null &&
+          this.options.automaticRoutePreflight) {
         const route = this.automaticRoute(s, run)!;
-        const policy = this.options.enginePolicy?.codex;
-        const denied = (route.intent === "deep" && policy?.delegationEnabled === false) ||
-          (route.intent === "creative" && policy?.imageGenerationEnabled === false &&
-            policy?.imageToolEnabled === false && this.options.imageAcceptance?.(s.id) !== true);
-        if (denied) {
-          try { codexAutomaticDirective(route, {deep:false, creative:false, technical:true}); }
-          catch (error) {
-            if (!(error instanceof ApiError)) throw error;
-            this.store.updateRun(run.id, "failed");
-            cleanupConfirmed = true; // No checkpoint, token, factory or native start.
-            this.store.emit(s.id, "error", {code:error.code, message:error.message}, run.id);
-            return;
-          }
+        assertCodexAutomaticRoute(route);
+        try { this.options.automaticRoutePreflight(route, s.id); }
+        catch (error) {
+          // Only static unavailability from this pre-native gate is recoverable.
+          // Unknown exceptions and all post-native failures retain guarded cleanup.
+          if (!(error instanceof ApiError) || error.statusCode !== 503 ||
+              !["deep_unavailable", "technical_unavailable", "creative_unavailable"].includes(error.code) ||
+              error.code !== `${route.intent}_unavailable`) throw error;
+          this.store.updateRun(run.id, "failed");
+          cleanupConfirmed = true; // No checkpoint, token, factory or native start.
+          this.store.emit(s.id, "error", {code:error.code, message:error.message}, run.id);
+          return;
         }
       }
       if (s.engineKind === "codex") this.store.checkpoints.prepare(s.id,run.id,run.kind,s.nativeSessionId);

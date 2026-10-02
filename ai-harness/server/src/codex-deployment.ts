@@ -13,7 +13,7 @@ export function codexDeployment(
   input: { enablePreview?: boolean; runtime?: CodexRuntime } = {},
 ): Pick<
   BrokerOptions,
-  "enginePolicy" | "codexEngineFactory" | "codexGatewayUrl"
+  "enginePolicy" | "codexEngineFactory" | "codexGatewayUrl" | "automaticRoutePreflight"
 > {
   const runtime = input.runtime;
   if (input.enablePreview && (!runtime || !runtime.protocolQualified))
@@ -35,5 +35,6 @@ export function codexDeployment(
     },
     codexEngineFactory: runtime ? codexEngineFactory(runtime) : undefined,
     codexGatewayUrl: runtime?.gatewayUrl,
+    automaticRoutePreflight: runtime?.automaticRouting,
   };
 }
