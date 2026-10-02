@@ -4,6 +4,7 @@ import {join} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
 import {spawnSync} from 'node:child_process';
+import {isDeepStrictEqual} from 'node:util';
 const sha=b=>createHash('sha256').update(b).digest('hex');
 const need=(v,m)=>{if(!v)throw Error(m);};
 const put=(p,b)=>{writeFileSync(p,b,{flag:'wx',mode:0o600});return sha(b);};
@@ -24,18 +25,63 @@ export function armProtocolCapture(owned){
 }
 export async function protocol(owned,Connection,input,abortSignal,frames=armProtocolCapture(owned)){
  need(!frames.captureFailure,'Original raw capture failed');
- let failure;
+ let failure,threadAck,threadRequested=false,threadStarted=false,notificationCount=0,envelopeBuffer='';
+ const pending=[],serverStates=new Map(),record=v=>!!v&&typeof v==='object'&&!Array.isArray(v);
+ const keys=(v,wanted)=>record(v)&&Object.keys(v).sort().join(',')===wanted;
  let rejectFailure;const failed=new Promise((_,reject)=>{rejectFailure=reject;});void failed.catch(()=>{});
- const connection=new Connection(owned.stdout,owned.stdin,(method)=>{if(!['thread/started'].includes(method)){failure=Error('Unexpected native notification');rejectFailure(failure);}},error=>{failure=error;rejectFailure(error);},15000);
- const stopped=new Promise((_,reject)=>{abortSignal.addEventListener('abort',()=>reject(Error('Finite carrier stop')),{once:true});if(abortSignal.aborted)reject(Error('Finite carrier stop'));});void stopped.catch(()=>{});
+ const refuse=error=>{failure??=error;rejectFailure(failure);};
+ const check=()=>{if(failure)throw failure;need(!frames.captureFailure,'Original raw capture failed');};
+ const bind=(method,params)=>{
+  if(method==='thread/started'){
+   need(!threadStarted&&isDeepStrictEqual(params.thread,threadAck.thread),'Invalid or wrong-thread thread/started notification');threadStarted=true;
+  }else{
+   need(params.threadId===threadAck.thread.id,'Wrong-thread MCP startup notification');
+   need(params.status==='starting'?!serverStates.has(params.name):serverStates.get(params.name)==='starting','Invalid MCP startup transition');
+   serverStates.set(params.name,params.status);
+  }
+ };
+ const notification=(method,params)=>{try{
+  check();need(++notificationCount<=16,'Bootstrap notification count exceeds bound');
+  if(method==='remoteControl/status/changed'){
+   need(keys(params,'environmentId,installationId,serverName,status')&&params.status==='disabled'&&params.environmentId===null&&typeof params.serverName==='string'&&/^[A-Za-z0-9][A-Za-z0-9._-]{0,254}$/.test(params.serverName)&&typeof params.installationId==='string'&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(params.installationId),'Invalid remote-control disabled notification');return;
+  }
+  if(method==='mcpServer/startupStatus/updated'){
+   need(keys(params,'error,failureReason,name,status,threadId')&&typeof params.threadId==='string'&&/^[A-Za-z0-9][A-Za-z0-9._:-]{0,255}$/.test(params.threadId)&&['search','browser','image'].includes(params.name)&&['starting','ready'].includes(params.status)&&params.error===null&&params.failureReason===null,'Invalid MCP startup notification');
+  }else if(method==='thread/started'){
+   need(keys(params,'thread')&&record(params.thread)&&typeof params.thread.id==='string','Invalid thread/started notification');
+  }else throw Error('Unexpected native notification');
+  need(threadRequested,'Thread notification before thread/start');
+  if(threadAck)bind(method,params);else{need(pending.length<16,'Pending bootstrap notifications exceed bound');pending.push({method,params});}
+ }catch(error){refuse(error);}};
+ // Connection intentionally passes only method/params. Validate the measured
+ // emittedAtMs envelope separately, before its synchronous same-chunk callback.
+ const envelope=chunk=>{try{
+  envelopeBuffer+=chunk;need(Buffer.byteLength(envelopeBuffer)<=2*1024*1024,'Bootstrap envelope exceeds private bound');
+  let end;while((end=envelopeBuffer.indexOf('\n'))>=0){const line=envelopeBuffer.slice(0,end);envelopeBuffer=envelopeBuffer.slice(end+1);const value=JSON.parse(line);
+   if(record(value)&&'method' in value)need(keys(value,'emittedAtMs,method,params')&&typeof value.method==='string'&&record(value.params)&&Number.isSafeInteger(value.emittedAtMs)&&value.emittedAtMs>0,'Invalid native notification envelope');
+  }
+ }catch(error){refuse(error);}};
+ owned.stdout.on('data',envelope);
+ const connection=new Connection(owned.stdout,owned.stdin,notification,refuse,15000);
+ let rejectStop;const onAbort=()=>rejectStop(Error('Finite carrier stop'));
+ const stopped=new Promise((_,reject)=>{rejectStop=reject;abortSignal.addEventListener('abort',onAbort,{once:true});if(abortSignal.aborted)onAbort();});void stopped.catch(()=>{});
  const request=(method,params)=>Promise.race([connection.request(method,params),failed,stopped]);
+ let observationTimer;
  try{
   const initialize=await request('initialize',{clientInfo:{name:'sova',title:'Sova',version:'0.0.3'},capabilities:{experimentalApi:false,requestAttestation:false}});
+  check();
   need(initialize?.codexHome===input.profileDir+'/codex-home'&&initialize.platformOs==='linux'&&initialize.platformFamily==='unix'&&typeof initialize.userAgent==='string'&&initialize.userAgent.includes('0.158.0'),'Invalid genuine initialize ACK');
   connection.initialized();
+  check();threadRequested=true;
   const threadStart=await request('thread/start',{model:'qwen3.8-27b',modelProvider:'sova',cwd:input.workspace,approvalPolicy:'never',sandbox:'read-only',ephemeral:false});
-  const nativeThreadId=validateAcks(initialize,threadStart,input);return {initialize,threadStart,nativeThreadId,frames};
- }finally{connection.fail(Error('Owned no-generation protocol closed'));}
+  check();const nativeThreadId=validateAcks(initialize,threadStart,input);threadAck=threadStart;
+  for(const value of pending)bind(value.method,value.params);pending.length=0;
+  // Finite bootstrap-only observation also checks ready notifications arriving
+  // after the ACK. This window does not assert that all MCP servers are ready.
+  await Promise.race([new Promise(resolve=>{observationTimer=setTimeout(resolve,250);}),failed,stopped]);
+  check();need(threadStarted&&!envelopeBuffer,'Missing or truncated bootstrap notification');
+  return {initialize,threadStart,nativeThreadId,frames};
+ }finally{clearTimeout(observationTimer);abortSignal.removeEventListener('abort',onAbort);owned.stdout.removeListener('data',envelope);connection.fail(Error('Owned no-generation protocol closed'));}
 }
 export async function shutdownOwned(owned){
  const cleanup=await owned.terminateAndConfirm().catch(()=>false);
