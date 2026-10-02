@@ -30,7 +30,11 @@ def build():
  import normal_service
  graph['runtime']['normalHandoff']['launcher']={'mode':'SYSTEMD_TYPE_EXEC_ORIGINAL_SUPERVISOR','argvTemplate':normal_service.startup_argv(graph,'a'*64),'nonceTemplate':'a'*64,'finiteKillParent':False}
  graph['actions']['load']['argv']=[['/usr/bin/python3','-I','-B',source+'/scripts/h044/vision_runtime/normal_service.py','--launch']]
- graph['phase']='V-live06'
+ graph['phase']='H045-vision'
+ graph['runtime']['enabledServices']=cfg['enabledServices']
+ graph['rootOwnerEvidence'].pop('otherFourInstances')
+ graph['rootOwnerEvidence']['protectedInstances']=None
+ graph['runtime']['peakMeasurements']['otherInstanceCount']=len(cfg['enabledServices']['general'])
  graph['runtime']['schedule']['maxChildCount']=5
  graph['runtime']['schedule']['producer']='separate systemd Type=exec ORIGINAL root supervisor owns Docker attach + UID1000 service/ingress from creation; bounded executor owns only launch/monitor'
  graph['runtime']['schedule']['normalFaultCleanup']='current admitted normal authority determined BEFORE child/resource mutation; original parent retains handles through fault/TERM/metadata quarantine until signed shutdown or signed normal lease expiry; exact ledger CAS lock spans settlement'
@@ -45,7 +49,7 @@ def build():
  sys.path.insert(0,str(HELPERS))
  import normal_service
  dump('NORMAL-HOST-CONTRACT.json',normal_service.contract(graph))
- dump('NORMAL-TRANSITION-TEMPLATE.json',{'schema':'h044-normal-adoption-input-template-v1','status':normal_service.STATUS,'execute':False,'normalCapabilitySchema':'h044-normal-adoption-v1','sourceGraphSHA256':normal_service.contract(graph)['sourceGraphSHA256'],'requiredEvidence':sorted(__import__('normal_handoff').EVIDENCE),'requiredRoles':sorted(__import__('normal_handoff').ROLES),'fields':{k:None for k in ('nonce','issuer','notBefore','prepareExpires','normalLeaseExpires','bootId','ociImageId','oldOwner','newOwner','resources','admissionLease','hostContract','credentials','evidence')},'transitions':['FINITE','PREPARED','COMMIT_PENDING_ACK','ACK_PENDING_RELINQUISH','NORMAL'],'originalWaitParent':'same authentic supervisor birth; new owner authority and admission lease; no Popen transfer','failure':'truthful quarantine; close exact finite owners before any accepted ack; unknown handoff remains untouched','NOT_TESTED':['actual model accuracy','current root capability','current UID descriptor','six resident operation','normal factory/MCP','live handoff']})
+ dump('NORMAL-TRANSITION-TEMPLATE.json',{'schema':'h044-normal-adoption-input-template-v1','status':normal_service.STATUS,'execute':False,'normalCapabilitySchema':'h044-normal-adoption-v1','sourceGraphSHA256':normal_service.contract(graph)['sourceGraphSHA256'],'requiredEvidence':sorted(__import__('normal_handoff').required_evidence(graph)),'requiredRoles':sorted(__import__('normal_handoff').ROLES),'fields':{k:None for k in ('nonce','issuer','notBefore','prepareExpires','normalLeaseExpires','bootId','ociImageId','oldOwner','newOwner','resources','admissionLease','hostContract','credentials','evidence')},'transitions':['FINITE','PREPARED','COMMIT_PENDING_ACK','ACK_PENDING_RELINQUISH','NORMAL'],'originalWaitParent':'same authentic supervisor birth; new owner authority and admission lease; no Popen transfer','failure':'truthful quarantine; close exact finite owners before any accepted ack; unknown handoff remains untouched','NOT_TESTED':['actual model accuracy','current root capability','current UID descriptor','enabled five-instance operation','normal factory/MCP','live handoff']})
 
  return graph
 if __name__=='__main__':build()

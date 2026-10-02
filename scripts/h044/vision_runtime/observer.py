@@ -135,12 +135,11 @@ def group_absent(pgid):
 
 
 def protected_instances(graph,snapshot):
- expected=graph['rootOwnerEvidence'].get('otherFourInstances')
- if not isinstance(expected,list) or len(expected)!=4:raise Refused('other_four_current_identity_missing')
+ expected=__import__('control').protected_roster(graph)
  result=[]
  for owner in expected:
   q=exact_container(owner['id'])
-  if not q.get('birth') or q['birth']!=owner.get('birth') or q.get('value',{}).get('image')!=owner.get('image') or q.get('value',{}).get('devices')!=owner.get('devices') or not q.get('value',{}).get('running'):raise Refused('other_four_identity_changed')
+  if not q.get('birth') or q['birth']!=owner.get('birth') or q.get('value',{}).get('image')!=owner.get('image') or q.get('value',{}).get('devices')!=owner.get('devices') or not q.get('value',{}).get('running'):raise Refused('protected_instance_identity_changed')
   result.append(owner)
  return result
 
@@ -160,5 +159,11 @@ def residency_sample(graph,owners):
   q['ownedGpuProcessBirths']=joined
  g=next((x for x in s['gpus'] if x[0]==GPU),None)
  if g is None or float(g[3])/float(g[1])<.07:raise Refused('peak_free_below_seven_percent')
- return {'snapshot':s,'otherFourInstances':protected,'minimumFreeFraction':float(g[3])/float(g[1]),'bothResident':True,'qualification':'LIVE_RECEIPTS_ONLY_NOT_SOURCE_FIXTURE'}
+ roster=__import__('control').enabled_roster(graph)
+ result={'snapshot':s,'minimumFreeFraction':float(g[3])/float(g[1]),'bothResident':True,'qualification':'LIVE_RECEIPTS_ONLY_NOT_SOURCE_FIXTURE'}
+ result['protectedInstances' if roster else 'otherFourInstances']=protected
+ if roster:
+  if sorted(o['role'] for o in owners)!=sorted(roster['vision']):raise Refused('enabled_vision_roles')
+  result.update(enabledServices=roster,instanceCount=len(protected)+len(owners),visionInstances=[{k:o[k] for k in ('role','id','birth','image','devices')} for o in sorted(owners,key=lambda x:x['role'])])
+ return result
 if __name__=='__main__':raise SystemExit('DISABLED: only source-bound exact executor may call observer after current root GO')

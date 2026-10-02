@@ -66,7 +66,7 @@ def exclusive(path,value):
 
 def validate_graph(g):
  if set(g)!={'schema','execute','phase','sourceRoot','privateRoot','sourceManifest','helperManifest','controlManifest','image','modelReceipt','configSHA256','rootOwnerEvidence','runtime','actions','gates','rootCarrier','workload'}:raise Refused('graph_fields')
- if g['schema']!='h044-private-runtime-graph-v1' or g['execute'] is not False or g['phase'] not in ('V-runtime04','V-runtime05','V-live06'):raise Refused('disabled_exact_graph')
+ if g['schema']!='h044-private-runtime-graph-v1' or g['execute'] is not False or g['phase'] not in ('V-runtime04','V-runtime05','V-live06','H045-vision'):raise Refused('disabled_exact_graph')
  if (g['sourceRoot'],g['privateRoot'])!=(SOURCE_ROOT,PHASE_ROOT):raise Refused('fixed_roots')
  if g['image']!='vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40':raise Refused('image')
  if set(g['gates'])!=set(GATES):raise Refused('gates')
@@ -77,7 +77,31 @@ def validate_graph(g):
   for name,value in g[table].items():
    if not re.fullmatch(r'[A-Za-z0-9_./-]{1,180}',name) or '..' in name.split('/') or not re.fullmatch(r'[0-9a-f]{64}',value):raise Refused('manifest')
  if set(g['actions'])!={'preflight','load','inference','stop','pull'} or any(v['enabled'] is not False for v in g['actions'].values()):raise Refused('all_actions_disabled')
+ enabled_roster(g)
  return g
+
+def enabled_roster(graph):
+ """Explicit signed capacity plan; absence preserves the historical contract."""
+ roster=graph.get('runtime',{}).get('enabledServices')
+ if 'enabledServices' not in graph.get('runtime',{}):return None
+ expected={'general':['qwen0','qwen1','mimo'],'vision':['interpretation','ocr'],'generation':False}
+ if roster!=expected or not isinstance(roster,dict) or roster.get('generation') is not False:raise Refused('enabled_service_roster')
+ return roster
+
+def protected_roster(graph):
+ roster=enabled_roster(graph)
+ if roster is None:
+  expected=graph['rootOwnerEvidence'].get('otherFourInstances')
+  if not isinstance(expected,list) or len(expected)!=4:raise Refused('other_four_current_identity_missing')
+  return expected
+ expected=graph['rootOwnerEvidence'].get('protectedInstances')
+ if not isinstance(expected,list) or len(expected)!=len(roster['general']):raise Refused('enabled_general_current_identity_missing')
+ if any(not isinstance(x,dict) for x in expected):raise Refused('enabled_general_identity')
+ if {x.get('serviceId') for x in expected}!=set(roster['general']):raise Refused('enabled_general_roles')
+ ids=[x.get('id') for x in expected]
+ if any(not isinstance(x,str) or not re.fullmatch('[a-f0-9]{64}',x) for x in ids) or len(set(ids))!=len(ids):raise Refused('enabled_general_unique_container_ids')
+ if any(not x.get('birth') or not x.get('image') or not x.get('devices') for x in expected):raise Refused('enabled_general_exact_identity_required')
+ return expected
 
 def verify_source(g,source_root,helper_root):
  from trusted_imports import protected_bytes
@@ -145,7 +169,9 @@ def current_authority(action):
  go=carrier(PHASE_ROOT+'/CURRENT-GO.json',PHASE_ROOT+'/CURRENT-GO.json.sig',graph)
  if os.geteuid()!=0:raise Refused('actual_root_control_context')
  if action in ('load','preflight') and not re.fullmatch(r'sha256:[a-f0-9]{64}',graph['rootOwnerEvidence'].get('imageId') or ''):raise Refused('current_exact_OCI_image_ID_missing')
- if action=='load' and (not isinstance(graph['rootOwnerEvidence'].get('otherFourInstances'),list) or len(graph['rootOwnerEvidence']['otherFourInstances'])!=4 or not graph['rootOwnerEvidence'].get('credentialDescriptorProof')):raise Refused('current_four_instances_or_UID_descriptor_proof_missing')
+ if action=='load':
+  protected_roster(graph)
+  if not graph['rootOwnerEvidence'].get('credentialDescriptorProof'):raise Refused('current_UID_descriptor_proof_missing')
  if action not in go['actions'] or datetime.datetime.fromisoformat(go['actionDeadlines'][action]).timestamp()<=time.time():raise Refused('finite_current_action_missing')
  if any(graph['gates'][x]!='PASS' for x in GATES):raise Refused('current_root_gates_missing')
  verify_source(graph,SOURCE_ROOT,SOURCE_ROOT+'/scripts/h044/vision_runtime')

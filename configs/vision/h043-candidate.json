@@ -159,5 +159,17 @@
       "auto": 400000,
       "output": 65536
     }
+  },
+  "enabledServices": {
+    "general": [
+      "qwen0",
+      "qwen1",
+      "mimo"
+    ],
+    "vision": [
+      "interpretation",
+      "ocr"
+    ],
+    "generation": false
   }
 }

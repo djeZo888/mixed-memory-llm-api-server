@@ -591,7 +591,7 @@ def supervise():
   if monitor['monitorBirth']['cgroup']==b['cgroup'] or monitor['monitorBirth']['pgid']==b['pgid']:raise control.Refused('finite_monitor_not_separate')
   manager.launch('workload');workload=manager.wait('workload',finite)
   if workload['actualExitCode']!=0 or workload['state']!='WAITED_ABSENT':raise control.Refused('actual_concurrent_workload_failed')
-  publish(root/'workload-ready.json',{'originalWorkload':workload,'resources':observe(),'sixResident':observer.residency_sample(graph,owners),'credentials':credentials,'status':'ROOT_ACCURACY_TIMING_ORIGINAL_RECEIPT_REVIEW_REQUIRED'},public=True)
+  publish(root/'workload-ready.json',{'originalWorkload':workload,'resources':observe(),('enabledResident' if control.enabled_roster(graph) else 'sixResident'):observer.residency_sample(graph,owners),'credentials':credentials,'status':'ROOT_ACCURACY_TIMING_ORIGINAL_RECEIPT_REVIEW_REQUIRED'},public=True)
   while time.time()<finite:
    healthy()
    if (root/'monitor/cancel.json').exists():raise control.Refused('unadopted_finite_monitor_cancel')
@@ -647,7 +647,7 @@ def supervise():
    try:cleanup=lifecycle.stop(graph,go['nonce'],stop_end)
    except BaseException as exc:cleanup={'state':'QUARANTINE','failure':str(exc)}
   try:
-   if observer.protected_instances(graph,observer.snapshot())!=protected:raise control.Refused('other_four_original_instances_changed')
+   if observer.protected_instances(graph,observer.snapshot())!=protected:raise control.Refused('protected_original_instances_changed')
   except BaseException as exc:failure=(failure or '')+';'+str(exc)
   publish(root/'supervisor-terminal.json',{'originalSupervisorBirth':b,'reason':reason,'failure':failure,'children':child_receipts,'cleanup':cleanup,'qualification':'NOT_TESTED_UNTIL_GENUINE_ROOT_REVIEW'})
  if failure:raise control.Refused(failure)

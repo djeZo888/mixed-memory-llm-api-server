@@ -11,6 +11,18 @@ STATUS='DISABLED_UNTIL_ROOT_SIGNED_REAL_RECEIPTS'
 ROLES={'interpretation','ocr','service','ingress','network'}
 EVIDENCE={'startup','workload','ocr','sixResident','credentials','uidDescriptor','sourceGraph','oci'}
 
+def required_evidence(graph):
+ return (EVIDENCE-{'sixResident'})|{'enabledResident'} if control.enabled_roster(graph) else EVIDENCE
+
+def validate_enabled_residency(record,graph,resources):
+ roster=control.enabled_roster(graph);protected=control.protected_roster(graph)
+ if control.enabled_roster({'runtime':{'enabledServices':record.get('enabledServices')}})!=roster:raise control.Refused('enabled_resident_roster')
+ expected=[{k:r.get(k) for k in ('role','id','birth','image','devices')} for r in sorted(resources,key=lambda x:x['role']) if r['role'] in roster['vision']]
+ if len(expected)!=len(roster['vision']) or any(not r[k] for r in expected for k in ('id','birth','image','devices')):raise control.Refused('enabled_vision_identity_required')
+ if record.get('enabledServices')!=roster or record.get('protectedInstances')!=protected or record.get('visionInstances')!=expected:raise control.Refused('enabled_resident_identity_bindings')
+ fraction=record.get('minimumFreeFraction')
+ if type(record.get('instanceCount')) is not int or record.get('instanceCount')!=len(protected)+len(expected) or record.get('concurrentOperation') is not True or type(fraction) not in (int,float) or not .07<=fraction<=1:raise control.Refused('enabled_resident_operation_capacity')
+
 def timestamp(s):
  try:
   d=datetime.datetime.fromisoformat(s)
@@ -59,7 +71,7 @@ def validate(raw,signature,graph,current,*,now=None,verify=verify_signature,read
  if {x.get('role') for x in cap['resources']}!=ROLES or len(cap['resources'])!=5:raise control.Refused('both_models_service_ingress_network_required')
  if not cap['oldOwner'] or cap['oldOwner']==cap['newOwner'] or not cap['newOwner'].get('supervisorBirth') or cap['newOwner'].get('supervisorBirth')!=cap['oldOwner'].get('supervisorBirth'):raise control.Refused('original_supervisor_wait_parent_required')
  if cap['admissionLease'].get('state')!='NORMAL_PREPARED_EXCLUSIVE' or cap['hostContract'].get('normalHost')!='10.156.100.60:18193' or cap['hostContract'].get('rawBackendBypass') is not False:raise control.Refused('normal_host_admission_contract')
- if set(cap['evidence'])!=EVIDENCE:raise control.Refused('normal_evidence_complete_required')
+ if set(cap['evidence'])!=required_evidence(graph):raise control.Refused('normal_evidence_complete_required')
  read=read or (lambda p:control.read_private(p,0))
  records={}
  for name,ref in cap['evidence'].items():
@@ -69,7 +81,8 @@ def validate(raw,signature,graph,current,*,now=None,verify=verify_signature,read
   value=control.parse_proof(b);no_fixture(value);records[name]=value
  if records['sourceGraph'].get('graphSHA256')!=cap['sourceGraphSHA256'] or records['oci'].get('imageId')!=cap['ociImageId']:raise control.Refused('normal_actual_source_oci_receipts')
  if records['startup'].get('actualBothModelServiceIngressHealthy') is not True or records['credentials'].get('leavesPreserved') is not True or records['uidDescriptor'].get('actualUid')!=1000 or records['uidDescriptor'].get('readableDescriptor') is not True:raise control.Refused('normal_actual_startup_uid_credentials')
- if len(records['sixResident'].get('instances',[]))!=6 or records['sixResident'].get('concurrentOperation') is not True:raise control.Refused('normal_six_resident_original_receipts')
+ if control.enabled_roster(graph):validate_enabled_residency(records['enabledResident'],graph,cap['resources'])
+ elif len(records['sixResident'].get('instances',[]))!=6 or records['sixResident'].get('concurrentOperation') is not True:raise control.Refused('normal_six_resident_original_receipts')
  for name in ('workload','ocr'):
   x=records[name]
   if x.get('status')!='RESPONSE_ASSERTIONS_PASS' or x.get('accuracyPassed') is not True or x.get('timingPassed') is not True:raise control.Refused('normal_accuracy_timing')

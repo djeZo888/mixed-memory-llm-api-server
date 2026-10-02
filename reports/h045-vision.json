@@ -1,0 +1,30 @@
+{
+  "schema": "h045-vision-report-v1",
+  "updatedUtc": "2026-10-02T08:52:17.925656+00:00",
+  "base": "f2151a569393252b7705476106c2deaaaedb51b6",
+  "status": "SOURCE_READY_LIVE_NOT_TESTED",
+  "enabledServices": {
+    "general": [
+      "qwen0",
+      "qwen1",
+      "mimo"
+    ],
+    "vision": [
+      "interpretation",
+      "ocr"
+    ],
+    "generation": false
+  },
+  "focusedTests": {
+    "count": 13,
+    "exit": 0,
+    "originalReceipt": "output/focused-enabled-roster-decf2ae213e84ecd8da04c7f435fd7d1.receipt.json"
+  },
+  "liveInference": "NOT_TESTED",
+  "normalSova": "NOT_TESTED",
+  "mimoObserved": "SETTLED_FAILED_UNIT_PREPARING_ROOT_RESTART_GO",
+  "preservedPins": "native0.158/upstream064c/context480000/auto400000/output65536",
+  "sessionModel": "gpt-6-astra",
+  "effort": "ultra",
+  "tier": "actual argv ultrafast; not exposed by turn_context"
+}
