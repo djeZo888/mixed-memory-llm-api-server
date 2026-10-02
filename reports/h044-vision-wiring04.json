@@ -1,0 +1,792 @@
+{
+  "schema": "h044-vision-wiring04-source-report-v1",
+  "status": "SOURCE_SEAM_CHECKED_WITH_RETAINED_LEGACY_FAILURES",
+  "sourceOnly": true,
+  "baseCommit": "d5e368d9f50d51fdc438da3c445391f28e9cf626",
+  "sourceCommit": "ba74d34aea94868f66be61156bdeae1e7e461e77",
+  "preparedUtc": "2026-10-02T00:36:16.168621+00:00",
+  "ownedFiles": [
+    "ai-harness/server/src/app.ts",
+    "ai-harness/server/test/h044-app-image-operation-admission.test.ts",
+    "reports/h044-vision-wiring04.md",
+    "reports/h044-vision-wiring04.json"
+  ],
+  "sourceOwnedHashes": {
+    "ai-harness/server/src/app.ts": {
+      "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+      "bytes": 36774
+    },
+    "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+      "sha256": "20bc182d3e6f86b8a03e29792101ae730701915b6f261b4d647e0f6f3aeb4e38",
+      "bytes": 17484
+    }
+  },
+  "adoption": {
+    "baseCommit": "d5e368d9f50d51fdc438da3c445391f28e9cf626",
+    "sourceCommit": "ba74d34aea94868f66be61156bdeae1e7e461e77",
+    "proposalOrigin": "CLOSED_R01_PRIVATE_PROPOSAL_NOT_ACTIVATED",
+    "proposalAppOldSHA256": "a5e07b86cefb2272bd607daa5a5abf2dac1d694c2b1d425e4eb858bbe606dcbe",
+    "proposalPatch": {
+      "sha256": "0a6499c00d01d5600bb4507b287c7922e5719c96935f6d0361c16d464a642d04",
+      "bytes": 1236
+    },
+    "baselineBeforeApp": {
+      "sha256": "6f2bf2afbbb000fd009549628c7d1f4c251a3647e52b524464d8c812e8720ae6",
+      "bytes": 36516
+    },
+    "afterApp": {
+      "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+      "bytes": 36774
+    },
+    "exactThreeHunksVerified": true,
+    "exactAdoptionDiff": {
+      "sha256": "09082c05af0a83a4842f0487d1a15b8426d88dfd483d17dfc17b6e1af23d4c22",
+      "bytes": 1670
+    },
+    "staleProposalApplyCheck": {
+      "receipt": "checks/02-proposal-apply-check-568998ed007141c2af3d9cc78ca13e8f.receipt.json",
+      "actualExitCode": 1,
+      "reason": "V03 NormalTechnicalVision import context differs; original proposal does not apply"
+    },
+    "reconciledPatch": {
+      "sha256": "9fdb07394b3ab6e2f3baec06efa5d2afa5589be6fc0baa840a7ba70438f0f206",
+      "bytes": 1324
+    },
+    "reconciledApplyCheckReceipt": "checks/03-reconciled-apply-check-1408c01898784e77b7a508dd1d3b744d.receipt.json",
+    "applyReceipt": "checks/04-reconciled-apply-039c9a362b66443fb602c5a000d475d3.receipt.json",
+    "noBroadOverwriteOrCherryPick": true,
+    "preservedNotOwnedBaselineFileCount": 5087
+  },
+  "seamContract": {
+    "schema": "h044-v04-normal-app-image-operation-seam-v1",
+    "scope": "SYNTHETIC_SOURCE_ONLY_NO_OPERATIONAL_PERMISSION",
+    "baseCommit": "d5e368d9f50d51fdc438da3c445391f28e9cf626",
+    "sourceCommit": "ba74d34aea94868f66be61156bdeae1e7e461e77",
+    "AppOptions": "imageOperationQualified?: ImageBrokerOptions[\"operationQualified\"]",
+    "currentR01Type": "(sessionId:string, operation:\"generation\"|\"edit\") => boolean",
+    "forwarding": "createApp normal images = new ImageBroker({operationQualified: options.imageOperationQualified,...existing composition})",
+    "absence": "Historic broker admission unchanged; full legacy gateway/reference admission independently closed",
+    "generationOnly": "True only for exact current qualified session and operation=generation; edits require separate current qualification",
+    "producer": "Trusted current main/R guard ONLY; fixtures never create actual host/profile qualification",
+    "R02SourceOverlay": "NONE",
+    "RIntegrationRequired": "R02 generation-only native profile/typed guard + gateway/main supplies this App callback; root checks final integrated graph",
+    "legacyGatesPreserved": [
+      "imageToolEnabled",
+      "imageAcceptance",
+      "imageReferenceAcceptance",
+      "creative child/delegation",
+      "uploaded reference guards",
+      "native pixel prohibition"
+    ],
+    "normalHistory": "Same original session/run/job/request, durable normal journal, status/artifacts/cancel and Stop settlement; no secondary private client/raw backend path",
+    "technicalVision": "NormalTechnicalVision construction and broker integration untouched by the three-hunk seam",
+    "inputHashes": {
+      "ai-harness/server/src/app.ts": {
+        "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+        "bytes": 36774
+      },
+      "ai-harness/server/src/image-broker.ts": {
+        "sha256": "af87bc35bebfffdf0b7087b47985e8eb140921fda14e280a0b8af79370d27e24",
+        "bytes": 38224
+      },
+      "ai-harness/server/src/main.ts": {
+        "sha256": "510f7eff65a66e96e5d2210e3bcecbea04e31a7dd87fcf339b673ccc592e06a9",
+        "bytes": 22605
+      },
+      "ai-harness/server/src/gateway.ts": {
+        "sha256": "856f2b1149459150e489dd878937a805d2b3f10bbe9e02d7a7721b093e07f1fa",
+        "bytes": 63114
+      },
+      "ai-harness/server/src/technical-vision-host.ts": {
+        "sha256": "d99bae358769fe4af1e5fb04164b89d57128d173b45f4a7259d0abcbfdf5cf0f",
+        "bytes": 45063
+      }
+    },
+    "NOT_TESTED": [
+      "actual native/current host generation qualification",
+      "actual model image generation",
+      "R02 final integrated graph",
+      "browser/full one-chat workflow",
+      "actual host cancel integration"
+    ]
+  },
+  "focusedPassedTests": 80,
+  "checks": [
+    {
+      "label": "20-new-test-final",
+      "passedTests": 5,
+      "actualExitCode": 0,
+      "receipt": "checks/20-new-test-final-c2850157f6f44f89b8e55805133ba271.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/20-new-test-final-c2850157f6f44f89b8e55805133ba271.stdout",
+        "sha256": "5d126358389c249e2cf1ac256b8dc00a9ce65610ae39be43dec313ab5f997b81",
+        "bytes": 756
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/20-new-test-final-c2850157f6f44f89b8e55805133ba271.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "20bc182d3e6f86b8a03e29792101ae730701915b6f261b4d647e0f6f3aeb4e38",
+          "bytes": 17484
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "17-app-compatible-focused",
+      "passedTests": 8,
+      "actualExitCode": 0,
+      "receipt": "checks/17-app-compatible-focused-1fcf688a936441e6a5a9eb1edbd0e09f.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/17-app-compatible-focused-1fcf688a936441e6a5a9eb1edbd0e09f.stdout",
+        "sha256": "1506ae37ddc239a2fee8bc96648474343c3a455e58b62cb0991d5b178e1ae810",
+        "bytes": 833
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/17-app-compatible-focused-1fcf688a936441e6a5a9eb1edbd0e09f.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "d038a6209f249d6e968d9f9684558a27b588939d70c7ff5a56710d596ae4084f",
+          "bytes": 17404
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "18-image-broker-focused",
+      "passedTests": 34,
+      "actualExitCode": 0,
+      "receipt": "checks/18-image-broker-focused-23ea1f32bc6b4f979e37ad8fbfa45497.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/18-image-broker-focused-23ea1f32bc6b4f979e37ad8fbfa45497.stdout",
+        "sha256": "751f9f94d6fb15131a68c9f0857167cc4b0389fc9702459285722dfceeb5fade",
+        "bytes": 4056
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/18-image-broker-focused-23ea1f32bc6b4f979e37ad8fbfa45497.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "d038a6209f249d6e968d9f9684558a27b588939d70c7ff5a56710d596ae4084f",
+          "bytes": 17404
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "12-technical-vision-focused",
+      "passedTests": 22,
+      "actualExitCode": 0,
+      "receipt": "checks/12-technical-vision-focused-cb6bb64890e140e5a7356384bcb1127b.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/12-technical-vision-focused-cb6bb64890e140e5a7356384bcb1127b.stdout",
+        "sha256": "a5325ccf1c4d5c9302d8fee90e85efe9b3fcd33edd876d522966a62c77a63445",
+        "bytes": 21059
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/12-technical-vision-focused-cb6bb64890e140e5a7356384bcb1127b.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "d038a6209f249d6e968d9f9684558a27b588939d70c7ff5a56710d596ae4084f",
+          "bytes": 17404
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "24-image-integration-compatible",
+      "passedTests": 11,
+      "actualExitCode": 0,
+      "receipt": "checks/24-image-integration-compatible-a9b481d8d5a047bc80b1ce4355b701ba.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/24-image-integration-compatible-a9b481d8d5a047bc80b1ce4355b701ba.stdout",
+        "sha256": "11a4024d01ab71ca1ca33c5e43f8aa768d356166b9d21a5a5fbde88e9227cb61",
+        "bytes": 1330
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/24-image-integration-compatible-a9b481d8d5a047bc80b1ce4355b701ba.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "20bc182d3e6f86b8a03e29792101ae730701915b6f261b4d647e0f6f3aeb4e38",
+          "bytes": 17484
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "4b9dce54b493149f57e5b7fa9f152e6eab3946a22f3314c61e526480837f8293",
+          "bytes": 14525
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "14-typecheck",
+      "passedTests": null,
+      "actualExitCode": 0,
+      "receipt": "checks/14-typecheck-86ad8a3aeb624d039ef757a7f7fbcaf7.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/14-typecheck-86ad8a3aeb624d039ef757a7f7fbcaf7.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/14-typecheck-86ad8a3aeb624d039ef757a7f7fbcaf7.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "d038a6209f249d6e968d9f9684558a27b588939d70c7ff5a56710d596ae4084f",
+          "bytes": 17404
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "15-build",
+      "passedTests": null,
+      "actualExitCode": 0,
+      "receipt": "checks/15-build-a0268887a6874e41a9baf0e2e1e1f382.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/15-build-a0268887a6874e41a9baf0e2e1e1f382.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/15-build-a0268887a6874e41a9baf0e2e1e1f382.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "d038a6209f249d6e968d9f9684558a27b588939d70c7ff5a56710d596ae4084f",
+          "bytes": 17404
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    },
+    {
+      "label": "19-new-test-typecheck",
+      "passedTests": null,
+      "actualExitCode": 0,
+      "receipt": "checks/19-new-test-typecheck-d2056f56674448759acbc324e9e257ed.receipt.json",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/19-new-test-typecheck-d2056f56674448759acbc324e9e257ed.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/19-new-test-typecheck-d2056f56674448759acbc324e9e257ed.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "sourceInputs": {
+        "ai-harness/server/src/app.ts": {
+          "sha256": "7c9d3930f2e8a64350de79d2f7bbf1a21725a7216635ea2374c362894f99a915",
+          "bytes": 36774
+        },
+        "ai-harness/server/test/h044-app-image-operation-admission.test.ts": {
+          "sha256": "20bc182d3e6f86b8a03e29792101ae730701915b6f261b4d647e0f6f3aeb4e38",
+          "bytes": 17484
+        },
+        "reports/h044-vision-wiring04.md": {
+          "missing": true
+        },
+        "reports/h044-vision-wiring04.json": {
+          "missing": true
+        },
+        "phase-local/receipt_recorder.py": {
+          "sha256": "367165d68c7e55abcf0294f0a7f92e46f7a116e316372f10704b9c693716a9de",
+          "bytes": 14211
+        },
+        "phase-local/run_check.py": {
+          "sha256": "fbd6f8705d88d26cd81281f2ba61731eee0086270cf573a77fd748f5f1935bf7",
+          "bytes": 1900
+        },
+        "DEPENDENCY-MANIFEST.json": {
+          "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+          "bytes": 624522
+        }
+      }
+    }
+  ],
+  "originalNonzeroOrPartialChecks": [
+    {
+      "receipt": "checks/02-proposal-apply-check-568998ed007141c2af3d9cc78ca13e8f.receipt.json",
+      "actualExitCode": 1,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "git",
+        "apply",
+        "--check",
+        "../handoff/V-app-operation-seam.patch"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/02-proposal-apply-check-568998ed007141c2af3d9cc78ca13e8f.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/02-proposal-apply-check-568998ed007141c2af3d9cc78ca13e8f.stderr",
+        "sha256": "a02e1f6e3f4e71c5c79687a80d78fa2c7622fe15f72135a8ea8465a56ea7a9ae",
+        "bytes": 111
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:19:36.359355+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/07-new-app-admission-9c7fc6d9b14c4dad9f3b3a20c8bf2f79.receipt.json",
+      "actualExitCode": 1,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-app-image-operation-admission.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/07-new-app-admission-9c7fc6d9b14c4dad9f3b3a20c8bf2f79.stdout",
+        "sha256": "acf4498ae8ee5406d8d3d087fedca85b2d93b53691184374d5ec05896324cb55",
+        "bytes": 1561
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/07-new-app-admission-9c7fc6d9b14c4dad9f3b3a20c8bf2f79.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:23:21.603337+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/08-new-app-admission-55378b90056a4a81ad4de24116e96911.receipt.json",
+      "actualExitCode": 1,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/h044-app-image-operation-admission.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/08-new-app-admission-55378b90056a4a81ad4de24116e96911.stdout",
+        "sha256": "01c662fafe5ffddd8d522a2b0e8b48fc13ed506e8d7fba687c49b3a139cc58cc",
+        "bytes": 1598
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/08-new-app-admission-55378b90056a4a81ad4de24116e96911.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:23:55.155693+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/10-app-focused-b031d2bd743f4eadaad9dfa990172640.receipt.json",
+      "actualExitCode": 1,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/app.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/10-app-focused-b031d2bd743f4eadaad9dfa990172640.stdout",
+        "sha256": "7a743b8f28ca216219f0f1bc176a3807c96d5ad2dd568445da8197242dabaee7",
+        "bytes": 60609
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/10-app-focused-b031d2bd743f4eadaad9dfa990172640.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:24:14.877564+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/11-image-focused-4e5f082ebb954f02ad603d42f51cd926.receipt.json",
+      "actualExitCode": -9,
+      "status": "PARTIAL",
+      "errors": [
+        {
+          "type": "TimeoutError",
+          "message": "whole command timeout"
+        }
+      ],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "test/image-broker.test.ts",
+        "test/image-integration.test.ts",
+        "test/image-intent-context.test.ts",
+        "test/image-status-consumption.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/11-image-focused-4e5f082ebb954f02ad603d42f51cd926.stdout",
+        "sha256": "b9b3b15615b69d1abe5e6352a78ef22ec7fc7471a50eb9bc3c6b36b39ceafec5",
+        "bytes": 3937
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/11-image-focused-4e5f082ebb954f02ad603d42f51cd926.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:27:12.358810+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/16-new-test-typecheck-2dcf40cd148640d48cf580bc4f0ca10a.receipt.json",
+      "actualExitCode": 2,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "node_modules/typescript/bin/tsc",
+        "--noEmit",
+        "--target",
+        "ES2023",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--strict",
+        "--esModuleInterop",
+        "--skipLibCheck",
+        "test/h044-app-image-operation-admission.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/16-new-test-typecheck-2dcf40cd148640d48cf580bc4f0ca10a.stdout",
+        "sha256": "acfa2a1bd52c5eea4ae0080427ea7a4d63756a07a2fdb8a4a08fa4fec9fa13ea",
+        "bytes": 5895
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/16-new-test-typecheck-2dcf40cd148640d48cf580bc4f0ca10a.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:25:48.370685+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/23-baseline-app-legacy-repro-c25176cda8de4bd2a6005add6d8dcd73.receipt.json",
+      "actualExitCode": 1,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "tsx",
+        "--test",
+        "--test-timeout=15000",
+        "--test-name-pattern=^JSON contract",
+        "test/app.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/baseline-repro/server",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/23-baseline-app-legacy-repro-c25176cda8de4bd2a6005add6d8dcd73.stdout",
+        "sha256": "2ff098e12852a915213be13502f1658c523c4ba5a516677f3bf94b71753f5f63",
+        "bytes": 1293
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/23-baseline-app-legacy-repro-c25176cda8de4bd2a6005add6d8dcd73.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:28:46.682490+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    },
+    {
+      "receipt": "checks/30-prepare-pre-review-1c5c15fc0bb84875a1509c98dcbc2e73.receipt.json",
+      "actualExitCode": 2,
+      "status": "COMPLETE",
+      "errors": [],
+      "argv": [
+        "python3",
+        "../output/prepare-review.py"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo",
+      "stdout": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/30-prepare-pre-review-1c5c15fc0bb84875a1509c98dcbc2e73.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      "stderr": {
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/output/checks/30-prepare-pre-review-1c5c15fc0bb84875a1509c98dcbc2e73.stderr",
+        "sha256": "6346c3b5bf2576e63f3ffb926a60a411bd5fcb85d7fbf4fdc79effde63c89611",
+        "bytes": 284
+      },
+      "absence": {
+        "checkedUtc": "2026-10-02T00:34:09.264355+00:00",
+        "recordedBirthAbsent": true,
+        "recordedGroupAbsent": true,
+        "remainingGroupRows": []
+      }
+    }
+  ],
+  "launchFailure": {
+    "schema": "preserved-tool-launch-failure-v1",
+    "kind": "PRE_RECORDER_LAUNCH_FAILURE",
+    "label": "06-new-app-admission",
+    "originalCommand": "python3 ../../../../output/run_check.py 06-new-app-admission /opt/homebrew/opt/node@24/bin/node --import tsx --test --test-timeout=15000 test/h044-app-image-operation-admission.test.ts",
+    "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/V-wiring04/repo/ai-harness/server",
+    "toolResult": {
+      "chunk_id": "702cf1",
+      "actualExitCode": 2,
+      "wallTimeSeconds": 2.333e-06
+    },
+    "pid": null,
+    "pgid": null,
+    "birth": null,
+    "startUtc": null,
+    "endUtc": null,
+    "recordedUtc": "2026-10-02T00:25:07.438906+00:00",
+    "missing": [
+      "PID",
+      "PGID",
+      "birth",
+      "UTCstart",
+      "UTCend",
+      "recorderNotStarted"
+    ],
+    "testProcessStarted": false,
+    "explanation": "Incorrect relative recorder path; interpreter returned before recorder or application test began. Original tool output retained verbatim separately."
+  },
+  "immutableDependencies": {
+    "manifest": {
+      "sha256": "84e0793dba4272e1309bfbe3342b0af61f3c8c7221e2b1dadd0e551cdf1d79dc",
+      "bytes": 624522
+    },
+    "mode": "IMMUTABLE_READ_ONLY_REUSE_NO_INSTALL_NO_MUTATION"
+  },
+  "nativePins": {
+    "runtime": "0.158.0",
+    "upstream": "064c",
+    "context": 480000,
+    "autoCompaction": 400000,
+    "output": 65536
+  },
+  "nativeAcceptance": "NOT_TESTED",
+  "ordinaryAcceptance": "NOT_TESTED",
+  "rootIntegratedGraph": "REQUIRED_NOT_TESTED_R02_NOT_PRESENT",
+  "goalComplete": false,
+  "fanActions": "NONE_POSTPONED_UNTOUCHED",
+  "limitations": [
+    "actual native/current host generation qualification",
+    "actual model image generation",
+    "R02 final integrated graph",
+    "browser/full one-chat workflow",
+    "actual host cancel integration",
+    "Full legacy App suite: 8 pass, 53 historical-chat-read-only fixture failures; protected baseline replay reproduces representative unchanged failure",
+    "Combined legacy image/app suite: recorder180s timeout, actual direct child exit -9, reap and group/birth absence recorded; PARTIAL with no complete suite result",
+    "Native wrapper/outer actual exits and all native descendants require independent review after return",
+    "Misaddressed recorder launch: original tool exit2, PID/PGID/birth/start/end unknown; explicitly retained partial metadata",
+    "Private prepare-script heredoc failed parsing before any subprocess; original tool exit1 retained; following recorded missing-script command exited2; preparation corrected using exact phase-private file"
+  ],
+  "manifestExclusions": [
+    "This report excludes its own SHA and final candidate/bundle/report commit hashes; final output manifests bind them after commit",
+    "Current recorder/in-flight stdout/stderr/checkpoint receipt excluded from snapshot manifests, never classified as pre-fork failure",
+    "Native events.jsonl/stderr.log/outer.log in-flight; root hashes closed originals after return"
+  ]
+}
