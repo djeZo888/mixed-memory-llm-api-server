@@ -187,6 +187,98 @@ class VendorResponseTests(unittest.TestCase):
         self.assertEqual(self.transport.call_count,1)
         self.assertEqual(self.evidence[-1]['kind'],'model_response')
 
+class EndpointTransportTests(unittest.TestCase):
+    """Live-pinned identity with entirely mocked HTTP; no network or inference."""
+    def setUp(self):
+        self.live=copy.deepcopy(SERVICE)
+        self.live.update(serviceId='pinned-vision',mode='live',generation=1)
+        self.live['interpreter']['revision']=QWEN_REV
+        self.live['parser']['revision']=PADDLE_REV
+        self.connections=[];self.evidence=[];self.raws=[]
+        self.key=Mock(side_effect=lambda role:'fixture-private-'+role+'-0001')
+        def connection(*args,**kwargs):
+            conn=Mock();conn.sock=None;self.connections.append(conn)
+            def response():
+                model=json.loads(conn.request.call_args.kwargs['body'])['model']
+                literal=json.dumps(dict(description='Fixture',uncertainties=[],derivedConclusions=[])) if model==QWEN else 'R1  10 kΩ\n'
+                raw=json.dumps(vendor_response(model,literal),indent=2).encode()+b'\n'
+                self.raws.append(raw);result=io.BytesIO(raw);result.status=200
+                result.getheader=lambda *args:'application/json'
+                return result
+            conn.getresponse.side_effect=response
+            return conn
+        self.transport=self.enterContext(patch('backend.http.client.HTTPConnection',side_effect=connection))
+        self.enterContext(patch('socket.create_connection',side_effect=AssertionError('network forbidden')))
+
+    def assert_transport(self,backend,expected):
+        before=self.transport.call_count
+        for role,model in [('interpretation',QWEN),('ocr',PADDLE)]:
+            backend._call(role,model,b'fixture-image','fixture',time.monotonic()+2,self.evidence.append,{})
+        self.assertEqual([call.args for call in self.transport.call_args_list[before:]],expected)
+        self.assertEqual([call.args for call in self.key.call_args_list[-2:]],[('interpretation',),('ocr',)])
+        for conn,role,model in zip(self.connections[-2:],('interpretation','ocr'),(QWEN,PADDLE)):
+            request=conn.request.call_args
+            self.assertEqual(request.args,('POST','/v1/chat/completions'))
+            self.assertEqual(request.kwargs['headers']['Authorization'],'Bearer fixture-private-'+role+'-0001')
+            self.assertEqual(json.loads(request.kwargs['body'])['model'],model)
+        checkpoints=[v for v in self.evidence if v['kind']=='model_response']
+        self.assertEqual([v['responseSha256'] for v in checkpoints[-2:]],[digest(raw) for raw in self.raws[-2:]])
+
+    def test_exact_production_origins_select_actual_http_transport(self):
+        origins=[{},dict(qwen_origin='http://172.31.243.2:18191',ocr_origin='http://172.31.243.3:18192'),
+            dict(qwen_origin='http://172.31.243.2:18191/',ocr_origin='http://172.31.243.3:18192/')]
+        for kwargs in origins:
+            with self.subTest(origins=kwargs):
+                backend=LocalVisionBackend(self.live,self.key,enabled=True,**kwargs)
+                self.assert_transport(backend,[('172.31.243.2',18191),('172.31.243.3',18192)])
+
+    def test_production_rejects_wrong_role_and_mixed_pairs(self):
+        for qwen,ocr in [
+            ('http://172.31.243.3:18192','http://172.31.243.2:18191'),
+            ('http://172.31.243.3:18191','http://172.31.243.3:18192'),
+            ('http://172.31.243.2:18191','http://172.31.243.2:18192'),
+            ('http://172.31.243.2:18192','http://172.31.243.3:18191'),
+            ('http://127.0.0.1:18191','http://172.31.243.3:18192'),
+            ('http://172.31.243.2:18191','http://127.0.0.1:18192')]:
+            with self.subTest(qwen=qwen,ocr=ocr),self.assertRaises(ValueError):
+                LocalVisionBackend(self.live,self.key,qwen_origin=qwen,ocr_origin=ocr)
+        self.transport.assert_not_called();self.key.assert_not_called()
+
+    def test_production_rejects_alternate_origins_and_url_components(self):
+        for role,host,port in [('qwen_origin','172.31.243.2',18191),('ocr_origin','172.31.243.3',18192)]:
+            valid=f'http://{host}:{port}'
+            invalid=[f'http://{other}:{port}' for other in ('127.0.0.1','localhost','example.com','172.31.243.4','[::1]')]
+            invalid += [f'http://{host}',f'http://{host}:1',f'http://{host}:65536',f'http://{host}:0{port}',
+                f'http://{host}:+{port}',valid.replace('http:','https:'),valid.replace('http:','HTTP:'),
+                ' '+valid,valid+' ',valid+'\n',valid.replace(host,host+'\t'),
+                valid+'/v1',valid+'//',valid+'/.',valid+'/%2f',valid+'?',valid+'?x=1',
+                valid+'#',valid+'#fragment',valid.replace('http://','http://@'),
+                valid.replace('http://','http://user:pass@'),valid.replace('http://','http://user@'),'',False,123]
+            for origin in invalid:
+                with self.subTest(role=role,origin=origin),self.assertRaises(ValueError):
+                    LocalVisionBackend(self.live,self.key,**{role:origin})
+        self.transport.assert_not_called();self.key.assert_not_called()
+
+    def test_fixture_loopback_defaults_and_ephemeral_ports(self):
+        for kwargs,ports in [({},(18191,18192)),
+            (dict(qwen_origin='http://127.0.0.1:42931/',ocr_origin='http://127.0.0.1:42932'),(42931,42932))]:
+            with self.subTest(origins=kwargs):
+                backend=LocalVisionBackend(SERVICE,self.key,fixture=True,enabled=True,**kwargs)
+                self.assert_transport(backend,[('127.0.0.1',port) for port in ports])
+
+    def test_fixture_identity_and_origins_cannot_bypass_production_policy(self):
+        with self.assertRaises(ValueError):LocalVisionBackend(self.live,self.key,fixture=True)
+        with self.assertRaises(ValueError):LocalVisionBackend(SERVICE,self.key)
+        for role,origin in [('qwen_origin','http://172.31.243.2:18191'),('ocr_origin','http://172.31.243.3:18192')]:
+            with self.subTest(role=role),self.assertRaises(ValueError):
+                LocalVisionBackend(SERVICE,self.key,fixture=True,**{role:origin})
+        for origin in ('http://localhost:42931','http://127.0.0.1:0','http://127.0.0.1:65536',
+            'http://127.0.0.1:42931?','http://127.0.0.1:42931#','http://@127.0.0.1:42931'):
+            with self.subTest(origin=origin),self.assertRaises(ValueError):
+                LocalVisionBackend(SERVICE,self.key,fixture=True,qwen_origin=origin)
+        self.transport.assert_not_called();self.key.assert_not_called()
+
+
 class BackendTests(unittest.TestCase):
     def setUp(self):
         self.requests=[];self.mode='valid'
