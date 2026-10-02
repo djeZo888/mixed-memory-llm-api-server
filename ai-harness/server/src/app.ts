@@ -12,7 +12,7 @@ import { Store } from "./store.js";
 import { NormalTechnicalVision, type NormalTechnicalVisionOptions } from "./technical-vision-host.js";
 import { TechnicalVisionError } from "./technical-vision-contracts.js";
 import { Files, MAX_UPLOAD } from "./files.js";
-import { ImageBroker } from "./image-broker.js";
+import { ImageBroker, type ImageBrokerOptions } from "./image-broker.js";
 import type { ImageBackend } from "./image-contracts.js";
 import { Broker, type BrokerOptions } from "./broker.js";
 import { contentDisposition, imageMime } from "./file-metadata.js";
@@ -49,6 +49,8 @@ export interface AppOptions extends Omit<BrokerOptions, "store" | "files"> {
   heartbeatMs?: number;
   visionAvailable?: boolean;
   imageBackend?: ImageBackend;
+  /** Trusted host qualification by exact operation; absent retains the legacy admission contract. */
+  imageOperationQualified?: ImageBrokerOptions["operationQualified"];
   /** Separate protected nginx-to-server capability; never passed to engines. */
   approvalProxyKey?: string;
   availability?: AvailabilityProvider;
@@ -182,6 +184,7 @@ export async function createApp(options: AppOptions): Promise<{
         store,
         files,
         backend: options.imageBackend,
+        operationQualified: options.imageOperationQualified,
         availability: options.availability,
         currentRun: (id) => broker.currentImageRun(id),
       });
