@@ -1,16 +1,191 @@
 import copy
 import http.server
+import io
 import json
 from pathlib import Path
 import sys
 import threading
 import time
 import unittest
+from unittest.mock import Mock, patch
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 from test_service import SERVICE,fixture
 from service import BackendFailure,decode_png,canonical,parse_json,digest,validate_result
 from backend import LocalVisionBackend,QWEN,PADDLE,QWEN_REV,PADDLE_REV
+
+
+def vendor_response(model, literal):
+    """Source fixture: captured vLLM 0.30 model_dump(), not live inference.
+
+    ChatMessage's serializer omits empty tool_calls; all other defaults remain.
+    protocol.py SHA256: 51fb06a943201ffdc0a0bbae44b79a996bdd6ae3373593a67666868d996451b2
+    """
+    return dict(id='chatcmpl-fixture', object='chat.completion', created=1,
+        model=model, choices=[dict(index=0, message=dict(role='assistant',
+            content=literal, refusal=None, annotations=None, audio=None,
+            function_call=None, reasoning=None), logprobs=None,
+            finish_reason='stop', stop_reason=None, token_ids=None,
+            routed_experts=None)], service_tier=None, system_fingerprint=None,
+        usage=dict(prompt_tokens=10, total_tokens=12, completion_tokens=2,
+            prompt_tokens_details=None, completion_tokens_details=None),
+        prompt_logprobs=None, prompt_token_ids=None, prompt_text=None,
+        kv_transfer_params=None, ec_transfer_params=None, metrics=None)
+
+
+class VendorResponseTests(unittest.TestCase):
+    """Entire transport is mocked: no socket, POST I/O, runtime or model."""
+    def setUp(self):
+        self.evidence=[];self.raws=[];self.responses=[]
+        self.backend=LocalVisionBackend(SERVICE,lambda _: 'fixture-backend-key-0001',
+            fixture=True,enabled=True)
+        self.payload=vendor_response(QWEN, json.dumps(dict(description='Fixture',
+            uncertainties=[], derivedConclusions=[])))
+        def connection(*args, **kwargs):
+            conn=Mock();conn.sock=None
+            def response():
+                payload=self.responses.pop(0) if self.responses else self.payload
+                # Deliberately noncanonical bytes prove original response hashing.
+                raw=json.dumps(payload,ensure_ascii=False,indent=2).encode()+b'\n'
+                self.raws.append(raw)
+                result=io.BytesIO(raw);result.status=200
+                result.getheader=lambda *args: 'application/json'
+                return result
+            conn.getresponse.side_effect=response
+            return conn
+        self.transport=self.enterContext(patch('backend.http.client.HTTPConnection',side_effect=connection))
+
+    def call(self):
+        return self.backend._call('interpretation',QWEN,b'fixture-image','fixture',
+            time.monotonic()+2,self.evidence.append,{})
+
+    def reject(self):
+        self.evidence.clear();before=self.transport.call_count
+        with self.assertRaises(BackendFailure) as error:self.call()
+        self.assertFalse(error.exception.settled)
+        self.assertEqual(self.transport.call_count,before+1)
+        self.assertEqual([v['kind'] for v in self.evidence],['dispatch_intent'])
+
+    def test_complete_vendor_response_and_original_checkpoint(self):
+        self.assertEqual(self.call(),self.payload['choices'][0]['message']['content'])
+        checkpoint=self.evidence[-1]
+        self.assertEqual(checkpoint['response'],self.payload)
+        self.assertEqual(checkpoint['responseSha256'],digest(self.raws[-1]))
+        self.assertNotEqual(checkpoint['responseSha256'],digest(canonical(self.payload)))
+
+    def test_vendor_interpretation_and_ocr_wrappers(self):
+        interpretation=copy.deepcopy(self.payload)
+        interpretation['choices'][0]['message']['reasoning']='Inspect the supplied image conservatively.'
+        ocr=vendor_response(PADDLE,'R1  10 kΩ\n  Vcc\n')
+        self.responses=[interpretation,ocr]
+        m,p=fixture()
+        outcome=self.backend.execute(m,{1:p['page-1'][1]},threading.Event(),
+            time.monotonic()+2,self.evidence.append)
+        self.assertTrue(outcome.settled)
+        self.assertEqual(outcome.result['description'],'Fixture')
+        self.assertEqual(outcome.result['extraction']['text'][0]['exactText'],ocr['choices'][0]['message']['content'])
+        validate_result(outcome.result,m['source'],SERVICE)
+        checkpoints=[v for v in self.evidence if v['kind']=='model_response']
+        self.assertEqual([v['response'] for v in checkpoints],[interpretation,ocr])
+        self.assertEqual([v['responseSha256'] for v in checkpoints],[digest(raw) for raw in self.raws])
+
+    def test_unknown_keys_rejected_at_every_level(self):
+        for level in ('top','choice','message'):
+            with self.subTest(level=level):
+                payload=copy.deepcopy(self.payload)
+                target=payload if level=='top' else payload['choices'][0]
+                if level=='message':target=target['message']
+                target['unknown_extension']=None
+                original=self.payload;self.payload=payload;self.reject();self.payload=original
+
+    def test_required_completion_contract(self):
+        original=copy.deepcopy(self.payload)
+        cases=[('model','other'),('role','user'),('index',1),('index',False),
+            ('index','0'),('finish_reason','length'),('finish_reason',None),
+            ('content',''),('content',None),('content',[]),('content',42),
+            ('content','x'*65537),('choices',[]),('choices',original['choices']*2)]
+        for key,value in cases:
+            with self.subTest(key=key,value_type=type(value).__name__):
+                self.payload=copy.deepcopy(original)
+                target=self.payload if key in ('model','choices') else self.payload['choices'][0]
+                if key in ('role','content'):target=target['message']
+                target[key]=value;self.reject()
+
+    def test_new_fields_accept_only_captured_null_defaults(self):
+        original=copy.deepcopy(self.payload)
+        levels=[('top',('service_tier','prompt_logprobs','prompt_token_ids','prompt_text',
+            'kv_transfer_params','ec_transfer_params','metrics')),
+            ('choice',('stop_reason','token_ids','routed_experts')),
+            ('message',('annotations','audio','function_call'))]
+        for level,fields in levels:
+            for key in fields:
+                for value in (False,0,'',[],{},'active', [1], {'nested':'active'}):
+                    with self.subTest(level=level,key=key,value=value):
+                        self.payload=copy.deepcopy(original)
+                        target=self.payload if level=='top' else self.payload['choices'][0]
+                        if level=='message':target=target['message']
+                        target[key]=value;self.reject()
+
+    def test_reasoning_is_bounded_metadata_preserved_in_checkpoint(self):
+        for reasoning in ('','Reason through the image.','x'*65536):
+            with self.subTest(length=len(reasoning)):
+                self.payload['choices'][0]['message']['reasoning']=reasoning
+                literal=self.payload['choices'][0]['message']['content']
+                self.assertEqual(self.call(),literal)
+                self.assertEqual(self.evidence[-1]['literalText'],literal)
+                self.assertEqual(self.evidence[-1]['response'],self.payload)
+                self.assertEqual(self.evidence[-1]['responseSha256'],digest(self.raws[-1]))
+
+    def test_reasoning_rejects_malformed_or_oversize_values(self):
+        for reasoning in (False,0,[],{},['text'],{'content':'text'},'x'*65537):
+            with self.subTest(value_type=type(reasoning).__name__):
+                self.payload['choices'][0]['message']['reasoning']=reasoning
+                self.reject()
+
+    def test_reasoning_cannot_replace_required_assistant_content(self):
+        self.payload['choices'][0]['message']['reasoning']='A complete reasoning trace'
+        for content in ('',None,[],42):
+            with self.subTest(content=content):
+                self.payload['choices'][0]['message']['content']=content
+                self.reject()
+
+    def test_required_fields_cannot_be_omitted(self):
+        original=copy.deepcopy(self.payload)
+        for level,keys in [('top',('model','choices')),
+            ('choice',('index','message','finish_reason')),
+            ('message',('role','content'))]:
+            for key in keys:
+                with self.subTest(level=level,key=key):
+                    self.payload=copy.deepcopy(original)
+                    target=self.payload if level=='top' else self.payload['choices'][0]
+                    if level=='message':target=target['message']
+                    del target[key];self.reject()
+
+    def test_active_tool_function_and_refusal_rejected(self):
+        original=copy.deepcopy(self.payload)
+        for key,value in [('tool_calls',[{'type':'function','function':{'name':'run','arguments':'{}'}}]),
+            ('function_call',{'name':'run','arguments':'{}'}),('refusal','Cannot comply'),
+            ('audio',{'id':'audio-fixture','data':'payload'})]:
+            with self.subTest(key=key):
+                self.payload=copy.deepcopy(original)
+                self.payload['choices'][0]['message'][key]=value;self.reject()
+
+    def test_legacy_supported_fields_remain_accepted(self):
+        self.payload=dict(model=QWEN,choices=[dict(index=0,finish_reason='stop',
+            logprobs=None,message=dict(role='assistant',content='literal',
+                reasoning_content='Legacy reasoning',tool_calls=[],refusal=None))])
+        self.assertEqual(self.call(),'literal')
+        self.assertEqual(self.evidence[-1]['response'],self.payload)
+
+    def test_structured_interpretation_remains_strict(self):
+        self.payload['choices'][0]['message']['content']='{"description":"fixture","unexpected":1}'
+        m,p=fixture()
+        with self.assertRaises(BackendFailure) as error:
+            self.backend.execute(m,{1:p['page-1'][1]},threading.Event(),
+                time.monotonic()+2,self.evidence.append)
+        self.assertTrue(error.exception.settled)
+        self.assertEqual(self.transport.call_count,1)
+        self.assertEqual(self.evidence[-1]['kind'],'model_response')
 
 class BackendTests(unittest.TestCase):
     def setUp(self):

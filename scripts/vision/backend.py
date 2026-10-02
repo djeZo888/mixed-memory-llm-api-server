@@ -22,6 +22,19 @@ PADDLE = 'PaddlePaddle/PaddleOCR-VL-1.6'
 QWEN_REV = 'c202236235762e1c871ad0ccb60c8ee5ba337b9a'
 PADDLE_REV = 'c5630abae1d940eafe0697512a0325494b02ab42'
 
+# Captured vLLM 0.30 api_router uses model_dump() with null defaults intact.
+# Permit only these inactive defaults, not unqualified extension payloads.
+RESPONSE_NULL_FIELDS = ('service_tier','prompt_logprobs','prompt_token_ids',
+    'prompt_text','kv_transfer_params','ec_transfer_params','metrics')
+CHOICE_NULL_FIELDS = ('stop_reason','token_ids','routed_experts')
+MESSAGE_NULL_FIELDS = ('annotations','audio','function_call')
+
+
+def completion_obj(value, required, optional, null_fields):
+    value=obj(value,required,optional+null_fields)
+    if any(value.get(field) is not None for field in null_fields):raise Reject()
+    return value
+
 
 @dataclass(frozen=True)
 class Outcome:
@@ -79,14 +92,17 @@ class LocalVisionBackend:
             from service import parse_json
             try:
                 data=parse_json(raw,self.response_cap)
-                obj(data,('model','choices'),('id','object','created','usage','system_fingerprint'))
+                completion_obj(data,('model','choices'),('id','object','created','usage','system_fingerprint'),RESPONSE_NULL_FIELDS)
                 if data['model']!=model:raise Reject()
                 choices=arr(data['choices'],1)
                 if len(choices)!=1:raise Reject()
-                choice=obj(choices[0],('index','message','finish_reason'),('logprobs',))
+                choice=completion_obj(choices[0],('index','message','finish_reason'),('logprobs',),CHOICE_NULL_FIELDS)
                 if type(choice['index']) is not int or choice['index']!=0 or choice['finish_reason']!='stop':raise Reject()
-                message=obj(choice['message'],('role','content'),('reasoning_content','refusal','tool_calls'))
+                message=completion_obj(choice['message'],('role','content'),('reasoning_content','refusal','tool_calls','reasoning'),MESSAGE_NULL_FIELDS)
                 if message['role']!='assistant' or message.get('tool_calls') or message.get('refusal'):raise Reject()
+                # qwen3 reasoning is bounded metadata, never the assistant answer.
+                reasoning=message.get('reasoning')
+                if reasoning is not None and (not isinstance(reasoning,str) or len(reasoning)>65536):raise Reject()
                 literal=message['content']
                 if not isinstance(literal,str) or not literal or len(literal)>65536:raise Reject()
             except Reject:raise BackendFailure(False) # no well-formed completion proof
