@@ -49,6 +49,9 @@ test("normal app/broker upload and send use technical specialist while creative 
   const uploaded = upload.json().attachment;
   const result = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Read exact labels", attachmentIds: [uploaded.id], submissionId: "original-submit" });
   assert.equal(result.statusCode, 202, result.body); const runId = result.json().runId;
+  await until(() => !!s.application.technicalVision.journal.records()[0]?.jobId);
+  assert.equal(s.calls.length, 0, "Pending vision must not reach the native prompt");
+  completeTechnical(s, s.application.technicalVision.journal.records()[0].jobId!);
   await until(() => s.calls.length === 1);
   assert.equal(s.fixture.counters().admissions, 1); assert.equal(s.calls[0].attachments.length, 0); assert.match(s.calls[0].text, /never native Codex pixels/);
   const record = s.application.technicalVision.journal.records()[0];
@@ -86,8 +89,10 @@ test("authenticated gateway strict fields, original owner followup after run end
 });
 
 test("terminal Store transaction dedup survives lost ack and reopen; original content/run immutable", async t => {
-  const s = await setup(t); const sent = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Analyze", attachmentIds: [s.file.id], submissionId: "dedup-submit" });
-  await until(() => s.calls.length === 1); const record = s.application.technicalVision.journal.records()[0]; completeTechnical(s, record.jobId!);
+  const s = await setup(t); const sent = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Analyze", submissionId: "dedup-submit" });
+  await until(() => s.calls.length === 1);
+  await s.application.technicalVision.invoke(s.session.id, { requestId: "dedup-request", source: { fileId: s.file.id } });
+  const record = s.application.technicalVision.journal.records()[0]; completeTechnical(s, record.jobId!);
   let loseAck = true; const original = s.application.technicalVision.journal.deliverOnce.bind(s.application.technicalVision.journal);
   s.application.technicalVision.journal.deliverOnce = async (...args) => { await original(...args); if (loseAck) { loseAck = false; throw Error("fixture lost ack after COMMIT"); } };
   await assert.rejects(s.application.technicalVision.followup(s.session.id, record.handle, "status"));
@@ -105,8 +110,10 @@ test("terminal Store transaction dedup survives lost ack and reopen; original co
 
 test("ambiguous POST is one claim across restart and source deletion; explicit lookup/cancel uses original request", async t => {
   const s = await setup(t); s.fixture.controls.loseSubmitResponse = true;
-  const send = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Analyze", attachmentIds: [s.file.id], submissionId: "ambiguous-submit" });
-  await until(() => s.calls.length === 1); const r = s.application.technicalVision.journal.records()[0];
+  const send = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Analyze", submissionId: "ambiguous-submit" });
+  await until(() => s.calls.length === 1);
+  await s.application.technicalVision.invoke(s.session.id, { requestId: "ambiguous-request", source: { fileId: s.file.id } });
+  const r = s.application.technicalVision.journal.records()[0];
   assert.equal(r.originalFailure, "timeout"); assert.equal(s.fixture.counters().submitCalls, 1); assert.equal(s.fixture.counters().admissions, 1);
   await rm(join(s.application.files.root, "uploads", s.file.path)); s.calls[0].release(); await until(() => s.application.store.runSnapshot(send.json().runId).status === "completed"); await s.reopen();
   assert.equal(s.application.technicalVision.list(s.session.id)[0].state, "interrupted");

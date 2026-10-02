@@ -1,3 +1,4 @@
+import { completedTechnicalVisionAttachments } from "./technical-vision-host.js";
 import { createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent } from "./codex-automatic-routing.js";
 import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
@@ -343,18 +344,27 @@ export class Broker {
         queueMicrotask(() => this.pump(workspaceId));
       });
   }
-  private automaticRoute(s:StoredSession,run:Run) {
-    if(s.engineKind!=="codex"||run.kind!=="message")return undefined;
-  let priorIntent: CodexAutomaticIntent | undefined;
-  // Read the saved one-parent history; repeated follow-ups do not lose the original route.
-  for(const previous of this.store.db.prepare("SELECT text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id,run.id) as Iterable<{text:string;attachment_ids:string}>) {
-    const previousImages = (JSON.parse(previous.attachment_ids) as string[]).some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
-    const previousRoute=createCodexAutomaticRoute({text:previous.text,hasImages:previousImages});
-    if(previousRoute.intent === "ordinary" && isCodexRouteFollowup(previous.text))continue;
-    priorIntent=previousRoute.intent;break;
-  }
-    const hasImages=run.attachmentIds.some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
-    return createCodexAutomaticRoute({text:run.text,hasImages,previous:priorIntent});
+  private automaticRoute(s: StoredSession, run: Run) {
+    if (s.engineKind !== "codex" || run.kind !== "message") return undefined;
+    const select = (runId: string, text: string, attachmentIds: string[], previous?: CodexAutomaticIntent) => {
+      const images = attachmentIds.filter(id => { try { return ["image/png", "image/jpeg", "application/pdf"].includes(this.store.file(id).mimeType); } catch { return false; } });
+      const selected = createCodexAutomaticRoute({ text, hasImages: images.length > 0, previous });
+      if (selected.intent !== "technical" || !images.length) return selected;
+      const completed = completedTechnicalVisionAttachments(this.store, s.id, runId);
+      if (!images.every(id => completed.has(id))) return selected;
+      // Only the exact delivered sources have already been read by the host. The
+      // original question still goes to Qwen verbatim; suppress the completed
+      // image-reading request in this routing-only second pass. Deep intent and
+      // creative intent retain their own gates. No native MCP receipt is created.
+      return createCodexAutomaticRoute({ text: text.replace(/\b(?:image|drawing|diagram|picture|scan)\b/gi, ""), previous: previous === "technical" ? undefined : previous });
+    };
+    let priorIntent: CodexAutomaticIntent | undefined;
+    for (const previous of this.store.db.prepare("SELECT id, text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id, run.id) as Iterable<{ id: string; text: string; attachment_ids: string }>) {
+      const previousRoute = select(previous.id, previous.text, JSON.parse(previous.attachment_ids));
+      if (previousRoute.intent === "ordinary" && isCodexRouteFollowup(previous.text) && !JSON.parse(previous.attachment_ids).length) continue;
+      priorIntent = previousRoute.intent; break;
+    }
+    return select(run.id, run.text, run.attachmentIds, priorIntent);
   }
   private async runner(
     s: StoredSession,
@@ -432,6 +442,7 @@ export class Broker {
     let promptRejectedDuringCancellation = false;
     let failureStatus: Status = "failed";
     const artifactJobs: Promise<unknown>[] = [];
+    let technicalContext: string | undefined;
     try {
       const s = this.store.getSession(run.sessionId);
       this.store.updateRun(run.id, "running");
@@ -623,6 +634,29 @@ export class Broker {
       };
       if (this.closing)
         throw new Error("Server is shutting down before engine launch");
+      // The optional host reader runs before any native checkpoint, token or
+      // runner exists. Its failure must not manufacture uncertain native work.
+      // Existing/uncertain runners keep the normal guarded failure path below.
+      if (s.engineKind === "codex" && run.kind === "message" && !this.runners.has(s.id) &&
+          s.nativeState.ownership === "idle" && s.nativeState.activeTurnId === null &&
+          this.options.technicalVisionContext && this.options.technicalVisionAvailable?.() &&
+          run.attachmentIds.some(id => ["image/png", "image/jpeg"].includes(this.store.file(id).mimeType))) {
+        try {
+          technicalContext = await this.options.technicalVisionContext(s.id, run.id, run.attachmentIds);
+          if (active.cancelled || this.closing) throw new Error("Image preprocessing ended before native launch");
+        } catch {
+          // No native operation has been attempted in this branch; retain the
+          // specialist journal/handle and leave all prior recovery guards intact.
+          this.store.updateRun(run.id, active.cancelled ? "cancelled" : "failed");
+          failureStatus = active.cancelled ? "idle" : "failed";
+          cleanupConfirmed = true; // Nothing native was created to clean up.
+          if (!active.cancelled) this.store.emit(s.id, "error", {
+            code: "technical_vision_failed",
+            message: "Image analysis did not complete. The original image job is retained for status or cancellation; you can continue with a text message.",
+          }, run.id);
+          return;
+        }
+      }
       if (s.engineKind === "codex") this.store.checkpoints.prepare(s.id,run.id,run.kind,s.nativeSessionId);
       const engine = await this.runner(s, update, run);
       const cancelBeforePrompt = async () => {
@@ -651,7 +685,7 @@ export class Broker {
         }
       } else {
         const preparedAttachments = await this.files.attachments(s.id, run.attachmentIds);
-        const technicalContext = run.kind === "message" ? await this.options.technicalVisionContext?.(s.id, run.id, run.attachmentIds) ?? "" : "";
+        technicalContext ??= run.kind === "message" ? await this.options.technicalVisionContext?.(s.id, run.id, run.attachmentIds) ?? "" : "";
         // Specialist pixels never enter native Codex's unsupported media path.
         const attachments = s.engineKind === "codex" && this.options.technicalVisionAvailable?.()
           ? preparedAttachments.filter(a => !["image/png", "image/jpeg"].includes(a.mimeType)) : preparedAttachments;
