@@ -14,7 +14,7 @@ import json
 from pathlib import Path
 import re
 
-BASE_COMMIT = '58bff2ec474fd0cf4a7ba3f71028bb2710555c88'
+BASE_COMMIT = '9785456b351d5e5620367fee4919348a808f2c32'
 GPU = 'GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23'
 READING_GPU = 'GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'
 REVISION = '790c92633540aa0cb11d9abf19eb46d861714758'
@@ -141,7 +141,8 @@ def plan_config_migration(runtime_raw, api_raw, expected_runtime_sha, expected_a
     """CAS-bound in-memory successor, preserving every other field/profile.
 
     This does not validate authenticity, acquire a lease, write config or unlock
-    qualification. The current manifest/config mismatch blocks installation.
+    qualification. Native platform identity already matches the runtime pin;
+    the distinct config relationship needs actual cached-byte evidence.
     """
     require(re.fullmatch('[0-9a-f]{64}', expected_runtime_sha or '') is not None
             and re.fullmatch('[0-9a-f]{64}', expected_api_sha or '') is not None, 'cas_digest')
@@ -151,7 +152,7 @@ def plan_config_migration(runtime_raw, api_raw, expected_runtime_sha, expected_a
             and runtime.get('source_commit') == SGLANG and runtime.get('checkpoint_revision') == REVISION
             and runtime.get('checkpoint_path') == MODEL, 'runtime_identity')
     require(runtime.get('gpu_uuid') in (GPU, READING_GPU)
-            and runtime.get('image_id') in (PARENT, MANIFEST), 'runtime_predecessor')
+            and runtime.get('image_id') == MANIFEST, 'runtime_predecessor')
     require(re.fullmatch('[0-9a-f]{64}', runtime.get('network_id', '')) is not None
             and re.fullmatch('[0-9a-f]{64}', runtime.get('checkpoint_receipt_sha256', '')) is not None,
             'runtime_protected_receipts')
@@ -163,12 +164,12 @@ def plan_config_migration(runtime_raw, api_raw, expected_runtime_sha, expected_a
             and api.get('runtime_revision') == SGLANG and api.get('model_revision') == REVISION
             and api.get('runtime_image_digest') in (PARENT, MANIFEST), 'api_identity')
     successor_runtime, successor_api = copy.deepcopy(runtime), copy.deepcopy(api)
-    successor_runtime.update(gpu_uuid=GPU, image_id=MANIFEST)
+    successor_runtime['gpu_uuid'] = GPU
     successor_api['runtime_image_digest'] = MANIFEST
     return {'executable': False, 'qualification': 'NOT_TESTED',
             'expectedRuntimeSha256': expected_runtime_sha, 'expectedApiSha256': expected_api_sha,
             'runtimeSuccessor': successor_runtime, 'apiSuccessor': successor_api,
-            'blockers': ['root_privileged_current_read', 'manifest_config_runtime_proposal',
+            'blockers': ['root_privileged_current_raw_read', 'cached_manifest_config_relationship',
                          'root_owned_CAS_storage_lease_boot_hardware_owner_transition',
                          'generation_only_protected_qualification']}
 
@@ -223,9 +224,7 @@ def readonly_request(graph):
     files = [{'path': p, 'projection': 'whole_file_sha256_stat_only'} for p in fixed_paths()]
     files += [{'path': BASE+'/'+p+'.json', 'projection': 'whole_file_sha256_stat_and_fixed_nonsecret_selectors'} for p in ('config','state','operation','recovery')]
     files += [{'path': p, 'projection': 'whole_file_sha256_stat_and_fixed_nonsecret_selectors'} for p in
-              (API_CONFIG, MODEL+'/CHECKPOINT-RECEIPT.json', '/opt/llmctl/adaptive-idle/image.json')]
-    files += [{'path':'/opt/llmctl/adaptive-idle/verify.py',
-               'projection':'whole_file_sha256_stat_only'}]
+              (API_CONFIG, MODEL+'/CHECKPOINT-RECEIPT.json')]
     files += [{'path': p, 'projection': 'bounded_metadata_text'} for p in ('/proc/sys/kernel/random/boot_id','/proc/meminfo')]
     files += [{'path': p, 'projection': 'stat_only_no_content_no_hash'} for p in
               ('/data/services/secrets/llm-api-key','/run/credentials/llm-image-api.service/inference-key')]
@@ -241,6 +240,7 @@ def readonly_request(graph):
                 'fileCount':len(files),'fileBytes':262144,'totalFileBytes':4194304,'processCount':3},
             'ownerProcessRead': 'Only positive image-unit/container PIDs joined to fixed owner; /proc/PID/stat,cgroup,exe; no cmdline/environ; bind boot/start_ticks/PGID before/after. PID0 does not prove absence.',
             'credentialRead': {'requestedNow':'metadata_only','laterAuthentication':'separate exact GO reads existing credential in-memory; no values/export/value hashes'},
+            'overlayNamespace': 'Container filesystem only: native_server.py guard runs inside image21; no host overlay delivery or host-path dependency claim.',
             'prohibited': ['HTTP health/ready or Owner.probe','runtime/service imports','lifecycle locks or storage guard methods','lifecycle/inference','downloads/pulls/weight rehash','credential contents','peer process inspection'],
             'failClosed': 'Any permission, daemon, identity, birth, source or byte/time-cap failure remains unknown. Inventory success excluding exact name/CID is required for container absence.'}
 
@@ -490,7 +490,8 @@ def runtime_proposal(graph):
             'affectedReadOnlyFiles':['scripts/image_runtime/service.py','scripts/lifecycle/runtime_io.py'],
             'sourceBindings':{r['candidateSource']:r['sha256'] for r in graph if r['candidateSource'] in ('scripts/image_runtime/service.py','scripts/lifecycle/runtime_io.py','configs/runtimes/h005-runtime-binding.json')},
             'requestedSuccessor':'Only if current exact engine/OCI diagnosis establishes a genuine source mismatch, root assigns a distinct owner and separately reviews that concrete correction. Independently preserve immutable platform50a3 and config3f61 evidence. No OR parent fallback, guessed domain migration or weakening of label/GPU/network/mount/lease/source/hardware/CAS guards.',
-            'status':'DOMAIN_READBACK_REQUIRED_BEFORE_ACTIVATION_OR_ANY_RUNTIME_EDIT; no existing runtime edit made'}
+            'overlayNamespace':'native_server.py runs inside image21; service.py mounts /runtime read-only and no host /opt overlay. Historical host ENOENT is wrong namespace, not established production defect.',
+            'status':'CONTAINER_OVERLAY_AND_DISTINCT_CACHED_CONFIG_RELATIONSHIP_NOT_TESTED; no production mismatch established; no existing runtime edit made'}
 
 
 def reconcile_plan(observation, original_sha256, graph):
@@ -558,13 +559,9 @@ def reconcile_plan(observation, original_sha256, graph):
         'phases':[
             {'name':'identity_and_current_settlement_read','authorization':'NEW_EXACT_ROOT_GO_REQUIRED',
              'maximumInvocations':1,'seconds':90,'prerequisites':'Exact /usr/bin/docker realpath/source and local daemon native platform/config evidence; exact external graph/overlay requirements; current image service/container/network/native descendant absence. No speculative source rewrite, health/ready or old GO retry.'},
-            {'name':'external_verifier_typed_delivery','authorization':'NEW_EXACT_ROOT_GO_REQUIRED',
-             'maximumInvocations':1,'seconds':120,
-             'source':RELEASE+'/scripts/runtime/verify_adaptive_idle_overlay.py',
-             'destination':'/opt/llmctl/adaptive-idle/verify.py',
-             'expectedSourceSha256':'554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d',
-             'expectedDestination':'ENOENT in retained read; recheck current no-follow destination/parent/FD absence CAS',
-             'prerequisites':'Actual advertised receipt/source/destination/FD/CAS and root ownership/mode/protected ancestry review; matching release source only, no fabricated verifier. Missing image.json receipt needs independently genuine receipt review and must not be synthesized. No import/execution of verifier during passive reads.'},
+            {'name':'container_overlay_preflight','authorization':'DISTINCT_NEW_EXACT_ROOT_GO_REQUIRED',
+             'maximumInvocations':1,'seconds':120,'hostDeliveryProposed':False,
+             'prerequisites':'GPU-free cached-platform50a3 owned temporary container; hash exact in-container verifier and selected receipt, invoke exact pinned verify_installed. No runtime/model/key mount. Host overlay ENOENT cannot establish container absence.'},
             {'name':'reviewed_guarded_reconcile_source','authorization':'SOURCE_OWNER_ASSIGNMENT_REQUIRED',
              'prerequisites':'Current selected read is insufficient for an executable rollback/helper graph. Root assigns exact separately owned helper; no edit to existing lifecycle/runtime files by I. Bind full protected current state/native_actions/native_generation/operation/recovery without exposing tokens.'},
             {'name':'archive_and_settle_prior_boot_image_owner','authorization':'NEW_EXACT_ROOT_GO_REQUIRED',
@@ -580,7 +577,7 @@ def reconcile_plan(observation, original_sha256, graph):
              'maximumInvocations':1,'outputs':1,'active':1,'steps':40,'cfg':1,
              'prerequisites':'Fresh actual native/runtime/auth/profile readiness, generation-only protected ticket from R owner, saved canonical same-chat IDs and resource sampling. No edit/multi-reference/child operation.'}],
         'rollback':'A separately reviewed exact finite owned rollback restores archived raw config by successor CAS only after new image owner is settled; it does not restart the old stable-Ada placement. No rollback may occupy the reading GPU, replay a historical helper or change fan policy.',
-        'remaining':['native platform/config identity diagnosis','missing external overlay verifier/receipt review','current owner/descendant/storage/lease/hardware settlement','generation-only protected ticket','actual concurrent six-model operation'],
+        'remaining':['distinct cached platform/config relationship','actual in-container overlay verification','current raw schema/owner/descendant/storage/lease/hardware settlement','generation-only protected ticket','actual concurrent six-model operation'],
         'qualification':'NOT_TESTED'}
 
 
@@ -623,6 +620,77 @@ def packet(root=ROOT):
             'notTested':['Linux privileged readback','config migration/install','owned model activation/shutdown','normal native generation','protected generation-only ticket','co-residency/concurrent operation','external USB4 sustained workload stability'],
             'postponed':['image editing','multiple references','creative child acceptance','persistent raw pre-crop capture']}
 
+
+
+PREFLIGHT_BODY = '"""Finite diagnostic only. Imported by synthetic tests; Linux execution needs GO."""\nimport datetime, hashlib, json, os, pathlib, selectors, signal, stat, subprocess, time\n\nclass Refused(Exception): pass\ndef require(ok, code):\n    if not ok: raise Refused(code)\ndef sha(raw): return hashlib.sha256(raw).hexdigest()\ndef utc(): return datetime.datetime.now(datetime.timezone.utc).isoformat()\ndef strict(raw):\n    require(type(raw) is bytes and len(raw) <= 262144, \'json_size\')\n    def pairs(items):\n        d={}\n        for k,v in items:\n            require(k not in d, \'duplicate_key\'); d[k]=v\n        return d\n    def bad(_): raise Refused(\'nonfinite\')\n    return json.loads(raw,object_pairs_hook=pairs,parse_constant=bad)\ndef signature(s): return (s.st_dev,s.st_ino,s.st_mode,s.st_uid,s.st_gid,s.st_nlink,s.st_size,s.st_mtime_ns,s.st_ctime_ns)\ndef read_protected(path, cap=262144):\n    p=pathlib.Path(path); require(p.is_absolute() and \'..\' not in p.parts,\'path\')\n    directory=os.open(\'/\',os.O_RDONLY|os.O_DIRECTORY)\n    try:\n        for part in p.parts[1:-1]:\n            child=os.open(part,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW,dir_fd=directory)\n            s=os.fstat(child); require(s.st_uid==0 and not s.st_mode&0o022,\'ancestry\')\n            os.close(directory); directory=child\n        before=os.stat(p.name,dir_fd=directory,follow_symlinks=False)\n        require(stat.S_ISREG(before.st_mode) and before.st_uid==0 and before.st_nlink==1\n                and not before.st_mode&0o022 and before.st_size<=cap,\'file\')\n        fd=os.open(p.name,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK,dir_fd=directory)\n        try:\n            require(signature(before)==signature(os.fstat(fd)),\'fd\')\n            raw=os.read(fd,cap+1)\n            require(len(raw)==before.st_size and signature(before)==signature(os.fstat(fd))\n                    and signature(before)==signature(os.stat(p.name,dir_fd=directory,follow_symlinks=False)),\'file_cas\')\n            return raw\n        finally: os.close(fd)\n    finally: os.close(directory)\ndef verify_image(v):\n    require(type(v) is dict and v.get(\'id\')==PIN[\'platform\'] and v.get(\'os\')==\'linux\'\n            and v.get(\'architecture\')==\'amd64\',\'image_identity\')\n    desc=v.get(\'descriptor\')\n    require(type(desc) is dict and desc.get(\'digest\')==PIN[\'platform\']\n            and desc.get(\'mediaType\')==\'application/vnd.oci.image.manifest.v1+json\'\n            and type(desc.get(\'size\')) is int and 0<desc[\'size\']<=262144,\'image_descriptor\')\n    require(v.get(\'overlay\')==PIN[\'overlay\'],\'image_overlay_label\')\n    return {\'imageId\':v[\'id\'],\'imageIdDomain\':\'oci_platform_manifest\',\'descriptor\':desc,\n            \'platform\':\'linux/amd64\',\'configDigest\':PIN[\'config\'],\n            \'configRelationship\':\'BLOCKED_EXACT_CACHE_FD_PATH_NOT_AVAILABLE\'}\ndef labels():\n    return {\'io.llm-image.owner\':PIN[\'owner\'],\'io.llm-image.invocation\':PIN[\'invocation\'],\n            \'io.llm-image.go\':PIN[\'goId\'],\'io.llm-image.boot\':PIN[\'boot\'],\n            \'io.llm-image.source-sha256\':PIN[\'sourceSha256\'],\n            \'io.llm-image.revision\':PIN[\'revision\']}\ndef verify_container(v,cid=None):\n    require(type(v) is dict and type(v.get(\'Id\')) is str and len(v[\'Id\'])==64\n            and all(c in \'0123456789abcdef\' for c in v[\'Id\']) and (cid is None or v[\'Id\']==cid),\'container_id\')\n    c,h,s=v.get(\'Config\',{}),v.get(\'HostConfig\',{}),v.get(\'State\',{})\n    require(v.get(\'Name\')==\'/\'+PIN[\'name\'] and v.get(\'Image\')==PIN[\'platform\']\n            and c.get(\'Image\')==PIN[\'platform\'] and type(c.get(\'Labels\')) is dict\n            and all(c[\'Labels\'].get(k)==v for k,v in labels().items())\n            and c[\'Labels\'].get(\'io.llmctl.adaptive-idle.overlay-sha256\')==PIN[\'overlay\'],\'container_owner\')\n    require(c.get(\'User\')==\'1000:1001\' and c.get(\'Entrypoint\')==[\'/opt/image-venv/bin/python\']\n            and c.get(\'Cmd\')==[\'-I\',\'-B\',\'-c\',PIN[\'containerProgram\']],\'container_command\')\n    selected=[e for e in c.get(\'Env\',[]) if e.split(\'=\',1)[0] in (\'NVIDIA_VISIBLE_DEVICES\',\'CUDA_VISIBLE_DEVICES\')]\n    require(sorted(selected)==[\'CUDA_VISIBLE_DEVICES=\',\'NVIDIA_VISIBLE_DEVICES=void\'],\'gpu_environment\')\n    require(h.get(\'Runtime\')==\'runc\' and h.get(\'NetworkMode\')==\'none\' and h.get(\'ReadonlyRootfs\') is True\n            and h.get(\'Privileged\') is False and h.get(\'DeviceRequests\') in (None,[])\n            and h.get(\'Devices\') in (None,[]) and h.get(\'DeviceCgroupRules\') in (None,[])\n            and v.get(\'Mounts\')==[] and h.get(\'Binds\') in (None,[]) and h.get(\'Tmpfs\') in (None,{})\n            and h.get(\'PortBindings\') in (None,{}) and h.get(\'PidMode\')==\'\'\n            and h.get(\'CapDrop\')==[\'ALL\'] and h.get(\'CapAdd\') in (None,[])\n            and h.get(\'SecurityOpt\')==[\'no-new-privileges\'] and h.get(\'RestartPolicy\',{}).get(\'Name\')==\'no\'\n            and h.get(\'LogConfig\',{}).get(\'Type\')==\'none\' and h.get(\'Memory\')==536870912\n            and h.get(\'MemorySwap\')==536870912 and h.get(\'NanoCpus\')==1000000000\n            and h.get(\'PidsLimit\')==32,\'container_isolation\')\n    require(type(s.get(\'Running\')) is bool and type(s.get(\'Pid\')) is int,\'container_state\')\n    return v[\'Id\']\ndef create_argv():\n    argv=[\'/usr/bin/docker\',\'create\',\'--pull\',\'never\',\'--runtime\',\'runc\',\'--name\',PIN[\'name\']]\n    for k,v in labels().items(): argv+=[\'--label\',k+\'=\'+v]\n    return argv+[\'--network\',\'none\',\'--read-only\',\'--user\',\'1000:1001\',\'--env\',\'NVIDIA_VISIBLE_DEVICES=void\',\n        \'--env\',\'CUDA_VISIBLE_DEVICES=\',\'--env\',\'PYTHONDONTWRITEBYTECODE=1\',\'--cap-drop\',\'ALL\',\n        \'--security-opt\',\'no-new-privileges\',\'--cpus\',\'1\',\'--memory\',\'512m\',\'--memory-swap\',\'512m\',\n        \'--pids-limit\',\'32\',\'--restart\',\'no\',\'--log-driver\',\'none\',\'--entrypoint\',\'/opt/image-venv/bin/python\',\n        PIN[\'platform\'],\'-I\',\'-B\',\'-c\',PIN[\'containerProgram\']]\ndef proc_stamp(pid):\n    raw=pathlib.Path(\'/proc/\'+str(pid)+\'/stat\').read_text(); tail=raw[raw.rfind(\')\')+2:].split()\n    return {\'pid\':pid,\'pgid\':int(tail[2]),\'startTicks\':int(tail[19])}\ndef journal(value):\n    data=(json.dumps(value,sort_keys=True)+\'\\n\').encode(); os.write(AUDIT,data); os.fsync(AUDIT)\nCOMMANDS=[]\ndef command(argv,deadline,seconds=8,check=True):\n    require(time.monotonic()<deadline,\'budget\')\n    start=utc(); buffers=[bytearray(),bytearray()]; streams=None; birth=\'UNKNOWN\'\n    timed=False; overflow=False; failure=None; child=None; reaped=False\n    local_end=min(deadline,time.monotonic()+seconds)\n    try:\n        child=subprocess.Popen(argv,cwd=\'/\',env={\'PATH\':\'/usr/bin:/bin\',\'HOME\':\'/nonexistent\'},\n            stdout=subprocess.PIPE,stderr=subprocess.PIPE,stdin=subprocess.DEVNULL,start_new_session=True)\n        # Every operation after Popen is inside this try/finally.\n        birth=proc_stamp(child.pid)\n        streams=selectors.DefaultSelector()\n        for i,pipe in enumerate((child.stdout,child.stderr)):\n            os.set_blocking(pipe.fileno(),False); streams.register(pipe,selectors.EVENT_READ,i)\n        while streams.get_map():\n            if time.monotonic()>=local_end: timed=True; break\n            for key,_ in streams.select(min(.1,max(0,local_end-time.monotonic()))):\n                data=os.read(key.fileobj.fileno(),8192)\n                if not data: streams.unregister(key.fileobj)\n                else:\n                    buffers[key.data].extend(data)\n                    if len(buffers[key.data])>65536: overflow=True; break\n            if overflow: break\n        if not timed and not overflow:\n            try: child.wait(timeout=max(.001,min(local_end-time.monotonic(),deadline-time.monotonic())))\n            except subprocess.TimeoutExpired: timed=True\n    except BaseException as error:\n        failure=\'interrupted\' if isinstance(error,Refused) and str(error)==\'interrupted\' else \'metadata_selector_or_command_failed\'\n    finally:\n        # Repeated interrupts cannot prevent mandatory direct-child settlement.\n        previous={sig:signal.signal(sig,signal.SIG_IGN) for sig in (signal.SIGTERM,signal.SIGINT)}\n        if child is not None:\n            for sig,grace in ((signal.SIGTERM,.5),(signal.SIGKILL,1.5)):\n                if child.poll() is not None: break\n                try: os.killpg(child.pid,sig)\n                except ProcessLookupError: pass\n                remaining=min(grace,max(.001,deadline-time.monotonic()))\n                try: child.wait(timeout=remaining)\n                except subprocess.TimeoutExpired: pass\n            reaped=child.poll() is not None\n            if reaped:\n                # returncode is actual Popen terminal; no prospective exit.\n                child.wait(timeout=.001)\n            for i,pipe in enumerate((child.stdout,child.stderr)):\n                try:\n                    os.set_blocking(pipe.fileno(),False)\n                    while len(buffers[i])<=65536:\n                        data=os.read(pipe.fileno(),min(8192,65537-len(buffers[i])))\n                        if not data: break\n                        buffers[i].extend(data)\n                except (OSError,ValueError): pass\n            overflow=overflow or any(len(buf)>65536 for buf in buffers)\n        terminal={\'argv\':argv,\'cwd\':\'/\',\'host\':\'ai-vm\',\'startUtc\':start,\'endUtc\':utc(),\n            \'pid\':child.pid if child else None,\'pgid\':child.pid if child else None,\'birth\':birth,\n            \'exitCode\':child.returncode if child and reaped else None,\'reaped\':reaped,\n            \'timeoutSeconds\':seconds,\'timedOut\':timed,\'overflow\':overflow,\'failure\':failure,\n            \'stdout\':bytes(buffers[0]).decode(\'utf-8\',\'replace\'),\'stderr\':bytes(buffers[1]).decode(\'utf-8\',\'replace\'),\n            \'stdoutSha256\':sha(bytes(buffers[0])),\'stderrSha256\':sha(bytes(buffers[1]))}\n        COMMANDS.append(terminal) # persist actual terminal before any postcheck\n        try: journal(terminal)\n        except (OSError,ValueError): failure=\'journal_failed\'\n        if streams is not None: streams.close()\n        if child is not None:\n            child.stdout.close(); child.stderr.close()\n        for sig,handler in previous.items(): signal.signal(sig,handler)\n    require(child is not None and reaped and failure is None and not timed and not overflow\n            and (not check or child.returncode==0),\'command_failed\')\n    return child.returncode,bytes(buffers[0])\n\ndef inspect(name,deadline):\n    # Full diagnostic config has no credentials; no production container is inspected.\n    code,raw=command([\'/usr/bin/docker\',\'container\',\'inspect\',name],deadline,check=False)\n    if code: return None\n    value=strict(raw); require(type(value) is list and len(value)==1,\'inspect_count\'); return value[0]\ndef validate_go(go,self_sha,now):\n    require(type(go) is dict and go.get(\'status\')==\'GO\' and go.get(\'issuedBy\')==\'root\'\n        and go.get(\'goId\')==PIN[\'goId\'] and go.get(\'bootId\')==PIN[\'boot\']\n        and go.get(\'helperSha256\')==self_sha and go.get(\'sourceSha256\')==PIN[\'sourceSha256\']\n        and go.get(\'containerName\')==PIN[\'name\'] and type(go.get(\'maximumInvocations\')) is int and go[\'maximumInvocations\']==1\n        and go.get(\'actions\')==[\'cached_image_inspect\',\'owned_gpu_free_create_start_attach_wait_inspect_remove\'], \'root_go\')\n    a=datetime.datetime.fromisoformat(go[\'notBeforeUtc\']); b=datetime.datetime.fromisoformat(go[\'expiresUtc\'])\n    require(a.tzinfo is not None and b.tzinfo is not None and a<=now<b\n            and (b-a).total_seconds()<=150 and (b-now).total_seconds()>=120,\'go_budget\')\ndef main():\n    global AUDIT\n    require(os.geteuid()==0,\'root\'); os.chdir(\'/\')\n    helper=PIN[\'stageRoot\']+\'/image21-preflight.py\'; go_path=PIN[\'stageRoot\']+\'/ROOT-GO.json\'\n    raw=read_protected(helper); go=strict(read_protected(go_path))\n    validate_go(go,sha(raw),datetime.datetime.now(datetime.timezone.utc))\n    require(pathlib.Path(\'/proc/sys/kernel/random/boot_id\').read_text().strip()==PIN[\'boot\'],\'boot\')\n    directory=os.open(PIN[\'stageRoot\'],os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)\n    s=os.fstat(directory); require(s.st_uid==0 and stat.S_IMODE(s.st_mode)==0o700,\'stage_root\')\n    AUDIT=os.open(\'PREFLIGHT-JOURNAL.jsonl\',os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600,dir_fd=directory)\n    os.close(directory)\n    beginning=time.monotonic(); work_end=beginning+65; cleanup_end=beginning+110\n    def interrupted(signum,frame): raise Refused(\'interrupted\')\n    signal.signal(signal.SIGTERM,interrupted); signal.signal(signal.SIGINT,interrupted)\n    cid=None; created_attempted=False; creator_complete=False; result={\'status\':\'FAILED\',\'nativeGeneration\':\'NOT_TESTED\',\'configRelationship\':\'BLOCKED_EXACT_CACHE_FD_PATH_NOT_AVAILABLE\'}\n    try:\n        fmt=\'{"id":{{json .Id}},"descriptor":{{json .Descriptor}},"os":{{json .Os}},"architecture":{{json .Architecture}},"overlay":{{json (index .Config.Labels "io.llmctl.adaptive-idle.overlay-sha256")}}}\'\n        _,raw=command([\'/usr/bin/docker\',\'image\',\'inspect\',\'--format\',fmt,PIN[\'platform\']],work_end)\n        result[\'image\']=verify_image(strict(raw))\n        _,raw=command([\'/usr/bin/docker\',\'container\',\'ls\',\'--all\',\'--no-trunc\',\'--filter\',\'name=^/\'+PIN[\'name\']+\'$\',\'--format\',\'{{.Names}}\'],work_end)\n        require(PIN[\'name\'] not in raw.decode().splitlines(),\'name_collision\')\n        journal({\'createIntent\':create_argv(),\'name\':PIN[\'name\'],\'boot\':PIN[\'boot\'],\'goId\':PIN[\'goId\']})\n        created_attempted=True\n        _,raw=command(create_argv(),work_end); cid=raw.decode().strip()\n        require(len(cid)==64 and all(c in \'0123456789abcdef\' for c in cid),\'creator_cid\')\n        creator_complete=True\n        verify_container(inspect(cid,work_end),cid)\n        _,raw=command([\'/usr/bin/docker\',\'start\',\'--attach\',\'--sig-proxy=false\',cid],work_end,seconds=15)\n        result[\'overlay\']=strict(raw)\n        require(result[\'overlay\'].get(\'verifierRawSha256\')==PIN[\'verifier\']\n                and type(result[\'overlay\'].get(\'receiptRawSha256\')) is str\n                and len(result[\'overlay\'][\'receiptRawSha256\'])==64\n                and result[\'overlay\'].get(\'verification\',{}).get(\'overlay_sha256\')==PIN[\'overlay\']\n                and result[\'overlay\'][\'verification\'].get(\'target\')==\'image\',\'overlay_result\')\n        _,raw=command([\'/usr/bin/docker\',\'wait\',cid],work_end)\n        require(raw.strip()==b\'0\',\'container_exit\')\n        value=inspect(cid,work_end); verify_container(value,cid)\n        require(value[\'State\'][\'Running\'] is False and value[\'State\'][\'Pid\']==0\n                and type(value[\'State\'][\'ExitCode\']) is int and value[\'State\'][\'ExitCode\']==0,\'container_terminal\')\n        result[\'status\']=\'PASS_CONTAINER_OVERLAY_ONLY\'\n    except (OSError,ValueError,KeyError,TypeError,Refused):\n        result[\'status\']=\'FAILED_DIAGNOSTIC\'\n    finally:\n        signal.signal(signal.SIGTERM,signal.SIG_IGN); signal.signal(signal.SIGINT,signal.SIG_IGN)\n        try:\n            if created_attempted:\n                value=inspect(PIN[\'name\'],cleanup_end)\n                if value is not None:\n                    owned=verify_container(value,cid)\n                    command([\'/usr/bin/docker\',\'rm\',\'--force\',owned],cleanup_end)\n                _,raw=command([\'/usr/bin/docker\',\'container\',\'ls\',\'--all\',\'--no-trunc\',\'--filter\',\'name=^/\'+PIN[\'name\']+\'$\',\'--format\',\'{{.Names}}\'],cleanup_end)\n                require(PIN[\'name\'] not in raw.decode().splitlines(),\'cleanup_absence\')\n                result[\'ownedContainerAbsent\']=True if creator_complete else \'NOT_PROVEN_CREATOR_DAEMON_DISPOSITION_UNRESOLVED\'\n                if not creator_complete: result[\'status\']=\'FAILED_UNRESOLVED_CREATE\'\n            else: result[\'ownedContainerAbsent\']=\'NO_CREATE_ATTEMPT\'\n            require(pathlib.Path(\'/proc/sys/kernel/random/boot_id\').read_text().strip()==PIN[\'boot\'],\'boot_after\')\n        except (OSError,ValueError,KeyError,TypeError,Refused):\n            result[\'ownedContainerAbsent\']=\'NOT_PROVEN\'; result[\'status\']=\'FAILED_CLEANUP\'\n        result[\'elapsedSeconds\']=time.monotonic()-beginning; result[\'commands\']=COMMANDS\n        try: journal({\'result\':result})\n        except (OSError,ValueError): result[\'journalComplete\']=False; result[\'status\']=\'FAILED_JOURNAL\'\n        os.close(AUDIT)\n    print(json.dumps(result,sort_keys=True))\n    return 0 if result[\'status\']==\'PASS_CONTAINER_OVERLAY_ONLY\' and result[\'ownedContainerAbsent\'] is True else 1\nif __name__==\'__main__\': raise SystemExit(main())\n'
+
+
+def container_program():
+    # Exact reviewed verifier executes in the container namespace. No package,
+    # torch, runtime, model, HTTP or credential imports are performed.
+    return r"""import hashlib, json, os, stat
+def read(path):
+    fd=os.open(path,os.O_RDONLY|os.O_NOFOLLOW|os.O_NONBLOCK)
+    try:
+        s=os.fstat(fd)
+        if not stat.S_ISREG(s.st_mode) or s.st_uid!=0 or s.st_nlink!=1 or s.st_mode&0o022 or s.st_size>262144:
+            raise ValueError('protected_container_file')
+        raw=os.read(fd,262145)
+        after=os.fstat(fd); named=os.stat(path,follow_symlinks=False)
+        signature=lambda x:(x.st_dev,x.st_ino,x.st_mode,x.st_uid,x.st_gid,x.st_nlink,x.st_size,x.st_mtime_ns,x.st_ctime_ns)
+        if len(raw)!=s.st_size or signature(s)!=signature(after) or signature(s)!=signature(named):
+            raise ValueError('container_file_changed')
+        return raw
+    finally: os.close(fd)
+verifier=read('/opt/llmctl/adaptive-idle/verify.py')
+digest=hashlib.sha256(verifier).hexdigest()
+if digest!='554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d':
+    raise ValueError('reviewed_verifier_mismatch')
+receipt=read('/opt/llmctl/adaptive-idle/image.json')
+scope={'__name__':'image_adaptive_verifier','__file__':'/opt/llmctl/adaptive-idle/verify.py'}
+exec(compile(verifier,scope['__file__'],'exec'),scope)
+verified=scope['verify_installed']('/opt/llmctl/adaptive-idle/image.json','dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b','image')
+if receipt!=read('/opt/llmctl/adaptive-idle/image.json') or verifier!=read('/opt/llmctl/adaptive-idle/verify.py'):
+    raise ValueError('container_overlay_changed')
+print(json.dumps({'verifierRawSha256':digest,'receiptRawSha256':hashlib.sha256(receipt).hexdigest(),'verification':verified},sort_keys=True))
+"""
+
+
+def container_preflight_request(root=ROOT):
+    name='h044-i03-image21-preflight-f7c7a4d8'
+    pin={'platform':MANIFEST,'config':OCI_CONFIG,'parentForbidden':PARENT,
+         'boot':'424b2823-b27c-4b3c-88b3-0ae9f4e7106d',
+         'owner':'H044-I03-IMAGE21-PREFLIGHT-f7c7a4d8',
+         'invocation':'f7c7a4d8979f4e089d340c7976f8e9c1','name':name,
+         'goId':'H044-I03-IMAGE21-PREFLIGHT-01','revision':SGLANG,
+         'sourceSha256':sha((root/'scripts/h044/image_backend_preparation.py').read_bytes()),
+         'overlay':'dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b',
+         'verifier':'554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d',
+         'stageRoot':'/run/llmctl/'+name,'containerProgram':container_program()}
+    program=('#!/usr/bin/env python3\nPIN='+repr(pin)+'\n'+PREFLIGHT_BODY).encode()
+    scope={'__name__':'source_packet'}
+    exec(compile(program,'<offline-preflight>','exec'),scope)
+    return {'schema':'h044-image21-container-preflight-request-v1',
+        'authorization':'REQUEST_ONLY_NO_GO','pin':pin,'helperSha256':sha(program),
+        'helperBytes':len(program),'helperFilename':'image21-preflight.py',
+        'createArgv':scope['create_argv'](),
+        'transportArgv':['/usr/bin/ssh','-T','-o','BatchMode=yes','-o','ConnectTimeout=8',
+            '-o','ConnectionAttempts=1','-o','ServerAliveInterval=5','-o','ServerAliveCountMax=1',
+            'ai-vm','/usr/bin/sudo','-n','/usr/bin/python3','-I','-B',pin['stageRoot']+'/image21-preflight.py'],
+        'transportProposal':{'staging':'Root alone stages these exact bytes plus a NEW ROOT-GO.json under the exact root-owned0700 stage directory; exclusive0600 files, protected ancestry/FD/hash validation. Separate finite source-bound staging/diagnostic approval required. No transport executed by I03.',
+            'stdout':'protected original Mac stdout/stderr files and actual child terminal; remote exclusive0600 PREFLIGHT-JOURNAL.jsonl stores original command logs before parsing',
+            'outerDeadlineSeconds':145,'remoteSeconds':120,'workSeconds':65,'cleanupReserveSeconds':45,
+            'transportInvocations':1,'createCount':1,'startAttachCount':1,'waitCount':1,
+            'allPathCleanup':'Reinspect exact unique name/CID, full diagnostic ownership/isolation/image/program labels before force removal; successful inventory absence required. Ambiguous owner refuses removal and reports NOT_PROVEN.',
+            'GOFields':{'status':'GO','issuedBy':'root','goId':pin['goId'],'bootId':pin['boot'],
+                'helperSha256':sha(program),'sourceSha256':pin['sourceSha256'],'containerName':name,
+                'maximumInvocations':1,'notBeforeUtc':'ROOT_MUST_SET_EXACT_CURRENT_UTC',
+                'expiresUtc':'ROOT_MUST_SET_FINITE_UTC_WITH_120_SECONDS_REMAINING',
+                'actions':['cached_image_inspect','owned_gpu_free_create_start_attach_wait_inspect_remove']}},
+        'cacheRelationship':{'status':'BLOCKED_EXACT_CACHE_FD_PATH_NOT_AVAILABLE',
+            'platformManifest':MANIFEST,'configDigest':OCI_CONFIG,
+            'requirement':'Separate exact known root-owned no-follow cache blob paths/FDs; raw platform/config hash and descriptor relationship. No store discovery, inference, image export/save, layers or network in this packet.'},
+        'qualification':'NOT_TESTED; overlay-only PASS cannot qualify OCI config relationship, lifecycle, GPU, model, generation or native Sova admission'}, program
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

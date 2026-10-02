@@ -18,7 +18,7 @@ class PreparationTests(unittest.TestCase):
         runtime, release = m.source_maps(self.graph)
         self.runtime = {'schema_version':1,'owner':m.OWNER,'source_commit':m.SGLANG,
             'checkpoint_revision':m.REVISION,'checkpoint_path':m.MODEL,
-            'checkpoint_receipt_sha256':'a'*64,'gpu_uuid':m.READING_GPU,'image_id':m.PARENT,
+            'checkpoint_receipt_sha256':'a'*64,'gpu_uuid':m.READING_GPU,'image_id':m.MANIFEST,
             'network_id':'b'*64,'source_sha256':runtime,'release_source_sha256':release,
             'untouched':{'marker':'preserve'}}
         self.api = {'schema_version':1,'runtime_revision':m.SGLANG,'model_id':'Qwen/Qwen-Image-2.1',
@@ -69,7 +69,7 @@ class PreparationTests(unittest.TestCase):
 
     def test_migration_preserves_every_unowned_field(self):
         old=copy.deepcopy(self.runtime); oldapi=copy.deepcopy(self.api); plan=self.plan()
-        expected=copy.deepcopy(old); expected.update(gpu_uuid=m.GPU,image_id=m.MANIFEST)
+        expected=copy.deepcopy(old); expected['gpu_uuid']=m.GPU
         api=copy.deepcopy(oldapi); api['runtime_image_digest']=m.MANIFEST
         self.assertEqual(plan['runtimeSuccessor'],expected)
         self.assertEqual(plan['apiSuccessor'],api)
@@ -164,6 +164,119 @@ class PreparationTests(unittest.TestCase):
         template=request['commands'][3][4]
         self.assertIn('gpuEnvironment',template)
         self.assertIn('false',template)
+
+    def test_correct_overlay_namespace_no_host_delivery(self):
+        request=m.readonly_request(self.graph)
+        self.assertFalse(any(f['path'].startswith('/opt/llmctl/adaptive-idle/') for f in request['files']))
+        self.assertIn('Container filesystem only',request['overlayNamespace'])
+        plan=m.reconcile_plan(self.observation(),'a'*64,self.graph)
+        self.assertNotIn('external_verifier_typed_delivery',str(plan))
+        self.assertFalse(plan['phases'][1]['hostDeliveryProposed'])
+
+    def test_current_platform_pin_has_no_parent_fallback(self):
+        for identity in (m.PARENT,m.OCI_CONFIG,'sha256:'+'0'*64):
+            self.runtime['image_id']=identity
+            with self.assertRaises(m.Refused): self.plan()
+
+    def preflight(self):
+        request,program=m.container_preflight_request()
+        scope={'__name__':'offline_preflight'}
+        exec(compile(program,'<preflight-synthetic>','exec'),scope)
+        return request,scope
+
+    def test_preflight_finite_gpu_free_and_sealed(self):
+        request,s=self.preflight(); cmd=request['createArgv']
+        self.assertEqual(cmd,s['create_argv']())
+        for flag in ('--gpus','--device','--mount','--volume','--publish'):
+            self.assertNotIn(flag,cmd)
+        for flag,value in (('--pull','never'),('--runtime','runc'),('--network','none'),
+                           ('--user','1000:1001'),('--memory','512m'),('--pids-limit','32')):
+            self.assertEqual(cmd[cmd.index(flag)+1],value)
+        self.assertIn('NVIDIA_VISIBLE_DEVICES=void',cmd)
+        self.assertIn('CUDA_VISIBLE_DEVICES=',cmd)
+        self.assertNotIn('torch',m.container_program())
+        self.assertIn("scope['verify_installed']",m.container_program())
+        self.assertEqual(request['transportProposal']['cleanupReserveSeconds'],45)
+        self.assertEqual(request['cacheRelationship']['status'],'BLOCKED_EXACT_CACHE_FD_PATH_NOT_AVAILABLE')
+
+    def test_preflight_typed_platform_descriptor_only(self):
+        request,s=self.preflight(); pin=request['pin']
+        image={'id':m.MANIFEST,'os':'linux','architecture':'amd64','overlay':pin['overlay'],
+               'descriptor':{'digest':m.MANIFEST,'mediaType':'application/vnd.oci.image.manifest.v1+json','size':1234}}
+        self.assertEqual(s['verify_image'](image)['imageIdDomain'],'oci_platform_manifest')
+        for key,value in (('id',m.OCI_CONFIG),('id',m.PARENT),('os','windows'),('descriptor',None),('overlay','0'*64)):
+            v=copy.deepcopy(image); v[key]=value
+            with self.assertRaises(s['Refused']): s['verify_image'](v)
+
+    def test_preflight_go_source_boot_and_remaining_cleanup_budget(self):
+        import datetime
+        request,s=self.preflight(); go=copy.deepcopy(request['transportProposal']['GOFields'])
+        now=datetime.datetime(2026,10,2,tzinfo=datetime.timezone.utc)
+        go.update(notBeforeUtc=now.isoformat(),expiresUtc=(now+datetime.timedelta(seconds=140)).isoformat())
+        s['validate_go'](go,request['helperSha256'],now)
+        for key,value in (('status','REQUEST'),('issuedBy','worker'),('bootId','old'),('maximumInvocations',True),
+                          ('sourceSha256','0'*64),('helperSha256','0'*64),('containerName','llm-image-backend')):
+            bad=copy.deepcopy(go); bad[key]=value
+            with self.assertRaises(s['Refused']): s['validate_go'](bad,request['helperSha256'],now)
+        with self.assertRaises(s['Refused']):
+            s['validate_go'](go,request['helperSha256'],now+datetime.timedelta(seconds=30))
+
+    def test_preflight_metadata_failure_reaps_and_records_actual_terminal(self):
+        from unittest.mock import Mock,patch
+        request,s=self.preflight()
+        child=Mock(pid=424242,returncode=None)
+        child.poll.side_effect=lambda:child.returncode
+        def wait(*,timeout):
+            self.assertGreater(timeout,0); child.returncode=-15; return -15
+        child.wait.side_effect=wait
+        with patch.object(s['subprocess'],'Popen',return_value=child), \
+             patch.dict(s,{'proc_stamp':Mock(side_effect=OSError()),'journal':Mock()}), \
+             patch.object(s['os'],'killpg') as kill, \
+             patch.object(s['os'],'set_blocking'),patch.object(s['os'],'read',return_value=b''):
+            with self.assertRaises(s['Refused']):
+                s['command'](['/usr/bin/docker','create'],s['time'].monotonic()+5)
+        record=s['COMMANDS'][-1]
+        self.assertEqual(record['birth'],'UNKNOWN')
+        self.assertTrue(record['reaped']); self.assertEqual(record['exitCode'],-15)
+        self.assertEqual(kill.call_args.args[0],child.pid)
+        self.assertTrue(all('timeout' in call.kwargs for call in child.wait.call_args_list))
+
+    def test_preflight_journal_failure_keeps_terminal_and_unresolved_create_rule(self):
+        from unittest.mock import Mock,patch
+        request,s=self.preflight(); child=Mock(pid=424242,returncode=None)
+        child.poll.side_effect=lambda:child.returncode
+        def wait(*,timeout): child.returncode=-15; return -15
+        child.wait.side_effect=wait
+        with patch.object(s['subprocess'],'Popen',return_value=child), \
+             patch.dict(s,{'proc_stamp':Mock(side_effect=OSError()),'journal':Mock(side_effect=OSError())}), \
+             patch.object(s['os'],'killpg'),patch.object(s['os'],'set_blocking'), \
+             patch.object(s['os'],'read',return_value=b''):
+            with self.assertRaises(s['Refused']): s['command'](['diagnostic'],s['time'].monotonic()+5)
+        self.assertEqual(s['COMMANDS'][-1]['exitCode'],-15)
+        self.assertIn('NOT_PROVEN_CREATOR_DAEMON_DISPOSITION_UNRESOLVED',m.PREFLIGHT_BODY)
+        self.assertIn("signal.signal(signal.SIGTERM,signal.SIG_IGN)",m.PREFLIGHT_BODY)
+
+    def test_preflight_ownership_and_isolation_before_cleanup(self):
+        request,s=self.preflight(); pin=request['pin']; cid='a'*64
+        c={'Id':cid,'Name':'/'+pin['name'],'Image':m.MANIFEST,'Mounts':[],
+           'Config':{'Image':m.MANIFEST,'User':'1000:1001','Entrypoint':['/opt/image-venv/bin/python'],
+                     'Cmd':['-I','-B','-c',pin['containerProgram']],
+                     'Env':['NVIDIA_VISIBLE_DEVICES=void','CUDA_VISIBLE_DEVICES='],
+                     'Labels':dict(s['labels'](),**{'io.llmctl.adaptive-idle.overlay-sha256':pin['overlay']})},
+           'State':{'Running':False,'Pid':0},
+           'HostConfig':{'Runtime':'runc','NetworkMode':'none','ReadonlyRootfs':True,'Privileged':False,
+               'DeviceRequests':[],'Devices':[],'DeviceCgroupRules':None,'Binds':None,'Tmpfs':None,
+               'PortBindings':{},'PidMode':'','CapDrop':['ALL'],'CapAdd':None,'SecurityOpt':['no-new-privileges'],
+               'RestartPolicy':{'Name':'no'},'LogConfig':{'Type':'none'},'Memory':536870912,
+               'MemorySwap':536870912,'NanoCpus':1000000000,'PidsLimit':32}}
+        self.assertEqual(s['verify_container'](c,cid),cid)
+        for key,value in (('Runtime','nvidia'),('NetworkMode','host'),('Privileged',True),
+                          ('DeviceRequests',[{}]),('Binds',['/data:/data']),('Memory',True),('CapAdd',['SYS_ADMIN'])):
+            bad=copy.deepcopy(c); bad['HostConfig'][key]=value
+            with self.assertRaises(s['Refused']): s['verify_container'](bad,cid)
+        for key,value in (('io.llm-image.boot','old'),('io.llm-image.go','old'),('io.llm-image.owner',m.OWNER)):
+            bad=copy.deepcopy(c); bad['Config']['Labels'][key]=value
+            with self.assertRaises(s['Refused']): s['verify_container'](bad,cid)
 
     def observation(self):
         records={}

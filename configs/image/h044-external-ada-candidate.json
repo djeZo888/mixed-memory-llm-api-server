@@ -2,7 +2,11 @@
   "schema": "h044-image-source-candidate-v1",
   "installable": false,
   "liveQualified": false,
-  "placement": {"gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23", "ordinalFallback": false, "reading_gpu_excluded": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"},
+  "placement": {
+    "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+    "ordinalFallback": false,
+    "reading_gpu_excluded": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+  },
   "runtime": {
     "base": "/data/services/image21-runtime-20260923",
     "release": "/data/services/releases/h037-image-placement-20260930",
@@ -17,13 +21,45 @@
     "configDigest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
     "parentOnlyForbidden": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8"
   },
-  "resources": {"gpuReservePercent": 5, "hostReservePercent": 15, "memoryBytes": 103079215104, "memorySwapBytes": 103079215104, "cpusetCpus": "8-15", "cpusetMems": "0", "active": 1, "outputs": 1, "steps": 40, "cfg": 1, "offload": false, "quantization": false, "approximateCache": false, "compile": false},
-  "fullHD": {"public": "1920x1080", "native": "1920x1088", "cropBottom": 8, "rawArtifact": "NOT_CAPTURED"},
+  "resources": {
+    "gpuReservePercent": 5,
+    "hostReservePercent": 15,
+    "memoryBytes": 103079215104,
+    "memorySwapBytes": 103079215104,
+    "cpusetCpus": "8-15",
+    "cpusetMems": "0",
+    "active": 1,
+    "outputs": 1,
+    "steps": 40,
+    "cfg": 1,
+    "offload": false,
+    "quantization": false,
+    "approximateCache": false,
+    "compile": false
+  },
+  "fullHD": {
+    "public": "1920x1080",
+    "native": "1920x1088",
+    "cropBottom": 8,
+    "rawArtifact": "NOT_CAPTURED"
+  },
   "migration": {
-    "runtimeDelta": {"gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23", "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"},
-    "apiDelta": {"runtime_image_digest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"},
+    "runtimeDelta": {
+      "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+    },
+    "apiDelta": {
+      "runtime_image_digest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+    },
     "preserve": "All other config fields, profile/evidence records, network ID, checkpoint receipt, source closure, histories, downloads and credentials. Retained profiles do not qualify a new placement.",
-    "requires": ["current protected config byte CAS", "root-reviewed critical source closure", "registered storage and canonical lease", "boot identity and settled prior native owner", "fresh exact UUID hardware guard", "rollback byte CAS and current owned receipts", "separately owned manifest/config domain correction"],
+    "requires": [
+      "current protected config byte CAS",
+      "root-reviewed critical source closure",
+      "registered storage and canonical lease",
+      "boot identity and settled prior native owner",
+      "fresh exact UUID hardware guard",
+      "rollback byte CAS and current owned receipts",
+      "actual immutable cached manifest/config relationship; no runtime identity guard change"
+    ],
     "expectedCurrentRuntimeSha256": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
     "expectedCurrentApiSha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3"
   },
@@ -38,7 +74,14 @@
     "protectedSourceClosure": "37 exact hashes matched; external graph still unreviewed",
     "daemonImageId": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
     "nativeConfigDomain": "NOT_PROVEN; required3f6178 retained; no guard change",
-    "nativeOwnerSettlement": "NOT_PROVEN; exact exited container and prior-boot active records retained"
+    "nativeOwnerSettlement": "NOT_PROVEN; exact exited container and prior-boot active records retained",
+    "namespaceCorrection": {
+      "decision": "ROOT-DECISION-NAMESPACE07",
+      "containerOverlay": "NOT_TESTED",
+      "hostOverlayAbsence": "WRONG_NAMESPACE; production absence NOT_ESTABLISHED",
+      "hostDeliveryProposed": false,
+      "productionNativeIdentity": "Observed container.Image/Config.Image/image.Id platform50a3 matches current runtime config.image_id; no OR/fallback/correction proposed"
+    }
   },
   "qualification": "NOT_TESTED; source candidate cannot enable admission or global image gate"
 }
