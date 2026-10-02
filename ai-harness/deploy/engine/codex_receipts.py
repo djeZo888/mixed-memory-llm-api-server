@@ -318,11 +318,23 @@ def inspect_launch(podman, container, args, config):
         expected += [ro(deployment.parent/'tools/technical-vision'/name,'/opt/ai-harness/tools/technical-vision/'+name) for name in ('technical-vision-mcp.mjs','technical-vision.mjs')]
     if sorted(volumes,key=lambda m:m['destination']) != sorted(expected,key=lambda m:m['destination']):
         raise ValueError('unexpected receipt mount policy')
+    # Select only safe isolation fields. Never capture the scoped gateway Env.
+    def selected_object(fields):
+        return '{'+','.join('"'+key+'":{{json '+field+'}}' for key,field in fields)+'}'
+    selected = '{"Id":{{json .ID}},"Name":{{json .Name}},"Image":{{json .Image}},"Mounts":{{json .Mounts}},"EffectiveCaps":{{json .EffectiveCaps}},"State":'
+    selected += selected_object((('Running','.State.Running'),('Pid','.State.Pid'),('Status','.State.Status'),('StartedAt','.State.StartedAt')))
+    selected += ',"HostConfig":'+selected_object((key,'.HostConfig.'+key) for key in ('CapDrop','Privileged','ReadonlyRootfs','NetworkMode','UsernsMode','SecurityOpt','IDMappings'))
+    selected += ',"Config":{"User":{{json .Config.User}},"WorkingDir":{{json .Config.WorkingDir}},"CreateOptions":{'
+    selected += ','.join('"'+key+'":[{{$next := false}}{{range .Config.CreateCommand}}{{if $next}}{{json .}},{{$next = false}}{{else if eq . "'+key+'"}}{{$next = true}}{{else if eq (printf "%.'+str(len(key)+1)+'s" .) "'+key+'="}}{{json .}},{{end}}{{end}}null]' for key in ('--userns','--network','--cap-drop','--user','--workdir','--security-opt'))
+    selected += '}'
+    if binding.get('nativeTraceMode'):
+        # Only the two existing nonsecret trace keys; preserve duplicate/wrong-value rejection.
+        selected += ',"Env":[{{range .Config.Env}}{{if or (eq (printf "%.9s" .) "RUST_LOG=") (eq (printf "%.11s" .) "LOG_FORMAT=")}}{{json .}},{{end}}{{end}}null]'
+    selected += '}}'
     deadline = time.monotonic() + 10
     while True:
         try:
-            values = json.loads(capture(podman, ['inspect', container]))
-            c = values[0]
+            c = json.loads(capture(podman, ['inspect', '--format', selected, container]))
             if not c['State']['Running']:
                 raise ValueError('native process not running')
             break
@@ -343,33 +355,172 @@ def inspect_launch(podman, container, args, config):
     sort = lambda xs: sorted(xs, key=lambda m: (m['source'],m['destination']))
     caps = sorted(x.upper() for x in host['CapDrop'])
     security = host['SecurityOpt']
-    if (sort(actual_mounts) != sort(volumes) or host['Privileged'] is not False or host['ReadonlyRootfs'] is not True or caps != ['ALL'] or c.get('EffectiveCaps') != [] or host['NetworkMode'] != 'slirp4netns:allow_host_loopback=true' or host['UsernsMode'] != 'keep-id' or native['User'] != str(os.getuid())+':'+str(os.getgid()) or native['WorkingDir'] != binding['workspace'] or 'no-new-privileges' not in security or not any(s.startswith('seccomp=') for s in security)):
+    literal = (caps == ['ALL'] and c.get('EffectiveCaps') == []
+               and host['NetworkMode'] == 'slirp4netns:allow_host_loopback=true' and host['UsernsMode'] == 'keep-id')
+    if (sort(actual_mounts) != sort(volumes) or host['Privileged'] is not False or host['ReadonlyRootfs'] is not True or native['User'] != str(os.getuid())+':'+str(os.getgid()) or native['WorkingDir'] != binding['workspace'] or 'no-new-privileges' not in security or not any(s.startswith('seccomp=') for s in security)):
         raise ValueError('actual native isolation differs from reviewed launch')
-    if capture(podman, ['info','--format','{{.Host.Security.Rootless}}']).strip() != b'true':
-        raise ValueError('actual rootless inspection failed')
-    image = json.loads(capture(podman, ['image','inspect',c['Image']]))[0]
-    labels = image['Config']['Labels']; image_id = image['Id'].removeprefix('sha256:')
-    if image_id != 'd8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad' or labels.get('org.opencontainers.image.revision') != '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' or labels.get('org.opencontainers.image.ai-harness.patchset') != 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec':
-        raise ValueError('actual image pin mismatch')
-    egress = read_private(path / 'egress.json')
-    result = dict(schema='codex-launch-v1', nonce=binding['nonce'], runId=binding['runId'], sessionId=binding['sessionId'],
-                  checkedAtMs=int(time.time()*1000), producer=process_identity(), sources=binding['sources'], egress=egress,
-                  container={'id': c['Id'], 'name': container, 'imageId': 'sha256:'+image_id,
-                   'imageRevision': labels['org.opencontainers.image.revision'], 'imagePatchset': labels['org.opencontainers.image.ai-harness.patchset'],
-                   'pid': c['State']['Pid'], 'pidStartTicks': process_identity(c['State']['Pid'])['startTicks'],
-                   'rootless': True, 'user': native['User'], 'network': host['NetworkMode'], 'capDrop': caps,
-                   'securityOpt': security, 'readOnly': host['ReadonlyRootfs'], 'privileged': host['Privileged'],
-                   'mounts': sort(actual_mounts), 'additionalMounts': sort(additional_mounts), 'workdir': native['WorkingDir'], 'profileDir': binding['profileDir'], 'workspace': binding['workspace']})
-    if binding.get('nativeTraceMode'):
-        expected={'RUST_LOG':'off,codex_core::session::turn=trace'+(',codex_core::tasks=info' if binding['nativeTraceMode']=='post-sampling-token-usage-v2' else ''),'LOG_FORMAT':'json'}
-        observed={}
-        for key in expected:
-            values=[x[len(key)+1:] for x in native.get('Env',[]) if x.startswith(key+'=')]
-            if values != [expected[key]]:raise ValueError('trace environment not independently observed')
-            observed[key]=values[0]
-        write_once(path,'trace-env',{'schema':'codex-trace-env-v1','nonce':binding['nonce'],'runId':binding['runId'],'sessionId':binding['sessionId'],'producer':result['producer'],'containerId':c['Id'],'environment':observed})
-    write_once(path, 'launch', result)
-    return result
+    held = []
+    runtime_check = None
+    proof = None
+    if not literal:
+        # Only the genuine CREATE01/02 Podman4.9.3 representation is qualified.
+        measured_caps = ['CAP_CHOWN','CAP_DAC_OVERRIDE','CAP_FOWNER','CAP_FSETID','CAP_KILL',
+                         'CAP_NET_BIND_SERVICE','CAP_SETFCAP','CAP_SETGID','CAP_SETPCAP','CAP_SETUID','CAP_SYS_CHROOT']
+        if (c['State']['Running'] is not True or caps != measured_caps or c.get('EffectiveCaps') not in (None, [])
+            or host['NetworkMode'] != 'slirp4netns' or host['UsernsMode'] != 'private'
+            or capture(podman, ['version','--format','{{.Client.Version}}']).strip() != b'4.9.3'):
+            raise ValueError('unqualified native isolation representation')
+        options = ('--userns','--network','--cap-drop','--user','--workdir','--security-opt')
+        def option_values(argv):
+            if not isinstance(argv, list) or not all(isinstance(x, str) for x in argv):
+                raise ValueError('missing original create options')
+            result = {key:[] for key in options}
+            for i, arg in enumerate(argv):
+                for key in options:
+                    if arg == key:
+                        if i+1 >= len(argv): raise ValueError('truncated create option')
+                        result[key].append(argv[i+1])
+                    elif arg.startswith(key+'='):
+                        # The measured representation uses separate option/value pairs.
+                        raise ValueError('unknown create option representation')
+            return result
+        reviewed = {'--userns':['keep-id'], '--network':['slirp4netns:allow_host_loopback=true'],
+                    '--cap-drop':['ALL'], '--user':[str(os.getuid())+':'+str(os.getgid())],
+                    '--workdir':[binding['workspace']],
+                    '--security-opt':['no-new-privileges','seccomp='+str(deployment/'security/chromium-seccomp.json')]}
+        if option_values(args) != reviewed or {key:[v for v in vals if v is not None] for key,vals in native['CreateOptions'].items()} != reviewed or security != reviewed['--security-opt']:
+            raise ValueError('unreviewed actual create options')
+        # Info reports the intermediate rootless namespace mapping, whereas /proc
+        # exposes host IDs. Compare the complete composition, never just keep-id's row.
+        outer = json.loads(capture(podman, ['info','--format','{{json .Host.IDMappings}}']))
+        mappings = host.get('IDMappings')
+        expected_maps = {}
+        for kind, host_id in (('uid',os.getuid()),('gid',os.getgid())):
+            inner = ['0:1:1000','1000:0:1','1001:1001:64536']
+            rows = outer.get(kind+'map')
+            if (host_id != 1000 or not isinstance(mappings, dict) or mappings.get(kind.title()+'Map') != inner
+                or not isinstance(rows, list) or len(rows) != 2
+                or any(not isinstance(row,dict) or set(row) != {'container_id','host_id','size'}
+                       or any(type(v) is not int or not 0 <= v < 2**32 for v in row.values()) for row in rows)
+                or rows[0] != {'container_id':0,'host_id':host_id,'size':1}
+                or rows[1]['container_id'] != 1 or rows[1]['size'] != 65536
+                or rows[1]['host_id'] <= host_id or rows[1]['host_id']+65536 >= 2**32):
+                raise ValueError('unqualified rootless keep-id mapping')
+            sub = rows[1]['host_id']
+            expected_maps[kind] = [[0,sub,1000],[1000,host_id,1],[1001,sub+1000,64536]]
+        pid = c['State']['Pid']
+        if type(pid) is not int or pid <= 0: raise ValueError('invalid running native PID')
+        names = ('cgroup','ipc','mnt','net','pid','time','time_for_children','user','uts')
+        try:
+            procfd = os.open('/proc/'+str(pid), os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+            held.append(procfd)
+            def read_proc(name):
+                fd = os.open(name, os.O_RDONLY | os.O_NOFOLLOW, dir_fd=procfd)
+                try:
+                    raw = os.read(fd, 65537)
+                    if len(raw) > 65536: raise ValueError('proc proof bound exceeded')
+                    return raw.decode()
+                finally: os.close(fd)
+            def descriptors():
+                result = {}
+                for name in names + ('pid_for_children',):
+                    fd = os.open('ns/'+name, os.O_RDONLY, dir_fd=procfd)
+                    try:
+                        info = os.fstat(fd); result[name] = [info.st_dev,info.st_ino]
+                    finally: os.close(fd)
+                if result.pop('pid_for_children') != result['pid']:
+                    raise ValueError('unqualified child PID namespace')
+                return result
+            def snapshot():
+                raw = read_proc('stat'); fields = raw[raw.rfind(')')+2:].split()
+                if len(fields) < 20 or fields[0] in ('Z','X','x'): raise ValueError('native process not alive')
+                status = {}
+                for line in read_proc('status').splitlines():
+                    key, sep, value = line.partition(':')
+                    if sep:
+                        if key in status: raise ValueError('duplicate proc status')
+                        status[key] = value.split()
+                for kind, value in (('Uid',os.getuid()),('Gid',os.getgid())):
+                    if status.get(kind) != [str(value)]*4: raise ValueError('native process IDs differ')
+                for key in ('CapEff','CapPrm','CapBnd','CapAmb','CapInh'):
+                    value = status.get(key)
+                    if not value or len(value) != 1 or re.fullmatch('[0-9a-fA-F]{16}',value[0]) is None or int(value[0],16) != 0:
+                        raise ValueError('native runtime capabilities not empty')
+                if status.get('NoNewPrivs') != ['1'] or status.get('Seccomp') != ['2']:
+                    raise ValueError('native runtime privilege/seccomp proof failed')
+                actual_maps = {}
+                for kind in ('uid','gid'):
+                    lines = read_proc(kind+'_map').splitlines()
+                    if any(re.fullmatch(r'\s*\d+\s+\d+\s+\d+\s*',line) is None for line in lines):
+                        raise ValueError('unknown runtime map format')
+                    actual_maps[kind] = [list(map(int,line.split())) for line in lines]
+                    if actual_maps[kind] != expected_maps[kind]: raise ValueError('runtime keep-id maps differ')
+                return dict(pid=pid,startTicks=fields[19],uid=os.getuid(),gid=os.getgid(),
+                            bootId=Path('/proc/sys/kernel/random/boot_id').read_text().strip(),
+                            namespaces=descriptors(),maps=actual_maps,
+                            capabilities={key:status[key][0] for key in ('CapEff','CapPrm','CapBnd','CapAmb','CapInh')},
+                            noNewPrivs=1,seccomp=2)
+            before = snapshot()
+            ns_fds = {}
+            for name in names:
+                fd = os.open('ns/'+name, os.O_RDONLY, dir_fd=procfd); held.append(fd)
+                info = os.fstat(fd); ns_fds[name] = [info.st_dev,info.st_ino]
+            if ns_fds != before['namespaces']: raise ValueError('namespace changed while opening descriptors')
+            for name in ('user','mnt','net','pid','ipc','uts'):
+                host_ns = Path('/proc/self/ns')/name
+                info = host_ns.stat()
+                if ns_fds[name] == [info.st_dev,info.st_ino]: raise ValueError('native namespace not isolated')
+            def runtime_check():
+                if snapshot() != before or process_identity(pid)['startTicks'] != before['startTicks']:
+                    raise ValueError('native birth or isolation changed during inspection')
+                for name, fd in zip(names, held[1:]):
+                    info = os.fstat(fd)
+                    if [info.st_dev,info.st_ino] != ns_fds[name]: raise ValueError('held namespace descriptor changed')
+                fresh = json.loads(capture(podman, ['inspect','--format',selected,c['Id']]))
+                if fresh != c: raise ValueError('native inspection changed during proof')
+                if snapshot() != before: raise ValueError('native process changed across reinspection')
+            runtime_check()
+            proof = dict(podmanVersion='4.9.3',rawCapDrop=host['CapDrop'],rawEffectiveCaps=c.get('EffectiveCaps'),
+                         rawNetwork=host['NetworkMode'],rawUserns=host['UsernsMode'],
+                         rootlessMappings=outer,inspectedMappings=mappings,process=before,
+                         namespaceDescriptors=ns_fds,ociProof=False)
+        except BaseException:
+            for fd in reversed(held): os.close(fd)
+            raise
+        caps = ['ALL']
+    try:
+        if capture(podman, ['info','--format','{{.Host.Security.Rootless}}']).strip() != b'true':
+            raise ValueError('actual rootless inspection failed')
+        image_format = '{"Id":{{json .ID}},"revision":{{json (index .Config.Labels "org.opencontainers.image.revision")}},"patchset":{{json (index .Config.Labels "org.opencontainers.image.ai-harness.patchset")}}}'
+        image = json.loads(capture(podman, ['image','inspect','--format',image_format,c['Image']]))
+        labels = {'org.opencontainers.image.revision':image['revision'], 'org.opencontainers.image.ai-harness.patchset':image['patchset']}; image_id = image['Id'].removeprefix('sha256:')
+        if image_id != 'd8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8a4c11aad' or labels.get('org.opencontainers.image.revision') != '064c6b8c737f5b41d171fdda80bd9ef10ad06eb3' or labels.get('org.opencontainers.image.ai-harness.patchset') != 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec':
+            raise ValueError('actual image pin mismatch')
+        egress = read_private(path / 'egress.json')
+        result = dict(schema='codex-launch-v1', nonce=binding['nonce'], runId=binding['runId'], sessionId=binding['sessionId'],
+                      checkedAtMs=int(time.time()*1000), producer=process_identity(), sources=binding['sources'], egress=egress,
+                      container={'id': c['Id'], 'name': container, 'imageId': 'sha256:'+image_id,
+                       'imageRevision': labels['org.opencontainers.image.revision'], 'imagePatchset': labels['org.opencontainers.image.ai-harness.patchset'],
+                       'pid': c['State']['Pid'], 'pidStartTicks': process_identity(c['State']['Pid'])['startTicks'],
+                       'rootless': True, 'user': native['User'], 'network': 'slirp4netns:allow_host_loopback=true' if proof is not None else host['NetworkMode'], 'capDrop': caps,
+                       'securityOpt': security, 'readOnly': host['ReadonlyRootfs'], 'privileged': host['Privileged'],
+                       'mounts': sort(actual_mounts), 'additionalMounts': sort(additional_mounts), 'workdir': native['WorkingDir'], 'profileDir': binding['profileDir'], 'workspace': binding['workspace']})
+        if binding.get('nativeTraceMode'):
+            expected={'RUST_LOG':'off,codex_core::session::turn=trace'+(',codex_core::tasks=info' if binding['nativeTraceMode']=='post-sampling-token-usage-v2' else ''),'LOG_FORMAT':'json'}
+            observed={}
+            for key in expected:
+                values=[x[len(key)+1:] for x in native.get('Env',[]) if isinstance(x,str) and x.startswith(key+'=')]
+                if values != [expected[key]]:raise ValueError('trace environment not independently observed')
+                observed[key]=values[0]
+            write_once(path,'trace-env',{'schema':'codex-trace-env-v1','nonce':binding['nonce'],'runId':binding['runId'],'sessionId':binding['sessionId'],'producer':result['producer'],'containerId':c['Id'],'environment':observed})
+        if runtime_check is not None:
+            runtime_check()
+            write_once(path, 'isolation-inspection', causal(config, 'codex-isolation-inspection-v1', containerId=c['Id'], containerName=container, scope=gate['scope'], proof=proof))
+            runtime_check()
+        write_once(path, 'launch', result)
+        return result
+    finally:
+        for fd in reversed(held): os.close(fd)
 
 
 def publish_settlement(config, producer, container, native_id, raw_exit, requested_stop,
