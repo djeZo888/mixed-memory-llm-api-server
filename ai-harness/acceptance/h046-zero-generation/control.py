@@ -3,7 +3,7 @@
 import argparse, hashlib, hmac, json, os, re, signal, stat, subprocess, time
 from datetime import datetime
 from pathlib import Path
-from metadata import Refused, check_ancestor
+from metadata import Refused, canonical as metadata_canonical, check_ancestor
 
 class Denied(RuntimeError): pass
 def need(value,message):
@@ -93,7 +93,7 @@ def present(expected):
 
 def write_once(path,value):
     fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL|os.O_NOFOLLOW,0o600)
-    try:os.write(fd,canonical(value).encode());os.fsync(fd)
+    try:os.write(fd,metadata_canonical(value));os.fsync(fd)
     finally:os.close(fd)
 def run_snapshot(input,input_path,outpath):
     command=[input['python'],str(Path(input['helperDir'])/'metadata.py'),'--input',str(input_path),'--output',str(outpath)]
@@ -242,7 +242,7 @@ def main():
         p=Path(mount);need(p.is_absolute() and p.resolve()==p,'native mount alias')
         for protected in [a.root_key,a.input,a.go,input['gatewayTokenPath'],str(output),str(state),input['helperDir'],input['serverDir'],input['deploymentDir']]:
             q=Path(protected);need(q!=p and p not in q.parents and q not in p.parents,'protected control/source path overlaps native mount')
-    graph=source_graph(input);snapshot=run_snapshot(input,a.input,output/'driver-preflight.json');need(sha(canonical(snapshot).encode())==input['preflightSha256'],'stale owner/store/unit/credentials packet')
+    graph=source_graph(input);snapshot=run_snapshot(input,a.input,output/'driver-preflight.json');need(sha(metadata_canonical(snapshot))==input['preflightSha256'],'stale owner/store/unit/credentials packet')
     need(time.time()<=timestamp(go['dispatchCutoff']),'GO expired before claim');write_once(state/('claim-'+go['approvalId']),{'approvalId':go['approvalId'],'inputSha256':sha(input_raw),'claimedAtNs':time.time_ns(),'status':'SPENT_BEFORE_START'})
     # A claim remains spent on every failure; no retries, no signing, no service action.
     argv=[input['node'],str(Path(input['helperDir'])/'carrier.mjs'),a.input,str(output)]
@@ -268,7 +268,7 @@ def main():
         raise
     finally:os.close(outfd);os.close(errfd)
     write_once(output/'driver-outcome-before-review.json',{'status':'REVIEW_PENDING' if closure['actualWaitExit']==0 else 'FAIL','actualWaitExit':closure['actualWaitExit'],'fallbackCleanup':closure['fallbackCleanup']})
-    final_snapshot=run_snapshot(input,a.input,output/'driver-postflight.json');need(canonical(snapshot)==canonical(final_snapshot),'ordinary owner/gateway/retained originals changed');source_graph(input)
+    final_snapshot=run_snapshot(input,a.input,output/'driver-postflight.json');need(metadata_canonical(snapshot)==metadata_canonical(final_snapshot),'ordinary owner/gateway/retained originals changed');source_graph(input)
     result=load(private(output/'carrier-result.json',2*1024*1024,private_group_ancestor=private_group_ancestor))
     scope_terminal=load(private(output/'channel-scope-terminal.json',65536,private_group_ancestor=private_group_ancestor));need(type(scope_terminal.get('creatorExit')) is int and scope_terminal.get('creatorReaped') is True,'missing actual original scope wait/reap')
     need(closure['actualWaitExit']==0 and not closure['fallbackCleanup'] and not closure['monitorFailureClass'] and closure['birthAbsence'] and closure['groupAbsence'] and closure['cgroupProcessAbsence'] and closure['cgroupDirectoryAbsence'] and closure['scopeAcquisitionObserved'] and result['status']=='CARRIER_PROTOCOL_VALID','independent closure/native protocol failed')
