@@ -26,5 +26,7 @@
   "preservedPins": "native0.158/upstream064c/context480000/auto400000/output65536",
   "sessionModel": "gpt-6-astra",
   "effort": "ultra",
-  "tier": "actual argv ultrafast; not exposed by turn_context"
+  "tier": "actual argv ultrafast; not exposed by turn_context",
+  "credentialFix": "Accept one terminal LF in existing protected credential leaves without rewriting",
+  "credentialFocusedExit": 0
 }

@@ -91,6 +91,9 @@ def protected_read(path,*,uid=None,limit=4096,secret=True):
  if not secret:return raw
  try:value=raw.decode('ascii')
  except UnicodeError:raise Refused('credential_encoding')
+ # Existing openssl-generated protected leaves have one terminal LF. Preserve
+ # the file/descriptor identity and normalize only this storage delimiter.
+ if value.endswith('\n'):value=value[:-1]
  if not re.fullmatch(r'[\x21-\x7e]{16,256}',value):raise Refused('credential_format')
  return value
 

@@ -63,6 +63,17 @@ class EntryTests(unittest.TestCase):
    os.chmod(p,0o644)
    with self.assertRaises(e.Refused):e.protected_read(p)
   finally:p.unlink(missing_ok=True)
+ def test_saved_credential_single_terminal_lf_without_rewriting(self):
+  p=ROOT.parent/'output'/'FAKE-key-LF-fixture'
+  try:
+   token='EXPLICIT-FAKE-TEST-KEY-0001';p.write_text(token+'\n');os.chmod(p,0o600)
+   before=p.read_bytes();inode=p.stat().st_ino
+   self.assertEqual(e.protected_read(p),token)
+   self.assertEqual(p.read_bytes(),before);self.assertEqual(p.stat().st_ino,inode)
+   for bad in (token+'\n\n',token+'\r\n',' '+token,token+' ',token[:8]+'\n'+token[8:]):
+    p.write_text(bad)
+    with self.assertRaises(e.Refused):e.protected_read(p)
+  finally:p.unlink(missing_ok=True)
  def test_concrete_disabled_construct_and_close(self):
   # Use fixed private phase directory rather than weakening ancestor requirements.
   p=ROOT.parent/'output'/'test-ledger';p.mkdir(mode=0o700)
