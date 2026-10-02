@@ -933,6 +933,7 @@ def source_only_amendment(old, new):
             'source_only_amendment_required')
 
 
+HELD_IDLE_BOOT_TRANSITION = 'OLD_BOOT_HELD_NO_REQUEST'
 INTERRUPTED_BOOT_TRANSITION = 'OLD_BOOT_INTERRUPTED_RUNNING'
 INTERRUPTED_BOOT_DELTA = 'new-boot-source-delta.json'
 INTERRUPTED_BOOT_NODE = '/usr/local/lib/llm-server/node-api/scripts/control/node_observation.py'
@@ -965,14 +966,65 @@ def interrupted_running_owner(old, state, proxy, guard):
     require(guard.get('proxy_disposition') == proxy, 'new_boot_recovery_invalid')
 
 
+def held_no_request_owner(old, state, proxy, guard):
+    """A failed physical stop is not an admitted request; keep its exact history.
+
+    This narrow 480K predecessor requires the full source-qualified idle proxy
+    and native/supervisor/guard joins. It does not repair an ambiguous snapshot.
+    """
+    require(all(isinstance(v, dict) for v in (old, state, proxy, guard)),
+            'new_boot_recovery_invalid')
+    native, supervisor, expected = (state.get(k) for k in ('native', 'supervisor', 'proxy'))
+    require(all(isinstance(v, dict) for v in (native, supervisor, expected))
+            and state.get('schema_version') == 2 and state.get('status') == 'HELD'
+            and state.get('request_hold') is False and state.get('settlement') is None
+            and old.get('context') == 480000 and old.get('parallel') == 1
+            and old.get('max_output_tokens') == 65536
+            and old.get('owner') == OWNER and old.get('service_id') == MODEL
+            and old.get('qualified') is True
+            and state.get('manifest_sha256') == digest(old)
+            and re.fullmatch('[0-9a-f]{32}', str(state.get('launch_id')))
+            and state.get('container_id') == native.get('container_id')
+            and HEX.fullmatch(str(native.get('container_id')))
+            and native.get('image_id') == old.get('image_id') == IMAGE
+            and native.get('name') == old.get('container_name')
+            and isinstance(native.get('started_at'), str) and bool(native['started_at'])
+            and supervisor.get('unit') == UNIT
+            and re.fullmatch('[0-9a-f]{32}', str(supervisor.get('invocation_id')))
+            and all(type(v.get('pid')) is int and v['pid'] > 0
+                    for v in (native, supervisor, expected))
+            and all(isinstance(v.get('pid_start_ticks'), str)
+                    and re.fullmatch('[0-9]+', v['pid_start_ticks'])
+                    for v in (native, expected)), 'new_boot_recovery_invalid')
+    recovery_names(state.get('boot_id'))
+    source_idle_proxy(state, proxy)
+    source_stop_guard(old, state, guard)
+    require(guard.get('proxy_disposition') == proxy, 'new_boot_recovery_invalid')
+
+
+def held_recovery_capabilities(h, lease, guard):
+    """Trust actual canonical capabilities, never names or duck-typed validators."""
+    from common.lifecycle_lease import _validate_borrowed_lease
+    from install.storage_io import AnchoredRoot, MountedStorageGuard
+    _validate_borrowed_lease(lease)
+    require(h.AnchoredRoot is AnchoredRoot and h.MountedStorageGuard is MountedStorageGuard
+            and type(guard) is MountedStorageGuard and guard.storage is h.s,
+            'new_boot_recovery_invalid')
+    guard.check_path(str(BASE))
+    h.s.root_payload_guard()
+
+
 def old_boot_absence(old, state, boot, *, successor=None, interrupted_running=False):
     """Physical absence only; never turns an uncertain request into success."""
     recovery_names(boot)
     recovery_names(state['boot_id'])
+    held_no_request = not interrupted_running and state.get('status') == 'HELD' and state.get('request_hold') is False
+    if held_no_request:
+        held_no_request_owner(old, state, read(BASE / 'proxy-state.json'), read(BASE / 'guard.json'))
     require(state['boot_id'] != boot and BOOT.read_text().strip() == boot
             and state.get('schema_version') == 2
             and state.get('status') == ('RUNNING' if interrupted_running else 'HELD')
-            and state.get('request_hold') is (False if interrupted_running else True)
+            and state.get('request_hold') is (False if interrupted_running or held_no_request else True)
             and state.get('manifest_sha256') == digest(old),
             'new_boot_recovery_invalid')
     for field in ('native', 'supervisor', 'proxy'):
@@ -1939,6 +1991,11 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
         require(all(proxy.get(k) == state.get(k) for k in ('boot_id', 'launch_id', 'native'))
                 and prior_guard.get('boot_id') == state['boot_id']
                 and prior_guard.get('manifest_sha256') == digest(old), 'new_boot_recovery_invalid')
+        held_no_request = not interrupted_running and state.get('status') == 'HELD' and state.get('request_hold') is False
+        if held_no_request:
+            held_no_request_owner(old, state, proxy, prior_guard)
+            held_recovery_capabilities(h, lease, guard)
+            source_preflight(h, m)
         if interrupted_running:
             interrupted_running_owner(old, state, proxy, prior_guard)
         if expected_delta_sha256 is None:
@@ -1970,16 +2027,42 @@ def reconcile_new_boot(expected_state_sha256, expected_boot_id, expected_manifes
                    'preserved_container_name': old['container_name'] + '-prior-' + state['launch_id']}
         if interrupted_running:
             receipt['transition'] = INTERRUPTED_BOOT_TRANSITION
+        if held_no_request:
+            receipt['transition'] = HELD_IDLE_BOOT_TRANSITION
+            receipt['input_sha256'] = archive['sha256']
         if expected_delta_sha256 is not None:
             receipt['reviewed_delta_sha256'] = expected_delta_sha256
         exclusive_recovery_write(h, guard, receipt_name, receipt)
         require(all(protected(BASE / input_name(name)).decode() == raw for name, raw in files.items())
                 and selection() == selected
                 and BOOT.read_text().strip() == expected_boot_id, 'new_boot_recovery_invalid')
-        # Source-only CAS amendment, after durable archive/receipt; no model/generation change.
+        # Source-only byte CAS under the canonical lease, after durable archives.
+        if held_no_request:
+            require(read(BASE / archive_name) == archive and read(BASE / receipt_name) == receipt,
+                    'new_boot_archive_changed')
+            held_recovery_capabilities(h, lease, guard)
+            source_preflight(h, m)
+            old_boot_absence(old, state, expected_boot_id)
+            require(all(protected(BASE / input_name(name)).decode() == raw for name, raw in files.items())
+                    and digest(read(BASE / 'manifest.json')) == digest(m), 'new_boot_recovery_invalid')
+            lease.validate()
         write(h, 'selection.json', amended)
+        if held_no_request:
+            require(selection() == amended, 'new_boot_recovery_invalid')
         h.s.root_payload_guard()
         lease.validate()
+        if held_no_request:
+            # An archive prepared before CAS is not a successful CAS receipt.
+            # Failed writes/postchecks leave no completion capability; no rollback
+            # or automatic replay is attempted against uncertain storage.
+            require(hashlib.sha256(protected(BASE / archive_name)).hexdigest() == receipt['archive_sha256']
+                    and read(BASE / receipt_name) == receipt
+                    and selection() == amended, 'new_boot_archive_changed')
+            exclusive_recovery_write(h, guard, 'new-boot-selection-' + expected_boot_id + '.json', {
+                'schema_version': 1, 'status': 'HELD_NO_REQUEST_SELECTION_COMMITTED',
+                'current_boot_id': expected_boot_id,
+                'receipt_sha256': hashlib.sha256(protected(BASE / receipt_name)).hexdigest(),
+                'selection_sha256': hashlib.sha256(protected(BASE / 'selection.json')).hexdigest()})
     return receipt
 
 
@@ -2013,6 +2096,43 @@ def recovery_for_start(m, selected, previous):
                 'new_boot_archive_changed')
     else:
         source_only_amendment(old, m)
+    held_no_request = previous.get('status') == 'HELD' and previous.get('request_hold') is False
+    if held_no_request or receipt.get('transition') == HELD_IDLE_BOOT_TRANSITION:
+        require(held_no_request and receipt.get('transition') == HELD_IDLE_BOOT_TRANSITION
+                and previous.get('boot_id') != boot
+                and set(archive['files']) == {'state.json', 'proxy-state.json', 'guard.json',
+                    'selection.json', 'new-boot-prior-manifest.json', 'new-boot-prior-owner.py'}
+                and set(archive['sha256']) == set(archive['files'])
+                and receipt.get('input_sha256') == archive['sha256']
+                and archive.get('prior_request_outcome') == 'FAILED_OR_UNKNOWN'
+                and receipt.get('physical_absence') == archive.get('physical_absence')
+                and receipt['physical_absence'].get('old_boot_id') == previous.get('boot_id')
+                and receipt['physical_absence'].get('current_boot_id') == boot
+                and receipt['physical_absence'].get('container_id') == previous['native']['container_id']
+                and receipt['physical_absence'].get('physical_release') == 'REBOOT'
+                and receipt['physical_absence'].get('prior_request_outcome') == 'FAILED_OR_UNKNOWN'
+                and all(receipt['physical_absence'].get(k) is True for k in
+                        ('native_pid_absent', 'cgroup_empty', 'gpu_compute_empty', 'owner_absent')),
+                'new_boot_recovery_invalid')
+        for name in (archive_name, recovery_receipt_name(boot), 'new-boot-selection-' + boot + '.json'):
+            info = (BASE / name).lstat()
+            require(stat.S_ISREG(info.st_mode) and info.st_nlink == 1
+                    and info.st_mode & 0o777 == 0o400, 'new_boot_archive_changed')
+        committed = read(BASE / ('new-boot-selection-' + boot + '.json'))
+        require(committed == {'schema_version': 1, 'status': 'HELD_NO_REQUEST_SELECTION_COMMITTED',
+                'current_boot_id': boot,
+                'receipt_sha256': hashlib.sha256(protected(BASE / recovery_receipt_name(boot))).hexdigest(),
+                'selection_sha256': hashlib.sha256(protected(BASE / 'selection.json')).hexdigest()},
+                'new_boot_recovery_invalid')
+        held_no_request_owner(old, previous, json.loads(archive['files']['proxy-state.json']),
+                              json.loads(archive['files']['guard.json']))
+        require(hashlib.sha256(archive['files']['new-boot-prior-owner.py'].encode()).hexdigest()
+                == old['source_sha256'][str(BASE / 'source/owner.py')]
+                and json.loads(archive['files']['selection.json']) == previous['selection']
+                and selected == {**previous['selection'], 'manifest_sha256': digest(m)}
+                and all(protected(BASE / new_boot_input_name(name, boot)).decode() == archive['files'][name]
+                        for name in archive['files'] if name != 'selection.json'),
+                'new_boot_archive_changed')
     if previous.get('status') == 'RUNNING' or receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION:
         require(receipt.get('transition') == INTERRUPTED_BOOT_TRANSITION
                 and previous.get('boot_id') != boot
