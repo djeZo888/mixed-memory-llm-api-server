@@ -9,7 +9,7 @@ import * as policies from '../src/codex-probe.js';
 import {receiptFixture} from './helpers/codex-receipt-fixture.js';
 import {waitCodexReceiptFile,validateCodexLaunchReceipt,validateCodexSettlementReceipt,validateCodexTraceReceipt,getCodexReceiptUtf8,getCodexRetainedTraceEvidence,type CodexNativeTraceMode} from '../src/codex-receipts.js';
 import {AUTHORIZATIONS,reviewedAuthorization} from '../../acceptance/compaction/authorization.mjs';
-import {H044_PRODUCER_CONTRACT,H044_REVIEWED_SOURCE_HASHES,verifyH044ReviewedSourceHashes,assertH044ProducerSourceActivation,selectPolicyFactories,createSelectedRetentionParentPolicy} from '../../acceptance/compaction/native-adapter/policy-selection.js';
+import {H044_PRODUCER_CONTRACT,H044_REVIEWED_SOURCE_HASHES,H044_R01_BASELINE_SOURCE_HASHES,verifyH044ReviewedSourceHashes,assertH044ProducerSourceActivation,selectPolicyFactories,createSelectedRetentionParentPolicy} from '../../acceptance/compaction/native-adapter/policy-selection.js';
 import {reviewedExpiry,FIXED_POLICY,type BootstrapInput} from '../../acceptance/compaction/native-adapter/bootstrap.js';
 import {assertFiniteAutomaticTurn,projectAutomaticConfig,verifyRegularSamplingExclusion,projectNormalProductTrace,NormalProductProducer,assertNormalProductTraceReady} from '../../acceptance/compaction/native-adapter/normal-product.js';
 import {runOrdinarySupplement,runOneAutomatic} from '../../acceptance/compaction/native-adapter/ordinary-runner.js';
@@ -33,6 +33,14 @@ test('SOURCE H044 exact closed graph activates; export aliases/copied windows or
  assert.doesNotThrow(()=>assertH044ProducerSourceActivation('H044'));assert.doesNotThrow(()=>verifyH044ReviewedSourceHashes({...H044_REVIEWED_SOURCE_HASHES}));
  for(const path of Object.keys(H044_REVIEWED_SOURCE_HASHES))assert.throws(()=>verifyH044ReviewedSourceHashes({...H044_REVIEWED_SOURCE_HASHES,[path]:sha256('changed')}));
  assert.throws(()=>verifyH044ReviewedSourceHashes({}));
+ assert.equal(H044_PRODUCER_CONTRACT.closedSourceCommit,'86fcd6d84381cb9c44caad75eb9785d3b0ec11bd');
+ assert.equal(H044_PRODUCER_CONTRACT.rootReviewSha256,'2e597654a5ae7b6c50393f741d9dee864178a956ed1b42284678d897913dc6ee');
+ assert.equal(H044_PRODUCER_CONTRACT.baselineEvidence.contractSha256,'f7f9228e9b6a3a2ce6bfa6a0c7b9508e3f68fd32d2c3744660190c9b858e340f');
+ assert.equal(H044_PRODUCER_CONTRACT.declarationSha256.receipts,'202bc26fb087a32064ec3e11d2778c99714bfd6764d07945f2f0d8db61e9cc60');
+ assert.equal(H044_PRODUCER_CONTRACT.baselineDeclarationSha256.receipts,'bcf97a9b95953cd694e925da6acfe3afc913ec3c2d95e0fd5e1935fc1b0422ca');
+ assert.equal(H044_R01_BASELINE_SOURCE_HASHES['ai-harness/server/src/codex-instructions.ts'],'8e4925203c9236d504ec1ca30d7f08f031d8a7930dd1cd1ec515090d793b61e9');
+ assert.throws(()=>verifyH044ReviewedSourceHashes({...H044_R01_BASELINE_SOURCE_HASHES}));
+ assert.throws(()=>verifyH044ReviewedSourceHashes({...H044_REVIEWED_SOURCE_HASHES,'ai-harness/deploy/run-engine.sh':sha256('extra')}));
  for(const full of [false,true]){assert.equal(selectPolicyFactories(policies,'H044',full).factory,policies.createCodexH044Policy);for(const api of [{...policies,CODEX_H044_WINDOW:{...policies.CODEX_H044_WINDOW}},{...policies,createCodexH044Policy:policies.createCodexH043Policy},{...policies,createCodexH044RetentionParentPolicy:policies.createCodexH043RetentionParentPolicy}])if(full||api.createCodexH044Policy!==policies.createCodexH044Policy||api.CODEX_H044_WINDOW!==policies.CODEX_H044_WINDOW)assert.throws(()=>selectPolicyFactories(api,'H044',full));}
  for(const version of ['v1','v2'] as const){const p=createSelectedRetentionParentPolicy(selectPolicyFactories(policies,'H044',true),'H044',fields,version);assert.equal(p.window,policies.CODEX_H044_WINDOW);assert.equal(p.collaborationVersion,version);assert.throws(()=>policies.assertCodexTextOnlyPolicy({...p}));}
  assert.throws(()=>createSelectedRetentionParentPolicy(selectPolicyFactories(policies,'H044',true),'H044',fields,undefined));
@@ -130,4 +138,23 @@ test('SOURCE finite automatic dispatch accepts exactly the reviewed ordinary tur
  assert.doesNotThrow(()=>assertFiniteAutomaticTurn(input,'SOURCE-session','SOURCE-thread','SOURCE-approved',0));
  for(const mutation of [(x:any)=>x.method='thread/compact/start',(x:any)=>x.threadId='FOREIGN',(x:any)=>x.sessionId='FOREIGN',(x:any)=>x.params.input[0].text='FOREIGN',(x:any)=>x.params.input.push(x.params.input[0]),(x:any)=>x.params.input[0].text_elements.push({foreign:true})]){const x=structuredClone(input);mutation(x);assert.throws(()=>assertFiniteAutomaticTurn(x,'SOURCE-session','SOURCE-thread','SOURCE-approved',0));}
  assert.throws(()=>assertFiniteAutomaticTurn(input,'SOURCE-session','SOURCE-thread','SOURCE-approved',1));
+});
+
+test('SOURCE final R03 real ordinary factory keeps owner/run/config/catalog brands and exact H044 expiry',t=>{
+ t.mock.method(Date,'now',()=>now);
+ const selected=selectPolicyFactories(policies,'H044',false),p=selected.factory({...fields});
+ policies.assertCodexTextOnlyPolicy(p,fields.sessionId);
+ assert.equal(p.sessionId,fields.sessionId);assert.equal(p.runId,fields.runId);assert.equal(p.configSha256,fields.configSha256);assert.equal(p.modelCatalogSha256,fields.modelCatalogSha256);
+ assert.throws(()=>policies.assertCodexTextOnlyPolicy({...p},fields.sessionId));
+ assert.throws(()=>policies.assertCodexTextOnlyPolicy(p,'FOREIGN'));
+ for(const version of ['v1','v2'] as const){
+  const parent=createSelectedRetentionParentPolicy(selectPolicyFactories(policies,'H044',true),'H044',fields,version);
+  assert.equal(parent.collaborationVersion,version);assert.equal(parent.mode,'retention-parent');
+  assert.throws(()=>createSelectedRetentionParentPolicy(selectPolicyFactories(policies,'H044',true),'H044',{...fields,window:policies.CODEX_H043_WINDOW},version));
+ }
+ t.mock.method(Date,'now',()=>Date.parse(auth.capUtc));
+ assert.throws(()=>policies.assertCodexTextOnlyPolicy(p,fields.sessionId));
+ assert.throws(()=>createSelectedRetentionParentPolicy(selectPolicyFactories(policies,'H044',true),'H044',fields,'v2'));
+ t.mock.method(Date,'now',()=>Date.parse(auth.startsUtc)-1);
+ assert.throws(()=>policies.assertCodexTextOnlyPolicy(selected.factory({...fields}),fields.sessionId));
 });
