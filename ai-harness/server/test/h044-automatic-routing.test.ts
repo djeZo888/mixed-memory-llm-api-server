@@ -27,6 +27,16 @@ test('primary scoped company research wins over optional visuals while quick loo
   'Generate a photorealistic image and also create SVG charts.',
   'Generate an image of a motorcycle; add an SVG chart of the stats.'])assert.equal(route({text}).intent,'creative',text);
 });
+test('original research intent survives optional plural visuals and uploaded-source preprocessing',()=>{
+ const original='Research company STRIX eMotors d.o.o. from Slovenia and tell me as much as you can about it. Make drawings, charts, images if needed and if you can.';
+ assert.equal(route({text:original}).intent,'deep');
+ assert.equal(route({text:original,hasImages:true}).intent,'technical');
+ // Broker reclassifies after exact delivered-source coverage is proven, without
+ // passing hasImages; this is routing-only SOURCE evidence, not image acceptance.
+ assert.equal(route({text:original.replace(/\b(?:image|drawing|diagram|picture|scan)\b/gi,'')}).intent,'deep');
+ assert.equal(route({text:'Analyze the attached company diagram; create images if useful.',hasImages:true}).intent,'technical');
+ assert.equal(route({text:'Generate an image using this reference.',hasImages:true}).intent,'creative');
+});
 test('ordinary/deep/analysis/generation and one-parent follow-up select deterministic intent',()=>{
  for(const [text,intent] of [['Write a function','ordinary'],['Do deep research on this problem','deep'],['Use greater intelligence for this','deep'],['Analyze this drawing','technical'],['Generate an image of a bird','creative']] as const)assert.equal(route({text}).intent,intent);
  assert.equal(route({text:'What does this show?',hasImages:true}).intent,'technical');

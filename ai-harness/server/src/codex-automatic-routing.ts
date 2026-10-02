@@ -18,8 +18,14 @@ export function createCodexAutomaticRoute(input: {text: string; hasImages?: bool
   const primaryResearch = /^(?:(?:please|can you|could you)\s+)*(?:research|investigate)\s+(?:the\s+)?(?:company|business|organisation|organization)\b/.test(text) &&
     /\bas much as (?:you )?can\b|\beverything you can find\b|\ball available (?:information|evidence|sources)\b|\b(?:comprehensively|thoroughly|extensively|deeply|in.depth|in detail)\b/.test(text);
   const nativeVisual = /^(?:(?:please|can you|could you)\s+)*(?:generate|create|draw|render|make)\s+(?:(?:a|an|the|some)\s+)?(?:(?:svg|html|mermaid)\s+(?:charts?|diagrams?|drawings?|illustrations?|files?|reports?|pages?)|(?:charts?|diagrams?|drawings?|illustrations?)\s+(?:in|as|using)\s+(?:svg|html|mermaid))\b/.test(text);
-  if (primaryResearch && !input.hasImages) intent = "deep";
-  else if (!nativeVisual && /\b(?:generate|create|draw|render|make)\b(?!\s+(?:(?:a|an|the)\s+)?(?:reports?|conclusions?|inferences?|functions?|code|essays?|summaries|plans?|recommendations?)\b).{0,64}\b(?:images?|pictures?|illustrations?|logos?|artwork|portraits?|photo(?:graph)?s?|sketch(?:es)?|diagrams?|drawings?|paintings?|posters?|icons?)\b|\b(?:edit|modify|recolor)\b.{0,40}\b(?:images?|pictures?)\b/.test(text)) intent = "creative";
+  const creativePattern = /\b(?:generate|create|draw|render|make)\b(?!\s+(?:(?:a|an|the)\s+)?(?:reports?|conclusions?|inferences?|functions?|code|essays?|summaries|plans?|recommendations?)\b).{0,64}\b(?:images?|pictures?|illustrations?|logos?|artwork|portraits?|photo(?:graph)?s?|sketch(?:es)?|diagrams?|drawings?|paintings?|posters?|icons?)\b|\b(?:edit|modify|recolor)\b.{0,40}\b(?:images?|pictures?)\b/;
+  const primaryText = text.replace(/^(?:(?:please|can you|could you)\s+)*/, "");
+  const primaryCreative = creativePattern.exec(primaryText)?.index === 0;
+  // Uploaded facts are extracted by the existing host preprocessor first. Its
+  // proven second routing pass omits hasImages and recovers the research intent.
+  if (input.hasImages && !primaryCreative) intent = "technical";
+  else if (primaryResearch) intent = "deep";
+  else if (!nativeVisual && creativePattern.test(text)) intent = "creative";
   else if (input.hasImages || /\b(?:analy[sz]e|read|inspect|ocr|interpret)\b.{0,64}\b(?:image|drawing|diagram|picture|scan)\b/.test(text)) intent = "technical";
   else if (/\bdeep research\b|\b(?:greater|higher|more) intelligence\b|\b(?:deep|in.depth|comprehensive) (?:analysis|investigation|research)\b/.test(text)) intent = "deep";
   else if (input.previous && isCodexRouteFollowup(text)) intent = input.previous;

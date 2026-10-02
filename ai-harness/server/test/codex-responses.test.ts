@@ -53,3 +53,26 @@ test("tool completion waits for native HTTP drain, not merely an SSE DONE marker
 test("Qwen leading instruction merge preserves ordered role/content and preserves later policy positions",()=>{
  const b=request();const t=translateResponses(b);const payload=JSON.parse(t.body.messages[0].content.split("\n").slice(1).join("\n"));assert.deepEqual(payload.map((v:any)=>v.role),["system","developer"]);assert.equal(payload[0].content,b.instructions);assert.equal(payload[1].content,b.input[0].content.map((v:any)=>v.text).join(""));b.input.push({type:"message",role:"developer",content:[{type:"input_text",text:"late"}]});const mapped=translateResponses(b);const all=JSON.parse(mapped.body.messages[0].content.split("\n").slice(1).join("\n"));assert.equal(all.at(-1).content,"late");assert.equal(all.at(-1).position,b.input.length);
 });
+
+test('mixed progress text and fragmented recognized tool arguments are retained together',()=>{
+ let wire='';const s=new ResponsesStream(translateResponses(request()),x=>wire+=x);
+ s.push(chunk({choices:[{delta:{content:'I will collect the evidence.',tool_calls:[{index:0,id:'call_mixed',type:'function',function:{name:'get_goal',arguments:'{'}}]},finish_reason:null}]}));
+ s.push(chunk({choices:[{delta:{tool_calls:[{index:0,function:{arguments:'}'}}]},finish_reason:'tool_calls'}]}));
+ s.push(chunk({choices:[],usage:{prompt_tokens:12,completion_tokens:40}}));s.push(Buffer.from('data: [DONE]\n\n'));s.end();
+ const terminal=parse(wire).at(-1).response;
+ assert.equal(terminal.output[0].content[0].text,'I will collect the evidence.');
+ assert.equal(terminal.output[1].call_id,'call_mixed');assert.equal(terminal.output[1].arguments,'{}');
+ assert.equal(terminal.usage.output_tokens,40);
+});
+test('recognized tool deltas plus stop are rejected, while literal intention prose is never a synthetic tool call',()=>{
+ let wire='';const mismatch=new ResponsesStream(translateResponses(request()),x=>wire+=x);
+ mismatch.push(chunk({choices:[{delta:{content:'Progress.',tool_calls:[{index:0,id:'call_stop',type:'function',function:{name:'get_goal',arguments:'{}'}}]},finish_reason:'stop'}]}));
+ mismatch.push(chunk({choices:[],usage:{prompt_tokens:12,completion_tokens:40}}));
+ mismatch.push(Buffer.from('data: [DONE]\n\n'));
+ assert.throws(()=>mismatch.end(),/Tool finish mismatch/);
+ assert.doesNotMatch(wire,/response.completed/);
+ wire='';const plain=new ResponsesStream(translateResponses(request()),x=>wire+=x);
+ plain.push(chunk({choices:[{delta:{content:'Now let me collect more evidence.'},finish_reason:'stop'}]}));
+ plain.push(chunk({choices:[],usage:{prompt_tokens:12,completion_tokens:40}}));plain.push(Buffer.from('data: [DONE]\n\n'));plain.end();
+ const output=parse(wire).at(-1).response.output;assert.equal(output.length,1);assert.equal(output[0].type,'message');assert.equal(output[0].content[0].text,'Now let me collect more evidence.');
+});
