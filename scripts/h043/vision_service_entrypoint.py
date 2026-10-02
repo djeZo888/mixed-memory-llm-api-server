@@ -36,7 +36,7 @@ import argparse,dataclasses,hashlib,importlib.util,json,os,re,signal,stat,sys,th
 from pathlib import Path
 LIBRARY_HASHES={
  'service.py':'3887854b2e7c29173baa63480cebeead44c3054c8b67caae280fa37bb292c4d0',
- 'backend.py':'d6fd7a672d34cbe1bcb2782a42dd8ac537d96ce4b11445b1e402aec62f39c130'}
+ 'backend.py':'7fc7dd3f26635b9cbb372b6766f8a6a1de8c079e5e6cb0fa8077545876622e6f'}
 REV_QWEN='c202236235762e1c871ad0ccb60c8ee5ba337b9a'
 REV_OCR='c5630abae1d940eafe0697512a0325494b02ab42'
 SECRET_PATHS={'service':'/run/secrets/vision-service.key','interpretation':'/run/secrets/vision-interpretation.key','ocr':'/run/secrets/vision-ocr.key'}
@@ -253,14 +253,18 @@ def approved_component(component):
   import ingress
   import normal_service
   lease=normal_service.component_lease(graph,'ingress',proof['end'])
-  s=graph['runtime']['ingress'];server=ingress.Server(protected_read(credentials['service']),s['clientIp'],s['protectedLinkAttestation'],end,proof=proof);server.timeout=.2
+  s=graph['runtime']['ingress'];server=ingress.Server(protected_read(credentials['service']),s['clientIp'],s['protectedLinkAttestation'],end,proof=proof,normal_lease=lease);server.timeout=.2
   closing=threading.Event();old={}
   def close_ingress(*_):closing.set()
   for sig in (signal.SIGTERM,signal.SIGINT):old[sig]=signal.signal(sig,close_ingress)
   try:
-   while not closing.is_set() and lease.available():
-    # Request admission follows authenticated steady lease after adoption.
-    server.deadline=time.monotonic()+max(0,lease.deadline()-time.time());server.handle_request()
+   while not closing.is_set():
+    # Serialize authenticated lease reads with threaded request admission.
+    with server.count_lock:
+     lease_end=lease.deadline()
+     if lease_end<=time.time():break
+     server.deadline=time.monotonic()+max(0,lease_end-time.time())
+    server.handle_request()
   finally:
    server.server_close()
    for sig,handler in old.items():signal.signal(sig,handler)

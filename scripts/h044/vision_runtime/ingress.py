@@ -49,10 +49,7 @@ class Handler(BaseHTTPRequestHandler):
  def do_POST(self):self.forward()
  def forward(self):
   self.close_connection=True
-  if time.monotonic()>=self.server.deadline:return self.send_error(503)
-  with self.server.count_lock:
-   if self.server.request_count>=64:return self.send_error(503)
-   self.server.request_count+=1
+  if not self.server.admit_request():return self.send_error(503)
   if len(self.headers.get_all('Authorization',[]))!=1 or self.headers.get('Host')!='10.156.100.60:18193':return self.send_error(401)
   if self.client_address[0] not in (self.server.client_ip,self.server.health_client_ip) or not hmac.compare_digest(self.headers.get('Authorization',''),'Bearer '+self.server.bearer):return self.send_error(401)
   if not ROUTES.fullmatch(self.path) or (self.command=='GET')!=(self.path.endswith('/capabilities')):return self.send_error(404)
@@ -80,11 +77,36 @@ class Server(ThreadingMixIn,HTTPServer):
   try:super().process_request_thread(request,address)
   finally:self.slots.release()
  def handle_error(self,*_):pass
- def __init__(self,bearer,client_ip,protected_link_attestation,deadline,*,proof=None):
+ def admit_request(self):
+  # Serialize lease validation and token accounting across the eight handlers.
+  # Finite mode retains its original lifetime budget, including rejected auth.
+  with self.count_lock:
+   now=time.monotonic()
+   if now>=self.deadline:return False
+   normal=False
+   if self.normal_lease is not None:
+    end=self.normal_lease.deadline() # authentic signature, graph, birth and NORMAL handshake
+    if end<=self.normal_lease.clock():return False
+    normal=self.normal_lease.adopted and self.normal_lease.lastState.get('state')=='NORMAL'
+   if normal:
+    # One 4Hz status poller plus health/control traffic; never an unlimited flag.
+    if self.token_time is None:self.tokens=16.0;self.token_time=now
+    self.tokens=min(16.0,self.tokens+max(0,now-self.token_time)*8.0)
+    self.token_time=now
+    if self.tokens<1:return False
+    self.tokens-=1
+   elif self.request_count>=64:return False
+   self.request_count+=1
+   return True
+ def __init__(self,bearer,client_ip,protected_link_attestation,deadline,*,proof=None,normal_lease=None):
   if not proof or proof.get('identityOrigin')!='REVIEWED_SIGNED_ROOT_PROOF' or proof.get('component')!='ingress' or proof.get('actualUid')!=1000:raise control.Refused('signed_ingress_proof_required')
   if not re.fullmatch(r'10\.156\.100\.[0-9]{1,3}',client_ip):raise control.Refused('root_exact_client_ip_required')
   if protected_link_attestation!='PASS_ROOT_REVIEWED_AUTHENTICATED_PRIVATE_LINK':raise control.Refused('protected_transport_required_for_existing_http_client')
   if not isinstance(bearer,str) or not re.fullmatch(r'[\x21-\x7e]{16,256}',bearer):raise control.Refused('private_bearer_required')
   if not 0<deadline-time.monotonic()<=600:raise control.Refused('finite_ingress_window')
+  if normal_lease is not None:
+   from normal_service import ActiveLease
+   if not isinstance(normal_lease,ActiveLease) or normal_lease.component!='ingress' or normal_lease.graph!=proof['graph']:raise control.Refused('exact_ingress_component_lease_required')
+  self.normal_lease=normal_lease;self.tokens=0.0;self.token_time=None
   self.bearer=bearer;self.client_ip=client_ip;self.health_client_ip=proof['graph']['runtime']['ingress']['healthClientIp'];self.deadline=deadline;self.slots=threading.BoundedSemaphore(8);self.count_lock=threading.Lock();self.request_count=0;super().__init__(BIND,Handler)
 if __name__=='__main__':raise SystemExit('DISABLED: private ingress needs authentic root carrier, exact client IP, protected private-link attestation and bearer references')

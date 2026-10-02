@@ -35,6 +35,20 @@ def completion_obj(value, required, optional, null_fields):
     return value
 
 
+def interpretation_json(literal):
+    """Unwrap only a complete JSON fence; keep the recorded model text intact."""
+    from service import JSON_CAP, parse_json
+    if not isinstance(literal, str) or not literal or len(literal) > 65536:
+        raise Reject()
+    raw = literal.encode('utf8')
+    if len(raw) > JSON_CAP:
+        raise Reject()
+    # ASCII JSON whitespace outside one exact, lowercase json fence is allowed.
+    # No prose, other fence type, missing closing line, or JSON extraction.
+    fence = re.fullmatch(rb'[ \t\r\n]*```json\r?\n(.*?)\r?\n```[ \t\r\n]*', raw, re.S)
+    return parse_json(fence[1] if fence else raw)
+
+
 @dataclass(frozen=True)
 class Outcome:
     result: object
@@ -141,8 +155,7 @@ class LocalVisionBackend:
             literal=self._call('interpretation',QWEN,png,prompt,deadline,checkpoint,ctx)
             if cancel.is_set():return Outcome(None,True)
             try:
-                from service import parse_json
-                q=obj(parse_json(literal.encode()),('description','uncertainties','derivedConclusions'));descriptions.append(text(q['description'],65536))
+                q=obj(interpretation_json(literal),('description','uncertainties','derivedConclusions'));descriptions.append(text(q['description'],65536))
                 for u in arr(q['uncertainties'],32):
                     counter+=1;result['uncertainties'].append(dict(id=f'qwen-uncertainty-{counter}',description=text(u),evidenceIds=[eid],affectedIds=[]))
                 for d in arr(q['derivedConclusions'],32):
