@@ -1,0 +1,219 @@
+{
+  "schema": "h044-worker-source-report-v1",
+  "phase": "E-compaction-alignment04",
+  "host": "mac-worker2",
+  "recordedUtc": "2026-10-02T00:40:44.668717+00:00",
+  "baseCommit": "d5e368d9f50d51fdc438da3c445391f28e9cf626",
+  "sourceCommit": "90db2bd23aa51e9db4ead6b869ab8ce5a997c117",
+  "sourceStatus": "PASS",
+  "scope": "SOURCE_ONLY",
+  "linuxAccess": "NONE",
+  "rootGo": null,
+  "changes": [
+    "Exact closed reviewed R implementation/declaration graph activates H044 factories; genuine WeakSet, current window, explicit collaboration version, observed producer and guard contracts retained.",
+    "Closed H044 retention factory consumes exact parent shape without the unsupported mode key; historical windows remain unchanged.",
+    "Finite normal AUTO preparation validates original config/catalog/source projection and regular sampling item-span causal exclusion with independently validated original receipt carriers; no unconditional readiness blocker remains.",
+    "One exact approved ordinary turn, pre-dispatch original revalidation and original AUTO capture/scoring preserve numeric postSampling separately from AUTO NEW including explicit empty autoCalls."
+  ],
+  "checks": {
+    "focused": {
+      "receipt": "commands/focused-final-sequence0.json",
+      "pass": 52,
+      "fail": 0,
+      "skip": 0
+    },
+    "affected": {
+      "receipt": "commands/affected01.json",
+      "pass": 54,
+      "fail": 0,
+      "skip": 1,
+      "skipMeaning": "native acceptance remains unqualified"
+    },
+    "adapterTypes": "commands/adapter-typecheck-final.json",
+    "focusedTestTypes": "commands/focused-types.json",
+    "executableAdapterBuild": "commands/private-build-final.json",
+    "serverDeclarationBuild": "commands/private-server-build.json",
+    "closedProducerDeclarations": "commands/exact-declaration-review.json",
+    "emittedImport": "commands/emitted-import-smoke.json",
+    "immutableDependencies": "commands/dependency-equality.json",
+    "finiteMaterializer": "commands/materializer-source-tests.json"
+  },
+  "actualFailedCommands": [
+    {
+      "name": "adapter-typecheck01",
+      "exit": 2,
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/adapter-typecheck01.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/adapter-typecheck01.stderr"
+    },
+    {
+      "name": "build-lock-and-compiler",
+      "exit": 1,
+      "argv": [
+        "python3",
+        "../output/build.py"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/build-lock-and-compiler.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/build-lock-and-compiler.stderr"
+    },
+    {
+      "name": "focused01",
+      "exit": 1,
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "./ai-harness/server/node_modules/tsx/dist/loader.mjs",
+        "--test",
+        "--test-timeout=15000",
+        "ai-harness/server/test/h044-compaction-alignment03.test.ts"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/focused01.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/focused01.stderr"
+    },
+    {
+      "name": "hooks-and-auto-output",
+      "exit": 1,
+      "argv": [
+        "python3",
+        "-c",
+        "from pathlib import Path; s=Path(\"ai-harness/acceptance/compaction/native-adapter/normal-product.ts\").read_text(); print(s[s.index(\"private traceHooks\"):s.index(\"private async gatewayObservation\")]); print(Path(\"ai-harness/acceptance/compaction/native-adapter/automatic.ts\").read_text()[5000:]); print(Path(\"../../E-compaction-alignment03/output/dependency-manifest.py\").read_text())"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/hooks-and-auto-output.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/hooks-and-auto-output.stderr"
+    },
+    {
+      "name": "materializer-missing-bindings",
+      "exit": 1,
+      "argv": [
+        "python3",
+        "../output/materialize-command-graph.py",
+        "--request",
+        "../output/ROOT-AUTOMATIC-400000-REQUEST.json",
+        "--bindings",
+        "../output/empty-review-bindings.json",
+        "--output",
+        "../output/MUST-NOT-EXIST.json"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/materializer-missing-bindings.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/materializer-missing-bindings.stderr"
+    },
+    {
+      "name": "native-audit-causal-search",
+      "exit": 2,
+      "argv": [
+        "rg",
+        "-n",
+        "post.turn|PostTurn|fallback.buffer|auto_compact_limit_scope|auto_compact.*scope|formatter|run_auto_compact|65536",
+        "reports/h037-upstream-codex-audit.md",
+        "reports/h041-compaction-completion09.md",
+        "reports/h043-acceptance02.json",
+        "reports/h043-acceptance02.md",
+        "reports/h043-execution-plan.md",
+        "reports/h043-fan-diagnostic01.json",
+        "reports/h043-fan-diagnostic01.md",
+        "reports/h043-fan-live02.json",
+        "reports/h043-fan-live02.md",
+        "reports/h043-image-readiness01.json",
+        "reports/h043-image-readiness01.md",
+        "reports/h043-progress-report.md",
+        "reports/h043-trace-v2-01.json",
+        "reports/h043-trace-v2-01.md",
+        "reports/h043-vision-source01.json",
+        "reports/h043-vision-source01.md",
+        "ai-harness/acceptance/compaction/native-adapter"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/native-audit-causal-search.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/native-audit-causal-search.stderr"
+    },
+    {
+      "name": "private-build01",
+      "exit": 1,
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "ai-harness/server/node_modules/typescript/bin/tsc",
+        "-p",
+        "ai-harness/acceptance/compaction/native-adapter/tsconfig.json",
+        "--noEmit",
+        "false",
+        "--declaration",
+        "true",
+        "--rootDir",
+        ".",
+        "--outDir",
+        "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/build"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/private-build01.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/private-build01.stderr"
+    },
+    {
+      "name": "schema-timestamp-location",
+      "exit": 2,
+      "argv": [
+        "rg",
+        "-n",
+        "TurnStartedNotification|TurnCompletedNotification|startedAtMs|completedAtMs",
+        "ai-harness/server/node_modules/@openai",
+        "ai-harness/server/src/schema"
+      ],
+      "stdout": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/schema-timestamp-location.stdout",
+      "stderr": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/E-compaction-alignment04/output/commands/schema-timestamp-location.stderr"
+    }
+  ],
+  "failureCorrections": {
+    "adapter-typecheck01": "Discriminated causal input corrected; final affected typechecks PASS.",
+    "focused01": "Actual H044 factory rejects extra mode key; consumer corrected; 52 focused tests PASS.",
+    "private-build01/build-lock-and-compiler": "Adapter declaration emission failed TS2742 inferred Fastify return portability. Executable adapter build uses declaration:false and passes; separate server declarations pass. Adapter declaration generation itself remains unresolved.",
+    "hooks-and-auto-output/native-audit-causal-search/schema-timestamp-location": "Read-only search failures corrected with exact existing paths or narrower reader; originals preserved.",
+    "materializer-missing-bindings": "Expected negative: missing root bindings rejected; no command graph emitted.",
+    "config-contract-discover": "Pre-recorder zsh glob rejected before child launch; actual shell exit1 and correction preserved in BOOTSTRAP-READ-ADDENDUM.json."
+  },
+  "closedInputs": {
+    "contractSha256": "f7f9228e9b6a3a2ce6bfa6a0c7b9508e3f68fd32d2c3744660190c9b858e340f",
+    "rootReviewSha256": "e255f7f4271a707351647aa7ae34ed9d6fd1b948c01ed2264d35c437e2c09b35",
+    "manifest": "../PREDECESSOR-MANIFEST.json",
+    "recheck": "commands/original-protected-inputs-recheck.json"
+  },
+  "dependencyEvidence": {
+    "actualEntries": 4042,
+    "before": "DEPENDENCIES-before.json",
+    "after": "DEPENDENCIES-after.json",
+    "byteManifestSha256": "a0c47976879b3868fd6151cdd1f04e5476698c6f60aedf0399b43997571cda7b",
+    "equal": true,
+    "access": "read-only symlink; checkout link removed"
+  },
+  "requestPackets": {
+    "ROOT-MANUAL-REQUEST.json": "56091a686886f2a46ee0f0a51a3fbee579d6832d6fbdf79ec7fa9d52d3744532",
+    "ROOT-AUTOMATIC-400000-REQUEST.json": "bd7ddb4293a0adf9b6348a9c3d6c06814c22708bc3dc036d12373672abc0e851"
+  },
+  "nativeStatus": {
+    "A03NoGenerationStartup": "NOT_TESTED",
+    "formatter": "NOT_TESTED",
+    "ordinary": "NOT_TESTED",
+    "manual": "NOT_TESTED",
+    "automatic400000": "NOT_TESTED",
+    "MiMo480000": "NOT_TESTED",
+    "LinuxDeployment": "NOT_TESTED",
+    "ownedLifecycle": "NOT_TESTED",
+    "physical": "NOT_TESTED"
+  },
+  "nativeWrapperExit": null,
+  "outerExit": null,
+  "wrapperStatus": "Coordinator must collect actual terminal and birth-qualified descendant absence after this fresh exec closes.",
+  "runtimePins": {
+    "runtime": "0.158.0",
+    "upstream": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "automatic": 400000,
+    "output": 65536
+  },
+  "remaining": "Root must freeze actual installed executable hash/config/catalog/source causal projection, genuine regular formatter/item-span original carriers, current parent/owner/run and startup/shutdown graph; issue distinct finite GO before any Linux/native action. Source synthetic tests are never native acceptance.",
+  "limits": [
+    "Exact baseline rollout SHA recheck may reject a legitimate resume metadata append; native behavior is untested and any successor must preserve original causal checks.",
+    "Early local read-only calls lack complete recorder metadata; original native transcript is authoritative and root collects it only after closure."
+  ]
+}
