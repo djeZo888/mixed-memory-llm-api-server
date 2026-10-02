@@ -49,7 +49,7 @@ test('protected current Codex frontier rejects historical MiniMax, source-only/n
 test('first deep success, second Qwen-only completion fails; resumed current MiMo terminal succeeds after close',()=>{
  const c=new CodexChildren(()=> 'parent',()=>{},4,['qwen3.8-27b','mimo-v2.6-pro-rl']),verified=new Set(['mimo']);
  c.thread({id:'mimo',parentThreadId:'parent',modelProvider:'sova',model:'mimo-v2.6-pro-rl'});
- const dispatch=(parentTurnId:string)=>{c.beginParentTurn();c.bindParentTurn(parentTurnId);const item={id:'send-'+parentTurnId,type:'collabAgentToolCall',tool:'sendInput',status:'completed',senderThreadId:'parent',receiverThreadIds:['mimo'],agentsStates:{mimo:{status:'running'}}};c.item(item,true);c.bindParentCollaboration(parentTurnId,item,true);};
+ const dispatch=(parentTurnId:string)=>{c.beginParentTurn();c.bindParentTurn(parentTurnId);const item={id:'send-'+parentTurnId,type:'collabAgentToolCall',tool:'sendInput',status:'completed',senderThreadId:'parent',receiverThreadIds:['mimo'],agentsStates:{mimo:{status:'running'}}};const start={...item,status:'inProgress',agentsStates:{}};c.item(start,false);c.bindParentCollaboration(parentTurnId,start,false);c.item(item,true);c.bindParentCollaboration(parentTurnId,item,true);};
  dispatch('parent-1');c.notification('turn/started',{threadId:'mimo',turn:{id:'child-1'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-1',status:'completed'}});
  assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),true);
  c.beginParentTurn();c.bindParentTurn('parent-2');
@@ -62,4 +62,38 @@ test('first deep success, second Qwen-only completion fails; resumed current MiM
  assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),true);assert.equal(c.currentTerminalEvidence('mimo-v2.6-pro-rl',verified)[0].parentTurnId,'parent-3');
  c.notification('turn/started',{threadId:'mimo',turn:{id:'child-3'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-3',status:'failed'}});assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
  assert.throws(()=>c.bindParentCollaboration('foreign',{receiverThreadIds:['mimo']},true),/Foreign/);
+});
+
+test('a pre-dispatch terminal cannot gain lineage from a later ACK; genuine dispatch permits terminal before ACK',()=>{
+ const c=new CodexChildren(()=> 'parent',()=>{},4,['qwen3.8-27b','mimo-v2.6-pro-rl']),verified=new Set(['mimo']);
+ c.thread({id:'mimo',parentThreadId:'parent',modelProvider:'sova',model:'mimo-v2.6-pro-rl'});
+ const item={id:'send',type:'collabAgentToolCall',tool:'sendInput',status:'inProgress',senderThreadId:'parent',receiverThreadIds:['mimo'],agentsStates:{}};
+ c.beginParentTurn();c.bindParentTurn('parent-1');
+ c.notification('turn/started',{threadId:'mimo',turn:{id:'before-dispatch'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'before-dispatch',status:'completed'}});
+ c.item(item,false);c.bindParentCollaboration('parent-1',item,false);
+ const ack={...item,status:'completed',agentsStates:{mimo:{status:'completed'}}};c.item(ack,true);c.bindParentCollaboration('parent-1',ack,true);
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+ c.beginParentTurn();c.bindParentTurn('parent-2');c.item(item,false);c.bindParentCollaboration('parent-2',item,false);
+ c.notification('turn/started',{threadId:'mimo',turn:{id:'after-dispatch'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'after-dispatch',status:'completed'}});
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+ c.item(ack,true);c.bindParentCollaboration('parent-2',ack,true);
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),true);
+ assert.match(c.currentTerminalEvidence('mimo-v2.6-pro-rl',verified)[0].dispatchSnapshot,/inProgress/);
+ c.beginParentTurn();c.bindParentTurn('parent-3');c.item(item,false);c.bindParentCollaboration('parent-3',item,false);
+ c.notification('turn/started',{threadId:'mimo',turn:{id:'cancelled'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'cancelled',status:'interrupted'}});
+ const cancelled={...item,status:'interrupted'};c.item(cancelled,true);c.bindParentCollaboration('parent-3',cancelled,true);
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+});
+
+test('unambiguous visual creation nouns have creative admission; reasoning and image analysis remain separate',()=>{
+ for(const text of ['draw a simple circuit diagram','create a portrait','create a photo','create a sketch','make an architectural drawing','render a photograph']){
+  const selected=route({text});assert.equal(selected.intent,'creative');assert.equal(selected.target,'qwen-image-2.1');
+  assert.throws(()=>codexAutomaticDirective(selected,{deep:true,technical:true,creative:false}),/temporarily unavailable/);
+  assert.match(codexAutomaticDirective(selected,{deep:false,technical:false,creative:true,generationOnly:true}),/generation-only/);
+ }
+ for(const text of ['draw conclusions','draw conclusions about the photo','create a report','create a report about image compression','draw on experience to solve the problem'])assert.equal(route({text}).intent,'ordinary');
+ for(const text of ['analyze this circuit diagram','read this drawing']){
+  const selected=route({text,hasImages:true});assert.equal(selected.intent,'technical');assert.equal(selected.target,'qwen3.5-9b+paddleocr-vl-1.6');
+  assert.throws(()=>codexAutomaticDirective(selected,{deep:true,technical:false,creative:true}),/temporarily unavailable/);
+ }
 });

@@ -136,7 +136,10 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
       const generation=!input.receiptRunId && input.imageGenerationRequested===true && qualification?.imageGenerationQualified===true;
       const technical=!input.receiptRunId && qualification?.technicalVisionQualified===true;
       const reviewed=qualification?.nativeReceiptPolicy;
-      const policy=reviewed && qualification?.imageGenerationQualified===true ? {...reviewed,sourceSha256:Object.fromEntries(codexReceiptSourceProfile(technical,generation).map(path=>[path,reviewed.sourceSha256[path]!]))}:reviewed;
+      // A reviewed current closure may include unavailable feature sources.
+      // Select only the actual independently admitted mounted profile; this
+      // preserves ordinary startup without granting either feature.
+      const policy=reviewed ? {...reviewed,sourceSha256:Object.fromEntries(codexReceiptSourceProfile(technical,generation).map(path=>[path,reviewed.sourceSha256[path]!]))}:reviewed;
       return createRootlessCodexLauncher(launcherPath,policy,qualification?.observations)({...input,imageJobsQualified:imageGateForCodexLaunch(input,qualification) && qualification?.imageGenerationQualified!==true,imageGenerationQualified:generation,technicalVisionQualified:technical});
     },
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },

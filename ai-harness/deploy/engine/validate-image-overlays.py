@@ -9,8 +9,8 @@ import sys
 
 
 COMMON = {
-    "tools/image/image-mcp.mjs": "63b2c06ea0fe9dfa95ab7eb40e0a7fc3784043812b05416cbf85dbddb8571e95",
-    "tools/image/image.mjs": "7cba531025eb598f1df36e9fed14c07b1ee59c0d091373ee03ad419443de7407",
+    "tools/image/image-mcp.mjs": "afd30444aa3285e324f72bc729c8769e946ab1ccf476fb05529b521a5cd26c1d",
+    "tools/image/image.mjs": "bd2c2a4b734bc1a00831517119b90c78427edc88f32dd5ae265082c3d8c4a2c4",
 }
 ENGINE = {
     "skills/pdf/SKILL.md": "f1e77bf04846cde401c900f0a817a6fc14685df438c050f7f6aad75d6a670211",

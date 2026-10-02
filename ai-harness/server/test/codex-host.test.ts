@@ -54,3 +54,27 @@ test('isolated receipt-run cannot bypass text-only policy through per-session im
  assert.throws(()=>composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,readOriginalProbe:()=>undefined,verifyLane:async()=>{throw Error('unused');}}),/receipt transport/);
  assert.throws(()=>composeCodexHost('/trusted/deploy/run-codex.sh',()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeReceiptPolicy:{linuxTransportQualified:true,sourceSha256:{}},readOriginalProbe:()=>undefined,verifyLane:async()=>{throw Error('unused');}}),/model tool\/sandbox scope is unqualified/);
 });
+
+import {PassThrough} from 'node:stream';
+import {CodexEngine} from '../src/codex-engine.js';
+import {createCodexAutomaticRoute} from '../src/codex-automatic-routing.js';
+import {loadCodexResumeInstructions} from '../src/codex-instructions.js';
+import {fileURLToPath} from 'node:url';
+test('qualified ordinary Qwen receives source-backed delegation guidance in actual native turn/start; fresh startup retains mounted catalog',async()=>{
+ const launcher=fileURLToPath(new URL('../../deploy/run-codex.sh',import.meta.url));
+ const host=composeCodexHost(launcher,()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeDelegationQualified:true,frontierResponsesQualified:true,verifyLane:async()=>{throw Error('not invoked');}});
+ const stdin=new PassThrough(),stdout=new PassThrough(),calls:any[]=[];let pending='';
+ stdin.on('data',chunk=>{pending+=chunk.toString();let end;while((end=pending.indexOf('\n'))!==-1){const r=JSON.parse(pending.slice(0,end));pending=pending.slice(end+1);calls.push(r);if(!r.id)continue;
+  const result=r.method==='initialize'?{codexHome:'/task/profile/codex-home',platformOs:'linux',platformFamily:'unix',userAgent:'codex/0.158.0'}:r.method==='thread/start'?{thread:{id:'parent'},model:'qwen3.8-27b',modelProvider:'sova',cwd:'/task/workspace',approvalPolicy:'never'}:r.method==='turn/start'?{turn:{id:'turn'}}:{};
+  stdout.write(JSON.stringify({id:r.id,result})+'\n');if(r.method==='turn/start')setImmediate(()=>stdout.write(JSON.stringify({method:'turn/completed',params:{threadId:'parent',turn:{id:'turn',status:'completed'}}})+'\n'));
+ }});
+ host.runtime.launchRootless=async()=>({stdin,stdout,exited:new Promise(()=>{}),terminateAndConfirm:async()=>true});host.runtime.confirmGatewaySettlement=async()=>true;host.runtime.revokeGatewaySession=()=>{};
+ const engine=new CodexEngine({sessionId:'chat',profileDir:'/task/profile',workspace:'/task/workspace',launcher,engineKind:'codex',engineVersion:host.runtime.pin.version,modelPolicyVersion:host.runtime.modelPolicyVersion,nativeState:{ownership:'idle',activeTurnId:null,eventCursor:0},onNativeState:()=>{},gatewayUrl:host.runtime.gatewayUrl,gatewayToken:'synthetic-only',stderrPath:'/unused',onUpdate:()=>{},onNativeSessionId:()=>{},onExit:()=>{}},host.runtime);
+ try{assert.equal(await engine.prompt('Investigate a difficult multi-step design',[],createCodexAutomaticRoute({text:'Investigate a difficult multi-step design'})),'completed');
+  assert.equal(calls.find(c=>c.method==='thread/start').params.baseInstructions,undefined);
+  const input=calls.find(c=>c.method==='turn/start').params.input;assert.match(input[0].text,/automatically delegates deeper research/);assert.match(input[0].text,/new work for this controlling turn/);assert.match(input[0].text,/Investigate a difficult multi-step design/);
+  assert.equal(host.runtime.model,'qwen3.8-27b');
+ }finally{await engine.close();stdin.destroy();stdout.destroy();}
+ const closed=composeCodexHost(launcher,()=>undefined,{protocolQualified:true,rootlessQualified:true,nativeDelegationQualified:true,verifyLane:async()=>{throw Error('never');}});
+ assert.match(closed.runtime.automaticRouting!(createCodexAutomaticRoute({text:'ordinary task'}),'chat'),/unqualified/);
+});

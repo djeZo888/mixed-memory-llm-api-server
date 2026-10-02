@@ -164,9 +164,7 @@ export function loadCurrentCodexFrontier(file?:string): boolean {
   if(!file?.startsWith(prefix) || !/^[a-zA-Z0-9][a-zA-Z0-9_-]{0,95}\.json$/.test(file.slice(prefix.length)))return false;
   try{
     const value=readMimoEvidence(file).value,server=dirname(fileURLToPath(import.meta.url)),deploy=resolve(server,"../../deploy");
-    const expected=[...['main','broker','gateway','codex-host','codex-engine','codex-children','codex-child-metadata','codex-automatic-routing','codex-specialist-qualification'].map(name=>join(server,name+'.js')),join(deploy,'run-codex.sh'),join(deploy,'codex/config.toml'),join(deploy,'codex/models.json')];
-    if(!value.sourceClosure || Object.keys(value.sourceClosure).sort().join()!==expected.sort().join())return false;
-    for(const path of expected){const stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o022||![0,process.getuid?.()].includes(stat.uid)||realpathSync(path)!==path||createHash('sha256').update(readFileSync(path)).digest('hex')!==value.sourceClosure[path])return false;}
+    if(!validateCurrentSpecialistSourceClosure(value.sourceClosure,server,deploy,"frontier"))return false;
     return validateCurrentCodexFrontier(value,name=>readMimoEvidence(prefix+name));
   }catch{return false;}
 }
@@ -190,9 +188,26 @@ export function loadCodexGenerationOnly(file?:string):CodexGenerationOnlyQualifi
  if(!file?.startsWith(CODEX_SPECIALIST_DIRECTORY+"/")||!fileName(file.slice(CODEX_SPECIALIST_DIRECTORY.length+1)))return generationClosed();
  try{
   const value=readMimoEvidence(file).value,server=dirname(fileURLToPath(import.meta.url)),deploy=resolve(server,"../../deploy");
-  const expected=[...['main','app','broker','gateway','image-broker','image-codec','image-files','image-upstream','image-contracts','codex-host','codex-engine','codex-launcher','codex-receipts','codex-specialist-qualification','codex-automatic-routing','codex-deployment','codex-capabilities','engine-router'].map(name=>join(server,name+'.js')),join(deploy,'run-codex.sh'),join(deploy,'engine/codex_receipts.py'),join(deploy,'codex/config-generation-only.toml'),join(deploy,'codex/models.json'),join(deploy,'codex/skills/sova-local-tools/SKILL.md'),resolve(deploy,'../tools/image/image-mcp.mjs'),resolve(deploy,'../tools/image/image.mjs')];
-  if(!value.sourceClosure || Object.keys(value.sourceClosure).sort().join()!==expected.sort().join())return generationClosed();
-  for(const path of expected){const stat=lstatSync(path);if(!stat.isFile()||stat.isSymbolicLink()||stat.mode&0o022||![0,process.getuid?.()].includes(stat.uid)||realpathSync(path)!==path||createHash('sha256').update(readFileSync(path)).digest('hex')!==value.sourceClosure[path])return generationClosed();}
+  if(!validateCurrentSpecialistSourceClosure(value.sourceClosure,server,deploy,"generation"))return generationClosed();
   return validateCodexGenerationOnly(value,name=>readMimoEvidence(CODEX_SPECIALIST_DIRECTORY+"/"+name));
  }catch{return generationClosed();}
+}
+
+export function currentSpecialistSourcePaths(server:string,deploy:string,kind:"frontier"|"generation"):readonly string[]{
+ return kind==="frontier" ? [...['main','broker','gateway','codex-host','codex-engine','codex-children','codex-child-metadata','codex-automatic-routing','codex-instructions','codex-launcher','codex-specialist-qualification'].map(name=>join(server,name+'.js')),join(deploy,'run-codex.sh'),join(deploy,'codex/config.toml'),join(deploy,'codex/models.json')] : [...['main','app','broker','gateway','image-broker','image-codec','image-files','image-upstream','image-contracts','codex-host','codex-engine','codex-launcher','codex-receipts','codex-specialist-qualification','codex-instructions','codex-automatic-routing','codex-deployment','codex-capabilities','engine-router'].map(name=>join(server,name+'.js')),join(deploy,'run-codex.sh'),join(deploy,'engine/codex_receipts.py'),join(deploy,'codex/config-generation-only.toml'),join(deploy,'codex/models.json'),join(deploy,'codex/skills/sova-local-tools/SKILL.md'),resolve(deploy,'../tools/image/image-mcp.mjs'),resolve(deploy,'../tools/image/image.mjs')];
+}
+
+/** Production loaders require every operative compiled instruction/producer byte. */
+export function validateCurrentSpecialistSourceClosure(closure:unknown,server:string,deploy:string,kind:"frontier"|"generation"):boolean {
+ try {
+  const expected=currentSpecialistSourcePaths(server,deploy,kind);
+  if(!closure || typeof closure!=="object" || Array.isArray(closure) || Object.keys(closure).sort().join()!==[...expected].sort().join())return false;
+  const values=closure as Record<string,unknown>;
+  for(const path of expected){
+   const stat=lstatSync(path);
+   if(!digest(values[path]) || !stat.isFile() || stat.isSymbolicLink() || stat.nlink!==1 || stat.mode&0o022 || ![0,process.getuid?.()].includes(stat.uid) || realpathSync(path)!==path || createHash('sha256').update(readFileSync(path)).digest('hex')!==values[path])return false;
+   for(let parent=dirname(path);;parent=dirname(parent)){const s=lstatSync(parent);if(!s.isDirectory()||s.isSymbolicLink()||s.mode&0o022||![0,process.getuid?.()].includes(s.uid))return false;if(dirname(parent)===parent)break;}
+  }
+  return true;
+ }catch{return false;}
 }

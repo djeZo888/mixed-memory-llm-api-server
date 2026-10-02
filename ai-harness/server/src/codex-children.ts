@@ -27,10 +27,11 @@ const id = (v: unknown): v is string =>
 /** Pinned collabAgentToolCall states, never inferred from a tool's own completion. */
 export class CodexChildren {
   private parentTurnId?: string;
-  private currentTurns = new Map<string, string>();
+  private currentTurns = new Map<string, {turnId:string;dispatchIds:ReadonlySet<string>}>();
+  private dispatchStarts = new Map<string,{tool:string;model:unknown;targets:readonly string[];snapshot:string}>();
   private currentTargets = new Map<string,{callId:string;snapshot:string}>();
   private seenTurns = new Map<string,Set<string>>();
-  beginParentTurn() { this.parentTurnId=undefined; this.currentTurns.clear(); this.currentTargets.clear(); }
+  beginParentTurn() { this.parentTurnId=undefined; this.currentTurns.clear(); this.currentTargets.clear(); this.dispatchStarts.clear(); }
   bindParentTurn(turnId:string) {
     if (!id(turnId) || (this.parentTurnId && this.parentTurnId!==turnId)) throw new CodexProtocolError("Changed controlling parent turn");
     this.parentTurnId=turnId;
@@ -38,15 +39,27 @@ export class CodexChildren {
   /** Called only after the controlling parent's item lifecycle is validated. */
   bindParentCollaboration(turnId:string,value:Record<string,unknown>,complete:boolean) {
     if (!this.parentTurnId || turnId!==this.parentTurnId) throw new CodexProtocolError("Foreign parent collaboration");
-    if (complete && value.status==="completed" && ["spawnAgent","sendInput","resumeAgent","sendMessage","followupTask"].includes(String(value.tool)))
-      for (const target of value.receiverThreadIds as string[]) this.currentTargets.set(target,{callId:String(value.id),snapshot:JSON.stringify(value)});
+    if (!["spawnAgent","sendInput","resumeAgent","sendMessage","followupTask"].includes(String(value.tool))) return;
+    if (!id(value.id) || !Array.isArray(value.receiverThreadIds)) throw new CodexProtocolError("Invalid controlling dispatch identity");
+    const callId=value.id, tool=String(value.tool), targets=value.receiverThreadIds as string[];
+    if (!complete) {
+      if(value.status!=="inProgress" || this.dispatchStarts.has(callId)) throw new CodexProtocolError("Invalid controlling dispatch start");
+      this.dispatchStarts.set(callId,{tool,model:value.model,targets:[...targets],snapshot:JSON.stringify(value)});
+      return;
+    }
+    const start=this.dispatchStarts.get(callId);
+    // Pinned native spawn starts may have an empty model and receiver list;
+    // the final qualified model and actual owned child metadata resolve them.
+    if(!start || start.tool!==tool || (start.model!=null && start.model!=="" && start.model!==value.model) || (start.targets.length && JSON.stringify(start.targets)!==JSON.stringify(targets))) throw new CodexProtocolError("Controlling dispatch completion lacks matching start");
+    if(value.status==="completed") for(const target of targets) this.currentTargets.set(target,{callId,snapshot:JSON.stringify({start:JSON.parse(start.snapshot),completed:value})});
   }
+
   currentTerminalEvidence(model:string,verified:ReadonlySet<string>) {
     if(!this.parentTurnId)return [];
-    return [...this.currentTurns].filter(([thread,turnId]) => {
+    return [...this.currentTurns].filter(([thread,current]) => {
       const turn=this.turns.get(thread);
-      return verified.has(thread) && this.currentTargets.has(thread) && this.models.get(thread)===model && turn?.id===turnId && turn.terminalStatus==="completed" && [...turn.items.values()].every(item=>item.completed);
-    }).map(([childThreadId,childTurnId])=>Object.freeze({parentTurnId:this.parentTurnId!,childThreadId,childTurnId,dispatchCallId:this.currentTargets.get(childThreadId)!.callId,dispatchSnapshot:this.currentTargets.get(childThreadId)!.snapshot,terminalSnapshot:this.turns.get(childThreadId)!.terminalSnapshot!}));
+      return verified.has(thread) && this.currentTargets.has(thread) && this.models.get(thread)===model && current.dispatchIds.has(this.currentTargets.get(thread)!.callId) && turn?.id===current.turnId && turn.terminalStatus==="completed" && [...turn.items.values()].every(item=>item.completed);
+    }).map(([childThreadId,current])=>Object.freeze({parentTurnId:this.parentTurnId!,childThreadId,childTurnId:current.turnId,dispatchCallId:this.currentTargets.get(childThreadId)!.callId,dispatchSnapshot:this.currentTargets.get(childThreadId)!.snapshot,terminalSnapshot:this.turns.get(childThreadId)!.terminalSnapshot!}));
   }
   completedCurrentModel(model:string,verified:ReadonlySet<string>):boolean {return this.currentTerminalEvidence(model,verified).length>0;}
   private children = new Map<string, string>();
@@ -245,7 +258,7 @@ export class CodexChildren {
       const seen=this.seenTurns.get(p.threadId)??new Set<string>();
       if(seen.has(p.turn.id)||seen.size>=10000)throw new CodexProtocolError("Replayed or excessive child turns");
       seen.add(p.turn.id);this.seenTurns.set(p.threadId,seen);
-      if (this.parentTurnId) this.currentTurns.set(p.threadId,p.turn.id);
+      if (this.parentTurnId) this.currentTurns.set(p.threadId,{turnId:p.turn.id,dispatchIds:new Set([...this.dispatchStarts].filter(([,start])=>start.tool==="spawnAgent" ? (!start.targets.length || start.targets.includes(p.threadId as string)) && (start.model==null || start.model==="" || start.model===this.models.get(p.threadId as string)) : start.targets.includes(p.threadId as string)).map(([callId])=>callId))});
       this.turns.set(p.threadId, {
         id: p.turn.id,
         terminal: false,

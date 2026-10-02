@@ -67,3 +67,10 @@ export async function loadCodexResumeInstructions(launcherPath: string): Promise
     return fail();
   }
 }
+
+/** Delivered in the controlling native turn, after independent host admission. */
+export function codexAutomaticDelegationInstructions(enabled:boolean):string {
+  return enabled
+    ? "Sova automatically delegates deeper research, complex multi-step investigation and tasks needing higher intelligence to one owned native MiMo child (model mimo-v2.6-pro-rl, provider sova, no fork). Use this capability when the current task warrants it, even without a model name in the request. Dispatch new work for this controlling turn, wait for its genuine completed terminal, then integrate the result into this unchanged Qwen parent chat. Previous or closed child results are history, not proof of new work. If admission, capacity, ownership, Responses or tools fail, explain that deep analysis is unavailable; never fabricate a specialist answer or switch harnesses."
+    : "Current MiMo deep-analysis capability is unqualified for this chat. Do ordinary work within its limits; if deeper research or higher intelligence is required, explain that deep analysis is unavailable and preserve the request for retry. Do not imply that a specialist ran.";
+}

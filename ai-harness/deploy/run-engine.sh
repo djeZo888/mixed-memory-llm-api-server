@@ -111,7 +111,7 @@ unset gateway_token
 "$python_bin" - "$launcher_dir/engine/validate-image-overlays.py" <<'PY_OVERLAY' || die 'reviewed overlay validator identity mismatch'
 import hashlib, sys
 try:
-    valid = hashlib.sha256(open(sys.argv[1], 'rb').read()).hexdigest() == '352e4f3ab089b5553948198e0feccff9bd3967f981c0e3d288740f08d1f67cf4'
+    valid = hashlib.sha256(open(sys.argv[1], 'rb').read()).hexdigest() == '45c5048bfa2c60193a23895e1870a6d813835b29bc3ec4efd9223ea6d87a6b6f'
 except OSError:
     valid = False
 sys.exit(0 if valid else 1)

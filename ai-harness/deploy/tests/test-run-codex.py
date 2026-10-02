@@ -2,6 +2,7 @@
 """Reuse existing container ownership/security fixtures for Codex; fake Podman only."""
 import importlib.util
 import hashlib
+import shutil
 import subprocess
 import sys
 import tomllib
@@ -18,6 +19,27 @@ base.IMAGE_ID = 'sha256:d8841743002e16de1f9269a850a2f06a73055688befec4c309778ca8
 base.PATCHSET = 'dd0ff12a651db4cc8521cddb8e5094c5a197ca87cef6b7ec797343da67d9f1ec'
 
 class CodexLauncherContract(base.LauncherContract):
+    def test_actual_protected_launcher_enforces_current_helper_overlay_bytes(self):
+        original = base.LAUNCHER
+        source = self.root / 'closed-source'
+        shutil.copytree(original.parent, source / 'deploy')
+        image = source / 'tools/image'
+        image.mkdir(parents=True, mode=0o700)
+        for name in ['image.mjs', 'image-mcp.mjs']:
+            shutil.copyfile(original.parent.parent / 'tools/image' / name, image / name)
+        try:
+            base.LAUNCHER = source / 'deploy/run-codex.sh'
+            result = self.invoke()
+            self.assertEqual(result.returncode, 0, result.stderr)
+            self.log.unlink()
+            (image / 'image.mjs').write_bytes((image / 'image.mjs').read_bytes() + b'\n// changed helper')
+            result = self.invoke()
+            self.assertNotEqual(result.returncode, 0)
+            self.assertIn('overlay validation failed', result.stderr)
+            self.assertFalse(any('run' in call['argv'] for call in self.calls()))
+        finally:
+            base.LAUNCHER = original
+
     def test_engine_exit_status_propagates(self):
         self.settings['exit']=17
         request='{"jsonrpc":"2.0","id":1}\n'

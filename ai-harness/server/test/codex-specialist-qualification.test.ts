@@ -116,3 +116,17 @@ test("one retained Codex child run can qualify its tool continuation and child w
  w.tool_continuation.runId=w.codex_child.runId;f.refresh("frontier");
  assert.equal(validateCodexSpecialists(f.record,f.read,now).frontierResponsesQualified,true);
 });
+
+import {mkdtempSync,realpathSync,mkdirSync,writeFileSync,rmSync} from 'node:fs';
+import {homedir} from 'node:os';
+import {join,dirname} from 'node:path';
+import {currentSpecialistSourcePaths,validateCurrentSpecialistSourceClosure} from '../src/codex-specialist-qualification.js';
+for(const kind of ['frontier','generation'] as const)test(`${kind} operative compiled instruction module is mandatory and bound to exact current bytes`,t=>{
+ const root=realpathSync(mkdtempSync(join(homedir(),'h044-specialist-closure-')));t.after(()=>rmSync(root,{recursive:true,force:true}));
+ const server=join(root,'server/dist'),deploy=join(root,'deploy'),paths=currentSpecialistSourcePaths(server,deploy,kind),closure:Record<string,string>={};
+ for(const path of paths){mkdirSync(dirname(path),{recursive:true,mode:0o700});writeFileSync(path,'operative:'+path,{mode:0o600});closure[path]=sha(readFileSync(path,'utf8'));}
+ const instruction=join(server,'codex-instructions.js');assert.ok(paths.includes(instruction));assert.equal(validateCurrentSpecialistSourceClosure(closure,server,deploy,kind),true);
+ const omitted={...closure};delete omitted[instruction];assert.equal(validateCurrentSpecialistSourceClosure(omitted,server,deploy,kind),false);
+ writeFileSync(instruction,'stale instructions',{mode:0o600});assert.equal(validateCurrentSpecialistSourceClosure(closure,server,deploy,kind),false);
+ rmSync(instruction);assert.equal(validateCurrentSpecialistSourceClosure(closure,server,deploy,kind),false);
+});
