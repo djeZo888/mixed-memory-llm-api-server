@@ -1,8 +1,8 @@
 {
   "schema": "h045-vision-report-v1",
-  "updatedUtc": "2026-10-02T08:52:17.925656+00:00",
+  "updatedUtc": "2026-10-02T08:54:37.641944+00:00",
   "base": "f2151a569393252b7705476106c2deaaaedb51b6",
-  "status": "SOURCE_READY_LIVE_NOT_TESTED",
+  "status": "SOURCE_EXPORTED_ROOT_REQUESTED_EARLY_CLOSURE",
   "enabledServices": {
     "general": [
       "qwen0",
@@ -22,11 +22,17 @@
   },
   "liveInference": "NOT_TESTED",
   "normalSova": "NOT_TESTED",
-  "mimoObserved": "SETTLED_FAILED_UNIT_PREPARING_ROOT_RESTART_GO",
+  "mimoObserved": "ONE_AUTHORIZED_START_EXIT0_CURRENTLY_LOADING",
   "preservedPins": "native0.158/upstream064c/context480000/auto400000/output65536",
   "sessionModel": "gpt-6-astra",
   "effort": "ultra",
   "tier": "actual argv ultrafast; not exposed by turn_context",
   "credentialFix": "Accept one terminal LF in existing protected credential leaves without rewriting",
-  "credentialFocusedExit": 0
+  "credentialFocusedExit": 0,
+  "mimoInvocationId": "0b6d60f08a924e77a334e66b5db27bb7",
+  "mimoObservationDeadlineUtc": "2026-10-02T09:02:51Z",
+  "visionLinuxMutations": "NONE",
+  "nextStep": "Root collects closure then fresh runtime context reviews and stages source under fresh GO",
+  "nativeExit": null,
+  "outerExit": null
 }
