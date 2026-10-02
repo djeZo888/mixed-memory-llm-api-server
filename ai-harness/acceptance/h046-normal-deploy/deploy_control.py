@@ -17,9 +17,17 @@ References are {path,sha256,uid}; paths and hashes are observed/approved by root
 not copied from historical authority. release.files is an exhaustive relative
 file SHA map; each archive carries an exact subset of that map. Dependencies
 are separate immutable verified trees, copied rather than installed/built.
-proofs.visionNormal binds original receipt bytes, JSON pointers to its NORMAL
-state/time/owner fields, and a freshly observed Linux producer owner. The helper
-checks that supplied evidence; it never writes or manufactures that receipt.
+STAGE has no vision dependency. RESTART requires explicit proofs.visionNormal
+scope: {enabled:false} for ordinary/minimal startup, or enabled:true with the
+original receipt, state/time/owner pointers, remote and sources fields. Enabled
+vision requires current ai-vm SSH boot/owner/source proof, never a local /proc
+join. remote binds host=10.156.100.60, port=22, user, bootId, identityFile
+{path,identity}, and knownHosts {path,sha256,uid}. sources is a nonempty list of
+{file:{path,sha256,uid},receiptPointer}; each original receipt digest must match
+freshly read remote protected source bytes. Existing SSH credentials are only
+used, never read into output or created. Root reviews the exact generated SSH
+argv and remote bindings before any GO. Disabled vision grants no qualification.
+The helper checks supplied evidence; it never manufactures a producer receipt.
 proofs.ordinaryApproval and ordinaryKey are original protected files; the real
 compiled ordinary loader validates original native launch/settlement/binary and
 current source sidecar after staging, before any unit replacement.
@@ -38,6 +46,7 @@ import datetime as dt
 import hashlib
 import hmac
 import io
+import inspect
 import json
 import os
 from pathlib import Path, PurePosixPath
@@ -195,6 +204,20 @@ def process(pid, proc_root=Path('/proc')):
     need((p/'stat').read_bytes().decode().rsplit(')',1)[1].split()[19]==fields[19], 'process birth changed during observation')
     return result
 
+def vision_process(pid, proc_root=Path('/proc')):
+    """Vision receipt birth fields retain their original types and raw cgroup."""
+    observed=process(pid,proc_root)
+    path=proc_root/str(pid); fields=(path/'stat').read_text().rsplit(')',1)[1].split()
+    result={'pid':pid,'startTicks':int(fields[19]),'ppid':int(fields[1]),'pgid':int(fields[2]),
+            'cgroup':(path/'cgroup').read_text(),'exe':observed['exe'],'uid':observed['uid'],
+            'bootId':observed['bootId']}
+    need(process(pid,proc_root)==observed and str(result['startTicks'])==observed['startTicks'],
+         'vision owner changed during birth observation')
+    return result
+
+VISION_OBSERVATION_FUNCTIONS='class Denied(RuntimeError): pass\n'+'\n'.join(inspect.getsource(f) for f in
+    (need,sha,utc,is_digest,strict_json,absolute,ancestry,identity,protected,reference,process,vision_process))
+
 def exact_owner(expected, invocation_id, proc_root=Path('/proc')):
     observed=process(expected['pid'],proc_root)
     need(set(expected)==set(observed)|{'invocationId'}, 'owner tuple fields mismatch')
@@ -336,8 +359,8 @@ class Control:
         root=absolute(self.b['journal']); ancestry(root.parent,(0,)); need(not root.exists(),'GO spent/retry journal already exists')
         root.mkdir(mode=0o700); self.journal=root
         self.record('spent.json',{'goId':self.b['goId'],'bodySha256':sha(canonical(self.b)),'consumedUtc':utc(),'retryPermitted':False})
-    def command(self,label,argv,cwd=None):
-        timeout=self.budget(); self.command_sequence+=1; prefix='%03d-%s'%(self.command_sequence,label)
+    def command(self,label,argv,cwd=None,timeout_limit=60,read_only=False):
+        timeout=min(timeout_limit,self.budget()); self.command_sequence+=1; prefix='%03d-%s'%(self.command_sequence,label)
         child=subprocess.Popen(argv,cwd=cwd,env={'PATH':'/usr/bin:/bin','LANG':'C.UTF-8'},stdin=subprocess.DEVNULL,
                                stdout=subprocess.PIPE,stderr=subprocess.PIPE,start_new_session=True)
         birth=spawned_birth(child.pid); timed=False
@@ -348,11 +371,16 @@ class Control:
             if not owner_absent(birth): os.killpg(child.pid,signal.SIGKILL)
             stdout,stderr=child.communicate(timeout=5)
         absent=owner_absent(birth); group=group_absent(child.pid)
-        self.record(prefix+'.stdout',raw=stdout); self.record(prefix+'.stderr',raw=stderr)
+        if not read_only:
+            self.record(prefix+'.stdout',raw=stdout); self.record(prefix+'.stderr',raw=stderr)
         receipt={'argv':argv,'cwd':cwd,'birth':birth,'pgid':child.pid,'actualExitCode':child.returncode,
                  'integerWait':type(child.returncode) is int,'timedOut':timed,'processAbsent':absent,'processGroupAbsent':group,
                  'stdoutSha256':sha(stdout),'stderrSha256':sha(stderr),'finishedUtc':utc()}
-        self.record(prefix+'.json',receipt)
+        if label=='vision-ai-vm-read-only': receipt['processScope']='LOCAL_SSH_TRANSPORT_ONLY'
+        if read_only:
+            receipt.update(stdoutBase64=base64.b64encode(stdout).decode(),stderrBase64=base64.b64encode(stderr).decode())
+            self.readonly_receipts.append(receipt)
+        else: self.record(prefix+'.json',receipt)
         need(type(child.returncode) is int and child.returncode==0 and not timed and absent and group,'command failed/partial: '+label)
         return stdout
     def manager(self,action):
@@ -373,18 +401,93 @@ class Control:
             need(type(p.returncode) is int and p.returncode==0,'read-only systemd observation failed; stderr='+p.stderr.decode(errors='replace'))
             raw=p.stdout
         return dict(line.split('=',1) for line in raw.decode().splitlines())
+    def vision_command(self,v):
+        remote=v['remote']
+        need(isinstance(remote,dict) and set(remote)=={'host','port','user','bootId','identityFile','knownHosts'},
+             'vision remote exact fields mismatch')
+        need(remote['host']=='10.156.100.60' and type(remote['port']) is int and remote['port']==22,
+             'vision remote is not the reviewed ai-vm host')
+        need(isinstance(remote['user'],str) and re.fullmatch('[a-z_][a-z0-9_-]{0,31}',remote['user']),
+             'vision remote SSH user invalid')
+        need(remote['bootId']==v['owner']['bootId'] and remote['bootId']!=self.b['hostBootId'],
+             'vision remote boot binding mismatch/local host')
+        credential=remote['identityFile']
+        need(isinstance(credential,dict) and set(credential)=={'path','identity'},'vision SSH identity binding omitted')
+        key_path=absolute(credential['path']); ancestry(key_path.parent,(0,))
+        current=identity(key_path)
+        need(stat.S_ISREG(key_path.lstat().st_mode) and current==credential['identity'] and
+             current['uid']==0 and current['nlink']==1 and current['size']>0 and not current['mode']&0o077,
+             'vision SSH credential inode/permissions changed')
+        need(remote['knownHosts'].get('uid')==0,'vision SSH known-hosts must be root owned')
+        reference(remote['knownHosts'],1024*1024)
+        sources=v['sources']
+        need(isinstance(sources,list) and 1<=len(sources)<=64,'vision source proof omitted/oversized')
+        paths=set()
+        for source in sources:
+            need(isinstance(source,dict) and set(source)=={'file','receiptPointer'},'vision source proof fields mismatch')
+            ref=source['file']
+            need(isinstance(ref,dict) and set(ref)=={'path','sha256','uid'} and is_digest(ref['sha256']) and
+                 type(ref['uid']) is int and ref['uid']>=0,'vision source reference invalid')
+            path=ref['path']
+            need(isinstance(path,str) and path.startswith('/') and str(PurePosixPath(path))==path and
+                 '..' not in PurePosixPath(path).parts and all(ord(x)>=32 for x in path), 'vision remote source path invalid')
+            need(path not in paths,'vision duplicate source path'); paths.add(path)
+        # Only these reviewed functions and nominated PID/files run remotely.
+        script="import base64,hashlib,json,os,re,signal,stat,sys,datetime as dt\nfrom pathlib import Path\nMAX_FILE=128*1024*1024\n"
+        script+=VISION_OBSERVATION_FUNCTIONS
+        script+="\nsignal.alarm(10)\nrequest=strict_json(base64.b64decode(sys.argv[1],validate=True))\n"
+        script+="owner=vision_process(request['pid'])\nsources={r['path']:sha(reference(r)) for r in request['sources']}\n"
+        script+="need(vision_process(request['pid'])==owner,'remote owner changed during source observation')\n"
+        script+="print(json.dumps({'host':'ai-vm','bootId':owner['bootId'],'owner':owner,'sources':sources,'observedAt':utc()},sort_keys=True))\n"
+        payload=base64.b64encode(canonical({'pid':v['owner']['pid'],'sources':[s['file'] for s in sources]})).decode()
+        argv=['/usr/bin/ssh','-F','/dev/null','-o','BatchMode=yes','-o','IdentitiesOnly=yes',
+              '-o','IdentityAgent=none','-o','ConnectTimeout=8','-o','ConnectionAttempts=1',
+              '-o','StrictHostKeyChecking=yes','-o','UpdateHostKeys=no','-o','GlobalKnownHostsFile=/dev/null',
+              '-o','UserKnownHostsFile='+remote['knownHosts']['path'],'-o','ClearAllForwardings=yes',
+              '-o','ServerAliveInterval=5','-o','ServerAliveCountMax=1','-i',str(key_path),'-p','22',
+              remote['user']+'@'+remote['host'],shlex.join(['/usr/bin/python3','-I','-B','-S','-c',script,payload])]
+        return argv
+    def remote_vision(self,v):
+        argv=self.vision_command(v)
+        raw=self.command('vision-ai-vm-read-only',argv,timeout_limit=15,read_only=self.journal is None)
+        self.vision_command(v)  # Recheck existing credential/known-host bindings after SSH.
+        need(len(raw)<=262144,'vision remote proof oversized')
+        return strict_json(raw)
     def vision(self):
-        v=self.b['proofs']['visionNormal']; value=strict_json(reference(v['receipt']))
-        need(timestamp(v['reviewedAt'])<=time.time() and time.time()-timestamp(v['reviewedAt'])<=120,
-             'vision root review is stale/not current')
+        if self.b['operation']==STAGE:
+            return {'enabled':False,'required':False,'scope':STAGE,'newQualificationClaimed':False}
+        v=self.b['proofs'].get('visionNormal')
+        need(isinstance(v,dict) and type(v.get('enabled')) is bool,'vision enabled scope must be explicit')
+        if not v['enabled']:
+            need(set(v)=={'enabled'},'disabled vision must not carry proof/authority')
+            return {'enabled':False,'required':False,'scope':'ORDINARY_NO_VISION','newQualificationClaimed':False}
+        need(set(v)=={'enabled','receipt','reviewedAt','statePointer','observedAtPointer','owner','ownerPointers','remote','sources'},
+             'enabled vision exact proof fields missing/mismatched')
+        value=strict_json(reference(v['receipt'])); now=time.time()
+        need(0<=now-timestamp(v['reviewedAt'])<=120,'vision root review is stale/not current')
         need(pointer(value,v['statePointer'])=='NORMAL','vision producer is not genuinely NORMAL')
         observed_at=timestamp(pointer(value,v['observedAtPointer']))
-        need(0<=time.time()-observed_at<=120,'vision producer observation stale')
-        expected=v['owner']; actual=process(expected['pid'])
-        need(actual==expected,'vision current producer identity mismatch')
+        need(0<=now-observed_at<=120,'vision producer observation stale')
+        expected=v['owner']
+        need(isinstance(expected,dict) and set(expected)=={'pid','startTicks','ppid','pgid','cgroup','exe','uid','bootId'} and
+             all(type(expected[k]) is int for k in ('pid','startTicks','ppid','pgid','uid')) and
+             expected['pid']>0 and expected['startTicks']>0,'vision exact receipt birth schema mismatch')
         need(set(v['ownerPointers'])==set(expected),'vision original receipt lacks exact owner pointers')
-        for field,p in v['ownerPointers'].items(): need(pointer(value,p)==expected[field],'vision original owner bytes mismatch')
-        return {'originalReceiptSha256':v['receipt']['sha256'],'owner':actual,'observedAt':observed_at,
+        for field,p in v['ownerPointers'].items(): need(canonical(pointer(value,p))==canonical(expected[field]),'vision original owner bytes mismatch')
+        for source in v['sources']:
+            need(pointer(value,source['receiptPointer'])==source['file']['sha256'],'vision original source bytes mismatch')
+        remote=self.remote_vision(v)
+        need(isinstance(remote,dict) and set(remote)=={'host','bootId','owner','sources','observedAt'},'vision remote proof fields mismatch')
+        need(remote['host']=='ai-vm' and remote['bootId']==v['remote']['bootId'],'vision remote current boot mismatch')
+        need(0<=time.time()-timestamp(remote['observedAt'])<=15,'vision remote current proof stale')
+        need(canonical(remote['owner'])==canonical(expected),'vision remote current producer birth/identity mismatch')
+        need(remote['sources']=={s['file']['path']:s['file']['sha256'] for s in v['sources']},'vision remote current source mismatch')
+        need(0<=time.time()-timestamp(v['reviewedAt'])<=120 and 0<=time.time()-observed_at<=120,
+             'vision original review/observation became stale during SSH')
+        return {'enabled':True,'required':True,'scope':'AI_VM_VISION_BOUND_RESTART',
+                'originalReceiptSha256':v['receipt']['sha256'],'owner':remote['owner'],'observedAt':observed_at,
+                'remoteObservedAt':remote['observedAt'],'remoteHost':v['remote']['host'],'sources':remote['sources'],
+                'normalStateScope':'RECENT_ORIGINAL_RECEIPT_ONLY','sourceScope':'EXACT_ROOT_REVIEWED_NOMINATED_FILES',
                 'newQualificationClaimed':False}
     def preflight(self):
         b=self.b; need(Path('/proc/sys/kernel/random/boot_id').read_text().strip()==b['hostBootId'],'host boot changed')
@@ -562,16 +665,21 @@ def main():
     helper=absolute(str(Path(__file__).absolute())); helper_raw=protected(helper,0)
     key=protected(args.go_key,0,4096,True); envelope=strict_json(protected(args.go,0,1024*1024,True))
     body=validate_go(envelope,key,time.time(),helper,sha(helper_raw)); control=Control(body)
-    if args.execute: result=control.execute()
-    else:
-        prepared=control.preflight(); result={'status':'PREFLIGHT_SOURCE_AND_CURRENT_TUPLES_MATCH','sourceCommit':body['sourceCommit'],
+    try:
+        if args.execute: result=control.execute()
+        else:
+            prepared=control.preflight(); result={'status':'PREFLIGHT_SOURCE_AND_CURRENT_TUPLES_MATCH','sourceCommit':body['sourceCommit'],
            'owner':prepared['owner'],'vision':prepared['vision'],'mutations':0,'nativeWorkflowAcceptance':'NOT_TESTED',
-           'ordinaryLoaderBeforeRestartRequired':True,'inferenceTurns':0,'readOnlyCommandReceipts':control.readonly_receipts}
+               'ordinaryLoaderBeforeRestartRequired':True,'inferenceTurns':0,'readOnlyCommandReceipts':control.readonly_receipts}
+    except Exception as error:
+        error.readOnlyCommandReceipts=control.readonly_receipts
+        raise
     print(json.dumps(result,sort_keys=True))
 
 if __name__=='__main__':
     os.umask(0o077)
     try: main()
     except Exception as error:
-        print(json.dumps({'status':'DENIED_OR_FAILED','type':type(error).__name__,'message':str(error)},sort_keys=True),file=sys.stderr)
+        print(json.dumps({'status':'DENIED_OR_FAILED','type':type(error).__name__,'message':str(error),
+            'readOnlyCommandReceipts':getattr(error,'readOnlyCommandReceipts',[])},sort_keys=True),file=sys.stderr)
         raise SystemExit(1)

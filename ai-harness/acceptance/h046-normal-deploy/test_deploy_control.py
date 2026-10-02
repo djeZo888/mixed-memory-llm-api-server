@@ -8,10 +8,13 @@ import json
 import os
 from pathlib import Path
 import sqlite3
+import shlex
+import subprocess
+import sys
 import tarfile
 import tempfile
 import unittest
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 spec=importlib.util.spec_from_file_location('deploy_control',Path(__file__).with_name('deploy_control.py'))
 c=importlib.util.module_from_spec(spec); spec.loader.exec_module(c)
@@ -117,9 +120,6 @@ class Controls(unittest.TestCase):
             self.assertTrue(c.owner_absent({'pid':12,'startTicks':'234'},root))
             self.assertFalse(c.group_absent(12,root)); self.assertTrue(c.group_absent(99,root))
             (root/'12/stat').unlink(); self.assertTrue(c.owner_absent({'pid':12,'startTicks':'345'},root))
-    def test_vision_missing_normal_fails_without_lifecycle(self):
-        b=copy.deepcopy(self.b); b['proofs']={'visionNormal':{'receipt':{'path':'/not-present','sha256':'0'*64,'uid':0}}}
-        with patch.object(c,'reference',side_effect=FileNotFoundError),self.assertRaises(FileNotFoundError): c.Control(b).vision()
     def test_spent_go_denied_before_claim(self):
         with tempfile.TemporaryDirectory() as directory:
             b=copy.deepcopy(self.b); b['journal']=str(Path(directory).resolve())
@@ -198,5 +198,275 @@ class RegressionControls(unittest.TestCase):
                 ancestors.assert_called_once_with(root.parent,(0,1000),0o022)
             root.chmod(0o755)
             with patch.object(Path,'lstat',service_leaf),patch.object(c,'ancestry'),self.assertRaises(c.Denied): c.database_state({'path':str(root)})
+
+
+class OptionalVisionControls(unittest.TestCase):
+    now=c.timestamp('2026-10-02T12:40:00Z')
+    def fixture(self):
+        owner={'pid':123,'startTicks':456,'ppid':1,'pgid':123,'cgroup':'0::/vision.service\n',
+               'exe':'/usr/bin/python3','uid':1000,'bootId':'ai-vm-boot'}
+        sources=[{'file':{'path':'/opt/vision/service.py','sha256':'c'*64,'uid':0},'receiptPointer':'/sources/service'}]
+        value={'state':'NORMAL','at':'2026-10-02T12:39:59Z','owner':copy.deepcopy(owner),'sources':{'service':'c'*64}}
+        v={'enabled':True,'receipt':{'path':'/root/vision-original.json','sha256':'a'*64,'uid':0},
+           'reviewedAt':'2026-10-02T12:39:59Z','statePointer':'/state','observedAtPointer':'/at',
+           'owner':owner,'ownerPointers':{k:'/owner/'+k for k in owner},'sources':sources,
+           'remote':{'host':'10.156.100.60','port':22,'user':'user','bootId':'ai-vm-boot',
+                     'identityFile':{'path':'/root/.ssh/existing','identity':{}},
+                     'knownHosts':{'path':'/root/.ssh/known_hosts','sha256':'d'*64,'uid':0}}}
+        b={'operation':c.RESTART,'expiresUtc':'2099-01-01T00:00:00Z','hostBootId':'ai-harness-boot','proofs':{'visionNormal':v}}
+        remote={'host':'ai-vm','bootId':'ai-vm-boot','owner':copy.deepcopy(owner),
+                'sources':{'/opt/vision/service.py':'c'*64},'observedAt':'2026-10-02T12:40:00Z'}
+        return c.Control(b),value,remote
+    def run_proof(self,ctl,value,remote):
+        with patch.object(c.time,'time',return_value=self.now),patch.object(c,'reference',return_value=c.canonical(value)),\
+             patch.object(ctl,'remote_vision',return_value=remote),patch.object(c,'process',side_effect=AssertionError('local producer join')):
+            return ctl.vision()
+    def test_stage_has_no_optional_vision_dependency(self):
+        for proof in ({},{'visionNormal':{'enabled':True}},{'visionNormal':{'receipt':'absent'}}):
+            ctl=c.Control({'operation':c.STAGE,'expiresUtc':'2099-01-01T00:00:00Z','proofs':proof})
+            with patch.object(c,'reference',side_effect=AssertionError),patch.object(c,'process',side_effect=AssertionError),\
+                 patch.object(ctl,'remote_vision',side_effect=AssertionError):
+                self.assertFalse(ctl.vision()['required'])
+    def test_ordinary_restart_disabled_vision_has_no_remote_or_receipt_dependency(self):
+        ctl,_,_=self.fixture(); ctl.b['proofs']['visionNormal']={'enabled':False}
+        with patch.object(c,'reference',side_effect=AssertionError),patch.object(c,'process',side_effect=AssertionError),\
+             patch.object(ctl,'remote_vision',side_effect=AssertionError):
+            self.assertEqual(ctl.vision()['scope'],'ORDINARY_NO_VISION')
+    def test_restart_requires_explicit_boolean_scope(self):
+        for value in (None,{}, {'enabled':'false'}, {'enabled':0}, {'enabled':False,'receipt':{}}, {'enabled':True}):
+            ctl,_,_=self.fixture(); ctl.b['proofs']['visionNormal']=value
+            with self.subTest(value=value),self.assertRaises(c.Denied): ctl.vision()
+    def test_enabled_vision_accepts_exact_remote_receipt_birth_and_source(self):
+        ctl,value,remote=self.fixture(); result=self.run_proof(ctl,value,remote)
+        self.assertTrue(result['required']); self.assertEqual(result['remoteHost'],'10.156.100.60')
+        self.assertFalse(result['newQualificationClaimed'])
+    def test_enabled_missing_original_receipt_denied(self):
+        ctl,_,_=self.fixture()
+        with patch.object(c,'reference',side_effect=FileNotFoundError),patch.object(ctl,'remote_vision') as ssh,\
+             self.assertRaises(FileNotFoundError): ctl.vision()
+        ssh.assert_not_called()
+    def test_enabled_wrong_boot_birth_source_stale_and_malformed_remote_denied(self):
+        mutations=[lambda r:r.update(bootId='wrong'),lambda r:r['owner'].update(startTicks=457),
+                   lambda r:r['owner'].update(uid=True),lambda r:r.update(sources={'/opt/vision/service.py':'0'*64}),
+                   lambda r:r.update(observedAt='2026-10-02T12:39:44Z'),
+                   lambda r:r.update(observedAt='2026-10-02T12:40:01Z'),lambda r:r.update(host='ai-harness'),
+                   lambda r:r.update(extra='unbound')]
+        for mutate in mutations:
+            ctl,value,remote=self.fixture(); mutate(remote)
+            with self.subTest(remote=remote),self.assertRaises(c.Denied): self.run_proof(ctl,value,remote)
+    def test_enabled_original_state_owner_source_and_review_staleness_denied(self):
+        for key in ('state','birth','source','observedAt','reviewedAt','ownerType'):
+            ctl,value,remote=self.fixture()
+            if key=='state': value['state']='DEGRADED'
+            if key=='birth': value['owner']['startTicks']=999
+            if key=='ownerType': value['owner']['ppid']=True
+            if key=='source': value['sources']['service']='0'*64
+            if key=='observedAt': value['at']='2026-10-02T12:37:59Z'
+            if key=='reviewedAt': ctl.b['proofs']['visionNormal']['reviewedAt']='2026-10-02T12:37:59Z'
+            with self.subTest(key=key),self.assertRaises(c.Denied): self.run_proof(ctl,value,remote)
+    def command_fixture(self,ctl):
+        v=ctl.b['proofs']['visionNormal']; key_identity={'dev':1,'ino':2,'uid':0,'gid':0,'mode':0o600,'nlink':1,'size':32,'mtimeNs':1,'ctimeNs':1}
+        v['remote']['identityFile']['identity']=key_identity
+        return v,key_identity
+    def make_argv(self,ctl,v,key_identity):
+        with patch.object(c,'absolute',side_effect=Path),patch.object(c,'ancestry'),\
+             patch.object(c,'identity',return_value=key_identity),patch.object(Path,'lstat',return_value=Mock(st_mode=0o100600)),\
+             patch.object(c,'reference',return_value=b'known host'):
+            return ctl.vision_command(v)
+    def test_exact_remote_command_is_bounded_no_ambient_config_and_script_compiles(self):
+        ctl,_,_=self.fixture(); v,key=self.command_fixture(ctl); argv=self.make_argv(ctl,v,key)
+        self.assertEqual(argv[0],'/usr/bin/ssh'); self.assertEqual(argv[-2],'user@10.156.100.60')
+        for option in ('StrictHostKeyChecking=yes','IdentityAgent=none','ClearAllForwardings=yes','UpdateHostKeys=no'):
+            self.assertIn(option,argv)
+        python=shlex.split(argv[-1]); self.assertEqual(python[:5],['/usr/bin/python3','-I','-B','-S','-c'])
+        compile(python[5],'<exact-remote-vision-probe>','exec')
+        self.assertIn('signal.alarm(10)',python[5]); self.assertNotIn('iterdir',python[5])
+    def test_remote_wrong_host_boot_key_inode_sources_denied_before_ssh(self):
+        for key in ('host','boot','key','empty','duplicate','source'):
+            ctl,_,_=self.fixture(); v,identity=self.command_fixture(ctl)
+            if key=='host': v['remote']['host']='10.156.100.61'
+            if key=='boot': v['remote']['bootId']='ai-harness-boot'
+            if key=='key': v['remote']['identityFile']['identity']=dict(identity,ino=99)
+            if key=='empty': v['sources']=[]
+            if key=='duplicate': v['sources']*=2
+            if key=='source': v['sources'][0]['file']['path']='/opt/../secret'
+            with self.subTest(key=key),self.assertRaises(c.Denied): self.make_argv(ctl,v,identity)
+    def test_original_birth_schema_retains_integer_ticks_ppid_and_raw_cgroup(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve(); p=root/'123'; p.mkdir(); (root/'sys/kernel/random').mkdir(parents=True)
+            (root/'sys/kernel/random/boot_id').write_text('remote-boot\n')
+            fields=['S','1','123','123']+['0']*15+['456']+['0']*8
+            (p/'stat').write_text('123 (vision) '+' '.join(fields))
+            (p/'status').write_text('Uid:\t1000\t1000\t1000\t1000\nGid:\t1000\t1000\t1000\t1000\n')
+            (p/'cgroup').write_text('0::/vision.service\n'); (p/'cmdline').write_bytes(b'python3\0vision.py\0')
+            (p/'environ').write_bytes(b''); (p/'exe').symlink_to('/usr/bin/python3')
+            observed=c.vision_process(123,root)
+            self.assertEqual(observed['startTicks'],456); self.assertIs(type(observed['startTicks']),int)
+            self.assertEqual(observed['ppid'],1); self.assertEqual(observed['cgroup'],'0::/vision.service\n')
+            ctl,_,_=self.fixture(); v,key=self.command_fixture(ctl); argv=self.make_argv(ctl,v,key)
+            probe=shlex.split(argv[-1])[5].split('\nsignal.alarm(10)')[0]
+            namespace={}; exec(probe,namespace)
+            self.assertEqual(namespace['vision_process'](123,root),observed)
+            source=root/'service.py'; source.write_bytes(b'print(1)\n'); source.chmod(0o444)
+            with patch.dict(namespace,ancestry=lambda *args:None):
+                self.assertEqual(namespace['reference']({'path':str(source),'sha256':c.sha(source.read_bytes()),'uid':os.getuid()}),source.read_bytes())
+    def test_ssh_failure_original_exit_and_stdout_stderr_are_retained(self):
+        ctl,_,_=self.fixture(); child=Mock(pid=777,returncode=255); child.communicate.return_value=(b'partial stdout',b'host-key failure')
+        with patch.object(ctl,'vision_command',return_value=['/usr/bin/ssh','exact-reviewed-command']),\
+             patch.object(c.subprocess,'Popen',return_value=child),patch.object(c,'spawned_birth',return_value={'pid':777}),\
+             patch.object(c,'owner_absent',return_value=True),patch.object(c,'group_absent',return_value=True),self.assertRaises(c.Denied):
+            ctl.remote_vision(ctl.b['proofs']['visionNormal'])
+        receipt=ctl.readonly_receipts[0]
+        self.assertEqual(receipt['actualExitCode'],255); self.assertTrue(receipt['integerWait'])
+        self.assertEqual(receipt['stderrSha256'],c.sha(b'host-key failure')); self.assertTrue(receipt['processGroupAbsent'])
+        self.assertEqual(c.base64.b64decode(receipt['stdoutBase64']),b'partial stdout')
+    def test_ssh_timeout_has_actual_wait_and_original_partial_bytes(self):
+        ctl,_,_=self.fixture(); child=Mock(pid=777,returncode=-9)
+        child.communicate.side_effect=[subprocess.TimeoutExpired('ssh',15), (b'partial',b'timeout stderr')]
+        with patch.object(ctl,'vision_command',return_value=['/usr/bin/ssh','exact-reviewed-command']),\
+             patch.object(c.subprocess,'Popen',return_value=child),patch.object(c,'spawned_birth',return_value={'pid':777}),\
+             patch.object(c,'owner_absent',return_value=False),patch.object(c,'group_absent',return_value=True),\
+             patch.object(c.os,'killpg') as kill,self.assertRaises(c.Denied): ctl.remote_vision(ctl.b['proofs']['visionNormal'])
+        kill.assert_called_once_with(777,c.signal.SIGKILL)
+        receipt=ctl.readonly_receipts[0]; self.assertEqual(receipt['actualExitCode'],-9); self.assertTrue(receipt['timedOut'])
+        self.assertEqual(receipt['stdoutSha256'],c.sha(b'partial'))
+
+class RestartPreservationControls(unittest.TestCase):
+    def fixture(self):
+        b={'operation':c.RESTART,'expiresUtc':'2099-01-01T00:00:00Z','sourceCommit':'b'*40,
+           'counts':{'rollback':[]},'proofs':{'visionNormal':{'enabled':False}},'owner':{'pid':10},
+           'data':{'path':'/private/data'},'unit':{'path':'/private/unit','sha256':c.sha(b'old'),
+                                             'candidate':{'sha256':c.sha(b'new')}},'configFiles':[]}
+        prepared={'original':b'old','candidate':b'new','options':{},'owner':b['owner'],'idle':{},'vision':{'enabled':False}}
+        return c.Control(b),prepared
+    def execute_fixture(self,ctl,prepared,loader_error=None,owner_error=None,db_error=None,vision_error=None):
+        calls=[]
+        def mark(name,result=None,error=None):
+            def f(*args,**kwargs):
+                calls.append(name)
+                if error: raise error
+                return result
+            return f
+        records=[]
+        with patch.object(ctl,'preflight',return_value=prepared),patch.object(ctl,'claim',side_effect=mark('claim')),\
+             patch.object(ctl,'record',side_effect=lambda name,*a,**k:records.append((name,a,k))),\
+             patch.object(ctl,'backup',side_effect=mark('backup')),patch.object(ctl,'verify_staged',side_effect=mark('verify')),\
+             patch.object(ctl,'ordinary_loader',side_effect=mark('loader',error=loader_error)),\
+             patch.object(ctl,'state',return_value={'InvocationID':'original'}),\
+             patch.object(c,'exact_owner',side_effect=mark('owner',error=owner_error)),\
+             patch.object(c,'database_state',side_effect=mark('db',error=db_error)),\
+             patch.object(ctl,'vision',side_effect=mark('vision',error=vision_error) if vision_error else ctl.vision),\
+             patch.object(ctl,'replace_unit',side_effect=mark('replace')),patch.object(ctl,'manager',side_effect=mark('manager')),\
+             patch.object(ctl,'fresh_owner',return_value={'pid':20}),patch.object(ctl,'health',side_effect=mark('health')),\
+             patch.object(c,'protected',return_value=b'new'):
+            try: return ctl.execute(),calls,records
+            except c.Denied as e: return e,calls,records
+    def test_ordinary_restart_disabled_vision_keeps_loader_backup_owner_db_order(self):
+        ctl,prepared=self.fixture(); result,calls,records=self.execute_fixture(ctl,prepared)
+        self.assertEqual(result['status'],'NORMAL_RESTARTED_HEALTH_ONLY')
+        self.assertEqual(calls[:7],['claim','backup','verify','loader','owner','db','replace'])
+        self.assertIn('RESULT.json',[v[0] for v in records])
+    def test_required_loader_owner_db_and_enabled_vision_failure_prevent_unit_mutation(self):
+        for guard in ('loader','owner','db','vision'):
+            ctl,prepared=self.fixture()
+            result,calls,records=self.execute_fixture(ctl,prepared,**{guard+'_error':c.Denied(guard+' failure')})
+            self.assertIsInstance(result,c.Denied); self.assertNotIn('replace',calls)
+            self.assertEqual(calls[0],'claim'); self.assertIn('failure.json',[v[0] for v in records])
+            failure=next(v for v in records if v[0]=='failure.json')[1][0]
+            self.assertFalse(failure['unitMutationAttempted'])
+    def test_preflight_stage_without_vision_preserves_real_source_hmac_native_pins_and_key_inode_guards(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base=Path(directory).resolve(); root=base/'release'; data=base/'data'; unit=base/'unit'; keypath=base/'key'
+            key=b'k'*32; keypath.write_bytes(key); unit.write_bytes(b'old')
+            q={'binaryVersion':'0.158.0','upstream':'064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'}
+            for name in ('launch','settlement','protocolAck','binary'): q.update({name+'Path':str(base/name),name+'Sha256':'c'*64})
+            def approval():
+                body={'qualification':q}; return c.canonical({'body':body,'seal':hmac.new(key,c.canonical(body),hashlib.sha256).hexdigest()})
+            content={'ai-harness/source-commit.txt':b'b'*40+b'\n'}
+            raw=Controls().archive([(name,value,tarfile.REGTYPE) for name,value in content.items()])
+            ref=lambda name:{'path':str(base/name),'sha256':'a'*64,'uid':0}
+            keyid=c.identity(keypath)
+            owner={'pid':10,'selectedEnvironment':{'AI_HARNESS_DATA_DIR':str(data)}}
+            b={'operation':c.STAGE,'expiresUtc':'2099-01-01T00:00:00Z','hostBootId':'local-boot','journal':str(base/'journal'),
+               'sourceCommit':'b'*40,'release':{'path':str(root),'files':{k:c.sha(v) for k,v in content.items()},'executableFiles':[]},
+               'archives':[{'archive':ref('archive'),'files':{k:c.sha(v) for k,v in content.items()}}],'dependencies':[],
+               'configFiles':[],'proofs':{'ordinaryApproval':ref('approval'),'ordinaryKey':{'path':str(keypath),'identity':keyid}},
+               'unit':{'path':str(unit),'sha256':c.sha(b'old'),'candidate':ref('candidate')},'owner':owner,'data':{'path':str(data)}}
+            original_read=Path.read_text
+            def boot(path,*a,**kw):
+                return 'local-boot' if str(path)=='/proc/sys/kernel/random/boot_id' else original_read(path,*a,**kw)
+            def read(ref,*a):
+                if ref['path']==str(base/'archive'): return raw
+                if ref['path']==str(base/'approval'): return approval()
+                return b'evidence'
+            def protect(path,*a): return key if str(path)==str(keypath) else b'old'
+            ctl=c.Control(b)
+            with patch.object(Path,'read_text',boot),patch.object(c,'ancestry'),patch.object(c,'reference',side_effect=read),\
+                 patch.object(c,'protected',side_effect=protect),patch.object(c,'unit_candidate',return_value={}),\
+                 patch.object(ctl,'state',return_value={'ActiveState':'active','SubState':'running','NRestarts':'0','MainPID':'10','InvocationID':'id'}),\
+                 patch.object(c,'exact_owner',return_value=owner),patch.object(c,'database_state',return_value={'activeRuns':0}),\
+                 patch.object(ctl,'remote_vision',side_effect=AssertionError('optional vision contacted')):
+                self.assertFalse(ctl.preflight()['vision']['required'])
+                q['binaryVersion']='0.159.0'
+                with self.assertRaisesRegex(c.Denied,'native pins'): ctl.preflight()
+                q['binaryVersion']='0.158.0'; b['proofs']['ordinaryKey']['identity']=dict(keyid,ino=0)
+                with self.assertRaisesRegex(c.Denied,'key identity'): ctl.preflight()
+                b['proofs']['ordinaryKey']['identity']=keyid; b['sourceCommit']='d'*40
+                with self.assertRaisesRegex(c.Denied,'source commit'): ctl.preflight()
+    def test_real_database_denies_active_runs_retained_owner_or_history_changes(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root=Path(directory).resolve(); root.chmod(0o700); db=root/'harness.sqlite'
+            con=sqlite3.connect(db)
+            con.executescript("CREATE TABLE sessions(id TEXT,status TEXT); CREATE TABLE messages(session_id TEXT,text TEXT);"
+              "CREATE TABLE runs(session_id TEXT,status TEXT); CREATE TABLE events(session_id TEXT,text TEXT);"
+              "CREATE TABLE h021_session_engines(session_id TEXT,ownership TEXT,active_turn_id TEXT);"
+              "CREATE TABLE h003_image_jobs(id INTEGER,data TEXT); INSERT INTO sessions VALUES('original','idle');"
+              "INSERT INTO messages VALUES('original','history'); INSERT INTO h021_session_engines VALUES('original','idle',NULL);")
+            con.commit(); projection={}
+            for table,column in [('sessions','id'),('messages','session_id'),('runs','session_id'),('events','session_id'),('h021_session_engines','session_id')]:
+                cursor=con.execute('SELECT * FROM '+table+' WHERE '+column+'=? ORDER BY rowid',('original',))
+                projection[table]={'columns':[v[0] for v in cursor.description],'rows':cursor.fetchall()}
+            dbid={k:v for k,v in c.identity(db).items() if k in ('dev','ino','uid','gid','mode','nlink')}; dbid['uid']=1000
+            spec={'path':str(root),'databaseIdentity':dbid,'retainedOwners':[],'preservedSessionId':'original','preservedSessionSha256':c.sha(c.canonical(projection))}
+            actual_lstat=Path.lstat; actual_identity=c.identity
+            def service_lstat(path,*args,**kwargs):
+                st=actual_lstat(path,*args,**kwargs)
+                if path==root:
+                    values=list(st); values[4]=1000; return os.stat_result(values)
+                return st
+            def service_identity(path):
+                result=actual_identity(path)
+                if path==db: result['uid']=1000
+                return result
+            with patch.object(c,'ancestry'),patch.object(Path,'lstat',service_lstat),patch.object(c,'identity',side_effect=service_identity):
+                self.assertEqual(c.database_state(spec)['activeRuns'],0)
+                con.execute("INSERT INTO runs VALUES('other','running')"); con.commit()
+                with self.assertRaisesRegex(c.Denied,'non-idle'): c.database_state(spec)
+                con.execute('DELETE FROM runs'); con.execute("UPDATE h021_session_engines SET ownership='uncertain'"); con.commit()
+                with self.assertRaisesRegex(c.Denied,'retained owner'): c.database_state(spec)
+                con.execute("UPDATE h021_session_engines SET ownership='idle'"); con.execute("UPDATE messages SET text='changed'"); con.commit()
+                with self.assertRaisesRegex(c.Denied,'original user session'): c.database_state(spec)
+            con.close()
+    def test_normal_exact_owner_still_checks_full_app_tuple_and_invocation(self):
+        observed={'pid':10,'startTicks':'123','bootId':'boot','uid':1000,'gid':1000,'pgid':10,
+                  'cgroup':'0::/app','exe':'/node','cmdlineSha256':'a'*64,'selectedEnvironment':{'AI_HARNESS_DATA_DIR':'/data'}}
+        expected=dict(observed,invocationId='original')
+        with patch.object(c,'process',return_value=observed):
+            self.assertEqual(c.exact_owner(expected,'original'),observed)
+            for field,value in [('startTicks','wrong'),('bootId','wrong'),('cmdlineSha256','b'*64),('invocationId','wrong')]:
+                bad=dict(expected,**{field:value})
+                with self.subTest(field=field),self.assertRaises(c.Denied): c.exact_owner(bad,'original')
+    def test_unit_compare_and_swap_denial_occurs_before_write(self):
+        ctl,_=self.fixture()
+        with patch.object(c,'protected',return_value=b'changed'),patch.object(c.os,'open') as write,\
+             self.assertRaises(c.Denied): ctl.replace_unit(b'new',c.sha(b'old'))
+        write.assert_not_called()
+    def test_rollback_requires_explicit_counts_and_current_candidate_owner(self):
+        ctl,prepared=self.fixture()
+        with patch.object(c,'protected') as read,self.assertRaises(c.Denied): ctl.rollback(prepared,None)
+        read.assert_not_called(); ctl.b['counts']['rollback']=c.ROLLBACK
+        with patch.object(c,'protected',return_value=b'other'),patch.object(ctl,'replace_unit') as write,\
+             self.assertRaises(c.Denied): ctl.rollback(prepared,None)
+        write.assert_not_called()
 
 if __name__=='__main__': unittest.main()
