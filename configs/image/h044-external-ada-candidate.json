@@ -77,11 +77,29 @@
     "nativeOwnerSettlement": "NOT_PROVEN; exact exited container and prior-boot active records retained",
     "namespaceCorrection": {
       "decision": "ROOT-DECISION-NAMESPACE07",
-      "containerOverlay": "NOT_TESTED",
+      "containerOverlay": "ADOPTED_PASS_CONTAINER_OVERLAY_ONLY; original preflight02",
       "hostOverlayAbsence": "WRONG_NAMESPACE; production absence NOT_ESTABLISHED",
       "hostDeliveryProposed": false,
       "productionNativeIdentity": "Observed container.Image/Config.Image/image.Id platform50a3 matches current runtime config.image_id; no OR/fallback/correction proposed"
+    },
+    "adoptedPreflight02": {
+      "originalStdoutSha256": "1fdf410f6c06cbd05d19d478a0708cf5690f766cd544bafcce615b5b09b01649",
+      "dockerCommands": 10,
+      "actualAllIntegerExits": 0,
+      "containerOwnedRemovedAbsent": true,
+      "verifiedOverlayFiles": 15,
+      "overlaySha256": "dda84e200adcc6a1ee8915e0e993627695477a346c5848fc27f9251c34d04b3b",
+      "platformManifest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "rawManifestConfigRelationship": "NOT_CAPTURED",
+      "qualification": "CONTAINER_OVERLAY_ONLY; not Linux operation by this worker or generation qualification"
     }
   },
-  "qualification": "NOT_TESTED; source candidate cannot enable admission or global image gate"
+  "qualification": "NOT_TESTED; source candidate cannot enable admission or global image gate",
+  "guardedWriter": {
+    "source": "scripts/h044/image_owner_reconcile.py",
+    "sha256": "11ab72ed68ba037026c84e13406de5077456860266a2ba46376a25b768838741",
+    "state": "IMPLEMENTED_SOURCE_ONLY_GUARDED_ARCHIVE_CAS_ROLLBACK",
+    "runtimeMutationAuthorization": "CLOSED_NEW_EXACT_ROOT_GO_REQUIRED",
+    "normalGenerationQualification": "CLOSED_SEPARATE_R_REVIEW_LIVE_RECEIPT_REQUIRED"
+  }
 }

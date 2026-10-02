@@ -336,5 +336,21 @@ class PreparationTests(unittest.TestCase):
         self.assertEqual(before,after)
 
 
+class DiagnosticFlagRegression(unittest.TestCase):
+    def test_docker_start_uses_supported_exact_flag_set(self):
+        request,program=m.container_preflight_request()
+        scope={'__name__':'offline_diagnostic_flag'}
+        exec(compile(program,'<offline>','exec'),scope)
+        captured=[]
+        # Source regression: only unsupported start sig-proxy removed. The
+        # actual cached preflight02 receipt remains the live overlay evidence.
+        self.assertNotIn("'--sig-proxy=false'",program.decode())
+        self.assertIn("['/usr/bin/docker','start','--attach',cid]",program.decode())
+        self.assertIn('--network',request['createArgv'])
+        self.assertIn('none',request['createArgv'])
+        self.assertIn('--read-only',request['createArgv'])
+        self.assertIn('--cap-drop',request['createArgv'])
+
+
 if __name__ == '__main__':
     unittest.main(verbosity=2)
