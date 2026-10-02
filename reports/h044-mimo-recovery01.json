@@ -1,0 +1,153 @@
+{
+  "schema": "h044-mimo-recovery-source-v1",
+  "phase": "M-mimo-recovery01",
+  "baseCommit": "c5ccf662234a42cf691a7d368ca44644e7d418ea",
+  "sourceCommit": "9e28613675ed14abaa3bb8ebba9a8be5f8841292",
+  "recordedUtc": "2026-10-02T01:03:13.226406+00:00",
+  "sourceStatus": "PASS",
+  "LinuxActions": 0,
+  "nativeReadback": "NOT_TESTED",
+  "nativeLifecycle": "NOT_TESTED",
+  "currentMiMo480K": "NOT_TESTED",
+  "generation": "NOT_TESTED",
+  "sourceSHA256": {
+    "scripts/runtime/mimo/owner.py": "0530603606ee980cc71c5244b78570a5d2e067ff898d1e5f6b3656c94d289121",
+    "tests/test_mimo_new_boot_recovery.py": "efb59923898b6315a2e3775b9d2a77eb8327ffd913414435c5a773831e825357"
+  },
+  "pins": {
+    "SovaCodex": "0.158.0",
+    "upstream": "064c6b8c737f5b41d171fdda80bd9ef10ad06eb3",
+    "context": 480000,
+    "auto": 400000,
+    "output": 65536,
+    "parallel": 1
+  },
+  "transition": "OLD_BOOT_HELD_NO_REQUEST",
+  "interface": "Existing reconcile-new-boot arguments; no new CLI flag; existing HELD:true and interrupted-running paths retained",
+  "contract": [
+    "HELD/schema2/request_hold exactly false/settlement None, full native+supervisor+proxy+guard identity joins, source-qualified old 480K manifest",
+    "Canonical LifecycleLease provenance and actual registered MountedStorageGuard/AnchoredRoot class identity",
+    "Original protected UTF-8 raw bytes and SHA256 for state/proxy/guard/selection/boot-scoped prior-manifest/prior-owner archived before exact byte checks and selection CAS under held canonical lease",
+    "Exact stopped original container/config/generation and absent proc/unit/cgroup/GPU/30012 plus stable different boot",
+    "Immutable exclusive archive and receipt then source-only selection amendment retaining generation; exclusive committed marker only after successful write/readback/storage/lease checks",
+    "Future recovery validates raw original archives, original source pin, immutable modes, marker hashes and FAILED_OR_UNKNOWN; normal startup retains physical/hardware guard and one-time consume",
+    "No original state/proxy/guard change, no old PID signal, no automatic rollback/retry/clear/reset/latch bypass"
+  ],
+  "checks": [
+    {
+      "label": "focused-tests-final",
+      "testsRun": 25,
+      "skipped": 0,
+      "actualExitCode": 0,
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "-m",
+        "unittest",
+        "discover",
+        "-s",
+        "tests",
+        "-p",
+        "test_mimo_new_boot_recovery.py",
+        "-v"
+      ],
+      "receiptSHA256": "aac15ba4e7a731ab754f229e7caf02b21121e03d36bdb0494ffb16635dd3a916",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "df2173fd746a78030a87f396c9ec8fe3c282fb59c9aca07b585aebd2b84bbfcb"
+    },
+    {
+      "label": "mimo-all-tests-final",
+      "testsRun": 254,
+      "skipped": 4,
+      "actualExitCode": 0,
+      "argv": [
+        "/usr/bin/python3",
+        "-B",
+        "../output/run-mimo-suite.py"
+      ],
+      "receiptSHA256": "2826fef3de971e6894c5518f65840ed0625d547474c8c56fa1833d637cf5c473",
+      "stdoutSHA256": "7721e1a2b770c220c0d94204438db0b9345ec32f2d181cf5e59e7d2a60d5a71e",
+      "stderrSHA256": "70fdcdcd866e7f1635456a10926ba15ce4002799b052de2deeefcac7e3bc2498"
+    },
+    {
+      "label": "source-syntax-final",
+      "testsRun": null,
+      "skipped": 0,
+      "actualExitCode": 0,
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "-c",
+        "import ast; from pathlib import Path; files=[\"scripts/runtime/mimo/owner.py\",\"tests/test_mimo_new_boot_recovery.py\"]; [ast.parse(Path(f).read_text(),filename=f) for f in files]; print(\"AST parse PASS\",files)"
+      ],
+      "receiptSHA256": "7b13bb81fdc6c7ee9ca38d8be77e676d0be48d9296e138897d980535f36e3ee2",
+      "stdoutSHA256": "bd597eeb68a57c556558438b5c7c37ac2103d72f3ff2840cd7403a014df168e9",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "label": "whitespace-final",
+      "testsRun": null,
+      "skipped": 0,
+      "actualExitCode": 0,
+      "argv": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "receiptSHA256": "e1b63ae3444ab6617234d956d46df567c1878eafc2fdade0d4db352c73528840",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "originalFailures": [
+    {
+      "label": "find-storage-classes",
+      "actualExitCode": 2
+    },
+    {
+      "label": "focused-tests-1",
+      "actualExitCode": 1
+    },
+    {
+      "label": "mimo-all-tests-1",
+      "actualExitCode": 1
+    },
+    {
+      "label": "mimo-all-tests-2",
+      "actualExitCode": 1
+    },
+    {
+      "label": "mimo-all-tests-3",
+      "actualExitCode": 1
+    },
+    {
+      "label": "source-commit",
+      "actualExitCode": 128
+    }
+  ],
+  "failureCorrections": {
+    "find-storage-classes": "Wrong nonexistent path scripts/storage.py; corrected read-only rg to actual scripts/install/storage_io.py",
+    "focused-tests-1": "1 failure/3 errors in fixtures: missing tick read seam and fake lease held tracking; corrected fixture only; final25 PASS",
+    "mimo-all-tests-1": "Discovery shadowed scripts/lifecycle with tests/lifecycle (52 errors); source package preloaded",
+    "mimo-all-tests-2": "tests/ lacks package initializer for -t .; discovery aborted before tests",
+    "mimo-all-tests-3": "Private runner did not place cwd on sys.path (14 errors); added explicit cwd plus genuine scripts source path; final254 run,4skip PASS",
+    "source-commit": "Author identity missing; corrected with command-local user.name/email only; no global/shared git config change"
+  },
+  "rootDecisions": {
+    "filesObserved": 0,
+    "mandatoryBoundariesAcknowledged": "before implementation/edit, each focused group, before export; original JSON snapshots retained"
+  },
+  "selectedPredecessor": {
+    "originalStdoutSHA256": "fd719c43f9b74a7cbf791aa67e57b75ee7d65719e16ba2d5e0cf0d38e09cbee0",
+    "goId": "H044-GENERAL-INVENTORY-02",
+    "adoption": "Historical root-reviewed passive inputs only; spent GO not used by worker"
+  },
+  "limits": [
+    "No Linux/SSH access or native generation/load/deployment. No current physical/readback/lifecycle/480K qualification",
+    "Full saved guard/source/manifest byte chain not present in approved projection; real HELD:false eligibility must be evaluated later under distinct root GO",
+    "Four existing opt-in private-capture checks skipped; no credentials or current live captures supplied",
+    "Native CLI/wrapper/outer exits and final descendant absence are collected by coordinator only after this worker closes; no prospective exit claims",
+    "Initial bootstrap tool reads and recorder installation predate private command ledger; native event record retains their calls/results, but their independent child birth/UTC/reap metadata was not captured"
+  ]
+}
