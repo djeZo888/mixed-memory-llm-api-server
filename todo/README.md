@@ -4,6 +4,18 @@ This is the compact index of future work. A linked plan describes intended work;
 it does not establish that the feature is implemented or deployed.
 Current release evidence remains in the [project README](../README.md).
 
+- **[redraw architecture and execution flows](sova-v2-foundation.md#1-redraw-architecture-and-flow-according-to-the-current-design)**
+  — distinguish the current deployment, intended design and proposed V2;
+  define independent working units, reuse decisions and simplicity constraints.
+- **[configurational architecture: define configuration files](sova-v2-foundation.md#2-configurational-architecture-define-configuration-files)**
+  — schemas, ownership, examples, validation and separation of intent, secrets
+  and runtime state.
+- **[define intra-communication protocols](sova-v2-foundation.md#3-define-intra-communication-protocols)**
+  — versioned interfaces, identifiers, events, errors, retries and settlement.
+- **[list tests, write tests, create an execution system](sova-v2-foundation.md#4-list-tests-write-tests-create-an-execution-system)**
+  — component, contract and real user-workflow acceptance with reproducible
+  execution. These four planning items were added on 2 October; a V2 rebuild
+  remains a proposal pending agreement on its design.
 - **[context compaction reliability](context-compaction-reliability.md)** —
   first priority: Qwen baseline, exact technical retention, repeated cycles,
   durable source recovery and fault handling.
