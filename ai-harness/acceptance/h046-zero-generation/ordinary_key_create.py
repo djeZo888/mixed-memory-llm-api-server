@@ -21,12 +21,12 @@ import time
 
 from key_inventory import (SOURCE_PATHS, InventoryError, absolute, ancestry, bounded_read,
                            canonical, file_metadata, identity, need,
-                           observe_process)
+                           observe_process, observe_remote_owners)
 
 FIELDS = {'schema', 'status', 'approvedBy', 'authority', 'goId', 'issuedUtc',
           'notBeforeUtc', 'dispatchCutoffUtc', 'expiresUtc', 'invocations',
           'retries', 'counts', 'sourceCommit', 'helper', 'helperFiles',
-          'sourceFiles', 'keyInventory', 'application', 'generalOwners',
+          'sourceFiles', 'keyInventory', 'application', 'generalOwners', 'remoteOwnerObservation',
           'protectedFiles', 'ordinaryAbsenceReview', 'target', 'claim'}
 SCHEMA = 'h046-ordinary-key-create-go-v1'
 
@@ -55,6 +55,8 @@ def timestamp(value):
 
 def private(path, uid, exact_size=None, cap=1048576):
     p = absolute(str(path)); ancestry(p.parent, (0, uid))
+    parent = identity(p.parent)
+    need(parent['uid'] == uid and parent['mode'] == 0o700, 'private input requires exact owned private700 parent')
     before = identity(p)
     need(before['uid'] == uid and before['mode'] == 0o600 and before['nlink'] == 1,
          'root GO/key/inventory requires private600 owner and single inode')
@@ -115,7 +117,7 @@ def validate_body(b, now, helper_path, helper_sha):
          'exact current ordinary service unit required')
     need(set(b['target']) == {'path', 'parentIdentity', 'uid', 'gid'} and
          b['target']['uid'] == b['application']['owner']['uid'] and
-         b['target']['gid'] == b['application']['owner']['gid'] and b['target']['uid'] > 0,
+         b['target']['gid'] == b['application']['owner']['gid'] and b['target']['uid'] == b['target']['gid'] == 1000,
          'ordinary service target owner required')
     need(set(b['claim']) == {'path', 'parentIdentity'} and
          Path(b['claim']['path']).name == b['goId'] + '.ordinary-key-create.claim.json',
@@ -214,8 +216,11 @@ def execute(body, now=None):
     owner = observe_owner(body['application']['owner'])
     need(owner['bootId'] == packet['owner']['bootId'] and owner == packet['owner'],
          'current owner differs from original inventory')
-    for expected in body['generalOwners'].values():
-        need(observe_owner(expected)['bootId'] == owner['bootId'], 'general model boot mismatch')
+    policy = body['remoteOwnerObservation']
+    need(policy['purpose'] == 'ordinary-key-create' and policy['sourceCommit'] == body['sourceCommit'] and
+         policy['bindingId'] == body['goId'] and policy['afterAnchor'] == body['target']['path'],
+         'remote root original policy differs from key creation GO')
+    observe_remote_owners(body['generalOwners'], policy, 'before')
     protected = body['protectedFiles']
     need(isinstance(protected, list) and all(set(x) == {'path', 'identity'} for x in protected),
          'exact original protected-file inode packet required')
@@ -249,8 +254,7 @@ def execute(body, now=None):
         'claimedAtUtc': dt.datetime.now(dt.timezone.utc).isoformat()}), 0, 0)
     need(time.time() < timestamp(body['dispatchCutoffUtc']), 'dispatch elapsed after once-only claim')
     observe_owner(body['application']['owner'])
-    for expected in body['generalOwners'].values():
-        observe_owner(expected)
+    observe_remote_owners(body['generalOwners'], policy, 'before')
     for ref in body['helperFiles'] + body['sourceFiles']:
         reference(ref)
     need(identity(body['application']['unitFile']) == packet['unit']['identity'],
@@ -269,8 +273,7 @@ def execute(body, now=None):
     for ref in protected:
         need(identity(ref['path']) == ref['identity'], 'protected original changed during creation')
     observe_owner(body['application']['owner'])
-    for expected in body['generalOwners'].values():
-        observe_owner(expected)
+    observe_remote_owners(body['generalOwners'], policy, 'after')
     return {'schema': 'h046-ordinary-key-create-receipt-v1', 'status': 'CREATED',
             'goId': body['goId'], 'sourceCommit': body['sourceCommit'],
             'ordinaryKey': created, 'nativeEvidenceKey': native,

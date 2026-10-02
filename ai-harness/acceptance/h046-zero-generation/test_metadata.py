@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 """Offline original-ledger and current-owner guard fixtures; no live action."""
+import copy
+import datetime as dt
 import hashlib
 import importlib.util
 import json
@@ -9,6 +11,9 @@ import re
 import sqlite3
 import tempfile
 import unittest
+from types import SimpleNamespace
+
+import key_inventory as inventory
 from unittest.mock import patch
 
 HERE = Path(__file__).resolve().parent
@@ -168,6 +173,105 @@ class MetadataFixtures(unittest.TestCase):
     def test_duplicate_and_nonfinite_json_denied(self):
         for raw in (b'{"x":1,"x":2}', b'{"x":NaN}'):
             with self.assertRaises(metadata.Refused): metadata.strict_json(raw)
+
+
+
+class RemoteTopology(unittest.TestCase):
+    def fixture(self):
+        now = 1780401600.0
+        executable = {'path': '/opt/reviewed/llama-server', 'sha256': '2' * 64,
+                      'identity': {'dev': 1, 'ino': 2, 'uid': 1000, 'gid': 1000,
+                                   'mode': 0o755, 'nlink': 1, 'size': 123, 'mtimeNs': 111, 'ctimeNs': 222}}
+        source = dict(executable, path='/opt/reviewed/run-engine.sh', sha256='3' * 64)
+        owners = {name: {'bootId': '12345678-1234-1234-1234-123456789abc',
+                  'uid': 1000, 'pid': pid, 'startTicks': str(pid * 10), 'pgid': pid,
+                  'cgroupPath': '/models/' + name, 'executable': executable,
+                  'cmdlineSha256': '4' * 64, 'sourceFiles': {'launcher': source}}
+                  for name, pid in [('qwen1', 1111), ('qwen2', 2222), ('mimo', 3333)]}
+        policy = {'schema': 'h046-root-remote-owner-policy-v1', 'purpose': 'native-carrier',
+                  'localHost': 'aiharness', 'remoteHost': 'ai-vm', 'kernelHost': 'aivm',
+                  'sourceCommit': '1' * 40, 'bindingId': 'a' * 64,
+                  'collectorSha256': hashlib.sha256(b'READ_ONLY_SOURCE_FIXTURE').hexdigest(),
+                  'sshArgv': ['/usr/bin/ssh', '-o', 'BatchMode=yes', '-o', 'ForwardAgent=no',
+                              '-o', 'ClearAllForwardings=yes', 'ai-vm', 'python3 -I -B -'],
+                  'beforePath': '/root-originals/' + 'a' * 64 + '.before.remote-original.json',
+                  'afterPath': '/root-originals/' + 'a' * 64 + '.after.remote-original.json',
+                  'afterAnchor': '/proof/channel-scope-terminal.json',
+                  'clockDomain': 'ai-harness-realtime-utc'}
+        packet = {'schema': 'h046-root-remote-owner-original-v1', 'stage': 'before',
+                  'policySha256': hashlib.sha256(inventory.canonical(policy)).hexdigest(),
+                  'startedUtc': dt.datetime.fromtimestamp(now - 2, dt.timezone.utc).isoformat(),
+                  'finishedUtc': dt.datetime.fromtimestamp(now - 1, dt.timezone.utc).isoformat(),
+                  'argv': policy['sshArgv'], 'actualExitCode': 0,
+                  'stdin': 'READ_ONLY_SOURCE_FIXTURE',
+                  'stdout': inventory.canonical({'host': 'ai-vm', 'kernelHost': 'aivm', 'owners': owners}).decode(),
+                  'stderr': '', 'anchor': None}
+        return now, owners, policy, packet
+
+    def observe(self, owners, policy, packet, now, stage='before'):
+        with patch.object(inventory, 'root_original', return_value=inventory.canonical(packet)), \
+             patch.object(inventory.os, 'uname', return_value=SimpleNamespace(nodename='aiharness')), \
+             patch.object(inventory.time, 'time', return_value=now), \
+             patch.object(inventory, 'observe_process', side_effect=AssertionError('foreign PID in local proc')):
+            return inventory.observe_remote_owners(owners, policy, stage)
+
+    def test_local_app_and_three_remote_models_never_share_proc_or_boot(self):
+        now, owners, policy, packet = self.fixture()
+        observed = self.observe(owners, policy, packet, now)
+        self.assertEqual(set(observed), {'qwen1', 'qwen2', 'mimo'})
+        self.assertTrue(all(v['host'] == 'ai-vm' for v in observed.values()))
+        app = {'bootId': 'different-local-boot', 'uid': 1000, 'pid': 5555,
+               'startTicks': '999', 'pgid': 5555, 'cgroupPath': '/app.slice/ai-harness.service'}
+        helper = HERE / 'key_inventory.py'
+        value = {'appSourceCommit': policy['sourceCommit'], 'controlRunId': policy['bindingId'],
+                 'output': '/proof', 'fileGraph': {str(helper): metadata.sha(helper.read_bytes())},
+                 'metadata': {'application': {'unit': 'ai-harness.service',
+                     'unitFile': '/home/user/.config/systemd/user/ai-harness.service', 'owner': app},
+                     'generalOwners': owners, 'remoteOwnerObservation': policy,
+                     'database': {'path': '/home/user/.local/share/ai-harness/harness.sqlite'},
+                     'protectedFiles': [{'path': '/protected', 'identity': {}}]}}
+        with patch.object(metadata.os, 'getuid', return_value=1000), \
+             patch.object(metadata.os, 'geteuid', return_value=1000), \
+             patch.object(metadata, 'observe_owner', return_value=app) as local, \
+             patch.object(metadata, 'observe_unit', return_value={}), \
+             patch.object(metadata, 'observe_protected', return_value={'path': '/protected', 'identity': {}}), \
+             patch.object(metadata, 'observe_database', return_value=({}, {}, [], {}, {})), \
+             patch.object(metadata, 'observe_remote_owners', return_value=observed) as remote:
+            before = metadata.snapshot(value, 'before')
+            after = metadata.snapshot(value, 'after')
+        self.assertEqual(before, after)
+        self.assertEqual(before['identity']['applicationHost'], 'ai-harness')
+        self.assertEqual([call.args[0]['pid'] for call in local.call_args_list], [5555] * 4)
+        self.assertEqual([call.args[2] for call in remote.call_args_list], ['before', 'before', 'after', 'after'])
+
+    def test_wrong_remote_host_boot_birth_source_or_original_exit_refused(self):
+        now, owners, policy, packet = self.fixture()
+        for change in ('host', 'bootId', 'startTicks', 'executable', 'exit', 'source'):
+            altered = copy.deepcopy(packet); observed = inventory.remote_json(altered['stdout'].encode())
+            if change == 'host': observed['kernelHost'] = 'aiharness'
+            elif change == 'exit': altered['actualExitCode'] = True
+            elif change == 'source': altered['stdin'] = 'OTHER_SOURCE'
+            elif change == 'executable': observed['owners']['qwen1']['executable']['sha256'] = '0' * 64
+            else: observed['owners']['qwen1'][change] = 'wrong'
+            altered['stdout'] = inventory.canonical(observed).decode()
+            with self.subTest(change=change), self.assertRaises(inventory.InventoryError):
+                self.observe(owners, policy, altered, now)
+
+    def test_distinct_after_original_must_start_after_exact_owned_shutdown(self):
+        now, owners, policy, packet = self.fixture()
+        with self.assertRaises(inventory.InventoryError): self.observe(owners, policy, packet, now, 'after')
+        after = dict(packet, stage='after', anchor={'path': policy['afterAnchor'],
+                        'sha256': hashlib.sha256(b'GENUINE_ORIGINAL_FIXTURE').hexdigest()})
+        with patch.object(inventory, 'absolute', return_value=Path(policy['afterAnchor'])), \
+             patch.object(inventory, 'bounded_read', return_value=b'GENUINE_ORIGINAL_FIXTURE'), \
+             patch.object(Path, 'stat', return_value=SimpleNamespace(st_mtime=now - 3)):
+            self.assertEqual(self.observe(owners, policy, after, now, 'after'),
+                             self.observe(owners, policy, packet, now))
+            with self.assertRaises(inventory.InventoryError): self.observe(owners, policy, after, now - 3, 'after')
+        with patch.object(inventory, 'identity', return_value={'uid': 1000, 'mode': 0o600, 'nlink': 1}), \
+             patch.object(inventory, 'absolute', return_value=Path('/fixture/original')), \
+             patch.object(inventory, 'ancestry'):
+            with self.assertRaises(inventory.InventoryError): inventory.root_original('/fixture/original')
 
 
 if __name__ == '__main__':

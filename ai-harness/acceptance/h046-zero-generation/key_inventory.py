@@ -8,12 +8,14 @@ by the current service unit/current process are recognized ordinary key paths.
 This inventory does not assert absence outside that finite recognized scope.
 """
 import argparse
+import datetime as dt
 import hashlib
 import json
 import os
 from pathlib import Path
 import shlex
 import stat
+import time
 
 SOURCE_PATHS = ('deploy/run-server.sh', 'deploy/run-codex.sh',
                 'deploy/engine/codex_receipts.py', 'server/src/main.ts',
@@ -130,6 +132,156 @@ def observe_process(pid, proc_root=Path('/proc')):
          'owner birth changed during inventory')
     return result
 
+
+
+REMOTE_OWNER_FIELDS = {'bootId', 'uid', 'pid', 'startTicks', 'pgid', 'cgroupPath',
+                       'executable', 'cmdlineSha256', 'sourceFiles'}
+REMOTE_POLICY_FIELDS = {'schema', 'purpose', 'localHost', 'remoteHost', 'kernelHost',
+                        'sourceCommit', 'bindingId', 'collectorSha256', 'sshArgv',
+                        'beforePath', 'afterPath', 'afterAnchor', 'clockDomain'}
+
+
+def root_original(filename):
+    """Root-frozen, nonsecret observation; never an SSH credential/key reader."""
+    p = absolute(filename)
+    ancestry(p.parent, (0,))
+    before = identity(p)
+    need(before['uid'] == 0 and before['mode'] in (0o600, 0o640, 0o644) and
+         before['nlink'] == 1, 'remote original must be immutable to app UID1000')
+    raw = bounded_read(p, 1048576)
+    need(identity(p) == before, 'root remote original changed')
+    return raw
+
+
+def remote_json(raw):
+    def pairs(items):
+        result = {}
+        for key, value in items:
+            need(key not in result, 'duplicate remote original JSON key')
+            result[key] = value
+        return result
+    return json.loads(raw.decode('utf-8', errors='strict'), object_pairs_hook=pairs,
+                      parse_constant=lambda _: (_ for _ in ()).throw(InventoryError('nonfinite remote original')))
+
+
+def utc(value):
+    parsed = dt.datetime.fromisoformat(value.replace('Z', '+00:00'))
+    need(parsed.utcoffset() == dt.timedelta(0), 'remote original requires UTC')
+    return parsed.timestamp()
+
+
+def observe_remote_owners(expected, policy, stage='before', originals=None):
+    """Consume finite root SSH ORIGINALS. Foreign PIDs never enter local /proc.
+
+    Root collects/publishes one immutable original immediately before the
+    carrier, and a different original after its owned shutdown. This helper
+    does not start a collector, use SSH, create a key, or qualify native receipts.
+    """
+    need(isinstance(expected, dict) and set(expected) == {'qwen1', 'qwen2', 'mimo'},
+         'exact three remote model owners required')
+    need(isinstance(policy, dict) and set(policy) == REMOTE_POLICY_FIELDS and
+         policy['schema'] == 'h046-root-remote-owner-policy-v1' and
+         policy['purpose'] in ('native-carrier', 'ordinary-key-create') and
+         policy['localHost'] == 'aiharness' and policy['remoteHost'] == 'ai-vm' and
+         policy['clockDomain'] == 'ai-harness-realtime-utc' and
+         os.uname().nodename == policy['localHost'] and
+         isinstance(policy['kernelHost'], str) and policy['kernelHost'] != policy['localHost'] and
+         len(policy['kernelHost']) <= 128 and
+         len(policy['bindingId']) == 64 and all(c in '0123456789abcdef' for c in policy['bindingId']) and
+         len(policy['sourceCommit']) == 40 and all(c in '0123456789abcdef' for c in policy['sourceCommit']) and
+         len(policy['collectorSha256']) == 64 and all(c in '0123456789abcdef' for c in policy['collectorSha256']),
+         'exact local ai-harness / remote ai-vm source-bound policy required')
+    need(stage in ('before', 'after') and policy['beforePath'] != policy['afterPath'],
+         'distinct before/after remote originals required')
+    for phase in ('before', 'after'):
+        need(Path(policy[phase + 'Path']).name == policy['bindingId'] + '.' + phase + '.remote-original.json',
+             'finite binding-specific remote original slot required')
+    argv = policy['sshArgv']
+    need(isinstance(argv, list) and 3 <= len(argv) <= 64 and argv[0].endswith('/ssh') and
+         all(isinstance(x, str) and x and not any(ord(c) < 32 for c in x) for x in argv) and
+         'BatchMode=yes' in argv and 'ForwardAgent=no' in argv and
+         'ClearAllForwardings=yes' in argv, 'root original requires exact nonforwarding SSH argv')
+    # A bounded read-only grace allows root's already-authorized finite collector
+    # to publish the after original after the existing scope-terminal marker.
+    deadline = time.monotonic() + (2 if stage == 'after' else 0)
+    while True:
+        try:
+            raw = root_original(policy[stage + 'Path']); break
+        except FileNotFoundError:
+            if time.monotonic() >= deadline:
+                raise InventoryError('fresh root remote original unavailable')
+            time.sleep(0.05)
+    packet = remote_json(raw)
+    need(isinstance(packet, dict) and set(packet) == {'schema', 'stage', 'policySha256',
+         'startedUtc', 'finishedUtc', 'argv', 'actualExitCode', 'stdin', 'stdout', 'stderr', 'anchor'} and
+         packet['schema'] == 'h046-root-remote-owner-original-v1' and packet['stage'] == stage and
+         packet['policySha256'] == hashlib.sha256(canonical(policy)).hexdigest() and
+         packet['argv'] == argv and type(packet['actualExitCode']) is int and
+         packet['actualExitCode'] == 0 and
+         isinstance(packet['stdin'], str) and isinstance(packet['stdout'], str) and
+         isinstance(packet['stderr'], str) and
+         hashlib.sha256(packet['stdin'].encode()).hexdigest() == policy['collectorSha256'],
+         'root SSH original/source/policy/actual integer exit mismatch')
+    now = time.time(); started = utc(packet['startedUtc']); finished = utc(packet['finishedUtc'])
+    need(started <= finished <= now and now - started <= (30 if stage == 'before' else 60),
+         'remote original is stale/future or collection was not immediate')
+    if stage == 'before':
+        need(packet['anchor'] is None, 'before observation cannot claim shutdown')
+    else:
+        anchor = absolute(policy['afterAnchor'])
+        if policy['purpose'] == 'native-carrier':
+            need(anchor.name == 'channel-scope-terminal.json', 'exact original owned shutdown anchor required')
+            anchor_raw = bounded_read(anchor, 65536)
+            need(packet['anchor'] == {'path': str(anchor), 'sha256': hashlib.sha256(anchor_raw).hexdigest()},
+                 'remote after original is not bound to owned shutdown original')
+        else:
+            need(packet['anchor'] == {'path': str(anchor), 'identity': identity(anchor)} and
+                 file_metadata(anchor, 1000).get('protected32B') is True,
+                 'remote after original is not bound to exact ordinary32B creation')
+        need(anchor.stat().st_mtime <= started <= anchor.stat().st_mtime + 5,
+             'remote after collection must start immediately after owned action closure')
+    if originals is not None:
+        captured = {'path': policy[stage + 'Path'], 'sha256': hashlib.sha256(raw).hexdigest(),
+                    'rawUtf8': raw.decode('utf-8')}
+        need(not originals or originals == captured, 'root original replaced during bounded snapshot')
+        originals.update(captured)
+    observed = remote_json(packet['stdout'].encode())
+    need(isinstance(observed, dict) and set(observed) == {'host', 'kernelHost', 'owners'} and
+         observed['host'] == 'ai-vm' and observed['kernelHost'] == policy['kernelHost'] and
+         isinstance(observed['owners'], dict) and set(observed['owners']) == set(expected),
+         'actual remote SSH host / kernel host / three owners mismatch')
+    boots = set()
+    for name, owner in expected.items():
+        need(isinstance(owner, dict) and set(owner) == REMOTE_OWNER_FIELDS and
+             type(owner['uid']) is int and owner['uid'] >= 0 and
+             type(owner['pid']) is int and owner['pid'] > 0 and
+             type(owner['pgid']) is int and owner['pgid'] > 0 and
+             isinstance(owner['startTicks'], str) and owner['startTicks'].isdigit() and
+             isinstance(owner['bootId'], str) and len(owner['bootId']) == 36 and
+             isinstance(owner['cgroupPath'], str) and owner['cgroupPath'].startswith('/') and
+             isinstance(owner['executable'], dict) and set(owner['executable']) == {'path', 'sha256', 'identity'} and
+             isinstance(owner['sourceFiles'], dict) and 1 <= len(owner['sourceFiles']) <= 16 and
+             len(owner['cmdlineSha256']) == 64 and all(c in '0123456789abcdef' for c in owner['cmdlineSha256']),
+             'complete remote kernel/executable/source owner required')
+        for source in [owner['executable'], *owner['sourceFiles'].values()]:
+            need(set(source) == {'path', 'sha256', 'identity'} and
+                 isinstance(source['path'], str) and source['path'].startswith('/') and
+                 len(source['sha256']) == 64 and all(c in '0123456789abcdef' for c in source['sha256']) and
+                 isinstance(source['identity'], dict) and
+                 set(source['identity']) == {'dev', 'ino', 'uid', 'gid', 'mode', 'nlink', 'size', 'mtimeNs', 'ctimeNs'} and
+                 all(type(v) is int for v in source['identity'].values()) and
+                 source['identity'].get('uid') in (0, owner['uid']) and
+                 type(source['identity'].get('mode')) is int and not source['identity']['mode'] & 0o022 and
+                 source['identity'].get('nlink') == 1,
+                 'remote executable/source identity must be exact protected original')
+        need(observed['owners'][name] == owner, 'actual remote boot/birth/group/cgroup/executable/source changed')
+        boots.add(owner['bootId'])
+    need(len(boots) == 1 and len({v['pid'] for v in expected.values()}) == 3,
+         'three distinct owners must share ai-vm boot domain')
+    # Stable identity only: temporal original hashes stay in root's original
+    # files, reviewed before signing; they must not break frozen before/after joins.
+    return {name: dict(host='ai-vm', kernelHost=policy['kernelHost'], **owner)
+            for name, owner in observed['owners'].items()}
 
 def unit_options(raw):
     text = raw.decode('utf-8', errors='strict')

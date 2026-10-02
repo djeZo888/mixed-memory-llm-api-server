@@ -23,6 +23,8 @@ import stat
 import subprocess
 import time
 
+from key_inventory import InventoryError, observe_remote_owners
+
 MAX_ROWS = 200000
 MAX_BYTES = 64 * 1024 * 1024
 FILE_FIELDS = ('dev', 'ino', 'uid', 'gid', 'mode', 'nlink')
@@ -273,13 +275,26 @@ def observe_database(spec):
         connection.close()
 
 
-def snapshot(input_value):
+def snapshot(input_value, stage='before', originals=None):
     spec = input_value.get('metadata', input_value)
-    need(isinstance(spec, dict) and set(spec) == {'application', 'generalOwners', 'database', 'protectedFiles'}, 'exact metadata specification required')
+    need(isinstance(spec, dict) and set(spec) == {'application', 'generalOwners', 'remoteOwnerObservation', 'database', 'protectedFiles'}, 'exact metadata specification required')
+    need(os.getuid() == os.geteuid() == 1000 and spec['application']['owner']['uid'] == 1000 and
+         spec['application']['unit'] == 'ai-harness.service' and
+         spec['application']['unitFile'] == '/home/user/.config/systemd/user/ai-harness.service' and
+         spec['database']['path'] == '/home/user/.local/share/ai-harness/harness.sqlite',
+         'exact UID1000 local application/unit/database required')
+    helper = Path(__file__).with_name('key_inventory.py').resolve()
+    need(input_value.get('fileGraph', {}).get(str(helper)) == sha(helper.read_bytes()),
+         'remote observation helper omitted from frozen source graph')
+    need(spec['remoteOwnerObservation']['purpose'] == 'native-carrier' and
+         spec['remoteOwnerObservation']['sourceCommit'] == input_value['appSourceCommit'] and
+         spec['remoteOwnerObservation']['bindingId'] == input_value['controlRunId'] and
+         spec['remoteOwnerObservation']['afterAnchor'] == str(Path(input_value['output']) / 'channel-scope-terminal.json'),
+         'remote original policy differs from exact carrier input')
     application = observe_owner(spec['application']['owner'])
     unit = observe_unit(spec['application'], application)
     need(set(spec['generalOwners']) == {'qwen1', 'qwen2', 'mimo'}, 'all three general owners required')
-    general = {name: observe_owner(owner) for name, owner in spec['generalOwners'].items()}
+    general = observe_remote_owners(spec['generalOwners'], spec['remoteOwnerObservation'], stage, originals)
     need(isinstance(spec['protectedFiles'], list) and 1 <= len(spec['protectedFiles']) <= 32,
          'protected original credential/key inodes required')
     protected = []
@@ -288,13 +303,14 @@ def snapshot(input_value):
     database, sequence, request_ids, retained, counts = observe_database(spec['database'])
     need(observe_owner(application) == application and observe_unit(spec['application'], application) == unit,
          'application changed during snapshot')
-    for name, owner in general.items():
-        need(observe_owner(owner) == owner, 'general owner changed during snapshot')
+    need(observe_remote_owners(spec['generalOwners'], spec['remoteOwnerObservation'], stage, originals) == general,
+         'root original remote owners changed during snapshot')
     for item in protected:
         again = observe_protected({'path': item['path'], 'identity': item['identity']}, spec['database']['path'])
         need(again == item, 'protected inode/absence changed during snapshot')
     return {'schema': 'legacy-gateway-retained-id-observation-v1',
-            'identity': {'applicationOwner': application, 'unit': unit, 'database': database,
+            'identity': {'applicationHost': 'ai-harness', 'applicationKernelHost': 'aiharness',
+                         'applicationOwner': application, 'unit': unit, 'database': database,
                          'admissionSequence': sequence, 'protectedOriginals': protected},
             'requestIds': request_ids, 'retainedRecords': retained, 'counts': counts,
             'nativeOwners': general}
@@ -305,8 +321,21 @@ def main():
     parser.add_argument('--input', required=True); parser.add_argument('--output', required=True)
     args = parser.parse_args()
     try:
-        result = snapshot(strict_json(private_read(path(args.input), 262144)))
+        input_value = strict_json(private_read(path(args.input), 262144))
         output = path(args.output); ancestry(output.parent, True)
+        allowed = {str(Path(input_value['output']) / name): stage for name, stage in
+                   [('driver-preflight.json', 'before'), ('gateway-before.json', 'before'),
+                    ('gateway-after.json', 'after'), ('driver-postflight.json', 'after')]}
+        need(str(output) in allowed, 'only exact frozen carrier/driver snapshot paths permitted')
+        originals = {}
+        result = snapshot(input_value, allowed[str(output)], originals)
+        original_output = Path(str(output) + '.remote-original.json')
+        fd = os.open(original_output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+        try:
+            with os.fdopen(os.dup(fd), 'wb') as stream:
+                stream.write(canonical(originals) + b'\n'); stream.flush(); os.fsync(stream.fileno())
+        finally:
+            os.close(fd)
         raw = canonical(result) + b'\n'; need(len(raw) <= 8 * 1024 * 1024, 'snapshot output exceeds bound')
         fd = os.open(output, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
         try:
@@ -319,7 +348,7 @@ def main():
             os.close(fd)
         print(json.dumps({'status': 'READ_ONLY_ORIGINALS', 'sha256': sha(raw), 'bytes': len(raw)}))
         return 0
-    except (Refused, OSError, ValueError, sqlite3.Error, subprocess.SubprocessError, KeyError, TypeError) as error:
+    except (Refused, InventoryError, OSError, ValueError, sqlite3.Error, subprocess.SubprocessError, KeyError, TypeError) as error:
         # Never print raw rows, unit stderr, environment, credentials or exception payloads.
         print(json.dumps({'status': 'REFUSED', 'errorClass': type(error).__name__}))
         return 2

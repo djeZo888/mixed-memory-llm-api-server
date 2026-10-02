@@ -44,3 +44,93 @@ python3 test_key_controls.py
 ```
 
 Fixtures cover protocol/effect bounds, ACK identity, caller-JSON rejection, complete legacy preservation/integer closure, finite HMAC/time/source/owner/claim guards, retained row changes, failed startup/teardown, and dedicated O_EXCL key control. An explicit signed `database.retainedUncertainOwners` list may retain only the exact interrupted uncertain rows; active/unlisted owners deny. Their original rows are hashed globally and in the complete retained session inventory, with no normalization or recovery. Failed initial fixture runs are preserved. Worker wrapper and outer actual integer closure receipts are produced by the coordinator after this native worker closes; this worker cannot truthfully attest its own future exit.
+
+
+## H04611 remote owner correction (source only)
+
+The app, user unit, database and native carrier are local to **ai-harness**
+(actual kernel hostname `aiharness`, UID1000). All three general model owners
+are on **ai-vm**. Their PIDs are never inspected in local `/proc`, and their
+boot ID is never compared to the application boot ID. Remote identity includes
+boot/PID/kernel birth/PGID/cgroup, command-line SHA256, executable bytes/inode,
+and each exact root-reviewed model launcher/config source bytes/inode.
+
+Read-only13:12–13:13UTC observations found no ordinary-user standard
+`id_ed25519`, `id_rsa` or `known_hosts` on ai-harness; `ai-vm` did not resolve
+there. This finite finding does not assert whole-host credential absence.
+The current run-engine source is local rootless Podman, with no SSH route.
+Accordingly this correction uses the explicitly authorized **root original
+remote observation** route. It does not create an SSH route or copy a secret.
+
+INPUT.metadata now requires `remoteOwnerObservation`; key-creation GO BODY
+requires the same member. Its exact fields are `schema`, `purpose`, `localHost`,
+`remoteHost`, `kernelHost`, `sourceCommit`, `bindingId`, `collectorSha256`,
+`sshArgv`, `beforePath`, `afterPath`, `afterAnchor`, `clockDomain`.
+Schema is `h046-root-remote-owner-policy-v1`; localHost=`aiharness`,
+remoteHost=`ai-vm`. Root fills the actual remote kernel hostname and exact
+existing SSH argv/credential provenance; argv includes BatchMode=yes,
+ForwardAgent=no and ClearAllForwardings=yes. No SSH client runs in these
+helpers. The stdin collector SHA binds the exact reviewed read-only collector
+including its three actual PIDs and finite source paths. The source-only
+probe template accompanies this phase's output; it reads no environment/key.
+
+For native-carrier purpose, sourceCommit equals INPUT.appSourceCommit,
+bindingId equals the fresh64hex INPUT.controlRunId, and afterAnchor equals
+INPUT.output/channel-scope-terminal.json. For ordinary-key-create purpose,
+these instead equal GO.sourceCommit, GO.goId and GO.target.path. Original slots
+are `<root-controlled-directory>/<bindingId>.before.remote-original.json`
+and the corresponding `.after.remote-original.json`. These nonsecret
+originals must be root-owned, single-link, immutable to UID1000, readable by the
+consumer, with protected root-owned ancestry. They are **not** root GO files;
+root GO remains root600 under root700. No new authentication key is introduced.
+
+Each slot is a once-created frozen JSON original containing exactly `schema`
+(`h046-root-remote-owner-original-v1`), `stage`, `policySha256` (canonical
+policy), `startedUtc`, `finishedUtc`, `argv`, `actualExitCode`, `stdin`, `stdout`,
+`stderr`, `anchor`. Preserve actual integer SSH exits and original stdin/stdout/
+stderr. stdout is `{host:"ai-vm",kernelHost:ACTUAL,owners:{qwen1,qwen2,mimo}}`.
+Each owner contains the six kernel fields plus `executable:{path,sha256,identity}`,
+`cmdlineSha256`, `sourceFiles:{LABEL:{path,sha256,identity}}`. All three births
+must match root's expected source-bound owners on one remote boot, with distinct
+PIDs. These originals qualify model preservation only; they never replace
+current native WeakSet provenance, ACKs, binary or independent owned absence.
+
+Use ai-harness realtime UTC for original invocation timestamps; root must
+establish that clock relationship before collection, rather than assume Mac
+and guest clocks agree. Before is collected within30s of use. After invocation
+must **start** after the copied terminal original's mtime and within5s of it;
+its same original may be consumed for60s across bounded ledger/parent checks.
+After anchor is `{path,sha256}` for the exact copied terminal original, or
+`{path,identity}` for the fully-written UID1000/private60032B ordinary key.
+A two-second read-only grace accommodates finite after publication; missing,
+stale, wrong-host/source/birth or pre-shutdown originals refuse. No collector
+service/observer is started. Root's finite before/after collection and
+nonsecret original publication need their own concrete operational authority.
+
+Four exact snapshot paths choose stages: driver-preflight.json and
+gateway-before.json use before; gateway-after.json and driver-postflight.json
+use after, all under INPUT.output. Arbitrary output paths deny. The imported
+key_inventory.py SHA must be in INPUT.fileGraph. Dynamic raw original capture
+and SHA are retained in adjacent private `.remote-original.json` sidecars;
+stable enriched nativeOwners alone enters frozen before/after equality.
+Do not put nonexistent future originals in the pre-dispatch fileGraph.
+
+Ordinary creation still requires separate finite root GO and wholly absent
+recognized ordinary paths. Target UID/GID is now exactly1000; root GO/root key
+and once-only root claim retain root private ownership. Native checkpoint and
+saved credentials are preserved. If post-creation observation fails, the
+command fails and root must inspect the once-spent claim/target; do not retry.
+No live key creation, native execution, inference or deployment occurred here.
+The canonical interpreter observed on ai-harness is `/usr/bin/python3.12`
+(SHA in original output); dormant argv must pin that real file, not its symlink.
+All live qualification remains **NOT_TESTED**.
+
+Focused correction checks (7 source checks; no build required):
+
+```
+python3 -B -m unittest -v test_metadata.RemoteTopology \
+  test_key_controls.KeyControls.test_exact_uid1000_private_key_and_root_go_roles \
+  test_key_controls.KeyControls.test_metadata_never_reads_keybytes_and_distinguishes_absence \
+  test_key_controls.KeyControls.test_private_fixture_write_is_exclusive_and_preserves_original \
+  test_key_controls.KeyControls.test_actual_cli_integer_exit_without_live_mutation
+```

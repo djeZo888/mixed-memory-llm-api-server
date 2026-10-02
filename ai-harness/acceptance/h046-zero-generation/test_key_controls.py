@@ -141,6 +141,22 @@ class KeyControls(unittest.TestCase):
         self.assertEqual(options['--codex-ordinary-entry-key'], root + '/private/ordinary.key')
         with self.assertRaises(inventory.InventoryError): inventory.unit_options(raw + raw)
 
+
+    def test_exact_uid1000_private_key_and_root_go_roles(self):
+        for uid, gid in [(1001, 1001), (0, 0), (1000, 1001)]:
+            value = body(); value['application']['owner'].update(uid=uid, gid=gid)
+            value['target'].update(uid=uid, gid=gid)
+            with self.subTest(uid=uid, gid=gid), self.assertRaises(inventory.InventoryError):
+                self.validate(value)
+        with patch.object(creator, 'identity', return_value={'uid': 1000, 'mode': 0o600, 'nlink': 1}), \
+             patch.object(creator, 'absolute', return_value=Path('/fixture/GO')), \
+             patch.object(creator, 'ancestry'):
+            with self.assertRaises(inventory.InventoryError): creator.private('/fixture/GO', 0)
+        with patch.object(creator, 'identity', return_value={'uid': 0, 'mode': 0o755}), \
+             patch.object(creator, 'absolute', return_value=Path('/fixture/key')), \
+             patch.object(creator, 'ancestry'):
+            with self.assertRaises(inventory.InventoryError): creator.check_parent('/fixture/key', {'uid': 0, 'mode': 0o755}, 0)
+
     def test_actual_cli_integer_exit_without_live_mutation(self):
         command = [sys.executable, str(Path(creator.__file__).resolve()), '--help']
         result = subprocess.run(command, capture_output=True, text=True, timeout=5)
