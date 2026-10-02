@@ -98,7 +98,7 @@
     "ocrBF16WeightBytesEstimate": 1800000000,
     "weightEstimateQualified": false,
     "kvAllocatorContextVisionPeak": "PENDING_EXACT_IMAGE_AND_MEASURED_TELEMETRY",
-    "scheduling": "one service job; one image prompt; serial crop calls; sequential residency alternative requires future owned stop/start review"
+    "scheduling": "Both BF16 model services remain concurrently resident; one finite service job with bounded serial OCR crops; no offload or sequential residency alternative."
   },
   "service": {
     "serviceId": "h043-technical-vision-candidate",
@@ -123,5 +123,41 @@
     "jobHistoryCap": 128,
     "privateLedgerBytes": 268435456,
     "hostIngress": "PENDING: reviewed fixed 10.156.100.60:18193 authenticated private bridge; loopback service never claims remote host availability"
+  },
+  "runtime02": {
+    "execution": "DISABLED",
+    "graphExport": "private output/RUNTIME-GRAPH.json",
+    "readOnlyGraphExport": "private output/READ-ONLY-TEMPLATE.json",
+    "sourceEntrypoint": "scripts/h043/vision_service_entrypoint.py",
+    "sourceProbe": "scripts/h043/vision_runtime_probe.py",
+    "rootCarrier": "AUTHENTIC_SIGNATURE_MISSING",
+    "ociPull": "SEPARATE_FINITE_ROOT_ACTION_ONLY",
+    "sourceOnlyAuthorityGrantsLiveActions": false,
+    "serviceUIDProposal": 1000,
+    "modelUIDProposal": 1000,
+    "uidArtifactCredentialAccess": "UNKNOWN_REQUIRES_ACTUAL_CONTEXT_CHECK",
+    "networkProposal": "new internal Docker bridge + bearer-authenticated loopback publications; no implicit pull",
+    "ingress": "fixed HTTP10.156.100.60:18193 compatible client requires root-reviewed authenticated private transport and exact firewall/client binding; disabled",
+    "savedReceiptCurrentRead": "UNKNOWN_DENIED_ORIGINAL_H040_RECEIPT_ADOPTED_HISTORICALLY",
+    "measurement": "resident weights+KV+hybrid+vision+allocator and actual job peaks; >=7% free; no nominal-fraction qualification",
+    "fullRawResponses": "original service private ledger checkpoints; configured alias alone not residency proof",
+    "ambiguousOutcome": "durable unsettled quarantine; no HTTP-close drain inference",
+    "normalHostWiring": "EXCLUDED_FROM_THIS_7FILE_SCOPE"
+  },
+  "runtime03": {
+    "execution": "DISABLED_NO_CURRENT_ROOT_GO",
+    "graphExport": "private output/RUNTIME-GRAPH.json",
+    "sourceHelpers": "scripts/h044/vision_runtime",
+    "sourceOnly": true,
+    "normalFactory": "R_EXCLUSIVE_NARROW_CONTRACT_REQUIRED",
+    "serviceUid": 1000,
+    "credentialBoundary": "signed nonsecret stdin ticket; root launches actual UID1000 workload/service/ingress; only service UID reads its bearer leaves",
+    "pins": {
+      "native": "0.158.0",
+      "upstream": "064c",
+      "context": 480000,
+      "auto": 400000,
+      "output": 65536
+    }
   }
 }
