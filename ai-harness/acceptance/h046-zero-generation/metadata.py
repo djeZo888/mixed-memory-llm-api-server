@@ -13,10 +13,12 @@ exact bootId/uid/pid/startTicks/pgid/cgroupPath. File identity is exact
 dev/ino/uid/gid/mode/nlink (integer permission bits). Secrets are never read.
 """
 import argparse
+import grp
 import hashlib
 import json
 import os
 from pathlib import Path
+import pwd
 import re
 import sqlite3
 import stat
@@ -28,6 +30,7 @@ from key_inventory import InventoryError, observe_remote_owners
 MAX_ROWS = 200000
 MAX_BYTES = 64 * 1024 * 1024
 FILE_FIELDS = ('dev', 'ino', 'uid', 'gid', 'mode', 'nlink')
+ANCESTOR_FIELDS = (*FILE_FIELDS, 'size', 'mtimeNs', 'ctimeNs')
 OWNER_FIELDS = ('bootId', 'uid', 'pid', 'startTicks', 'pgid', 'cgroupPath')
 
 
@@ -68,12 +71,78 @@ def path(value):
     return result
 
 
-def ancestry(value, private=False):
+def ancestor_identity(info):
+    return dict(zip(ANCESTOR_FIELDS, (info.st_dev, info.st_ino, info.st_uid,
+                info.st_gid, stat.S_IMODE(info.st_mode), info.st_nlink,
+                info.st_size, info.st_mtime_ns, info.st_ctime_ns)))
+
+
+def observe_private_group_ancestor(value, info, approval):
+    """Observe only; control binds this INPUT member to root HMAC before launch.
+
+    INPUT.privateGroupAncestor is {path, identity}; identity has all nine
+    ANCESTOR_FIELDS. Caller-supplied account/group claims are never evidence.
+    """
+    need(isinstance(approval, dict) and set(approval) == {'path', 'identity'} and
+         approval['path'] == str(value) == '/home/user/.local' and
+         os.getuid() == os.geteuid() == 1000, 'exact private-group ancestor required')
+    expected = approval['identity']
+    need(isinstance(expected, dict) and set(expected) == set(ANCESTOR_FIELDS) and
+         all(type(v) is int for v in expected.values()) and
+         expected['uid'] == expected['gid'] == 1000 and expected['mode'] == 0o775,
+         'exact private-group descriptor required')
+    need(path(str(value)) == value and stat.S_ISDIR(info.st_mode) and
+         ancestor_identity(info) == expected, 'private-group ancestor changed')
+    fd = os.open(value, os.O_RDONLY | os.O_DIRECTORY | os.O_NOFOLLOW)
+    try:
+        opened = os.fstat(fd)
+        need(stat.S_ISDIR(opened.st_mode) and ancestor_identity(opened) == expected,
+             'private-group named FD changed')
+        accounts = pwd.getpwall()
+        members = [p for p in accounts if p.pw_gid == 1000 or p.pw_uid == 1000]
+        def account(p):
+            return (p.pw_name, p.pw_uid, p.pw_gid, p.pw_dir)
+        ordinary = ('user', 1000, 1000, '/home/user')
+        need([account(p) for p in members] == [ordinary] and
+             account(pwd.getpwuid(1000)) == account(pwd.getpwnam('user')) == ordinary,
+             'private-group primary membership changed')
+        def group(g):
+            return (g.gr_name, g.gr_gid, tuple(g.gr_mem))
+        current = grp.getgrgid(1000)
+        need(current.gr_name == 'user' and current.gr_gid == 1000 and
+             list(current.gr_mem) in ([], ['user']) and
+             group(grp.getgrnam('user')) == group(current) and
+             [group(g) for g in grp.getgrall() if g.gr_gid == 1000 or
+              g.gr_name == 'user'] == [group(current)],
+             'private-group supplementary membership changed')
+        need(path(str(value)) == value and ancestor_identity(os.fstat(fd)) == expected and
+             ancestor_identity(value.lstat()) == expected,
+             'private-group ancestor changed during observation')
+        return {'path': str(value), 'identity': expected.copy(),
+                'group': {'name': current.gr_name, 'gid': current.gr_gid,
+                          'supplementaryMembers': list(current.gr_mem)},
+                'primaryMembers': [{'name': 'user', 'uid': 1000, 'gid': 1000}]}
+    except (KeyError, OSError) as error:
+        raise Refused('private-group observation unavailable') from error
+    finally:
+        os.close(fd)
+
+
+def check_ancestor(value, info, uid, private_group_ancestor=None):
+    need(stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and
+         info.st_uid in (0, uid), 'unsafe path ancestry')
+    if str(value) == '/home/user/.local' and private_group_ancestor is not None:
+        need(uid == 1000, 'private-group owner mismatch')
+        observe_private_group_ancestor(value, info, private_group_ancestor)
+    else:
+        need(not info.st_mode & 0o022, 'unsafe path ancestry')
+
+
+def ancestry(value, private=False, private_group_ancestor=None):
+    value = path(str(value))
     for current in (value, *value.parents):
         info = current.lstat()
-        need(stat.S_ISDIR(info.st_mode) and not stat.S_ISLNK(info.st_mode) and
-             info.st_uid in (0, os.getuid()) and not info.st_mode & 0o022,
-             'unsafe path ancestry')
+        check_ancestor(current, info, os.getuid(), private_group_ancestor)
     if private:
         need(value.stat().st_uid == os.getuid() and value.stat().st_mode & 0o777 == 0o700,
              'private owned parent required')
@@ -87,36 +156,36 @@ def file_identity(value):
                                   stat.S_IMODE(info.st_mode), info.st_nlink)))
 
 
-def match_identity(value, expected, private=False):
+def match_identity(value, expected, private=False, private_group_ancestor=None):
     need(isinstance(expected, dict) and set(expected) == set(FILE_FIELDS) and
          all(type(v) is int for v in expected.values()), 'exact file identity required')
-    ancestry(value.parent, private)
+    ancestry(value.parent, private, private_group_ancestor)
     actual = file_identity(value)
     need(actual == expected, 'original inode/ownership changed')
     return actual
 
 
-def observe_protected(item, database_path):
+def observe_protected(item, database_path, private_group_ancestor=None):
     need(isinstance(item, dict) and set(item) == {'path', 'identity'},
          'exact protected original specification required')
     value = path(item['path'])
     if item['identity'] is None:
         need(str(value) == str(path(database_path)) + '.h041-native-evidence.key',
              'absence allowed only for source-derived native evidence key')
-        ancestry(value.parent, True)
+        ancestry(value.parent, True, private_group_ancestor)
         try:
             value.lstat()
         except FileNotFoundError:
             return {'path': str(value), 'identity': None, 'state': 'ABSENT'}
         raise Refused('source-derived native evidence key no longer absent')
-    actual = match_identity(value, item['identity'], True)
+    actual = match_identity(value, item['identity'], True, private_group_ancestor)
     need(actual['uid'] == os.getuid() and actual['mode'] == 0o600,
          'protected original is not private')
     return {'path': str(value), 'identity': actual}
 
 
-def private_read(value, maximum):
-    ancestry(value.parent, True)
+def private_read(value, maximum, private_group_ancestor=None):
+    ancestry(value.parent, True, private_group_ancestor)
     fd = os.open(value, os.O_RDONLY | os.O_NOFOLLOW)
     try:
         info = os.fstat(fd)
@@ -157,11 +226,11 @@ def observe_owner(expected):
     return actual
 
 
-def observe_unit(spec, owner):
+def observe_unit(spec, owner, private_group_ancestor=None):
     need(isinstance(spec.get('unit'), str) and
          re.fullmatch(r'[A-Za-z0-9_.@-]{1,200}\.service', spec['unit']), 'service unit required')
     need(owner['uid'] == os.getuid(), 'unit snapshot must run as application owner')
-    source = path(spec['unitFile']); ancestry(source.parent)
+    source = path(spec['unitFile']); ancestry(source.parent, private_group_ancestor=private_group_ancestor)
     info = source.lstat()
     need(stat.S_ISREG(info.st_mode) and info.st_uid in (0, os.getuid()) and
          not info.st_mode & 0o022 and sha(source.read_bytes()) == spec['unitSha256'],
@@ -200,8 +269,8 @@ def digest_cursor(cursor, budget):
     return {'columns': columns, 'rows': count, 'sha256': digest.hexdigest()}
 
 
-def observe_database(spec):
-    database = path(spec['path']); identity = match_identity(database, spec['identity'], True)
+def observe_database(spec, private_group_ancestor=None):
+    database = path(spec['path']); identity = match_identity(database, spec['identity'], True, private_group_ancestor)
     need(identity['uid'] == os.getuid() and identity['mode'] == 0o600,
          'database must be service-private')
     ids = spec['retainedSessionIds']
@@ -276,6 +345,7 @@ def observe_database(spec):
 
 
 def snapshot(input_value, stage='before', originals=None):
+    private_group_ancestor = input_value.get('privateGroupAncestor')
     spec = input_value.get('metadata', input_value)
     need(isinstance(spec, dict) and set(spec) == {'application', 'generalOwners', 'remoteOwnerObservation', 'database', 'protectedFiles'}, 'exact metadata specification required')
     need(os.getuid() == os.geteuid() == 1000 and spec['application']['owner']['uid'] == 1000 and
@@ -292,21 +362,21 @@ def snapshot(input_value, stage='before', originals=None):
          spec['remoteOwnerObservation']['afterAnchor'] == str(Path(input_value['output']) / 'channel-scope-terminal.json'),
          'remote original policy differs from exact carrier input')
     application = observe_owner(spec['application']['owner'])
-    unit = observe_unit(spec['application'], application)
+    unit = observe_unit(spec['application'], application, private_group_ancestor)
     need(set(spec['generalOwners']) == {'qwen1', 'qwen2', 'mimo'}, 'all three general owners required')
     general = observe_remote_owners(spec['generalOwners'], spec['remoteOwnerObservation'], stage, originals)
     need(isinstance(spec['protectedFiles'], list) and 1 <= len(spec['protectedFiles']) <= 32,
          'protected original credential/key inodes required')
     protected = []
     for item in spec['protectedFiles']:
-        protected.append(observe_protected(item, spec['database']['path']))
-    database, sequence, request_ids, retained, counts = observe_database(spec['database'])
-    need(observe_owner(application) == application and observe_unit(spec['application'], application) == unit,
+        protected.append(observe_protected(item, spec['database']['path'], private_group_ancestor))
+    database, sequence, request_ids, retained, counts = observe_database(spec['database'], private_group_ancestor)
+    need(observe_owner(application) == application and observe_unit(spec['application'], application, private_group_ancestor) == unit,
          'application changed during snapshot')
     need(observe_remote_owners(spec['generalOwners'], spec['remoteOwnerObservation'], stage, originals) == general,
          'root original remote owners changed during snapshot')
     for item in protected:
-        again = observe_protected({'path': item['path'], 'identity': item['identity']}, spec['database']['path'])
+        again = observe_protected({'path': item['path'], 'identity': item['identity']}, spec['database']['path'], private_group_ancestor)
         need(again == item, 'protected inode/absence changed during snapshot')
     return {'schema': 'legacy-gateway-retained-id-observation-v1',
             'identity': {'applicationHost': 'ai-harness', 'applicationKernelHost': 'aiharness',
@@ -322,7 +392,7 @@ def main():
     args = parser.parse_args()
     try:
         input_value = strict_json(private_read(path(args.input), 262144))
-        output = path(args.output); ancestry(output.parent, True)
+        output = path(args.output); ancestry(output.parent, True, input_value.get('privateGroupAncestor'))
         allowed = {str(Path(input_value['output']) / name): stage for name, stage in
                    [('driver-preflight.json', 'before'), ('gateway-before.json', 'before'),
                     ('gateway-after.json', 'after'), ('driver-postflight.json', 'after')]}

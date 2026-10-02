@@ -3,6 +3,7 @@
 import argparse, hashlib, hmac, json, os, re, signal, stat, subprocess, time
 from datetime import datetime
 from pathlib import Path
+from metadata import Refused, check_ancestor
 
 class Denied(RuntimeError): pass
 def need(value,message):
@@ -17,11 +18,14 @@ def canonical(value):
 def sha(raw):return hashlib.sha256(raw).hexdigest()
 def ident(path):
     s=Path(path).lstat();return dict(dev=s.st_dev,ino=s.st_ino,uid=s.st_uid,gid=s.st_gid,mode=stat.S_IMODE(s.st_mode),nlink=s.st_nlink)
-def private(path,maxbytes,uid=None):
+def guard_ancestor(path,info,uid,private_group_ancestor=None):
+    try:check_ancestor(path,info,uid,private_group_ancestor)
+    except Refused as error:raise Denied(str(error)) from error
+def private(path,maxbytes,uid=None,private_group_ancestor=None):
     p=Path(path);uid=os.getuid() if uid is None else uid
     need(p.is_absolute() and p.resolve()==p,'noncanonical private path')
     for parent in p.parents:
-        s=parent.lstat();need(stat.S_ISDIR(s.st_mode) and not s.st_mode&0o022 and s.st_uid in (0,uid),'unsafe private ancestry')
+        s=parent.lstat();guard_ancestor(parent,s,uid,private_group_ancestor)
     parent=p.parent.lstat();need(parent.st_uid==uid and stat.S_IMODE(parent.st_mode)==0o700,'private700 parent required')
     fd=os.open(p,os.O_RDONLY|os.O_NOFOLLOW)
     try:
@@ -51,10 +55,10 @@ def check_go(raw,key,input_raw,now=None):
     need(b['invocations']=={'nativeStart':1,'ownedShutdown':1,'initialize':1,'threadStart':1,'turnStart':0,'turnResume':0,'compact':0,'providerDispatch':0,'generation':0},'unsupported invocation bounds')
     return b
 
-def protected_directory(path):
+def protected_directory(path,private_group_ancestor=None):
     p=Path(path);need(p.is_absolute() and p.resolve()==p,'directory alias')
     for parent in (p,*p.parents):
-        s=parent.lstat();need(stat.S_ISDIR(s.st_mode) and not s.st_mode&0o022 and s.st_uid in (0,os.getuid()),'unsafe directory ancestry')
+        s=parent.lstat();guard_ancestor(parent,s,os.getuid(),private_group_ancestor)
     s=p.lstat();need(s.st_uid==os.getuid() and stat.S_IMODE(s.st_mode)==0o700,'private700 directory required')
 def source_graph(input):
     files=input['fileGraph'];need(isinstance(files,dict) and 8<=len(files)<=4096,'incomplete file graph')
@@ -62,7 +66,7 @@ def source_graph(input):
         p=Path(name);need(p.is_absolute() and p.resolve()==p and re.fullmatch('[a-f0-9]{64}',digest),'invalid graph path/hash')
         s=p.lstat();need(stat.S_ISREG(s.st_mode) and s.st_nlink==1 and not s.st_mode&0o022 and s.st_uid in (0,os.getuid()),'unsafe graph file')
         for parent in p.parents:
-            ps=parent.lstat();need(stat.S_ISDIR(ps.st_mode) and not ps.st_mode&0o022 and ps.st_uid in (0,os.getuid()),'unsafe graph ancestry')
+            ps=parent.lstat();guard_ancestor(parent,ps,os.getuid(),input.get('privateGroupAncestor'))
         need(sha(p.read_bytes())==digest,'source/build/helper changed: '+name)
     need(sha(canonical(files).encode())==input['fileGraphSha256'],'graph join mismatch')
     required=[Path(__file__).resolve(),Path(input['helperDir'])/'carrier.mjs',Path(input['helperDir'])/'metadata.py',Path(input['node']),Path(input['python']),Path(input['unitFile']),Path(input['configPath'])]
@@ -94,7 +98,7 @@ def write_once(path,value):
 def run_snapshot(input,input_path,outpath):
     command=[input['python'],str(Path(input['helperDir'])/'metadata.py'),'--input',str(input_path),'--output',str(outpath)]
     p=subprocess.run(command,env=safe_env(),capture_output=True,timeout=12)
-    need(p.returncode==0,'fresh actual owner/preflight unavailable');return load(private(outpath,8*1024*1024))
+    need(p.returncode==0,'fresh actual owner/preflight unavailable');return load(private(outpath,8*1024*1024,private_group_ancestor=input.get('privateGroupAncestor')))
 def safe_env():return {k:os.environ[k] for k in ('HOME','USER','LOGNAME','XDG_RUNTIME_DIR') if k in os.environ}|{'PATH':'/usr/bin:/bin','PYTHONDONTWRITEBYTECODE':'1'}
 def scan_tree(process,observed):
     candidates={}
@@ -148,12 +152,12 @@ def closure_observation(observed,groups,scopes):
         except FileNotFoundError:pass  # collected between observed inode and read; next full observation verifies absence
     return live,group_live,cgroups,directories
 
-def preserve_channel(output):
+def preserve_channel(output,private_group_ancestor=None):
     descriptor=output/'channel.json'
     if not descriptor.exists():return
-    channel=Path(load(private(descriptor,65536))['directory'])
+    channel=Path(load(private(descriptor,65536,private_group_ancestor=private_group_ancestor))['directory'])
     need(str(channel).startswith('/run/user/'+str(os.getuid())+'/ai-harness-codex-receipts/run-'),'unowned channel path')
-    protected_directory(channel)
+    protected_directory(channel,private_group_ancestor)
     for original in channel.iterdir():
         if not re.fullmatch(r'[a-z-]+\.(json|ready)',original.name):continue
         target=output/('channel-'+original.name)
@@ -218,18 +222,22 @@ def monitor(process,input,output,end):
         time.sleep(.05)
     closure={'schema':'h046-independent-parent-closure-v1','actualWaitExit':actual,'forcedStop':stopped,'fallbackCleanup':fallback,'monitorFailureClass':failure,'observedBirths':list(observed.values()),'observedGroups':sorted(groups),'observedNativeCgroups':scopes,'birthAbsence':not live,'groupAbsence':not group_live,'cgroupProcessAbsence':not cgroups,'cgroupDirectoryAbsence':not directories,'scopeAcquisitionObserved':bool(scopes),'remainingBirths':live,'remainingGroups':group_live,'remainingCgroups':cgroups,'remainingCgroupDirectories':directories}
     write_once(output/'parent-closure.json',closure)
-    preserve_channel(output)
+    preserve_channel(output,input.get('privateGroupAncestor'))
     return closure
 
 def main():
     ap=argparse.ArgumentParser();ap.add_argument('--go',required=True);ap.add_argument('--input',required=True);ap.add_argument('--root-key',required=True);ap.add_argument('--trusted-key-sha256',required=True);a=ap.parse_args()
+    # Bootstrap INPUT/key/GO must have strict ancestry: never let unsigned JSON
+    # relax their reads. Root stages these controls outside .local; the verified
+    # HMAC input hash authorizes the exception only for subsequent operations.
     input_raw=private(a.input,2*1024*1024);input=load(input_raw);key=private(a.root_key,32);need(len(key)==32 and sha(key)==a.trusted_key_sha256,'independent existing root key anchor mismatch');go=check_go(private(a.go,2*1024*1024),key,input_raw)
+    private_group_ancestor=input.get('privateGroupAncestor')
     need(os.uname().sysname=='Linux' and os.getuid()>0,'rootless Linux only')
     need(len(input['receiptSources'])==8,'ordinary receipt profile only');need(ident(a.root_key)==input['rootKeyIdentity'] and a.root_key==input['rootKeyPath'],'protected root key inode changed')
     need(set(input['runtime'])=={'version','upstream','context','auto','output'} and input['runtime']=={'version':'0.158.0','upstream':'064c6b8c737f5b41d171fdda80bd9ef10ad06eb3','context':480000,'auto':400000,'output':65536},'runtime pins changed')
     need(input['nativeThreadId']=='UNALLOCATED' and type(input['workBudgetMs']) is int and 1<=input['workBudgetMs']<=45000,'fresh finite protocol only');need(input['gatewayTokenPath'] in {v['path'] for v in input['metadata']['protectedFiles']},'gateway credential inode omitted');need(a.root_key in {v['path'] for v in input['metadata']['protectedFiles']},'ordinary key inode omitted');need(input['rootKeyPath']==a.root_key,'ordinary key path mismatch')
     need(Path(input['helperDir']).resolve()==Path(__file__).parent.resolve(),'helper directory mismatch');need(input['unitFile']==input['metadata']['application']['unitFile'],'unit join mismatch');need(Path(input['cwd']).resolve()==Path(input['cwd']),'cwd alias')
-    output=Path(input['output']);state=Path(input['stateDirectory']);protected_directory(output);protected_directory(state);need(not list(output.iterdir()),'output must be fresh empty700')
+    output=Path(input['output']);state=Path(input['stateDirectory']);protected_directory(output,private_group_ancestor);protected_directory(state,private_group_ancestor);need(not list(output.iterdir()),'output must be fresh empty700')
     for mount in [input['profileDir'],input['workspace']]:
         p=Path(mount);need(p.is_absolute() and p.resolve()==p,'native mount alias')
         for protected in [a.root_key,a.input,a.go,input['gatewayTokenPath'],str(output),str(state),input['helperDir'],input['serverDir'],input['deploymentDir']]:
@@ -255,14 +263,14 @@ def main():
                 except subprocess.TimeoutExpired:process.kill();actual=process.wait(timeout=3)
             else:actual=process.wait(timeout=3)
         write_once(output/'parent-monitor-failure.json',{'schema':'h046-parent-monitor-failure-v1','errorClass':type(error).__name__,'actualWaitExit':actual,'nativeAcceptance':'FAIL','independentAbsence':'UNKNOWN'})
-        try:preserve_channel(output)
+        try:preserve_channel(output,private_group_ancestor)
         except Exception:pass
         raise
     finally:os.close(outfd);os.close(errfd)
     write_once(output/'driver-outcome-before-review.json',{'status':'REVIEW_PENDING' if closure['actualWaitExit']==0 else 'FAIL','actualWaitExit':closure['actualWaitExit'],'fallbackCleanup':closure['fallbackCleanup']})
     final_snapshot=run_snapshot(input,a.input,output/'driver-postflight.json');need(canonical(snapshot)==canonical(final_snapshot),'ordinary owner/gateway/retained originals changed');source_graph(input)
-    result=load(private(output/'carrier-result.json',2*1024*1024))
-    scope_terminal=load(private(output/'channel-scope-terminal.json',65536));need(type(scope_terminal.get('creatorExit')) is int and scope_terminal.get('creatorReaped') is True,'missing actual original scope wait/reap')
+    result=load(private(output/'carrier-result.json',2*1024*1024,private_group_ancestor=private_group_ancestor))
+    scope_terminal=load(private(output/'channel-scope-terminal.json',65536,private_group_ancestor=private_group_ancestor));need(type(scope_terminal.get('creatorExit')) is int and scope_terminal.get('creatorReaped') is True,'missing actual original scope wait/reap')
     need(closure['actualWaitExit']==0 and not closure['fallbackCleanup'] and not closure['monitorFailureClass'] and closure['birthAbsence'] and closure['groupAbsence'] and closure['cgroupProcessAbsence'] and closure['cgroupDirectoryAbsence'] and closure['scopeAcquisitionObserved'] and result['status']=='CARRIER_PROTOCOL_VALID','independent closure/native protocol failed')
     write_once(output/'driver-result.json',{'schema':'h046-zero-generation-driver-result-v1','status':'ACTUAL_NO_GENERATION_PROOF_ROOT_REVIEW_REQUIRED','inputSha256':sha(input_raw),'goSha256':sha(private(a.go,2*1024*1024)),'actualWaitExit':closure['actualWaitExit'],'sourceGraphSha256':input['fileGraphSha256'],'importedModules':graph,'ordinaryBaseline':'NOT_CREATED','rootReviewRequired':True})
     return 0
