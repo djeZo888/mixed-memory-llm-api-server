@@ -1,3 +1,4 @@
+import {isRecord} from "./codex-connection.js";
 import {observeGatewayNoGeneration,type GatewayNoGenerationProof} from "./codex-no-generation.js";
 import { emitAdmission, type QwenAdmissionContext, type QwenAdmissionObserver } from "./codex-admission.js";
 import { codexProvider, type CodexProviderContract } from "./codex-provider.js";
@@ -86,9 +87,10 @@ export interface GatewayOptions {
   /** Latest unresolved durable request owner, retained across profile changes. */
   initialFrontierOwnerModel?: string;
   images?: ImageBroker;
-  technicalVision?: import("./technical-vision-host.js").NormalTechnicalVision;
+  technicalVision?: import("./technical-vision-host.js").NormalTechnicalVisionHostContract;
   /** Separate reviewed specialist-job gate; text settlement never releases image ownership. */
   codexImageJobsQualified?: boolean;
+  codexImageGenerationQualified?: boolean;
   /** Trusted temporary exact-session/run acceptance, checked on each new job. */
   imageAcceptance?: (sessionId: string) => boolean;
   dispatchHeld?: (alias: string) => boolean;
@@ -654,8 +656,8 @@ export function createGateway(options: GatewayOptions): Gateway {
       (request.method === "POST" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+\/cancel$/.test(request.url));
     const qualifiedImageRoute = existingImageRoute ||
       (request.method === "POST" && request.url === "/v1/image-jobs" &&
-       (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true));
-    const technicalRoute = options.technicalVision && /^(?:\/v1\/technical-vision-capabilities|\/v1\/technical-vision-jobs(?:\/[a-zA-Z0-9_-]{1,80}\/(?:status|lookup|cancel))?)$/.test(request.url);
+       (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true || options.codexImageGenerationQualified===true));
+    const technicalRoute = options.technicalVision && /^(?:\/v1\/technical-vision-capabilities|\/v1\/technical-vision-jobs(?:\/[a-zA-Z0-9_-]{1,80}\/(?:status|lookup|cancel|journal))?)$/.test(request.url);
     if (codexTokens.has(token) && !qualifiedImageRoute && !technicalRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
       return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
     // This internal bearer service has no browser API and never grants CORS.
@@ -709,20 +711,39 @@ export function createGateway(options: GatewayOptions): Gateway {
   const vision = () => { if (!options.technicalVision) throw new ApiError(503, "technical_vision_unavailable", "Technical specialist is unavailable"); return options.technicalVision; };
   const visionBody = (body: unknown) => { if (!body || typeof body !== "object" || Array.isArray(body) || Object.keys(body).length) throw new ApiError(400, "invalid_request", "Expected empty object"); };
   app.get("/v1/technical-vision-capabilities", async req => { visionBody(req.query); return vision().capabilities(); });
-  app.post("/v1/technical-vision-jobs", { bodyLimit: 64 * 1024 }, async req => { visionBody(req.query); return vision().invoke(imageSession(req.headers.authorization), req.body); });
-  for (const action of ["status", "lookup", "cancel"] as const) app.post(`/v1/technical-vision-jobs/:handle/${action}`, { bodyLimit: 1024 }, async req => {
+  const withVisionSignal = async <T>(req:FastifyRequest,reply:FastifyReply,action:(signal:AbortSignal)=>Promise<T>):Promise<T> => {
+    const controller=new AbortController(),abort=()=>controller.abort(),closed=()=>{if(!reply.raw.writableFinished)abort();};
+    req.raw.once("aborted",abort);reply.raw.once("close",closed);
+    if(req.raw.aborted)abort();
+    try{return await action(controller.signal);}finally{req.raw.removeListener("aborted",abort);reply.raw.removeListener("close",closed);}
+  };
+  app.post("/v1/technical-vision-jobs", { bodyLimit: 64 * 1024 }, async (req,reply) => { visionBody(req.query); return withVisionSignal(req,reply,signal=>vision().invoke(imageSession(req.headers.authorization),req.body,undefined,signal)); });
+  for (const action of ["status", "lookup", "cancel"] as const) app.post(`/v1/technical-vision-jobs/:handle/${action}`, { bodyLimit: 1024 }, async (req,reply) => {
     visionBody(req.body); visionBody(req.query);
     const handle = (req.params as {handle:string}).handle;
     if (!/^[a-zA-Z0-9_-]{1,80}$/.test(handle)) throw new ApiError(400, "invalid_request", "Invalid handle");
-    return vision().followup(imageSession(req.headers.authorization), handle, action);
+    return withVisionSignal(req,reply,signal=>vision().followup(imageSession(req.headers.authorization),handle,action,signal));
   });
-  app.get("/v1/image-capabilities", async () => imageBroker().capabilities());
-  app.post("/v1/image-jobs", { bodyLimit: 64 * 1024 }, async (request) => ({
-    job: await imageBroker().submit(
+  app.post("/v1/technical-vision-jobs/:handle/journal",{bodyLimit:1024},async req=>{
+    visionBody(req.body);visionBody(req.query);const handle=(req.params as {handle:string}).handle;
+    if(!/^[a-zA-Z0-9_-]{1,80}$/.test(handle))throw new ApiError(400,"invalid_request","Invalid handle");
+    return vision().journalStatus(imageSession(req.headers.authorization),handle);
+  });
+  app.get("/v1/image-capabilities", async req => {
+    const value=await imageBroker().capabilities();
+    if(codexTokens.has(req.headers.authorization!.slice(7)) && options.codexImageGenerationQualified===true){
+      if(!isRecord(value)||!Array.isArray(value.profiles))throw new ApiError(503,"image_capabilities_invalid","Image capabilities could not be verified");
+      return {...value,profiles:value.profiles.filter(p=>isRecord(p) && p.operation==="generation")};
+    }
+    return value;
+  });
+  app.post("/v1/image-jobs", { bodyLimit: 64 * 1024 }, async (request) => {
+    if(codexTokens.has(request.headers.authorization!.slice(7)) && options.codexImageGenerationQualified===true && (request.body as {operation?:unknown}|undefined)?.operation!=="generation")throw new ApiError(403,"image_operation_unqualified","Only generation is qualified");
+    return {job: await imageBroker().submit(
       imageSession(request.headers.authorization),
       request.body,
-    ),
-  }));
+    )};
+  });
   app.get("/v1/image-jobs/:jobId", async (request) => ({
     job: imageBroker().get(
       imageSession(request.headers.authorization),

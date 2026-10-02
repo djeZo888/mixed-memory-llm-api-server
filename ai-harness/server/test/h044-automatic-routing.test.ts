@@ -40,8 +40,26 @@ test('selected MiMo needs clean pinned current child metadata and actual complet
 });
 test('protected current Codex frontier rejects historical MiniMax, source-only/native-unknown and different parent',()=>{
  const value:any={schema:1,kind:'current-native-codex-frontier-review',pins:CURRENT_CODEX_FRONTIER_PINS,sourceRevision:'a'.repeat(40),sourceClosure:{'/synthetic/source.js':'b'.repeat(64)},reviewedBy:'root',reviewedAt:'2026-10-01T23:20:00Z',workflows:{}};const records:any={};
- for(const workflow of ['responses','toolContinuation','automaticSelection']){const run={schema:1,kind:'current-native-codex-frontier-workflow',workflow,result:'PASS',harness:'codex',pins:value.pins,sourceRevision:value.sourceRevision,sessionId:'11111111-1111-1111-1111-111111111111',parentThreadId:'parent',childThreadId:'child',model:'mimo-v2.6-pro-rl',provider:'sova',nativeSemanticAcceptance:'PASS',transcriptSha256:'b'.repeat(64),settlementSha256:'c'.repeat(64),currentOwnerReceiptSha256:'d'.repeat(64)},text=JSON.stringify(run);records[workflow+'.json']={text,value:run};value.workflows[workflow]={file:workflow+'.json',sha256:createHash('sha256').update(text).digest('hex')};}
+ for(const workflow of ['responses','toolContinuation','automaticSelection']){const run={schema:1,kind:'current-native-codex-frontier-workflow',workflow,result:'PASS',harness:'codex',pins:value.pins,sourceRevision:value.sourceRevision,sessionId:'11111111-1111-1111-1111-111111111111',parentThreadId:'parent',parentTurnId:'parent-turn',childThreadId:'child',childTurnId:'child-turn',dispatchEventSha256:'e'.repeat(64),childTerminalSha256:'f'.repeat(64),model:'mimo-v2.6-pro-rl',provider:'sova',nativeSemanticAcceptance:'PASS',transcriptSha256:'b'.repeat(64),settlementSha256:'c'.repeat(64),currentOwnerReceiptSha256:'d'.repeat(64)},text=JSON.stringify(run);records[workflow+'.json']={text,value:run};value.workflows[workflow]={file:workflow+'.json',sha256:createHash('sha256').update(text).digest('hex')};}
  const read=(name:string)=>records[name];assert.equal(validateCurrentCodexFrontier(value,read,Date.parse('2026-10-02T00:00:00Z')),true);
  const first=records['responses.json'];for(const patch of [{harness:'minimax'},{nativeSemanticAcceptance:'NOT_TESTED'},{model:'qwen3.8-27b'},{parentThreadId:'another'},{sourceOnly:true}]){const invalid={...first.value,...patch},text=JSON.stringify(invalid),v=structuredClone(value);v.workflows.responses.sha256=createHash('sha256').update(text).digest('hex');assert.equal(validateCurrentCodexFrontier(v,name=>name==='responses.json'?{text,value:invalid}:read(name)),false);}
  assert.equal(validateCurrentCodexFrontier({schema:1,kind:'reviewed-codex-specialists'},read),false);
+});
+
+test('first deep success, second Qwen-only completion fails; resumed current MiMo terminal succeeds after close',()=>{
+ const c=new CodexChildren(()=> 'parent',()=>{},4,['qwen3.8-27b','mimo-v2.6-pro-rl']),verified=new Set(['mimo']);
+ c.thread({id:'mimo',parentThreadId:'parent',modelProvider:'sova',model:'mimo-v2.6-pro-rl'});
+ const dispatch=(parentTurnId:string)=>{c.beginParentTurn();c.bindParentTurn(parentTurnId);const item={id:'send-'+parentTurnId,type:'collabAgentToolCall',tool:'sendInput',status:'completed',senderThreadId:'parent',receiverThreadIds:['mimo'],agentsStates:{mimo:{status:'running'}}};c.item(item,true);c.bindParentCollaboration(parentTurnId,item,true);};
+ dispatch('parent-1');c.notification('turn/started',{threadId:'mimo',turn:{id:'child-1'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-1',status:'completed'}});
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),true);
+ c.beginParentTurn();c.bindParentTurn('parent-2');
+ // Previously validated MiMo identity+old terminal are insufficient even after parent Qwen completes.
+ assert.equal(c.completedModel('mimo-v2.6-pro-rl',verified),true);assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+ c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-1',status:'completed'}});assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+ assert.throws(()=>c.notification('turn/started',{threadId:'mimo',turn:{id:'child-1'}}),/Replayed/);
+ dispatch('parent-3');c.notification('turn/started',{threadId:'mimo',turn:{id:'child-2'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-2',status:'completed'}});
+ c.item({id:'close',tool:'closeAgent',status:'completed',senderThreadId:'parent',receiverThreadIds:['mimo'],agentsStates:{mimo:{status:'shutdown'}}},true);
+ assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),true);assert.equal(c.currentTerminalEvidence('mimo-v2.6-pro-rl',verified)[0].parentTurnId,'parent-3');
+ c.notification('turn/started',{threadId:'mimo',turn:{id:'child-3'}});c.notification('turn/completed',{threadId:'mimo',turn:{id:'child-3',status:'failed'}});assert.equal(c.completedCurrentModel('mimo-v2.6-pro-rl',verified),false);
+ assert.throws(()=>c.bindParentCollaboration('foreign',{receiverThreadIds:['mimo']},true),/Foreign/);
 });

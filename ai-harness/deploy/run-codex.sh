@@ -5,7 +5,7 @@ umask 077
 
 usage() {
   cat <<'EOF'
-Usage: run-codex.sh --profile-dir ABS --workspace ABS [--image-jobs-qualified]
+Usage: run-codex.sh --profile-dir ABS --workspace ABS [--image-jobs-qualified | --image-generation-qualified] [--technical-vision-qualified]
 
 Run the reviewed Codex image through local, rootless Podman using private AppServer stdio.
 Both existing directories must be owned by this user, resolve without symlinks,
@@ -44,6 +44,9 @@ while (($#)); do
     --image-jobs-qualified)
       [[ "$image_config" = config.toml ]] || die 'duplicate image gate'
       image_config=config-image-jobs.toml; shift ;;
+    --image-generation-qualified)
+      [[ "$image_config" = config.toml ]] || die 'ambiguous or duplicate image gate'
+      image_config=config-generation-only.toml; shift ;;
     --technical-vision-qualified)
       [[ "$technical_qualified" = false ]] || die 'duplicate technical gate'
       technical_qualified=true; shift ;;
@@ -124,6 +127,7 @@ unset gateway_token
 if [[ -n "$receipt_dir" ]]; then
   export AI_HARNESS_CODEX_RECEIPT_DIR="$receipt_dir" AI_HARNESS_CODEX_RECEIPT_NONCE="$receipt_nonce"
 fi
+[[ "$image_config" != config-generation-only.toml || ( -n "$receipt_dir" && -n "$receipt_nonce" ) ]] || die 'generation-only requires trusted receipt channel'
 unset receipt_dir receipt_nonce
 trace_args=()
 if [[ -n "$trace_mode" ]]; then
@@ -169,6 +173,12 @@ image_patchset=${image_labels#*|}
 import hashlib,pathlib,sys
 p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['config.toml', 'config-image-jobs.toml', 'requirements.toml', 'models.json', 'browser-mcp.mjs', 'skills/sova-local-tools/SKILL.md'])).hexdigest() == '6d70b39cb33340f793fde3c46f18f8dbb703e4e65267e2c9e54c7fa984c2a3e7'
 PY_POLICY
+if [[ "$image_config" = config-generation-only.toml ]]; then
+  "$python_bin" - "$launcher_dir" <<'PY_GENERATION' || die 'Generation-only policy checksum mismatch'
+import hashlib,pathlib,sys
+p=pathlib.Path(sys.argv[1]); assert hashlib.sha256(b''.join((p/n).read_bytes() for n in ['codex/config-generation-only.toml','../tools/image/image-mcp.mjs','../tools/image/image.mjs','codex/skills/sova-local-tools/SKILL.md'])).hexdigest() == '3308a9550e5c2ab599489c3b7ba68df49bf4ae14d5195662f482c54f05699344'
+PY_GENERATION
+fi
 # Task state is persistent; trusted configuration is an immutable bind mount.
 # Native proper-lockfile writes a sibling dataDir.lock. Nest dataDir inside the
 # existing profile mount so its lock remains writable without mounting parents.

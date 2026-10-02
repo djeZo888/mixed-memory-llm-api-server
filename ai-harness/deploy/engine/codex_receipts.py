@@ -16,6 +16,11 @@ SOURCES = ('run-codex.sh', 'engine/task-egress.py', 'engine/redact-acp.py',
            'engine/codex_receipts.py', 'engine/codex_native_trace.py', 'security/chromium-seccomp.json',
            'codex/config.toml', 'codex/models.json')
 TECHNICAL_SOURCES = SOURCES + ("../tools/technical-vision/technical-vision-mcp.mjs", "../tools/technical-vision/technical-vision.mjs")
+GENERATION_SOURCES = SOURCES + ('codex/config-generation-only.toml','../tools/image/image-mcp.mjs','../tools/image/image.mjs','codex/skills/sova-local-tools/SKILL.md')
+def source_profile(value):
+    if value.get('imageGenerationQualified') is True:
+        return GENERATION_SOURCES + (TECHNICAL_SOURCES[len(SOURCES):] if value.get('technicalVisionQualified') is True else ())
+    return TECHNICAL_SOURCES if value.get('technicalVisionQualified') is True else SOURCES
 MAX_BYTES = 32768
 
 
@@ -64,16 +69,16 @@ def channel():
     protected(root, True); protected(path, True)
     value = read_private(path / 'request.json')
     required = {'nonce', 'runId', 'sessionId', 'startedAtMs', 'uid', 'profileDir', 'workspace', 'deploymentDir', 'imageJobsQualified', 'gid', 'sources'}
-    if set(value) != required | ({'nativeTraceMode'} if 'nativeTraceMode' in value else set()) | ({'technicalVisionQualified'} if value.get('technicalVisionQualified') is True else set()) or value.get('nativeTraceMode') not in (None,'post-sampling-token-usage-v1','post-sampling-token-usage-v2') or value.get('nativeTraceMode') != os.environ.get('AI_HARNESS_CODEX_TRACE_MODE') or value['nonce'] != nonce or value['uid'] != os.getuid() or value['gid'] != os.getgid() or value['sessionId'] != os.environ.get('AI_HARNESS_SESSION_ID') or not all(isinstance(value[k], str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,127}', value[k]) for k in ('runId','sessionId')):
+    if set(value) != required | ({'nativeTraceMode'} if 'nativeTraceMode' in value else set()) | ({'imageGenerationQualified'} if value.get('imageGenerationQualified') is True else set()) | ({'technicalVisionQualified'} if value.get('technicalVisionQualified') is True else set()) or value.get('nativeTraceMode') not in (None,'post-sampling-token-usage-v1','post-sampling-token-usage-v2') or value.get('nativeTraceMode') != os.environ.get('AI_HARNESS_CODEX_TRACE_MODE') or value['nonce'] != nonce or value['uid'] != os.getuid() or value['gid'] != os.getgid() or value['sessionId'] != os.environ.get('AI_HARNESS_SESSION_ID') or not all(isinstance(value[k], str) and re.fullmatch('[A-Za-z0-9][A-Za-z0-9._:-]{0,127}', value[k]) for k in ('runId','sessionId')):
         raise ValueError('unbound receipt request')
     deployment = Path(__file__).resolve().parent.parent
-    if value['deploymentDir'] != str(deployment) or type(value['imageJobsQualified']) is not bool:
+    if value['deploymentDir'] != str(deployment) or type(value['imageJobsQualified']) is not bool or (value.get('imageGenerationQualified') is True and value['imageJobsQualified']):
         raise ValueError('unbound receipt deployment')
     for scope in ('profileDir', 'workspace'):
         p = Path(value[scope])
         if not p.is_absolute() or p.resolve() != p or p == root or p in root.parents or root in p.parents or p == deployment or p in deployment.parents:
             raise ValueError('receipt/source overlap with native scope')
-    if set(value['sources']) != set(TECHNICAL_SOURCES if value.get('technicalVisionQualified') is True else SOURCES):
+    if set(value['sources']) != set(source_profile(value)):
         raise ValueError('incomplete source receipt')
     for relative, expected in value['sources'].items():
         p = deployment / relative; info = p.lstat()
@@ -293,6 +298,7 @@ def capture(podman, args, timeout=3):
 
 def inspect_launch(podman, container, args, config):
     path, binding = config
+    if binding.get('imageGenerationQualified') is True and binding['imageJobsQualified']:raise ValueError('ambiguous full/generation-only profile')
     gate = original(config, 'producer')
     if gate['producer'] != process_identity() or gate['containerName'] != container:
         raise ValueError('missing genuine original launch producer gate')
@@ -307,7 +313,7 @@ def inspect_launch(podman, container, args, config):
             volumes.append({'source': src, 'destination': dst, 'rw': options.startswith('rw,'), 'type': 'bind'})
     deployment = Path(binding['deploymentDir'])
     ro = lambda source, destination: dict(source=str(source), destination=str(destination), rw=False, type='bind')
-    expected = [dict(source=binding['profileDir'],destination=binding['profileDir'],rw=True,type='bind'),dict(source=binding['workspace'],destination=binding['workspace'],rw=True,type='bind'),ro(deployment.parent/'tools/image/image-mcp.mjs','/opt/ai-harness/tools/image/image-mcp.mjs'),ro(deployment.parent/'tools/image/image.mjs','/opt/ai-harness/tools/image/image.mjs'),ro(deployment/'codex'/('config-image-jobs.toml' if binding['imageJobsQualified'] else 'config.toml'),Path(binding['profileDir'])/'codex-home/config.toml'),ro(deployment/'codex/models.json','/opt/sova/codex/models.json'),ro(deployment/'codex/skills/sova-local-tools',Path(binding['profileDir'])/'codex-home/skills/sova-local-tools')]
+    expected = [dict(source=binding['profileDir'],destination=binding['profileDir'],rw=True,type='bind'),dict(source=binding['workspace'],destination=binding['workspace'],rw=True,type='bind'),ro(deployment.parent/'tools/image/image-mcp.mjs','/opt/ai-harness/tools/image/image-mcp.mjs'),ro(deployment.parent/'tools/image/image.mjs','/opt/ai-harness/tools/image/image.mjs'),ro(deployment/'codex'/('config-generation-only.toml' if binding.get('imageGenerationQualified') is True else 'config-image-jobs.toml' if binding['imageJobsQualified'] else 'config.toml'),Path(binding['profileDir'])/'codex-home/config.toml'),ro(deployment/'codex/models.json','/opt/sova/codex/models.json'),ro(deployment/'codex/skills/sova-local-tools',Path(binding['profileDir'])/'codex-home/skills/sova-local-tools')]
     if binding.get('technicalVisionQualified') is True:
         expected += [ro(deployment.parent/'tools/technical-vision'/name,'/opt/ai-harness/tools/technical-vision/'+name) for name in ('technical-vision-mcp.mjs','technical-vision.mjs')]
     if sorted(volumes,key=lambda m:m['destination']) != sorted(expected,key=lambda m:m['destination']):

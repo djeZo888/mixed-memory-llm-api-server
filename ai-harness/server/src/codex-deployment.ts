@@ -27,6 +27,7 @@ export function codexDeployment(
         capabilities: runtime?.capabilities,
         delegationEnabled: runtime?.delegationEnabled === true,
         imageToolEnabled: runtime?.imageToolEnabled === true,
+        imageGenerationEnabled: runtime?.imageGenerationEnabled === true,
         protocolQualified: runtime?.protocolQualified === true,
         engineVersion: CODEX_PIN.version,
         modelPolicyVersion: runtime?.modelPolicyVersion ?? "unqualified",

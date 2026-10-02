@@ -925,6 +925,7 @@ export class ImageBroker {
       this.requireAvailable();
       r.preparedSha256 = references.map(sha256);
       this.persist(r); // Exact conditioned bytes are hashed before native dispatch.
+      if(this.options.operationQualified && this.options.operationQualified(r.job.sessionId,r.job.operation)!==true)throw new ApiError(503,"image_operation_unqualified","Image operation lost qualification before native dispatch");
       this.ownerSettled = false; // A prior owner's proof never covers a new request.
       this.setUncertain(true); // Durable ownership precedes the first upstream byte.
       dispatched = true;

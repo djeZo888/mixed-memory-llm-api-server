@@ -133,6 +133,27 @@ class InspectedLaunch(unittest.TestCase):
             self.assertNotIn('UNTRUSTED_LOG_BODY', json.dumps(value))
             self.assertEqual(receipts.read_private(path / 'launch.json'), value)
 
+    def test_generation_only_and_independent_technical_exact_mounts(self):
+        for technical in (False,True):
+            with self.subTest(technical=technical), tempfile.TemporaryDirectory() as root:
+                path=Path(root).resolve();path.chmod(0o700)
+                binding,args,identity,native,image,capture=self.fixture(path)
+                binding['imageGenerationQualified']=True
+                args=[value.replace('codex/config.toml:','codex/config-generation-only.toml:') for value in args]
+                native['Mounts'][4]['Source']='/fixture/deploy/codex/config-generation-only.toml'
+                if technical:
+                    binding['technicalVisionQualified']=True
+                    for name in ('technical-vision-mcp','technical-vision'):
+                        source=f'/fixture/tools/technical-vision/{name}.mjs';destination=f'/opt/ai-harness/tools/technical-vision/{name}.mjs'
+                        args+=['--volume',source+':'+destination+':ro,rprivate'];native['Mounts'].append(dict(Source=source,Destination=destination,RW=False,Type='bind'))
+                with patch.object(receipts,'capture',capture),patch.object(receipts,'process_identity',return_value=identity):
+                    result=receipts.inspect_launch('/fixture/podman','ai-harness-'+'f'*32,args,(path,binding))
+                self.assertEqual(len(result['container']['mounts']),9 if technical else 7)
+                self.assertIn('codex/config-generation-only.toml',receipts.source_profile(binding))
+                binding['imageJobsQualified']=True
+                with self.assertRaisesRegex(ValueError,'ambiguous'):
+                    receipts.inspect_launch('/fixture/podman','ai-harness-'+'f'*32,args,(path,binding))
+
     def test_v1_v2_environment_is_independently_inspected_and_wrong_pair_fails(self):
         for mode,log in [('post-sampling-token-usage-v1','off,codex_core::session::turn=trace'),('post-sampling-token-usage-v2','off,codex_core::session::turn=trace,codex_core::tasks=info')]:
             with tempfile.TemporaryDirectory() as root:

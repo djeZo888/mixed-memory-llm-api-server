@@ -65,6 +65,7 @@ export interface CodexRuntime {
   authorizeOriginalRead?(input: { policy: CodexTextOnlyPolicy; probe: CodexReadOriginalProbe; launchReceipt: CodexNativeLaunchReceipt; threadId: string; turnId: string; callId: string }, signal: AbortSignal): Promise<void>;
   onNativeThread?(input:{sessionId:string;threadId:string;rolloutPath:string|null;launchReceipt:CodexNativeLaunchReceipt;method:"thread/start"|"thread/resume";observedSettings:Readonly<Record<string,unknown>>;readChildThread:(candidateId:string)=>Promise<Readonly<Record<string,unknown>>>}):Promise<void>;
   beforeNativeAction?(input:{sessionId:string;threadId:string;method:"turn/start"|"thread/compact/start";launchReceipt:CodexNativeLaunchReceipt;params:Readonly<Record<string,unknown>>;readChildThread:(candidateId:string)=>Promise<Readonly<Record<string,unknown>>>}):Promise<void>;
+  onNativeDeepCompletion?(input:{sessionId:string;parentThreadId:string;parentTurnId:string;childThreadId:string;childTurnId:string;dispatchCallId:string;dispatchSnapshot:string;terminalSnapshot:string;launchReceipt:CodexNativeLaunchReceipt}):void;
   onNativeChildObserved?(input:{sessionId:string;parentThreadId:string;parentTurnId:string;item:Readonly<Record<string,unknown>>}):void;
   onNativeThreadPolicy?(input: { policy: CodexTextOnlyPolicy; launchReceipt: CodexNativeLaunchReceipt; threadId: string; sandbox: Readonly<Record<string, unknown>>; requestedSettings: Readonly<Record<string, unknown>>; observedSettings: Readonly<Record<string, unknown>>; method: "thread/start" | "thread/resume" }): void;
   readOriginalProbe?(sessionId: string): CodexReadOriginalProbe | undefined;
@@ -82,6 +83,7 @@ export interface CodexRuntime {
   readonly technicalVisionEnabled?: boolean;
   automaticRouting?: (route: CodexAutomaticRoute, sessionId: string) => string;
   readonly imageToolEnabled?: boolean;
+  readonly imageGenerationEnabled?: boolean;
   readonly maxChildren?: number;
   /** Trusted host-reviewed child providers; absent keeps the Qwen-only boundary. */
   readonly qualifiedChildModels?: readonly string[];
@@ -103,6 +105,7 @@ export interface CodexRuntime {
     gatewayToken: string;
     modelPolicyVersion: string;
     receiptRunId?: string;
+    imageGenerationRequested?: true;
   }): Promise<RootlessCodexProcess>;
   /** Revoke every scoped token belonging to this session before final settlement proof. */
   revokeGatewaySession(sessionId: string): void;
@@ -147,6 +150,9 @@ export class CodexEngine implements Engine {
   private children: CodexChildren;
   private readonly qualifiedChildren: readonly string[];
   private automaticDeep = false;
+  private promptClaimed = false;
+  private generationOnlyLaunch = false;
+  private knownDeepChildren = new Set<string>();
   private verifiedDeepChildren = new Set<string>();
   private compacting = new Set<string>();
   private compactRequested = false;
@@ -187,6 +193,7 @@ export class CodexEngine implements Engine {
     private readonly options: EngineOptions,
     private readonly runtime: CodexRuntime,
   ) {
+    if(options.nativeAutomaticRoute){assertCodexAutomaticRoute(options.nativeAutomaticRoute);this.generationOnlyLaunch=runtime.imageGenerationEnabled===true && options.nativeAutomaticRoute.intent==="creative";}
     this.qualifiedChildren = runtime.qualifiedChildModelsForSession?.(options.sessionId) ?? runtime.qualifiedChildModels ?? ["qwen3.8-27b"];
     this.children = new CodexChildren(
       () => this.nativeId,
@@ -200,7 +207,7 @@ export class CodexEngine implements Engine {
     const policy = runtime.textOnlyPolicy?.(options.sessionId);
     if (policy) {
       assertCodexTextOnlyPolicy(policy, options.sessionId);
-      if (!runtime.nativeReceiptsRequired || (this.nativeId && !codexPolicyOwnsSettledThread(policy, this.nativeId)) || (runtime.delegationEnabled && policy.mode!=="retention-parent") || runtime.imageToolEnabled || !runtime.authorizeNativeTurn) fault("Text-only policy requires fresh receipt-qualified ownership and admission hook");
+      if (!runtime.nativeReceiptsRequired || (this.nativeId && !codexPolicyOwnsSettledThread(policy, this.nativeId)) || (runtime.delegationEnabled && policy.mode!=="retention-parent") || (runtime.imageToolEnabled || runtime.imageGenerationEnabled) || !runtime.authorizeNativeTurn) fault("Text-only policy requires fresh receipt-qualified ownership and admission hook");
       if(policy.mode==="retention-parent"&&(!runtime.delegationEnabled||runtime.maxChildren!==1||!runtime.retentionTurnKind))fault("Retention parent lacks separately reviewed depth-one child/action admission");
       this.textPolicy = policy;
       this.scopeStopTimer = setTimeout(() => {
@@ -217,7 +224,7 @@ export class CodexEngine implements Engine {
     if (policy && ["parent-artifacts","retention-parent"].includes(policy.mode) && !artifactScope) fault("Parent artifact policy lacks bounded scope");
     const probe = runtime.readOriginalProbe?.(options.sessionId);
     if (probe) {
-      if (!runtime.nativeReceiptsRequired || this.nativeId || runtime.delegationEnabled || runtime.imageToolEnabled) fault("Isolated original probe requires fresh receipt-qualified text-only ownership");
+      if (!runtime.nativeReceiptsRequired || this.nativeId || runtime.delegationEnabled || runtime.imageToolEnabled || runtime.imageGenerationEnabled) fault("Isolated original probe requires fresh receipt-qualified text-only ownership");
       if (!policy || policy.mode !== "read-original" || policy.runId !== probe.runId || !runtime.authorizeOriginalRead) fault("Original probe requires reviewed text-only scope admission");
       claimCodexReadOriginalProbe(probe, options.sessionId); this.probe = probe;
     }
@@ -309,6 +316,7 @@ export class CodexEngine implements Engine {
       gatewayUrl: o.gatewayUrl,
       gatewayToken: o.gatewayToken,
       modelPolicyVersion: r.modelPolicyVersion,
+      ...(this.generationOnlyLaunch?{imageGenerationRequested:true as const}:{}),
       ...(r.nativeTraceMode?{nativeTraceMode:r.nativeTraceMode}:{}),
       ...(this.textPolicy ? { receiptRunId: this.textPolicy.runId } : {}),
     });
@@ -428,10 +436,13 @@ export class CodexEngine implements Engine {
       if (!this.runtime.automaticRouting && routing.intent !== "ordinary") fault("Automatic specialist routing is unavailable");
       directive = this.runtime.automaticRouting?.(routing,this.options.sessionId) ?? "";
     }
-    this.automaticDeep = routing?.intent === "deep";
     const input = await codexInput((directive ? directive + "\n\n" : "") + text, this.options.workspace, attachments);
-    if (this.active || this.stopped || this.closing || this.failed)
+    if (this.promptClaimed || this.active || this.stopped || this.closing || this.failed)
       fault("Codex engine cannot accept this prompt");
+    if(this.options.nativeAutomaticRoute && (!routing || routing.intent!==this.options.nativeAutomaticRoute.intent || routing.target!==this.options.nativeAutomaticRoute.target))fault("Controlling route changed after native launch selection");
+    if(this.runtime.imageGenerationEnabled && routing?.intent==="creative" && this.launchAttempted && !this.generationOnlyLaunch)fault("Generation-only native profile was not selected before launch");
+    this.promptClaimed=true;
+    this.generationOnlyLaunch=this.runtime.imageGenerationEnabled===true && routing?.intent==="creative";
     await this.start();
     // Startup is shared and asynchronous; another caller may have claimed this engine.
     if (this.active || this.stopped || this.closing || this.failed)
@@ -439,6 +450,9 @@ export class CodexEngine implements Engine {
     if (this.options.dispatchHeld?.())
       fault("Codex prompt blocked by dispatch freeze");
     this.active = true;
+    this.automaticDeep = routing?.intent === "deep";
+    this.verifiedDeepChildren.clear();
+    this.children.beginParentTurn();
     this.state("uncertain", null);
     let yes!: (v: "completed" | "cancelled") => void, no!: (e: Error) => void;
     const promise = new Promise<"completed" | "cancelled">(
@@ -475,7 +489,8 @@ export class CodexEngine implements Engine {
       }
       if (this.failed) throw this.failed;
       await this.cleanup();
-      if (outcome === "completed" && routing?.intent === "deep" && !this.children.completedModel("mimo-v2.6-pro-rl",this.verifiedDeepChildren)) fault("Deep analysis did not complete in its selected specialist; the request remains unavailable.");
+      if (outcome === "completed" && routing?.intent === "deep" && !this.children.completedCurrentModel("mimo-v2.6-pro-rl",this.verifiedDeepChildren)) fault("Deep analysis did not complete in its selected specialist; the request remains unavailable.");
+      if(outcome==="completed" && routing?.intent==="deep" && this.launchReceipt)for(const proof of this.children.currentTerminalEvidence("mimo-v2.6-pro-rl",this.verifiedDeepChildren))this.runtime.onNativeDeepCompletion?.({sessionId:this.options.sessionId,parentThreadId:this.nativeId!,...proof,launchReceipt:this.launchReceipt});
       if (outcome === "completed" && !this.cancelRequested && this.textPolicy && this.completedTurn) recordCodexPolicySuccessfulTurn(this.textPolicy,this.completedTurn.id);
       // An absent native phase is not a reasoning/final split. Only the last
       // matching completed agent message in the successful owned turn summary
@@ -564,6 +579,7 @@ export class CodexEngine implements Engine {
       fault("Unexpected native turn identity");
     if (!this.active) fault("Unsolicited native turn");
     this.turnId = id;
+    this.children.bindParentTurn(id);
     this.state("active");
   }
   private stopRepeatedSchemaError(failure: CodexSchemaErrorFailure, threadId: string, turnId: string) {
@@ -760,19 +776,21 @@ export class CodexEngine implements Engine {
     if (method === "thread/started") {
       if (!isRecord(p.thread)) fault("Invalid native thread");
       if (this.nativeId && p.thread.id !== this.nativeId) {
-        if (!this.runtime.delegationEnabled)
+        if (!this.runtime.delegationEnabled || this.generationOnlyLaunch)
           fault("Native delegation unavailable");
         if (this.automaticDeep && p.thread.model === "mimo-v2.6-pro-rl") {
           validateCodexChildMetadata(p.thread,this.nativeId,this.qualifiedChildren,this.runtime.provider);
-          this.verifiedDeepChildren.add(String(p.thread.id));
+          this.knownDeepChildren.add(String(p.thread.id));
         }
         this.children.thread(p.thread);
       }
       return;
     }
     if (method === "thread/status/changed") return;
+    if(method==="model/rerouted")fault("Native configuration, provider or turn error");
     if (this.children.owns(p.threadId)) {
       this.children.notification(method, p);
+      if (this.automaticDeep && this.active && this.turnId && !this.completedTurn && this.knownDeepChildren.has(p.threadId) && method==="turn/completed") this.verifiedDeepChildren.add(p.threadId);
       this.cursor++;
       this.state("active");
       return;
@@ -1034,11 +1052,12 @@ export class CodexEngine implements Engine {
     } else if (value.type === "collabAgentToolCall") {
       this.runtime.onNativeChildObserved?.({sessionId:this.options.sessionId,parentThreadId:this.nativeId!,parentTurnId:this.turnId!,item:Object.freeze(structuredClone(value))});
       if(this.textPolicy?.mode==="retention-parent"&&this.retentionAction!=="child")fault("Native child outside approved retention action");
-      if (!this.runtime.delegationEnabled)
+      if (!this.runtime.delegationEnabled || this.generationOnlyLaunch)
         fault("Native delegation unavailable");
       this.children.item(value, complete);
+      this.children.bindParentCollaboration(this.turnId!,value,complete);
     } else if (value.type === "subAgentActivity") {
-      if (!this.runtime.delegationEnabled)
+      if (!this.runtime.delegationEnabled || this.generationOnlyLaunch)
         fault("Native delegation unavailable");
       this.children.activity(value);
     } else if (value.type === "dynamicToolCall") {

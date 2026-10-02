@@ -343,6 +343,19 @@ export class Broker {
         queueMicrotask(() => this.pump(workspaceId));
       });
   }
+  private automaticRoute(s:StoredSession,run:Run) {
+    if(s.engineKind!=="codex"||run.kind!=="message")return undefined;
+  let priorIntent: CodexAutomaticIntent | undefined;
+  // Read the saved one-parent history; repeated follow-ups do not lose the original route.
+  for(const previous of this.store.db.prepare("SELECT text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id,run.id) as Iterable<{text:string;attachment_ids:string}>) {
+    const previousImages = (JSON.parse(previous.attachment_ids) as string[]).some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
+    const previousRoute=createCodexAutomaticRoute({text:previous.text,hasImages:previousImages});
+    if(previousRoute.intent === "ordinary" && isCodexRouteFollowup(previous.text))continue;
+    priorIntent=previousRoute.intent;break;
+  }
+    const hasImages=run.attachmentIds.some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
+    return createCodexAutomaticRoute({text:run.text,hasImages,previous:priorIntent});
+  }
   private async runner(
     s: StoredSession,
     onUpdate: (update: EngineUpdate) => void,
@@ -372,6 +385,7 @@ export class Broker {
       engineVersion: s.engineVersion,
       modelPolicyVersion: s.modelPolicyVersion,
       nativeState: s.nativeState,
+      ...(this.options.enginePolicy?.codex?.imageGenerationEnabled===true ? {nativeAutomaticRoute:this.automaticRoute(s,run)}:{}),
       onNativeState: (state) => this.store.setNativeState(s.id, s.engineKind, state),
       dispatchHeld: this.options.dispatchHeld,
       profileDir: this.files.profile(s.id),
@@ -674,15 +688,7 @@ export class Broker {
             const priorContext = handoff
               ? `Context from the prior chat (same workspace):\n${handoff.summary}\n\n`
               : "";
-            let priorIntent: CodexAutomaticIntent | undefined;
-            // Read the saved one-parent history; repeated follow-ups do not lose the original route.
-            for(const previous of this.store.db.prepare("SELECT text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id,run.id) as Iterable<{text:string;attachment_ids:string}>) {
-              const previousImages = (JSON.parse(previous.attachment_ids) as string[]).some(id=>{try{return ["image/png","image/jpeg","application/pdf"].includes(this.store.file(id).mimeType);}catch{return false;}});
-              const previousRoute=createCodexAutomaticRoute({text:previous.text,hasImages:previousImages});
-              if(previousRoute.intent === "ordinary" && isCodexRouteFollowup(previous.text))continue;
-              priorIntent=previousRoute.intent;break;
-            }
-            const routing = s.engineKind === "codex" && run.kind === "message" ? createCodexAutomaticRoute({text:run.text,hasImages:preparedAttachments.some(a=>["image/png","image/jpeg","application/pdf"].includes(a.mimeType)),previous:priorIntent}) : undefined;
+            const routing=this.automaticRoute(s,run);
             promptOutcome = await engine.prompt(
               (s.engineKind === "codex" ? this.store.memory.bridge(s.id).continuationText() : "") + priorContext + (currentImageContext
                 ? `${currentImageContext}\n\nCurrent user request (run ${run.id}):\n${requestText}`

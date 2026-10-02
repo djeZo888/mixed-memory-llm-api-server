@@ -40,7 +40,8 @@ export function createImageServer(client, lifetime = new AbortController()) {
     inputSchema: generateInput,
     annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: false },
   }, (input, extra) => invoke('generation', input, extra));
-  server.registerTool('image_edit', {
+  if(client.profile==="generation-only")for(const action of ['lookup','cancel'])server.registerTool(`image_${action}`,{description:`${action} the original owned image job. No resubmit; cancellation acknowledgement is not settlement.`,inputSchema:statusInput,annotations:{readOnlyHint:action!=='cancel',idempotentHint:true}},(input,extra)=>run(()=>client[action](input,{signal:AbortSignal.any([extra.signal,lifetime.signal])})));
+  if(client.profile!=="generation-only")server.registerTool('image_edit', {
     title: 'Edit an image locally',
     description: 'Use for requested reference-based creation or a new opaque edited version using resident Qwen-Image-2.1, with references containing explicit current-session file IDs or anchored relative workspace paths. Reuse successful outputs; do not edit/regenerate for embedding/layout or cosmetic self-verification. User-requested iterative edits remain supported. Use returned imageMarkdown inline in the final answer. Read image_capabilities for enabled sizes/reference counts first. Preserve originals and source geometry; any required resize/canvas change needs the user approval card. image_edit submits an edit proposal. Make one normal guarded proposal with the owned reference and a supported edit profile. If the target dimensions differ from the reference and approval is required, the app saves a protected awaiting_approval card; no transformation or GPU edit is dispatched before actual user approval. Surface that saved card, then retain its job ID. Never preapprove, resize locally, duplicate or resubmit the proposal. A qualified same-canvas edit may proceed normally without inventing an approval requirement. Unavailable edits cannot fall back to generation or another creative service.',
     inputSchema: editInput,
@@ -69,7 +70,9 @@ async function main() {
   try { token = configuredToken(process.env); }
   catch { process.stderr.write('Image MCP rejected: invalid session gateway configuration.\n'); process.exitCode = 1; return; }
   const lifetime = new AbortController();
-  const server = createImageServer(createImageClient({ token }), lifetime);
+  const profile=process.env.AI_HARNESS_IMAGE_PROFILE??"full";
+  if(!["full","generation-only"].includes(profile))throw Error("Invalid trusted image profile");
+  const server = createImageServer(createImageClient({ token,profile }), lifetime);
   const transport = new StdioServerTransport(process.stdin, process.stdout, { maxBufferSize: LIMITS.stdioBytes });
   server.server.onerror = () => process.stderr.write('Image MCP transport or protocol error.\n');
   server.server.onclose = () => lifetime.abort();

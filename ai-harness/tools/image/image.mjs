@@ -192,7 +192,8 @@ async function boundedJSON(response) {
   } catch { throw new ImageError('INVALID_RESPONSE', 'The image gateway returned invalid JSON metadata.'); }
 }
 
-export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sleep = (ms, signal) => delay(ms, undefined, { signal }), newRequestId = randomUUID } = {}) {
+export function createImageClient({ profile="full", token, fetchImpl = fetch, now = Date.now, sleep = (ms, signal) => delay(ms, undefined, { signal }), newRequestId = randomUUID } = {}) {
+  if(!["full","generation-only"].includes(profile))throw new ImageError("INVALID_PROFILE","Unknown trusted image profile");
   configuredToken({ AI_HARNESS_GATEWAY_TOKEN: token });
   async function request(path, method, body, signal, remaining) {
     const timeout = AbortSignal.timeout(Math.max(1, Math.min(LIMITS.requestMs, remaining)));
@@ -218,7 +219,9 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
   async function capabilities(input, { signal } = {}) {
     if (!capabilitiesInput.safeParse(input).success) throw new ImageError('INVALID_INPUT', 'image_capabilities requires exactly {"query":"capabilities"}; no other arguments are accepted. This reads service metadata only.');
     const data = await request('/image-capabilities', 'GET', undefined, signal, LIMITS.requestMs);
-    return publicCapabilities(data, token);
+    const result=publicCapabilities(data,token);
+    if(profile==="generation-only")result.profiles=result.profiles.filter(p=>p.operation==="generation");
+    return result;
   }
   async function status(input, { signal } = {}) {
     const parsed = statusInput.safeParse(input);
@@ -232,6 +235,7 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
     return result;
   }
   async function invoke(operation, input, { signal, onProgress } = {}) {
+    if(profile==="generation-only" && operation!=="generation")throw new ImageError("OPERATION_UNQUALIFIED","This profile permits generation only");
     const parsed = (operation === 'edit' ? editInput : generateInput).safeParse(input);
     if (!['generation', 'edit'].includes(operation) || !parsed.success) throw new ImageError('INVALID_INPUT', 'Use prompt, optional supported size/seed, and current-session file IDs or anchored relative workspace references only.');
     if (signal?.aborted) throw new ImageError('OBSERVATION_STOPPED', 'The tool stopped before image submission.');
@@ -280,5 +284,10 @@ export function createImageClient({ token, fetchImpl = fetch, now = Date.now, sl
       }
     }
   }
-  return { capabilities, status, invoke };
+  async function cancel(input,{signal}={}) {
+    const parsed=statusInput.safeParse(input);if(!parsed.success)throw new ImageError('INVALID_INPUT','Use the original jobId');
+    const data=await request(`/image-jobs/${encodeURIComponent(parsed.data.jobId)}/cancel`,'POST',{},signal,LIMITS.requestMs),job=publicJob(data.job,token);
+    if(job.id!==parsed.data.jobId)throw new ImageError('INVALID_JOB_RESPONSE','Unrelated job');return jobResult(job);
+  }
+  return { profile, capabilities, status, lookup:status, cancel, invoke };
 }

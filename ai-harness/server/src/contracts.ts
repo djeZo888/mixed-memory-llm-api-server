@@ -196,6 +196,8 @@ export type EngineUpdate =
   | { type: "context"; used: number | null; estimated: boolean; source: string }
   | { type: "artifact"; path: string; name?: string; mimeType?: string };
 export interface EngineOptions {
+  /** Trusted broker-only branded controlling route, selected before native launch. */
+  nativeAutomaticRoute?:import("./codex-automatic-routing.js").CodexAutomaticRoute;
   onNativeLifecycle?: (e:import("./codex-observation.js").CodexNativeObservation) => void;
   /** Host-owned ordinary memory. Distinct from finite private acceptance policy. */
   sessionMemory?: import("./session-memory.js").SessionMemoryBridge;

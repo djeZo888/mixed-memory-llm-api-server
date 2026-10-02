@@ -26,6 +26,29 @@ const id = (v: unknown): v is string =>
   typeof v === "string" && !!v && v.length <= 512 && !/[\x00-\x20\x7f]/.test(v);
 /** Pinned collabAgentToolCall states, never inferred from a tool's own completion. */
 export class CodexChildren {
+  private parentTurnId?: string;
+  private currentTurns = new Map<string, string>();
+  private currentTargets = new Map<string,{callId:string;snapshot:string}>();
+  private seenTurns = new Map<string,Set<string>>();
+  beginParentTurn() { this.parentTurnId=undefined; this.currentTurns.clear(); this.currentTargets.clear(); }
+  bindParentTurn(turnId:string) {
+    if (!id(turnId) || (this.parentTurnId && this.parentTurnId!==turnId)) throw new CodexProtocolError("Changed controlling parent turn");
+    this.parentTurnId=turnId;
+  }
+  /** Called only after the controlling parent's item lifecycle is validated. */
+  bindParentCollaboration(turnId:string,value:Record<string,unknown>,complete:boolean) {
+    if (!this.parentTurnId || turnId!==this.parentTurnId) throw new CodexProtocolError("Foreign parent collaboration");
+    if (complete && value.status==="completed" && ["spawnAgent","sendInput","resumeAgent","sendMessage","followupTask"].includes(String(value.tool)))
+      for (const target of value.receiverThreadIds as string[]) this.currentTargets.set(target,{callId:String(value.id),snapshot:JSON.stringify(value)});
+  }
+  currentTerminalEvidence(model:string,verified:ReadonlySet<string>) {
+    if(!this.parentTurnId)return [];
+    return [...this.currentTurns].filter(([thread,turnId]) => {
+      const turn=this.turns.get(thread);
+      return verified.has(thread) && this.currentTargets.has(thread) && this.models.get(thread)===model && turn?.id===turnId && turn.terminalStatus==="completed" && [...turn.items.values()].every(item=>item.completed);
+    }).map(([childThreadId,childTurnId])=>Object.freeze({parentTurnId:this.parentTurnId!,childThreadId,childTurnId,dispatchCallId:this.currentTargets.get(childThreadId)!.callId,dispatchSnapshot:this.currentTargets.get(childThreadId)!.snapshot,terminalSnapshot:this.turns.get(childThreadId)!.terminalSnapshot!}));
+  }
+  completedCurrentModel(model:string,verified:ReadonlySet<string>):boolean {return this.currentTerminalEvidence(model,verified).length>0;}
   private children = new Map<string, string>();
   private models = new Map<string, string>();
   // Call bookkeeping only: an unowned close target never becomes a child.
@@ -36,6 +59,7 @@ export class CodexChildren {
       id: string;
       terminal: boolean;
       terminalStatus?: string;
+      terminalSnapshot?: string;
       schemaErrors: CodexSchemaErrorGuard;
       items: Map<
         string,
@@ -218,6 +242,10 @@ export class CodexChildren {
           throw new CodexProtocolError("Replayed child turn");
         return;
       }
+      const seen=this.seenTurns.get(p.threadId)??new Set<string>();
+      if(seen.has(p.turn.id)||seen.size>=10000)throw new CodexProtocolError("Replayed or excessive child turns");
+      seen.add(p.turn.id);this.seenTurns.set(p.threadId,seen);
+      if (this.parentTurnId) this.currentTurns.set(p.threadId,p.turn.id);
       this.turns.set(p.threadId, {
         id: p.turn.id,
         terminal: false,
@@ -236,10 +264,12 @@ export class CodexChildren {
       )
         throw new CodexProtocolError("Invalid child terminal");
       if (turn.terminal) {
-        if (turn.terminalStatus !== p.turn.status)
+        if (turn.terminalStatus !== p.turn.status || turn.terminalSnapshot!==JSON.stringify(p.turn))
           throw new CodexProtocolError("Conflicting child terminal");
         return;
       }
+      if(p.turn.status==="completed" && p.turn.error!=null)throw new CodexProtocolError("Successful child terminal contains error");
+      turn.terminalSnapshot=JSON.stringify(p.turn);
       turn.terminal = true;
       turn.terminalStatus = String(p.turn.status);
       this.state(

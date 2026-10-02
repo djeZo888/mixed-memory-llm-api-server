@@ -84,6 +84,16 @@ class CodexLauncherContract(base.LauncherContract):
         self.assertIn(f'{base.LAUNCHER.parent}/codex/config-image-jobs.toml:{self.profile}/codex-home/config.toml:ro,rprivate',run)
         self.assertNotIn('--image-jobs-qualified',run)
         self.assert_catalog_selected_by_container_config_is_mounted(run, 'config-image-jobs.toml')
+    def test_generation_requires_receipts_and_never_opens_full_or_child_profile(self):
+        config=tomllib.loads((base.LAUNCHER.parent/'codex/config-generation-only.toml').read_text())
+        self.assertEqual(config['mcp_servers']['image']['enabled_tools'],['image_capabilities','image_status','image_generate','image_lookup','image_cancel'])
+        self.assertEqual(config['mcp_servers']['image']['env']['AI_HARNESS_IMAGE_PROFILE'],'generation-only')
+        self.assertFalse(config['features']['multi_agent']);self.assertFalse(config['agents']['enabled'])
+        result=self.invoke(['--profile-dir',str(self.profile),'--workspace',str(self.workspace),'--image-generation-qualified'])
+        self.assertEqual(result.returncode,64);self.assertIn('generation-only requires trusted receipt channel',result.stderr);self.assertEqual(self.calls(),[])
+        result=self.invoke(['--image-jobs-qualified','--image-generation-qualified'])
+        self.assertEqual(result.returncode,64);self.assertIn('ambiguous',result.stderr);self.assertEqual(self.calls(),[])
+
     def test_symlinked_engine_state_rejected(self):
         (self.profile/'codex-home').symlink_to(self.home,target_is_directory=True)
         result=self.invoke();self.assertEqual(result.returncode,64)

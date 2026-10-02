@@ -8,6 +8,7 @@ export type CapabilityName =
   | "search"
   | "browser"
   | "pdf"
+  | "imageGeneration"
   | "image"
   | "coding"
   | "frontier";
@@ -26,7 +27,7 @@ const unavailable = (reason: string): CodexCapability => ({
 /** Describes implementation/qualification, never enables deployment or marks health ready. */
 export function codexCapabilities(
   reviewed: Partial<CodexCapabilities> = {},
-  gates: { delegationEnabled?: boolean; imageToolEnabled?: boolean; technicalVisionAvailable?: boolean; technicalVisionFixture?: boolean } = {},
+  gates: { delegationEnabled?: boolean; imageToolEnabled?: boolean; imageGenerationEnabled?: boolean; technicalVisionAvailable?: boolean; technicalVisionFixture?: boolean } = {},
 ): CodexCapabilities {
   return {
     compaction: {
@@ -71,6 +72,7 @@ export function codexCapabilities(
       }),
       supported: gates.delegationEnabled === true,
     },
+    imageGeneration: {supported:gates.imageGenerationEnabled===true,qualification:gates.imageGenerationEnabled===true?"live":"not_tested",reason:"Independent protected normal generation-only qualification; edits and creative children remain closed. Current readiness is checked separately."},
     image: {
       ...(reviewed.image ??
         unavailable(

@@ -1,5 +1,5 @@
 import { codexAutomaticDirective, type CodexAutomaticRoute } from "./codex-automatic-routing.js";
-import { codexTraceSchemaForMode, CODEX_TECHNICAL_RECEIPT_SOURCES, type CodexNativeTraceMode } from "./codex-receipts.js";
+import { codexTraceSchemaForMode, CODEX_TECHNICAL_RECEIPT_SOURCES, codexReceiptSourceProfile, type CodexNativeTraceMode } from "./codex-receipts.js";
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
 import type {CodexHostObservations} from "./codex-host-observation.js";
 import { codexReceiptProvenance, type CodexReceiptPolicy } from "./codex-receipts.js";
@@ -18,6 +18,7 @@ export interface CodexHostQualification {
   observations?:CodexHostObservations;
   onNativeThread?:CodexRuntime["onNativeThread"];
   beforeNativeAction?:CodexRuntime["beforeNativeAction"];
+  onNativeDeepCompletion?:CodexRuntime["onNativeDeepCompletion"];
   onNativeChildObserved?:CodexRuntime["onNativeChildObserved"];
   nativeMetadataAuthority?: GatewayOptions["nativeMetadataAuthority"];
   onNativeOperation?: GatewayOptions["onNativeOperation"];
@@ -50,6 +51,7 @@ export interface CodexHostQualification {
   qualifiedAliases?: readonly string[];
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
   imageJobsQualified?: true;
+  imageGenerationQualified?: true;
   /** Temporary exact-session/run acceptance; never changes advertised capability. */
   imageAcceptance?: (sessionId: string) => boolean;
   nativeDelegationQualified?: true;
@@ -75,7 +77,9 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.textOnlyPolicy && (!qualification.nativeReceiptPolicy || !qualification.authorizeNativeTurn)) throw Error("Text-only policy requires receipt transport and observed native admission");
   if (qualification?.readOriginalProbe && (!qualification.textOnlyPolicy || !qualification.authorizeOriginalRead)) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
   if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
-  if(qualification?.technicalVisionQualified && (!qualification.nativeReceiptPolicy || Object.keys(qualification.nativeReceiptPolicy.sourceSha256).sort().join()!==[...CODEX_TECHNICAL_RECEIPT_SOURCES].sort().join()))throw Error("Technical MCP requires exact reviewed receipt source/mount closure");
+  if(qualification?.technicalVisionQualified && (!qualification.nativeReceiptPolicy || Object.keys(qualification.nativeReceiptPolicy.sourceSha256).sort().join()!==[...codexReceiptSourceProfile(true,qualification.imageGenerationQualified===true)].sort().join()))throw Error("Technical MCP requires exact reviewed receipt source/mount closure");
+  if(qualification?.imageJobsQualified && qualification?.imageGenerationQualified)throw Error("Ambiguous full/generation-only qualification");
+  if(qualification?.imageGenerationQualified && (!qualification.nativeReceiptPolicy || Object.keys(qualification.nativeReceiptPolicy.sourceSha256).sort().join()!==[...codexReceiptSourceProfile(qualification.technicalVisionQualified===true,true)].sort().join()))throw Error("Generation-only MCP requires exact reviewed source/mount closure");
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
     nativeTraceMode:qualification?.nativeTraceMode,
@@ -83,6 +87,7 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     onNativeThread:qualification?.onNativeThread,
     beforeNativeAction:qualification?.beforeNativeAction,
     onNativeChildObserved:qualification?.onNativeChildObserved,
+    onNativeDeepCompletion:qualification?.onNativeDeepCompletion,
     retentionTurnKind:qualification?.retentionTurnKind,
     ordinaryMemoryAdmission: qualification?.ordinaryMemoryAdmission ? async (input,signal) => {
       if (!codexReceiptProvenance(input.launchReceipt)) throw Error("Ordinary memory lacks genuine current launch receipt");
@@ -113,19 +118,27 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     modelPolicyVersion: CODEX_MODEL_POLICY, model: "qwen3.8-27b", provider: "sova",
     gatewayUrl: "http://10.0.2.2:8081/v1", contextLimit: 480000,
     imageToolEnabled: qualification?.imageJobsQualified === true,
+    imageGenerationEnabled: qualification?.imageGenerationQualified === true,
     delegationEnabled: qualification?.nativeDelegationQualified === true,
     maxChildren: qualification?.retentionTurnKind ? 1 : 4,
     technicalVisionEnabled: qualification?.technicalVisionQualified === true,
     automaticRouting: (route: CodexAutomaticRoute, sessionId: string) => codexAutomaticDirective(route, {
       deep: qualification?.nativeDelegationQualified === true && (qualification?.frontierResponsesQualified === true || qualification?.frontierAcceptance?.(sessionId) === true),
       technical: qualification?.technicalVisionQualified === true,
-      creative: imageGateForCodexLaunch({sessionId},qualification),
+      creative: qualification?.imageGenerationQualified===true || imageGateForCodexLaunch({sessionId},qualification),
+      generationOnly:qualification?.imageGenerationQualified===true,
     }),
     qualifiedChildModels: qualification?.nativeDelegationQualified === true && qualification.frontierResponsesQualified === true ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     qualifiedChildModelsForSession: sessionId => qualification?.nativeDelegationQualified === true && (qualification.frontierResponsesQualified === true || qualification.frontierAcceptance?.(sessionId) === true) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,
-    launchRootless: input => createRootlessCodexLauncher(launcherPath, qualification?.nativeReceiptPolicy, qualification?.observations)({ ...input, imageJobsQualified: imageGateForCodexLaunch(input, qualification),technicalVisionQualified:!input.receiptRunId && qualification?.technicalVisionQualified === true }),
+    launchRootless: input => {
+      const generation=!input.receiptRunId && input.imageGenerationRequested===true && qualification?.imageGenerationQualified===true;
+      const technical=!input.receiptRunId && qualification?.technicalVisionQualified===true;
+      const reviewed=qualification?.nativeReceiptPolicy;
+      const policy=reviewed && qualification?.imageGenerationQualified===true ? {...reviewed,sourceSha256:Object.fromEntries(codexReceiptSourceProfile(technical,generation).map(path=>[path,reviewed.sourceSha256[path]!]))}:reviewed;
+      return createRootlessCodexLauncher(launcherPath,policy,qualification?.observations)({...input,imageJobsQualified:imageGateForCodexLaunch(input,qualification) && qualification?.imageGenerationQualified!==true,imageGenerationQualified:generation,technicalVisionQualified:technical});
+    },
     revokeGatewaySession: id => { const g = gateway(); if (!g) throw Error("Gateway unavailable"); g.revokeSession(id); },
     // Native teardown can finish before the accepted provider request drains.
     // Observe the durable session ledger; this never releases native/image ownership.

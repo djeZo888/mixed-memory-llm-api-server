@@ -1729,3 +1729,13 @@ test('generation-only operation gate rejects new edit/generation without cancell
  const job=await f.submit('generation-open');await until(()=>f.backend.calls.length===1);assert.equal(job.operation,'generation');
  qualified=false;await assert.rejects(f.submit('generation-closed'),/not qualified/);assert.equal(f.backend.calls.length,1);
 });
+
+test('queued generation loses qualification before dispatch while the original active artifact still settles',async t=>{
+ let qualified=true;const f=await fixture(t,{operationQualified:(_session,operation)=>qualified&&operation==='generation'});
+ const first=await f.submit('active-qualified');await until(()=>f.backend.calls.length===1);
+ const queued=await f.submit('queued-qualified');assert.equal(queued.state,'queued');
+ qualified=false;await f.backend.complete();
+ await until(()=>f.broker.get(f.session.id,first.id).state==='completed');
+ await until(()=>f.broker.get(f.session.id,queued.id).state==='failed');
+ assert.equal(f.backend.calls.length,1);assert.equal(f.broker.get(f.session.id,queued.id).error?.code,'image_operation_unqualified');
+});

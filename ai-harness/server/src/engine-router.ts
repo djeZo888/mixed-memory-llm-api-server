@@ -8,6 +8,7 @@ export interface EnginePolicy {
     capabilities?: Partial<CodexCapabilities>;
     delegationEnabled?: boolean;
     imageToolEnabled?: boolean;
+    imageGenerationEnabled?: boolean;
     /** Descriptive external specialist capability, never native pixel permission. */
     technicalVisionAvailable?: boolean;
     enabled: boolean;
