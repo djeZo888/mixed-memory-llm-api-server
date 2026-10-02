@@ -1,0 +1,299 @@
+{
+  "phase": "U-clean-chat02",
+  "authority": "source_only",
+  "baseCommit": "091ea2158e1999c0e4b484122ce49162b5ba624f",
+  "sourceCommit": "606ffa0d637f20e021a9eca0065f4747efcd205a",
+  "status": "SOURCE_AND_BROWSER_FIXTURE_PASS",
+  "checks": [
+    {
+      "label": "web-tests",
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "test"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:02:35.043085+00:00",
+      "finishedUtc": "2026-10-02T00:02:38.164452+00:00",
+      "exitCode": 1,
+      "receipt": "commands/web-tests.receipt.json",
+      "receiptSHA256": "d4b8105248e2a99f3ccc640068f8fb2427291cf70cc541e3f1f1c1490b8daf18",
+      "stdoutSHA256": "7ffd0839ac2e3c6e2a957ad806fcfaa77040a5f248506797ddd0cba77ccb428b",
+      "stderrSHA256": "08bedb6b2a1f7444272de606ac93522ff683d06c3cf70ddd3cae1f40aa4511ab",
+      "checkedHead": null
+    },
+    {
+      "label": "web-tests-corrected",
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "test"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:03:35.266854+00:00",
+      "finishedUtc": "2026-10-02T00:03:38.018745+00:00",
+      "exitCode": 0,
+      "receipt": "commands/web-tests-corrected.receipt.json",
+      "receiptSHA256": "38460e0896a6a8cc1f236d004e3b92288c1e32c44c90bab442ce4091d6924fed",
+      "stdoutSHA256": "f92602be24eac647c09a10638ac25bbe25a0904866659ba217b6d89f528b8d88",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checkedHead": null
+    },
+    {
+      "label": "chrome-browser",
+      "argv": [
+        "/usr/bin/env",
+        "PLAYWRIGHT_CHANNEL=chrome",
+        "H002_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots",
+        "H003_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots",
+        "H004_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots",
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "test:browser"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:03:35.266828+00:00",
+      "finishedUtc": "2026-10-02T00:03:52.051552+00:00",
+      "exitCode": 1,
+      "receipt": "commands/chrome-browser.receipt.json",
+      "receiptSHA256": "8c8c168e0462ecf1c516fdab6418d36f5a7d94a7ba19a999a0a9c5d80c6accff",
+      "stdoutSHA256": "61ef7c5f675a5ddb32efa2ad9c2ee94c8e8621ae73011bad529ca7d4d7b98866",
+      "stderrSHA256": "c0b9041e190cc923e56855d491d2ea57cb2773c0a4715d2a288126570cc12f59",
+      "checkedHead": null
+    },
+    {
+      "label": "chrome-browser-corrected",
+      "argv": [
+        "/usr/bin/env",
+        "PLAYWRIGHT_CHANNEL=chrome",
+        "H002_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-corrected",
+        "H003_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-corrected",
+        "H004_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-corrected",
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "test:browser"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:04:48.169781+00:00",
+      "finishedUtc": "2026-10-02T00:04:57.727790+00:00",
+      "exitCode": 0,
+      "receipt": "commands/chrome-browser-corrected.receipt.json",
+      "receiptSHA256": "fc20a25a014a7b257db5ed4fcac22ef09ef9ad42e8415d08a99730fc5eafb93c",
+      "stdoutSHA256": "2d7c02d72c51ae825b0f4c4480822b3602d3f98cf6a44faf04034ffec3c3f2df",
+      "stderrSHA256": "2a610290c4b3e76e5f5ae0e7e475d4531190c7415340d7ccac7ea627393a1a87",
+      "checkedHead": null
+    },
+    {
+      "label": "source-commit",
+      "argv": [
+        "/usr/bin/git",
+        "commit",
+        "-m",
+        "Keep chat context details and prior-file reuse on demand"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo",
+      "startedUtc": "2026-10-02T00:07:26.843176+00:00",
+      "finishedUtc": "2026-10-02T00:07:27.168416+00:00",
+      "exitCode": 128,
+      "receipt": "commands/source-commit.receipt.json",
+      "receiptSHA256": "fbb547e24b38ff59d6c4bee7d272fe10fc7694e9fc5851006de82d5a0093566b",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "a96fce9994104fe3396340092b0545de576a4e76e94289a16f4317e92670e040",
+      "checkedHead": "091ea2158e1999c0e4b484122ce49162b5ba624f"
+    },
+    {
+      "label": "source-commit-corrected",
+      "argv": [
+        "/usr/bin/git",
+        "-c",
+        "user.name=CodexAIagent",
+        "-c",
+        "user.email=133749519+djeZo888@users.noreply.github.com",
+        "commit",
+        "-m",
+        "Keep chat context details and prior-file reuse on demand"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo",
+      "startedUtc": "2026-10-02T00:08:00.831687+00:00",
+      "finishedUtc": "2026-10-02T00:08:01.121940+00:00",
+      "exitCode": 0,
+      "receipt": "commands/source-commit-corrected.receipt.json",
+      "receiptSHA256": "0f6ccd71bb9f8cc952b6ca4a3db47e24b94c30854be997aa5a15d669301b922d",
+      "stdoutSHA256": "18f34316a933b6976bd2c7731c45a65c4e8659cb5d2c6eceb668e7938da45249",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checkedHead": "091ea2158e1999c0e4b484122ce49162b5ba624f"
+    },
+    {
+      "label": "final-web-tests",
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "test"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:08:01.178126+00:00",
+      "finishedUtc": "2026-10-02T00:08:03.834928+00:00",
+      "exitCode": 0,
+      "receipt": "commands/final-web-tests.receipt.json",
+      "receiptSHA256": "b0d31622c4dad1fe2c09bc183d9063647ac1f9e1db90f4068341abe1242b6f8d",
+      "stdoutSHA256": "8cf0b6e810312c3bdfdbf191973ecbf85ada20ad94699e15f3d8fba5d69a0bd0",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checkedHead": "606ffa0d637f20e021a9eca0065f4747efcd205a"
+    },
+    {
+      "label": "final-web-typecheck",
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "typecheck"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:08:01.178320+00:00",
+      "finishedUtc": "2026-10-02T00:08:01.716111+00:00",
+      "exitCode": 0,
+      "receipt": "commands/final-web-typecheck.receipt.json",
+      "receiptSHA256": "7039ddfe411ebc919f33f563f88723635556fa77c9c4fb0a6c0155209a2ce0f4",
+      "stdoutSHA256": "865d76bbf5582f31f74386eeabbb2f356079a547c81307c06ba60b50fc35860d",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checkedHead": "606ffa0d637f20e021a9eca0065f4747efcd205a"
+    },
+    {
+      "label": "final-web-build",
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "build"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:08:01.178151+00:00",
+      "finishedUtc": "2026-10-02T00:08:02.210389+00:00",
+      "exitCode": 0,
+      "receipt": "commands/final-web-build.receipt.json",
+      "receiptSHA256": "e47de0a07728f42f462a7ce79e0b28f095fb787f205dff0361da1fdf8ab3439e",
+      "stdoutSHA256": "dd001311b446278b8a215d3fe274647cf70ab084ece22749e9af9abd0a4af80b",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "checkedHead": "606ffa0d637f20e021a9eca0065f4747efcd205a"
+    },
+    {
+      "label": "final-chrome-browser",
+      "argv": [
+        "/usr/bin/env",
+        "PLAYWRIGHT_CHANNEL=chrome",
+        "H002_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-final",
+        "H003_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-final",
+        "H004_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-final",
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "test:browser"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:06:45.241545+00:00",
+      "finishedUtc": "2026-10-02T00:06:54.765231+00:00",
+      "exitCode": 0,
+      "receipt": "commands/final-chrome-browser.receipt.json",
+      "receiptSHA256": "bae74aadd050fbea1e81d12ffeef4ea116dbc3cfaa0dd6a95bea24a89c9f6722",
+      "stdoutSHA256": "69558c4a6063308c1fb3a5735a08c5dda882a10d03afabd15ab3ee50b8d82841",
+      "stderrSHA256": "a3eabc5c945a438374a813bf2edb5566876d62bbcc720b38ed5883c0f92ef202",
+      "checkedHead": null
+    },
+    {
+      "label": "sealed-chrome-browser",
+      "argv": [
+        "/usr/bin/env",
+        "PLAYWRIGHT_CHANNEL=chrome",
+        "H002_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-sealed",
+        "H003_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-sealed",
+        "H004_WEB_EVIDENCE=/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/output/screenshots-sealed",
+        "/opt/homebrew/opt/node@24/bin/npm",
+        "run",
+        "test:browser"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/U-clean-chat02/repo/ai-harness/web",
+      "startedUtc": "2026-10-02T00:08:55.413025+00:00",
+      "finishedUtc": "2026-10-02T00:09:04.944786+00:00",
+      "exitCode": 0,
+      "receipt": "commands/sealed-chrome-browser.receipt.json",
+      "receiptSHA256": "5e56510cbd52dd16945e914d3fec47c27b78c7de5ceb96764ff326af1b30415a",
+      "stdoutSHA256": "6e3e77e98f5e72da08b1db47da7438aa1adaa26a188f4e6ff7e2562897f26584",
+      "stderrSHA256": "bdda471f95fe7b75604b9a611128309bc9803362423e6de318d90a3298383ede",
+      "checkedHead": "606ffa0d637f20e021a9eca0065f4747efcd205a"
+    }
+  ],
+  "counts": {
+    "webUnitTestsPassed": 254,
+    "webUnitTestFilesPassed": 24,
+    "chromeFixtureTestsPassed": 17,
+    "representativeScreenshotsInspected": 6
+  },
+  "evidence": {
+    "source": "PASS",
+    "typecheck": "PASS",
+    "build": "PASS",
+    "realInstalledChromeFixture": "PASS",
+    "visualFixture": "PASS",
+    "nativeRuntime": "NOT_TESTED",
+    "liveInference": "NOT_TESTED",
+    "deployedBrowser": "NOT_TESTED",
+    "modelAcceptance": "NOT_TESTED",
+    "physical": "NOT_TESTED"
+  },
+  "changes": [
+    "Closed native context disclosure keeps truthfully estimated/measured/unavailable/stale summary and occupancy bar visible; token numbers/explanation open on demand.",
+    "Closed native prior-file disclosure retains the original accessible select, locks, MIME filtering and exact reuse callback.",
+    "Attachment help was already collapsed and remains so; production App, engine policy, history and all runtime interfaces are unchanged."
+  ],
+  "preservedPins": {
+    "runtime": "0.158.0",
+    "upstream": "064c",
+    "context": 480000,
+    "autoCompaction": 400000,
+    "output": 65536,
+    "verification": "no owned diff outside frontend presentation/tests/reports; no runtime change or live qualification"
+  },
+  "externalIntegrationLimit": "This exact base consumes session-scoped technical-vision-jobs status/lookup/cancel from web, but their server implementation is absent in this base and independently owned. No production interface edits or extra regression were needed for this presentation-only patch. Existing same-session/original-handle fixtures do not qualify deployed contracts.",
+  "originalFailures": [
+    {
+      "label": "web-tests",
+      "exitCode": 1,
+      "reason": "jsdom role query exposed a hidden native-details combobox; assertion corrected to visibility."
+    },
+    {
+      "label": "chrome-browser",
+      "exitCode": 1,
+      "reason": "existing image browser check expected context numbers visible; corrected to open/close the native disclosure."
+    },
+    {
+      "label": "source-commit",
+      "exitCode": 128,
+      "reason": "isolated checkout lacked Git author identity; corrected with per-command identity matching reviewed base, without shared/global config changes."
+    }
+  ],
+  "exploratoryFailures": "Original command execution failures preserved in output/commands/original-exploratory-failures.json. Original exploratory exec events did not expose UTC timestamps or stream separation; none are invented. Includes wrong-relative scope lookup, nonexistent web/apps paths and unnecessary Pillow pixel probe; no dependency installed.",
+  "processClosure": {
+    "ownedFixtureAndCheckIdentitiesAbsent": true,
+    "recordedIdentities": 353,
+    "groupsAbsent": true,
+    "port4193Absent": true,
+    "proof": "output/FIXTURE-CLOSURE.json and commands/owned-process-absence.receipt.json",
+    "initialRecorderLimit": "Earlier browser receipts retained command names after exit as (node); their PID/PGID/birth is tied to WebServer stderr. Final exact fixture argv was observed by PS after recorder correction; originals retained.",
+    "nativeWrapperOuter": "ROOT_MUST_COLLECT_AFTER_NATIVE_RETURN; not claimed by this still-running native session"
+  },
+  "session": {
+    "sid": "01a0f9e7-9ac1-7043-a568-936e77851641",
+    "model": "gpt-6.1-sol",
+    "reasoning": "ultra",
+    "settingsEvidence": "output/SESSION-EVIDENCE.json",
+    "nestedReviewer": {
+      "agentIdentifier": "/root/read_only_ui_review",
+      "requestedModel": "gpt-6.1-sol",
+      "requestedReasoning": "ultra",
+      "nativeCliSid": null,
+      "settingReceipt": "No independent native CLI SID/settings receipt was exposed by collaboration tool",
+      "status": "closed",
+      "readOnly": true,
+      "conclusions": [
+        "Native details preserves keyboard and accessibility; retain existing attachment/send/stop/IME locks and session callbacks.",
+        "No additional session-vision compatibility regression needed for this presentation patch.",
+        "Corresponding technical vision server routes absent from this exact base; independently owned external integration remains unqualified."
+      ]
+    }
+  },
+  "privateEvidence": "Output/check logs/screenshots remain outside Git; no credentials or private histories exported."
+}
