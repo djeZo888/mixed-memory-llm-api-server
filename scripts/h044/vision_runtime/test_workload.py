@@ -73,6 +73,40 @@ class TerminalRawTests(unittest.TestCase):
    result=workload.service_job(graph,proof,time.monotonic()+5,'EXPLICIT_FAKE_KEY')
   self.assertEqual(bytes.fromhex(result['rawServiceResponseHex']),terminal_raw);self.assertNotEqual(bytes.fromhex(result['rawServiceResponseHex']),admission);self.assertEqual(result['rawServiceResponseSHA256'],control.sha(terminal_raw));self.assertEqual(result['polls'],1)
 
+class MultipartAdmissionTests(unittest.TestCase):
+ def test_service_job_generated_request_passes_production_admission(self):
+  from unittest import mock
+  from pathlib import Path
+  import service
+  root=Path(__file__).absolute().parents[3]
+  config=json.loads((root/'configs/vision/h043-candidate.json').read_text())
+  identity={k:config['service'][k] for k in ('serviceId','generation','mode','interpreter','parser')}
+  png,corpus=workload.fixture();writes=[];captured=[]
+  graph={'runtime':{'service':{'ledger':str(root.parent/'output/multipart-source-fixture')}}}
+  # Valid workload-boundary fields only; no signed live authority or credential.
+  proof={'component':'workload','actualUid':1000,'identityOrigin':'REVIEWED_SIGNED_ROOT_PROOF','proofSHA256':control.sha(b'multipart-source-fixture')}
+  class AdmissionObserved(Exception):pass
+  def bounded(method,host,port,path,payload,typ,key,deadline,rid=None):
+   self.assertEqual((method,host,port,path),('POST','127.0.0.1',18193,'/v1/technical-vision/jobs'))
+   captured.append((payload,typ))
+   metadata,parts=service.multipart(payload,typ)
+   self.assertEqual(metadata,writes[0]['metadata'])
+   self.assertEqual(metadata['service'],identity)
+   self.assertEqual(metadata['source']['sha256'],corpus['pngSha256'])
+   self.assertEqual(parts,{'page-1':('image/png',png)})
+   service.runtime_profile(metadata)
+   self.assertEqual(service.admission(metadata,parts,identity,rid,deadline),{1:png})
+   raise AdmissionObserved()
+  with mock.patch.object(workload.os,'geteuid',return_value=1000),mock.patch.object(workload,'graph_service',return_value=config['service']),mock.patch.object(workload.control,'exclusive',side_effect=lambda p,v:writes.append(v)),mock.patch.object(workload,'bounded_call',side_effect=bounded) as transport,mock.patch.object(workload.http.client,'HTTPConnection',side_effect=AssertionError('network forbidden')):
+   with self.assertRaises(AdmissionObserved):
+    workload.service_job(graph,proof,time.monotonic()+5,'EXPLICIT_FAKE_KEY')
+  transport.assert_called_once()
+  body,content_type=captured[0]
+  old_body=body.replace(b'filename="page-1.png"',b'filename="original.png"',1)
+  self.assertNotEqual(old_body,body)
+  with self.assertRaises(service.Reject) as rejected:service.multipart(old_body,content_type)
+  self.assertEqual(rejected.exception.status,400)
+
 class WallTimerTests(unittest.TestCase):
  def test_slow_body_entire_wall_timer_and_actual_socket(self):
   import http.client,os,threading
