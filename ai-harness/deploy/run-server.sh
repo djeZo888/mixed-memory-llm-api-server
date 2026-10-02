@@ -23,6 +23,12 @@ An explicitly reviewed --codex-preview-receipt ABS enables the optional local pr
 --codex-preview-output-limit defaults65536 and may be1024 for bounded acceptance.
 --codex-specialist-qualification ABS forwards a protected specialist record and
 requires both --codex-preview-receipt and --codex-owned-acceptance-policy.
+--codex-generation-acceptance ABS, --codex-global-generation-proof ABS and
+--codex-current-frontier-proof ABS forward only protected host paths. They require
+reviewed Codex preview and ordinary approval/key. The scoped ticket may be absent
+until the new app PID is known; request-time validation grants its exact scope.
+Global/current proof loaders validate source/evidence; paths grant no qualification.
+No ambient generation/frontier variables or browser/model booleans are forwarded.
 Receipt failure disables only Codex. MiniMax remains the default engine.
 Listeners are fixed by the server contract: 127.0.0.1:8080 and :8081.
 EOF
@@ -32,11 +38,12 @@ node_prefix=''; app_dir=''; data_dir=''; key_file=''; approval_key_file=''; node
 codex_ordinary_entry=""; codex_ordinary_key=""
 owned_acceptance_policy=""
 codex_specialist_qualification=""
+codex_generation_acceptance=""; codex_generation_only=""; codex_current_frontier=""
 script_dir=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 engine_launcher="$script_dir/run-engine.sh"
 while (($#)); do
   case "$1" in
-    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy|--codex-specialist-qualification|--codex-ordinary-entry|--codex-ordinary-entry-key)
+    --node-prefix|--app-dir|--data-dir|--inference-key-file|--frontier-key-file|--browser-approval-key-file|--node-control-key-file|--engine-launcher|--codex-preview-receipt|--codex-owned-acceptance-policy|--codex-specialist-qualification|--codex-ordinary-entry|--codex-ordinary-entry-key|--codex-generation-acceptance|--codex-global-generation-proof|--codex-current-frontier-proof)
       (($# >= 2)) || fail "$1 requires an absolute path"
       case "$1" in
         --node-prefix) node_prefix=$2 ;;
@@ -51,6 +58,13 @@ while (($#)); do
         --codex-ordinary-entry) codex_ordinary_entry=$2 ;;
         --codex-ordinary-entry-key) codex_ordinary_key=$2 ;;
         --codex-owned-acceptance-policy) owned_acceptance_policy=$2 ;;
+        --codex-generation-acceptance|--codex-global-generation-proof|--codex-current-frontier-proof)
+          [[ "$2" == /* && "$2" != *$'\n'* && "$2" != *$'\r'* ]] || fail 'protected capability path must be absolute and single-line'
+          case "$1" in
+            --codex-generation-acceptance) [[ -z "$codex_generation_acceptance" ]] || fail 'duplicate generation acceptance path'; codex_generation_acceptance=$2 ;;
+            --codex-global-generation-proof) [[ -z "$codex_generation_only" ]] || fail 'duplicate global generation proof path'; codex_generation_only=$2 ;;
+            --codex-current-frontier-proof) [[ -z "$codex_current_frontier" ]] || fail 'duplicate current frontier proof path'; codex_current_frontier=$2 ;;
+          esac ;;
         --codex-specialist-qualification)
           [[ "$2" == /* && "$2" != *$'\n'* && "$2" != *$'\r'* ]] || fail 'specialist qualification path must be absolute and single-line'
           codex_specialist_qualification=$2 ;;
@@ -109,6 +123,11 @@ fi
 if [[ -n "$codex_ordinary_entry" || -n "$codex_ordinary_key" ]]; then
   [[ -n "$codex_receipt" && "$codex_ordinary_entry" == /* && "$codex_ordinary_key" == /* && -f "$codex_ordinary_entry" && -f "$codex_ordinary_key" ]] || fail 'ordinary entry requires preview and protected approval/key paths'
 fi
+if [[ -n "$codex_generation_acceptance" || -n "$codex_generation_only" || -n "$codex_current_frontier" ]]; then
+  [[ -n "$codex_receipt" && -n "$codex_ordinary_entry" && -n "$codex_ordinary_key" ]] || fail 'protected capability paths require reviewed Codex preview and ordinary approval/key'
+fi
+# Path forwarding grants nothing. Protected server loaders validate proof bytes;
+# an absent scoped ticket is allowed until the exact new app owner is observed.
 entry_args=("$app_dir/server/dist/main.js")
 if [[ -n "$codex_receipt" ]]; then
   [[ "$codex_receipt" == /* && "$codex_receipt" != *$'\n'* && "$codex_receipt" != *$'\r'* ]] || fail 'receipt path must be absolute and single-line'
@@ -132,6 +151,9 @@ exec env -i \
   XDG_RUNTIME_DIR="$runtime_dir" DBUS_SESSION_BUS_ADDRESS="unix:path=$runtime_dir/bus" \
   AI_HARNESS_CODEX_ORDINARY_ENTRY_FILE="$codex_ordinary_entry" \
   AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE="$codex_ordinary_key" \
+  AI_HARNESS_CODEX_GENERATION_ACCEPTANCE_FILE="$codex_generation_acceptance" \
+  AI_HARNESS_CODEX_GENERATION_ONLY_FILE="$codex_generation_only" \
+  AI_HARNESS_CODEX_CURRENT_FRONTIER_FILE="$codex_current_frontier" \
   AI_HARNESS_DATA_DIR="$data_dir" AI_HARNESS_ENGINE_LAUNCHER="$engine_launcher" \
   AI_HARNESS_INFERENCE_KEY_FILE="$key_file" \
   AI_HARNESS_FRONTIER_KEY_FILE="$frontier_key_file" \
