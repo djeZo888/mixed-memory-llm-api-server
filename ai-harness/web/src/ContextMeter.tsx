@@ -12,17 +12,32 @@ export function ContextMeter({ context }: { context?: Context }) {
       className={`context-meter ${context?.stale ? 'is-stale' : ''}`}
       aria-label="Context occupancy"
     >
-      <div className="context-label">
-        <span>
-          {known ? (fresh ? kind : `${kind} context`) : 'Context unavailable'}
-          {context?.stale ? ' · stale' : ''}
-        </span>
-        <span>
+      <details className="context-details">
+        <summary className="context-label">
+          <span>
+            {known ? (fresh ? kind : `${kind} context`) : 'Context unavailable'}
+            {context?.stale ? ' · stale' : ''}
+          </span>
+        </summary>
+        <span className="context-numbers">
           {known
             ? `${number.format(context!.used!)} / ${number.format(CONTEXT_LIMIT)} tokens · ${percentText}%`
             : `Unknown used / ${number.format(CONTEXT_LIMIT)} tokens`}
         </span>
-      </div>
+        <span className="context-note">
+          {fresh
+            ? 'No turns yet. '
+            : context?.estimated && known
+              ? 'Approximate server estimate. '
+              : ''}
+          Input and output share this window.
+          {context?.stale
+            ? known
+              ? ' Last reported value; awaiting an update.'
+              : ' Awaiting an update.'
+            : ''}
+        </span>
+      </details>
       {known ? (
         <div
           className="meter"
@@ -38,19 +53,6 @@ export function ContextMeter({ context }: { context?: Context }) {
       ) : (
         <div className="meter unknown" />
       )}
-      <span className="context-note">
-        {fresh
-          ? 'No turns yet. '
-          : context?.estimated && known
-            ? 'Approximate server estimate. '
-            : ''}
-        Input and output share this window.
-        {context?.stale
-          ? known
-            ? ' Last reported value; awaiting an update.'
-            : ' Awaiting an update.'
-          : ''}
-      </span>
     </div>
   );
 }

@@ -27,6 +27,11 @@ it('reuses selected Codex artifact as attachment and never claims native image r
   const reference = vi.fn(async () => ({ attachment: { ...file, id: 'copy-a' } }));
   const store = new HarnessStore({ ...transport, reference });
   render(<App store={store} />);
+  const reuse = await screen.findByText('Reuse a file');
+  expect(screen.getByRole('combobox', { name: 'Reuse workspace file' })).not.toBeVisible();
+  expect(reference).not.toHaveBeenCalled();
+  expect(screen.getByText('PDF, source and text files · 50 MiB per file.')).not.toBeVisible();
+  await userEvent.click(reuse);
   const select = await screen.findByRole('combobox', { name: 'Reuse workspace file' });
   await userEvent.selectOptions(select, 'artifact-a');
   await waitFor(() => expect(reference).toHaveBeenCalledWith('chat/a', 'artifact-a'));

@@ -263,7 +263,9 @@ test('revision-ordered SSE and reconnect ignore stale jobs, allow requeue, and d
       source: 'fixture estimator',
     },
   });
+  await page.locator('.context-details > summary').click();
   await expect(page.getByText(/98,765 \/ 480,000 tokens/)).toBeVisible();
+  await page.locator('.context-details > summary').click();
   await expect(card(page, active.id).getByRole('status')).toHaveText('Queued');
 
   // No event carries this failure: the next connection must re-fetch persisted jobs.

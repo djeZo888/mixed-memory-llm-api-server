@@ -190,24 +190,27 @@ export function Composer({
         }}
       >
         {codex && reusableFiles.length > 0 && (
-          <label className="composer-queue-note">
-            Reuse a file
-            <select
-              aria-label="Reuse workspace file"
-              value=""
-              disabled={!!locked}
-              onChange={(event) => {
-                if (event.target.value) void store.reuseFile(id, event.target.value);
-              }}
-            >
-              <option value="">Choose a previous upload or artifact…</option>
-              {reusableFiles.map((file) => (
-                <option key={file.id} value={file.id}>
-                  {file.name}
-                </option>
-              ))}
-            </select>
-          </label>
+          <details className="composer-reuse">
+            <summary>Reuse a file</summary>
+            <label className="composer-queue-note">
+              Previous files
+              <select
+                aria-label="Reuse workspace file"
+                value=""
+                disabled={!!locked}
+                onChange={(event) => {
+                  if (event.target.value) void store.reuseFile(id, event.target.value);
+                }}
+              >
+                <option value="">Choose a previous upload or artifact…</option>
+                {reusableFiles.map((file) => (
+                  <option key={file.id} value={file.id}>
+                    {file.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </details>
         )}
         {attachments.length > 0 && (
           <ul className="attachments" aria-label="Attached files">

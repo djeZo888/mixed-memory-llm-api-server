@@ -669,18 +669,18 @@ h1 {
   margin-bottom: 14px;
 }
 .context-label {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
   font-size: 10px;
   color: #7d8776;
   margin-bottom: 7px;
-  flex-wrap: wrap;
+  cursor: pointer;
 }
-.context-label > span:last-child {
+.context-numbers {
+  display: block;
+  font-size: 10px;
   font-variant-numeric: tabular-nums;
   color: #88917e;
 }
+.context-details[open] { margin-bottom: 8px; }
 .meter {
   height: 3px;
   background: #e5e9df;
@@ -1556,6 +1556,9 @@ h1 {
 .attachment-help { max-width: 100%; }
 .attachment-help summary { cursor: pointer; }
 .attachment-help p { margin: 7px 0; }
+.composer-reuse { color: #737e70; font-size: 11px; padding: 9px 12px 0; }
+.composer-reuse > summary { cursor: pointer; }
+.composer-reuse .composer-queue-note { margin: 0; padding: 8px 0; }
 
 label.composer-queue-note { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 8px 12px; }
 .composer-queue-note select { font: inherit; min-width: 0; max-width: 100%; color: inherit; border: 1px solid #d8ded4; border-radius: 5px; background: white; padding: 4px; }

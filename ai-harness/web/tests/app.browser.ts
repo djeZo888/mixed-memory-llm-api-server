@@ -20,7 +20,17 @@ test('desktop contract fixture: send, upload, stop, reconnect, new chat, downloa
     page.getByRole('heading', { name: 'Investigate a streaming pipeline' }),
   ).toBeVisible();
   await expect(page.getByText('Estimated context')).toBeVisible();
+  await expect(page.getByText('123,456 / 480,000 tokens · 25.7%')).not.toBeVisible();
+  await page.locator('.context-details > summary').focus();
+  await page.keyboard.press('Space');
   await expect(page.getByText('123,456 / 480,000 tokens · 25.7%')).toBeVisible();
+  await page.keyboard.press('Space');
+  await expect(page.getByText('123,456 / 480,000 tokens · 25.7%')).not.toBeVisible();
+  await expect(page.getByRole('combobox', { name: 'Reuse workspace file' })).not.toBeVisible();
+  await page.getByText('Reuse a file', { exact: true }).click();
+  await expect(page.getByRole('combobox', { name: 'Reuse workspace file' })).toBeVisible();
+  await page.getByText('Reuse a file', { exact: true }).click();
+  await expect(page.getByText('PDF, source and text files · 50 MiB per file.')).not.toBeVisible();
   await mkdir(evidence, { recursive: true });
   // Labels are test-run overlays, never shipped application content.
   await page.evaluate(() => {
@@ -52,6 +62,7 @@ test('desktop contract fixture: send, upload, stop, reconnect, new chat, downloa
   await page.getByRole('textbox', { name: 'Message' }).fill('Review the attached notes');
   await page.getByRole('button', { name: 'Send message' }).click();
   await expect(page.getByText('Checking the fixture pipeline', { exact: true })).toBeVisible();
+  await page.screenshot({ path: resolve(evidence, 'h044-fixture-running-stop.png'), fullPage: true });
   let response = await request.get('/__fixture/calls');
   let calls = (await response.json()).calls;
   expect(
@@ -96,6 +107,13 @@ test('desktop contract fixture: send, upload, stop, reconnect, new chat, downloa
   await expect(page.locator('.badge')).toHaveText('interrupted');
   await page.getByRole('button', { name: 'New chat', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'New fixture conversation' })).toBeVisible();
+  await page.evaluate(() => {
+    const label = document.createElement('div');
+    label.textContent = 'CONTRACT FIXTURE · NOT LIVE INFERENCE';
+    label.style.cssText = 'position:fixed;top:0;right:0;background:#303a31;color:white;padding:5px 10px;font:10px monospace;z-index:100;';
+    document.body.append(label);
+  });
+  await page.screenshot({ path: resolve(evidence, 'h044-fixture-empty-desktop.png'), fullPage: true });
   await page.getByRole('button', { name: 'Delete chat New fixture conversation' }).click();
   await page.getByRole('button', { name: 'Delete chat', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'Investigate a streaming pipeline' })).toBeVisible();
@@ -166,6 +184,7 @@ test('mobile fixture: no horizontal overflow, sidebar focus, unknown context and
     .getByLabel('Upload file')
     .setInputFiles({ name: 'photo.png', mimeType: 'image/png', buffer: Buffer.from('fixture') });
   await expect(page.getByRole('alert')).toContainText('Image analysis is unavailable');
+  await page.screenshot({ path: resolve(evidence, 'h044-fixture-upload-error-mobile.png'), fullPage: true });
 });
 
 test('fixture new-chat and image callback are gated by explicit health capability', async ({
@@ -176,7 +195,10 @@ test('fixture new-chat and image callback are gated by explicit health capabilit
   await page.goto('/');
   await page.getByRole('button', { name: 'New chat', exact: true }).click();
   await expect(page.getByRole('heading', { name: 'New fixture conversation' })).toBeVisible();
+  await expect(page.getByText('0 / 480,000 tokens · 0%')).not.toBeVisible();
+  await page.locator('.context-details > summary').click();
   await expect(page.getByText('0 / 480,000 tokens · 0%')).toBeVisible();
+  await page.locator('.context-details > summary').click();
   await page.getByLabel('Upload file').setInputFiles({
     name: 'photo.png',
     mimeType: 'image/png',
@@ -402,6 +424,13 @@ test('clean chat and source-linked technical analysis persist through reload wit
   await page.reload();
   await expect(analysis).toHaveCount(1);
   await expect(analysis.getByText('The crossing needs review.')).toBeVisible();
+  // Explicit test-only overlay: this source-linked result is never live qualification.
+  await page.evaluate(() => {
+    const label = document.createElement('div');
+    label.textContent = 'CONTRACT FIXTURE · NOT LIVE INFERENCE';
+    label.style.cssText = 'position:fixed;top:0;right:0;background:#303a31;color:white;padding:5px 10px;font:10px monospace;z-index:100;';
+    document.body.append(label);
+  });
   await mkdir(evidence, { recursive: true });
   await page.screenshot({ path: resolve(evidence, 'h044-clean-analysis-desktop.png'), fullPage: true });
 });

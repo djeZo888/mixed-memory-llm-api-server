@@ -8,9 +8,11 @@ import { HarnessStore } from '../src/store';
 import { artifactPath } from '../src/api';
 import { event, fixtureTransport } from './fixtures';
 describe('UI', () => {
-  it('shows unknown/stale/estimated/measured context without inventing zero', () => {
+  it('keeps context details on demand without inventing zero or hiding occupancy', async () => {
+    const user = userEvent.setup();
     const { rerender } = render(<ContextMeter />);
     expect(screen.getByText(/Unknown used/)).toBeInTheDocument();
+    expect(screen.getByText(/Unknown used/)).not.toBeVisible();
     expect(screen.queryByRole('meter')).not.toBeInTheDocument();
     rerender(
       <ContextMeter
@@ -18,7 +20,14 @@ describe('UI', () => {
       />,
     );
     expect(screen.getByText(/Estimated context · stale/)).toBeInTheDocument();
-    expect(screen.getByText(/25.7%/)).toBeInTheDocument();
+    expect(screen.getByText(/25.7%/)).not.toBeVisible();
+    expect(screen.getByRole('meter')).toHaveAttribute('aria-valuenow', '123456');
+    const summary = screen.getByText(/Estimated context · stale/).closest('summary')!;
+    await user.click(summary);
+    expect(screen.getByText(/25.7%/)).toBeVisible();
+    expect(screen.getByText(/Approximate server estimate/)).toBeVisible();
+    await user.click(summary);
+    expect(screen.getByText(/25.7%/)).not.toBeVisible();
     rerender(
       <ContextMeter
         context={{ used: 0, limit: 480000, estimated: false, stale: false, updatedAt: '' }}
