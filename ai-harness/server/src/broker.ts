@@ -1,5 +1,5 @@
 import { completedTechnicalVisionAttachments } from "./technical-vision-host.js";
-import { createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent } from "./codex-automatic-routing.js";
+import { codexAutomaticDirective, createCodexAutomaticRoute, isCodexRouteFollowup, type CodexAutomaticIntent } from "./codex-automatic-routing.js";
 import {boundedRecoveryObservation,type CodexRecoveryObservers} from "./codex-recovery-observation.js";
 import { nativeMedia } from "./codex-input.js";
 import { createHash, randomUUID } from "node:crypto";
@@ -346,17 +346,47 @@ export class Broker {
   }
   private automaticRoute(s: StoredSession, run: Run) {
     if (s.engineKind !== "codex" || run.kind !== "message") return undefined;
+    const reference = /\b(?:this|that|the same|same|previous|earlier|last|original)\s+(?:(?:uploaded|attached)\s+)?(?:image|drawing|diagram|picture|scan)\b/gi;
+    const priorImageCovered = (runId: string) => {
+      // Follow only the current conversational chain, never an arbitrary old
+      // success across an unrelated turn, failed request or newer source.
+      for (const prior of this.store.db.prepare("SELECT id,text,attachment_ids,status FROM runs WHERE session_id=? AND kind='message' AND rowid<(SELECT rowid FROM runs WHERE id=?) ORDER BY rowid DESC").iterate(s.id, runId) as Iterable<{id:string;text:string;attachment_ids:string;status:string}>) {
+        if (prior.status !== "completed") return false;
+        const ids: string[] = JSON.parse(prior.attachment_ids);
+        if (ids.length) {
+          const images = ids.filter(id => { try { return ["image/png", "image/jpeg", "application/pdf"].includes(this.store.file(id).mimeType); } catch { return false; } });
+          const covered = completedTechnicalVisionAttachments(this.store, s.id, prior.id);
+          return images.length > 0 && images.every(id => covered.has(id));
+        }
+        if (!isCodexRouteFollowup(prior.text) && !prior.text.match(reference)) return false;
+        // A request for another source cannot extend the same-image chain.
+        const remaining = prior.text.replace(reference, "");
+        const intent = createCodexAutomaticRoute({text:remaining}).intent;
+        if (/\b(?:image|drawing|diagram|picture|scan)\b/i.test(remaining) ||
+            (intent !== "ordinary" && !(intent === "deep" && prior.text.match(reference)))) return false;
+      }
+      return false;
+    };
     const select = (runId: string, text: string, attachmentIds: string[], previous?: CodexAutomaticIntent) => {
       const images = attachmentIds.filter(id => { try { return ["image/png", "image/jpeg", "application/pdf"].includes(this.store.file(id).mimeType); } catch { return false; } });
       const selected = createCodexAutomaticRoute({ text, hasImages: images.length > 0, previous });
-      if (selected.intent !== "technical" || !images.length) return selected;
-      const completed = completedTechnicalVisionAttachments(this.store, s.id, runId);
-      if (!images.every(id => completed.has(id))) return selected;
+      if (selected.intent !== "technical") return selected;
+      let routingText: string;
+      if (images.length) {
+        const completed = completedTechnicalVisionAttachments(this.store, s.id, runId);
+        if (!images.every(id => completed.has(id))) return selected;
+        routingText = text.replace(/\b(?:image|drawing|diagram|picture|scan)\b/gi, "");
+      } else {
+        if (attachmentIds.length || !text.match(reference) || !priorImageCovered(runId)) return selected;
+        // Remove only the proven referential phrase; any request to read a new
+        // or unrelated image still selects technical and keeps its own gate.
+        routingText = text.replace(reference, "");
+      }
       // Only the exact delivered sources have already been read by the host. The
       // original question still goes to Qwen verbatim; suppress the completed
       // image-reading request in this routing-only second pass. Deep intent and
       // creative intent retain their own gates. No native MCP receipt is created.
-      return createCodexAutomaticRoute({ text: text.replace(/\b(?:image|drawing|diagram|picture|scan)\b/gi, ""), previous: previous === "technical" ? undefined : previous });
+      return createCodexAutomaticRoute({ text: routingText, previous: previous === "technical" ? undefined : previous });
     };
     let priorIntent: CodexAutomaticIntent | undefined;
     for (const previous of this.store.db.prepare("SELECT id, text, attachment_ids FROM runs WHERE session_id=? AND kind='message' AND status='completed' AND id<>? ORDER BY created_at DESC,rowid DESC").iterate(s.id, run.id) as Iterable<{ id: string; text: string; attachment_ids: string }>) {
@@ -655,6 +685,27 @@ export class Broker {
             message: "Image analysis did not complete. The original image job is retained for status or cancellation; you can continue with a text message.",
           }, run.id);
           return;
+        }
+      }
+      // Only explicit protected policy denials are known here. Host vision
+      // availability is not native technical qualification; leave that gate alone.
+      const nativeState = this.store.getSession(s.id).nativeState;
+      if (s.engineKind === "codex" && run.kind === "message" && !this.runners.has(s.id) &&
+          nativeState.ownership === "idle" && nativeState.activeTurnId === null) {
+        const route = this.automaticRoute(s, run)!;
+        const policy = this.options.enginePolicy?.codex;
+        const denied = (route.intent === "deep" && policy?.delegationEnabled === false) ||
+          (route.intent === "creative" && policy?.imageGenerationEnabled === false &&
+            policy?.imageToolEnabled === false && this.options.imageAcceptance?.(s.id) !== true);
+        if (denied) {
+          try { codexAutomaticDirective(route, {deep:false, creative:false, technical:true}); }
+          catch (error) {
+            if (!(error instanceof ApiError)) throw error;
+            this.store.updateRun(run.id, "failed");
+            cleanupConfirmed = true; // No checkpoint, token, factory or native start.
+            this.store.emit(s.id, "error", {code:error.code, message:error.message}, run.id);
+            return;
+          }
         }
       }
       if (s.engineKind === "codex") this.store.checkpoints.prepare(s.id,run.id,run.kind,s.nativeSessionId);

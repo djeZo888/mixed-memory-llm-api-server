@@ -71,10 +71,15 @@ test("queued/running job waits; completed authenticated text reaches ordinary Qw
   assert.equal(s.launches[0]?.intent, "ordinary", "native launch is bound only after authenticated preprocessing");
   assert.deepEqual([...completedTechnicalVisionAttachments(s.app.store, s.session.id, runId)], [s.file.id]);
   s.calls[0].release(); await until(() => s.app.store.runSnapshot(runId).status === "completed");
-  await s.reopen(); const followup = await s.send("Explain further", false); await until(() => s.calls.length === 2);
-  assert.equal(s.calls[1].route?.intent, "ordinary"); assert.equal(s.fixture.counters().submitCalls, 1);
-  s.calls[1].release(); await until(() => s.app.store.runSnapshot(followup).status === "completed");
-  await s.send("Now expand", false); await until(() => s.calls.length === 3); assert.equal(s.calls[2].route?.intent, "ordinary");
+  await s.reopen();
+  for (const text of ["Explain further and interpret that diagram", "Read this drawing again", "What about the labels in that drawing?", "Explain further", "Now expand"]) {
+    const count = s.calls.length, followup = await s.send(text, false);
+    await until(() => s.calls.length === count + 1);
+    assert.equal(s.calls[count].route?.intent, "ordinary"); assert.ok(s.calls[count].text.endsWith(text));
+    assert.equal(s.launches[count]?.intent, "ordinary"); assert.equal(s.fixture.counters().submitCalls, 1);
+    s.calls[count].release(); await until(() => s.app.store.runSnapshot(followup).status === "completed");
+    assert.ok(s.app.store.checkpoints.status(s.session.id).every(c => c.status === "settled"));
+  }
 });
 
 test("lost submit response reconciles the same owner/request/job; no resubmit", async t => {
@@ -197,4 +202,98 @@ test("failure after native launch retains the uncertain-native recovery gate", a
   assert.equal(s.app.store.checkpoints.status(s.session.id)[0].status, "recovery_required");
   const next = await s.inject(`/api/sessions/${s.session.id}/messages`, { text: "Continue", submissionId: "unknown-native-followup" });
   assert.equal(next.statusCode, 409); assert.equal(next.json().error.code, "compaction_recovery_required");
+});
+
+for (const text of ["Read a new image", "Read an unrelated image", "Read this drawing and inspect a new image"]) {
+  test(`prior image proof does not cover: ${text}`, async t => {
+    const s = await setup(t, 2500, true), first = await s.send("Read this drawing");
+    await until(() => !!s.record()?.jobId); s.complete(s.record().jobId!);
+    await until(() => s.calls.length === 1); s.calls[0].release();
+    await until(() => s.app.store.runSnapshot(first).status === "completed");
+    const next = await s.send(text, false); await until(() => s.app.store.runSnapshot(next).status === "failed");
+    assert.equal(s.launches[1]?.intent, "technical"); assert.equal(s.calls.length, 1);
+    assert.equal(s.fixture.counters().submitCalls, 1);
+  });
+}
+
+test("no persisted evidence or callback assertion can authorize an attachment-free image reference", async t => {
+  const s = await setup(t, 2500, true);
+  s.app.broker.options.technicalVisionContext = async () => '{"completed":true,"terminalDelivered":true}';
+  const next = await s.send("Read this drawing again", false);
+  await until(() => s.app.store.runSnapshot(next).status === "failed");
+  assert.equal(s.launches[0]?.intent, "technical"); assert.equal(s.calls.length, 0);
+});
+
+test("tampered persisted acknowledgement cannot authorize same-image followup", async t => {
+  const s = await setup(t, 2500, true), first = await s.send("Read this drawing");
+  await until(() => !!s.record()?.jobId); s.complete(s.record().jobId!);
+  await until(() => s.calls.length === 1); s.calls[0].release();
+  await until(() => s.app.store.runSnapshot(first).status === "completed");
+  const r = s.record(); r.terminal!.acknowledged = false;
+  s.app.store.db.prepare("UPDATE h043_vision_host SET record=? WHERE handle=?").run(JSON.stringify(r), r.handle);
+  const next = await s.send("Explain further and interpret that diagram", false);
+  await until(() => s.app.store.runSnapshot(next).status === "failed");
+  assert.equal(s.launches[1]?.intent, "technical"); assert.equal(s.calls.length, 1);
+});
+
+for (const [text, code] of [["Do deep research", "deep_unavailable"], ["Generate an image", "creative_unavailable"]]) {
+  test(`known policy denial is pre-native and next text remains usable: ${code}`, async t => {
+    const s = await setup(t);
+    Object.assign(s.app.broker.options.enginePolicy!.codex!, {delegationEnabled:false, imageGenerationEnabled:false, imageToolEnabled:false});
+    let tokens = 0, factories = 0;
+    s.app.broker.options.issueToken = () => { tokens++; return "fixture-token"; };
+    const factory = s.app.broker.options.codexEngineFactory!;
+    s.app.broker.options.codexEngineFactory = opts => { factories++; return factory(opts); };
+    const denied = await s.send(text, false); await until(() => s.app.store.runSnapshot(denied).status === "failed");
+    assert.equal(tokens, 0); assert.equal(factories, 0); assert.equal(s.launches.length, 0);
+    assert.equal(s.app.store.checkpoints.status(s.session.id).length, 0);
+    assert.equal(s.app.store.isQuarantined(s.app.store.getSession(s.session.id).workspaceId), false);
+    assert.ok(s.app.store.replay(s.session.id, 0).some(e => e.type === "error" && e.data.code === code));
+    const next = await s.send("Write a greeting", false); await until(() => s.calls.length === 1);
+    s.calls[0].release(); await until(() => s.app.store.runSnapshot(next).status === "completed");
+  });
+}
+
+test("same-image interpretation preserves explicit deep and creative gates", async t => {
+  const s = await setup(t), first = await s.send("Read this drawing");
+  await until(() => !!s.record()?.jobId); s.complete(s.record().jobId!);
+  await until(() => s.calls.length === 1); s.calls[0].release();
+  await until(() => s.app.store.runSnapshot(first).status === "completed");
+  const deep = await s.send("Do deep research and interpret that diagram", false);
+  await until(() => s.calls.length === 2); assert.equal(s.calls[1].route?.intent, "deep");
+  s.calls[1].release(); await until(() => s.app.store.runSnapshot(deep).status === "completed");
+  const deepFollowup = await s.send("Explain further and interpret that diagram", false);
+  await until(() => s.calls.length === 3); assert.equal(s.calls[2].route?.intent, "deep");
+  s.calls[2].release(); await until(() => s.app.store.runSnapshot(deepFollowup).status === "completed");
+  Object.assign(s.app.broker.options.enginePolicy!.codex!, {imageGenerationEnabled:false, imageToolEnabled:false});
+  const creative = await s.send("Generate an image from that diagram", false);
+  await until(() => s.app.store.runSnapshot(creative).status === "failed");
+  assert.equal(s.calls.length, 3); assert.equal(s.launches.length, 3);
+  assert.ok(s.app.store.replay(s.session.id, 0).some(e => e.type === "error" && e.data.code === "creative_unavailable"));
+});
+
+
+test("an explicit route denial never clears existing uncertain native ownership", async t => {
+  const s = await setup(t);
+  s.app.broker.options.enginePolicy!.codex!.delegationEnabled = false;
+  s.app.store.setNativeState(s.session.id, "codex", {ownership:"uncertain", activeTurnId:"unsettled-turn", eventCursor:1});
+  const run = await s.send("Do deep research", false);
+  await until(() => s.app.store.runSnapshot(run).status === "interrupted");
+  assert.equal(s.app.store.checkpoints.status(s.session.id)[0]?.status, "recovery_required");
+  assert.equal(s.app.store.getSession(s.session.id).nativeState.ownership, "uncertain");
+  assert.ok(!s.app.store.replay(s.session.id, 0).some(e => e.type === "error" && e.data.code === "deep_unavailable"));
+  const next = await s.inject(`/api/sessions/${s.session.id}/messages`, {text:"Write a greeting",submissionId:"still-uncertain"});
+  assert.equal(next.statusCode, 409);
+});
+
+test("an unrelated completed turn cannot lend old image coverage to a new reference", async t => {
+  const s = await setup(t, 2500, true), first = await s.send("Read this drawing");
+  await until(() => !!s.record()?.jobId); s.complete(s.record().jobId!);
+  await until(() => s.calls.length === 1); s.calls[0].release();
+  await until(() => s.app.store.runSnapshot(first).status === "completed");
+  const unrelated = await s.send("Write a recipe", false); await until(() => s.calls.length === 2);
+  s.calls[1].release(); await until(() => s.app.store.runSnapshot(unrelated).status === "completed");
+  const reference = await s.send("Read this drawing again", false);
+  await until(() => s.app.store.runSnapshot(reference).status === "failed");
+  assert.equal(s.launches[2]?.intent, "technical"); assert.equal(s.calls.length, 2);
 });
