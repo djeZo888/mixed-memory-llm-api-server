@@ -31,6 +31,10 @@ The helper checks supplied evidence; it never manufactures a producer receipt.
 proofs.ordinaryApproval and ordinaryKey are original protected files; the real
 compiled ordinary loader validates original native launch/settlement/binary and
 current source sidecar after staging, before any unit replacement.
+For RESTART only, --go-key is exactly proofs.ordinaryKey.path: the existing
+UID1000/0600/32-byte key in its UID1000/0700 directory, bound by full identity.
+The signed GO stays root0600 in root0700. The ordinary key is NOT a digest
+configFiles reference; its identity proof and candidate loader path are required.
 
 Unit changes are limited to the reviewed ExecStart/WorkingDirectory/Restart
 lines; restart is disabled in the candidate. Only one candidate restart is
@@ -155,6 +159,34 @@ def reference(ref, cap=MAX_FILE, private=False):
     raw=protected(ref['path'],ref['uid'],cap,private)
     need(sha(raw)==ref['sha256'], 'file SHA mismatch: '+ref['path'])
     return raw
+
+def restart_ordinary_key(path, body):
+    need(body.get('operation')==RESTART, 'ordinary GO key role is RESTART only')
+    spec=body['proofs']['ordinaryKey']
+    need(isinstance(spec,dict) and set(spec)=={'path','identity'} and str(path)==spec['path'],
+         'RESTART GO key must join exact ordinary key proof path')
+    path=absolute(spec['path']); before=identity(path)
+    expected=spec['identity']
+    need(isinstance(expected,dict) and set(expected)==set(before) and
+         all(type(v) is int for v in expected.values()) and expected==before,
+         'original ordinary key identity mismatch')
+    need(before['uid']==1000 and before['mode']==0o600 and before['size']==32 and before['nlink']==1,
+         'ordinary key requires UID1000 mode0600 single-link exact32 bytes')
+    parent=path.parent.lstat()
+    need(stat.S_ISDIR(parent.st_mode) and parent.st_uid==1000 and stat.S_IMODE(parent.st_mode)==0o700,
+         'ordinary key parent requires UID1000 mode0700')
+    raw=protected(path,1000,32,True)
+    need(len(raw)==32 and identity(path)==before and path.parent.lstat()==parent,
+         'original ordinary key identity/parent changed while reading')
+    return raw
+
+def configuration_files(body):
+    if body['operation']==RESTART:
+        keypath=absolute(body['proofs']['ordinaryKey']['path'])
+        for ref in body['configFiles']:
+            need(absolute(ref['path'])!=keypath,
+                 'ordinary key must use identity proof, not configFiles digest reference')
+    for ref in body['configFiles']: reference(ref)
 
 def pointer(value, path):
     need(isinstance(path,str) and (path=='' or path.startswith('/')), 'invalid JSON pointer')
@@ -508,9 +540,11 @@ class Control:
             relative(dependency['target']); need(dependency['target'].endswith('/node_modules'),'dependency target is not node_modules')
             need(not any(name==dependency['target'] or name.startswith(dependency['target']+'/') for name in contents),'archive contains dependency mutation')
             need(dependency_digest(Path(dependency['source']))==dependency['sha256'],'immutable dependency source graph changed')
-        for ref in b['configFiles']: reference(ref)
+        configuration_files(b)
         approval=reference(b['proofs']['ordinaryApproval'],262144,True)
-        key_spec=b['proofs']['ordinaryKey']; key=protected(key_spec['path'],1000,32,True)
+        key_spec=b['proofs']['ordinaryKey']
+        key=(restart_ordinary_key(key_spec['path'],b) if b['operation']==RESTART else
+             protected(key_spec['path'],1000,32,True))
         need(len(key)==32 and identity(Path(key_spec['path']))==key_spec['identity'],'original ordinary key identity mismatch')
         envelope=strict_json(approval); need(set(envelope)=={'body','seal'} and is_digest(envelope['seal']) and
             hmac.compare_digest(envelope['seal'],hmac.new(key,canonical(envelope['body']),hashlib.sha256).hexdigest()),'original ordinary approval HMAC mismatch')
@@ -642,7 +676,7 @@ class Control:
                 self.record('RESULT.json',result); return result
             self.verify_staged(); self.ordinary_loader(prepared['options']); self.budget(90)
             state=self.state(); exact_owner(self.b['owner'],state['InvocationID']); database_state(self.b['data']); self.vision()
-            for ref in self.b['configFiles']: reference(ref)
+            configuration_files(self.b)
             changed=True; self.replace_unit(prepared['candidate'],self.b['unit']['sha256'])
             self.manager(['daemon-reload']); self.manager(['restart','ai-harness.service'])
             new_owner=self.fresh_owner(prepared['options']); self.health(); database_state(self.b['data'])
@@ -663,7 +697,16 @@ def main():
     parser.add_argument('--execute',action='store_true'); args=parser.parse_args()
     need(sys.platform=='linux' and os.geteuid()==0,'only root on Linux may observe/execute deployment controls')
     helper=absolute(str(Path(__file__).absolute())); helper_raw=protected(helper,0)
-    key=protected(args.go_key,0,4096,True); envelope=strict_json(protected(args.go,0,1024*1024,True))
+    go_raw=protected(args.go,0,1024*1024,True); envelope=strict_json(go_raw)
+    if envelope.get('body',{}).get('operation')==RESTART:
+        go=absolute(args.go); go_identity=identity(go); parent=go.parent.lstat()
+        need(go_identity['uid']==0 and go_identity['mode']==0o600 and
+             stat.S_ISDIR(parent.st_mode) and parent.st_uid==0 and stat.S_IMODE(parent.st_mode)==0o700,
+             'RESTART signed GO requires root0600 in root0700')
+        need(protected(go,0,1024*1024,True)==go_raw, 'signed GO changed while selecting key role')
+        key=restart_ordinary_key(args.go_key,envelope['body'])
+        need(identity(go)==go_identity and go.parent.lstat()==parent, 'signed GO identity/parent changed')
+    else: key=protected(args.go_key,0,4096,True)
     body=validate_go(envelope,key,time.time(),helper,sha(helper_raw)); control=Control(body)
     try:
         if args.execute: result=control.execute()

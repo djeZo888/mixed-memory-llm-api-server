@@ -1,5 +1,6 @@
 """Local pure/fixture denial tests only; no Linux deployment or inference."""
 import copy
+from contextlib import contextmanager
 import hashlib
 import hmac
 import importlib.util
@@ -13,6 +14,7 @@ import subprocess
 import sys
 import tarfile
 import tempfile
+from types import SimpleNamespace
 import unittest
 from unittest.mock import patch, Mock
 
@@ -132,6 +134,126 @@ class Controls(unittest.TestCase):
                 self.assertEqual(c.dependency_digest(root,uid),c.sha(c.canonical({'file':{'sha256':c.sha(b'x'),'mode':0o444,'uid':uid}})))
                 (root/'escape').symlink_to('../elsewhere')
                 with self.assertRaises(c.Denied): c.dependency_digest(root,uid)
+
+class RestartKeyRoleControls(unittest.TestCase):
+    @contextmanager
+    def fixture(self):
+        # Real reads/chmod and ancestry checks; only Linux ownership is simulated
+        # because this source phase runs on a Mac without UID1000/root files.
+        with tempfile.TemporaryDirectory() as directory:
+            base=Path(directory).resolve(); keydir=base/'ordinary'; godir=base/'root-go'
+            keydir.mkdir(mode=0o700); godir.mkdir(mode=0o700)
+            keypath=keydir/'existing-key'; keypath.write_bytes(b'k'*32); keypath.chmod(0o600)
+            gopath=godir/'RESTART.signed.json'; gopath.write_bytes(b'{}'); gopath.chmod(0o600)
+            actual_lstat=Path.lstat; overrides={}
+            def linux_metadata(path,*args,**kwargs):
+                st=actual_lstat(path,*args,**kwargs)
+                values={name:getattr(st,name) for name in dir(st) if name.startswith('st_')}
+                values['st_uid']=1000 if path in (keypath,keydir) else 0
+                if c.stat.S_ISDIR(st.st_mode) and path not in (keydir,godir): values['st_mode']&=~0o022
+                fields=('st_mode','st_ino','st_dev','st_nlink','st_uid','st_gid','st_size')
+                for index,value in overrides.get(path,{}).items(): values[fields[index]]=value
+                return SimpleNamespace(**values)
+            with patch.object(Path,'lstat',linux_metadata):
+                source=Controls(); source.setUp(); b=copy.deepcopy(source.b)
+                b.update(operation=c.RESTART,counts={'stage':0,'restart':1,'rollback':[]},
+                         proofs={'ordinaryKey':{'path':str(keypath),'identity':c.identity(keypath)},
+                                 'ordinaryApproval':{'path':str(base/'original-approval')},'visionNormal':{'enabled':False}},
+                         configFiles=[])
+                yield base,keypath,gopath,b,source,overrides
+    def test_exact_restart_reader_and_root_go_main_without_key_hash(self):
+        with self.fixture() as (base,keypath,gopath,b,source,overrides):
+            self.assertEqual(c.restart_ordinary_key(str(keypath),b),source.key)
+            helper=Path(c.__file__).resolve()
+            b['helper']={'path':str(helper),'sha256':c.sha(helper.read_bytes()),'uid':0}
+            gopath.write_bytes(c.canonical(source.envelope(b))+b'\n')
+            with patch.object(c.sys,'platform','linux'),patch.object(c.os,'geteuid',return_value=0),\
+                 patch.object(c.sys,'argv',['deploy_control','--go',str(gopath),'--go-key',str(keypath)]),\
+                 patch.object(c.time,'time',return_value=source.now),patch.object(c,'protected',wraps=c.protected) as reads,\
+                 patch.object(c,'sha',wraps=c.sha) as hashes,patch.object(c.Control,'execute',side_effect=AssertionError('live execute')),\
+                 patch.object(c.Control,'preflight',return_value={'owner':{},'vision':{'enabled':False}}) as preflight,\
+                 patch.object(c.sys,'stdout',new_callable=io.StringIO) as stdout:
+                c.main(); preflight.assert_called_once()
+                self.assertEqual(json.loads(stdout.getvalue())['mutations'],0)
+                self.assertTrue(any(str(call.args[0])==str(keypath) and call.args[1:]==(1000,32,True) for call in reads.call_args_list))
+                self.assertFalse(any(call.args[0]==source.key for call in hashes.call_args_list))
+                gopath.chmod(0o400)
+                with self.assertRaisesRegex(c.Denied,'root0600'): c.main()
+                gopath.chmod(0o600); gopath.parent.chmod(0o755)
+                with self.assertRaisesRegex(c.Denied,'root0700'): c.main()
+                gopath.parent.chmod(0o700); b['operation']=c.STAGE; b['counts']={'stage':1,'restart':0,'rollback':[]}
+                gopath.write_bytes(c.canonical(source.envelope(b)))
+                with patch.object(c,'restart_ordinary_key',side_effect=AssertionError('STAGE ordinary fallback')),self.assertRaises(c.Denied): c.main()
+    def test_key_uid_mode_size_parent_identity_and_alias_refusals(self):
+        cases=('uid','mode0400','mode0640','size31','size33','parentUid','parentMode','ancestor',
+               'inode','booleanIdentity','linkCount','alias','symlink','pathMismatch','duringRead')
+        for case in cases:
+            with self.subTest(case=case),self.fixture() as (base,keypath,gopath,b,source,overrides):
+                if case=='uid': overrides[keypath]={4:0}
+                if case.startswith('mode'): keypath.chmod(int(case[4:],8))
+                if case.startswith('size'): keypath.write_bytes(b'k'*int(case[4:]))
+                if case=='parentUid': overrides[keypath.parent]={4:0}
+                if case=='parentMode': keypath.parent.chmod(0o755)
+                if case=='ancestor': overrides[base]={0:c.stat.S_IFDIR|0o777}
+                if case=='inode': b['proofs']['ordinaryKey']['identity']['ino']+=1
+                if case=='booleanIdentity': b['proofs']['ordinaryKey']['identity']['nlink']=True
+                if case=='linkCount': overrides[keypath]={3:2}
+                if case in ('uid','mode0400','mode0640','size31','size33','linkCount'):
+                    b['proofs']['ordinaryKey']['identity']=c.identity(keypath)
+                path=str(keypath)
+                if case=='alias': path=str(keypath.parent)+'/../ordinary/existing-key'; b['proofs']['ordinaryKey']['path']=path
+                if case=='symlink':
+                    alias=keypath.parent/'alias'; alias.symlink_to(keypath); path=str(alias); b['proofs']['ordinaryKey']['path']=path
+                if case=='pathMismatch': path=str(base/'native-checkpoint-key')
+                if case=='duringRead':
+                    actual_read=c.protected
+                    def changed(*args):
+                        raw=actual_read(*args); keypath.chmod(0o400); return raw
+                    with patch.object(c,'protected',side_effect=changed),self.assertRaisesRegex(c.Denied,'changed while reading'):
+                        c.restart_ordinary_key(path,b)
+                else:
+                    with self.assertRaises(c.Denied): c.restart_ordinary_key(path,b)
+    def test_config_key_digest_refused_before_any_read_and_loader_path_join(self):
+        with self.fixture() as (base,keypath,gopath,b,source,overrides):
+            b['configFiles']=[{'path':str(base/'current-source-sidecar'),'uid':1000,'sha256':'a'*64},
+                              {'path':str(keypath),'uid':1000,'sha256':'b'*64}]
+            with patch.object(c,'reference',side_effect=AssertionError('config read before key exclusion')),\
+                 self.assertRaisesRegex(c.Denied,'identity proof'): c.configuration_files(b)
+            original,candidate,spec,unitbody=UnitControls().fixture()
+            candidate=candidate.replace(b'/private/ordinary-key',str(keypath).encode())
+            spec['argv']=[str(keypath) if v=='/private/ordinary-key' else v for v in spec['argv']]
+            unitbody['proofs']['ordinaryKey']=b['proofs']['ordinaryKey']
+            self.assertEqual(c.unit_candidate(original,candidate,spec,unitbody)['--codex-ordinary-entry-key'],str(keypath))
+            unitbody['proofs']['ordinaryKey']['path']=str(base/'native-checkpoint-key')
+            with self.assertRaisesRegex(c.Denied,'credential tuple'): c.unit_candidate(original,candidate,spec,unitbody)
+    def test_current_restart_preflight_vision_off_with_original_approval(self):
+        with self.fixture() as (base,keypath,gopath,b,source,overrides):
+            root=base/'release'; root.mkdir(); unit=base/'unit'; unit.write_bytes(b'old')
+            overrides[unit]={4:1000}
+            q={'binaryVersion':'0.158.0','upstream':'064c6b8c737f5b41d171fdda80bd9ef10ad06eb3'}
+            for name in ('launch','settlement','protocolAck','binary'): q.update({name+'Path':str(base/name),name+'Sha256':'c'*64})
+            body={'qualification':q}; approval=c.canonical({'body':body,'seal':hmac.new(source.key,c.canonical(body),hashlib.sha256).hexdigest()})
+            content={'ai-harness/source-commit.txt':b['sourceCommit'].encode()+b'\n'}
+            raw=source.archive([(name,value,tarfile.REGTYPE) for name,value in content.items()])
+            ref=lambda name:{'path':str(base/name),'sha256':'a'*64,'uid':1000}
+            b.update(journal=str(base/'journal'),release={'path':str(root),'files':{k:c.sha(v) for k,v in content.items()},'executableFiles':[]},
+                     archives=[{'archive':ref('archive'),'files':{k:c.sha(v) for k,v in content.items()}}],dependencies=[],
+                     unit={'path':str(unit),'sha256':c.sha(b'old'),'candidate':ref('candidate')},data={'path':str(base/'data')},
+                     owner={'pid':10,'selectedEnvironment':{'AI_HARNESS_DATA_DIR':str(base/'data')}})
+            b['proofs']['ordinaryApproval']=ref('original-approval'); b['configFiles']=[ref('current-source-sidecar')]
+            def evidence(item,*args):
+                if item['path']==str(base/'archive'): return raw
+                if item['path']==str(base/'original-approval'): return approval
+                return b'evidence'
+            ctl=c.Control(b); original_read=Path.read_text
+            def boot(path,*a,**kw): return b['hostBootId'] if str(path)=='/proc/sys/kernel/random/boot_id' else original_read(path,*a,**kw)
+            with patch.object(Path,'read_text',boot),patch.object(c,'reference',side_effect=evidence),\
+                 patch.object(c,'unit_candidate',return_value={}),patch.object(ctl,'verify_staged') as staged,\
+                 patch.object(ctl,'state',return_value={'ActiveState':'active','SubState':'running','NRestarts':'0','MainPID':'10','InvocationID':'id'}),\
+                 patch.object(c,'exact_owner',return_value=b['owner']),patch.object(c,'database_state',return_value={'activeRuns':0}),\
+                 patch.object(ctl,'remote_vision',side_effect=AssertionError('vision contacted')):
+                result=ctl.preflight(); staged.assert_called_once()
+                self.assertEqual(result['idle']['activeRuns'],0); self.assertEqual(result['vision']['scope'],'ORDINARY_NO_VISION')
 
 class UnitControls(unittest.TestCase):
     def fixture(self):
@@ -334,7 +456,7 @@ class OptionalVisionControls(unittest.TestCase):
 class RestartPreservationControls(unittest.TestCase):
     def fixture(self):
         b={'operation':c.RESTART,'expiresUtc':'2099-01-01T00:00:00Z','sourceCommit':'b'*40,
-           'counts':{'rollback':[]},'proofs':{'visionNormal':{'enabled':False}},'owner':{'pid':10},
+           'counts':{'rollback':[]},'proofs':{'visionNormal':{'enabled':False},'ordinaryKey':{'path':'/private/ordinary-key'}},'owner':{'pid':10},
            'data':{'path':'/private/data'},'unit':{'path':'/private/unit','sha256':c.sha(b'old'),
                                              'candidate':{'sha256':c.sha(b'new')}},'configFiles':[]}
         prepared={'original':b'old','candidate':b'new','options':{},'owner':b['owner'],'idle':{},'vision':{'enabled':False}}
