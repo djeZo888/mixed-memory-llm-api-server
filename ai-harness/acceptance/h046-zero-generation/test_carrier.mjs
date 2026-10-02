@@ -1,0 +1,29 @@
+/** SOURCE fixtures: compiled Connection protocol, never native acceptance. */
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {PassThrough} from 'node:stream';
+import {pathToFileURL} from 'node:url';
+import {join} from 'node:path';
+import {protocol,effectGate,validateAcks,armProtocolCapture,shutdownOwned} from './carrier.mjs';
+const compiled=process.env.H046_COMPILED_SERVER;
+assert.ok(compiled,'explicit exported compiled server fixture required');
+const {CodexConnection}=await import(pathToFileURL(join(compiled,'dist/codex-connection.js')));
+const receipts=await import(pathToFileURL(join(compiled,'dist/codex-receipts.js')));
+const ordinary=await import(pathToFileURL(join(compiled,'dist/codex-ordinary-entry.js')));
+const input={profileDir:'/SOURCE/profile',workspace:'/SOURCE/workspace'};
+const initialize={codexHome:input.profileDir+'/codex-home',platformOs:'linux',platformFamily:'unix',userAgent:'codex/0.158.0'};
+const threadStart={thread:{id:'SOURCE-thread-from-real-fixture-ACK'},model:'qwen3.8-27b',modelProvider:'sova',cwd:input.workspace,approvalPolicy:'never'};
+function fixture(bad=false){const stdin=new PassThrough(),stdout=new PassThrough();let buffer='';const methods=[];stdin.on('data',chunk=>{buffer+=chunk;while(buffer.includes('\n')){const n=buffer.indexOf('\n'),value=JSON.parse(buffer.slice(0,n));buffer=buffer.slice(n+1);methods.push(value.method);if(value.id)setImmediate(()=>stdout.write(JSON.stringify({id:value.id,...(bad&&value.method==='thread/start'?{error:{code:-1,message:'SOURCE failed startup'}}:{result:value.method==='initialize'?initialize:threadStart})})+'\n'));}});return {stdin,stdout,methods};}
+test('current exported Connection sends only finite initialize/initialized/fresh thread/start; exact ACK ID retained',async()=>{const f=fixture(),frames=armProtocolCapture(f);const result=await protocol(f,CodexConnection,input,new AbortController().signal,frames);assert.equal(result.nativeThreadId,threadStart.thread.id);assert.deepEqual(f.methods,['initialize','initialized','thread/start']);assert.equal(frames.filter(v=>v.direction==='input').length,3);assert.equal(frames.filter(v=>v.direction==='output').length,2);f.stdin.end();f.stdout.end();});
+test('all generation/resume/compact/repeated startup effects denied before stream write',()=>{for(const method of ['turn/start','turn/resume','thread/resume','thread/compact/start','turn/interrupt','item/tool/call']){const gate=effectGate();assert.throws(()=>gate(JSON.stringify({method,params:{}})),/Forbidden/);}const gate=effectGate();gate(JSON.stringify({method:'initialize',params:{}}));assert.throws(()=>gate(JSON.stringify({method:'initialize',params:{}})),/Forbidden/);});
+test('failed thread/start never yields a success projection, retains original protocol',async()=>{const f=fixture(true),frames=armProtocolCapture(f);await assert.rejects(protocol(f,CodexConnection,input,new AbortController().signal,frames),/App Server rejected/);assert.equal(frames.filter(v=>v.direction==='input').length,3);assert.equal(frames.filter(v=>v.direction==='output').length,2);f.stdin.end();f.stdout.end();});
+test('returned fresh ACK ID cannot be fabricated or invalid pinned initialize admitted',()=>{assert.throws(()=>validateAcks(initialize,{...threadStart,thread:{id:null}},input));assert.throws(()=>validateAcks({...initialize,userAgent:'codex/0.159.2'},threadStart,input));assert.throws(()=>validateAcks(initialize,{...threadStart,cwd:'/wrong'},input));});
+test('caller JSON never has authentic current receipt transport/WeakSet provenance',()=>{const raw={schema:'codex-launch-v1'};assert.equal(receipts.isVerifiedCodexLaunchReceipt(raw),false);assert.equal(receipts.codexReceiptProvenance(raw),undefined);assert.equal(receipts.getCodexReceiptUtf8(raw),undefined);assert.equal(receipts.codexReceiptValidation(raw),undefined);});
+test('legacy loader requires originals complete equality and integer actual native closure',()=>{const ack={providerRequests:null},expected={launchSha256:'l',settlementSha256:'s',rawProtocolSha256:'p'},before={schema:'legacy-gateway-retained-id-observation-v1',identity:{actualProcess:'SOURCE'},requestIds:['SOURCE-original'],retainedRecords:{sha256:'SOURCE'},counts:{uncertain:1},nativeOwners:{qwen1:'SOURCE',qwen2:'SOURCE',mimo:'SOURCE'}};const legacy={status:'PASS',validatedInitialize:true,validatedThread:true,requestedStop:true,cleanupOk:true,engineExitStatus:143,receipts:{launch:{sha256:'l'},settlement:{sha256:'s'}},rawProtocolSHA256:'p',gatewayBefore:before,gatewayAfter:structuredClone(before)};ordinary.assertOrdinaryNoGenerationObservation(ack,legacy,expected);assert.throws(()=>ordinary.assertOrdinaryNoGenerationObservation(ack,{...legacy,engineExitStatus:null},expected));assert.throws(()=>ordinary.assertOrdinaryNoGenerationObservation(ack,{...legacy,gatewayAfter:{...before,requestIds:['changed']}},expected));assert.throws(()=>ordinary.assertOrdinaryNoGenerationObservation({providerRequests:0},legacy,expected));});
+
+test('failed SOURCE startup enters one owned shutdown and records actual integer parent exit/reap',async()=>{
+ const {spawn}=await import('node:child_process');const child=spawn(process.execPath,['-e',"process.exit(7)"],{stdio:'ignore'});let count=0;
+ const exitObservation=new Promise(resolve=>child.once('exit',(code,signal)=>resolve({code,signal,spawnFailed:false}))),exited=exitObservation.then(()=>undefined);
+ const owned={exited,exitObservation,settlementReceipt:Promise.resolve(undefined),terminateAndConfirm:async()=>{count++;await exited;return false;}};
+ const result=await shutdownOwned(owned);assert.equal(count,1);assert.equal(result.cleanup,false);assert.equal(result.exit.code,7);assert.equal(typeof result.exit.code,'number');assert.equal(result.exit.signal,null);assert.equal(result.settlement,undefined);
+});
