@@ -17,7 +17,7 @@ export function availabilityNotice(value?: HealthAvailability): string {
   const messages: string[] = [];
   if (unavailable === 2) messages.push('Text service unavailable.');
   else if (unavailable === 1) messages.push('Text service is running with reduced capacity.');
-  if (current.image === 'unavailable') messages.push('Image service unavailable.');
+  if (current.image === 'unavailable') messages.push('Image generation unavailable.');
   if (text.includes('unknown') || current.image === 'unknown') messages.push('Some services are still being checked.');
   return messages.join(' ');
 }

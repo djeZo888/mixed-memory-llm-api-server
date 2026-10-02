@@ -1,6 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import { waitFor } from '@testing-library/react';
-import { api } from '../src/api';
+import { api, ApiError } from '../src/api';
 import { HarnessStore } from '../src/store';
 import { imageCapabilities, editAvailable } from '../src/image-capabilities';
 import { imageElapsed, mergeImageJobs } from '../src/image-jobs';
@@ -199,7 +199,7 @@ describe('image lifecycle and reference boundaries', () => {
     await store.start();
     await waitFor(() => expect(fixture.streams).toHaveLength(1));
     expect(store.getSnapshot().thread?.messages[0].content).toBe('Existing conversation');
-    expect(store.getSnapshot().imageJobsError).toContain('Image status unavailable');
+    expect(store.getSnapshot().imageJobsError).toBe('Image generation status is unavailable.');
     fixture.streams[0].callbacks.event(
       event(1, 'image_job', { job: job({ revision: 2, state: 'running' }) }),
     );
@@ -226,6 +226,33 @@ describe('image lifecycle and reference boundaries', () => {
     );
     store.dispose();
   });
+
+  it.each(['image_unavailable', 'image_service_unavailable'])(
+    'preserves saved image jobs when generation is unavailable (%s), then clears the notice on recovery',
+    async code => {
+      const fixture = fixtureTransport();
+      const saved = job({ revision: 2, state: 'running' });
+      fixture.transport.imageJobs.mockResolvedValueOnce({ jobs: [saved] });
+      const store = new HarnessStore(fixture.transport);
+      try {
+        await store.start();
+        await waitFor(() => expect(fixture.streams).toHaveLength(1));
+        fixture.transport.imageJobs.mockRejectedValueOnce(
+          new ApiError(503, code, 'Image broker is not configured'),
+        );
+        await store.resync();
+        expect(store.getSnapshot().thread?.imageJobs).toEqual([saved]);
+        expect(store.getSnapshot().imageJobsError).toBe(
+          'Image generation is unavailable. Last saved image jobs remain visible.',
+        );
+        fixture.transport.imageJobs.mockResolvedValueOnce({ jobs: [saved] });
+        await store.resync();
+        expect(store.getSnapshot().imageJobsError).toBeNull();
+      } finally {
+        store.dispose();
+      }
+    },
+  );
 
   it('keeps current-session artifact references separate from uploads and enforces the discovered count', async () => {
     const fixture = fixtureTransport();

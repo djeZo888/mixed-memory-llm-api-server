@@ -278,16 +278,22 @@ export class HarnessStore {
       return { ...snapshot, imageJobs: mergeImageJobs(previous ?? [], jobs, id) };
     } catch (error) {
       if (signal.aborted) throw error;
+      const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
+      const imageJobs = mergeImageJobs(previous ?? [], snapshot.imageJobs ?? [], id);
+      const unavailable = error instanceof ApiError && error.status === 503 &&
+        ['image_unavailable', 'image_service_unavailable'].includes(error.code);
       if (this.state.selectedId === id)
         this.update({
-          imageJobsError: `Image status unavailable: ${messageOf(error)} Last saved jobs remain visible.`,
+          imageJobsError: (unavailable
+            ? 'Image generation is unavailable.'
+            : 'Image generation status is unavailable.') +
+            (imageJobs.length ? ' Last saved image jobs remain visible.' : ''),
         });
       // Image status is additive: preserve text chat and known jobs during an
       // image-route failure. Persisted image_job events can still advance them.
-      const previous = this.state.thread?.session.id === id ? this.state.thread.imageJobs : [];
       return {
         ...snapshot,
-        imageJobs: mergeImageJobs(previous ?? [], snapshot.imageJobs ?? [], id),
+        imageJobs,
       };
     }
   }

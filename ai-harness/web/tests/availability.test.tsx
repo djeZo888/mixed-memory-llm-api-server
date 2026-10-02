@@ -95,7 +95,7 @@ it('shows partial Qwen and image degradation with a status link while permitting
     }
     render(<View />);
     expect(screen.getByRole('status')).toHaveTextContent(
-      'Text service is running with reduced capacity. Image service unavailable.',
+      'Text service is running with reduced capacity. Image generation unavailable.',
     );
     expect(screen.getByRole('link', { name: 'View status' })).toHaveAttribute('href', '/status');
     fireEvent.change(screen.getByRole('textbox', { name: 'Message' }), {
