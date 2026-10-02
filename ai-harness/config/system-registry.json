@@ -96,7 +96,7 @@
         "selection_group": null
       },
       "placement": {
-        "gpu_uuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
         "selection_authority": "/data/services/image21-runtime-20260923/config.json.gpu_uuid",
         "selection_config_sha256": null
       }

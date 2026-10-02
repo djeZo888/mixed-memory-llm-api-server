@@ -1,0 +1,1869 @@
+{
+  "baseCommit": "58bff2ec474fd0cf4a7ba3f71028bb2710555c88",
+  "build": "NOT_REQUIRED; Python stdlib only, no heavy build/shared dependencies",
+  "candidate": {
+    "currentReadback": {
+      "boot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+      "capturedUtc": "2026-10-01T23:32:23.340556+00:00",
+      "currentApiConfigSha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+      "currentConfiguredGpu": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+      "currentRuntimeConfigSha256": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
+      "daemonImageId": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "nativeConfigDomain": "NOT_PROVEN; required3f6178 retained; no guard change",
+      "nativeOwnerSettlement": "NOT_PROVEN; exact exited container and prior-boot active records retained",
+      "origin": "root coordinator privileged read; native worker Linux actions0",
+      "originalStdoutSha256": "f578c47f2eb5ad706d7504081067d2ca00f9305e400728b2b11c70fde5aaa063",
+      "protectedSourceClosure": "37 exact hashes matched; external graph still unreviewed"
+    },
+    "fullHD": {
+      "cropBottom": 8,
+      "native": "1920x1088",
+      "public": "1920x1080",
+      "rawArtifact": "NOT_CAPTURED"
+    },
+    "installable": false,
+    "liveQualified": false,
+    "migration": {
+      "apiDelta": {
+        "runtime_image_digest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+      },
+      "expectedCurrentApiSha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+      "expectedCurrentRuntimeSha256": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
+      "preserve": "All other config fields, profile/evidence records, network ID, checkpoint receipt, source closure, histories, downloads and credentials. Retained profiles do not qualify a new placement.",
+      "requires": [
+        "current protected config byte CAS",
+        "root-reviewed critical source closure",
+        "registered storage and canonical lease",
+        "boot identity and settled prior native owner",
+        "fresh exact UUID hardware guard",
+        "rollback byte CAS and current owned receipts",
+        "separately owned manifest/config domain correction"
+      ],
+      "runtimeDelta": {
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+        "image_id": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+      }
+    },
+    "placement": {
+      "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23",
+      "ordinalFallback": false,
+      "reading_gpu_excluded": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf"
+    },
+    "qualification": "NOT_TESTED; source candidate cannot enable admission or global image gate",
+    "resources": {
+      "active": 1,
+      "approximateCache": false,
+      "cfg": 1,
+      "compile": false,
+      "cpusetCpus": "8-15",
+      "cpusetMems": "0",
+      "gpuReservePercent": 5,
+      "hostReservePercent": 15,
+      "memoryBytes": 103079215104,
+      "memorySwapBytes": 103079215104,
+      "offload": false,
+      "outputs": 1,
+      "quantization": false,
+      "steps": 40
+    },
+    "runtime": {
+      "base": "/data/services/image21-runtime-20260923",
+      "configDigest": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+      "container": "llm-image-backend",
+      "modelPath": "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758",
+      "modelRevision": "790c92633540aa0cb11d9abf19eb46d861714758",
+      "network": "llm-image-backend-private",
+      "owner": "IMAGE21-RUNTIME-20260923",
+      "parentOnlyForbidden": "sha256:dafbccb763cff6a6aa3777c7c0a8cc185d838bd4b9f61bec8007f57f2c7233f8",
+      "platformManifest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "release": "/data/services/releases/h037-image-placement-20260930",
+      "sglangRevision": "0cd8be351d0825488f4b81c8931167bbab618eca",
+      "unit": "llm-image-backend.service"
+    },
+    "schema": "h044-image-source-candidate-v1"
+  },
+  "checks": [
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(Path(\"reports/h043-image-readiness01.md\").read_text()); print(Path(\"reports/h043-image-readiness01.json\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(Path(\"reports/h043-execution-plan.md\").read_text()); print(Path(\"reports/h043-progress-report.md\").read_text())"
+      ],
+      "birth": "81170 81169 81170 Fri Oct  2 01:22:31 2026     /usr/bin/python3 -c from pathlib import Path; print(Path(\"reports/h043-image-readiness01.md\").read_text()); print(Path(\"reports/h043-image-readiness01.json\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(Path(\"reports/h043-execution-plan.md\").read_text()); print(Path(\"reports/h043-progress-report.md\").read_text())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:32.020382+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81170,
+      "pid": 81170,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/001-predecessor-read.receipt.json",
+      "receiptSha256": "6a5e8c5e7fbe9c7237cfa592135dbb6e9356cd64bb29726f0f9e4a3fe4e51b48",
+      "startUtc": "2026-10-01T23:22:31.968825+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/001-predecessor-read.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 303986,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/001-predecessor-read.stdout",
+        "sha256": "48496de4a2e64e1f309b6a6e18ec3ec0576668564ee7c153c17c9a7a130511d5"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(Path(\"reports/h043-execution-plan.md\").read_text()); print(Path(\"reports/h043-progress-report.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(\"ROOT DECISIONS\",[str(p) for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(Path(\"ai-harness/config/system-registry.json\").read_text())"
+      ],
+      "birth": "81250 81249 81250 Fri Oct  2 01:22:46 2026     /usr/bin/python3 -c from pathlib import Path; print(Path(\"reports/h043-execution-plan.md\").read_text()); print(Path(\"reports/h043-progress-report.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(\"ROOT DECISIONS\",[str(p) for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(Path(\"ai-harness/config/system-registry.json\").read_text())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:46.769035+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81250,
+      "pid": 81250,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/002-authority-targets.receipt.json",
+      "receiptSha256": "1ba7082206bf1d940c684306c7101c79a9c56c843c8e3a76b9aae5552a82d8e5",
+      "startUtc": "2026-10-01T23:22:46.716936+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/002-authority-targets.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 45848,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/002-authority-targets.stdout",
+        "sha256": "0723414fce81f89d0e99584a3dbd6ce5239593245275dd24b4bc5d22ebaa50b5"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "--files",
+        "scripts/image_runtime",
+        "scripts/image_api",
+        "scripts/h043",
+        "configs",
+        "systemd",
+        "ai-harness/src"
+      ],
+      "birth": "81255 81254 81255 Fri Oct  2 01:22:46 2026     rg --files scripts/image_runtime scripts/image_api scripts/h043 configs systemd ai-harness/src",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:46.853670+00:00",
+      "exitCode": 2,
+      "host": "mac-worker2.local",
+      "pgid": 81255,
+      "pid": 81255,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/003-source-inventory.receipt.json",
+      "receiptSha256": "148d6a809039c0ac43f18e0f84639b563d6c328805de738047862b915b69fd62",
+      "startUtc": "2026-10-01T23:22:46.844233+00:00",
+      "stderr": {
+        "bytes": 111,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/003-source-inventory.stderr",
+        "sha256": "b8461b29dc4ed64ec11bbff6dc3765f14bc686e3a76ed994a591c965ee9b868d"
+      },
+      "stdout": {
+        "bytes": 4484,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/003-source-inventory.stdout",
+        "sha256": "94ea77b433fb5476e837a29127260859820bb30c803807acc2541adc63d023db"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "-n",
+        "BASE|OWNER|container|network|credential|config_path|model_path|checkpoint|image_ref|gpu_uuid|GPU-|require|qualification|gate|seed",
+        "scripts/image_runtime/config.py",
+        "scripts/image_runtime/service.py",
+        "scripts/image_runtime/owner.py",
+        "scripts/image_api/config.py",
+        "scripts/image_api/protection.py",
+        "scripts/h043/image_workflow_probe.py"
+      ],
+      "birth": "81259 81258 81259 Fri Oct  2 01:22:46 2026     rg -n BASE|OWNER|container|network|credential|config_path|model_path|checkpoint|image_ref|gpu_uuid|GPU-|require|qualification|gate|seed scripts/image_runtime/config.py scripts/image_runtime/service.py scripts/image_runtime/owner.py scripts/image_api/config.py scripts/image_api/protection.py scripts/h043/image_workflow_probe.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:46.960821+00:00",
+      "exitCode": 2,
+      "host": "mac-worker2.local",
+      "pgid": 81259,
+      "pid": 81259,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/004-retained-guards.receipt.json",
+      "receiptSha256": "85e24af7eb556654b7b345a588904085c4aeff7b08dce78956985639a07ad62d",
+      "startUtc": "2026-10-01T23:22:46.951372+00:00",
+      "stderr": {
+        "bytes": 223,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/004-retained-guards.stderr",
+        "sha256": "d708353b54b881e18ab97f3e4873764e79d558b535c9cd76e384dbbe3d95e248"
+      },
+      "stdout": {
+        "bytes": 39835,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/004-retained-guards.stdout",
+        "sha256": "7fb9c6bb5fcf80d93d42969d66801c2d013d58f64cd8153fbf36761d393aae13"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; r=json.loads(Path(\"ai-harness/config/system-registry.json\").read_text()); print(json.dumps(r.get(\"image\"),indent=2)); print(Path(\"scripts/image_runtime/service.py\").read_text()[:17500]); print(Path(\"scripts/image_api/protection.py\").read_text()[:18000]); print(Path(\"scripts/h043/image_workflow_probe.py\").read_text()[:8500])"
+      ],
+      "birth": "81305 81304 81305 Fri Oct  2 01:22:54 2026     /usr/bin/python3 -c from pathlib import Path; import json; r=json.loads(Path(\"ai-harness/config/system-registry.json\").read_text()); print(json.dumps(r.get(\"image\"),indent=2)); print(Path(\"scripts/image_runtime/service.py\").read_text()[:17500]); print(Path(\"scripts/image_api/protection.py\").read_text()[:18000]); print(Path(\"scripts/h043/image_workflow_probe.py\").read_text()[:8500])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:54.953588+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81305,
+      "pid": 81305,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/005-exact-local-config.receipt.json",
+      "receiptSha256": "578eb544f44700af3fe285614a9272ce485a527ad1dffdf539eeb821020dc94a",
+      "startUtc": "2026-10-01T23:22:54.902167+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/005-exact-local-config.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 30072,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/005-exact-local-config.stdout",
+        "sha256": "66534c0b06c7e649f5ee2d598b2b7d9ac84d04144bc7034dcd16e55ed2aa2163"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "--files",
+        "scripts/image_runtime",
+        "scripts/image_api",
+        "configs",
+        "systemd"
+      ],
+      "birth": "81309 81308 81309 Fri Oct  2 01:22:55 2026     rg --files scripts/image_runtime scripts/image_api configs systemd",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:22:55.036790+00:00",
+      "exitCode": 2,
+      "host": "mac-worker2.local",
+      "pgid": 81309,
+      "pid": 81309,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/006-config-files.receipt.json",
+      "receiptSha256": "db36a54c67e716efeb8ca450092ce7d68cd1538ee4b9f620aa44c95df095fbb0",
+      "startUtc": "2026-10-01T23:22:55.027476+00:00",
+      "stderr": {
+        "bytes": 52,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/006-config-files.stderr",
+        "sha256": "7e773fdc2599bd31f9d8f31f32ee3ce1fd9b81811945842a17c29381ad912cf8"
+      },
+      "stdout": {
+        "bytes": 4405,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/006-config-files.stdout",
+        "sha256": "ce5f330a449f3292b79c679813e6295e9399bc3d33581d3efb207eeacccd3ae4"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; r=json.loads(Path(\"ai-harness/config/system-registry.json\").read_text()); print(\"REGISTRY ROOT\",r.keys()); print(json.dumps(r,indent=2)[:18000]); print(Path(\"scripts/image_api/qualification.empty.json\").read_text()); print(Path(\"configs/runtimes/h005-runtime-binding.json\").read_text()); print(Path(\"scripts/image_api/llm-image-api.service.in\").read_text()); print(Path(\"scripts/image_runtime/llm-image-backend.service\").read_text()); print(Path(\"reports/image21-runtime-20260923/deployed-runtime-config.json\").read_text())"
+      ],
+      "birth": "81348 81347 81348 Fri Oct  2 01:23:06 2026     /usr/bin/python3 -c from pathlib import Path; import json; r=json.loads(Path(\"ai-harness/config/system-registry.json\").read_text()); print(\"REGISTRY ROOT\",r.keys()); print(json.dumps(r,indent=2)[:18000]); print(Path(\"scripts/image_api/qualification.empty.json\").read_text()); print(Path(\"configs/runtimes/h005-runtime-binding.json\").read_text()); print(Path(\"scripts/image_api/llm-image-api.service.in\").read_text()); print(Path(\"scripts/image_runtime/llm-image-backend.service\").read_text()); print(Path(\"reports/image21-runtime-20260923/deployed-runtime-config.json\").read_text())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:23:06.898557+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81348,
+      "pid": 81348,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/007-registry-contract.receipt.json",
+      "receiptSha256": "f1d0374919450cc8b14fa203e53638a8b6c795e3b4b0a02108920fddaaeba6a2",
+      "startUtc": "2026-10-01T23:23:06.846777+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/007-registry-contract.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 27843,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/007-registry-contract.stdout",
+        "sha256": "8a95ccbc615813d7995ac08767445152e8b03ab841560c9b78a3472621e667a1"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "-n",
+        "qualification|profile|seed|steps|cfg|guidance|provenance|reference|image_generate|Owner|health|probe|admit|ticket|1920|gate",
+        "scripts/image_api/protocol.py",
+        "scripts/image_api/app.py",
+        "scripts/image_api/backend.py",
+        "scripts/lifecycle/runtime_io.py",
+        "ai-harness/src/mcp-image-tools.ts",
+        "ai-harness/src/image-profile-policy.ts",
+        "scripts/image_runtime/README.md"
+      ],
+      "birth": "81354 81353 81354 Fri Oct  2 01:23:06 2026     rg -n qualification|profile|seed|steps|cfg|guidance|provenance|reference|image_generate|Owner|health|probe|admit|ticket|1920|gate scripts/image_api/protocol.py scripts/image_api/app.py scripts/image_api/backend.py scripts/lifecycle/runtime_io.py ai-harness/src/mcp-image-tools.ts ai-harness/src/image-profile-policy.ts scripts/image_runtime/README.md",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:23:06.987791+00:00",
+      "exitCode": 2,
+      "host": "mac-worker2.local",
+      "pgid": 81354,
+      "pid": 81354,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/008-api-guard-locations.receipt.json",
+      "receiptSha256": "855f12eb87686790e6be2ede6b2cdfa76e856ac65e157f0e99beb4a5dee8f130",
+      "startUtc": "2026-10-01T23:23:06.978245+00:00",
+      "stderr": {
+        "bytes": 161,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/008-api-guard-locations.stderr",
+        "sha256": "c4a36d1237a9c7a24ec816e0cc827795c7949f7264be4bc90fa9d9a05cd49aeb"
+      },
+      "stdout": {
+        "bytes": 9204,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/008-api-guard-locations.stdout",
+        "sha256": "4b9d0aeda8cd9806a7fc00a557b0b5065f22b1ed3bfb09374a047018d618471c"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(\"ROOT\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); r=json.loads(Path(\"reports/h043-image-readiness01.json\").read_text()); print(\"PREDECESSOR KEYS\",list(r)); print(\"FILES\",[str(p) for p in Path(\"ai-harness/src\").rglob(\"*image*\")])"
+      ],
+      "birth": "81409 81408 81409 Fri Oct  2 01:23:34 2026     /usr/bin/python3 -c from pathlib import Path; import json; print(Path(\"../predecessor/I-image-readiness01-selected/RELEVANT-HANDOFF.md\").read_text()); print(Path(\"../predecessor/I-image-readiness01-selected/ROOT-FINAL-INTEGRITY-01.json\").read_text()); print(\"ROOT\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); r=json.loads(Path(\"reports/h043-image-readiness01.json\").read_text()); print(\"PREDECESSOR KEYS\",list(r)); print(\"FILES\",[str(p) for p in Path(\"ai-harness/src\").rglob(\"*image*\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:23:34.902069+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81409,
+      "pid": 81409,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/009-handoff-read.receipt.json",
+      "receiptSha256": "df1333d3fadf395633f37c007ee6297217880ba9c4087eddc89d72f8576672e1",
+      "startUtc": "2026-10-01T23:23:34.850167+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/009-handoff-read.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 9572,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/009-handoff-read.stdout",
+        "sha256": "a4cbfef7c7267e71ab51074baf0a3d39b747f0cf036c46aeb09b44ef341d11a3"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; p=Path(\"scripts/lifecycle/runtime_io.py\").read_text(); i=p.index(\"def image_gpu_uuid\"); print(p[i:i+8500]); print(Path(\"scripts/image_runtime/source-closure.json\").read_text()[:7000]); p=Path(\"scripts/image_api/protocol.py\").read_text(); print(p[3600:6700]); print(p[9500:13200]); print(Path(\"scripts/image_api/app.py\").read_text()[:5100]); print(Path(\"ai-harness/src/mcp/image-tools.ts\").exists())"
+      ],
+      "birth": "81413 81412 81413 Fri Oct  2 01:23:34 2026     /usr/bin/python3 -c from pathlib import Path; p=Path(\"scripts/lifecycle/runtime_io.py\").read_text(); i=p.index(\"def image_gpu_uuid\"); print(p[i:i+8500]); print(Path(\"scripts/image_runtime/source-closure.json\").read_text()[:7000]); p=Path(\"scripts/image_api/protocol.py\").read_text(); print(p[3600:6700]); print(p[9500:13200]); print(Path(\"scripts/image_api/app.py\").read_text()[:5100]); print(Path(\"ai-harness/src/mcp/image-tools.ts\").exists())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:23:35.029101+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81413,
+      "pid": 81413,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/010-guards-contract.receipt.json",
+      "receiptSha256": "70bbaa151d873db94d42e2125fd70f60338a5aecaa132dfdbca0a54464bcc921",
+      "startUtc": "2026-10-01T23:23:34.977556+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/010-guards-contract.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 21925,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/010-guards-contract.stdout",
+        "sha256": "46da896558712f1ab3b4100d5187e69edb839c2527da5920b3a9605178116687"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(Path(\"../ROOT-DECISION-SOURCE-REVIEW01.json\").read_text()); print(Path(\"ai-harness/server/src/codex-specialist-qualification.ts\").read_text()[:14000]); print(Path(\"docs/qwen-image-2.1-ada-plan.md\").read_text()[:16000]); print(Path(\"tools/image/image-mcp.mjs\").read_text()[:9000])"
+      ],
+      "birth": "81442 81441 81442 Fri Oct  2 01:23:42 2026     /usr/bin/python3 -c from pathlib import Path; print(Path(\"../ROOT-DECISION-SOURCE-REVIEW01.json\").read_text()); print(Path(\"ai-harness/server/src/codex-specialist-qualification.ts\").read_text()[:14000]); print(Path(\"docs/qwen-image-2.1-ada-plan.md\").read_text()[:16000]); print(Path(\"tools/image/image-mcp.mjs\").read_text()[:9000])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:23:42.424053+00:00",
+      "exitCode": 1,
+      "host": "mac-worker2.local",
+      "pgid": 81442,
+      "pid": 81442,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/011-root-review01.receipt.json",
+      "receiptSha256": "16ed0c9cd9d51fd549b3c2e8921eb30c9917cf7574c14c1d11e2cd7737882dd2",
+      "startUtc": "2026-10-01T23:23:42.372302+00:00",
+      "stderr": {
+        "bytes": 774,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/011-root-review01.stderr",
+        "sha256": "717d9111e1f7a0383f94b9add27515801ea51969961aed864e0027e470b75293"
+      },
+      "stdout": {
+        "bytes": 19392,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/011-root-review01.stdout",
+        "sha256": "030c263bf3de030ad38bb0bbf9afb97d2c0533204adacb92b0c39d5f8871deba"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "--files",
+        "ai-harness/tools",
+        "ai-harness/server/src"
+      ],
+      "birth": "81542 81541 81542 Fri Oct  2 01:24:38 2026     rg --files ai-harness/tools ai-harness/server/src",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:24:38.082097+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81542,
+      "pid": 81542,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/012-tool-contract.receipt.json",
+      "receiptSha256": "2755dc7541edc40156000594dbbc3a88ec056972821f6a338691f12492a1fd7b",
+      "startUtc": "2026-10-01T23:24:38.072667+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/012-tool-contract.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 6053,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/012-tool-contract.stdout",
+        "sha256": "701cc29f30c13e3436b2df99945f67b7e3d37388ef76939f2f54b73f980d5bff"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "rg",
+        "-n",
+        "ticket|image_generate|seed|provenance|profile|fullhd|globalImage|imageJobsQualified",
+        "ai-harness/tools/image/image-mcp.mjs",
+        "ai-harness/tools/image/image.mjs",
+        "ai-harness/server/src/codex-launcher.ts",
+        "ai-harness/server/src/codex-image-tools.ts",
+        "ai-harness/server/src/image-contracts.ts"
+      ],
+      "birth": "81546 81545 81546 Fri Oct  2 01:24:38 2026     rg -n ticket|image_generate|seed|provenance|profile|fullhd|globalImage|imageJobsQualified ai-harness/tools/image/image-mcp.mjs ai-harness/tools/image/image.mjs ai-harness/server/src/codex-launcher.ts ai-harness/server/src/codex-image-tools.ts ai-harness/server/src/image-contracts.ts",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:24:38.188636+00:00",
+      "exitCode": 2,
+      "host": "mac-worker2.local",
+      "pgid": 81546,
+      "pid": 81546,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/013-exact-gate.receipt.json",
+      "receiptSha256": "9dc399bc355ef8f7845be73e1ca298f4f301740c9527f3d628a8b039e895d164",
+      "startUtc": "2026-10-01T23:24:38.179374+00:00",
+      "stderr": {
+        "bytes": 87,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/013-exact-gate.stderr",
+        "sha256": "193dcfb7b625abef2a31b967af146a6a070daf57a5e48dd4ddbcb90a608d5e35"
+      },
+      "stdout": {
+        "bytes": 6342,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/013-exact-gate.stdout",
+        "sha256": "39129b922c13f4ce9a3e47743ccca70b8641809649b741bf6830aad6c0c4d5ae"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(Path(\"ai-harness/tools/image/image.mjs\").read_text()[:2100]); print(Path(\"scripts/lifecycle/hardware_policy.py\").read_text()[:2200]); print(Path(\"scripts/common/lifecycle_lease.py\").read_text()[:2000]); print(Path(\"scripts/image_runtime/llm-image-backend-recover\").read_text()[:2300]); print(\"ROOT\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "81580 81579 81580 Fri Oct  2 01:25:01 2026     /usr/bin/python3 -c from pathlib import Path; print(Path(\"ai-harness/tools/image/image.mjs\").read_text()[:2100]); print(Path(\"scripts/lifecycle/hardware_policy.py\").read_text()[:2200]); print(Path(\"scripts/common/lifecycle_lease.py\").read_text()[:2000]); print(Path(\"scripts/image_runtime/llm-image-backend-recover\").read_text()[:2300]); print(\"ROOT\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:25:01.531925+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81580,
+      "pid": 81580,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/014-image-tool-input.receipt.json",
+      "receiptSha256": "6f655b7e7e4841d696e0a54bb021770c6e29f626054a7956c35d7ff140a12d82",
+      "startUtc": "2026-10-01T23:25:01.480258+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/014-image-tool-input.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 6606,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/014-image-tool-input.stdout",
+        "sha256": "26e435c04c7bb9ba5ffec49245393d7829c12eb974e29506404fcbb4246a28fa"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/bin/cat",
+        "../ROOT-DECISION-SCOPE02.json"
+      ],
+      "birth": "81588 81587 81588 Fri Oct  2 01:25:05 2026     <defunct>",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:25:05.105790+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81588,
+      "pid": 81588,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/015-root-scope02.receipt.json",
+      "receiptSha256": "fc1f648d40b9f9a97c43512162225ef18e92debb602cc2c38ac646f4902be0c9",
+      "startUtc": "2026-10-01T23:25:05.100969+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/015-root-scope02.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1084,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/015-root-scope02.stdout",
+        "sha256": "b477a742e1f28f80abbfc5cac08d3fd2a8884838b409e9719230f12f1289c3d3"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; p=Path(\"scripts/image_runtime/service.py\").read_text().splitlines(); print(\"\\n\".join(p[450:499])); print(\"\\n\".join(p[630:695])); print(\"\\n\".join(p[849:894])); print(Path(\"scripts/runtime/h005_runtime_binding.py\").read_text()[:5200])"
+      ],
+      "birth": "81626 81625 81626 Fri Oct  2 01:25:26 2026     /usr/bin/python3 -c from pathlib import Path; p=Path(\"scripts/image_runtime/service.py\").read_text().splitlines(); print(\"\\n\".join(p[450:499])); print(\"\\n\".join(p[630:695])); print(\"\\n\".join(p[849:894])); print(Path(\"scripts/runtime/h005_runtime_binding.py\").read_text()[:5200])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:25:27.002582+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 81626,
+      "pid": 81626,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/016-image-identity-logic.receipt.json",
+      "receiptSha256": "06d0b9f89d2fa7a1794613c3af4b66706fe0c4da3f351bf776611f99563e3216",
+      "startUtc": "2026-10-01T23:25:26.950691+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/016-image-identity-logic.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 13919,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/016-image-identity-logic.stdout",
+        "sha256": "b2e81ee50c3037c201781194bd50dccbafefe5677a923f5923c678909ef88e5a"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; p=Path(\"ai-harness/config/system-registry.json\"); raw=p.read_text(); old=\"GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf\"; new=\"GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23\"; r=json.loads(raw); assert next(v for v in r[\"services\"] if v[\"id\"]==\"image\")[\"placement\"][\"gpu_uuid\"]==old; assert raw.count(old)==1; p.write_text(raw.replace(old,new)); print(\"exact one UUID replacement; every other byte preserved\")"
+      ],
+      "birth": "82243 82242 82243 Fri Oct  2 01:30:38 2026     /usr/bin/python3 -c from pathlib import Path; import json; p=Path(\"ai-harness/config/system-registry.json\"); raw=p.read_text(); old=\"GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf\"; new=\"GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23\"; r=json.loads(raw); assert next(v for v in r[\"services\"] if v[\"id\"]==\"image\")[\"placement\"][\"gpu_uuid\"]==old; assert raw.count(old)==1; p.write_text(raw.replace(old,new)); print(\"exact one UUID replacement; every other byte preserved\")",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:30:38.851910+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82243,
+      "pid": 82243,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/017-registry-placement.receipt.json",
+      "receiptSha256": "cde03f2d9d91ffd688acc66535345ae37df52cad068f545f65ce9144c631c373",
+      "startUtc": "2026-10-01T23:30:38.800409+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/017-registry-placement.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 55,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/017-registry-placement.stdout",
+        "sha256": "1b420c420121abb7a4f7d9b234e757aa4c3355d84a901582ae5f5419d760ed33"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/test_image_backend_preparation.py"
+      ],
+      "birth": "82247 82246 82247 Fri Oct  2 01:30:38 2026     /usr/bin/python3 -I -B scripts/h044/test_image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:30:39.379997+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82247,
+      "pid": 82247,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/018-offline-tests.receipt.json",
+      "receiptSha256": "78d051f1d83795eea8570bdb3a7c3668e4ba2b9ba655f49440d7bb8185fd9021",
+      "startUtc": "2026-10-01T23:30:38.926740+00:00",
+      "stderr": {
+        "bytes": 1444,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/018-offline-tests.stderr",
+        "sha256": "861e5e5df82a2f9db7c5a74c907e2bbc38ceac8d092541f2bb135c2619647f56"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/018-offline-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/image_backend_preparation.py",
+        "--packet"
+      ],
+      "birth": "82307 82306 82307 Fri Oct  2 01:31:07 2026     /usr/bin/python3 -I -B scripts/h044/image_backend_preparation.py --packet",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:31:07.636079+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82307,
+      "pid": 82307,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/019-packet-export.receipt.json",
+      "receiptSha256": "799df9acc209078a8d05b4ce3039c765460b39c8f79f10beda21f86303cc41c9",
+      "startUtc": "2026-10-01T23:31:07.482118+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/019-packet-export.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 51944,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/019-packet-export.stdout",
+        "sha256": "163de138322d0ac8035a2ff1e1814ba11756feed3d532103bb5feddcde5288c8"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); (out/\"PREPARATION-PACKET.json\").write_text(json.dumps(p,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-REQUEST.json\").write_text(json.dumps(p[\"readonlyRequest\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-RUNTIME-PROPOSAL.json\").write_text(json.dumps(p[\"runtimeProposal\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-LIVE-REQUEST.json\").write_text(json.dumps(p[\"generation\"],indent=2,sort_keys=True)+\"\\n\"); print(\"packets exported\",len(p[\"sourceGraph\"]),\"source bindings\"); print(\"ROOT DECISIONS\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "82311 82310 82311 Fri Oct  2 01:31:07 2026     /usr/bin/python3 -c from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); (out/\"PREPARATION-PACKET.json\").write_text(json.dumps(p,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-REQUEST.json\").write_text(json.dumps(p[\"readonlyRequest\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-RUNTIME-PROPOSAL.json\").write_text(json.dumps(p[\"runtimeProposal\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-LIVE-REQUEST.json\").write_text(json.dumps(p[\"generation\"],indent=2,sort_keys=True)+\"\\n\"); print(\"packets exported\",len(p[\"sourceGraph\"]),\"source bindings\"); print(\"ROOT DECISIONS\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:31:07.806705+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82311,
+      "pid": 82311,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/020-boundary-review.receipt.json",
+      "receiptSha256": "21bdfe4166846e6b74ce1316797407c1b40ee79a9f082cea7e4a66bdd4a640bc",
+      "startUtc": "2026-10-01T23:31:07.713186+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/020-boundary-review.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 120,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/020-boundary-review.stdout",
+        "sha256": "bedd0c562691c6d5b864771654bdad9aa7658ab1efef6b6ef93032cb5e1be5f5"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/ROOT-PRIVILEGED-IMAGE-READ-WORKER-RUNNER-01.py"
+      ],
+      "birth": "82466 82465 82466 Fri Oct  2 01:32:22 2026     /usr/bin/python3 -I -B /Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/ROOT-PRIVILEGED-IMAGE-READ-WORKER-RUNNER-01.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:32:23.285082+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82466,
+      "pid": 82466,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/021-root-privileged-image-go01.receipt.json",
+      "receiptSha256": "521aec6b447802fbe44b2a3654bcfe63439dc9557d09113589490c4734f9a4e7",
+      "startUtc": "2026-10-01T23:32:22.424671+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/021-root-privileged-image-go01.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 60736,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/021-root-privileged-image-go01.stdout",
+        "sha256": "f578c47f2eb5ad706d7504081067d2ca00f9305e400728b2b11c70fde5aaa063"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import ast,importlib.util; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); code=m.readonly_program(p[\"readonlyRequest\"]); ast.parse(code); print(\"finite candidate syntax valid\",len(code),m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(\"registered unchanged base contexts\")"
+      ],
+      "birth": "82824 82823 82824 Fri Oct  2 01:35:08 2026     /usr/bin/python3 -c from pathlib import Path; import ast,importlib.util; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); code=m.readonly_program(p[\"readonlyRequest\"]); ast.parse(code); print(\"finite candidate syntax valid\",len(code),m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(\"registered unchanged base contexts\")",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:35:08.342179+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82824,
+      "pid": 82824,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/022-local-review.receipt.json",
+      "receiptSha256": "4a8cd95f965303ce0b722f5ac6f07cf2a072360c8e713fc22df189548414d701",
+      "startUtc": "2026-10-01T23:35:08.255403+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/022-local-review.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 289,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/022-local-review.stdout",
+        "sha256": "1f699d2a95675d81a6419a5d02adb97b5978601162586f8946497984b813fb7c"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(Path(\"../ROOT-DECISION-READ-RESULT03.json\").read_text()); print(Path(\"../ROOT-DECISION-IDENTITY04.json\").read_text())"
+      ],
+      "birth": "82845 82844 82845 Fri Oct  2 01:35:18 2026     /usr/bin/python3 -c from pathlib import Path; print(Path(\"../ROOT-DECISION-READ-RESULT03.json\").read_text()); print(Path(\"../ROOT-DECISION-IDENTITY04.json\").read_text())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:35:18.221067+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82845,
+      "pid": 82845,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/023-root-boundary03.receipt.json",
+      "receiptSha256": "31d7430b0bbe40b15177060104e64150e97d10f4428899e99420c8a437c00c89",
+      "startUtc": "2026-10-01T23:35:18.169351+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/023-root-boundary03.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 3182,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/023-root-boundary03.stdout",
+        "sha256": "34702429231fe2d4daff4121129eb5895716b7402750e318fa088046918492f1"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; p=Path(\"../output/root-privileged-image01.ssh.stdout\"); r=json.loads(p.read_text()); print(\"KEYS\",list(r)); print(json.dumps(r,indent=2)[:30000]); print(\"FILES\",[v.name for v in Path(\"../output\").glob(\"root-privileged-image01*\")])"
+      ],
+      "birth": "82857 82856 82857 Fri Oct  2 01:35:29 2026     /usr/bin/python3 -c from pathlib import Path; import json; p=Path(\"../output/root-privileged-image01.ssh.stdout\"); r=json.loads(p.read_text()); print(\"KEYS\",list(r)); print(json.dumps(r,indent=2)[:30000]); print(\"FILES\",[v.name for v in Path(\"../output\").glob(\"root-privileged-image01*\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:35:29.337276+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82857,
+      "pid": 82857,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/024-current-root-evidence.receipt.json",
+      "receiptSha256": "9a8b5be83ffaa36e64ff2cf2c3b837d8bbcde2e8ccce1fd4cedb13c7bf85ab9b",
+      "startUtc": "2026-10-01T23:35:29.287787+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/024-current-root-evidence.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 30394,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/024-current-root-evidence.stdout",
+        "sha256": "4f4263d49f16904b91b63b8899a6495eabdfecdc9699ab9cd06052d17991dc2d"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import json; o=json.loads(Path(\"../output/root-privileged-image01.ssh.stdout\").read_text())[\"observation\"]; print(json.dumps({\"records\":{k:v for k,v in o[\"records\"].items() if k in (\"state\",\"operation\",\"recovery\")},\"sourceGraphFailure\":[v for v in o[\"sourceGraph\"] if v.get(\"receipt\",{}).get(\"outcome\")==\"FAILED\" or v.get(\"outcome\")==\"FAILED\"]},indent=2)); print(\"graph row keys\",o[\"sourceGraph\"][0]); print(\"ROOT decisions\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "82876 82875 82876 Fri Oct  2 01:35:41 2026     /usr/bin/python3 -c from pathlib import Path; import json; o=json.loads(Path(\"../output/root-privileged-image01.ssh.stdout\").read_text())[\"observation\"]; print(json.dumps({\"records\":{k:v for k,v in o[\"records\"].items() if k in (\"state\",\"operation\",\"recovery\")},\"sourceGraphFailure\":[v for v in o[\"sourceGraph\"] if v.get(\"receipt\",{}).get(\"outcome\")==\"FAILED\" or v.get(\"outcome\")==\"FAILED\"]},indent=2)); print(\"graph row keys\",o[\"sourceGraph\"][0]); print(\"ROOT decisions\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:35:41.232529+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 82876,
+      "pid": 82876,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/025-root-selected-reconcile.receipt.json",
+      "receiptSha256": "2d716bf6093ad010425024733c6e4371f9bebe3c390f315ebf4c4b2a48a8c71c",
+      "startUtc": "2026-10-01T23:35:41.180736+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/025-root-selected-reconcile.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 4315,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/025-root-selected-reconcile.stdout",
+        "sha256": "f81e95019669765c126a875888ff0167180db19004cb63f742fcea76f8e148e6"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/test_image_backend_preparation.py"
+      ],
+      "birth": "83389 83388 83389 Fri Oct  2 01:38:46 2026     /usr/bin/python3 -I -B scripts/h044/test_image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:38:47.321599+00:00",
+      "exitCode": 1,
+      "host": "mac-worker2.local",
+      "pgid": 83389,
+      "pid": 83389,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/026-offline-tests02.receipt.json",
+      "receiptSha256": "c8207b0c23d2b71086b278538aa7747f7f04f1c9dc64405ab4e080e14d850ccb",
+      "startUtc": "2026-10-01T23:38:46.756183+00:00",
+      "stderr": {
+        "bytes": 2391,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/026-offline-tests02.stderr",
+        "sha256": "3a65f58a27fa0418f5171c032bb5a7dc852a961bdd214df30f2df7d7beeace05"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/026-offline-tests02.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); (out/\"ROOT-RECONCILE-REQUEST.json\").write_text(json.dumps(plan,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-CANDIDATE.py\").write_bytes(m.readonly_program(p[\"readonlyRequest\"])); (out/\"PREPARATION-PACKET-02.json\").write_text(json.dumps(p,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-REQUEST-02.json\").write_text(json.dumps(p[\"readonlyRequest\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-RUNTIME-PROPOSAL-02.json\").write_text(json.dumps(p[\"runtimeProposal\"],indent=2,sort_keys=True)+\"\\n\"); print(\"current rootread-backed request sealed; original stdout hash\",m.sha(original.read_bytes())); print(\"new candidate read SHA\",p[\"readonlyRequest\"][\"readerSha256\"]); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "83394 83393 83394 Fri Oct  2 01:38:47 2026     /usr/bin/python3 -c from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); (out/\"ROOT-RECONCILE-REQUEST.json\").write_text(json.dumps(plan,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-CANDIDATE.py\").write_bytes(m.readonly_program(p[\"readonlyRequest\"])); (out/\"PREPARATION-PACKET-02.json\").write_text(json.dumps(p,indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-READONLY-REQUEST-02.json\").write_text(json.dumps(p[\"readonlyRequest\"],indent=2,sort_keys=True)+\"\\n\"); (out/\"ROOT-RUNTIME-PROPOSAL-02.json\").write_text(json.dumps(p[\"runtimeProposal\"],indent=2,sort_keys=True)+\"\\n\"); print(\"current rootread-backed request sealed; original stdout hash\",m.sha(original.read_bytes())); print(\"new candidate read SHA\",p[\"readonlyRequest\"][\"readerSha256\"]); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:38:47.490806+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83394,
+      "pid": 83394,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/027-reviewed-packets02.receipt.json",
+      "receiptSha256": "82cd1771b6f33193026a19ec84a08366f611ce81b56407bd59a7585801998256",
+      "startUtc": "2026-10-01T23:38:47.397371+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/027-reviewed-packets02.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 401,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/027-reviewed-packets02.stdout",
+        "sha256": "ffdc686d46fb380ee8e4c96c4cb924e1ac84cf05528a9da0d9ae6e5d338df9ce"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/bin/cat",
+        "../ROOT-DECISION-MIGRATION05.json"
+      ],
+      "birth": "83405 83404 83405 Fri Oct  2 01:38:57 2026     <defunct>",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:38:57.428685+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83405,
+      "pid": 83405,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/028-root-migration05.receipt.json",
+      "receiptSha256": "f26e2066098765f6af81bc379b41da15f5dedbe8a113e389a2a72971e744c1d1",
+      "startUtc": "2026-10-01T23:38:57.423523+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/028-root-migration05.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 1281,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/028-root-migration05.stdout",
+        "sha256": "8dc66325838795266fe6da0e2f568bf8716c1e9e58fe880522bd1bcb09e14118"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/test_image_backend_preparation.py"
+      ],
+      "birth": "83476 83475 83476 Fri Oct  2 01:39:49 2026     /usr/bin/python3 -I -B scripts/h044/test_image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:39:49.852600+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83476,
+      "pid": 83476,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/029-offline-tests03.receipt.json",
+      "receiptSha256": "9de9f815cc1948459aeb932243493c5614de01146e94443b51b3aa9986f0d2d4",
+      "startUtc": "2026-10-01T23:39:49.282699+00:00",
+      "stderr": {
+        "bytes": 1689,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/029-offline-tests03.stderr",
+        "sha256": "006fe686cc66404e16a46276baa4e7ca13091b7a29e8a1db09f1623dc1e8c507"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/029-offline-tests03.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; print(\"ROOT decisions\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(\"PRIVATE FILES\",[p.name for p in Path(\"../output\").iterdir()]); print(\"TMPDIR\",Path(\"../TEST-TMPDIR.json\").read_text()); print(\"HEAD initial frozen\"); print(Path(\"../INPUT-HASHES.json\").read_text())"
+      ],
+      "birth": "83499 83498 83499 Fri Oct  2 01:40:18 2026     /usr/bin/python3 -c from pathlib import Path; print(\"ROOT decisions\",[p.name for p in Path(\"..\").glob(\"ROOT-DECISION*.json\")]); print(\"PRIVATE FILES\",[p.name for p in Path(\"../output\").iterdir()]); print(\"TMPDIR\",Path(\"../TEST-TMPDIR.json\").read_text()); print(\"HEAD initial frozen\"); print(Path(\"../INPUT-HASHES.json\").read_text())",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:40:18.907041+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83499,
+      "pid": 83499,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/030-preseal-state.receipt.json",
+      "receiptSha256": "bcdedb1354a36a3c1980f9cd30a657317cb447303b14cf6a10f0035c3b2cd0c1",
+      "startUtc": "2026-10-01T23:40:18.855317+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/030-preseal-state.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 2189,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/030-preseal-state.stdout",
+        "sha256": "f8161e466026a2481c2539eaba1ffe02a23d43863a5602368bf947e29c34c76a"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "diff",
+        "--check"
+      ],
+      "birth": "83503 83502 83503 Fri Oct  2 01:40:18 2026     /usr/bin/git diff --check",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:40:19.009297+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83503,
+      "pid": 83503,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/031-source-diff-check.receipt.json",
+      "receiptSha256": "36931906f6e8b0a888d61a097f13946d4c8963a6c7f4540888db25b1e8e9f976",
+      "startUtc": "2026-10-01T23:40:18.982015+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/031-source-diff-check.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/031-source-diff-check.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "status",
+        "--short"
+      ],
+      "birth": "83507 83506 83507 Fri Oct  2 01:40:19 2026     /usr/bin/git status --short",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:40:19.157551+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83507,
+      "pid": 83507,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/032-source-scope.receipt.json",
+      "receiptSha256": "cb3cb41711db26fc82aaa30619a3c5880eb31fd7f02bc55dc98b8462c48c5cb9",
+      "startUtc": "2026-10-01T23:40:19.106179+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/032-source-scope.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 77,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/032-source-scope.stdout",
+        "sha256": "acf272ff280536813596dd43039a0b83543585431dbedd7e5fcc8ce40c7bfc0e"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/test_image_backend_preparation.py"
+      ],
+      "birth": "83596 83595 83596 Fri Oct  2 01:41:09 2026     /usr/bin/python3 -I -B scripts/h044/test_image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:10.560623+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83596,
+      "pid": 83596,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/033-final-offline-tests.receipt.json",
+      "receiptSha256": "4540a66d39bc1412bd8db5d21e67d0d0d5df9247b43eca0701d2b56a02a78120",
+      "startUtc": "2026-10-01T23:41:09.986598+00:00",
+      "stderr": {
+        "bytes": 1689,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/033-final-offline-tests.stderr",
+        "sha256": "006fe686cc66404e16a46276baa4e7ca13091b7a29e8a1db09f1623dc1e8c507"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/033-final-offline-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "diff",
+        "--check"
+      ],
+      "birth": "83601 83600 83601 Fri Oct  2 01:41:10 2026     /usr/bin/git diff --check",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:10.663293+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83601,
+      "pid": 83601,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/034-final-source-check.receipt.json",
+      "receiptSha256": "47a2ca375a7620f4216da97ea0125f3858041d39655f61e0cc124d2883886c7a",
+      "startUtc": "2026-10-01T23:41:10.636004+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/034-final-source-check.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/034-final-source-check.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "add",
+        "scripts/h044/image_backend_preparation.py",
+        "scripts/h044/test_image_backend_preparation.py",
+        "configs/image/h044-external-ada-candidate.json",
+        "ai-harness/config/system-registry.json"
+      ],
+      "birth": "83605 83604 83605 Fri Oct  2 01:41:10 2026     /usr/bin/git add scripts/h044/image_backend_preparation.py scripts/h044/test_image_backend_preparation.py configs/image/h044-external-ada-candidate.json ai-harness/config/system-registry.json",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:10.789066+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83605,
+      "pid": 83605,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/035-source-stage.receipt.json",
+      "receiptSha256": "97eb955d554e2e1620047e94bcda575608cecf7f4b570b3e0214cc6087d17260",
+      "startUtc": "2026-10-01T23:41:10.761788+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/035-source-stage.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/035-source-stage.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "-c",
+        "user.name=AI Agent",
+        "-c",
+        "user.email=agent@mac-worker2.local",
+        "commit",
+        "-m",
+        "Prepare external Ada image backend review and guarded migration packets"
+      ],
+      "birth": "83609 83608 83609 Fri Oct  2 01:41:10 2026     /usr/bin/git -c user.name=AI Agent -c user.email=agent@mac-worker2.local commit -m Prepare external Ada image backend review and guarded migration packets",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:10.938528+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83609,
+      "pid": 83609,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/036-source-commit.receipt.json",
+      "receiptSha256": "f7dd3f774fc88f3316c08d000c5de2d6509d4bd2b76ef579e6a792a3ea59a41c",
+      "startUtc": "2026-10-01T23:41:10.887015+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/036-source-commit.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 344,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/036-source-commit.stdout",
+        "sha256": "85bb794bc69a81d8f9ef7d485cb70fde0386e57978474e9a41245678c33e9e92"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "birth": "83666 83665 83666 Fri Oct  2 01:41:40 2026     /usr/bin/git rev-parse HEAD",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:40.220369+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83666,
+      "pid": 83666,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/037-source-head.receipt.json",
+      "receiptSha256": "7e676c3d0fbbd8fa1e337686355f94d3f55540de871f7f7365e1d023f0d4f1b4",
+      "startUtc": "2026-10-01T23:41:40.205082+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/037-source-head.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 41,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/037-source-head.stdout",
+        "sha256": "8d2a84aeace7dd1ca23575e847e19072196c6da048e39935e2e34d8ad0609bd7"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); files={\"PREPARATION-PACKET-FINAL.json\":p,\"ROOT-READONLY-REQUEST-FINAL.json\":p[\"readonlyRequest\"],\"ROOT-RUNTIME-PROPOSAL-FINAL.json\":p[\"runtimeProposal\"],\"ROOT-LIVE-REQUEST-FINAL.json\":p[\"generation\"],\"ROOT-RECONCILE-REQUEST-FINAL.json\":plan}; [(out/n).write_text(json.dumps(v,indent=2,sort_keys=True)+\"\\n\") for n,v in files.items()]; code=m.readonly_program(p[\"readonlyRequest\"]); (out/\"ROOT-READONLY-CANDIDATE-FINAL.py\").write_bytes(code); print(\"final immutable addenda written\",m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "83670 83669 83670 Fri Oct  2 01:41:40 2026     /usr/bin/python3 -c from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); files={\"PREPARATION-PACKET-FINAL.json\":p,\"ROOT-READONLY-REQUEST-FINAL.json\":p[\"readonlyRequest\"],\"ROOT-RUNTIME-PROPOSAL-FINAL.json\":p[\"runtimeProposal\"],\"ROOT-LIVE-REQUEST-FINAL.json\":p[\"generation\"],\"ROOT-RECONCILE-REQUEST-FINAL.json\":plan}; [(out/n).write_text(json.dumps(v,indent=2,sort_keys=True)+\"\\n\") for n,v in files.items()]; code=m.readonly_program(p[\"readonlyRequest\"]); (out/\"ROOT-READONLY-CANDIDATE-FINAL.py\").write_bytes(code); print(\"final immutable addenda written\",m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:41:40.411328+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83670,
+      "pid": 83670,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/038-final-packet-addendum.receipt.json",
+      "receiptSha256": "a75c88e306ac97618c41ea4f7d23db7514f754412ad563b4363e8b3610292151",
+      "startUtc": "2026-10-01T23:41:40.317954+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/038-final-packet-addendum.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 284,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/038-final-packet-addendum.stdout",
+        "sha256": "4c2e4da58f3d0799dfe3f7babf9cd0daed4eff0ce50a9aa28dc670a469884aff"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "add",
+        "scripts/h044/image_backend_preparation.py"
+      ],
+      "birth": "83694 83693 83694 Fri Oct  2 01:42:07 2026     /usr/bin/git add scripts/h044/image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:42:07.376691+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83694,
+      "pid": 83694,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/039-source-export-binding-stage.receipt.json",
+      "receiptSha256": "7851ccc7d5962befa0f960d1ddc906c7cfa2f7042db28e2cd29cb1e614f3bf0e",
+      "startUtc": "2026-10-01T23:42:07.349396+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/039-source-export-binding-stage.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/039-source-export-binding-stage.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "-c",
+        "user.name=AI Agent",
+        "-c",
+        "user.email=agent@mac-worker2.local",
+        "commit",
+        "-m",
+        "Bind final reviewed passive reader filename without changing runtime guards"
+      ],
+      "birth": "83698 83697 83698 Fri Oct  2 01:42:07 2026     /usr/bin/git -c user.name=AI Agent -c user.email=agent@mac-worker2.local commit -m Bind final reviewed passive reader filename without changing runtime guards",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:42:07.526030+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83698,
+      "pid": 83698,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/040-source-export-binding-commit.receipt.json",
+      "receiptSha256": "98f588b5de28477624f86e425c301b616bcea552c310dfb9a9ad0c04cd30011b",
+      "startUtc": "2026-10-01T23:42:07.474659+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/040-source-export-binding-commit.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 148,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/040-source-export-binding-commit.stdout",
+        "sha256": "3e51d6a9a7c96e27e2a816510fcb2de05d66fcda84e24417c0d1575761fc02c3"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "birth": "83704 83703 83704 Fri Oct  2 01:42:07 2026     /usr/bin/git rev-parse HEAD",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:42:07.638744+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83704,
+      "pid": 83704,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/041-source-final-head.receipt.json",
+      "receiptSha256": "8ad523b65e32cd8c236a4ba1ea46e429033170083af201fd4a4b5a493a2ad46c",
+      "startUtc": "2026-10-01T23:42:07.623653+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/041-source-final-head.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 41,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/041-source-final-head.stdout",
+        "sha256": "acff1618d806051757f3be0bd7019f1b817659dd694ae98e6e5ef961044ca482"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-I",
+        "-B",
+        "scripts/h044/test_image_backend_preparation.py"
+      ],
+      "birth": "83735 83734 83735 Fri Oct  2 01:42:37 2026     /usr/bin/python3 -I -B scripts/h044/test_image_backend_preparation.py",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:42:38.067106+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83735,
+      "pid": 83735,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/042-final-binding-tests.receipt.json",
+      "receiptSha256": "8c37c81cc3627cc974e2084dbb09ce0355ccc04d346c32012cb5b3319e17928b",
+      "startUtc": "2026-10-01T23:42:37.504599+00:00",
+      "stderr": {
+        "bytes": 1689,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/042-final-binding-tests.stderr",
+        "sha256": "006fe686cc66404e16a46276baa4e7ca13091b7a29e8a1db09f1623dc1e8c507"
+      },
+      "stdout": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/042-final-binding-tests.stdout",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "timedOut": false
+    },
+    {
+      "argv": [
+        "/usr/bin/python3",
+        "-c",
+        "from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); files={\"PREPARATION-PACKET-FINAL-02.json\":p,\"ROOT-READONLY-REQUEST-FINAL-02.json\":p[\"readonlyRequest\"],\"ROOT-RUNTIME-PROPOSAL-FINAL-02.json\":p[\"runtimeProposal\"],\"ROOT-LIVE-REQUEST-FINAL-02.json\":p[\"generation\"],\"ROOT-RECONCILE-REQUEST-FINAL-02.json\":plan}; [(out/n).write_text(json.dumps(v,indent=2,sort_keys=True)+\"\\n\") for n,v in files.items()]; code=m.readonly_program(p[\"readonlyRequest\"]); assert (out/\"ROOT-READONLY-CANDIDATE-FINAL.py\").read_bytes()==code; print(\"selected final source-bound addenda exported; original reader bytes unchanged\",m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])"
+      ],
+      "birth": "83740 83739 83740 Fri Oct  2 01:42:38 2026     /usr/bin/python3 -c from pathlib import Path; import importlib.util,json; s=importlib.util.spec_from_file_location(\"i\",Path(\"scripts/h044/image_backend_preparation.py\")); m=importlib.util.module_from_spec(s); s.loader.exec_module(m); p=m.packet(); out=Path(\"../output\"); original=out/\"root-privileged-image01.ssh.stdout\"; plan=m.reconcile_plan(json.loads(original.read_text())[\"observation\"],m.sha(original.read_bytes()),p[\"sourceGraph\"]); files={\"PREPARATION-PACKET-FINAL-02.json\":p,\"ROOT-READONLY-REQUEST-FINAL-02.json\":p[\"readonlyRequest\"],\"ROOT-RUNTIME-PROPOSAL-FINAL-02.json\":p[\"runtimeProposal\"],\"ROOT-LIVE-REQUEST-FINAL-02.json\":p[\"generation\"],\"ROOT-RECONCILE-REQUEST-FINAL-02.json\":plan}; [(out/n).write_text(json.dumps(v,indent=2,sort_keys=True)+\"\\n\") for n,v in files.items()]; code=m.readonly_program(p[\"readonlyRequest\"]); assert (out/\"ROOT-READONLY-CANDIDATE-FINAL.py\").read_bytes()==code; print(\"selected final source-bound addenda exported; original reader bytes unchanged\",m.sha(code)); print(\"ROOT decisions\",[v.name for v in Path(\"..\").glob(\"ROOT-DECISION*.json\")])",
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/repo",
+      "endUtc": "2026-10-01T23:42:38.235656+00:00",
+      "exitCode": 0,
+      "host": "mac-worker2.local",
+      "pgid": 83740,
+      "pid": 83740,
+      "postcheck": {
+        "ownedGroupAbsent": true,
+        "pgidMembers": [],
+        "psExit": 0
+      },
+      "reaped": true,
+      "receipt": "commands/043-selected-final-export.receipt.json",
+      "receiptSha256": "a0b4ea47aac5d6aa8b28d5407b1f0a14e89bd0e7214621bfca68bfe22ccd2968",
+      "startUtc": "2026-10-01T23:42:38.142294+00:00",
+      "stderr": {
+        "bytes": 0,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/043-selected-final-export.stderr",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "stdout": {
+        "bytes": 330,
+        "path": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/I-image02/output/commands/043-selected-final-export.stdout",
+        "sha256": "0e75235e990a16f483e3a0266ca9f72f15d4602496016e97a52f0324feedae9f"
+      },
+      "timedOut": false
+    }
+  ],
+  "closure": "Native CLI/wrapper/outer actual terminals and birth-qualified descendant absence require coordinator collection after this session exits. No prospective exit/absence asserted.",
+  "createdUtc": "2026-10-01T23:45:06.814183+00:00",
+  "currentSelectedRootRead": {
+    "boot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+    "file": "root-privileged-image01.ssh.stdout",
+    "finishedUtc": "2026-10-01T23:32:23.340556+00:00",
+    "originalSha256": "f578c47f2eb5ad706d7504081067d2ca00f9305e400728b2b11c70fde5aaa063",
+    "outcome": "PARTIAL_PASSIVE_METADATA",
+    "sevenActualIntegerCommandExits": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "failuresPreserved": "Discovery missing paths/rg exits; original template-index test failure and escape warning; source-only domain supposition corrected by current root read; original recorder and metadata limits retained",
+  "generationPacket": {
+    "active": 1,
+    "arguments": {
+      "prompt": "Create one clear landscape illustration of a red sailboat on a calm alpine lake at sunrise, with mountains reflected in the water.",
+      "seed": 43001,
+      "size": "1920x1080"
+    },
+    "authorization": "REQUEST_ONLY_NO_GO",
+    "cfg": 1,
+    "coResidency": "Two Qwens + MiMo + Qwen3.5-9B + PaddleOCR-VL1.6 + Qwen-Image must be observed resident/operating together by separate bounded root owner. Configured placement is not observed concurrency.",
+    "cropBottom": 8,
+    "evidence": [
+      "actual app/native session/run/request/job IDs",
+      "exact operation/container/GPU/boot/source/config/OCI/model binding",
+      "normal tool and durable app result",
+      "actual decoded public PNG SHA256 and1920x1080 dimensions",
+      "native protocol geometry/crop evidence without invented raw hash",
+      "sample gaps/peaks >=5%GPU/>=15%host reserves",
+      "one same-chat noncreative follow-up using saved image; no additional generation"
+    ],
+    "executable": false,
+    "gate": "Retained codex-specialist-qualification.ts requires generation + followup_edit + child live records; this packet cannot open it from one generation. R owns separately reviewed generation-only qualification. No fake evidence or guard bypass.",
+    "invocations": 1,
+    "mcpTimeoutSeconds": 3300,
+    "nativeSize": "1920x1088",
+    "operationSeconds": 900,
+    "outputs": 1,
+    "path": "normal Sova saved chat \u2192 pinned native Codex \u2192 authenticated image MCP \u2192 owned image broker/job \u2192 upstream image API \u2192 exact external-Ada backend \u2192 decoded durable public PNG \u2192 same-chat result",
+    "prerequisites": [
+      "genuine minimal Codex startup/owned shutdown",
+      "current root-reviewed source/config/boot/owner/container/native OCI/model checkpoint",
+      "CAS migration and source closure settled",
+      "canonical storage/lease/hardware guards",
+      "current protected API authentication",
+      "authentic generation-only scoped task ticket from R owner; old global guard remains closed",
+      "exact qualified zero-reference opaque FullHD profile",
+      "fresh before/during/after external GPU temperature/link/ownership/memory and host/cgroup no-swap samples"
+    ],
+    "publicSize": "1920x1080",
+    "rawPrecropArtifact": "NOT_CAPTURED",
+    "references": 0,
+    "reviewBindings": {
+      "candidateConfigSha256": "ab2b511a4e9006737a4569cbe8947f1f96b53a94b8e9af69f5a238b7bf9a8cb4",
+      "currentApiConfigSha256": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3",
+      "currentRuntimeConfigSha256": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
+      "integrationRequirement": "Frozen base normal-path hashes only. Root must bind the actual reviewed successor routing/native source and fresh config/owner/boot immediately before any finite GO; no concurrent active source is imported.",
+      "normalPathSourceSha256": {
+        "ai-harness/server/src/codex-launcher.ts": "b9eb2a47799644b9a300e64f604747fd6353881aeac9dac880e6bc3aa12dcf59",
+        "ai-harness/server/src/codex-specialist-qualification.ts": "6d70c4f82a556b7a03483491c9dfc962c5beff8b723dc5cd802fba407089e355",
+        "ai-harness/server/src/image-broker.ts": "6b341b19b33501f47e167bf122df443da11f889ea4f19196a7c7f1a1b07d77f9",
+        "ai-harness/server/src/image-codec.ts": "a53d7a205fd95d680858a16605aa2fa0b40a202db3b3e025f23ac1d1f7f81a29",
+        "ai-harness/server/src/image-contracts.ts": "d6b51df4b90159341183b5eee6b76ea7a994af90468c212256cf42a6c70798d0",
+        "ai-harness/server/src/image-files.ts": "c7ff29d38afd0ff50911580b2c16cc82f354941366e13561fd976dbd34bc6a06",
+        "ai-harness/server/src/image-status-consumption.ts": "ea28e6eada164d6f00d0889c6c377be19a36e87a7e1150bce1691240dca26b4d",
+        "ai-harness/server/src/image-upstream.ts": "926f822289ea6d7b29932e939ba99ec32aeb5dcc2d0a34d479d6b4c5cd05a504",
+        "ai-harness/tools/image/image-mcp.mjs": "63b2c06ea0fe9dfa95ab7eb40e0a7fc3784043812b05416cbf85dbddb8571e95",
+        "ai-harness/tools/image/image.mjs": "7cba531025eb598f1df36e9fed14c07b1ee59c0d091373ee03ad419443de7407"
+      },
+      "preparationSourceSha256": "04aec20a576709a3ed09449d6d66b5214892748329d6faf9ff1e15d8adbed3bd",
+      "registrySha256": "f606b016e9622682dac083acfc96aab27d5df6d6f8a9c08d92e7ebeca82428e0",
+      "rootReadbackOriginalSha256": "f578c47f2eb5ad706d7504081067d2ca00f9305e400728b2b11c70fde5aaa063",
+      "runtimeSourceGraphSha256": "bd20dc0d445f50ae20bfb9f4f3c716c71976c6440ed3138776739194b57f97c3",
+      "sourceBase": "58bff2ec474fd0cf4a7ba3f71028bb2710555c88"
+    },
+    "rollback": "Separate exact finite GO with authentic current image owner/boot/container/invocation/PID-birth/config/source/helper/storage/lease/hardware. Retain old bytes and original failures; no name-only stop/recover, historical H032 latch clear, peer/fan action.",
+    "scopedTicketSeconds": 1800,
+    "steps": 40,
+    "tool": "image_generate"
+  },
+  "initialSourceCommit": "7412773ac24f4471fc146d2631d0937f3856c327",
+  "linuxActions": {
+    "additionalAuthority": "NONE",
+    "coordinatorGO": "SPENT_NO_RETRY",
+    "coordinatorReadonly": 1,
+    "nativeWorker": 0
+  },
+  "notTested": [
+    "Linux privileged readback",
+    "config migration/install",
+    "owned model activation/shutdown",
+    "normal native generation",
+    "protected generation-only ticket",
+    "co-residency/concurrent operation",
+    "external USB4 sustained workload stability"
+  ],
+  "ownedSourceSha256": {
+    "ai-harness/config/system-registry.json": "f606b016e9622682dac083acfc96aab27d5df6d6f8a9c08d92e7ebeca82428e0",
+    "configs/image/h044-external-ada-candidate.json": "ab2b511a4e9006737a4569cbe8947f1f96b53a94b8e9af69f5a238b7bf9a8cb4",
+    "scripts/h044/image_backend_preparation.py": "04aec20a576709a3ed09449d6d66b5214892748329d6faf9ff1e15d8adbed3bd",
+    "scripts/h044/test_image_backend_preparation.py": "03803375957ad3b853bb1fddff9a4535563c3a1aa57ec0e3e746de0e4b297ed0"
+  },
+  "phase": "I-image02",
+  "postponed": [
+    "image editing",
+    "multiple references",
+    "creative child acceptance",
+    "persistent raw pre-crop capture"
+  ],
+  "prohibitedActionsPerformed": false,
+  "reconciliation": {
+    "criticalFileCAS": {
+      "/data/models-large/qwen-image-2.1-790c92633540aa0cb11d9abf19eb46d861714758/CHECKPOINT-RECEIPT.json": "b662d87e521153a396639e574267f1cc0ffa709009392d482a0fcb00ad040b73",
+      "/data/services/image21-runtime-20260923/config.json": "1800f1eeecb5cc20b08545e46b17811e36b412a97bcadf0ba50e00c5df07534a",
+      "/data/services/image21-runtime-20260923/operation.json": "74583bebf9e3eeaaca2af50a603a1fd9b69b8512817c06746a1996a3c89689ef",
+      "/data/services/image21-runtime-20260923/recovery.json": "627033bd0ab6b260c9d92e59fa3712b8097b28372b140a59272aeef14a2b413c",
+      "/data/services/image21-runtime-20260923/state.json": "64410770122b0bfd1e0a73043e35f08dce83c789ee3d56027a4ca386dc129e6b",
+      "/etc/llm-server/image-api.json": "9c001640638833950fca3a60363f64e93c71b6b5f0113da792eec0256d99e8b3"
+    },
+    "daemonIdentity": {
+      "configDomainProven": false,
+      "observedContainerImage": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "observedId": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef",
+      "requiredConfig": "sha256:3f6178faa74c4a9bcb95ed4304dbee57473efa8913a793e067014af4a98281ad",
+      "requiredManifest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+    },
+    "deltas": {
+      "api": {
+        "runtime_image_digest": "sha256:50a3bfd20fc931f05fc5fc919b0445abbce30d5c7716424d697a7ab6708c08ef"
+      },
+      "runtime": {
+        "gpu_uuid": "GPU-5d895991-b794-2b4c-b9c4-5f1b668afd23"
+      }
+    },
+    "executable": false,
+    "observedBoot": "424b2823-b27c-4b3c-88b3-0ae9f4e7106d",
+    "observedUtc": "2026-10-01T23:32:23.340556+00:00",
+    "ownedContainerCandidate": {
+      "authenticCurrentSettlement": "NOT_PROVEN",
+      "exitCode": 255,
+      "gpu_uuid": "GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf",
+      "id": "7978d53e33a5502ba7a3b6cf5e6d10a63cfec60829950e565b9a2c4a111579cc",
+      "invocation": "ba8d3f2e0172482194d2b4b8743aecae",
+      "pid": 0,
+      "running": false
+    },
+    "phases": [
+      {
+        "authorization": "NEW_EXACT_ROOT_GO_REQUIRED",
+        "maximumInvocations": 1,
+        "name": "identity_and_current_settlement_read",
+        "prerequisites": "Exact /usr/bin/docker realpath/source and local daemon native platform/config evidence; exact external graph/overlay requirements; current image service/container/network/native descendant absence. No speculative source rewrite, health/ready or old GO retry.",
+        "seconds": 90
+      },
+      {
+        "authorization": "NEW_EXACT_ROOT_GO_REQUIRED",
+        "destination": "/opt/llmctl/adaptive-idle/verify.py",
+        "expectedDestination": "ENOENT in retained read; recheck current no-follow destination/parent/FD absence CAS",
+        "expectedSourceSha256": "554c6ffc6c76fef28a3c778cd25ee1160a21a771906f95a7fea3418682ece00d",
+        "maximumInvocations": 1,
+        "name": "external_verifier_typed_delivery",
+        "prerequisites": "Actual advertised receipt/source/destination/FD/CAS and root ownership/mode/protected ancestry review; matching release source only, no fabricated verifier. Missing image.json receipt needs independently genuine receipt review and must not be synthesized. No import/execution of verifier during passive reads.",
+        "seconds": 120,
+        "source": "/data/services/releases/h037-image-placement-20260930/scripts/runtime/verify_adaptive_idle_overlay.py"
+      },
+      {
+        "authorization": "SOURCE_OWNER_ASSIGNMENT_REQUIRED",
+        "name": "reviewed_guarded_reconcile_source",
+        "prerequisites": "Current selected read is insufficient for an executable rollback/helper graph. Root assigns exact separately owned helper; no edit to existing lifecycle/runtime files by I. Bind full protected current state/native_actions/native_generation/operation/recovery without exposing tokens."
+      },
+      {
+        "authorization": "NEW_EXACT_ROOT_GO_REQUIRED",
+        "maximumInvocations": 1,
+        "name": "archive_and_settle_prior_boot_image_owner",
+        "prerequisites": "Canonical lease, registered storage/root disk/boot/hardware, all6 original-file CAS, refreshed exact image container/native descendants and network. Copy original bytes to new protected registered evidence location before any writes. No generic reset/latch clear or name-only adoption.",
+        "seconds": 120,
+        "transition": "Only after current authentic owner/absence proof may a reviewed helper settle/reconcile old image records and remove the exact stopped owned container. Preserve originals and all peer/uncertain owners."
+      },
+      {
+        "authorization": "NEW_EXACT_ROOT_GO_REQUIRED",
+        "maximumInvocations": 1,
+        "name": "critical_config_CAS",
+        "prerequisites": "Settled image owner, same boot, current refreshed6file CAS/source closure, immutable saved image/model receipt and exact resource guards. No source closure hash changes without reviewed source delivery.",
+        "seconds": 120,
+        "transition": "Read full config privately; change runtime.gpu_uuid14c\u21925d and API.runtime_image_digest parent\u2192platform. Retain all other fields and profiles. Record whole before/after FILE hashes and rollback CAS. Registry source already declares external5d."
+      },
+      {
+        "authorization": "DISTINCT_NEW_EXACT_ROOT_GO_REQUIRED",
+        "maximumInvocations": 1,
+        "name": "detached_owned_activation",
+        "prerequisites": "Root-reviewed full helper/unit/current-source/config graph, source closure37+external requirements, boot/storage/lease/native owner/hardware/memory guards; prerequisite service recovery may itself start/warm and is an active operation.",
+        "seconds": 840,
+        "transition": "Load existing saved image weights through one reviewed existing owned service only. Service start includes deterministic warm generation; include that explicitly in GO. Detach model load; close paid session during load. Ordinary residency is left usable only after qualification."
+      },
+      {
+        "active": 1,
+        "authorization": "DISTINCT_NEW_EXACT_ROOT_GO_REQUIRED",
+        "cfg": 1,
+        "maximumInvocations": 1,
+        "name": "normal_Sova_generation",
+        "outputs": 1,
+        "prerequisites": "Fresh actual native/runtime/auth/profile readiness, generation-only protected ticket from R owner, saved canonical same-chat IDs and resource sampling. No edit/multi-reference/child operation.",
+        "steps": 40
+      }
+    ],
+    "preserve": "Every other raw field/profile/evidence. Selected fields are not complete raw bytes; do not build replacement files from this snapshot.",
+    "protectedClosure": {
+      "count": 37,
+      "externalDeliveryReviewed": false,
+      "hashesMatch": true
+    },
+    "qualification": "NOT_TESTED",
+    "remaining": [
+      "native platform/config identity diagnosis",
+      "missing external overlay verifier/receipt review",
+      "current owner/descendant/storage/lease/hardware settlement",
+      "generation-only protected ticket",
+      "actual concurrent six-model operation"
+    ],
+    "rollback": "A separately reviewed exact finite owned rollback restores archived raw config by successor CAS only after new image owner is settled; it does not restart the old stable-Ada placement. No rollback may occupy the reading GPU, replay a historical helper or change fan policy.",
+    "rootOriginalReadbackSha256": "f578c47f2eb5ad706d7504081067d2ca00f9305e400728b2b11c70fde5aaa063",
+    "schema": "h044-image-current-reconcile-plan-v1",
+    "staleRecords": {
+      "currentProcessOwnership": "NOT_PROVEN; prior-boot PID numbers must not authorize signals",
+      "operationStatus": "active",
+      "priorBoot": "a64e7b47-ed94-4ed2-a26c-01c030423148",
+      "recoveryStatus": "active"
+    }
+  },
+  "registryChange": "Only services[id=image].placement.gpu_uuid14c\u21925d; every other byte preserved",
+  "reportCommit": "SEE_PRIVATE_RESULTS_AFTER_COMMIT",
+  "schema": "h044-image02-source-report-v1",
+  "selectedExports": {
+    "liveRequest": "ROOT-LIVE-REQUEST-FINAL-02.json",
+    "preparation": "PREPARATION-PACKET-FINAL-02.json",
+    "readCandidate": "ROOT-READONLY-CANDIDATE-FINAL.py",
+    "readCandidateSha256": "35af9044645160be4b9309871ab70473fcdc4375430ee77a03df950a4d654d23",
+    "readRequest": "ROOT-READONLY-REQUEST-FINAL-02.json",
+    "reconcileRequest": "ROOT-RECONCILE-REQUEST-FINAL-02.json",
+    "runtimeProposal": "ROOT-RUNTIME-PROPOSAL-FINAL-02.json"
+  },
+  "socketCreated": false,
+  "sourceClosure": {
+    "externalDeliveryReviewed": false,
+    "interpretation": "No guard relaxed",
+    "missingExternalReceipt": "/opt/llmctl/adaptive-idle/image.json",
+    "missingExternalVerifier": "/opt/llmctl/adaptive-idle/verify.py",
+    "observerAggregateProtectedClosureHashesMatch": false,
+    "protectedCount": 37,
+    "protectedHashMatches": true
+  },
+  "sourceCommit": "337e63ea8b089adbb2cd7ad8052df0b493862402",
+  "sourceOutcome": "PASS",
+  "tests": {
+    "count": 22,
+    "exitCode": 0,
+    "finalReceipt": "commands/042-final-binding-tests.receipt.json",
+    "kind": "SYNTHETIC_OFFLINE_ONLY"
+  },
+  "tmpdir": {
+    "mode": "0o700",
+    "path": "/private/tmp/h044-I-i-5zvzp4kg",
+    "purpose": "TEST_COMMANDS_ONLY; pass TMPDIR per command; record socket path byte lengths/actual environment/logs",
+    "realpath": "/private/tmp/h044-I-i-5zvzp4kg",
+    "uid": 502
+  }
+}
