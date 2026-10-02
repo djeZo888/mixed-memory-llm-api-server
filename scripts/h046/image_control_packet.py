@@ -10,23 +10,28 @@ import sys
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'h044'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
 import image_owner_successor as owner
-from image_executor import LEAVES
+from image_executor import LEAVES, canonical_storage_binding, storage_guard_argv
 
 
 def signature(value):
     return [value[k] for k in ('dev','inode','mode','uid','gid','nlink','size','mtimeNs','ctimeNs')]
 
 
-def build(graph, stage, source_root):
+def build(graph, stage, source_root, canonical_packet=None):
     stage = Path(stage)
     if str(stage.parent) != '/run/llmctl' or not stage.name.startswith('h046-image-stopped-cas-'):
         raise ValueError('new exact protected H046 stage required')
     core = owner.core; source_root = Path(source_root)
+    if canonical_packet is None:raise ValueError('fresh actual canonical storage source/registration packet required')
+    if canonical_packet['bootId'] != graph['bootId']:raise ValueError('canonical/owner boot join changed')
+    storage_binding = canonical_storage_binding(canonical_packet)
     sources = {name:source_root/('scripts/h044' if name == 'image_owner_reconcile.py' else 'scripts/h046')/name
                for name in LEAVES}
     helpers = {str(stage/name):hashlib.sha256(path.read_bytes()).hexdigest() for name,path in sources.items()}
     files = {v['path']:v['sha256'] for group in graph['sourceGraph'].values()
              for v in group.values() if type(v) is dict and 'path' in v and 'sha256' in v}
+    if any(files.get(p) != digest for p,digest in storage_binding['sourceSha256'].items()):
+        raise ValueError('owner/canonical frozen source closure join changed')
     value = owner.request() | {'status':'SOURCE_ONLY_REVIEW_REQUEST_NOT_GO','issuedBy':'UNISSUED',
         'bootId':graph['bootId'],'sourceSha256':helpers[str(stage/'image_owner_successor.py')],
         'ownerSourceSha256':core.OWNER_SOURCE_SHA,'rootStage':str(stage),'helperSha256':helpers,
@@ -42,12 +47,18 @@ def build(graph, stage, source_root):
         'archiveFileIdentity':graph['archiveFileIdentity'],
         'archiveDirectoryIdentity':graph['archiveDirectoryIdentity'],
         'hardwareLatchSha256':graph['hardwareLatchSha256'],'hardwareLatchIdentity':graph['hardwareLatchIdentity'],
+        'canonicalStorageBinding':storage_binding,
+        'canonicalStorageReadUtc':canonical_packet['proofUtc'],
         'cachedPublicOCIPaths':{'manifest':'/data/containerd/root/io.containerd.content.v1.content/blobs/sha256/'+core.PLATFORM[7:],
             'config':'/data/containerd/root/io.containerd.content.v1.content/blobs/sha256/'+core.CONFIG[7:]},
         'readGraphUtc':graph['proofUtc'],'readGraphStatus':'ACTUAL_READBACK_ONLY; refresh changed identities before root GO',
         'fixedInvocation':['/usr/bin/python3.12','-I','-S','-B',str(stage/'image_executor.py'),str(stage/'ROOT-GO.json')],
         'stageSourceGraph':{str(stage/name):str(path.relative_to(source_root)) for name,path in sources.items()},
         'preflight':'Root-owned0700 exclusive new stage, five0600 helpers; NO-PYC-CACHE absent; ROOT-GO0600; current owner refresh',
+        'storageTransport':'Unchanged canonical helper subprocess/Runner/Storage; exact -X child cache prefix added; original parent actual kernel wait and complete group absence; normal nested subprocess returns lack separate recorder receipts',
+        'storageGuardInvocations':[storage_guard_argv(['/usr/bin/python3.12','-I','-B',
+            core.RELEASE+'/scripts/common/registered-storage.py','--json',*extra],core,{'rootStage':str(stage)})
+            for extra in ([],['--root-guard'])],
         'finitePlan':{'totalSeconds':180,'minimumInitialSettlementReserveSeconds':60,'invocations':1,
             'archiveWrites':0,'protectedSuccessorFiles':['config','state','operation','recovery','api'],
             'unchangedCheckpoint':core.PATHS['checkpoint'],
@@ -77,6 +88,7 @@ def build(graph, stage, source_root):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('graph'); parser.add_argument('stage'); args = parser.parse_args()
+    parser.add_argument('graph'); parser.add_argument('stage');parser.add_argument('canonical_packet'); args = parser.parse_args()
     print(json.dumps(build(json.loads(Path(args.graph).read_text()),args.stage,
-                           Path(__file__).resolve().parents[2]),indent=2,sort_keys=True))
+                           Path(__file__).resolve().parents[2],
+                           json.loads(Path(args.canonical_packet).read_text())),indent=2,sort_keys=True))
