@@ -1,9 +1,0 @@
-# SOURCE CANDIDATE ONLY. Not built, pulled, deployed or qualified in H039 C.
-# Immutable linux/amd64 manifest inspected through the official Docker registry.
-FROM vllm/vllm-openai@sha256:5f5e535216848d0c52159c8c13a0af04be5f6fe1a84e79914300610796f76d40
-ENV HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 HF_HUB_DISABLE_TELEMETRY=1
-COPY scripts/vision/runtime_plan.py /opt/vision/runtime_plan.py
-COPY configs/vision/h039-candidate.json /opt/vision/candidate.json
-# Default command only prints argv and closed gates. No GPU model is loaded.
-ENTRYPOINT ["python3", "/opt/vision/runtime_plan.py"]
-CMD ["--profile", "16k"]

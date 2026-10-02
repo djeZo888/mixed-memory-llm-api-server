@@ -1,9 +1,0 @@
-{
-  "utc": "2026-09-29T08:28:19.027240+00:00",
-  "tunnelPid": 37280,
-  "exactCommandVerified": true,
-  "sent": "SIGTERM",
-  "processAbsent": true,
-  "ownedRunsSettled": true,
-  "nativeWrapperExit": "pending actual run.sh after this worker returns"
-}

@@ -1,7 +1,0 @@
-{
-  "model": "glm-5.3-flash",
-  "mimoEnabled": false,
-  "mimoQualificationSha256": null,
-  "mimoContextWindow": null,
-  "mimoMaxOutputTokens": null
-}

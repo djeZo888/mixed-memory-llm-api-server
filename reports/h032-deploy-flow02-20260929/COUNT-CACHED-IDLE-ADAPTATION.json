@@ -1,7 +1,0 @@
-{
-  "utc": "2026-09-29T13:05:02.768495+00:00",
-  "helperSha256": "79132e3152f3a3842faec0906c71bc59927e449365867db6c3d63a59a62da92d",
-  "inboxSha256": "577ec01baa986159976e7ce29929316a1cbc138e9ace7b9ce3ce6c1cb39851a7",
-  "adaptation": "Allow pre-stop only exact settled W1 MiniMax cached container+workspace/profile+idle owner. Post-stop still requires no task container. No manual container removal.",
-  "priorStageFailure": "Preserved stage.stderr; occurred before new release/backup/stop"
-}

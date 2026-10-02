@@ -1,2 +1,0 @@
-{"status": "PASS", "scope": "offline character-tokenizer construction only", "targets": [8192, 65536], "native_tokenizer_parity": "NOT_TESTED"}
-PASS: long fixture exact fit; reserve, thermal, power brake, owned swap; historical swap permitted; sustained swap stopped

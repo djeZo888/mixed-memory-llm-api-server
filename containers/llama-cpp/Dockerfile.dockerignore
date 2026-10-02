@@ -1,2 +1,0 @@
-# Intentionally include the whole clean pinned checkout, including .git.
-# Upstream .dockerignore omits tracked files, invalidating the clean-source check.

@@ -1,6 +1,0 @@
-/home/user/ai-harness-build/H016-TIMEOUT-COMPILE-20260927/artifact-guard.py: OK
-/home/user/.config/systemd/user/ai-harness.service: OK
-/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf: OK
-proposed/ai-harness.service: OK
-proposed/30-h008-registry.conf: OK
-PASS local pair checks only; W1/root live owner review still required. No tag/unit/service change.

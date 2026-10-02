@@ -1,9 +1,0 @@
-# H040 reviewed continuation outcome
-
-Compaction source preparation is coherently validated:281source cases, build and both strict compiles pass. The native collector remains disabled; actual Linux transport, model-facing scope, owned-close producer and semantic retention are NOT_TESTED. B's final phase was deadline-terminated after committed export and67source passes; its actual-15/143 and PARTIAL outcome remain preserved. See [source validation](h040-source-validation.json) and [closed adopted roster](h040-worker-sessions.json).
-
-The exact adopted vision recovery completed VERIFIED, all36files/fiveweights, preserving the original modelroot and failed receipts. No H040 download/inference job remains running on ai-vm. All paid Mac phases are closed. See [artifact completion](h040-artifact-completion.md). No new shutdown is requested; the earlier shutdown was fulfilled before the user returned the guest to service.
-
-The installed integrated GPU policy requests100% at>=70C on every available fan. CHA_FAN3 requests at least80% at>=70C and100% strictlyabove80C, retaining100% until fresh<=65C continuously30seconds. Configured start/stop/restart/readback passed; actualhot thresholds/measuredPWM remain NOT_TESTED. Otherzones are preserved. See [fan outcome](h040-fan-artifact-live.md).
-
-Remaining work: qualified native entry/receipt/close/scope, staged then full compaction retention/retrieval/continuation/coldresume/automatic400k acceptance; owned vision jobservice and combined stable-Ada runtime fit/tool workflows; physical fast-Blackwell slot2/slot5 UUID mapping and reviewed placement successors. Keep Codex/upstream/context/output pins and existing normal routing. Read [current handoff](h040-handoff.md) before dispatch. The reviewed packet is for draft PR11; exact publication-head/readback and new CI are root-owned private receipts. No merge, upstream/driver/Proxmox upgrade or creative-image acceptance occurred.
