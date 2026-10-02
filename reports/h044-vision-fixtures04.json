@@ -1,0 +1,130 @@
+{
+  "schema": "h044-r-vision-fixtures04-source-v1",
+  "baseCommit": "e31e0d43782afc468e8b9a954b386a2fa3b9e463",
+  "ownedFiles": [
+    "ai-harness/server/test/technical-vision-host.test.ts",
+    "reports/h044-vision-fixtures04.md",
+    "reports/h044-vision-fixtures04.json"
+  ],
+  "qualification": "SOURCE_ONLY_NATIVE_LIVE_NOT_TESTED",
+  "sourceOnly": true,
+  "affected20": {
+    "tests": 20,
+    "passed": 20,
+    "failed": 0,
+    "skipped": 0
+  },
+  "focusedTestTypes": "PASS",
+  "originalAffected20": {
+    "tests": 20,
+    "passed": 14,
+    "failed": 6,
+    "failures": [
+      "default gate closed; model cannot choose ownership or endpoints",
+      "durable retained run, no reprepare or resubmit; exactly one logical terminal event",
+      "lost admission response has retained lookup handle and never rereads a deleted source",
+      "real Python service/backend + fake model HTTP + existing TS client + host end to end",
+      "H043 one-page/two-megapixel host cap rejects before any backend POST and retains original claim",
+      "explicit Stop during preparation durably records intent and prevents the initial POST"
+    ],
+    "messages": [
+      "Technical vision service or PDF renderer is unavailable (five journal-open failures)",
+      "ValueError: ledger_symlink (Python fixture)"
+    ],
+    "stdoutSHA256": "3b4a3e2410b3fe4910ae5cedad035cea4551d8e8b32297a16d4c5f5aa469e1c5",
+    "receiptSHA256": "e9e01c60b6cbc68549c01176b39899081951851d9bebb0af8a7018235a9abc86"
+  },
+  "currentProducerBlockers": [],
+  "producerRequest": "NONE; the inspected scoped behavior required authentic fixture setup, no production edit",
+  "checks": {
+    "affected20-sealed": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "--import",
+        "./node_modules/tsx/dist/loader.mjs",
+        "--test",
+        "test/technical-vision-host.test.ts",
+        "test/h043-technical-vision-wiring.test.ts",
+        "test/h044-app-image-operation-admission.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-vision-fixtures04/repo/ai-harness/server",
+      "actualExitCode": 0,
+      "loggerExitCode": 0,
+      "waitCompleted": true,
+      "sameIdentityRemaining": [],
+      "receiptSHA256": "c058e15d1b0205c47825b9cee463a7f8047391ae4cf1bb02f120c6811a4011f4",
+      "stdoutSHA256": "7c67b6b1c7e23c62578b1320b5c3499d2aa6097c7d633987241fdb5e7d3550ae",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "owned-test-types-corrected": {
+      "argv": [
+        "/opt/homebrew/opt/node@24/bin/node",
+        "./node_modules/typescript/lib/tsc.js",
+        "--noEmit",
+        "--target",
+        "ES2023",
+        "--module",
+        "NodeNext",
+        "--moduleResolution",
+        "NodeNext",
+        "--strict",
+        "--esModuleInterop",
+        "--skipLibCheck",
+        "test/technical-vision-host.test.ts"
+      ],
+      "cwd": "/Users/agent/CodexProjects/llm-orchestration/H044-20261002/R-vision-fixtures04/repo/ai-harness/server",
+      "actualExitCode": 0,
+      "loggerExitCode": 0,
+      "waitCompleted": true,
+      "sameIdentityRemaining": [],
+      "receiptSHA256": "c400fb6ae684848a4ee9277f8fb081480fcd21ebdcb9ebbd914df73670c960d7",
+      "stdoutSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrSHA256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  },
+  "retainedLocalCheckFailures": [
+    "refine-fixtures: private edit-script AssertionError before any owned source write; exact original script and command logs retained",
+    "owned-test-types: TS18048 at identity callback; corrected by stable local identity binding; original command logs retained",
+    "apply_patch private helper creation: rejected invalid hunk, no file mutation; original tool event retained",
+    "source-commit: exact-scope seal refused the locally created dependency symlink as untracked; link unlinked after unchanged dependency-pin proof. Premature bundle/verify attempts failed without producing a bundle; originals retained. Corrected sealing follows."
+  ],
+  "pythonE2E": {
+    "realServiceAndBackend": true,
+    "fakeModelHttpOnly": true,
+    "faultsExercised": [
+      "identity metadata before capture",
+      "readiness JSON parse",
+      "receipt after actual direct child close wait"
+    ],
+    "actualChildExits": [
+      0,
+      0,
+      0,
+      0
+    ],
+    "signalsSent": [],
+    "unknownInjectedIdentity": "Retained as unknown in child terminal; no signal or cleanup guess. Logger independently observes owned command identities.",
+    "receiptFault": "Original streams and hashes plus actual child terminal persisted before deliberate receipt failure; logger retains independent absence proof."
+  },
+  "reusePredecessor": {
+    "focusedSource": 90,
+    "engineHostRouting": 129,
+    "protectedLauncher": 23,
+    "imageMcp": 41,
+    "typecheck": "PASS reused",
+    "build": "PASS reused",
+    "matrixRerun": false
+  },
+  "nativeLive": "NOT_TESTED",
+  "deployment": "NOT_TESTED",
+  "fanBmc": "OUT_OF_SCOPE_UNTOUCHED",
+  "pinsPreserved": {
+    "runtime": "0.158.0",
+    "upstream": "064c",
+    "context": 480000,
+    "autoCompaction": 400000,
+    "output": 65536
+  },
+  "workerTerminal": "Native/wrapper/outer are active until natural closure; root independently collects actual exits and absence afterward",
+  "exportPreparedUTC": "2026-10-02T02:47:52.041876+00:00"
+}
