@@ -67,7 +67,7 @@ class TerminalRawTests(unittest.TestCase):
   def read_record(*_,**kw):
    metadata=next(v['metadata'] for p,v in writes if 'request-' in str(p))
    return control.canonical({'metadata':metadata,'job':terminal})
-  graph={'runtime':{'service':{'ledger':str(root.parent/'output/terminal-source-fixture')}}}
+  graph={'runtime':{'service':{'ledger':str(root.parent/'output/terminal-source-fixture'),'controlLedger':str(root.parent/'output/terminal-control-fixture')}}}
   proof={'component':'workload','actualUid':1000,'identityOrigin':'REVIEWED_SIGNED_ROOT_PROOF','proofSHA256':'SOURCE_ONLY_FIXTURE'}
   with mock.patch.object(workload.os,'geteuid',return_value=1000),mock.patch.object(workload,'graph_service',return_value=config['service']),mock.patch.object(workload,'bounded_call',side_effect=bounded),mock.patch.object(workload.control,'exclusive',side_effect=lambda p,v:writes.append((p,v))),mock.patch.object(entry,'protected_read',side_effect=read_record),mock.patch.object(workload,'assess_response',return_value={'status':'SOURCE_ONLY_FIXTURE'}):
    result=workload.service_job(graph,proof,time.monotonic()+5,'EXPLICIT_FAKE_KEY')
@@ -82,7 +82,7 @@ class MultipartAdmissionTests(unittest.TestCase):
   config=json.loads((root/'configs/vision/h043-candidate.json').read_text())
   identity={k:config['service'][k] for k in ('serviceId','generation','mode','interpreter','parser')}
   png,corpus=workload.fixture();writes=[];captured=[]
-  graph={'runtime':{'service':{'ledger':str(root.parent/'output/multipart-source-fixture')}}}
+  graph={'runtime':{'service':{'ledger':str(root.parent/'output/multipart-source-fixture'),'controlLedger':str(root.parent/'output/multipart-control-fixture')}}}
   # Valid workload-boundary fields only; no signed live authority or credential.
   proof={'component':'workload','actualUid':1000,'identityOrigin':'REVIEWED_SIGNED_ROOT_PROOF','proofSHA256':control.sha(b'multipart-source-fixture')}
   class AdmissionObserved(Exception):pass
@@ -106,6 +106,76 @@ class MultipartAdmissionTests(unittest.TestCase):
   self.assertNotEqual(old_body,body)
   with self.assertRaises(service.Reject) as rejected:service.multipart(old_body,content_type)
   self.assertEqual(rejected.exception.status,400)
+
+class LedgerIsolationTests(unittest.TestCase):
+ def test_actual_workload_evidence_preserves_production_ledger_reopen(self):
+  from unittest import mock
+  from pathlib import Path
+  import base64,os,tempfile
+  import service,vision_service_entrypoint as entry
+  root=Path(__file__).absolute().parents[3]
+  config=json.loads((root/'configs/vision/h043-candidate.json').read_text())
+  identity={k:config['service'][k] for k in ('serviceId','generation','mode','interpreter','parser')}
+  actual_uid=os.geteuid();original_read=entry.protected_read;reads=[];calls=[]
+  proof={'component':'workload','actualUid':1000,'identityOrigin':'REVIEWED_SIGNED_ROOT_PROOF','proofSHA256':control.sha(b'SOURCE_ONLY_LEDGER_FIXTURE')}
+  with tempfile.TemporaryDirectory(prefix='h045-workload-',dir='/codex/tmp') as tmp:
+   jobs=Path(tmp)/'jobs';aux=Path(tmp)/'control'
+   jobs.mkdir(mode=0o700);aux.mkdir(mode=0o700)
+   graph={'runtime':{'service':{'ledger':str(jobs),'controlLedger':str(aux)}}}
+   ledger=service.PrivateLedger(str(jobs));self.addCleanup(ledger.close)
+   records=[]
+   def bounded(method,host,port,path,payload,typ,key,deadline,rid=None):
+    calls.append(path)
+    if path.endswith('/jobs'):
+     metadata,parts=service.multipart(payload,typ)
+     images=service.admission(metadata,parts,identity,rid,deadline)
+     service.runtime_profile(metadata)
+     if not records:
+      job=dict(schemaVersion=1,jobId='source-only-job',requestId=rid,owner=metadata['owner'],service=identity,source=metadata['source'],state='running',settled=False,cancelRequested=False)
+      records.append(dict(metadata=metadata,fingerprint=service.digest(service.canonical(metadata)),images={str(k):base64.b64encode(v).decode() for k,v in images.items()},job=job,backendEvidence=[]))
+      ledger.save(ledger.scope(metadata),records[0])
+     status=202 if len(calls)==1 else 200
+    else:
+     self.assertEqual(json.loads(payload)['owner'],records[0]['metadata']['owner'])
+     records[0]['job'].update(state='failed',settled=True,error={'code':'source_fixture','message':'No backend invoked'})
+     ledger.save(ledger.scope(records[0]['metadata']),records[0]);status=200
+    raw=service.canonical(records[0]['job'])
+    return status,raw,json.loads(raw)
+   def read_record(path,**kwargs):
+    reads.append(path)
+    # Only the workload boundary impersonates UID1000; real files use worker UID.
+    with mock.patch.object(os,'geteuid',return_value=actual_uid):return original_read(path,**kwargs)
+   with mock.patch.object(os,'geteuid',return_value=1000),mock.patch.object(workload,'graph_service',return_value=config['service']),mock.patch.object(workload,'bounded_call',side_effect=bounded),mock.patch.object(entry,'protected_read',side_effect=read_record),mock.patch.object(workload.http.client,'HTTPConnection',side_effect=AssertionError('network forbidden')):
+    result=workload.service_job(graph,proof,time.monotonic()+5,'EXPLICIT_FAKE_KEY')
+   self.assertEqual(len(calls),3);self.assertEqual(result['polls'],1)
+   record_name=ledger.scope(records[0]['metadata'])+'.json'
+   self.assertRegex(record_name,r'^[a-f0-9]{64}\.json$')
+   self.assertEqual({p.name for p in jobs.iterdir()},{'owner.lock',record_name})
+   self.assertEqual(reads,[jobs/record_name])
+   evidence={p.name:json.loads(p.read_bytes()) for p in aux.iterdir()}
+   rid=result['requestId']
+   self.assertEqual(set(evidence),{'request-'+rid+'.evidence','admission-'+rid+'.evidence','status-'+rid+'-1.evidence'})
+   self.assertEqual(evidence['request-'+rid+'.evidence']['metadata'],records[0]['metadata'])
+   for name in ('admission-'+rid+'.evidence','status-'+rid+'-1.evidence'):
+    self.assertEqual(evidence[name]['rawSHA256'],control.sha(bytes.fromhex(evidence[name]['rawHex'])))
+   self.assertEqual(result['rawServiceResponseHex'],evidence['status-'+rid+'-1.evidence']['rawHex'])
+   self.assertEqual(result['rawRecordSHA256'],control.sha((jobs/record_name).read_bytes()))
+   self.doCleanups()
+   reopened=service.PrivateLedger(str(jobs))
+   try:self.assertEqual(reopened.records,{record_name[:-5]:records[0]})
+   finally:reopened.close()
+   # Retain strict rejection, copying actual generated auxiliary bytes into an
+   # isolated negative fixture. Constructor failure needs explicit fd cleanup.
+   bad=Path(tmp)/'bad';bad.mkdir(mode=0o700)
+   (bad/('request-'+rid+'.evidence')).write_bytes((aux/('request-'+rid+'.evidence')).read_bytes())
+   opened=[];original_open=os.open
+   def capture_open(*args,**kwargs):
+    fd=original_open(*args,**kwargs);opened.append(fd);return fd
+   try:
+    with mock.patch.object(service.os,'open',side_effect=capture_open):
+     with self.assertRaisesRegex(ValueError,'unknown_ledger_entry'):service.PrivateLedger(str(bad))
+   finally:
+    for fd in reversed(opened):os.close(fd)
 
 class WallTimerTests(unittest.TestCase):
  def test_slow_body_entire_wall_timer_and_actual_socket(self):

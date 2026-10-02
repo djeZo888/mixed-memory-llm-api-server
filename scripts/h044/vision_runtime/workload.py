@@ -163,19 +163,21 @@ def service_job(graph,proof,deadline,key):
  request_id='private-'+__import__('secrets').token_hex(16);owner={'sessionId':'h044-private-vision','workspaceId':'h044-private-corpus','runId':'h044-v03-'+request_id}
  source={'reference':{'fileId':corpus['fixtureId']},'sha256':corpus['pngSha256'],'mediaType':'image/png','coordinateSpace':'oriented_page_pixels','pages':[{'page':1,'width':corpus['width'],'height':corpus['height'],'originalWidth':corpus['width'],'originalHeight':corpus['height'],'orientation':1}],'crops':[corpus['crop']]}
  metadata={'schemaVersion':1,'owner':owner,'requestId':request_id,'service':identity,'source':source,'question':'Describe visible labels conservatively, distinguishing uncertain interpretation from literal extraction.','pageImages':[{'page':1,'sha256':corpus['pngSha256'],'part':'page-1'}]}
- # All UID-owned request/response evidence stays inside the UID1000 ledger.
- ledger=Path(graph['runtime']['service']['ledger']);control.exclusive(ledger/('request-'+request_id+'.evidence'),{'metadata':metadata,'corpus':corpus,'inputPngHex':png.hex(),'status':'PRE_DISPATCH','proofSHA256':proof['proofSHA256']})
+ # Auxiliary evidence uses the existing UID1000 control storage; the job ledger
+ # remains reserved for PrivateLedger records.
+ ledger=Path(graph['runtime']['service']['ledger']);control_ledger=Path(graph['runtime']['service']['controlLedger'])
+ control.exclusive(control_ledger/('request-'+request_id+'.evidence'),{'metadata':metadata,'corpus':corpus,'inputPngHex':png.hex(),'status':'PRE_DISPATCH','proofSHA256':proof['proofSHA256']})
  boundary='h044-private-'+request_id;meta=control.canonical(metadata);body=(('--'+boundary+'\r\nContent-Disposition: form-data; name="metadata"\r\nContent-Type: application/json\r\n\r\n').encode()+meta+('\r\n--'+boundary+'\r\nContent-Disposition: form-data; name="page-1"; filename="page-1.png"\r\nContent-Type: image/png\r\n\r\n').encode()+png+('\r\n--'+boundary+'--\r\n').encode())
  def call(path,payload,typ='application/json',rid=None):return bounded_call('POST','127.0.0.1',18193,path,payload,typ,key,deadline,rid)
  status,raw,job=call('/v1/technical-vision/jobs',body,'multipart/form-data; boundary='+boundary,request_id)
- control.exclusive(ledger/('admission-'+request_id+'.evidence'),{'status':status,'rawHex':raw.hex(),'rawSHA256':control.sha(raw),'requestId':request_id})
+ control.exclusive(control_ledger/('admission-'+request_id+'.evidence'),{'status':status,'rawHex':raw.hex(),'rawSHA256':control.sha(raw),'requestId':request_id})
  if status not in (200,202):raise control.Refused('admission_failed_no_retry')
  status,dup,duplicate=call('/v1/technical-vision/jobs',body,'multipart/form-data; boundary='+boundary,request_id)
  if status!=200 or duplicate.get('jobId')!=job.get('jobId'):raise control.Refused('duplicate_identity_unknown')
  last_status_raw=[None]
  def record(n,status,raw):
   last_status_raw[0]=raw
-  control.exclusive(ledger/('status-'+request_id+'-'+str(n)+'.evidence'),{'status':status,'rawHex':raw.hex(),'rawSHA256':control.sha(raw)})
+  control.exclusive(control_ledger/('status-'+request_id+'-'+str(n)+'.evidence'),{'status':status,'rawHex':raw.hex(),'rawSHA256':control.sha(raw)})
  try:current,polls=poll_job(call,owner,request_id,deadline,record)
  except TimeoutError:return {'status':'TIMING_OVERRUN','settled':False,'requestId':request_id,'admission':'CLOSED_QUARANTINE','noRetry':True,'nativeEngineDrained':False}
  from vision_service_entrypoint import protected_read
