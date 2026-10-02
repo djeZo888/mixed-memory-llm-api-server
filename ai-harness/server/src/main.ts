@@ -1,3 +1,4 @@
+import {createHostGenerationAcceptance,reviewedCodexSourceFlags} from './codex-generation-acceptance.js';
 import {CODEX_TECHNICAL_RECEIPT_SOURCES,codexReceiptSourceProfile} from "./codex-receipts.js";
 import {isQualificationTaskAdmission,type QualificationTaskAdmission} from './qualification-task-admission.js';
 import {composeCodexProductObservers,type CodexProductObservers} from "./codex-product-observation.js";
@@ -103,12 +104,22 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
   let activeRunId = (_sessionId: string): string | undefined => undefined;
   const owned = codex.ownedAcceptancePath ? createHostOwnedAcceptance(codex.ownedAcceptancePath, id => activeRunId(id)) : undefined;
   if (owned && codex.qualification) codex.qualification = { ...codex.qualification, frontierAcceptance: owned.frontier, imageAcceptance: owned.image, onResponsesDiagnostic: owned.onDiagnostic };
+  const generationPolicy=process.env.AI_HARNESS_CODEX_GENERATION_ACCEPTANCE_FILE;
+  let generationOwned:ReturnType<typeof createHostGenerationAcceptance>|undefined;
+  if(generationPolicy&&codex.qualification?.imageGenerationQualified!==true){
+    const ordinary=codex.ordinary,keyPath=process.env.AI_HARNESS_CODEX_ORDINARY_ENTRY_KEY_FILE;
+    if(!codex.qualification||!ordinary?.generationAuthority||!keyPath)throw Error("Scoped generation requires reviewed current ordinary generation sources and existing approval key");
+    if(!path.isAbsolute(generationPolicy)||generationPolicy===dataDir||generationPolicy.startsWith(dataDir+path.sep))throw Error("Scoped generation policy must remain outside all model data mounts");
+    generationOwned=createHostGenerationAcceptance(generationPolicy,keyPath,{authority:ordinary.generationAuthority,assertCurrent:ordinary.assertSourcesCurrent,assertNativeReceipt:ordinary.assertCurrent},id=>activeRunId(id));
+    const prior=codex.qualification.onNativeLaunchReceipt;
+    codex.qualification={...codex.qualification,imageGenerationAcceptance:generationOwned.generation,imageGenerationLaunchAcceptance:generationOwned.authorizeLaunch,onNativeLaunchReceipt:receipt=>{prior?.(receipt);if(reviewedCodexSourceFlags(receipt.sources)?.generation){generationOwned!.assertLaunch(receipt);}}};
+  }
   const technicalQualification = loadTechnicalVisionQualification();
   const technicalKey = technicalQualification ? await readProtectedCredential(TECHNICAL_VISION_KEY_FILE).catch(() => undefined) : undefined;
-  if(codex.qualification?.nativeReceiptPolicy && Object.keys(codex.qualification.nativeReceiptPolicy.sourceSha256).sort().join()===[...codexReceiptSourceProfile(true,codex.qualification.imageGenerationQualified===true)].sort().join() && technicalQualification && technicalKey)codex.qualification={...codex.qualification,technicalVisionQualified:true};
+  if(codex.qualification?.nativeReceiptPolicy && reviewedCodexSourceFlags(codex.qualification.nativeReceiptPolicy.sourceSha256)?.technical===true && technicalQualification && technicalKey)codex.qualification={...codex.qualification,technicalVisionQualified:true};
   const codexHost = composeCodexHost(path.join(path.dirname(launcher), "run-codex.sh"), () => gateway, codex.qualification);
   if(task){const launch=codexHost.runtime.launchRootless;codexHost.runtime.launchRootless=async input=>{await task.verify({sessionId:input.sessionId,requestId:"launch:"+input.sessionId,lane:"qwen3.8-27b"});return launch(input);};}
-  const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime });
+  const codexOptions = codexDeployment({ enablePreview: codex.enablePreview, runtime: codexHost.runtime, runtimeForSession:codexHost.runtimeForSession });
   const availability = (id: string) => {
     const observed = serviceAvailability(
       nodeAvailability
@@ -138,10 +149,10 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
     ...codexOptions,
     memoryRecoveryHost:codex.ordinary?input=>(recoveryHost??=createCodexRecoveryHost({store:application.store,files:application.files,runtime:codexHost.runtime,gateway:()=>gateway,launcher,dispatchHeld:()=>held("harness"),observers:codex}))(input):undefined,
     imageAcceptance: codex.qualification?.imageAcceptance,
-    imageOperationQualified: (sessionId:string,operation:"generation"|"edit") => codex.qualification?.imageGenerationQualified===true ? operation==="generation" : codex.qualification?.imageJobsQualified===true || codex.qualification?.imageAcceptance?.(sessionId)===true,
+    imageOperationQualified: (sessionId:string,operation:"generation"|"edit") => codex.qualification?.imageGenerationQualified===true||codex.qualification?.imageGenerationAcceptance?.(sessionId)===true||generationOwned?.generationJob(sessionId)===true ? operation==="generation" : codex.qualification?.imageJobsQualified===true || codex.qualification?.imageAcceptance?.(sessionId)===true,
     imageReferenceAcceptance: owned?.imageReference,
-    onRunAccepted: owned?.onRunAccepted,
-    onRunFinished: owned?.onRunFinished,
+    onRunAccepted: (sessionId,runId)=>{owned?.onRunAccepted(sessionId,runId);generationOwned?.onRunAccepted(sessionId,runId);},
+    onRunFinished: (sessionId,runId)=>{owned?.onRunFinished(sessionId,runId);generationOwned?.onRunFinished(sessionId,runId);},
     imageBackend: new ImageUpstream({ key }),
     frontierStatus: (sessionId) => ({
       ...gateway?.frontierSnapshot(),
@@ -251,6 +262,8 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
       },
       diagnostics: owned ? { capture: owned.capture, onFailure: owned.onFailure } : codex.providerDiagnostics,
       imageAcceptance: codex.qualification?.imageAcceptance,
+      imageGenerationAcceptance:codex.qualification?.imageGenerationAcceptance,
+      authorizeScopedGenerationJob:generationOwned?.authorizeJob,
       qwenOutputLimit: codex.pilotOutputLimit ?? codex.qualification?.outputLimit,
       frontier,
       selectedFrontierModel,
@@ -359,6 +372,7 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
     );
   } catch (error) {
     owned?.close();
+    generationOwned?.close();
     codexHost.stopSettlementObservation();
     nodeAvailability?.stop();
     clearInterval(freezeTimer);
@@ -376,6 +390,7 @@ export async function start(codex: {taskAdmission?:QualificationTaskAdmission} &
     clearInterval(freezeTimer);
     await freezeServer?.close();
     owned?.close();
+    generationOwned?.close();
     await Promise.all([
       application.broker.close(),
       application.images?.close(),

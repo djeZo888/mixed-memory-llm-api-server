@@ -93,6 +93,9 @@ export interface GatewayOptions {
   codexImageGenerationQualified?: boolean;
   /** Trusted temporary exact-session/run acceptance, checked on each new job. */
   imageAcceptance?: (sessionId: string) => boolean;
+  /** Finite generation only: no edits/references/creative children/global grant. */
+  imageGenerationAcceptance?: (sessionId:string) => boolean;
+  authorizeScopedGenerationJob?: (sessionId:string,body:unknown) => boolean;
   dispatchHeld?: (alias: string) => boolean;
   /** Local cached observation only; unknown preserves existing admission behavior. */
   availability?: AvailabilityProvider;
@@ -656,7 +659,7 @@ export function createGateway(options: GatewayOptions): Gateway {
       (request.method === "POST" && /^\/v1\/image-jobs\/[a-zA-Z0-9_-]+\/cancel$/.test(request.url));
     const qualifiedImageRoute = existingImageRoute ||
       (request.method === "POST" && request.url === "/v1/image-jobs" &&
-       (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true || options.codexImageGenerationQualified===true));
+       (options.codexImageJobsQualified === true || options.imageAcceptance?.(tokens.get(token)!) === true || options.codexImageGenerationQualified===true || options.imageGenerationAcceptance?.(tokens.get(token)!)===true));
     const technicalRoute = options.technicalVision && /^(?:\/v1\/technical-vision-capabilities|\/v1\/technical-vision-jobs(?:\/[a-zA-Z0-9_-]{1,80}\/(?:status|lookup|cancel|journal))?)$/.test(request.url);
     if (codexTokens.has(token) && !qualifiedImageRoute && !technicalRoute && !["/v1/responses", "/v1/models", "/v1/image-capabilities"].includes(request.url))
       return reply.code(403).send({ error: { code: "codex_route_unqualified", message: "Route unavailable under Codex preview qualification" } });
@@ -731,14 +734,23 @@ export function createGateway(options: GatewayOptions): Gateway {
   });
   app.get("/v1/image-capabilities", async req => {
     const value=await imageBroker().capabilities();
-    if(codexTokens.has(req.headers.authorization!.slice(7)) && options.codexImageGenerationQualified===true){
+    if(codexTokens.has(req.headers.authorization!.slice(7)) && (options.codexImageGenerationQualified===true||options.imageGenerationAcceptance?.(imageSession(req.headers.authorization))===true)){
       if(!isRecord(value)||!Array.isArray(value.profiles))throw new ApiError(503,"image_capabilities_invalid","Image capabilities could not be verified");
       return {...value,profiles:value.profiles.filter(p=>isRecord(p) && p.operation==="generation")};
     }
     return value;
   });
   app.post("/v1/image-jobs", { bodyLimit: 64 * 1024 }, async (request) => {
-    if(codexTokens.has(request.headers.authorization!.slice(7)) && options.codexImageGenerationQualified===true && (request.body as {operation?:unknown}|undefined)?.operation!=="generation")throw new ApiError(403,"image_operation_unqualified","Only generation is qualified");
+    if(codexTokens.has(request.headers.authorization!.slice(7))){
+      const sessionId=imageSession(request.headers.authorization),scoped=options.imageGenerationAcceptance?.(sessionId)===true;
+      // Recheck at submission after onRequest: expiry must not admit a raced job.
+      if(options.codexImageJobsQualified!==true&&options.codexImageGenerationQualified!==true&&!scoped&&options.imageAcceptance?.(sessionId)!==true)throw new ApiError(403,"image_operation_unqualified","Image creation is unqualified");
+      if(options.codexImageGenerationQualified===true||scoped){
+        const b=request.body as {operation?:unknown;references?:unknown}|undefined;
+        if(b?.operation!=="generation"||(b.references!==undefined&&(!Array.isArray(b.references)||b.references.length!==0)))throw new ApiError(403,"image_operation_unqualified","Only generation without references is qualified");
+        if(options.codexImageGenerationQualified!==true&&options.authorizeScopedGenerationJob?.(sessionId,request.body)!==true)throw new ApiError(403,"image_scope_spent","Scoped generation invocation is unavailable");
+      }
+    }
     return {job: await imageBroker().submit(
       imageSession(request.headers.authorization),
       request.body,

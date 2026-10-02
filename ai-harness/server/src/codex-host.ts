@@ -1,3 +1,4 @@
+import {reviewedCodexSourceFlags} from './codex-generation-acceptance.js';
 import { codexAutomaticDirective, type CodexAutomaticRoute } from "./codex-automatic-routing.js";
 import { codexTraceSchemaForMode, CODEX_TECHNICAL_RECEIPT_SOURCES, codexReceiptSourceProfile, type CodexNativeTraceMode } from "./codex-receipts.js";
 /** Trusted host composition. No environment flag or chat payload qualifies a runtime. */
@@ -52,6 +53,9 @@ export interface CodexHostQualification {
   /** Explicit independent specialist ownership gate, never inferred from protocol PASS. */
   imageJobsQualified?: true;
   imageGenerationQualified?: true;
+  /** Separate finite parent generation permission; never full image/global proof. */
+  imageGenerationAcceptance?: (sessionId:string) => boolean;
+  imageGenerationLaunchAcceptance?: (sessionId:string) => boolean;
   /** Temporary exact-session/run acceptance; never changes advertised capability. */
   imageAcceptance?: (sessionId: string) => boolean;
   nativeDelegationQualified?: true;
@@ -77,9 +81,12 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
   if (qualification?.textOnlyPolicy && (!qualification.nativeReceiptPolicy || !qualification.authorizeNativeTurn)) throw Error("Text-only policy requires receipt transport and observed native admission");
   if (qualification?.readOriginalProbe && (!qualification.textOnlyPolicy || !qualification.authorizeOriginalRead)) throw Error("Original probes disabled: native model tool/sandbox scope is unqualified");
   if (qualification?.parentArtifactScope && (!qualification.textOnlyPolicy || !qualification.nativeReceiptPolicy || !qualification.registerCheckpointArtifact)) throw Error("Parent artifacts require bounded policy, genuine receipts and actual registration");
-  if(qualification?.technicalVisionQualified && (!qualification.nativeReceiptPolicy || Object.keys(qualification.nativeReceiptPolicy.sourceSha256).sort().join()!==[...codexReceiptSourceProfile(true,qualification.imageGenerationQualified===true)].sort().join()))throw Error("Technical MCP requires exact reviewed receipt source/mount closure");
-  if(qualification?.imageJobsQualified && qualification?.imageGenerationQualified)throw Error("Ambiguous full/generation-only qualification");
-  if(qualification?.imageGenerationQualified && (!qualification.nativeReceiptPolicy || Object.keys(qualification.nativeReceiptPolicy.sourceSha256).sort().join()!==[...codexReceiptSourceProfile(qualification.technicalVisionQualified===true,true)].sort().join()))throw Error("Generation-only MCP requires exact reviewed source/mount closure");
+  const sourceFlags=reviewedCodexSourceFlags(qualification?.nativeReceiptPolicy?.sourceSha256);
+  if(qualification?.technicalVisionQualified && (!qualification.nativeReceiptPolicy?.linuxTransportQualified||!sourceFlags?.technical))throw Error("Technical MCP requires exact reviewed receipt source/mount closure");
+  if(qualification?.imageJobsQualified && (qualification.imageGenerationQualified||qualification.imageGenerationAcceptance))throw Error("Ambiguous full/generation-only qualification");
+  if((qualification?.imageGenerationQualified||qualification?.imageGenerationAcceptance) && (!qualification.nativeReceiptPolicy?.linuxTransportQualified||!sourceFlags?.generation))throw Error("Generation-only MCP requires exact reviewed source/mount closure");
+  const generationAllowed=(sessionId:string)=>qualification?.imageGenerationQualified===true||qualification?.imageGenerationAcceptance?.(sessionId)===true;
+  const scopedRoutes=new Map<string,CodexAutomaticRoute>();
   const settlementObservation = new AbortController();
   const runtime: CodexRuntime = {
     nativeTraceMode:qualification?.nativeTraceMode,
@@ -122,18 +129,24 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     delegationEnabled: qualification?.nativeDelegationQualified === true,
     maxChildren: qualification?.retentionTurnKind ? 1 : 4,
     technicalVisionEnabled: qualification?.technicalVisionQualified === true,
-    automaticRouting: (route: CodexAutomaticRoute, sessionId: string) => codexAutomaticDirective(route, {
+    automaticRouting: (route: CodexAutomaticRoute, sessionId: string) => {const directive=codexAutomaticDirective(route, {
       deep: qualification?.nativeDelegationQualified === true && (qualification?.frontierResponsesQualified === true || qualification?.frontierAcceptance?.(sessionId) === true),
       technical: qualification?.technicalVisionQualified === true,
-      creative: qualification?.imageGenerationQualified===true || imageGateForCodexLaunch({sessionId},qualification),
-      generationOnly:qualification?.imageGenerationQualified===true,
-    }),
+      creative: generationAllowed(sessionId) || imageGateForCodexLaunch({sessionId},qualification),
+      generationOnly:generationAllowed(sessionId),
+    });
+      if(qualification?.imageGenerationQualified!==true&&qualification?.imageGenerationAcceptance?.(sessionId)===true&&route.intent==='creative')scopedRoutes.set(sessionId,route);
+      else scopedRoutes.delete(sessionId);
+      return directive;
+    },
     qualifiedChildModels: qualification?.nativeDelegationQualified === true && qualification.frontierResponsesQualified === true ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     qualifiedChildModelsForSession: sessionId => qualification?.nativeDelegationQualified === true && (qualification.frontierResponsesQualified === true || qualification.frontierAcceptance?.(sessionId) === true) ? ["qwen3.8-27b", "mimo-v2.6-pro-rl"] : ["qwen3.8-27b"],
     capabilities: qualification?.capabilities,
     loadResumeInstructions: qualification ? () => loadCodexResumeInstructions(launcherPath) : undefined,
     launchRootless: input => {
-      const generation=!input.receiptRunId && input.imageGenerationRequested===true && qualification?.imageGenerationQualified===true;
+      const generation=!input.receiptRunId && input.imageGenerationRequested===true && generationAllowed(input.sessionId);
+      if(input.imageGenerationRequested===true&&!generation&&!input.receiptRunId)throw Error("Generation-only scoped launch unavailable");
+      if(generation&&qualification?.imageGenerationQualified!==true&&qualification?.imageGenerationLaunchAcceptance?.(input.sessionId)!==true)throw Error("Scoped generation native invocation spent or unapproved");
       const technical=!input.receiptRunId && qualification?.technicalVisionQualified===true;
       const reviewed=qualification?.nativeReceiptPolicy;
       // A reviewed current closure may include unavailable feature sources.
@@ -148,6 +161,12 @@ export function composeCodexHost(launcherPath: string, gateway: () => Gateway | 
     confirmGatewaySettlement: async query => (await gateway()?.observeSettlement(query, settlementObservation.signal)) === true,
   };
   return { runtime,
+    runtimeForSession(sessionId:string){
+      const route=scopedRoutes.get(sessionId);scopedRoutes.delete(sessionId);
+      if(!route)return {runtime};
+      if(qualification?.imageGenerationAcceptance?.(sessionId)!==true)throw Error("Generation acceptance expired before bootstrap");
+      return {runtime:{...runtime,imageGenerationEnabled:true,delegationEnabled:false,qualifiedChildModels:["qwen3.8-27b"],qualifiedChildModelsForSession:()=>["qwen3.8-27b"]} as CodexRuntime,nativeAutomaticRoute:route};
+    },
     // Stop only after broker/recovery owners have settled; stopping is not settlement proof.
     stopSettlementObservation: () => settlementObservation.abort(),
     responses: qualification ? { enabled: true, outputLimit: qualification.outputLimit, qualifiedAliases: qualification.qualifiedAliases,

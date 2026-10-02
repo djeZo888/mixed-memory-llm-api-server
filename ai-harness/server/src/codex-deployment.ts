@@ -10,7 +10,7 @@ import type { BrokerOptions } from "./broker.js";
  * neither environment strings nor browser/chat configuration can fabricate these functions.
  */
 export function codexDeployment(
-  input: { enablePreview?: boolean; runtime?: CodexRuntime } = {},
+  input: { enablePreview?: boolean; runtime?: CodexRuntime; runtimeForSession?:(sessionId:string)=>{runtime:CodexRuntime;nativeAutomaticRoute?:import("./codex-automatic-routing.js").CodexAutomaticRoute} } = {},
 ): Pick<
   BrokerOptions,
   "enginePolicy" | "codexEngineFactory" | "codexGatewayUrl" | "automaticRoutePreflight"
@@ -33,7 +33,11 @@ export function codexDeployment(
         modelPolicyVersion: runtime?.modelPolicyVersion ?? "unqualified",
       },
     },
-    codexEngineFactory: runtime ? codexEngineFactory(runtime) : undefined,
+    codexEngineFactory: runtime ? options=>{
+      const selected=input.runtimeForSession?.(options.sessionId)??{runtime};
+      if(selected.nativeAutomaticRoute&&options.nativeSessionId)throw Error("Scoped generation bootstrap requires a fresh normal parent");
+      return codexEngineFactory(selected.runtime)({...options,...(selected.nativeAutomaticRoute?{nativeAutomaticRoute:selected.nativeAutomaticRoute}:{})});
+    } : undefined,
     codexGatewayUrl: runtime?.gatewayUrl,
     automaticRoutePreflight: runtime?.automaticRouting,
   };

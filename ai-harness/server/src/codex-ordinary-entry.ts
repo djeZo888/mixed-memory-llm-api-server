@@ -53,7 +53,8 @@ export function loadCodexOrdinaryCurrentSources(path:string,key:Buffer,baselineR
  verifyCurrentFiles(b.files);const flags=profileFlags(b.profile);assertCodexReceiptSourceClosure(runtime.deploymentDir,b.receiptSources,process.getuid?.(),flags.technical,flags.generation);
  return Object.freeze({...b,files:Object.freeze({...b.files}),receiptSources:Object.freeze({...b.receiptSources})});
 }
-export interface CodexOrdinaryEntry {readonly approvalId:string;readonly nativeReceiptPolicy:CodexReceiptPolicy;assertCurrent(launch:CodexNativeLaunchReceipt):void;hooks:Pick<CodexHostQualification,"ordinaryMemoryAdmission"|"onNativeThread"|"nativeMetadataAuthority"|"onNativeSettlementReceipt">}
+export interface CodexOrdinaryGenerationAuthority {sourceCommit:string;profile:CodexOrdinarySourceProfile;currentSourceSha256:string;receiptSourcesSha256:string}
+export interface CodexOrdinaryEntry {readonly generationAuthority?:CodexOrdinaryGenerationAuthority;assertSourcesCurrent():void;readonly approvalId:string;readonly nativeReceiptPolicy:CodexReceiptPolicy;assertCurrent(launch:CodexNativeLaunchReceipt):void;hooks:Pick<CodexHostQualification,"ordinaryMemoryAdmission"|"onNativeThread"|"nativeMetadataAuthority"|"onNativeSettlementReceipt">}
 /** HMAC approval is root's concrete qualification decision over ORIGINAL evidence, not a native PASS from this loader. */
 export function loadCodexOrdinaryEntry(path:string|undefined,keyPath:string|undefined,runtime?:{serverDir:string;deploymentDir:string}):CodexOrdinaryEntry|undefined{
  if(!path&&!keyPath)return undefined;if(!path||!keyPath)throw Error("Ordinary entry requires protected approval and key");
@@ -81,13 +82,15 @@ export function loadCodexOrdinaryEntry(path:string|undefined,keyPath:string|unde
  }
  if(sha(privateBytes(q.binaryPath,512*1024*1024))!==q.binarySha256)throw Error("Retained actual native binary bytes changed");
  const protectedPaths=[path,keyPath,...(sourceApproval?[sourcePath]:[]),q.launchPath,q.settlementPath,q.protocolAckPath,q.binaryPath,...(q.legacyTransportPath?[q.legacyTransportPath]:[]),...(q.rawProtocolPath?[q.rawProtocolPath]:[])];let current=new Map<string,{threadId:string;launch:CodexNativeLaunchReceipt;abort:AbortController;authority:CodexMetadataAuthority}>();
+ const assertSourcesCurrent=()=>{
+  verifyFiles(b.files);if(sourceApproval){verifyCurrentFiles(currentFiles);const again=loadCodexOrdinaryCurrentSources(sourcePath,key,raw,b.approvalId,runtime);if(canonicalJson(again)!==canonicalJson(sourceApproval))throw Error("Current ordinary source approval changed");}
+ };
  const assertCurrent=(receipt:CodexNativeLaunchReceipt)=>{
-  verifyFiles(b.files);if(sourceApproval)verifyCurrentFiles(currentFiles);
+  assertSourcesCurrent();
   const actual=codexReceiptValidation(receipt)?.binding;
   if(!codexReceiptProvenance(receipt)||isHistoricalCodexReceipt(receipt)||!actual||receipt.container.imageId!==launch.container.imageId||actual.deploymentDir!==runtime.deploymentDir||actual.uid!==q.binding.uid||actual.gid!==q.binding.gid||sourceApproval&&actual.imageJobsQualified!==false||actual.technicalVisionQualified===true&&!flags.technical||actual.imageGenerationQualified===true&&!flags.generation)throw Error("Current ordinary launch is not genuinely qualified");
   const expected=Object.fromEntries(codexReceiptSourceProfile(actual.technicalVisionQualified===true,actual.imageGenerationQualified===true).map(name=>[name,currentSources[name]]));
   if(canonicalJson(receipt.sources)!==canonicalJson(expected)||canonicalJson(actual.sources)!==canonicalJson(expected))throw Error("Current ordinary mounted source profile mismatch");
-  if(sourceApproval){const again=loadCodexOrdinaryCurrentSources(sourcePath,key,raw,b.approvalId,runtime);if(canonicalJson(again)!==canonicalJson(sourceApproval))throw Error("Current ordinary source approval changed");}
   assertOrdinaryProtectedPaths(receipt,protectedPaths);
  };
  const hooks:CodexOrdinaryEntry["hooks"]={
@@ -97,5 +100,5 @@ export function loadCodexOrdinaryEntry(path:string|undefined,keyPath:string|unde
   nativeMetadataAuthority:input=>current.get(input.sessionId)?.authority,
   onNativeSettlementReceipt:receipt=>{const c=current.get(receipt.sessionId);if(c&&c.launch.nonce===receipt.nonce){c.abort.abort();current.delete(receipt.sessionId);}}
  };
- return Object.freeze({approvalId:b.approvalId,nativeReceiptPolicy:Object.freeze({linuxTransportQualified:true as const,sourceSha256:Object.freeze({...currentSources})}),assertCurrent,hooks});
+ return Object.freeze({...(sourceApproval&&flags.generation?{generationAuthority:Object.freeze({sourceCommit:sourceApproval.sourceCommit,profile:sourceApproval.profile,currentSourceSha256:sha(canonicalJson(sourceApproval)),receiptSourcesSha256:sha(canonicalJson(currentSources))})}:{}),assertSourcesCurrent,approvalId:b.approvalId,nativeReceiptPolicy:Object.freeze({linuxTransportQualified:true as const,sourceSha256:Object.freeze({...currentSources})}),assertCurrent,hooks});
 }
