@@ -26,6 +26,11 @@ UNITS = ('llm-image-api.service', 'llm-image-backend.service')
 API_UNIT = '/etc/systemd/system/llm-image-api.service'
 BACKEND_UNIT = '/etc/systemd/system/llm-image-backend.service'
 LATCH_PATH = '/data/services/llm-manager/hardware-latch.json'
+
+GUARD_PATH = '/data/services/mimo-h016-20260927/guard.json'
+MUTABLE_PATHS = (LATCH_PATH, GUARD_PATH)
+# Actual read-only installed writer/schema closure; never a relaxed JSON class.
+MUTABLE_SOURCE_SHA = {'/data/build/h014-pro-7ac59a6-20260927/prep.py': '03c0933c194c79a6aca5e98e26bd1682f99927c0f9dbfe53f25d9938caf3724c', '/data/services/mimo-h016-20260927/source/owner.py': '0530603606ee980cc71c5244b78570a5d2e067ff898d1e5f6b3656c94d289121', '/data/services/releases/h037-image-placement-20260930/scripts/common/lifecycle_lease.py': '483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0', '/data/services/releases/h037-image-placement-20260930/scripts/control/hardware_latch.py': 'a23e3e55453fefd3bbd5dbb6bce7d8e16da08db2f6debfcdfe01110815353685', '/data/services/releases/h037-image-placement-20260930/scripts/install/storage_io.py': '5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a', '/data/services/releases/h037-image-placement-20260930/scripts/lifecycle/hardware_policy.py': '05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18', '/usr/local/lib/llm-server/control-api/scripts/common/lifecycle_lease.py': '483ba038c62a8b4633449cef9c0f9a6664c00276662498abc748b58c8be644e0', '/usr/local/lib/llm-server/control-api/scripts/common/registered-storage.py': '21cf082a841aeab9470bd6704b77104961b9d4afcaec696d90aa22b65f5b6f3d', '/usr/local/lib/llm-server/control-api/scripts/control/hardware_latch.py': 'a23e3e55453fefd3bbd5dbb6bce7d8e16da08db2f6debfcdfe01110815353685', '/usr/local/lib/llm-server/control-api/scripts/install/storage.py': '4f834e92d149ea1955e79d34c53c18bf8c5846a4121d779e135a50d31a615505', '/usr/local/lib/llm-server/control-api/scripts/install/storage_io.py': '5ba1b1356519bbb4922b563662a605459862a84b81ce4f521dfbce293d97302a', '/usr/local/lib/llm-server/control-api/scripts/lifecycle/hardware_policy.py': '05fafa5697d389f2224cec8cece5aaaa6944acda433b49d0995719de1961fa18'}
 ACTIONS = ['adopt_exact_existing_seven_file_archive', 'fresh_stopped_owner_reconcile_CAS',
            'conditional_own_inode_whole_byte_rollback']
 require, sha, strict = core.require, core.sha, core.strict
@@ -58,19 +63,169 @@ def validate_go(go, source_sha, now):
         and set(go['residentBindings']) == {'Qwen0', 'Qwen1', 'MiMo', 'VisionQwen', 'VisionOCR'},
         'h046_exact_source_owner_sets_required')
     for field in ('apiUnitRawSha256', 'backendUnitRawSha256', 'dockerBinarySha256', 'daemonId',
-                  'pythonSha256', 'rootStage', 'hardwareLatchSha256'):
+                  'pythonSha256', 'rootStage'):
         require(type(go.get(field)) is str and bool(go[field]), 'h046_source_inputs_required')
     require(type(go.get('archiveDirectoryIdentity')) is list and len(go['archiveDirectoryIdentity']) == 5,
             'h046_archive_directory_identity_required')
     for identities in (go['expectedFileIdentity'],go['archiveFileIdentity']):
         require(all(type(v) is list and len(v) == 9 and all(type(n) is int for n in v)
                     for v in identities.values()),'h046_exact_nine_field_inode_pins_required')
-    require(type(go.get('hardwareLatchIdentity')) is list and len(go['hardwareLatchIdentity']) == 9,
-            'h046_current_hardware_latch_identity_required')
+    validate_mutable_binding(go)
 
 
 def identity(file):
     return list(core.signature(file.before))
+
+
+def mutable_semantic(path, raw, *, temperature_limit=85):
+    """Only installed public descriptor fields can vary, with full shape checks.
+
+    Fault/history/target/boot/owner/source/device truth is retained. External
+    validation itself is selected truth and remains exact; only unrelated
+    validated observation annotations may advance. This is not native proof.
+    """
+    from control.hardware_latch import HardwareLatch, MAX_AGE_MS, _timestamp
+    value = strict(raw)
+    if path == LATCH_PATH:
+        saved = HardwareLatch(value).export_state()
+        require(core.EXTERNAL_GPU not in saved['targets'], 'hardware_target_protection_must_not_clear')
+        result = copy.deepcopy(saved)
+        for gpu, proof in result.get('validated', {}).items():
+            if gpu != core.EXTERNAL_GPU:
+                result['validated'][gpu] = {'boot_id': proof['boot_id']}
+        return result
+    require(path == GUARD_PATH, 'fixed_mutable_descriptor_path_required')
+    def fields(item, names):
+        require(type(item) is dict and set(item) == set(names.split()), 'mutable_descriptor_schema_changed')
+    def numeric(number):
+        import math
+        require(type(number) in (int,float) and math.isfinite(number) and number >= 0,
+                'mutable_numeric_telemetry_invalid')
+    def fresh(stamp):
+        observed = _timestamp(stamp)
+        require(observed is not None and 0 <= (datetime.datetime.now(datetime.timezone.utc).timestamp()-observed)*1000 <= MAX_AGE_MS,
+                'mutable_descriptor_stale')
+    fields(value, 'schema_version status boot_id manifest_sha256 selection supervisor native proxy proxy_disposition observed_monotonic_s observed_at hardware_latched hardware_proof sample')
+    require(type(value['schema_version']) is int and value['schema_version'] == 2
+            and value['status'] == 'ok' and value['boot_id'] == core.BOOT
+            and value['hardware_latched'] is False, 'mutable_guard_fault_or_boot_changed')
+    fresh(value['observed_at']); numeric(value['observed_monotonic_s'])
+    proof = value['hardware_proof']
+    fields(proof, 'hardware_latched hardware_latched_boot_id hardware_validated_boot_id hardware_validated_gpu_uuids hardware_validation_age_ms identity reason')
+    require(proof['hardware_latched'] is False and proof['hardware_latched_boot_id'] is None
+            and proof['reason'] is None and proof['hardware_validated_boot_id'] == core.BOOT,
+            'mutable_guard_hardware_fault')
+    numeric(proof['hardware_validation_age_ms'])
+    require(proof['hardware_validation_age_ms'] <= MAX_AGE_MS, 'mutable_guard_hardware_stale')
+    sample = value['sample']
+    fields(sample, 'gpus host hardware_validation memory_policy cgroup host_swap_diagnostic')
+    validation = sample['hardware_validation']
+    fields(validation, 'boot_id gpu_uuid observed_at observation_id')
+    require(validation['boot_id'] == core.BOOT and proof['hardware_validated_gpu_uuids'] == [validation['gpu_uuid']]
+            and proof['identity'] == [[validation['gpu_uuid'], core.BOOT, 'validated']], 'mutable_guard_device_changed')
+    fresh(validation['observed_at'])
+    import re
+    require(type(validation['observation_id']) is str and re.fullmatch('[0-9a-f]{32}',validation['observation_id']) is not None,
+            'mutable_guard_observation_invalid')
+    require(type(sample['gpus']) is list and len(sample['gpus']) == 1, 'mutable_guard_gpu_shape')
+    gpu = sample['gpus'][0]; fields(gpu, 'uuid total_mib free_mib temp_c')
+    require(gpu['uuid'] == validation['gpu_uuid'], 'mutable_guard_gpu_changed')
+    for k in ('total_mib','free_mib','temp_c'): numeric(gpu[k])
+    require(type(temperature_limit) in (int,float) and 0 < temperature_limit <= 85
+            and 0 < gpu['total_mib'] and gpu['free_mib'] <= gpu['total_mib']
+            and gpu['free_mib']*100 >= 7*gpu['total_mib'] and gpu['temp_c'] < temperature_limit, 'mutable_guard_gpu_capacity')
+    require(type(sample['host']) is dict and {'MemTotal','HardwareCorrupted','SwapTotal'} <= set(sample['host']), 'mutable_guard_host_shape')
+    for number in sample['host'].values(): numeric(number)
+    require(sample['host']['MemAvailable']*100 >= 15*sample['host']['MemTotal']
+            and sample['host']['HardwareCorrupted'] == 0, 'mutable_guard_host_capacity')
+    fields(sample['cgroup'], 'memory.current memory.max memory.swap.current memory.swap.max memory.events')
+    fields(sample['memory_policy'], 'memory.max memory.swap.current memory.swap.max')
+    fields(sample['host_swap_diagnostic'], 'baseline_used_bytes delta_bytes used_bytes')
+    for key,number in sample['host_swap_diagnostic'].items():
+        require(type(number) is int and (key == 'delta_bytes' or number >= 0), 'mutable_guard_swap_diagnostic')
+    swap = sample['host_swap_diagnostic']
+    require(swap['used_bytes'] == sample['host']['SwapTotal']-sample['host']['SwapFree']
+            and swap['delta_bytes'] == swap['used_bytes']-swap['baseline_used_bytes'], 'mutable_guard_swap_diagnostic')
+    cg = sample['cgroup']; policy = sample['memory_policy']
+    for key in ('memory.current','memory.max','memory.swap.current'):
+        require(type(cg[key]) is str and cg[key].isascii() and cg[key].isdecimal() and len(cg[key]) <= 32, 'mutable_guard_memory_shape')
+    require(int(cg['memory.max']) > 0 and int(cg['memory.current']) <= int(cg['memory.max'])
+            and cg['memory.swap.current'] == '0' and cg['memory.swap.max'] in ('0','max')
+            and policy == {'memory.max':cg['memory.max'],'memory.swap.current':'0','memory.swap.max':'0'}
+            and all(cg['memory.events'].get(k) == '0' for k in ('oom','oom_kill')), 'mutable_guard_memory_capacity')
+    disposition = value['proxy_disposition']
+    fields(disposition, 'schema_version boot_id launch_id native pid pid_start_ticks parent_pid quarantined active_requests observed_monotonic_s')
+    require(disposition['quarantined'] is False and disposition['boot_id'] == core.BOOT
+            and disposition['native'] == value['native']
+            and {k:disposition[k] for k in value['proxy']} == value['proxy'], 'mutable_guard_proxy_changed')
+    require(type(disposition['active_requests']) is int and disposition['active_requests'] in (0,1), 'mutable_guard_request_shape')
+    numeric(disposition['observed_monotonic_s'])
+    result = copy.deepcopy(value)
+    for k in ('observed_at','observed_monotonic_s'): result.pop(k)
+    result['hardware_proof'].pop('hardware_validation_age_ms')
+    for k in ('observed_at','observation_id'): result['sample']['hardware_validation'].pop(k)
+    for k in ('free_mib','temp_c'): result['sample']['gpus'][0].pop(k)
+    result['sample']['host'] = {'keys':sorted(sample['host']), **{k:sample['host'][k] for k in ('MemTotal','HardwareCorrupted','SwapTotal')}}
+    result['sample']['cgroup'].pop('memory.current')
+    # OOM/swap/limit changes remain protected; only diagnostic current-use values vary.
+    result['sample']['host_swap_diagnostic'] = {'baseline_used_bytes':sample['host_swap_diagnostic']['baseline_used_bytes']}
+    for k in ('active_requests','observed_monotonic_s'): result['proxy_disposition'].pop(k)
+    return result
+
+
+def validate_mutable_binding(go):
+    binding = go.get('mutableDescriptorBinding')
+    require(type(binding) is dict and set(binding) == set(MUTABLE_PATHS), 'exact_mutable_descriptor_binding_required')
+    require(go.get('mutableSourceSha256') == MUTABLE_SOURCE_SHA
+            and type(go.get('mutableSourceIdentity')) is dict
+            and set(go['mutableSourceIdentity']) == set(MUTABLE_SOURCE_SHA), 'exact_mutable_writer_source_required')
+    for ident in go['mutableSourceIdentity'].values():
+        require(type(ident) is list and len(ident) == 9 and all(type(n) is int for n in ident), 'mutable_writer_identity_required')
+    require(not set(MUTABLE_PATHS).intersection(go['helperSha256'] | go['apiCanonicalSourceSha256'] | go['peerFileSha256']), 'mutable_static_graph_overlap')
+    for path, entry in binding.items():
+        require(type(entry) is dict and set(entry) == {'path','protectedMetadata','parentIdentity','semantic','temperatureLimitC'} and entry['path'] == path,
+                'fixed_mutable_binding_shape')
+        ident = entry['protectedMetadata']
+        parent = entry['parentIdentity']
+        require(type(parent) is list and len(parent) == 5 and all(type(n) is int for n in parent)
+                and stat.S_ISDIR(parent[2]) and parent[3] == 0 and not parent[2]&0o022, 'frozen_mutable_parent_required')
+        require(type(ident) is list and len(ident) == 4 and all(type(n) is int for n in ident)
+                and stat.S_ISREG(ident[0]) and stat.S_IMODE(ident[0]) == 0o600 and ident[1] == 0 and ident[3] == 1,
+                'frozen_mutable_metadata_required')
+        require(type(entry['semantic']) is dict, 'frozen_mutable_semantic_required')
+        require(entry['temperatureLimitC'] is None if path == LATCH_PATH else
+                type(entry['temperatureLimitC']) in (int,float) and 0 < entry['temperatureLimitC'] <= 85, 'mutable_guard_thermal_limit_required')
+
+
+class MutableDescriptor:
+    """Canonical replacements between reads; every read keeps exact inode CAS.
+
+    Only fixed public descriptors qualify. Protected parent/metadata/source and
+    selected semantic truth remain frozen. No writer, retry or lease path.
+    """
+    def __init__(self, path, binding, *, audit, trusted_uid=0, fixture_root=None):
+        require(path in MUTABLE_PATHS or fixture_root is not None, 'fixed_mutable_path')
+        require(callable(audit), 'mutable_current_readback_audit_required')
+        self.path, self.binding, self.audit = path, binding, audit
+        self.trusted_uid, self.fixture_root = trusted_uid, fixture_root
+    def read(self):
+        with core.ProtectedFile(self.path, trusted_uid=self.trusted_uid, fixture_root=self.fixture_root) as held:
+            parent = os.fstat(held.directory)
+            require([parent.st_dev,parent.st_ino,parent.st_mode,parent.st_uid,parent.st_gid] == self.binding['parentIdentity'], 'mutable_protected_parent_changed')
+            require(identity(held)[2:6] == self.binding['protectedMetadata'], 'mutable_protected_metadata_changed')
+            raw = held.raw
+            require(len(raw) <= (65536 if self.binding['path'] == LATCH_PATH else 262144), 'mutable_descriptor_size_bound')
+            require(os.pread(held.fd,262145,0) == raw, 'mutable_descriptor_read_race')
+            held.check()
+            self.audit({'schema':'h046-mutable-descriptor-actual-readback-v1',
+                'classification':'ACTUAL_STABLE_READBACK_ONLY_NOT_HARDWARE_PROOF',
+                'path':self.binding['path'],'identity':identity(held),'sha256':sha(raw),
+                'observedUtc':datetime.datetime.now(datetime.timezone.utc).isoformat(),
+                'semanticAcceptance':'NOT_EVALUATED', 'writerSourceSha256':MUTABLE_SOURCE_SHA})
+            semantic = mutable_semantic(self.binding['path'],raw,temperature_limit=self.binding['temperatureLimitC'])
+            require(core.encode(semantic) == core.encode(self.binding['semantic']), 'mutable_protected_semantic_changed')
+            held.check(); require(os.pread(held.fd,262145,0) == raw, 'mutable_descriptor_read_race'); held.check()
+            return raw
 
 
 class ProtectedExecutable(core.ProtectedFile):
@@ -269,6 +424,8 @@ class StoppedRecord(core._SessionRecord):
         for held in (*self.peers.values(),*self.protected_sources.values(),*self.archive_files.values()):
             held.check(); require(os.pread(held.fd,len(held.raw)+1,0) == held.raw,'closed_graph_bytes_changed')
         self.peer_check()
+        self.services_check()
+        for descriptor in self.mutable_descriptors.values(): descriptor.read()
 
     def hardware_readonly(self):
         """Strict CAS-only guard; never publish, clear or reset latch evidence.
@@ -281,15 +438,13 @@ class StoppedRecord(core._SessionRecord):
         """
         from lifecycle.hardware_policy import HardwarePolicy, MAX_AGE_MS, _timestamp
         from control.hardware_latch import HardwareLatch
-        held = self.protected_sources[LATCH_PATH]
-        held.check(); require(os.pread(held.fd,262145,0) == held.raw,'hardware_latch_changed')
-        require(identity(held) == self.go['hardwareLatchIdentity'] and sha(held.raw) == self.go['hardwareLatchSha256'],
-                'source_bound_hardware_latch_changed')
+        self.services_check()
+        raw = self.mutable_descriptors[LATCH_PATH].read()
         record = self
         class ReadOnlyStore:
             def read(self):
                 record.services_check()
-                return strict(held.raw)
+                return strict(raw)
             def write(self,value): raise core.Refused('hardware_latch_write_out_of_scope')
         policy = HardwarePolicy(ReadOnlyStore(),lease=self.lease)
         saved = policy._owner().export_state()
@@ -301,7 +456,7 @@ class StoppedRecord(core._SessionRecord):
         result = HardwareLatch(saved).validate_required(core.EXTERNAL_GPU,current_boot_id=core.BOOT,
             receipt={'observed_at':proof['observed_at'],'observation_id':proof['observation_id']})
         require(result['hardware_latched'] is False and result.get('reason') is None,'hardware_fault')
-        held.check()
+        require(self.mutable_descriptors[LATCH_PATH].read() == raw, 'hardware_readback_race')
 
     def services_check(self):
         self.runtime.services_anchor.check()
@@ -322,7 +477,7 @@ class StoppedRecord(core._SessionRecord):
 
 
 @contextlib.contextmanager
-def open_stopped_session(go):
+def open_stopped_session(go, *, audit):
     """Only reviewed executor supplies the mandatory exact current peer join."""
     require(os.geteuid() == 0, 'writer_root_required')
     with core.ProtectedFile(str(Path(__file__).absolute())) as source:
@@ -333,10 +488,12 @@ def open_stopped_session(go):
             protected_sources = {}
             graph = dict(go['helperSha256']) | dict(go['apiCanonicalSourceSha256']) | {
                 API_UNIT:go['apiUnitRawSha256'],BACKEND_UNIT:go['backendUnitRawSha256'],
-                LATCH_PATH:go['hardwareLatchSha256']}
+                **go['mutableSourceSha256']}
             for path,expected in graph.items():
                 held = sources.enter_context(core.ProtectedFile(path))
                 require(sha(held.raw) == expected,'h046_closed_helper_source_changed')
+                if path in go['mutableSourceIdentity']:
+                    require(identity(held) == go['mutableSourceIdentity'][path], 'mutable_writer_source_identity_changed')
                 protected_sources[path] = held
             executables = {}
             for path,expected in {'/usr/bin/docker':go['dockerBinarySha256'],
@@ -382,6 +539,7 @@ def open_stopped_session(go):
                 record = StoppedRecord(module,runtime,anchor,mounted,lease,model,operation,
                     snapshot,archive,go,digest,oci,peers)
                 record.archive_files = archived; record.protected_sources = protected_sources
+                record.mutable_descriptors = {path:MutableDescriptor(path,go['mutableDescriptorBinding'][path],audit=audit) for path in MUTABLE_PATHS}
                 record.executables = executables
                 record.peer_check = lambda: validate_peers(go,module)
                 core._ACTIVE[session] = record

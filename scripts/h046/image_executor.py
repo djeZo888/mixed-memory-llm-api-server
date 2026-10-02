@@ -368,7 +368,13 @@ def main(go_path):
     core._load_owner = load_owner
     try:
         deadline.check(60)
-        with successor.open_stopped_session(go) as session:
+        descriptor_sequence = 0
+        def descriptor_audit(snapshot):
+            nonlocal descriptor_sequence
+            descriptor_sequence += 1
+            if descriptor_sequence > 4096:raise ValueError('finite mutable readback audit bound')
+            write('mutable-read-'+str(descriptor_sequence).zfill(4)+'.json',snapshot)
+        with successor.open_stopped_session(go,audit=descriptor_audit) as session:
             result = successor.reconcile_stopped(session)
         write('CAS-RESULT.json',dict(result,qualification='SOURCE_WRITER_COMPLETED; native NOT_TESTED'))
     except BaseException as error:

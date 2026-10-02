@@ -139,8 +139,12 @@ class ArchiveTests(unittest.TestCase):
         held = core.ProtectedFile(str(path),trusted_uid=os.getuid(),fixture_root=self.fixture.path)
         self.addCleanup(held.close)
         record = object.__new__(m.StoppedRecord)
-        record.protected_sources = {m.LATCH_PATH:held}
-        record.go = {'hardwareLatchIdentity':m.identity(held),'hardwareLatchSha256':core.sha(held.raw)}
+        parent = os.fstat(held.directory)
+        binding = {'path':m.LATCH_PATH,'protectedMetadata':m.identity(held)[2:6],
+            'parentIdentity':[parent.st_dev,parent.st_ino,parent.st_mode,parent.st_uid,parent.st_gid],
+            'semantic':m.mutable_semantic(m.LATCH_PATH,held.raw),'temperatureLimitC':None}
+        record.mutable_descriptors = {m.LATCH_PATH:m.MutableDescriptor(str(path),binding,audit=lambda _:None,
+            trusted_uid=os.getuid(),fixture_root=self.fixture.path)}
         record.runtime = SimpleNamespace(hardware_observation={'boot':core.BOOT,
             'observed_at':datetime.datetime.now(datetime.timezone.utc).isoformat(),'observation_id':'fixture-probe'})
         record.lease = None; record.services_check = lambda:None
@@ -174,6 +178,15 @@ class ControlTests(unittest.TestCase):
             'archiveDirectoryIdentity':[1,2,3,0,0],'apiUnitRawSha256':'e'*64,'backendUnitRawSha256':'f'*64,
             'dockerBinarySha256':'0'*64,'daemonId':'daemon','pythonSha256':'1'*64,'rootStage':'/stage',
             'hardwareLatchSha256':'2'*64,'hardwareLatchIdentity':[1]*9}
+        actual = json.loads((Path(__file__).resolve().parents[2]/'output/mutable-discovery06.json').read_text())
+        guard = actual['descriptors'][m.GUARD_PATH]['value']
+        guard['observed_at'] = guard['sample']['hardware_validation']['observed_at'] = now.isoformat()
+        go['mutableSourceSha256'] = m.MUTABLE_SOURCE_SHA
+        go['mutableSourceIdentity'] = {p:v['identity'] for p,v in actual['sources'].items()}
+        go['mutableDescriptorBinding'] = {p:{'path':p,'protectedMetadata':v['identity'][2:6],
+            'parentIdentity':v['parentIdentity'],'temperatureLimitC':actual['guardTemperatureLimitC'] if p == m.GUARD_PATH else None,
+            'semantic':m.mutable_semantic(p,core.encode(v['value']),temperature_limit=actual['guardTemperatureLimitC'])}
+            for p,v in actual['descriptors'].items()}
         return go,now
 
     def test_historical_go_stale_boot_bool_expiry_partial_peers_refuse(self):
@@ -214,7 +227,8 @@ class ControlTests(unittest.TestCase):
         canonical = Path(__file__).resolve().parents[3]/'output/canonical-read02/stdout'
         if not canonical.exists():self.skipTest('actual frozen canonical read packet is exported with worker output')
         control = packet.build(graph,'/run/llmctl/h046-image-stopped-cas-offline-shape-test',
-                               Path(__file__).resolve().parents[2],json.loads(canonical.read_text()))
+                               Path(__file__).resolve().parents[2],json.loads(canonical.read_text()),
+                               json.loads((Path(__file__).resolve().parents[2]/'output/mutable-discovery06.json').read_text()))
         self.assertEqual(control['status'],'SOURCE_ONLY_REVIEW_REQUEST_NOT_GO')
         self.assertEqual(set(control['stoppedUnits']['llm-image-api.service']),
             {'Id','MainPID','ControlPID','ActiveState','ControlGroup','InvocationID','Job','NeedDaemonReload'})

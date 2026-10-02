@@ -9,6 +9,7 @@ import sys
 
 sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'h044'))
 sys.path.insert(0,str(Path(__file__).resolve().parent))
+sys.path.insert(0,str(Path(__file__).resolve().parents[1]))
 import image_owner_successor as owner
 from image_executor import LEAVES, canonical_storage_binding, storage_guard_argv
 
@@ -17,7 +18,7 @@ def signature(value):
     return [value[k] for k in ('dev','inode','mode','uid','gid','nlink','size','mtimeNs','ctimeNs')]
 
 
-def build(graph, stage, source_root, canonical_packet=None):
+def build(graph, stage, source_root, canonical_packet=None, mutable_packet=None):
     stage = Path(stage)
     if str(stage.parent) != '/run/llmctl' or not stage.name.startswith('h046-image-stopped-cas-'):
         raise ValueError('new exact protected H046 stage required')
@@ -25,6 +26,29 @@ def build(graph, stage, source_root, canonical_packet=None):
     if canonical_packet is None:raise ValueError('fresh actual canonical storage source/registration packet required')
     if canonical_packet['bootId'] != graph['bootId']:raise ValueError('canonical/owner boot join changed')
     storage_binding = canonical_storage_binding(canonical_packet)
+    if mutable_packet is None or mutable_packet.get('bootId') != graph['bootId']:
+        raise ValueError('fresh actual mutable writer/descriptor packet required')
+    if {p:v['sha256'] for p,v in mutable_packet['sources'].items()} != owner.MUTABLE_SOURCE_SHA:
+        raise ValueError('exact installed mutable writer source changed')
+    for leaf in ('scripts/control/hardware_latch.py','scripts/lifecycle/hardware_policy.py'):
+        if hashlib.sha256((source_root/leaf).read_bytes()).hexdigest() != owner.MUTABLE_SOURCE_SHA[owner.core.RELEASE+'/'+leaf]:
+            raise ValueError('offline canonical schema source changed')
+    if mutable_packet['guardTemperatureGPU'] != mutable_packet['descriptors'][owner.GUARD_PATH]['value']['sample']['gpus'][0]['uuid']:
+        raise ValueError('guard thermal target changed')
+    mutable = {}
+    for p in owner.MUTABLE_PATHS:
+        observed = mutable_packet['descriptors'][p]
+        if observed['path'] != p: raise ValueError('fixed mutable descriptor path required')
+        mutable[p] = {'path':p,'protectedMetadata':observed['identity'][2:6],'parentIdentity':observed['parentIdentity'],
+            'temperatureLimitC':mutable_packet['guardTemperatureLimitC'] if p == owner.GUARD_PATH else None,
+            'semantic':owner.mutable_semantic(p,owner.core.encode(observed['value']),temperature_limit=mutable_packet['guardTemperatureLimitC'])}
+    peer_files = dict(graph['peerFileSha256'])
+    if owner.GUARD_PATH not in peer_files:raise ValueError('exact previous guard peer set required')
+    peer_files.pop(owner.GUARD_PATH)
+    native = mutable[owner.GUARD_PATH]['semantic']['native']
+    resident = graph['residentBindings']['MiMo']
+    if native['image_id'] != resident['container']['image'] or native['container_id'] != resident['container']['id'] or native['pid'] != resident['container']['pid'] or str(native['pid_start_ticks']) != resident['birth']['startTicks']:
+        raise ValueError('fresh MiMo guard/current resident owner join changed')
     sources = {name:source_root/('scripts/h044' if name == 'image_owner_reconcile.py' else 'scripts/h046')/name
                for name in LEAVES}
     helpers = {str(stage/name):hashlib.sha256(path.read_bytes()).hexdigest() for name,path in sources.items()}
@@ -41,12 +65,16 @@ def build(graph, stage, source_root, canonical_packet=None):
         'backendUnitRawSha256':files[owner.BACKEND_UNIT],
         'dockerBinarySha256':graph['dockerBinarySha256'],
         'pythonSha256':graph['pythonSha256'],'daemonId':graph['daemonId'],
-        'residentBindings':graph['residentBindings'],'peerFileSha256':graph['peerFileSha256'],
+        'residentBindings':graph['residentBindings'],'peerFileSha256':peer_files,
         'stoppedUnits':graph['stoppedUnits'],
         'expectedFileIdentity':graph['expectedFileIdentity'],
         'archiveFileIdentity':graph['archiveFileIdentity'],
         'archiveDirectoryIdentity':graph['archiveDirectoryIdentity'],
-        'hardwareLatchSha256':graph['hardwareLatchSha256'],'hardwareLatchIdentity':graph['hardwareLatchIdentity'],
+        'mutableDescriptorBinding':mutable,'mutableSourceSha256':owner.MUTABLE_SOURCE_SHA,
+        'mutableSourceIdentity':{p:v['identity'] for p,v in mutable_packet['sources'].items()},
+        'descriptorReadback':{'proofUtc':mutable_packet['proofUtc'],'status':'ACTUAL_READBACK_ONLY_NOT_HARDWARE_PROOF',
+            'files':{p:{k:v[k] for k in ('path','sha256','identity')} for p,v in mutable_packet['descriptors'].items()}},
+        'mutableReadContract':'Fixed canonical paths/writers/protected parent/metadata/semantics frozen; atomic replacement BETWEEN stable reads allowed; each read exact current FD/named9field+bytes join; each successful snapshot durably audited; no retry/descriptor writes/native admission.',
         'canonicalStorageBinding':storage_binding,
         'canonicalStorageReadUtc':canonical_packet['proofUtc'],
         'cachedPublicOCIPaths':{'manifest':'/data/containerd/root/io.containerd.content.v1.content/blobs/sha256/'+core.PLATFORM[7:],
@@ -89,7 +117,8 @@ def build(graph, stage, source_root, canonical_packet=None):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('graph'); parser.add_argument('stage');parser.add_argument('canonical_packet'); args = parser.parse_args()
+    parser.add_argument('graph'); parser.add_argument('stage');parser.add_argument('canonical_packet');parser.add_argument('mutable_packet'); args = parser.parse_args()
     print(json.dumps(build(json.loads(Path(args.graph).read_text()),args.stage,
                            Path(__file__).resolve().parents[2],
-                           json.loads(Path(args.canonical_packet).read_text())),indent=2,sort_keys=True))
+                           json.loads(Path(args.canonical_packet).read_text()),
+                           json.loads(Path(args.mutable_packet).read_text())),indent=2,sort_keys=True))
