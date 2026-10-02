@@ -36,7 +36,7 @@ import argparse,dataclasses,hashlib,importlib.util,json,os,re,signal,stat,sys,th
 from pathlib import Path
 LIBRARY_HASHES={
  'service.py':'3887854b2e7c29173baa63480cebeead44c3054c8b67caae280fa37bb292c4d0',
- 'backend.py':'5ca264c574dc714aaae1a1cdfe51776a2d19ee28a47f2b67509152e3b6e31b39'}
+ 'backend.py':'d6fd7a672d34cbe1bcb2782a42dd8ac537d96ce4b11445b1e402aec62f39c130'}
 REV_QWEN='c202236235762e1c871ad0ccb60c8ee5ba337b9a'
 REV_OCR='c5630abae1d940eafe0697512a0325494b02ab42'
 SECRET_PATHS={'service':'/run/secrets/vision-service.key','interpretation':'/run/secrets/vision-interpretation.key','ocr':'/run/secrets/vision-ocr.key'}
@@ -117,7 +117,7 @@ def validate_config(c):
  s=c['service']
  expected={'serviceId':'h043-technical-vision-candidate','generation':1,'mode':'live','interpreter':{'model':'Qwen/Qwen3.5-9B','revision':REV_QWEN,'precision':'BF16'},'parser':{'model':'PaddlePaddle/PaddleOCR-VL-1.6','revision':REV_OCR}}
  if {k:s[k] for k in expected}!=expected:raise Refused('service_identity_mismatch')
- if (s['listenOrigin'],s['qwenOrigin'],s['ocrOrigin'])!=('http://127.0.0.1:18193','http://127.0.0.1:18191','http://127.0.0.1:18192'):raise Refused('fixed_origin_required')
+ if (s['listenOrigin'],s['qwenOrigin'],s['ocrOrigin'])!=('http://127.0.0.1:18193','http://172.31.243.2:18191','http://172.31.243.3:18192'):raise Refused('fixed_origin_required')
  if any(type(s[k]) is not int for k in ('generation','requestDeadlineSeconds','jobDeadlineSeconds','queueCap','jobHistoryCap','privateLedgerBytes')):raise Refused('typed_service_limits')
  if (s['requestDeadlineSeconds'],s['jobDeadlineSeconds'],s['queueCap'],s['jobHistoryCap'],s['privateLedgerBytes'])!=(10,120,4,128,268435456):raise Refused('service_bounds')
  return expected
@@ -199,7 +199,7 @@ def serve(runtime,deadline_monotonic,normal_lease=None):
  return result
 
 def description():
- return {'executionEnabled':False,'sourceBindings':LIBRARY_HASHES,'serviceBind':'127.0.0.1:18193','models':['127.0.0.1:18191','127.0.0.1:18192'],'profile':dataclasses.asdict(Profile()),'credentialContext':'actual effective UID; 0400/0600 single-link no-follow stable FD; protected ancestors','credentialPaths':SECRET_PATHS,'nativeSettlement':'NO_PROOF_FROM_HTTP_CLOSE','remoteIngress':'separate protected private-link+bearer fixed 10.156.100.60:18193 bridge required'}
+ return {'executionEnabled':False,'sourceBindings':LIBRARY_HASHES,'serviceBind':'127.0.0.1:18193','models':['172.31.243.2:18191','172.31.243.3:18192'],'profile':dataclasses.asdict(Profile()),'credentialContext':'actual effective UID; 0400/0600 single-link no-follow stable FD; protected ancestors','credentialPaths':SECRET_PATHS,'nativeSettlement':'NO_PROOF_FROM_HTTP_CLOSE','remoteIngress':'separate protected private-link+bearer fixed 10.156.100.60:18193 bridge required'}
 def verify_signed_ticket(ticket,component,*,uid,now,boot,anchor_sha,signature_verifier):
  """Identity follows the reviewed signed proof only; producer/root euid is insufficient."""
  import control,datetime
@@ -266,6 +266,7 @@ def approved_component(component):
    for sig,handler in old.items():signal.signal(sig,handler)
   return 0
  config=json.loads(trusted_imports.protected_bytes(Path(base)/'configs/vision/h043-candidate.json',0))
+ if control.model_origins(graph)!={'interpretation':config['service']['qwenOrigin'],'ocr':config['service']['ocrOrigin']}:raise Refused('graph_config_model_origins')
  runtime=ServiceRuntime(config,Path(base)/'scripts/vision',private+'/job-ledger',lambda role:protected_read(credentials[role]));runtime.authorized=True;runtime.backend.ready=True;runtime.service.enabled=True
  import normal_service
  lease=normal_service.component_lease(graph,'service',proof['end'])

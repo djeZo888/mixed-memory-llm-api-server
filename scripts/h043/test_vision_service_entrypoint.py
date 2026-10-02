@@ -52,6 +52,7 @@ class EntryTests(unittest.TestCase):
   # Exact private test TMPDIR is root-sticky ancestry; this strict production reader
   # refuses it. Positive reader fixtures use protected phase path, no new credentials.
   with tempfile.TemporaryDirectory() as t:
+   os.chmod(t,0o777)  # Deliberately unsafe ancestor, independent of TMPDIR.
    p=Path(t)/'key';p.write_text('EXPLICIT-FAKE-TEST-KEY-0001');os.chmod(p,0o600)
    with self.assertRaises(e.Refused):e.protected_read(p)
    with self.assertRaises(e.Refused):e.protected_read(p,uid=os.geteuid()+1)
@@ -146,6 +147,7 @@ class SignedTicketTests(unittest.TestCase):
 class RawCaptureTests(unittest.TestCase):
  def test_actual_loopback_raw_bytes_and_failure_checkpoint(self):
   import http.server,threading
+  from unittest import mock
   cfg=json.loads((ROOT/'configs/vision/h043-candidate.json').read_text());identity=e.validate_config(cfg);_,backend=e.load_libraries(ROOT/'scripts/vision')
   for malformed in (False,True):
    literal=json.dumps({'description':'EXPLICIT_SOURCE_FIXTURE','uncertainties':['Unqualified source fixture'],'derivedConclusions':[]})
@@ -155,7 +157,11 @@ class RawCaptureTests(unittest.TestCase):
     def do_POST(self):
      self.rfile.read(int(self.headers['Content-Length']));self.send_response(200);self.send_header('Content-Type','application/json');self.send_header('Content-Length',str(len(raw)));self.end_headers();self.wfile.write(raw)
    server=http.server.HTTPServer(('127.0.0.1',0),Handler);port=server.server_address[1];thread=threading.Thread(target=server.handle_request);thread.start();events=[]
-   audit=e.audited_backend(backend,identity,lambda _:'EXPLICIT-FAKE-KEY-0001',cfg);audit.endpoints['interpretation']=port
+   local_cfg=copy.deepcopy(cfg);local_cfg['service'].update(qwenOrigin='http://127.0.0.1:'+str(port),ocrOrigin='http://127.0.0.1:18192')
+   class FixtureBackend(backend.LocalVisionBackend):
+    def __init__(self,service,key,**kwargs):super().__init__(dict(service,mode='mock'),key,fixture=True,**kwargs)
+   with mock.patch.object(backend,'LocalVisionBackend',FixtureBackend):
+    audit=e.audited_backend(backend,identity,lambda _:'EXPLICIT-FAKE-KEY-0001',local_cfg)
    self.control=__import__('control');self.control.exclusive(ROOT.parent/'output'/('raw-socket-'+__import__('secrets').token_hex(8)+'.json'),{'kind':'TCP_LOOPBACK_SOURCE_FIXTURE','address':'127.0.0.1','port':port,'unixSocketPaths':[],'TMPDIR':os.environ.get('TMPDIR')})
    try:
     if malformed:
@@ -164,5 +170,29 @@ class RawCaptureTests(unittest.TestCase):
     observed=next(x for x in events if x['kind']==('model_response_failure' if malformed else 'model_response'));self.assertEqual(bytes.fromhex(observed['rawResponseHex']),raw);self.assertEqual(observed['responseSha256'],hashlib.sha256(raw).hexdigest())
    finally:thread.join(timeout=2);server.server_close()
    self.assertFalse(thread.is_alive())
+
+
+class PrivateOriginContractTests(unittest.TestCase):
+ def config(self):return json.loads((ROOT/'configs/vision/h043-candidate.json').read_text())
+ def test_only_exact_role_origins_are_accepted(self):
+  cfg=self.config();self.assertEqual(e.validate_config(cfg)['mode'],'live')
+  for role in ('qwenOrigin','ocrOrigin'):
+   for origin in ('http://127.0.0.1:18191','http://172.31.243.2:18192','http://172.31.243.3:18191','http://example.invalid:18191','http://172.31.243.2:18191/','http://172.31.243.2:18191?x=1','http://user@172.31.243.2:18191'):
+    with self.subTest(role=role,origin=origin):
+     changed=copy.deepcopy(cfg);changed['service'][role]=origin
+     with self.assertRaises(e.Refused):e.validate_config(changed)
+ def test_constructor_forwards_exact_role_pair_without_contact(self):
+  import types
+  captured={}
+  class ConstructorOnly:
+   def __init__(self,identity,reader,**kwargs):captured.update(identity=identity,reader=reader,kwargs=kwargs)
+  module=types.SimpleNamespace(LocalVisionBackend=ConstructorOnly)
+  cfg=self.config();identity=e.validate_config(cfg)
+  def reader(role):raise AssertionError('constructor must not read credentials')
+  e.audited_backend(module,identity,reader,cfg)
+  self.assertEqual(captured['kwargs'],dict(qwen_origin='http://172.31.243.2:18191',ocr_origin='http://172.31.243.3:18192',enabled=False))
+  self.assertIs(captured['reader'],reader)
+ def test_description_keeps_service_loopback(self):
+  d=e.description();self.assertEqual(d['serviceBind'],'127.0.0.1:18193');self.assertEqual(d['models'],['172.31.243.2:18191','172.31.243.3:18192'])
 
 if __name__=='__main__':unittest.main()

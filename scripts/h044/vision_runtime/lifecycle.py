@@ -79,7 +79,11 @@ def load(graph,nonce,deadline,manager=None):
   argv=[n['id'] if v=='ACTUAL_NEW_NETWORK_ID' else v.replace('ROOT_FINITE_NONCE',nonce) for v in spec['createArgv']]
   if '--pull=never' not in argv or graph['image'] not in argv or spec['dtype']!='BF16' or spec['gpuUuid']!=observer.GPU:raise control.Refused('exact_BF16_image_gpu')
   created=record_created('container',spec['role'],argv,nonce,deadline,graph['rootOwnerEvidence']['imageId']);owners.append(start_created(created,nonce,deadline) if manager is None else start_created(created,nonce,deadline,manager=manager))
- control.exclusive(Path(control.PHASE_ROOT)/('owned-'+nonce+'.json'),owners);return owners
+ control.exclusive(Path(control.PHASE_ROOT)/('owned-'+nonce+'.json'),owners)
+ # No service/health child is launched until current daemon membership matches
+ # both original create IDs and the fixed role-address graph.
+ control.verify_current_network(graph,nonce)
+ return owners
 
 def settle_container(created,birth,nonce,deadline):
  cid=created['id'];role=created['role'];q=observer.exact_container(cid);v=q.get('value',{})

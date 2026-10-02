@@ -94,13 +94,18 @@ def bounded_call(method,host,port,path,payload,typ,key,deadline,rid=None):
 
 def health(graph,proof,deadline,credential):
  if proof.get('component')!='health' or proof.get('actualUid')!=1000:raise control.Refused('signed_uid_health_required')
+ control.validate_graph(graph)
+ # This validates both exact role addresses and their dedicated internal network
+ # before reading a bearer key or making any request. No URL or DNS selection.
+ origins=control.model_origins(graph)
  observations=[]
  while time.monotonic()<deadline:
   try:
-   for role,port,model in (('interpretation',18191,'Qwen/Qwen3.5-9B'),('ocr',18192,'PaddlePaddle/PaddleOCR-VL-1.6')):
-    status,raw,v=bounded_call('GET','127.0.0.1',port,'/v1/models',b'','application/json',credential(role),deadline)
+   for role,model in (('interpretation','Qwen/Qwen3.5-9B'),('ocr','PaddlePaddle/PaddleOCR-VL-1.6')):
+    host,port=origins[role][len('http://'):].split(':')
+    status,raw,v=bounded_call('GET',host,int(port),'/v1/models',b'','application/json',credential(role),deadline)
     if status!=200 or model not in [x.get('id') for x in v.get('data',[])]:raise control.Refused('exact_model_health')
-    observations.append({'role':role,'rawHex':raw.hex(),'sha256':control.sha(raw),'model':model})
+    observations.append({'role':role,'origin':origins[role],'rawHex':raw.hex(),'sha256':control.sha(raw),'model':model})
    for host in ('127.0.0.1','10.156.100.60'):
     status,raw,v=bounded_call('GET',host,18193,'/v1/technical-vision/capabilities',b'','application/json',credential('service'),deadline)
     if status!=200 or v.get('service')!={k:graph_service(graph)[k] for k in ('serviceId','generation','mode','interpreter','parser')} or not v.get('ready') or not v.get('admitting'):raise control.Refused('service_ingress_health')

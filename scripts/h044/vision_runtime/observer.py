@@ -31,7 +31,7 @@ if __name__ == '__main__':
 import json,os,re,subprocess,time
 from pathlib import Path
 from control import Refused,sha,utc
-INSPECT='{"id":{{json .Id}},"image":{{json .Image}},"pid":{{json .State.Pid}},"running":{{json .State.Running}},"exit":{{json .State.ExitCode}},"started":{{json .State.StartedAt}},"finished":{{json .State.FinishedAt}},"owner":{{json (index .Config.Labels "io.h044.vision.owner")}},"nonce":{{json (index .Config.Labels "io.h044.vision.nonce")}},"devices":{{json .HostConfig.DeviceRequests}}}'
+INSPECT='{"id":{{json .Id}},"image":{{json .Image}},"pid":{{json .State.Pid}},"running":{{json .State.Running}},"exit":{{json .State.ExitCode}},"started":{{json .State.StartedAt}},"finished":{{json .State.FinishedAt}},"owner":{{json (index .Config.Labels "io.h044.vision.owner")}},"nonce":{{json (index .Config.Labels "io.h044.vision.nonce")}},"devices":{{json .HostConfig.DeviceRequests}},"networks":{{json .NetworkSettings.Networks}},"networkMode":{{json .HostConfig.NetworkMode}},"portBindings":{{json .HostConfig.PortBindings}}}'
 GPU='GPU-14c23cbc-12f0-9c61-0fda-7aaf80fbd1bf'
 def selected(argv,timeout=5):
  import receipt_recorder
@@ -146,6 +146,14 @@ def protected_instances(graph,snapshot):
 
 def residency_sample(graph,owners):
  s=snapshot([o['id'] for o in owners]);protected=protected_instances(graph,s)
+ # Reuse the same current exact-container reads; one bounded network inspect
+ # binds normal as well as finite operation to the original owned bridge.
+ if len(owners)!=2 or len({o.get('nonce') for o in owners})!=1:raise Refused('network_original_owners_required')
+ containers={}
+ for o in owners:
+  v=next((q.get('value',{}) for q in s['containers'] if q.get('value',{}).get('id')==o['id']),{})
+  containers[o['role']]={'Id':v.get('id'),'State':{'Running':v.get('running')},'Config':{'Labels':{'io.h044.vision.owner':v.get('owner'),'io.h044.vision.nonce':v.get('nonce')}},'HostConfig':{'NetworkMode':v.get('networkMode'),'PortBindings':v.get('portBindings')},'NetworkSettings':{'Networks':v.get('networks',{})}}
+ network=__import__('control').verify_current_network(graph,owners[0]['nonce'],containers=containers)
  if s['gpuProcesses'] is None or s['gpus'] is None:raise Refused('gpu_telemetry_unknown')
  for o in owners:
   q=next(x for x in s['containers'] if x.get('value',{}).get('id')==o['id'])
@@ -160,7 +168,7 @@ def residency_sample(graph,owners):
  g=next((x for x in s['gpus'] if x[0]==GPU),None)
  if g is None or float(g[3])/float(g[1])<.07:raise Refused('peak_free_below_seven_percent')
  roster=__import__('control').enabled_roster(graph)
- result={'snapshot':s,'minimumFreeFraction':float(g[3])/float(g[1]),'bothResident':True,'qualification':'LIVE_RECEIPTS_ONLY_NOT_SOURCE_FIXTURE'}
+ result={'snapshot':s,'network':network,'minimumFreeFraction':float(g[3])/float(g[1]),'bothResident':True,'qualification':'LIVE_RECEIPTS_ONLY_NOT_SOURCE_FIXTURE'}
  result['protectedInstances' if roster else 'otherFourInstances']=protected
  if roster:
   if sorted(o['role'] for o in owners)!=sorted(roster['vision']):raise Refused('enabled_vision_roles')

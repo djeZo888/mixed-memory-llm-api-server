@@ -78,7 +78,67 @@ def validate_graph(g):
    if not re.fullmatch(r'[A-Za-z0-9_./-]{1,180}',name) or '..' in name.split('/') or not re.fullmatch(r'[0-9a-f]{64}',value):raise Refused('manifest')
  if set(g['actions'])!={'preflight','load','inference','stop','pull'} or any(v['enabled'] is not False for v in g['actions'].values()):raise Refused('all_actions_disabled')
  enabled_roster(g)
+ model_origins(g)
  return g
+
+MODEL_ADDRESSES={'interpretation':'172.31.243.2','ocr':'172.31.243.3'}
+MODEL_PORTS={'interpretation':18191,'ocr':18192}
+NETWORK_OWNER='H044-VISION-V03'
+def model_origins(graph):
+ """Only the two source-bound roles on the dedicated internal bridge are valid."""
+ runtime=graph.get('runtime',{});network=runtime.get('network',{});service=runtime.get('service',{})
+ origins={role:'http://'+ip+':'+str(MODEL_PORTS[role]) for role,ip in MODEL_ADDRESSES.items()}
+ expected_network=['network','create','--internal','--driver','bridge','--subnet','172.31.243.0/28','--label','io.h044.vision.owner='+NETWORK_OWNER,'--label','io.h044.vision.nonce=ROOT_FINITE_NONCE','h044-vision-v03-candidate']
+ if network.get('internal') is not True or network.get('subnet')!='172.31.243.0/28' or network.get('roleAddresses')!=MODEL_ADDRESSES or network.get('loopbackPorts')!=[] or network.get('createArgv')!=expected_network:raise Refused('fixed_internal_model_network')
+ nid=network.get('actualNetworkId')
+ if nid is not None and (not isinstance(nid,str) or not re.fullmatch('[a-f0-9]{64}',nid)):raise Refused('actual_network_id')
+ containers=runtime.get('containers',[])
+ if len(containers)!=2 or {x.get('role') for x in containers}!=set(MODEL_ADDRESSES):raise Refused('exact_model_network_roles')
+ for spec in containers:
+  role=spec['role'];argv=spec.get('createArgv',[])
+  if spec.get('privateIp')!=MODEL_ADDRESSES[role] or spec.get('origin')!=origins[role]:raise Refused('model_role_address')
+  for flag,value in (('--network','ACTUAL_NEW_NETWORK_ID'),('--ip',MODEL_ADDRESSES[role])):
+   if argv.count(flag)!=1 or argv.index(flag)+1>=len(argv) or argv[argv.index(flag)+1]!=value:raise Refused('model_network_argv')
+  if any(x=='--net' or x.startswith(('--net=','--network=','--ip=','--publish','-p','-P')) for x in argv):raise Refused('model_network_override_or_publish')
+ if service.get('listenOrigin')!='http://127.0.0.1:18193' or service.get('modelOrigins')!=origins:raise Refused('model_service_origins')
+ return origins
+
+def validate_network_owners(graph,network,containers,*,network_id,nonce,container_ids):
+ """Validate selected current Docker inspect fields against original create IDs."""
+ model_origins(graph)
+ if not isinstance(network_id,str) or not re.fullmatch('[a-f0-9]{64}',network_id) or not isinstance(nonce,str) or not re.fullmatch('[a-f0-9]{64}',nonce):raise Refused('network_owner_binding')
+ if graph['runtime']['network'].get('actualNetworkId') not in (None,network_id):raise Refused('network_graph_id_mismatch')
+ if set(container_ids)!=set(MODEL_ADDRESSES) or len(set(container_ids.values()))!=2 or any(not isinstance(x,str) or not re.fullmatch('[a-f0-9]{64}',x) for x in container_ids.values()):raise Refused('network_container_binding')
+ labels={'io.h044.vision.owner':NETWORK_OWNER,'io.h044.vision.nonce':nonce}
+ if network.get('Id')!=network_id or network.get('Internal') is not True or network.get('Driver')!='bridge' or any(network.get('Labels',{}).get(k)!=v for k,v in labels.items()):raise Refused('actual_internal_network_owner')
+ ipam=network.get('IPAM',{}).get('Config',[])
+ if len(ipam)!=1 or ipam[0].get('Subnet')!='172.31.243.0/28' or set(network.get('Containers',{}))!=set(container_ids.values()):raise Refused('actual_network_membership')
+ if set(containers)!=set(MODEL_ADDRESSES):raise Refused('actual_network_roles')
+ for role,ip in MODEL_ADDRESSES.items():
+  c=containers[role];cid=container_ids[role];nets=c.get('NetworkSettings',{}).get('Networks',{});host=c.get('HostConfig',{})
+  if c.get('Id')!=cid or c.get('State',{}).get('Running') is not True or any(c.get('Config',{}).get('Labels',{}).get(k)!=v for k,v in labels.items()):raise Refused('actual_model_owner')
+  if len(nets)!=1 or host.get('NetworkMode')!=network_id or host.get('PortBindings') not in (None,{}):raise Refused('actual_model_network')
+  n=next(iter(nets.values()))
+  if n.get('NetworkID')!=network_id or n.get('IPAddress')!=ip or n.get('IPAMConfig',{}).get('IPv4Address')!=ip or network['Containers'][cid].get('IPv4Address')!=ip+'/28':raise Refused('actual_model_role_address')
+ return {'networkId':network_id,'containerIds':container_ids,'modelOrigins':model_origins(graph)}
+
+def verify_current_network(graph,nonce,containers=None):
+ """Root inference gate: read only original journal IDs and bounded inspect receipts."""
+ import observer
+ n=parse_proof(read_private(PHASE_ROOT+'/network-'+nonce+'.json',0))
+ owners=parse_proof(read_private(PHASE_ROOT+'/owned-'+nonce+'.json',0))
+ boot=Path('/proc/sys/kernel/random/boot_id').read_text().strip()
+ if n.get('nonce')!=nonce or n.get('bootId')!=boot or len(owners)!=2 or any(x.get('nonce')!=nonce or x.get('bootId')!=boot for x in owners):raise Refused('current_network_journal')
+ ids={x['role']:x['id'] for x in owners}
+ def inspect(kind,cid,projection):
+  if not isinstance(cid,str) or not re.fullmatch('[a-f0-9]{64}',cid):raise Refused('actual_inspect_id')
+  receipt,raw=observer.selected(['/usr/bin/docker',kind,'inspect','--format',projection,cid])
+  if receipt['exitCode']!=0:raise Refused('actual_network_inspect_failed')
+  return parse_proof(raw)
+ network=inspect('network',n['id'],'{"Id":{{json .Id}},"Internal":{{json .Internal}},"Driver":{{json .Driver}},"Labels":{{json .Labels}},"IPAM":{{json .IPAM}},"Containers":{{json .Containers}}}')
+ projection='{"Id":{{json .Id}},"State":{"Running":{{json .State.Running}}},"Config":{"Labels":{{json .Config.Labels}}},"HostConfig":{"NetworkMode":{{json .HostConfig.NetworkMode}},"PortBindings":{{json .HostConfig.PortBindings}}},"NetworkSettings":{"Networks":{{json .NetworkSettings.Networks}}}}'
+ if containers is None:containers={role:inspect('container',cid,projection) for role,cid in ids.items()}
+ return validate_network_owners(graph,network,containers,network_id=n['id'],nonce=nonce,container_ids=ids)
 
 def enabled_roster(graph):
  """Explicit signed capacity plan; absence preserves the historical contract."""
@@ -175,4 +235,5 @@ def current_authority(action):
  if action not in go['actions'] or datetime.datetime.fromisoformat(go['actionDeadlines'][action]).timestamp()<=time.time():raise Refused('finite_current_action_missing')
  if any(graph['gates'][x]!='PASS' for x in GATES):raise Refused('current_root_gates_missing')
  verify_source(graph,SOURCE_ROOT,SOURCE_ROOT+'/scripts/h044/vision_runtime')
+ if action=='inference':verify_current_network(graph,go['nonce'])
  return graph,go
