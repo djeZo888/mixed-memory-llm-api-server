@@ -97,7 +97,7 @@
   "qualification": "NOT_TESTED; source candidate cannot enable admission or global image gate",
   "guardedWriter": {
     "source": "scripts/h044/image_owner_reconcile.py",
-    "sha256": "11ab72ed68ba037026c84e13406de5077456860266a2ba46376a25b768838741",
+    "sha256": "c1e49a2653cb1d1dc0a98cccca4a7d71248410c15daefeaeda137361de76787f",
     "state": "IMPLEMENTED_SOURCE_ONLY_GUARDED_ARCHIVE_CAS_ROLLBACK",
     "runtimeMutationAuthorization": "CLOSED_NEW_EXACT_ROOT_GO_REQUIRED",
     "normalGenerationQualification": "CLOSED_SEPARATE_R_REVIEW_LIVE_RECEIPT_REQUIRED"

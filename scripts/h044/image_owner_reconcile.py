@@ -679,7 +679,18 @@ class RawTransaction:
     reconcile_current() admits a production registered session. No CLI paths,
     boolean readiness, alternate owners or generic reset are accepted there.
     """
-    def __init__(self, files, archive, check, *, anchors=None):
+    def __init__(self, files, archive, check, *, anchors=None, session=None):
+        if os.geteuid()==0:
+            require(type(session) is ProductionSession,'writer_registered_session_required')
+            record=ProductionSession.check(session)
+            require(files is record.snapshot.files and archive is record.archive
+                and check==record.physical and anchors=={k:record.anchor for k in ('config','state','operation','recovery')},
+                'writer_actual_session_resources_required')
+        else:
+            # Explicit ordinary-user offline filesystem seam only. Root has no
+            # caller-controlled guard callback or readiness-boolean interface.
+            require(os.geteuid()!=0 and all(type(f) is ProtectedFile and f.uid==os.geteuid() for f in files.values()),
+                'writer_offline_owned_files_only')
         self.files=files; self.archive=archive; self.guard=check; self.anchors=anchors or {}
         self.original={k:v.raw for k,v in files.items()}; self.current=dict(self.original)
         self.identities={k:signature(v.before) for k,v in files.items()}
@@ -931,7 +942,7 @@ def reconcile_current(session):
     successors['config']=replace_scalar(raw['config'],'gpu_uuid',READING_GPU,EXTERNAL_GPU)
     successors['api']=replace_scalar(raw['api'],'runtime_image_digest',PARENT,PLATFORM)
     tx=RawTransaction(record.snapshot.files,record.archive,record.physical,
-        anchors={k:record.anchor for k in ('config','state','operation','recovery')})
+        anchors={k:record.anchor for k in ('config','state','operation','recovery')},session=session)
     def verify():
         candidate=record.module.Runtime() # unchanged normal constructor guards
         require(type(candidate) is record.module.Runtime and candidate.config==updated_config,

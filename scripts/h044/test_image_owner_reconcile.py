@@ -462,5 +462,12 @@ class RealWriterTests(unittest.TestCase):
             with self.assertRaises(m.Refused):capability.check()
 
 
+    def test_privileged_core_cannot_accept_caller_readiness_or_fake_guard(self):
+        with patch.object(m.os,'geteuid',return_value=0):
+            with self.assertRaises(m.Refused):m.RawTransaction(self.files,self.fixture.archive,lambda:True)
+            forged=object.__new__(m.ProductionSession)
+            with self.assertRaises(m.Refused):m.RawTransaction(self.files,self.fixture.archive,lambda:True,session=forged)
+
+
 
 if __name__=='__main__':unittest.main(verbosity=2)
