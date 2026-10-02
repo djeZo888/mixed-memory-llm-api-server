@@ -135,6 +135,159 @@ class Controls(unittest.TestCase):
                 (root/'escape').symlink_to('../elsewhere')
                 with self.assertRaises(c.Denied): c.dependency_digest(root,uid)
 
+class PrivateGroupAncestorControls(unittest.TestCase):
+    """SOURCE_ONLY: real local SQLite/FDs with the actual Linux directory shape."""
+    @contextmanager
+    def fixture(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base=Path(directory).resolve(); local=Path('/home/user/.local'); root=local/'share/ai-harness'
+            actual=base/'home/user/.local'; data=actual/'share/ai-harness'; data.mkdir(parents=True)
+            for path,mode in ((base/'home',0o755),(actual.parent,0o750),(actual,0o775),
+                              (actual/'share',0o700),(data,0o700)): path.chmod(mode)
+            db=data/'harness.sqlite'; connection=sqlite3.connect(db)
+            connection.executescript("CREATE TABLE sessions(id TEXT,status TEXT); CREATE TABLE messages(session_id TEXT,text TEXT);"
+              "CREATE TABLE runs(session_id TEXT,status TEXT); CREATE TABLE events(session_id TEXT,text TEXT);"
+              "CREATE TABLE h021_session_engines(session_id TEXT,ownership TEXT,active_turn_id TEXT);"
+              "CREATE TABLE h003_image_jobs(id INTEGER,data TEXT); INSERT INTO sessions VALUES('original','idle');"
+              "INSERT INTO messages VALUES('original','history'); INSERT INTO h021_session_engines VALUES('original','idle',NULL);")
+            connection.commit(); projection={}
+            for table,column in [('sessions','id'),('messages','session_id'),('runs','session_id'),('events','session_id'),('h021_session_engines','session_id')]:
+                cursor=connection.execute('SELECT * FROM '+table+' WHERE '+column+'=? ORDER BY rowid',('original',))
+                projection[table]={'columns':[value[0] for value in cursor.description],'rows':cursor.fetchall()}
+            original_lstat=Path.lstat; original_resolve=Path.resolve
+            original_open=c.os.open; original_fstat=c.os.fstat; original_close=c.os.close
+            original_connect=c.sqlite3.connect; overrides={}; descriptors={}
+            actual9={'dev':2050,'ino':25690124,'uid':1000,'gid':1000,'mode':0o775,'nlink':6,'size':4096,
+                     'mtimeNs':1790702664527808612,'ctimeNs':1790702664527808612}
+            names={'dev':'st_dev','ino':'st_ino','uid':'st_uid','gid':'st_gid','nlink':'st_nlink',
+                   'size':'st_size','mtimeNs':'st_mtime_ns','ctimeNs':'st_ctime_ns'}
+            def physical(path):
+                path=Path(path)
+                return base/str(path).lstrip('/') if path==Path('/home') or Path('/home') in path.parents else path
+            def metadata(path,*args,**kwargs):
+                path=Path(path); st=original_lstat(physical(path),*args,**kwargs)
+                values={name:getattr(st,name) for name in dir(st) if name.startswith('st_')}
+                values['st_uid']=1000 if local.parent==path or local in (path,*path.parents) else 0
+                values['st_gid']=1000 if values['st_uid']==1000 else 0
+                if path==local:
+                    values.update({names[key]:value for key,value in actual9.items() if key!='mode'})
+                    values['st_mode']=c.stat.S_IFDIR|actual9['mode']
+                values.update(overrides.get(path,{})); return SimpleNamespace(**values)
+            def resolve(path,*args,**kwargs):
+                resolved=original_resolve(physical(path),*args,**kwargs)
+                return Path('/')/resolved.relative_to(base) if resolved.is_relative_to(base) else resolved
+            def opened(path,*args,**kwargs):
+                fd=original_open(physical(path),*args,**kwargs)
+                if Path(path)==local: descriptors[fd]=local
+                return fd
+            def fstat(fd): return metadata(descriptors[fd]) if fd in descriptors else original_fstat(fd)
+            def closed(fd): descriptors.pop(fd,None); return original_close(fd)
+            def connect(database,*args,**kwargs):
+                return original_connect(database.replace((root/'harness.sqlite').as_uri(),db.as_uri()),*args,**kwargs)
+            user=SimpleNamespace(pw_name='user',pw_uid=1000,pw_gid=1000)
+            nobody=SimpleNamespace(pw_name='nobody',pw_uid=65534,pw_gid=65534)
+            group=SimpleNamespace(gr_name='user',gr_gid=1000,gr_mem=[])
+            with patch.object(Path,'lstat',metadata),patch.object(Path,'resolve',resolve),\
+                 patch.object(c.os,'open',side_effect=opened),patch.object(c.os,'fstat',side_effect=fstat),\
+                 patch.object(c.os,'close',side_effect=closed),patch.object(c.sqlite3,'connect',side_effect=connect),\
+                 patch.object(c.grp,'getgrgid',return_value=group),patch.object(c.grp,'getgrnam',return_value=group),\
+                 patch.object(c.grp,'getgrall',return_value=[group]),patch.object(c.pwd,'getpwall',return_value=[user,nobody]),\
+                 patch.object(c.pwd,'getpwuid',return_value=user),patch.object(c.pwd,'getpwnam',return_value=user),\
+                 patch.object(c.os,'getgrouplist',side_effect=lambda name,gid:[gid]):
+                dbid={key:value for key,value in c.identity(root/'harness.sqlite').items() if key in ('dev','ino','uid','gid','mode','nlink')}
+                spec={'path':str(root),'databaseIdentity':dbid,'retainedOwners':[],'preservedSessionId':'original',
+                      'preservedSessionSha256':c.sha(c.canonical(projection)),
+                      'privateGroupAncestor':{'path':str(local),'identity':dict(actual9),
+                          'group':{'name':'user','gid':1000,'supplementaryMembers':[]},
+                          'primaryMembers':[{'name':'user','uid':1000,'gid':1000}]}}
+                try: yield spec,overrides,group,user,nobody,connection,metadata
+                finally: connection.close()
+    def test_actualshape_private_ancestor_idle_and_history_guards(self):
+        with self.fixture() as (spec,overrides,group,user,nobody,db,metadata):
+            self.assertEqual(c.database_state(spec)['activeRuns'],0)
+            ctl=c.Control({'operation':c.RESTART,'expiresUtc':'2099-01-01T00:00:00Z','proofs':{'visionNormal':{'enabled':False}}})
+            with patch.object(ctl,'remote_vision',side_effect=AssertionError('vision contacted')):
+                self.assertEqual(ctl.vision()['scope'],'ORDINARY_NO_VISION')
+            db.execute("INSERT INTO runs VALUES('other','running')"); db.commit()
+            with self.assertRaisesRegex(c.Denied,'non-idle'): c.database_state(spec)
+            db.execute('DELETE FROM runs'); db.execute("UPDATE messages SET text='changed'"); db.commit()
+            with self.assertRaisesRegex(c.Denied,'original user session'): c.database_state(spec)
+    def test_absent_exception_and_other_ancestors_stay_strict(self):
+        with self.fixture() as (spec,overrides,*_):
+            absent=copy.deepcopy(spec); del absent['privateGroupAncestor']
+            with self.assertRaisesRegex(c.Denied,'unsafe path ancestry'): c.database_state(absent)
+            with self.assertRaisesRegex(c.Denied,'unsafe path ancestry'): c.ancestry(Path(spec['path']).parent,(0,1000))
+            for path in ('/home/user','.local/share'):
+                parent=Path(path) if path.startswith('/') else Path('/home/user')/path
+                overrides[parent]={'st_mode':c.stat.S_IFDIR|0o775}
+                with self.subTest(path=path),self.assertRaisesRegex(c.Denied,'unsafe path ancestry'): c.database_state(spec)
+                overrides.clear()
+    def test_all_nine_descriptor_fields_and_directory_type_refuse(self):
+        fields={'dev':'st_dev','ino':'st_ino','uid':'st_uid','gid':'st_gid','mode':'st_mode','nlink':'st_nlink',
+                'size':'st_size','mtimeNs':'st_mtime_ns','ctimeNs':'st_ctime_ns'}
+        with self.fixture() as (spec,overrides,*_):
+            local=Path('/home/user/.local'); proof=spec['privateGroupAncestor']
+            for key,attribute in fields.items():
+                value=proof['identity'][key]+1
+                overrides[local]={attribute:c.stat.S_IFDIR|value if key=='mode' else value}
+                with self.subTest(field=key),self.assertRaises(c.Denied): c.database_state(spec)
+                overrides.clear()
+            for mode in (0o777,0o755,c.stat.S_IFREG|0o775):
+                overrides[local]={'st_mode':mode if c.stat.S_IFMT(mode) else c.stat.S_IFDIR|mode}
+                if mode==0o777: proof['identity']['mode']=0o777
+                with self.subTest(mode=mode),self.assertRaises(c.Denied): c.database_state(spec)
+                proof['identity']['mode']=0o775; overrides.clear()
+    def test_canonical_scope_exact_shape_and_integer_proof_refuse(self):
+        with self.fixture() as (spec,*_):
+            for case in ('alias','otherPath','otherData','null','extra','missingField','bool','groupOutsider','floatGroup','floatMember'):
+                changed=copy.deepcopy(spec); proof=changed['privateGroupAncestor']
+                if case=='alias': proof['path']='/home/user/.local/../.local'
+                if case=='otherPath': proof['path']='/home/user'
+                if case=='otherData': changed['path']='/home/user/.local/share'
+                if case=='null': changed['privateGroupAncestor']=None
+                if case=='extra': proof['extra']=True
+                if case=='missingField': del proof['identity']['ctimeNs']
+                if case=='bool': proof['identity']['nlink']=True
+                if case=='groupOutsider': proof['group']['supplementaryMembers']=['nobody']
+                if case=='floatGroup': proof['group']['gid']=1000.0
+                if case=='floatMember': proof['primaryMembers'][0]['uid']=1000.0
+                with self.subTest(case=case),self.assertRaises(c.Denied): c.database_state(changed)
+            with patch.object(Path,'resolve',new=lambda path,*a,**kw:Path('/elsewhere') if str(path)=='/home/user/.local' else path),\
+                 self.assertRaisesRegex(c.Denied,'aliases/symlinks'): c.data_ancestry(Path(spec['path']),spec)
+    def test_primary_supplementary_and_nss_disagreement_refuse(self):
+        with self.fixture() as (spec,overrides,group,user,nobody,*_):
+            cases=[(c.grp,'getgrgid',SimpleNamespace(gr_name='other',gr_gid=1000,gr_mem=[])),
+                   (c.grp,'getgrnam',SimpleNamespace(gr_name='user',gr_gid=1001,gr_mem=[])),
+                   (c.grp,'getgrall',[]),(c.grp,'getgrall',[group,group]),
+                   (c.grp,'getgrgid',SimpleNamespace(gr_name='user',gr_gid=1000,gr_mem=['nobody'])),
+                   (c.pwd,'getpwall',[user,SimpleNamespace(pw_name='other',pw_uid=1001,pw_gid=1000)]),
+                   (c.pwd,'getpwall',[nobody]),(c.pwd,'getpwnam',nobody),(c.pwd,'getpwuid',nobody)]
+            for module,name,value in cases:
+                with self.subTest(name=name,value=value),patch.object(module,name,return_value=value),self.assertRaises(c.Denied): c.database_state(spec)
+            with patch.object(c.os,'getgrouplist',side_effect=lambda name,gid:[gid,1000]),\
+                 self.assertRaisesRegex(c.Denied,'supplementary NSS outsider'): c.database_state(spec)
+            with patch.object(c.grp,'getgrgid',side_effect=KeyError('NSS unavailable')),self.assertRaises(KeyError): c.database_state(spec)
+    def test_named_fd_replacement_and_in_check_descriptor_change_refuse(self):
+        with self.fixture() as (spec,overrides,group,user,nobody,db,metadata):
+            local=Path('/home/user/.local'); opened=metadata(local); changed=SimpleNamespace(**vars(opened)); changed.st_ino+=1
+            with patch.object(c.os,'fstat',return_value=changed),self.assertRaisesRegex(c.Denied,'opened directory identity'): c.database_state(spec)
+            original=c.private_group_membership
+            def changed_during(proof):
+                original(proof); overrides[local]={'st_ctime_ns':proof['identity']['ctimeNs']+1}
+            with patch.object(c,'private_group_membership',side_effect=changed_during),self.assertRaisesRegex(c.Denied,'named directory changed'): c.database_state(spec)
+    def test_hmac_binding_fresh_each_use_and_after_database_read(self):
+        with self.fixture() as (spec,overrides,group,user,nobody,db,metadata):
+            source=Controls(); source.setUp(); source.b['data']=spec
+            envelope=source.envelope(); envelope['body']['data']['privateGroupAncestor']['identity']['ino']+=1
+            with self.assertRaisesRegex(c.Denied,'HMAC'): c.validate_go(envelope,source.key,source.now,source.helper,source.helper_sha)
+            spec['privateGroupAncestor']['identity']['ino']-=1
+            with patch.object(c.grp,'getgrgid',wraps=c.grp.getgrgid) as fresh:
+                c.database_state(spec); c.database_state(spec); self.assertEqual(fresh.call_count,4)
+            with patch.object(c.grp,'getgrgid',side_effect=[group,SimpleNamespace(gr_name='user',gr_gid=1000,gr_mem=['nobody'])]),\
+                 self.assertRaisesRegex(c.Denied,'NSS lookup changed'): c.database_state(spec)
+            overrides[Path('/home/user/.local')]={'st_mtime_ns':spec['privateGroupAncestor']['identity']['mtimeNs']+1}
+            with self.assertRaisesRegex(c.Denied,'full identity'): c.database_state(spec)
+
 class RestartKeyRoleControls(unittest.TestCase):
     @contextmanager
     def fixture(self):

@@ -36,6 +36,17 @@ UID1000/0600/32-byte key in its UID1000/0700 directory, bound by full identity.
 The signed GO stays root0600 in root0700. The ordinary key is NOT a digest
 configFiles reference; its identity proof and candidate loader path are required.
 
+Optional data.privateGroupAncestor is part of the root-HMAC-bound GO body:
+{path:'/home/user/.local', identity:{dev,ino,mode,uid,gid,nlink,size,mtimeNs,
+ctimeNs}, group:{name:'user',gid:1000,supplementaryMembers:[]},
+primaryMembers:[{name:'user',uid:1000,gid:1000}]}. Only the existing data path
+/home/user/.local/share/ai-harness may use it. The full nine current integer
+identity fields, directory UID/GID1000/mode0775, named/opened inode and fresh
+NSS enumeration, lookup and initgroups membership must agree before and after
+each database read. Any changed descriptor or membership refuses; no permission
+write or general group-write exception exists. Absent this member, ancestry
+remains strict. All other ancestry, key and GO file checks remain strict.
+
 Unit changes are limited to the reviewed ExecStart/WorkingDirectory/Restart
 lines; restart is disabled in the candidate. Only one candidate restart is
 permitted. Rollback has no default authority: [] or the exact three operations
@@ -47,6 +58,7 @@ This source has only local negative/fixture tests; Linux operation is NOT_TESTED
 import argparse
 import base64
 import datetime as dt
+import grp
 import hashlib
 import hmac
 import io
@@ -54,6 +66,7 @@ import inspect
 import json
 import os
 from pathlib import Path, PurePosixPath
+import pwd
 import re
 import shlex
 import shutil
@@ -316,8 +329,61 @@ def archive_members(raw, expected):
     need(set(contents)==set(expected), 'archive omits exact file graph')
     return contents
 
+def private_group_membership(proof):
+    expected_group={'name':'user','gid':1000,'supplementaryMembers':[]}
+    expected_primary=[{'name':'user','uid':1000,'gid':1000}]
+    need(canonical(proof['group'])==canonical(expected_group) and canonical(proof['primaryMembers'])==canonical(expected_primary),
+         'private group proof is not sole UID1000 user')
+    def group(record):
+        return {'name':record.gr_name,'gid':record.gr_gid,'supplementaryMembers':list(record.gr_mem)}
+    def user(record): return {'name':record.pw_name,'uid':record.pw_uid,'gid':record.pw_gid}
+    need(group(grp.getgrgid(1000))==expected_group and group(grp.getgrnam('user'))==expected_group,
+         'private group NSS lookup changed')
+    groups=[group(record) for record in grp.getgrall() if record.gr_gid==1000 or record.gr_name=='user']
+    need(groups==[expected_group], 'private group NSS enumeration changed')
+    users=pwd.getpwall()
+    primary=[user(record) for record in users if record.pw_gid==1000 or record.pw_uid==1000 or record.pw_name=='user']
+    need(primary==expected_primary and user(pwd.getpwuid(1000))==expected_primary[0] and
+         user(pwd.getpwnam('user'))==expected_primary[0], 'private group primary NSS membership changed')
+    need(len({record.pw_name for record in users})==len(users) and len({record.pw_uid for record in users})==len(users),
+         'private group ambiguous NSS accounts')
+    for record in users:
+        memberships=os.getgrouplist(record.pw_name,record.pw_gid)
+        need(record.pw_gid in memberships and all(type(gid) is int for gid in memberships),
+             'private group NSS initgroups proof unavailable')
+        need(1000 not in memberships or user(record)==expected_primary[0],
+             'private group supplementary NSS outsider')
+
+def data_ancestry(root, spec):
+    if 'privateGroupAncestor' not in spec:
+        ancestry(root.parent,(0,1000),0o022); return
+    proof=spec['privateGroupAncestor']
+    need(isinstance(proof,dict) and set(proof)=={'path','identity','group','primaryMembers'} and
+         proof['path']=='/home/user/.local' and str(root)=='/home/user/.local/share/ai-harness',
+         'private group ancestor scope mismatch')
+    path=absolute(proof['path']); before=identity(path); expected=proof['identity']
+    need(isinstance(expected,dict) and set(expected)==set(before) and
+         all(type(value) is int for value in expected.values()) and before==expected and
+         before['uid']==1000 and before['gid']==1000 and before['mode']==0o775,
+         'private group ancestor full identity mismatch')
+    fd=os.open(path,os.O_RDONLY|os.O_DIRECTORY|os.O_NOFOLLOW)
+    try:
+        st=os.fstat(fd)
+        opened={'dev':st.st_dev,'ino':st.st_ino,'mode':stat.S_IMODE(st.st_mode),'uid':st.st_uid,
+                'gid':st.st_gid,'nlink':st.st_nlink,'size':st.st_size,
+                'mtimeNs':st.st_mtime_ns,'ctimeNs':st.st_ctime_ns}
+        need(stat.S_ISDIR(st.st_mode) and opened==before, 'private group opened directory identity mismatch')
+        private_group_membership(proof)
+        for parent in (root.parent,*root.parent.parents):
+            if parent==path: continue
+            st=parent.lstat()
+            need(stat.S_ISDIR(st.st_mode) and st.st_uid in (0,1000) and not st.st_mode&0o022,
+                 'unsafe path ancestry: '+str(parent))
+        need(identity(path)==before, 'private group named directory changed during check')
+    finally: os.close(fd)
+
 def database_state(spec):
-    root=absolute(spec['path']); ancestry(root.parent,(0,1000),0o022)
+    root=absolute(spec['path']); data_ancestry(root,spec)
     need(root.lstat().st_uid==1000 and not root.lstat().st_mode&0o077,'data directory is not service-private')
     db=root/'harness.sqlite'; current=identity(db)
     need(all(current.get(k)==v for k,v in spec['databaseIdentity'].items()) and
@@ -338,6 +404,7 @@ def database_state(spec):
             rows=cursor.fetchall(); projection[table]={'columns':[v[0] for v in cursor.description],'rows':rows}
         need(len(projection['sessions']['rows'])==1 and sha(canonical(projection))==spec['preservedSessionSha256'],
              'original user session changed')
+        if 'privateGroupAncestor' in spec: data_ancestry(root,spec)
         return {'activeRuns':active,'retainedOwners':[list(v) for v in owners],
                 'preservedSessionSha256':sha(canonical(projection)),'databaseIdentity':current}
     finally: connection.close()
