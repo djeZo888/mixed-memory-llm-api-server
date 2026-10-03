@@ -1,9 +1,0 @@
-{
-  "sessionId": "01a0e3ec-82cc-79b0-bdef-87276b6b1613",
-  "startedUtc": "2026-09-27T17:32:02.677994+00:00",
-  "hardDeadlineUtc": "2026-09-27T18:07:02.677994+00:00",
-  "maximumSeconds": 2100,
-  "baseCommit": "4c12d239300d05c8fae12d9048bfa187128587dd",
-  "role": "mac-worker2",
-  "exitStatus": "CHECKPOINT_COMPLETE_NATIVE_EXIT_TO_BE_RECORDED_BY_WRAPPER"
-}

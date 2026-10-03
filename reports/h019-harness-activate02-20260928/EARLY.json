@@ -1,9 +1,0 @@
-{
-  "sessionId": "01a0e602-537d-70d2-a65d-6912e5fa552d",
-  "startedUtc": "2026-09-28T03:15:07.187421+00:00",
-  "recordedUtc": "2026-09-28T03:15:27.316410+00:00",
-  "deadlineUtc": "2026-09-28T03:37:07.187421+00:00",
-  "task": "H019-HARNESS-ACTIVATE02-20260928",
-  "scope": "ai-harness only",
-  "status": "reading current receipt authority"
-}

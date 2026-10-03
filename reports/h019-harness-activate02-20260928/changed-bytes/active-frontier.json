@@ -1,7 +1,0 @@
-{
-  "model": "mimo-v2.6-pro-rl",
-  "mimoEnabled": true,
-  "mimoQualificationSha256": "05ad0301dc7b7d614f0400747812079a02c7f4163c506d774d8c7b944d61e83a",
-  "mimoContextWindow": 950000,
-  "mimoMaxOutputTokens": 65536
-}

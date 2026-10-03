@@ -1,8 +1,0 @@
-{
-  "authorized": false,
-  "purpose": "H018_SHORT950000",
-  "reason": "No actual native/Sova acceptance or root LAST GO. Fresh production identity, manifest/source pins and bounded deadlines must be filled only after later authorization.",
-  "admit_before_epoch": null,
-  "hard_end_epoch": null,
-  "active_cap_seconds": 900
-}

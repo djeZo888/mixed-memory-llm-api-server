@@ -1,6 +1,0 @@
-test_explicit_worker_gateway_origin_web_path_and_clean_environment (__main__.ServerContract.test_explicit_worker_gateway_origin_web_path_and_clean_environment) ... ok
-
-----------------------------------------------------------------------
-Ran 1 test in 1.403s
-
-OK

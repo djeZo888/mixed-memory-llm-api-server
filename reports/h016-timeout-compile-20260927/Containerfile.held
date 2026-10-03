@@ -1,8 +1,0 @@
-# HELD: root must first add hash-reviewed actual W1 active config to payload.
-# One filesystem layer; retains executable modes on the CLI.
-FROM sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022
-USER root
-COPY payload/ /
-LABEL org.opencontainers.image.ai-harness.patchset="38d7b6a7978e5e95e69db790cf2e3465a0e33ddd27124b1b7af387518e9722bf" \
-      org.opencontainers.image.ai-harness.native-source="b948889814648ad761f40a18260ddbe6351c6bbf"
-USER 1000:1000

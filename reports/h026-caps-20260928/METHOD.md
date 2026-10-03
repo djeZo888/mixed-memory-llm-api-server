@@ -1,8 +1,0 @@
-H026 W1 narrow method checkpoint 2026-09-28 21:08 UTC
-Source base 776a135. Helper will be reports/h026-caps-20260928/caps.py.
-Confirmed read-only both UUIDs current/enforced 600W; q0 range150–600, q1 range300–600. Qwen native containers running, exact owner and 480K readback next. No cap/inference writes yet.
-Reuse scripts/benchmark/client.py StreamObserver, parse_response/run_request and protected native loopback HTTP; immutable 64K fixture + leading nonce counted by exact /v1/tokenize body excluding stream transport only. One exclusive serial request at a time, 512 target, temperature0/thinkingoff. Per UUID600warmup/600/550/500/600anchor.180s absolute timeout, stop new measurement21:23. Save full raw body/SSE private.
-Upper app/status quiet only after sqlite read-only no nonterminal runs/gateway/image proof; save exact service states and preserve enabled states. Search/fans/models remain.
-Guard/helper independent systemd unit Restart=no. Finally restore both UUID600 and readbacks even error; finite unit deadline. 1Hz nvidia UUID power/temp/util/clocks/throttles/fan; external fan readback via existing ai-harness status,85C/stale cutoff. No persistent hardware change.
-Settlement: current source-backed Qwen adaptive-drain middleware + successful full HTTP terminal SSE and EOF + exact owner identity/readiness under exclusive admission. No global idle claim. Failed accepted work stops only exact known Qwen owner via current normal manager; unsent failure must never stop runtime.
-Parallel review is requested on this narrow source plan; preparation continues without another GO. Exact helper will be copied when ready. Concrete current-source ownership/guard read is underway.

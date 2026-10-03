@@ -1,9 +1,0 @@
-test_h018_absolute_last_window_cannot_be_extended (last_source_test.SourceGates.test_h018_absolute_last_window_cannot_be_extended) ... ok
-test_eight_hours_and_proxy_claim_are_mandatory (last_source_test.SourceGates.test_eight_hours_and_proxy_claim_are_mandatory) ... ok
-test_authority_requires_every_acceptance (last_source_test.SourceGates.test_authority_requires_every_acceptance) ... ok
-test_64k_precedes_near_with_distinct_output_reserves (last_source_test.SourceGates.test_64k_precedes_near_with_distinct_output_reserves) ... ok
-
-----------------------------------------------------------------------
-Ran 4 tests in 0.000s
-
-OK

@@ -1,9 +1,0 @@
-{
-  "utc": "2026-09-27T15:15:39.037607+00:00",
-  "status": "SYSTEMD_DISPATCHED_READBACK_REQUIRED",
-  "unit": "h016-mimo-profile-20260927-r8.service",
-  "unit_readback": "TimeoutStopUSec=7min\nRuntimeMaxUSec=2h 9min 20s\nMainPID=939758\nExecMainStartTimestamp=Sun 2026-09-27 15:15:39 UTC\nControlGroup=/system.slice/h016-mimo-profile-20260927-r8.service\nActiveState=active\nSubState=running\nInvocationID=f7eedd254a734907996d310a4feb7349\n",
-  "admission_end_utc": "2026-09-27T17:00:00Z",
-  "settlement_utc": "2026-09-27T17:25:00Z",
-  "global_end_utc": "2026-09-27T17:48:08Z"
-}

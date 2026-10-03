@@ -1,7 +1,0 @@
-# Matched pilot fixtures
-
-Copy the three language directories to each engine's owned task workspace. Give the task text from CASES.json with the same Qwen/context/tool/output policy, and run the prewritten check without editing its expected results. The checked-in implementations contain intentional defects; their initial checks must fail. Comparison correctness is independent of a model's own claim of success. No real-model execution is part of this package.
-
-The research/PDF/image cases reuse existing repository fixtures and approved tool ownership. PDF/page/image references are tool tasks, not evidence of Codex native multimodal recognition. The PDF case reuses write_pdf with an explicit 3.3 V/250 mA fixture string and checks 0.25 A conversion; generating and processing that PDF remains a later owned tool task. The historical fixture42 remains an additional browser download check. Neither is engineering datasheet accuracy acceptance. External research must name/link the page actually opened. Image remains the existing specialist service, with its job admission and guarded edit rules.
-
-Record raw initial failure, any single diagnosed repair, final independent check, exact source/pin, elapsed time, tokens if supplied, retries, tool errors and manual intervention. Do not run these fixtures by contacting live models without root's exact lane ownership. MiMo remains deferred during H019.

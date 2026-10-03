@@ -1,6 +1,0 @@
-{
-  "ai-harness/deploy/engine/configure-profile.mjs": "a4aff30b28967d68ee4205b683c9445e8d5da091c78d686eb8cb6bf5586da118",
-  "ai-harness/config/active-frontier.json": "7a4bea03394e51fb005f56d39cd3b5b7c4a28d8c2de85e99b45fc73913febe1a",
-  "ai-harness/deploy/patches/0010-frontier-model-accounting.patch": "43a2620284ccb6110723119ab4720d0f047ffd3805db8d84a3eaf7463d501c99",
-  "ai-harness/deploy/patches/SHA256SUMS": "a6dd7df37313edc4ea2f6bc742ffb6ff431a37abacb2facdbbf422a4c9f9d4bd"
-}

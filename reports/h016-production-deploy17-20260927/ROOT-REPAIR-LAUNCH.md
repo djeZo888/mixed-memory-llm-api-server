@@ -1,5 +1,0 @@
-Corrected ordinary launch STARTED17:54:58 UTC; fresh native STARTED17:54:59.739250868 UTC. State LOADING at17:55:00, readiness PENDING.
-
-MainPID3481160; nativePID3481564; invocation2e31e65bdcfe403f9c76bd1ba49f276e; container57954b459c29ad393c2b30588644ebd2585f94cf2acef8faeec2de65330e16cf; launch e531d11ccdf44614b70c3e4a78b33f49. Selectiongeneration3; canonicalmanifest c2d4cb314ce86a6c082faf784a5c3c55a6bb95acc1056f43f8baaeaa43f9016b. Exact approved owner7768181c/unitc0c260e2 installed/readback.
-
-18:10 cutoff timer active/waiting; ordinary1800s internal timeout unchanged. Journal diagnostics now retained. GLM remains stopped/manual rollback. No inference/Sova/LAST dispatched. Full ROOT-REPAIR-LAUNCH.json includes actual source/selection/unit/native/runtime identity. Original failed evidence preserved under protected worker1-deploy17/failed-original before exact failedcontainer removal. One initial lease contention caused zero mutation; fresh lslocks read showed lease free before canonical reacquisition. No lease bypass.

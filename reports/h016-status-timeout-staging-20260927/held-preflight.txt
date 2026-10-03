@@ -1,1 +1,0 @@
-H016_PREFLIGHT_FAILED: HELD: actual final capacity/settings, full17/65536/serial, production owner/node pins and current W1 lane handoff require root source review

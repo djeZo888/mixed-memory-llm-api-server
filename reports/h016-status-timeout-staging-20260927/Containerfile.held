@@ -1,7 +1,0 @@
-# HELD: incomplete compiled engine closure; do not build or activate.
-# Final root-reviewed overlay must include the verified changed engine payload,
-# profile and actual qualified active config in ONE layer over this exact image.
-FROM sha256:6641df04cf4e8375029639a67c22da7c3ff4719d2b8e58748572f049de8fb022
-USER root
-COPY --chmod=0644 overlay/ /
-USER 1000:1000

@@ -1,9 +1,0 @@
-{
-  "bash_syntax": "PASS",
-  "array_only_evaluation": "PASS: 16 unique explicit PMU/direction events",
-  "source_hashes": "PASS for every source present in prior manifest; supplemental server-http lacks prior manifest entry",
-  "live_execution": "NOT_RUN",
-  "implementation": "NONE",
-  "whitespace": "PASS after trimming excerpt line-label whitespace",
-  "secret_scan": "PASS: scoped grep for private keys and common token/password patterns"
-}

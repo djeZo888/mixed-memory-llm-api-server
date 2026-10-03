@@ -1,6 +1,0 @@
-# Exact deployed engine; only the reviewed managed 1M profile and its test change.
-FROM c328dac0e6ede1dfb890a0657ebafd6f6fd4a1f2281f4e1c664ab95db7dcaa20
-USER root
-COPY --chmod=0444 configure-profile.mjs configure-profile.test.mjs /opt/ai-harness/engine/
-USER 1000:1000
-RUN node --test /opt/ai-harness/engine/configure-profile.test.mjs
