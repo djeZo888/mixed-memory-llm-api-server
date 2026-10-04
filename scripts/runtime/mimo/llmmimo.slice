@@ -1,6 +1,0 @@
-[Unit]
-Description=MiMo dedicated zero-swap boundary
-[Slice]
-MemoryAccounting=yes
-MemoryMax=755914244096
-MemorySwapMax=0

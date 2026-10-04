@@ -1,1 +1,0 @@
-PASS existing checkedFile/evidenceFile/privateFile helpers on all actual gate/driver/receipt/activation/release and credential metadata paths; no credentials read, preflight invocation or network/model contact.

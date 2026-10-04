@@ -1,9 +1,0 @@
-{
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/READ-STATUS.py": "da22cdd135cf9bd9961d2d1607d23c27180a27db6867c3fd349029f681dd8d61",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/DISPATCH-SHORT.py": "e4cef78e67cf4ca752d5cdf6484f6734b71eddfaf3676bab53195d75b9914eb6",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/COLLECT-SHORT.py": "8853bbf429f2d9f20bfaf169269e7ed10aa38c56c7e0383f75f495170e7696e9",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/READ-FAILURE-ONCE.py": "bc280917441489c80bc7d2372a8e35dac871629243bacc5f2c1be4d5564446cd",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/private/read-status-remote.py": "d8c1191cae4fad6113003e626349642f2032049f30d289dd47573fa6c92ed59b",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/private/dispatch-short-remote.py": "c69a6c47c71faa98ad5df136cb6b00c0388abb2ab51d66f087cd8e51b9c6c14c",
-  "/Users/agent/CodexProjects/llm-orchestration/tasks/H017-RECEIPT-04-20260927/private/collect-short-remote.py": "7529f683052b90c505f099cbb6be1ff2ddfcf351be9ad866ef6c65678b37035d"
-}

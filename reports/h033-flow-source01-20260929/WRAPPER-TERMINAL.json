@@ -1,7 +1,0 @@
-{
-  "nativePid": 50468,
-  "actualExitCode": 0,
-  "finishedUtc": "2026-09-29T15:15:33.118319+00:00",
-  "deadlineTermination": false,
-  "method": "Popen.wait; persisted before any cleanup"
-}

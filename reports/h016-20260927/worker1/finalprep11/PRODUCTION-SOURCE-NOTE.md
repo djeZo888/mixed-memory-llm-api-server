@@ -1,5 +1,0 @@
-# Ordinary production source preparation only
-
-Scoped ROOT-WINNER selects16threads. Changed only protected-source launch.json --threads64→16 locally; threads-batch64 and its initial131072 placeholders remain. Existing owner replaces both context flags from the future qualifiedmanifest and appends --no-host exactly once. Do not copy experimentalargv wholesale. No owner/node/schema/W2profile files edited or deployed.
-
-Owner source remains ee5d623f3334afba341e1539383ca672f7f4db096cf329adf1c69d2b871ec814 with GOMP0. The future protected launch source SHA256 is e8f124d17791d154080cff6b1f804a152d0eb62da9e14fdf5c16cc1d91331c14. Root/W2 must bind actual final qualifiedcontext, full nativeargv, sourceclosure and real native17 qualification in existing schema, then authorize ordinary productionload and application acceptance. Existing memory schema requires qualifiedpeak+startupcache<=limit; qualify component definitions without doublecounting cgroup filecache. No manifest is markedqualified in this prepstage.

@@ -1,4 +1,0 @@
-
-> @ai-harness/server@0.0.3 build
-> tsc -p tsconfig.json
-

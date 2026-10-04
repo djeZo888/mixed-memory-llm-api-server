@@ -1,9 +1,0 @@
-{
-  "sessionId": "01a0e380-3f3d-7da1-b9c9-742b4811e528",
-  "startedUtc": "2026-09-27T15:33:47.542762+00:00",
-  "hardDeadlineUtc": "2026-09-27T15:53:47.542762+00:00",
-  "maximumSeconds": 1200,
-  "earlyTimeoutsPublishedUtc": "2026-09-27T15:38:34.982536+00:00",
-  "sourceFinishedUtc": "2026-09-27T15:50:19.947610+00:00",
-  "wrapperOwnsExitReceipt": true
-}

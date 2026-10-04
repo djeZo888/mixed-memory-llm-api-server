@@ -1,6 +1,0 @@
-/home/user/ai-harness-build/H016-TIMEOUT-COMPILE-20260927/artifact-guard.py: OK
-/home/user/.config/systemd/user/ai-harness.service: OK
-/etc/systemd/system/ai-harness-status.service.d/30-h008-registry.conf: OK
-proposed/ai-harness.service: OK
-proposed/30-h008-registry.conf: OK
-Pair paths/tag applied; app remains stopped. Keep app paused for separately gated H009-derived acceptance; start status/app only after root review of acceptance.

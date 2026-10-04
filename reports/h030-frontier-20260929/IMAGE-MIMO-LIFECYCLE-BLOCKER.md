@@ -1,9 +1,0 @@
-# Unresolved production blocker: image warm holds canonical lease
-
-Observed protected MiMo state: mandatory_guard_timeout07:56:17.804132 during hardware_latch/RUNNING; cycle5.000736s,54 canonical lease contentions, refresh_attempted=false, pre hardware_latched=null. Subsequent settlement_lease_deadline07:56:38.843396 leaves HELD; original runtime remains owned. Exact error preserved in MIMO-CANONICAL-CAUSE.json. This is not a request retry or qualified MiMo health.
-
-Source evidence: scripts/image_runtime/service.py main acquires start_admission and calls runtime.start inside that context (870–877). start contains native readiness/load loop and deterministic warm generation (704–756), so the canonical lease is held through these slow operations. The authorized API recovery began07:55:46 and owner published warm07:57:16. Temporal overlap supports image warm as the likely competing holder; no /proc lock sample captured the historical holder, so that attribution is an inference, not a measured holder identity.
-
-Image API now ready/admitting/idle; its supported error recovery can invoke this same long critical section again. Normal image workflow success cannot qualify cross-service lifecycle safety. This is a production blocker even if we avoid further image lifecycle writes in the current bounded acceptance window. Containment keeps image warm and forbids further recovery/start while MiMo loads/runs; it does not resolve the code defect.
-
-Needed later: narrowly split slow image load/warm observation from canonical publication lease, retain exclusive image ownership and exact before/after native/config/guard validation, keep all hardware guard deadlines, preserve held work and verify competing watchdog access under lifecycle overlap. No implementation in FRONTIER01; no timeout increase, blanket retry, guard bypass or fake ready flag. Root deferred risky owner refactor; this remains FAIL/INCOMPLETE in final acceptance.

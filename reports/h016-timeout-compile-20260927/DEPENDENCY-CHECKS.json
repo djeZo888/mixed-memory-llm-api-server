@@ -1,9 +1,0 @@
-{
-  "result": "PASS",
-  "entries": 32247,
-  "sha256": "cd885d31b928a4823e3c69bb3630955f1e53eb17969133550bcc397586b9293f",
-  "changedEntries": 0,
-  "source": "immutable cde82ffa /build/minimax",
-  "isolated": "/work/native-source",
-  "network": "none"
-}

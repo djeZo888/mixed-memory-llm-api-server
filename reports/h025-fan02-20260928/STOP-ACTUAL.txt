@@ -1,8 +1,0 @@
-2026-09-28T19:43:34Z
-MainPID=0
-Result=success
-ExecMainStatus=0
-ExecStopPost={ path=/usr/bin/python3 ; argv[]=/usr/bin/python3 /usr/local/lib/sova-cha-fan3/cha_fan3.py failsafe ; ignore_errors=no ; start_time=[Mon 2026-09-28 21:43:33 CEST] ; stop_time=[Mon 2026-09-28 21:43:34 CEST] ; pid=65213 ; code=exited ; status=0 }
-ActiveState=inactive
-SubState=dead
-{"actual_tach": 3600, "actual_tach_units": null, "bmc_logins": 1, "bmc_put_attempts": 0, "channel": "Zone4(CHA_FAN3)/PWMNum3", "desired_duty": 80, "errors": [], "gpu_uuid": "GPU-93dbfca8-ef3a-9628-a798-6a4afd0af528", "host_boot_id": "a80a9860-7fde-4483-abc4-00903793c201", "invariant_sha256": "450692842e449436e29afaad1d9c30b7002c2c19995d1d656e8eb9a0a8820e94", "last_known_readback_duty": 80, "last_write_at": null, "mode": 4, "node_boot_id": null, "pid": 65213, "readback_at": "2026-09-28T19:43:34.288124+00:00", "readback_duty": 80, "readback_kind": "first_four_curve_duties_not_measured_pwm", "sampled_at": null, "schema_version": 1, "source_bits": [0, 0, 0], "source_sha256": "9293a17dcdfbda23015142d9fd57099e133fda48e251f488484550b1b8df3d0c", "started_at": "2026-09-28T19:43:33.435221+00:00", "state": "stopped_high", "tach_at": "2026-09-28T19:43:34.715674+00:00", "telemetry_age_seconds": null, "temperature_c": null, "updated_at": "2026-09-28T19:43:34.715695+00:00"}

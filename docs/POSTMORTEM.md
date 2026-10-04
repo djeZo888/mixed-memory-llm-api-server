@@ -1,0 +1,43 @@
+# V1 postmortem
+
+**V1 ended before the requested system worked end to end.** Some infrastructure and narrow workflows were genuinely demonstrated. The complete research, recognition and generation experience remained unfinished despite extensive code, fixtures and operational machinery.
+
+This assessment uses the [final H046 report](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/1f9bd99621d079f049d945dd1cc65bce96ae0c29/reports/h046-six-hour-status-20261002.md) and the retained source baseline. “Observed” below means a recorded outcome or explicit source dependency. “Assessment” is our engineering interpretation, not proof of a unique cause.
+
+## What actually worked at closeout
+
+| Evidence | Scope and limit |
+| --- | --- |
+| Basic ordinary chat | A real normal UI run returned the requested complete three-sentence answer. |
+| Closed browser tab | Server work continued and the completed chat/file card reappeared on reopen. This was a tab-disconnect test; physical PC sleep was not tested. |
+| Published file | The public endpoint returned HTTP 200 and the expected bytes/hash. The final browser download-event wait timed out; completed browser download was unconfirmed. |
+| Manual native compaction | Native start/completion and settlement were recorded. A follow-up recalled the test phrase and read the file checklist while prior visible messages/files remained. This did not test automatic 400k triggering, occupied 480k behavior or every recovery path. |
+| Startup and shutdown | Minimal native startup was demonstrated without generation, followed by verified owned process/group/scope closure. |
+
+Recognition, generation/editing, qualified deep research and simultaneous operation of all required model instances were not accepted in the final session. The Ada cards were visible and idle; idle inventory did not qualify sustained external-link/GPU operation. Source-only passing suites were real source checks, not substitutes for these missing results.
+
+## Concrete failures and coupling
+
+**Observed: our vision maintenance blocked ordinary text admission.** A maintenance runner held the shared lifecycle lock while waiting for later authorized steps. The real GPU validator needed that lock, so its 15-second hardware proofs expired. Ordinary chat failed with HTTP 503 / “No currently qualified Qwen lane” although the GPU inventory was present. Cancelling the waiting operation and releasing the lock let proofs refresh automatically; genuine Qwen admission recovered without fabricated hardware fields, weakened guards or model restarts. **Assessment:** we incorrectly made a long-lived workflow own a lock needed by short health refreshes. Resource-scoped, short mutations and independent observation would have prevented this coupling.
+
+**Observed in source: broad source graphs coupled specialist qualification to shared application changes.** Technical vision qualification includes 18 shared/vision modules. Generation qualification includes 30 application, engine, routing, tool and configuration sources; all expected current hashes must match. See [vision qualification](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/1f9bd99621d079f049d945dd1cc65bce96ae0c29/ai-harness/server/src/technical-vision-qualification.ts) and [specialist qualification](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/1f9bd99621d079f049d945dd1cc65bce96ae0c29/ai-harness/server/src/codex-specialist-qualification.ts). Changes to shared entry/routing code could invalidate an otherwise unrelated specialist's previous acceptance. **Assessment:** deployment integrity checks were being used as a broad behavioral compatibility system. Keep provenance and explicit compatibility review, but bind each component to its actual contract and direct tests rather than repeatedly qualifying an entire moving graph.
+
+**Observed in the recovery design: generation restoration depended on vision reaching NORMAL.** The restoration chain bound five resident peers—the two general Qwen owners, MiMo, vision Qwen and OCR—before adopting the independent generation owner; see the [generation owner successor](https://github.com/djeZo888/mixed-memory-llm-api-server/blob/1f9bd99621d079f049d945dd1cc65bce96ae0c29/scripts/h046/image_owner_successor.py). A free generation Ada therefore waited on recognition recovery even though the capabilities had separate hardware roles. This describes an enforced restoration precondition, not a successful generation execution; none occurred in the final session. **Assessment:** peer protection became a prerequisite for an unrelated service's readiness. Preserve genuine resource conflicts and current-owner checks; replace this serialized chain with independent service restoration and a shared capacity contract. This does not justify inventing a NORMAL owner or clearing a real fault.
+
+**Observed: native completion was mistaken for sufficient product completion.** The original research chat ended with a short planning sentence, and the engine emitted it as its final answer; Sova stored that final. It did not fulfill the request. Records show no cancellation, timeout, server error or context-limit event, but do not retain the raw provider finish reason or the PC-disconnect time. The cause cannot be attributed to browser closure or a specific model fault from those records. **Assessment:** Sova lacked a reliable way to surface unfinished task fulfillment and request bounded continuation. This remained unresolved at retirement.
+
+**Observed: fixtures and recovery helpers grew while ordinary image workflows stayed offline.** The final vision lane had stopped old owners and prepared source, but no new NORMAL owner, live accuracy acceptance or normal upload. Generation had staged controls and collectors but no startup, warmup or normal FullHD result. **Assessment:** we spent too much effort proving preparatory mechanisms before repeatedly checking the smallest real user flow. Increasing fixture count was not increasing product readiness at the same rate.
+
+**Observed: current instructions and dated history were duplicated.** Root and harness `AGENTS.md`, architecture descriptions, README/TODO text and many dated reports carried overlapping “current” states. Some older documents still described MiniMax defaults after later instructions made Codex the sole engine. **Assessment:** we failed to keep one concise authoritative design/state index. Reading and reconciling this accumulation became part of every task and encouraged preservation of temporary implementation rules as if they were permanent requirements.
+
+Other retained failures matter: a restart helper returned nonzero during an immediate readiness race even though later independent observations found the new application healthy; a cancellation helper read an outer receipt before its write completed; a partial validator incorrectly required distinct hosts to share a boot ID. Independent closure evidence can establish a later state, but cannot convert these original failed or unknown receipts into passes.
+
+## Our responsibility as AI engineering agents
+
+We own these engineering choices, including the orchestrator's integration decisions. We accumulated helper, receipt, source-hash and approval chains, let protective checks spread across capability boundaries, and delayed a stable end-to-end ordinary workflow. That was our design and execution mistake. Delegating more isolated work did not solve the serial integration chain we had created. We should have shortened the path from a change to a direct component test and then a normal user flow, and stopped adding layers when their cost exceeded a stated requirement.
+
+The user's evolving goals, time limits and hardware changes are context, not an excuse for those choices. Nor is removing safeguards the answer. Genuine process ownership and owned shutdown, authentication, isolation, protected secrets, GPU/RAM capacity, cancellation settlement, durable data and verified backups are requirements worth preserving. Our implementation of them needed smaller boundaries and clearer tests. A new repository alone cannot establish delivery speed or correctness.
+
+## Carry forward
+
+Use one current architecture/configuration/protocol/test definition. Make text, recognition and generation independently startable, callable, observable and recoverable. Keep the browser as an observer of durable server-owned jobs. Scope maintenance locks to actual conflicting resources and release them before waiting. Review reused components against direct evidence, then require full user workflows; record failed, partial and untested cases plainly. [V2 design input](V2-DESIGN-INPUT.md) turns these lessons into reviewable work.

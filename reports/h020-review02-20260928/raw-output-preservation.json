@@ -1,7 +1,0 @@
-{
-  "original": "/Users/agent/CodexProjects/llm-orchestration/tasks/H020-REVIEW02-20260928/raw-test-output/initial-independent-new.tap",
-  "originalSha256": "505e0e956006921200a45815a998e8aa8f274ae440b08a81ad4aacdae0e6aa0b",
-  "reportCopy": "initial-independent-new.tap",
-  "reportCopySha256": "1dbee956e617f77593353e6fa6f82c09680c531d7c0ec52597c6f88863860a4a",
-  "normalization": "Report copy strips trailing whitespace only; original failure output remains unchanged outside Git."
-}

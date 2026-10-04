@@ -1,9 +1,0 @@
-# H031 SOURCE02 result
-
-Local source/tests complete at 2026-09-29T09:42:52.378938+00:00. Commit `b2ecf727d1a5192e5e791db4b088ef9b9a3ee865` on exact base `9cd941cdbd9170fb56ccacbc87f3238e3bd40f0e`. No GitHub push; no VM mutation. One explicitly INBOX-authorized bounded read-only raw artifact fetch completed, all expected hashes matched.
-
-Added an explicit idle normal-stop timeout physically settled disposition preserving BOTH exact failure records and original raw stopped history. Preparation runs staged reviewed code against unchanged installed predecessor; the protected exclusive supplement binds immutable original intent/delta, exact stopped state/proxy/guard/selection, old/original-proposed/corrected manifests, owner-only NEW-pin correction, absence and strict hardware proof. Normal start revalidates the full chain, consumes once only after successful preflight and preserves the predecessor container. Clean same-boot path, new-boot path, HELD rules and global source allowlists are unchanged.
-
-54 focused tests PASS, zero skipped, no inherited duplicate fixtures. Includes exact private raw-chain replay; unrelated failures/phases/operations, stale hashes, changed node/source/model/context/selection, proxy ambiguity, current positive/unknown hardware, OOM/remaining native and existing process/cgroup/GPU/listener fixtures, tamper/reuse and failed-preflight preservation/one-time consumption. `py_compile` and `git diff --check` pass. Operating-system boundaries are mocked in fixtures; no deployment/readiness/acceptance is claimed.
-
-Use PROTOCOL.md after root exact review. All credentials/raw captures stay outside Git under private/. Original clean SOURCE01 outcomes and actual timeout failure remain preserved. Packet uses raw and canonical digest labels explicitly. Worker exits after packet verification; coordinator appends actual wrapper terminal externally.

@@ -1,6 +1,0 @@
-1. Signed amendment, effective 2026-09-20. Approved by the fixture records owner.
-2. Ordinary event records must be deleted after 14 days.
-3. Audit records are retained for 180 days.
-4. This amendment supersedes lines 2 and 3 of policy-a.txt.
-5. Litigation holds suspend deletion only for records specifically listed in the hold.
-6. No hold is listed for this two-document fixture.

@@ -1,1 +1,0 @@
-39 focused R9 offline tests PASS; 13 existing ordinary owner tests PASS; all source and embedded remote Python parses PASS; frozen source hash equality PASS; scoped secret-pattern scan PASS; diff whitespace PASS. Native R8 exact result and physical settlement/GLM readiness verified; no R9 inference or capacity claim.

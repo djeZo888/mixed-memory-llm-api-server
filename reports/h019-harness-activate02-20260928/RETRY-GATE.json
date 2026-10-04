@@ -1,7 +1,0 @@
-{
-  "gate": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/private/ROOT-LIVE-GATE-02.json",
-  "gateSha256": "cb4cf70471483eed93a62a6c168517f0528591f4f7bfbfbd6991cbafba52e43f",
-  "driverDir": "/home/user/ai-harness-build/H019-HARNESS-PREP01-20260928/driver-attempt02",
-  "priorRefusalSha256": "270ab8237c613f2e35a255095eec05ca63b8ef6fb933d371e6d613432e74aeb4",
-  "launcherSha256": "9c814c5456075de7b1fbbcfa560bee9fb702af7b5757ca1ae97f050a20daaa21"
-}
